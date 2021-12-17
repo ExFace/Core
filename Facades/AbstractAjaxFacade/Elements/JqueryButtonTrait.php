@@ -196,7 +196,7 @@ JS;
         return <<<JS
 
                     $js_check_button_state
-					var requestData = {$js_get_data};console.log(requestData);
+					var requestData = {$js_get_data};
 					$js_check_input_rows
 
 JS;
