@@ -194,7 +194,17 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
         if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
             $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-            $this->setValue($valuePointer->getValue(), false);
+            $value = $valuePointer->getValue();
+            
+            // If it is a single-select but the prefill has multiple values (either explicitly or as a delimited list),
+            // do not use the prefill data - we don't know which value to use!
+            if ($this->getMultiSelect() === false && $value) {
+                if ($data_sheet->countRows() > 1 || count(explode($this->getMultiSelectValueDelimiter(), $value)) > 1) {
+                    return;
+                }
+            }
+            
+            $this->setValue($value, false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
         }
         

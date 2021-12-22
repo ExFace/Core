@@ -444,7 +444,18 @@ class InputSelect extends Input implements iSupportMultiSelect
             return;
         }
         
-        // First du the regular prefill for an input (setting the value)
+        // If it is a single-select but the prefill has multiple values (either explicitly or as a delimited list),
+        // do not use the prefill data - we don't know which value to use!
+        if ($this->getMultiSelect() === false && $this->isBoundToAttribute()) {
+            $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
+            if (! $prefill_columns->isEmpty() && $col = $data_sheet->getColumns()->getByExpression($prefill_columns->getFirst()->getExpressionObj())) {
+                if (count($col->getValues(false)) > 1 || count(explode($this->getMultipleValuesDelimiter(), ($col->getValue(0) ?? ''))) > 1) {
+                    return;
+                }
+            }
+        }
+        
+        // First do the regular prefill for an input (setting the value)
         parent::doPrefill($data_sheet);
         
         // Additionally the InputSelect can use the prefill data to generate selectable options.
