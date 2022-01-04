@@ -946,24 +946,24 @@
         },
         {
             "CREATED_ON": "2019-09-29 21:02:28",
-            "MODIFIED_ON": "2019-09-29 21:02:28",
+            "MODIFIED_ON": "2022-01-04 09:45:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e2fc7135b291bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "MS SQL Server Connection",
-            "DESCRIPTION": "",
+            "NAME": "MS SQL Server connection",
+            "DESCRIPTION": "Most basic connection to an SQL server",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
             "UXON": {
-                "serverName": "",
+                "host": "",
                 "database": "",
-                "CharacterSet": "UTF-8",
-                "UID": "",
-                "PWD": ""
+                "user": "",
+                "password": "",
+                "CharacterSet": "UTF-8"
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2019-09-30 09:39:37",
@@ -4754,6 +4754,31 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button.gif"
+        },
+        {
+            "CREATED_ON": "2022-01-04 09:43:45",
+            "MODIFIED_ON": "2022-01-04 09:45:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8e276d6d80288e27025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "MS SQL Server connection with SSL",
+            "DESCRIPTION": "Change `TrustServerCertificate` to `false` if no self-signed certificates are used!",
+            "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
+            "UXON": {
+                "host": "",
+                "database": "",
+                "user": "",
+                "password": "",
+                "CharacterSet": "UTF-8",
+                "connection_options": {
+                    "Encrypt": true,
+                    "TrustServerCertificate": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
