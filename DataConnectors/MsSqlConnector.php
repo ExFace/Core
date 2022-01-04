@@ -12,16 +12,25 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
- * Microsoft SQL Server connector via sqlsrv PHP extension.
+ * Microsoft SQL Server connector via the official sqlsrv PHP extension.
+ * 
+ * Apart from the typical SQL connection config syntax you can also explicitly set the `connection_options` 
+ * as described here: https://docs.microsoft.com/en-us/sql/connect/php/connection-options.
+ * 
+ * Also note, that the connector handles SQL server warnings as errors by default. If you wish to suppress
+ * error messages for warnings, set `warnings_return_as_errors` to `false`. See the official documentation
+ * for more details: https://www.php.net/manual/en/function.sqlsrv-configure.php.
  *
  * @author Andrej Kabachnik
- *        
+ *
  */
 class MsSqlConnector extends AbstractSqlConnector
 {
-
+    private $connectionInfo = [];
+    
     private $dBase = null;
     
     private $warningsReturnAsErrors = false;
@@ -29,7 +38,7 @@ class MsSqlConnector extends AbstractSqlConnector
     private $resultCounter = null;
     
     private $multiqueryResults = null;
-
+    
     /**
      *
      * {@inheritdoc}
@@ -38,15 +47,15 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
-        $connectInfo = array();
+        $connectInfo = $this->getConnectionOptions();
         $connectInfo["Database"] = $this->getDatabase();
         $connectInfo["CharacterSet"] = $this->getCharacterSet();
-        $connectInfo['ReturnDatesAsStrings'] = true;
-        if ($this->getUID()) {
-            $connectInfo["UID"] = $this->getUID();
+        $connectInfo['ReturnDatesAsStrings'] = $this->getConnectionOptions()['ReturnDatesAsStrings'] ?? true;
+        if ($this->getUser()) {
+            $connectInfo["UID"] = $this->getUser();
         }
-        if ($this->getPWD()) {
-            $connectInfo["PWD"] = $this->getPWD();
+        if ($this->getPassword()) {
+            $connectInfo["PWD"] = $this->getPassword();
         }
         
         if (function_exists('sqlsrv_connect') === false) {
@@ -56,16 +65,16 @@ class MsSqlConnector extends AbstractSqlConnector
         if ($this->getWarningsReturnAsErrors() === false) {
             if(sqlsrv_configure("WarningsReturnAsErrors", 0) === false) {
                 throw new DataConnectionFailedError($this, 'PHP function "sqlsrv_connect" not available!', '76BJXFH');
-            } 
+            }
         }
         
-        if (! $conn = sqlsrv_connect($this->getServerName() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
+        if (! $conn = sqlsrv_connect($this->getHost() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
             throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastError());
         } else {
             $this->setCurrentConnection($conn);
         }
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -78,14 +87,14 @@ class MsSqlConnector extends AbstractSqlConnector
             @sqlsrv_close($conn);
         }
     }
-
+    
     /**
      *
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performQuery()
      *
-     * @param SqlDataQuery $query            
+     * @param SqlDataQuery $query
      */
     protected function performQuerySql(SqlDataQuery $query)
     {
@@ -154,9 +163,9 @@ class MsSqlConnector extends AbstractSqlConnector
                 return new DataQueryFailedError($query, $message, '6T2T2UI');
         }
     }
-
+    
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getInsertId()
      */
@@ -171,7 +180,12 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $id;
     }
-
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getAffectedRowsCount()
+     */
     function getAffectedRowsCount(SqlDataQuery $query)
     {
         if (! $stmt = $query->getResultResource()) {
@@ -184,7 +198,7 @@ class MsSqlConnector extends AbstractSqlConnector
         // sqlsrv_rows_affected() can return FALSE in case of an error accoring to the docs and -1
         // if no counting was possible.
         switch (true) {
-            case $cnt === false: 
+            case $cnt === false:
                 if ($err = $this->getLastError()) {
                     throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $err, '6T2TCL6');
                 } else {
@@ -195,9 +209,9 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $cnt;
     }
-
+    
     /**
-     * 
+     *
      * @return string|NULL
      */
     protected function getLastError() : ?string
@@ -207,7 +221,7 @@ class MsSqlConnector extends AbstractSqlConnector
     }
     
     /**
-     * 
+     *
      * @return int|string|NULL
      */
     protected function getLastErrorCode()
@@ -215,7 +229,11 @@ class MsSqlConnector extends AbstractSqlConnector
         $errors = $this->getErrors();
         return $errors[0]['code'];
     }
-
+    
+    /**
+     *
+     * @return mixed
+     */
     protected function getErrors()
     {
         if ($this->getWarningsReturnAsErrors()) {
@@ -224,7 +242,7 @@ class MsSqlConnector extends AbstractSqlConnector
             return sqlsrv_errors(SQLSRV_ERR_ERRORS);
         }
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -251,7 +269,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $array;
     }
-
+    
     public function transactionStart()
     {
         // Do nothing if the autocommit option is set for this connection
@@ -270,7 +288,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $this;
     }
-
+    
     public function transactionCommit()
     {
         // Do nothing if the autocommit option is set for this connection
@@ -290,7 +308,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $this;
     }
-
+    
     public function transactionRollback()
     {
         // Throw error if trying to rollback a transaction with autocommit enabled
@@ -310,85 +328,61 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         return $this;
     }
-
+    
     public function freeResult(SqlDataQuery $query)
     {
         if (is_resource($query->getResultResource())) {
             sqlsrv_free_stmt($query->getResultResource());
         }
     }
-
-    public function getUID()
-    {
-        return $this->getUser();
-    }
-
+    
     /**
      * SQL Server user id (same as "user")
      *
-     * @uxon-property UID
-     * @uxon-type string
-     *
-     * @see set_user()
-     * @param string $value            
+     * @deprecated use setUser()
+     * @param string $value
      * @return MsSqlConnector
      */
-    public function setUID($value)
+    protected function setUID($value)
     {
         return $this->setUser($value);
     }
-
-    public function getPWD()
-    {
-        return $this->getPassword();
-    }
-
+    
     /**
      * The password for the connection (same as "password")
      *
-     * @uxon-property PWD
-     * @uxon-type password
-     *
-     * @see set_password()
-     * @param string $value            
+     * @deprecated use setPassword()
+     * @param string $value
      * @return MsSqlConnector
      */
-    public function setPWD($value)
+    protected function setPWD($value)
     {
         return $this->setPassword($value);
     }
-
-    public function getServerName()
-    {
-        return $this->getHost();
-    }
-
+    
     /**
      * The server name for the connection (same as "host")
      *
-     * @uxon-property serverName
-     * @uxon-type string
-     *
-     * @see set_host()
-     * @param string $value            
+     * @deprecated use setHost()
+     * @param string $value
      * @return MsSqlConnector
      */
-    public function setServerName($value)
+    protected function setServerName($value)
     {
         return $this->setHost($value);
     }
-
+    
     public function getDatabase()
     {
-        return $this->dBase;
+        return $this->dBase ?? $this->getConnectionOptions()['Database'];
     }
-
+    
     /**
      * The database to connect to
-     * 
+     *
      * @uxon-property database
      * @uxon-type string
-     * 
+     *
      * @param string $value
      * @return \exface\Core\DataConnectors\MsSqlConnector
      */
@@ -401,18 +395,15 @@ class MsSqlConnector extends AbstractSqlConnector
     /**
      * The database name to connect to (same as "database")
      *
-     * @uxon-property dbase
-     * @uxon-type string
-     *
-     * @see set_database()
+     * @deprecated use setDatabase()
      * @param string $value
      * @return MySqlConnector
      */
-    public function setDbase($value)
+    protected function setDbase($value)
     {
         return $this->setDatabase($value);
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -425,7 +416,7 @@ class MsSqlConnector extends AbstractSqlConnector
         $uxon->setProperty('Database', $this->getDatabase());
         return $uxon;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -440,36 +431,19 @@ class MsSqlConnector extends AbstractSqlConnector
     /**
      * The character set to be used in this connection (same as "character_set")
      *
-     * @uxon-property charset
-     * @uxon-type string
-     *
-     * @see set_character_set()
+     * @deprecated use setCharacterSet()
      * @param string $value
      * @return MySqlConnector
      */
-    public function setCharset($value)
+    protected function setCharset($value)
     {
         return $this->setCharacterSet($value);
     }
     
     /**
-     * 
-     * @return string|NULL
+     *
+     * @return bool
      */
-    public function getCharset() : ?string
-    {
-        return $this->getCharacterSet();
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getDbase()
-    {
-        return $this->getDatabase();
-    }
-    
     protected function getWarningsReturnAsErrors() : bool
     {
         return $this->warningsReturnAsErrors;
@@ -477,14 +451,14 @@ class MsSqlConnector extends AbstractSqlConnector
     
     /**
      * Set to TRUE to make the connection throw exceptions on SQL Server warning messages.
-     * 
+     *
      * See https://docs.microsoft.com/en-us/sql/connect/php/how-to-handle-errors-and-warnings-using-the-sqlsrv-driver
      * for details.
-     * 
+     *
      * @uxon-property warnings_return_as_errors
      * @uxon-type boolean
      * @uxon-default false
-     * 
+     *
      * @param bool $value
      * @return MsSqlConnector
      */
@@ -492,5 +466,57 @@ class MsSqlConnector extends AbstractSqlConnector
     {
         $this->warningsReturnAsErrors = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getConnectionOptions() : array
+    {
+        return $this->connectionInfo;
+    }
+    
+    /**
+     * SQL server PHP driver connection options for advanced configuration
+     * 
+     * See https://docs.microsoft.com/en-us/sql/connect/php/connection-options for details.
+     * 
+     * @uxon-property connection_options
+     * @uxon-type object
+     * @uxon-template {"":""}
+     * 
+     * @link https://docs.microsoft.com/en-us/sql/connect/php/connection-options
+     * @param UxonObject|array $value
+     * @return MsSqlConnector
+     */
+    public function setConnectionOptions($value) : MsSqlConnector
+    {
+        if ($value instanceof UxonObject) {
+            $opts = $value->toArray();
+        } else {
+            $opts = $value;
+        }
+        
+        foreach ($opts as $opt => $val) {
+            switch ($opt) {
+                case 'TransactionIsolation':
+                    $opts[$opt] = constant($val);
+                    break;
+            }
+        }
+        
+        $this->connectionInfo = $opts;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getCharacterSet()
+     */
+    public function getCharacterSet()
+    {
+        return parent::getCharacterSet() ?? $this->getConnectionOptions()['CharacterSet'];
     }
 }
