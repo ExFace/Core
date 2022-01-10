@@ -147,7 +147,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             return false;
         }
         
-        if (! in_array($token->getDataConnectionAlias(), $this->getConnectionAliases())) {
+        if (! in_array($token->getDataConnectionAlias(), ($this->getConnectionAliases() ?? []))) {
             return false;
         }
         
