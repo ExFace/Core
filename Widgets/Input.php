@@ -225,8 +225,8 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         if (! $this->getIgnoreDefaultValue() && $default_expr = $this->getDefaultValueExpression()) {
             if ($data_sheet = $this->getPrefillData()) {
                 $value = $default_expr->evaluate($data_sheet, 0);
-            } elseif ($default_expr->isConstant()) {
-                $value = $default_expr->getRawValue();
+            } elseif ($default_expr->isStatic()) {
+                $value = $default_expr->evaluate();
             }
         }
         return $value;

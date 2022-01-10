@@ -428,15 +428,6 @@ class Expression implements ExpressionInterface
     }
 
     /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRawValue()
-     */
-    public function getRawValue()
-    {
-        return $this->value;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
