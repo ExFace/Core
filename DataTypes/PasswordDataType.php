@@ -68,10 +68,18 @@ class PasswordDataType extends StringDataType
     }
     
     /**
-     *
-     * @return int
+     * Returns the value of the PHP constant corresponding to the selected hash algorithm.
+     * 
+     * NOTE: this value is NOT the one passed to `setHashAlgorithm()`, but rather the
+     * one used by PHPs built-in `password_hash()` function.
+     * 
+     * See https://www.php.net/manual/en/password.constants.php for a list of available
+     * constants and the corresponding values.
+     * 
+     * @link https://www.php.net/manual/en/password.constants.php
+     * @return string|int|null
      */
-    protected function getHashAlgorithm() : int
+    protected function getHashAlgorithm()
     {
         if ($this->hashAlgorithm !== null) {
             return constant('PASSWORD_' . strtoupper($this->hashAlgorithm));
