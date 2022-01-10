@@ -148,8 +148,6 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      */
     public function __toString() : string;
     
-    public function getRawValue();
-    
     /**
      * Returns the data type, that the calculation result of this expression will have.
      * 
