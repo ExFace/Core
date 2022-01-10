@@ -210,6 +210,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
         }
         
         // If namepacing is no, see where the namespaces had changed
+        $nsChangedRowNos = [];
         if ($this->hasNamespace()) {
             $nsAttr = $this->getNamespaceAttribute();
             if (! $nsAttr->isRelated()) {
