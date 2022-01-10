@@ -48,6 +48,8 @@ class NumberDataType extends AbstractDataType
         } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
             // Hexadecimal numbers in '0x....'-Notation
             return $string;
+        } elseif (is_bool($string)) {
+            return $string === true ? 1 : 0;
         } elseif (strcasecmp($string, 'true') === 0) {
             return 1;
         } elseif (strcasecmp($string, 'false') === 0) {
@@ -55,16 +57,16 @@ class NumberDataType extends AbstractDataType
         } elseif (static::isValueLogicalNull($string) === true) {
             return null;
         } else {
-            $string = trim($string);
+            $trimmed = str_replace(' ', '', trim($string));
             $matches = array();
-            preg_match_all('!^(-?\d+([,\.])?)+$!', str_replace(' ', '', $string), $matches);
+            preg_match_all('!^(-?\d+([,\.])?)+$!', $trimmed, $matches);
             if (empty($matches[0]) === false) {
                 $decimalSep = $matches[2][0];
                 if ($decimalSep === ',') {
-                    $number = str_replace('.', '', $string);
+                    $number = str_replace('.', '', $trimmed);
                     $number = str_replace($decimalSep, '.', $number);
                 } else {
-                    $number = str_replace(',', '', $string);
+                    $number = str_replace(',', '', $trimmed);
                 }
                 if (is_numeric($number)) {
                     return $number;
