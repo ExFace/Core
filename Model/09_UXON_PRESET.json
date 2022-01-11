@@ -693,7 +693,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
-            "MODIFIED_ON": "2020-12-09 19:29:24",
+            "MODIFIED_ON": "2022-01-11 16:48:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
@@ -746,7 +746,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:08:11",
-            "MODIFIED_ON": "2020-11-24 09:55:27",
+            "MODIFIED_ON": "2022-01-11 16:48:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88b0c200e3ead7fe4b318306b9a",
@@ -2391,7 +2391,7 @@
         },
         {
             "CREATED_ON": "2020-03-19 20:23:49",
-            "MODIFIED_ON": "2021-11-26 22:38:42",
+            "MODIFIED_ON": "2022-01-11 12:51:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6a1f8afdd918a3480205857feb80",
@@ -2410,7 +2410,8 @@
                     {
                         "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT!",
                         "required": true,
-                        "hidden": true
+                        "hidden": true,
+                        "comparator": "=="
                     }
                 ],
                 "columns": [
@@ -3319,7 +3320,7 @@
         },
         {
             "CREATED_ON": "2020-12-09 19:25:25",
-            "MODIFIED_ON": "2020-12-09 19:28:09",
+            "MODIFIED_ON": "2022-01-11 16:48:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba523e81ce3aea523025041000001",
