@@ -468,7 +468,7 @@ JS;
             if ($action->getPrefillWithPrefillData()) {
                 if ($prefillPreset = $action->getPrefillDataPreset()) {
                     $prefill_param = '&prefill=\' + JSON.stringify(' . $this->buildJsPrefillDataFromPreset($prefillPreset) . ') + \'';
-                } else {
+                } elseif ($widget->getMetaObject()->hasUidAttribute()) {
                     $output .= <<<JS
 
 			var prefillRows = [];
