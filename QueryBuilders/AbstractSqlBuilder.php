@@ -237,6 +237,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * SQL statement to be executed before every INSERT - e.g. to initialize a variable used in `SQL_INSERT`
      * 
      * @uxon-property SQL_INSERT_BEFORE
+     * @uxon-target attribute
      * @uxon-type string
      * 
      * @var string
@@ -247,6 +248,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * SQL statement to be executed after every INSERT - e.g. to deal with a variable used in `SQL_INSERT`
      *
      * @uxon-property SQL_INSERT_AFTER
+     * @uxon-target attribute
      * @uxon-type string
      *
      * @var string
