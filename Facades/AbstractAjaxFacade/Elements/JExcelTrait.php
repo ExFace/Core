@@ -991,7 +991,7 @@ JS;
      */
     public function buildJsDataResetter() : string
     {
-        return "(function(){ {$this->buildJsJqueryElement()}.jexcel('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })()";
+        return "(function(){ {$this->buildJsJqueryElement()}.jexcel('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
     }
     
     /**
