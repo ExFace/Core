@@ -54,15 +54,32 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 $isRequired = $col['NULLABLE'] == 0 ? 1 : 0;
                 $isEditable = 1;
             }
+            
+            $dataType = $this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE']);
+            
+            $default = $col['COLUMN_DEF'];
+            switch (true) {
+                case $default === null:
+                    $default = '';
+                    break;
+                case ! ($dataType instanceof StringDataType):
+                    $default = trim($default, "()");
+                    break;
+            }
+            if ($default === '""' || $default === "''") {
+                $default = '';
+                $isRequired = 0;
+            }
+            
             $rows[] = array(
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE'])),
+                'DATATYPE' => $this->getDataTypeId($dataType),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => $isRequired,
                 'EDITABLEFLAG' => $isEditable,
-                'DEFAULT_VALUE' => (! is_null($col['COLUMN_DEF']) ? $col['COLUMN_DEF'] : ''),
+                'DEFAULT_VALUE' => $default,
                 'UIDFLAG' => $isUid
             );
         }
