@@ -1668,7 +1668,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
                 }
             } elseif ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
-                $where .= "\n-- buildSqlWhereCondition(" . $qpart_fltr->getCondition()->toString() . ", " . $rely_on_joins . ")"
+                $where .= "\n-- buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100) . ", " . $rely_on_joins . ")"
                     . "\n " . ($where ? $op . " " : '') . $fltr_string;
             }
         }
