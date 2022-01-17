@@ -1001,7 +1001,7 @@ class DataSheet implements DataSheetInterface
             $relThisSheetKeyAttr = $relPathFromNestedSheet->getRelationLast()->getRightKeyAttribute();
             $relThisSheetKeyCol = $this->getColumns()->getByAttribute($relThisSheetKeyAttr);
             $relThisKeyVal = $relThisSheetKeyCol->getCellValue($rowNr);
-            if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === mull) {
+            if (! $relThisSheetKeyCol || $relThisKeyVal === '' || $relThisKeyVal === null) {
                 throw new DataSheetWriteError($this, 'Cannot update nested data - missing key value in main data sheet!');
             }
             
