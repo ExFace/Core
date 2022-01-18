@@ -868,16 +868,30 @@ HTML;
     protected function buildHtmlHeadIcons() : array
     {
         $tags = [];
-        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS')->toArray();
-        $favicon = $icons[0];
-        if (is_array($favicon)) {
-            $tags[] = '<link rel="shortcut icon" href="' . $favicon['src'] . '">';
+        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS');
+        if (! $icons) {
+            return $tags;
         }
-        foreach ($icons as $icon) {
-            if ($icon['sizes'] == '192x192') {
-                $tags[] = '<link rel="icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
-                $tags[] = '<link rel="apple-touch-icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
-            }  
+        if (! ($icons instanceof UxonObject)) {
+            $icons = new UxonObject([$icons]);
+        }
+        foreach ($icons->getPropertiesAll() as $icon) {
+            if (($icon instanceof UxonObject) && $src = $icon->getProperty('src')) {
+                $props = '';
+                
+                $rel = $icon->getProperty('rel');
+                $props .= ' rel="' . ($rel ? $rel : 'icon') . '"';
+                
+                $type = $icon->getProperty('type');
+                $props .= $type ? ' type="' . $type . '"' : '';
+                
+                $sizes = $icon->getProperty('sizes');
+                $props .= $sizes ? ' sizes="' . $sizes . '"' : '';
+                
+                $tags[] = '<link ' . $props . ' href="' . $src . '">';
+            } elseif (is_string($icon) && $icon !== '') {
+                $tags[] = '<link rel="shortcut icon" href="' . $icon . '">';
+            }
         }
         return $tags;
     }
