@@ -96,7 +96,7 @@ Now it is time to install the workbench via [Composer](Install_via_Composer.md) 
 
 ```
 
-## Securing sesnsitive folders
+## Securing sensitive folders
 
 See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
 
@@ -112,3 +112,15 @@ Different web facades use different file types and extensions. When installing a
 For exampe, the `exface.UI5Facade` based on SAP UI5 uses `.properties` files for translations. This extension is not part of the standard IIS MIME mapping, so it needs to be added with MIME type `text/plain`.
 
 To find out if MIME types are missing, look for `404`-errors in your browsers network debug tools (i.e. richt click > Inspect element).
+
+## Update PHP version
+
+To update the php version on the IIS Server follow this procedure:
+
+1. Download the new PHP version (Non-Thread Safe)
+2. Unzip it and copy the `php.ini` file from the current PHP/bin directory to the unzipped php directory
+3. Compare the `php.ini-development` file in the new PHP directory with the copied `php.ini` file and copy missing entries into the php.ini file
+4. Copy needed extensions from the current PHP `bin/ext` directory to the `ext` directory in the unzipped php directory or download new versions of those extensions if needed
+5. In the current PHP directory rename the `bin` directory to `bin_{versionnumber}`, if thats not possible open the `Task Manager` and stop all PHP processes, for example `php-cgi.exe` and try renaming again
+6. Create a new `bin` directory in the current PHP directory and copy everything from the unzipped PHP directory ito that directory
+7. Restart the IIS Server
