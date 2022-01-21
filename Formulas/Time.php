@@ -31,9 +31,9 @@ class Time extends Date
      * @param string $date
      * @param string $format
      */
-    public function run($date, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL)
+    public function run($date = null, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL)
     {
-        if (! $date) {
+        if ($date === null || $date === '') {
             return null;
         }
         

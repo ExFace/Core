@@ -29,10 +29,14 @@ class RegExpFind extends \exface\Core\CommonLogic\Model\Formula
      * @param int $matchToReturn
      * @return NULL|mixed
      */
-    function run($search, string $pattern, int $matchToReturn = 1)
+    function run($search = null, string $pattern = null, int $matchToReturn = 1)
     {
-        if ($search === null) {
-            return null;
+        if ($search === null || $search === '') {
+            return $search;
+        }
+        
+        if ($pattern = null || $pattern === '') {
+            return $search;
         }
         
         $matches = [];

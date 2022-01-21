@@ -9,7 +9,12 @@ use exface\Core\CommonLogic\Model\Formula;
  */
 class NullValue extends Formula
 {
-    function run()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run()
     {
         return null;
     }

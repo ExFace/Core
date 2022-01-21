@@ -13,7 +13,7 @@ class AddDays extends Formula
      * @param int $days_to_add
      * @return string
      */
-    function run($date, int $days_to_add = null)
+    public function run($date = null, int $days_to_add = null)
     {
         if (! $date) {
             return;

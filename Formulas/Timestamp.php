@@ -33,7 +33,7 @@ class Timestamp extends \exface\Core\CommonLogic\Model\Formula
      *           
      * @return number
      */
-    function run($date, $multiplier = 1)
+    public function run($date = null, $multiplier = 1)
     {
         if ($date === null && $date === '') {
             return strtotime() * $multiplier;

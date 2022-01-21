@@ -19,10 +19,19 @@ use exface\Core\DataTypes\PercentDataType;
 class Percentage extends Formula
 {
 
-    function run($value, $in_percent_of, $precision = 1)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run($value = null, $in_percent_of = null, $precision = 1)
     {
-        if (! $in_percent_of)
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        if (! $in_percent_of) {
             return 0;
+        }
         return round(($value / $in_percent_of) * 100, $precision);
     }
     

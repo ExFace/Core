@@ -13,8 +13,16 @@ use exface\Core\CommonLogic\Model\Formula;
  */
 class GetConfig extends Formula
 {
-    function run(string $key, string $appAlias = null)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $key = null, string $appAlias = null)
     {
+        if (! $key) {
+            return null;
+        }
         if ($appAlias !== null) {
             return $this->getWorkbench()->getApp($appAlias)->getConfig()->getOption($key);
         } else {

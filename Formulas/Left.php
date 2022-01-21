@@ -20,7 +20,7 @@ class Left extends \exface\Core\CommonLogic\Model\Formula
      * @param bool $dots
      * @return string|NULL
      */
-    function run($text, $numChars = 1, $stickToWords = false, bool $dots = true)
+    function run($text = null, $numChars = 1, $stickToWords = false, bool $dots = true)
     {
         if ($text === null || $text === '') {
             return $text;

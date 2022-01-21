@@ -25,7 +25,7 @@ class DataURI extends Formula
      * 
      * @return string
      */
-    public function run(string $binary, string $mimeType, string $binaryEncoding = BinaryDataType::ENCODING_HEX)
+    public function run(string $binary = null, string $mimeType = null, string $binaryEncoding = BinaryDataType::ENCODING_HEX)
     {
         if ($binary === null || $binary === '') {
             return $binary;

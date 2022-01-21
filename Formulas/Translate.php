@@ -25,14 +25,19 @@ class Translate extends \exface\Core\CommonLogic\Model\Formula
      * @param string $pluralNumber
      * @return string
      */
-    public function run(string $appAlias, string $messageId, string $placeholderValues = null, string $pluralNumber = null)
+    public function run(string $appAlias = null, string $messageId = null, string $placeholderValues = null, string $pluralNumber = null)
     {
+        if (! $appAlias || ! $messageId) {
+            return '';
+        }
+        
         if ($placeholderValues) {
             $placeholder = $this->parsePlaceholderValues($placeholderValues);
         }
         if ($pluralNumber) {
             $plural = $this->parsePluralNumber($pluralNumber);
         }
+        
         return $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate($messageId, $placeholder, $plural);
     }
 
