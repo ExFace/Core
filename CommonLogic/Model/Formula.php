@@ -124,6 +124,17 @@ abstract class Formula implements FormulaInterface
             throw new FormulaError($errorText . ' ' . $e->getMessage(), null, $e);
         }
     }
+    
+    /**
+     * Runs the logic of the formula on the provided arguments.
+     * 
+     * Implement this method to create a real formula. Make sure, all arguments are optional to
+     * avoid compile errors. Also keep in mind, that most formulas should be able to work with
+     * empty values (null and empty strings), because these may always occur in data.
+     * 
+     * @return mixed
+     */
+    abstract public function run();
 
     /**
      * 

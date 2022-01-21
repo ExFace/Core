@@ -18,9 +18,14 @@ use exface\Core\Factories\DataTypeFactory;
  */
 class WorkbenchURL extends \exface\Core\CommonLogic\Model\Formula
 {
-    public function run(string $string)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $string = null)
     {
-        return $this->getWorkbench()->getUrl() . $string;
+        return $this->getWorkbench()->getUrl() . trim($string ?? '');
     }
     
     /**

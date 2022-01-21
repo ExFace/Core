@@ -12,7 +12,12 @@ namespace exface\Core\Formulas;
 class Concatenate extends \exface\Core\CommonLogic\Model\Formula
 {
 
-    function run()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run()
     {
         for ($i = 0; $i < func_num_args(); $i ++) {
             $return .= func_get_arg($i);

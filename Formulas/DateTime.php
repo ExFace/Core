@@ -29,7 +29,7 @@ class DateTime extends Date
      * @param string $date
      * @param string $format
      */
-    public function run($date, $format = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL)
+    public function run($date = null, $format = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL)
     {
         return parent::run($date, $format);
     }

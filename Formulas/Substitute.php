@@ -10,10 +10,17 @@ namespace exface\Core\Formulas;
  */
 class Substitute extends \exface\Core\CommonLogic\Model\Formula
 {
-
-    function run($text, $old_text, $new_text)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    function run($text = null, $search = null, $replace = null)
     {
-        return str_replace($old_text, $new_text, $text);
+        if ($text === null || $text === '') {
+            return $text;
+        }
+        return str_replace($search, $replace, $text);
     }
 }
 ?>

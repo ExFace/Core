@@ -14,7 +14,7 @@ use exface\Core\CommonLogic\Model\Formula;
  */
 class Calc extends Formula
 {
-    public function run($string)
+    public function run($string = null)
     {
         return $string;
     }

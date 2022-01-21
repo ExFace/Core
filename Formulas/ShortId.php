@@ -14,10 +14,13 @@ use exface\Core\DataTypes\UUIDDataType;
  */
 class ShortId extends \exface\Core\CommonLogic\Model\Formula
 {
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
     function run()
     {
         return UUIDDataType::generateShortIdFromTime(1);
     }
 }
-?>

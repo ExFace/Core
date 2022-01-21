@@ -25,8 +25,11 @@ class EnumValues extends Formula
      * @throws FormulaError
      * @return string
      */
-    public function run(string $objectAlias, string $attributeAlias, string $condition = null)
+    public function run(string $objectAlias = null, string $attributeAlias = null, string $condition = null)
     {
+        if (! $objectAlias || ! $attributeAlias) {
+            return null;
+        }
         $attr = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias)->getAttribute($attributeAlias);
         $dataType = $attr->getDataType();
         if (! ($dataType instanceof EnumDataTypeInterface)) {

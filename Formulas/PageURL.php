@@ -19,8 +19,16 @@ use exface\Core\Factories\DataTypeFactory;
  */
 class PageURL extends \exface\Core\CommonLogic\Model\Formula
 {
-    public function run(string $pageSelectorString)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $pageSelectorString = null)
     {
+        if ($pageSelectorString === null || $pageSelectorString === '') {
+            return $pageSelectorString;
+        }
         $selector = SelectorFactory::createPageSelector($this->getWorkbench(), $pageSelectorString);
         if ($selector->isAlias()) {
             $alias = $selector;

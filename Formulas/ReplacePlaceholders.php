@@ -34,8 +34,16 @@ use exface\Core\Factories\ExpressionFactory;
  */
 class ReplacePlaceholders extends \exface\Core\CommonLogic\Model\Formula
 {
-    public function run(string $string)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $string = null)
     {
+        if ($string === null || $string === '') {
+            return $string;
+        }
         $ds = $this->getDataSheet();
         $idx = $this->getCurrentRowNumber();
         $phValues = $ds->getRow($idx);

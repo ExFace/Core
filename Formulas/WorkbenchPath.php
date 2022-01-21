@@ -19,9 +19,14 @@ use exface\Core\DataTypes\FilePathDataType;
  */
 class WorkbenchPath extends \exface\Core\CommonLogic\Model\Formula
 {
-    public function run(string $string)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $string = null)
     {
-        $string = str_replace('/', DIRECTORY_SEPARATOR, $string);
+        $string = str_replace('/', DIRECTORY_SEPARATOR, trim($string ?? ''));
         return $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . $string;
     }
     

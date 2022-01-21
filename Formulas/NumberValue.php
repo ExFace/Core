@@ -7,12 +7,20 @@ use exface\Core\Factories\DataTypeFactory;
 class NumberValue extends \exface\Core\CommonLogic\Model\Formula
 {
 
-    function run($string)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run($string)
     {
+        if ($string === null || $string === '') {
+            return $string;
+        }
         try {
             $number = NumberDataType::cast($string);
         } catch (\exface\Core\Exceptions\DataTypes\DataTypeCastingError $e) {
-            return '';
+            return null;
         }
         return $number;
     }

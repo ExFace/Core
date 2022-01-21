@@ -32,7 +32,7 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
      * @param string $format
      * @return void|\DateTime
      */
-    public function run($date, $format = DateDataType::DATE_ICU_FORMAT_INTERNAL)
+    public function run($date = null, $format = DateDataType::DATE_ICU_FORMAT_INTERNAL)
     {
         if (! $date) {
             return null;
