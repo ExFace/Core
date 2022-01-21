@@ -6,6 +6,7 @@ use Symfony\Component\ExpressionLanguage\Lexer;
 use exface\Core\Formulas\Calc;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * Wrapper class to extract formula name, nested formulas and attributes
@@ -147,7 +148,7 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                 $token = $tokens[$i];
                 if ($token['name']) {
                     //if the token is followed by a ':' its an attribute alias with an aggregation, therefor buffer the token
-                    if ($tokens[$i+1]['punctuation'] === ':') {
+                    if ($tokens[$i+1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($tokens[$i+2]['name'])) {
                         $buffer .= $token['name'] . ':';
                     } elseif ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
                         $attributes[] = $buffer . $token['name'];

@@ -204,6 +204,10 @@ class DataSheet implements DataSheetInterface
                             $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), ($left_row_new_nr ?? $left_row_nr), $val);
                         }
                         $needRowCopy = true;
+                    }                    
+                } else {
+                    foreach ($right_cols as $col) {
+                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
                     }
                 }
             }
