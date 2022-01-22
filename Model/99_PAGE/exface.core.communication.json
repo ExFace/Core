@@ -1,43 +1,49 @@
 {
-    "uid": "0xdd41b032949e11e798a5028037ec0200",
-    "alias_with_namespace": "exface.core.messages",
+    "uid": "0x11ecad0b27c711b2ad0b025041000001",
+    "alias_with_namespace": "exface.core.communication",
     "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "menu_index": 5,
+    "menu_index": 6,
     "menu_visible": true,
-    "name": "Messages",
-    "description": "Manage and create message codes",
+    "name": "Communication",
+    "description": "",
     "intro": "",
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
-    "created_on": "1970-01-01 01:00:00",
+    "created_on": "2022-01-22 15:54:09",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-01-22 15:54:41",
+    "modified_on": "2022-01-22 15:54:49",
     "contents": {
         "widget_type": "DataTable",
-        "object_alias": "exface.Core.MESSAGE",
+        "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
         "filters": [
             {
-                "attribute_alias": "CODE"
-            },
-            {
-                "attribute_alias": "TITLE"
+                "attribute_alias": "NAME"
             },
             {
                 "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "PROTOTYPE"
             }
         ],
         "columns": [
             {
-                "attribute_alias": "TYPE"
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
             },
             {
                 "attribute_alias": "APP__ALIAS"
             },
             {
-                "attribute_alias": "CODE"
+                "attribute_alias": "DESCRIPTION"
             },
             {
-                "attribute_alias": "TITLE"
+                "attribute_alias": "PROTOTYPE__LABEL"
             }
         ],
         "sorters": [
@@ -58,7 +64,8 @@
                 "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
-                "action_alias": "exface.Core.DeleteObject"
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
             }
         ]
     }
