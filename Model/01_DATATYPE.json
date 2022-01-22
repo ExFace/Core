@@ -1076,6 +1076,28 @@
             },
             "ALIAS": "LogLevel",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2022-01-22 15:43:12",
+            "MODIFIED_ON": "2022-01-22 15:43:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec958f9fb9d27e958f025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "UXON Communication Channel",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/UxonDataType.php",
+            "CONFIG_UXON": {
+                "schema": "\\exface\\Core\\Uxon\\CommunicationChannelSchema"
+            },
+            "VALIDATION_ERROR": "",
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputUxon",
+                "width": "2",
+                "height": "6"
+            },
+            "ALIAS": "UxonCommunicationChannel",
+            "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for communication channel configuration"
         }
     ],
     "totals_rows": [],
