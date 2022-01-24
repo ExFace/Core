@@ -19,6 +19,8 @@ use exface\Core\DataTypes\StringDataType;
  * 
  * ## Configuration
  * 
+ * **IMPORTANT**: make sure ldap PHP extension is installed (i.e. uncomment `extension=ldap` in php.ini)
+ * 
  * - `host` - IP address or hostname of the LDAP server
  * - `dn_string` - default is `[#domain#]\\[#username#]`.
  * - `domains` - array of domains for the user to pick from.
