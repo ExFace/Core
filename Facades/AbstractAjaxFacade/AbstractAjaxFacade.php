@@ -962,11 +962,30 @@ HTML;
         return $this;
     }
     
-    protected function buildHtmlPage(WidgetInterface $widget, string $pagetTemplateFilePath = null) : string
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @param string $pageTemplateFilePath
+     * @return string
+     */
+    protected function buildHtmlPage(WidgetInterface $widget, string $pageTemplateFilePath = null) : string
     {
-        $pagetTemplateFilePath = $pagetTemplateFilePath ?? $this->getPageTemplateFilePath();
-        $renderer = new FacadePageTemplateRenderer($this, $pagetTemplateFilePath, $widget);
-        return $renderer->render();
+        $renderer = $this->getTemplateRenderer($widget);
+        return $renderer->render($pageTemplateFilePath ?? $this->getPageTemplateFilePath());
+    }
+    
+    /**
+     * Instantiates a template renderer for the given widget - override this method to customize the renderer
+     * 
+     * To add additional placeholders, override this method and call 
+     * `$renderer->addPlaceholderResolver()`.
+     * 
+     * @param WidgetInterface $widget
+     * @return FacadePageTemplateRenderer
+     */
+    protected function getTemplateRenderer(WidgetInterface $widget) : FacadePageTemplateRenderer
+    {
+        return new FacadePageTemplateRenderer($this, $widget);
     }
     
     /**
