@@ -3,9 +3,12 @@ namespace exface\Core\CommonLogic\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 abstract class AbstractCommunicationChannel implements CommunicationChannelInterface
 {
@@ -17,10 +20,26 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     
     private $workbench = null;
     
-    public function __construct(WorkbenchInterface $workbench, UxonObject $config)
+    private $connection = null;
+    
+    private $selector = null;
+    
+    public function __construct(CommunicationChannelSelectorInterface $selector, UxonObject $config = null)
     {
-        $this->importUxonObject($config);
-        $this->workbench = $workbench;
+        $this->selector = $selector;
+        $this->workbench = $selector->getWorkbench();
+        if ($config !== null) {
+            $this->importUxonObject($config);
+        }
+    }
+    
+    /**
+     * {@inheritdoc}
+     * @see AliasSelectorTrait::getSelector()
+     */
+    public function getSelector() : AliasSelectorInterface
+    {
+        return $this->selector;
     }
     
     public function getName(): string
@@ -51,5 +70,16 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     public static function getUxonSchemaClass(): ?string
     {
         return null;
+    }
+    
+    public function getConnection() : DataConnectionInterface
+    {
+        return $this->connection;
+    }
+    
+    public function setConnection(DataConnectionInterface $value) : AbstractCommunicationChannel
+    {
+        $this->connection = $value;
+        return $this;
     }
 }

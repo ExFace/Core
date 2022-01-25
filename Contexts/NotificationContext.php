@@ -11,6 +11,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Communication\Messages\NotificationMessage;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -186,5 +187,31 @@ class NotificationContext extends AbstractContext
         $ds->dataRead();
         $this->data = $ds;
         return $ds;
+    }
+    
+    public function send(NotificationMessage $notification, array $userUids) : NotificationMessage
+    {
+        $widgetUxon = new UxonObject([
+            'object_alias' => $notification->getWidgetObject()->getAliasWithNamespace(),
+            'width' => 1,
+            'height' => 'auto',
+            'caption' => $notification->getTitle(),
+            'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
+            'buttons' => $notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : []
+        ]);
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($notification->getWorkbench(), 'exface.Core.NOTIFICATION');
+        foreach ($userUids as $userUid) {
+            $ds->addRow([
+                'USER' => $userUid,
+                'TITLE' => $notification->getTitle(),
+                'ICON' => $notification->getIcon(),
+                'WIDGET_UXON' => $widgetUxon->toJson()
+            ]);
+        }
+        
+        $ds->dataCreate(false);
+        
+        return $notification;
     }
 }
