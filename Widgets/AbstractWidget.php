@@ -1123,7 +1123,7 @@ abstract class AbstractWidget implements WidgetInterface
      * ```json
      *  "widget_type": "Input"
      *  "disabled_if": {
-     *      "value_left": "id_of_checkbox",
+     *      "value_left": "=id_of_checkbox",
      *      "comparator": "!=",
      *      "value_right": "1"
      *  }
@@ -1136,7 +1136,7 @@ abstract class AbstractWidget implements WidgetInterface
      *  "widget_type": "Button",
      *  "caption": "Call",
      *  "disabled_if": {
-     *      "value_left": "id_of_table!PHONE_NUMBER",
+     *      "value_left": "=id_of_table!PHONE_NUMBER",
      *      "comparator": "==",
      *      "value_right": ""
      *  }
@@ -1152,11 +1152,11 @@ abstract class AbstractWidget implements WidgetInterface
      *      "operator": "AND",
      *      "conditions": [
      *          {
-     *              "value_left": "id_of_table!PHONE_NUMBER",
+     *              "value_left": "=id_of_table!PHONE_NUMBER",
      *              "comparator": "==",
      *              "value_right": ""
      *          },{
-     *              "value_left": "id_of_table!ALLOW_PHONE_CALLS",
+     *              "value_left": "=id_of_table!ALLOW_PHONE_CALLS",
      *              "comparator": "==",
      *              "value_right": "1"
      *          }

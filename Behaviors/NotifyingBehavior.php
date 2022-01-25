@@ -12,8 +12,11 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Notification;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Communication\Messages\NotificationMessage;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Factories\CommunicationChannelFactory;
 
 /**
  * Creates user-notifications on certain conditions.
@@ -39,7 +42,9 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $notifyRoleFromAttribute = null;
     
-    private $notification = null;
+    private $messages = null;
+    
+    private $channelAlias = null;
 
     /**
      * 
@@ -112,11 +117,7 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
-        $notifications = $this->createNotificationsFromRows($dataSheet);
-        $userUids = $this->getRecipientUids();
-        foreach ($notifications as $notification) {
-            $notification->sendTo($userUids);
-        }
+        $this->notify($dataSheet);
         return;
     }
     
@@ -150,41 +151,25 @@ class NotifyingBehavior extends AbstractBehavior
     /**
      * 
      * @param DataSheetInterface $dataSheet
-     * @return Notification[]
+     * @return NotificationMessage[]
      */
-    protected function createNotificationsFromRows(DataSheetInterface $dataSheet) : array
+    protected function notify(DataSheetInterface $dataSheet)
     {
-        $notifications = [];
-        
-        $uxon = $this->getNotificationUxon();
-        $json = $uxon->toJson();
-        $phs = array_unique(StringDataType::findPlaceholders($json));
-        $phSheet = DataSheetFactory::createFromObject($dataSheet->getMetaObject());
-        foreach ($phs as $ph) {
-            if ($col = $dataSheet->getColumns()->getByExpression($ph)) {
-                $phSheet->getColumns()->add($col->copy(), $col->getName());
-            } else {
-                $phSheet->getColumns()->addFromExpression($ph);
+        foreach ($this->getMessagesUxon() as $msgUxon) {
+            $channelAlias = $msgUxon->getProperty('channel_alias');
+            $msgUxon->unsetProperty('channel_alias');
+            $channel = CommunicationChannelFactory::createFromString($this->getWorkbench(), $channelAlias);
+            
+            $json = $msgUxon->toJson();
+            foreach (array_keys($dataSheet->getRows()) as $rowNo) {
+                $userUids = $this->getRecipientUids();
+                $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+                $renderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo));
+                $renderedUxon = UxonObject::fromJson($renderer->render($json));
             }
-        }
-        if (! $phSheet->isFresh()) {
-            $phSheet->getFilters()->addConditionFromColumnValues($dataSheet->getUidColumn());
-            $phSheet->dataRead();
         }
         
-        $uidColName = $dataSheet->getUidColumnName();
-        foreach ($dataSheet->getRows() as $row) {
-            $phVals = [];
-            foreach ($phs as $ph) {
-                $phVals[$ph] = $phSheet->getColumns()->getByExpression($ph)->getValueByUid($row[$uidColName]);
-            }
-            if (! empty($phVals)) {
-                $json = StringDataType::replacePlaceholders($json, $phVals);
-                $uxon = UxonObject::fromJson($json);
-            }
-            $notifications[] = new Notification($this->getWorkbench(), $uxon, $dataSheet->getMetaObject());
-        }
-        return $notifications;
+        return;
     }
     
     public function getNotifyOnCreate() : bool
@@ -361,16 +346,22 @@ class NotifyingBehavior extends AbstractBehavior
         return $this;
     }
     
-    public function getNotificationUxon() : UxonObject
+    public function getMessagesUxon() : UxonObject
     {
-        return $this->notification;
+        return $this->messages;
+    }
+    
+    protected function setMessages(UxonObject $array) : NotifyingBehavior
+    {
+        $this->messages = $array;
+        return $this;
     }
     
     /**
      * The notification to show
      * 
      * @uxon-property notification
-     * @uxon-type \exface\Core\CommonLogic\Model\Notification
+     * @uxon-type \exface\Core\Communication\Messages\NotificationMessage
      * @uxon-template {"title": "", "body": "", "buttons": [{"caption": "", "action": {"alias": "", "object_alias": ""}}]}
      * 
      * @param UxonObject $value
@@ -378,7 +369,6 @@ class NotifyingBehavior extends AbstractBehavior
      */
     protected function setNotification(UxonObject $value) : NotifyingBehavior
     {
-        $this->notification = $value;
         return $this;
     }
     
@@ -407,5 +397,16 @@ class NotifyingBehavior extends AbstractBehavior
         }
         
         return array_unique($userData->getUidColumn()->getValues(false));
+    }
+    
+    protected function getCommunicationChannelAlias() : string
+    {
+        return $this->channelAlias;
+    }
+    
+    public function setCommunicationChannel(string $value) : NotifyingBehavior
+    {
+        $this->channelAlias = $value;
+        return $this;
     }
 }

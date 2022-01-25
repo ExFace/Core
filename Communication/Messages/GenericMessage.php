@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
-class CommunicationMessage implements CommunicationMessageInterface
+class GenericMessage implements CommunicationMessageInterface
 {
     use ImportUxonObjectTrait;
     
@@ -31,6 +31,12 @@ class CommunicationMessage implements CommunicationMessageInterface
     {
         return $this->subject;
     }
+    
+    public function setSubject(string $value) : CommunicationMessageInterface
+    {
+        $this->subject = $value;
+        return $this;
+    }
 
     /**
      * 
@@ -41,6 +47,12 @@ class CommunicationMessage implements CommunicationMessageInterface
     {
         return $this->text;
     }
+    
+    public function setText(string $value) : CommunicationMessageInterface
+    {
+        $this->text = $value;
+        return $this;
+    }
 
     /**
      * 
@@ -50,6 +62,12 @@ class CommunicationMessage implements CommunicationMessageInterface
     public function getOptionsUxon(): UxonObject
     {
         return $this->optionsUxon ?? new UxonObject();
+    }
+    
+    protected function setOptions(UxonObject $uxon) : CommunicationMessageInterface
+    {
+        $this->optionsUxon = $uxon;
+        return $this;
     }
 
     /**

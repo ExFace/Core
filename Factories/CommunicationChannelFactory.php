@@ -1,10 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
@@ -19,13 +16,15 @@ abstract class CommunicationChannelFactory extends AbstractSelectableComponentFa
 {
 
     /**
-     *
-     * @param FacadeSelectorInterface $name_resolver            
-     * @return FacadeInterface
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $aliasOrClassOrPath
+     * @return CommunicationChannelInterface
      */
-    public static function create(string $name, CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
+    public static function createFromString(WorkbenchInterface $workbench, string $aliasOrClassOrPath) : CommunicationChannelInterface
     {
-        return parent::createFromSelector($selector, [$name]);
+        $selector = new CommunicationChannelSelector($workbench, $aliasOrClassOrPath);
+        return parent::createFromSelector($selector);
     }
 
     /**
@@ -35,10 +34,10 @@ abstract class CommunicationChannelFactory extends AbstractSelectableComponentFa
      * @param UxonObject $uxon
      * @param WorkbenchInterface $workbench
      */
-    public static function createFromUxon(string $name, string $prototype, UxonObject $uxon, WorkbenchInterface $workbench) : CommunicationChannelInterface
+    public static function createFromUxon(string $prototype, UxonObject $uxon, WorkbenchInterface $workbench) : CommunicationChannelInterface
     {
-        $selector = new CommunicationChannelSelector($workbench, $prototype);
-        $channel = self::create($name, $selector);
+        $channel = self::createFromString($workbench, $prototype);
         $channel->importUxonObject($uxon);
+        return $channel;
     }
 }

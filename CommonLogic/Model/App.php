@@ -8,7 +8,6 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\CommonLogic\Translation;
@@ -38,17 +37,16 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -657,6 +655,8 @@ class App implements AppInterface
                 return 'QueryBuilders';
             case $selector instanceof WidgetSelectorInterface:
                 return 'Widgets';
+            case $selector instanceof CommunicationChannelSelectorInterface:
+                return 'Communication\\Channels';
         }
         return '';
     }
