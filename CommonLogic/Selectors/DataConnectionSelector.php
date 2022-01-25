@@ -15,6 +15,10 @@ use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
  */
 class DataConnectionSelector extends AbstractSelector implements DataConnectionSelectorInterface
 {
+    const METAMODEL_CONNECTION_ALIAS = 'exface.Core.METAMODEL_DB';
+    
+    const METAMODEL_CONNECTION_UID = '0x11ea72c00f0fadeca3480205857feb80';
+    
     use AliasSelectorTrait;
     use UidSelectorTrait;
     

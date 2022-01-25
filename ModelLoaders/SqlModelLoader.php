@@ -82,6 +82,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Events\Model\OnMessageLoadedEvent;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\CommonLogic\Selectors\DataSourceSelector;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -592,28 +593,37 @@ class SqlModelLoader implements ModelLoaderInterface
             // Join data source and connection on alias or UID depending on the type of connection selector
             // Note, that the alias needs to be wrapped in quotes and the UID does not!
             if (false === $connectionSelector->isUid()) {
-                $join_on = 'dc.alias = "' . $connectionSelector->toString() . '"';
+                $joinConnectionOn = 'dc.alias = "' . $connectionSelector->toString() . '"';
             } else {
-                $join_on = 'dc.oid = ' . $connectionSelector->toString();
+                $joinConnectionOn = 'dc.oid = ' . $connectionSelector->toString();
             }
         } else {
-            //$join_on = 'IF (ds.custom_connection_oid IS NOT NULL, ds.custom_connection_oid, ds.default_connection_oid) = dc.oid';
-            $join_on = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
+            $joinConnectionOn = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
         }
         
         // If there is a user logged in, fetch his specific connctor config (credentials)
         $authToken = $exface->getSecurity()->getAuthenticatedToken();
         if ($authToken->isAnonymous() === false && $user_name = $authToken->getUsername()) {
-            $join_user_credentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$this->buildSqlEscapedString($user_name)}') ON dcc.data_connection_oid = dc.oid";
-            $select_user_credentials = ', dcc.data_connector_config AS user_connector_config';
+            $joinUserCredentials = " LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.oid = uc.data_connection_credentials_oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = '{$this->buildSqlEscapedString($user_name)}') ON dcc.data_connection_oid = dc.oid";
+            $selectUserCredentials = ', dcc.data_connector_config AS user_connector_config';
         }
         
         if ($selector->isUid() === true) {
-            $selectorFilter = 'ds.oid = ' . $selector->toString();
+            $selectorFilter = "ds.oid = {$selector->toString()}";
+            $joinDataSourceApp = '';
         } else {
-            $selectorFilter = 'ds.alias = "' . $selector->toString() . '"';
+            // Now we know, it's an alias
+            // Check if it has a namespace. In older versions data sources did not have namespaced aliases, so
+            // this if basically takes care of backwards compatibility. Currently this should not be possible!
+            if (strpos($selector->toString(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
+                $joinDataSourceApp = '';
+                $selectorFilter = "ds.alias = '{$selector->toString()}'";
+            } else {
+                $joinDataSourceApp = 'INNER JOIN exf_app dsa ON ds.app_oid = dsa.oid';
+                $selectorFilter = "ds.alias = '{$selector::stripNamespace($selector->toString())}' AND dsa.app_alias = '{$selector->getAppAlias()}'";
+            }
         }
-        $sql = '
+        $sql = "
 			SELECT
 				ds.name as data_source_name,
 				ds.alias as data_source_alias,
@@ -622,18 +632,20 @@ class SqlModelLoader implements ModelLoaderInterface
 				ds.readable_flag AS data_source_readable,
 				ds.writable_flag AS data_source_writable,
 				dc.read_only_flag AS connection_read_only,
-				' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
+				{$this->buildSqlUuidSelector('dc.oid')} AS data_connection_oid,
 				dc.alias AS data_connection_alias,
 				dc.name AS data_connection_name,
 				dc.data_connector,
 				dc.data_connector_config,
 				dc.filter_context_uxon,
-                a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
+                dca.app_alias AS data_connection_app_alias
+                {$selectUserCredentials}
 			FROM exf_data_source ds 
-                LEFT JOIN exf_data_connection dc ON ' . $join_on . '
-                ' . $join_user_credentials . '
-                LEFT JOIN exf_app a ON dc.app_oid = a.oid
-			WHERE ' . $selectorFilter;
+                {$joinDataSourceApp}
+                LEFT JOIN exf_data_connection dc ON {$joinConnectionOn}
+                {$joinUserCredentials}
+                LEFT JOIN exf_app dca ON dc.app_oid = dca.oid
+			WHERE {$selectorFilter}";
         
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
@@ -668,7 +680,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         
         // The query builder
-        if (strtolower($data_source->getId()) === '0x32000000000000000000000000000000') {
+        if (strtolower($data_source->getId()) === DataSourceSelector::METAMODEL_SOURCE_UID) {
             $data_source->setQueryBuilderAlias($this->getWorkbench()->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
         } else {
             $data_source->setQueryBuilderAlias($ds['custom_query_builder'] ? $ds['custom_query_builder'] : $ds['default_query_builder']);

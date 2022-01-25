@@ -6,9 +6,10 @@ namespace exface\Core\Interfaces\Selectors;
  * 
  * A data source can be identified by
  * - a UID
+ * - a qualified alias (with app namespace)
  * 
  * @author Andrej Kabachnik
  *
  */
-interface DataSourceSelectorInterface extends UidSelectorInterface
+interface DataSourceSelectorInterface extends UidSelectorInterface, AliasSelectorInterface
 {}
