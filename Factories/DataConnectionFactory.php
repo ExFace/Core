@@ -22,12 +22,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
  */
 abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
 {
-    const METAMODEL_CONNECTION_ALIAS = 'METAMODEL_DB';
-    
-    const METAMODEL_CONNECTION_ALIAS_NAMESPACE = 'exface.Core';
-    
-    const METAMODEL_CONNECTION_UID = '0x11ea72c00f0fadeca3480205857feb80';
-    
     const METAMODEL_CONNECTION_NAME = 'Model DB';
     
     /**
@@ -166,9 +160,9 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         return self::create(
             new DataConnectorSelector($config->getWorkbench(), $config->getOption('METAMODEL.CONNECTOR')), 
             $config->getOption('METAMODEL.CONNECTOR_CONFIG'),
-            self::METAMODEL_CONNECTION_UID,
-            self::METAMODEL_CONNECTION_ALIAS,
-            self::METAMODEL_CONNECTION_ALIAS_NAMESPACE,
+            DataConnectionSelector::METAMODEL_CONNECTION_UID,
+            DataConnectionSelector::stripNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS),
+            DataConnectionSelector::findNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS),
             self::METAMODEL_CONNECTION_NAME
         );
     }
