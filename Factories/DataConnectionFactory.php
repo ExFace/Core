@@ -122,8 +122,8 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
             $selector = new DataConnectionSelector($workbench, $uidOrAliasOrSelector);
         }
         switch (true) {
-            case $selector->isAlias() && strcasecmp($uidOrAliasOrSelector, self::METAMODEL_CONNECTION_ALIAS_NAMESPACE . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . self::METAMODEL_CONNECTION_ALIAS) === 0:
-            case $selector->isUid() && strcasecmp($uidOrAliasOrSelector, self::METAMODEL_CONNECTION_UID) === 0:
+            case $selector->isAlias() && strcasecmp($uidOrAliasOrSelector, DataConnectionSelector::findNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS) . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . DataConnectionSelector::stripNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS)) === 0:
+            case $selector->isUid() && strcasecmp($uidOrAliasOrSelector, DataConnectionSelector::METAMODEL_CONNECTION_UID) === 0:
                 return $workbench->model()->getModelLoader()->getDataConnection();
             default:
                 return $workbench->model()->getModelLoader()->loadDataConnection($selector);
