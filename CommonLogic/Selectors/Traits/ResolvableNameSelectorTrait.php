@@ -23,6 +23,10 @@ trait ResolvableNameSelectorTrait
     
     private $splitParts = null;
     
+    /**
+     * {@inheritdoc}
+     * @see AliasSelectorTrait::split()
+     */
     protected function split() : array
     {
         if ($this->splitParts === null) {
@@ -59,10 +63,13 @@ trait ResolvableNameSelectorTrait
         return (! $this->isFilepath() && ! $this->isClassname());
     }
     
+    /**
+     * {@inheritdoc}
+     * @see AliasSelectorTrait::getAppAlias()
+     */
     public function getAppAlias() : string
     {
         if ($this->isAlias()) {
-            $this->isFilepath();
             return $this->getAppAliasFromAlias();
         } 
         return $this->getPrototypeAppAlias();

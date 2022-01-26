@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 
 /**
  * Generic implementation of the DataSourceSelectorInterface.
@@ -16,6 +17,12 @@ class DataSourceSelector extends AbstractSelector implements DataSourceSelectorI
 {
     use UidSelectorTrait;
     
+    use AliasSelectorTrait;
+    
+    const METAMODEL_SOURCE_ALIAS = 'METAMODEL_SOURCE';
+    
+    const METAMODEL_SOURCE_UID = '0x32000000000000000000000000000000';
+    
     /**
      *
      * {@inheritDoc}
@@ -24,5 +31,15 @@ class DataSourceSelector extends AbstractSelector implements DataSourceSelectorI
     public function getComponentType() : string
     {
         return 'data source';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see AliasSelectorTrait::isAlias()
+     */
+    public function isAlias()
+    {
+        return ! $this->isUid();
     }
 }

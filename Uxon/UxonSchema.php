@@ -785,9 +785,9 @@ class UxonSchema implements UxonSchemaInterface
     protected function getMetamodelDataSourceAliases() : array
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATASRC');
-        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->getColumns()->addFromExpression('ALIAS_WITH_NS');
         $ds->dataRead();
-        return $ds->getColumns()->get('ALIAS')->getValues(false);
+        return $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false);
     }
     
     /**

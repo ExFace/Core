@@ -5,7 +5,6 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\DataTypes\ComparatorDataType;
@@ -74,11 +73,9 @@ trait JsConditionalPropertyTrait {
                     $jsConditions[] = $conditionJs;
                     break;
                 case ComparatorDataType::IS: // =
-                    $conditionJs = "(new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString())";
-                    $jsConditions[] = $conditionJs;
-                    break;
                 case ComparatorDataType::IS_NOT: // !=
-                    $conditionJs = "!((new RegExp(($rightJs || '').toString(), 'i')).test(({$leftJs} || '').toString()))";;
+                    $conditionJs = $condition->getComparator() === ComparatorDataType::IS_NOT ? '!' : '';
+                    $conditionJs .= "function(){var sR = ($rightJs || '').toString(); var sL = ($leftJs || '').toString(); return (sR === '' && sL !== '') || (sR !== '' && sL === '') ? false : (new RegExp(sR, 'i')).test(sL); }()";
                     $jsConditions[] = $conditionJs;
                     break;
                 default:
