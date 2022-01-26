@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Communication\CommunicatorInterface;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
@@ -150,4 +151,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return string
      */
     public function getUrl() : string;
+    
+    /**
+     * 
+     * @return CommunicatorInterface
+     */
+    public function getCommunicator() : CommunicatorInterface;
 }

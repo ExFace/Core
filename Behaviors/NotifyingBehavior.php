@@ -17,6 +17,8 @@ use exface\Core\Communication\Messages\NotificationMessage;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Factories\CommunicationChannelFactory;
+use exface\Core\CommonLogic\Communication\Envelope;
+use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 /**
  * Creates user-notifications on certain conditions.
@@ -158,14 +160,14 @@ class NotifyingBehavior extends AbstractBehavior
         foreach ($this->getMessagesUxon() as $msgUxon) {
             $channelAlias = $msgUxon->getProperty('channel_alias');
             $msgUxon->unsetProperty('channel_alias');
-            $channel = CommunicationChannelFactory::createFromString($this->getWorkbench(), $channelAlias);
             
             $json = $msgUxon->toJson();
             foreach (array_keys($dataSheet->getRows()) as $rowNo) {
-                $userUids = $this->getRecipientUids();
                 $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
                 $renderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo));
                 $renderedUxon = UxonObject::fromJson($renderer->render($json));
+                $envelope = new Envelope($renderedUxon, new CommunicationChannelSelector($this->getWorkbench(), $channelAlias));
+                $this->getWorkbench()->getCommunicator()->send($envelope);
             }
         }
         
@@ -369,34 +371,8 @@ class NotifyingBehavior extends AbstractBehavior
      */
     protected function setNotification(UxonObject $value) : NotifyingBehavior
     {
+        // TODO remove
         return $this;
-    }
-    
-    /**
-     * 
-     * @return string[]
-     */
-    protected function getRecipientUids() : array
-    {
-        $userData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-        $userData->getColumns()->addFromUidAttribute();
-        $orFilterGroup = ConditionGroupFactory::createForDataSheet($userData, EXF_LOGICAL_AND);
-        
-        $roleAliases = $this->getNotifyUserRoleAliases();
-        if (! empty($roleAliases)) {
-            $orFilterGroup->addConditionFromValueArray('USER_ROLE_USERS__USER_ROLE__ALIAS_WITH_NS', $roleAliases);
-        }
-        $usernames = $this->getNotifyUsernames();
-        if (! empty($usernames)) {
-            $orFilterGroup->addConditionFromValueArray('USERNAME', $usernames);
-        }
-        
-        if (! $orFilterGroup->isEmpty()) {
-            $userData->getFilters()->addNestedGroup($orFilterGroup);
-            $userData->dataRead();
-        }
-        
-        return array_unique($userData->getUidColumn()->getValues(false));
     }
     
     protected function getCommunicationChannelAlias() : string
