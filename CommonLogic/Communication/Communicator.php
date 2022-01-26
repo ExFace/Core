@@ -6,7 +6,8 @@ use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\CommunicationChannelFactory;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
-use exface\Core\Interfaces\Communication\CommunicationAcknowledgementInterface;
+use exface\Core\Interfaces\Communication\EnvelopeInterface;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
 class Communicator implements CommunicatorInterface
 {
@@ -18,16 +19,11 @@ class Communicator implements CommunicatorInterface
         $this->workbench = $workbench;
     }
     
-    /**
-     * 
-     * @param CommunicationMessageInterface $message
-     * @return CommunicationAcknowledgementInterface[]
-     */
-    public function send(CommunicationMessageInterface $message) : array
+    public function send(EnvelopeInterface $envelope) : array
     {
         $acks = [];
-        foreach ($this->getChannels($message) as $channel) {
-            $acks[] = $channel->send($message);
+        foreach ($this->getChannels($envelope) as $channel) {
+            $acks[] = $channel->send($envelope);
         }
         return $acks;
     }
@@ -37,9 +33,38 @@ class Communicator implements CommunicatorInterface
      * @param CommunicationMessageInterface $message
      * @return CommunicationChannelInterface[]
      */
-    protected function getChannels(CommunicationMessageInterface $message) : array
+    protected function getChannels(EnvelopeInterface $envelope) : array
     {
-        return [];
+        $result = [];
+        if ($chSel = $envelope->getChannelSelector()) {
+            if (null !== $ch = $this->getChannelLoaded($chSel)) {
+                $ch = $this->loadChanne($chSel);
+            }
+            $result[] = $ch;
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param CommunicationChannelSelectorInterface $selector
+     * @return CommunicationChannelInterface|NULL
+     */
+    private function getChannelLoaded(CommunicationChannelSelectorInterface $selector) : ?CommunicationChannelInterface
+    {
+        return $this->channels[$selector->toString()];
+    }
+    
+    /**
+     * 
+     * @param CommunicationChannelSelectorInterface $selector
+     * @return CommunicationChannelInterface
+     */
+    private function loadChanne(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
+    {
+        $ch = CommunicationChannelFactory::createFromSelector($selector);
+        $this->channels[$selector->toString()] = $ch;
+        return $ch;
     }
     
     /**

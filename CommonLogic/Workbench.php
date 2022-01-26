@@ -14,6 +14,7 @@ use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Communication\CommunicatorInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
@@ -32,6 +33,7 @@ use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
+use exface\Core\CommonLogic\Communication\Communicator;
 
 class Workbench implements WorkbenchInterface
 {
@@ -68,6 +70,8 @@ class Workbench implements WorkbenchInterface
     private $request_params = null;
     
     private $security = null;
+    
+    private $communicator = null;
 
     public function __construct(array $config = null)
     {   
@@ -469,5 +473,18 @@ class Workbench implements WorkbenchInterface
         }
         
         return '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getCommunicator()
+     */
+    public function getCommunicator(): CommunicatorInterface
+    {
+        if ($this->communicator === null) {
+            $this->communicator = new Communicator($this);
+        }
+        return $this->communicator;
     }
 }
