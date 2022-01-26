@@ -54,12 +54,12 @@ class UiPagePlaceholders implements PlaceholderResolverInterface
     {
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $property = $this->stripPrefix($placeholder, $this->prefix);
-            switch ($property) {
-                case 'alias':
+            $property = $this->stripPrefix(mb_strtolower($placeholder), $this->prefix);
+            switch (true) {
+                case $property === 'alias':
                     $val = $this->page->getAliasWithNamespace();
                     break;
-                case 'url' && $this->facade !== null:
+                case $property === 'url' && $this->facade !== null:
                     $val = $this->facade->buildUrlToPage($this->page);
                     break;
                 default:
