@@ -83,6 +83,10 @@ use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Events\Model\OnMessageLoadedEvent;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Selectors\DataSourceSelector;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
+use exface\Core\Factories\CommunicationChannelFactory;
+use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1856,5 +1860,50 @@ SQL;
         $row = reset($rows);
         $app->importUxonObject(UxonObject::fromArray($row, CASE_LOWER));
         return $app;
+    }
+    
+    public function loadCommunicationChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
+    {
+        if ($selector->isAlias()) {
+            if ($selector->hasNamespace()) {
+                $selectorWhere = "cc.alias = '{$selector::stripNamespace($selector->toString())}' AND a.app_alias = '{$selector->getAppAlias()}'";
+            } else {
+                $selectorWhere = "cc.alias = '{$selector->toString()}'";
+            }
+        } else {
+            $selectorWhere = "cc.prototype = '{$selector->toString()}'";
+        }
+        
+        $sql = <<<SQL
+SELECT 
+    {$this->buildSqlUuidSelector('cc.oid')} AS UID,
+    cc.name AS NAME,
+    cc.alias AS ALIAS,
+    a.app_alias AS APP_ALIAS,
+    cc.prototype AS PROTOTYPE,
+    cc.config_uxon AS CONFIG_UXON,
+    {$this->buildSqlUuidSelector('cc.data_connection_oid')} AS DATA_CONNECTION
+FROM
+    exf_communication_channel cc
+    LEFT JOIN exf_app a ON cc.app_oid = a.oid
+WHERE {$selectorWhere}
+SQL;
+    
+        $result = $this->getDataConnection()->runSql($sql);
+        $row = $result->getResultArray()[0];
+        if (! is_array($row)) {
+            throw new CommunicationChannelNotFoundError('No communication channel found in model matching "' . $selector->toString() . '"!');
+        }
+        
+        $prototype = $row['PROTOTYPE'];
+        $uxon = new UxonObject($row['CONFIG_UXON'] ?? []);
+        $uxon->setProperty('name', $row['NAME']);
+        
+        $channel = CommunicationChannelFactory::createFromUxon($prototype, $uxon, $this->getWorkbench());
+        $channel->setAlias(($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
+        if ($row['CONNECTION']) {
+            $channel->setConnection($row['CONNECTION']);
+        }
+        return $channel;
     }
 }

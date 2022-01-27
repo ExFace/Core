@@ -9,18 +9,30 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
+use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
+use exface\Core\Factories\DataConnectionFactory;
+use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 abstract class AbstractCommunicationChannel implements CommunicationChannelInterface
 {
     use ImportUxonObjectTrait;
     
-    use AliasTrait;
+    use AliasTrait {
+        getAlias as getAliasFromSelector;
+    }
+    
+    private $alias = null;
     
     private $name = '';
     
     private $workbench = null;
     
     private $connection = null;
+    
+    private $connectionSelector = null;
+    
+    private $appSelector = null;
     
     private $selector = null;
     
@@ -47,7 +59,7 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
         return $this->getName();
     }
     
-    protected function setName(string $name) : CommunicationChannelInterface
+    public function setName(string $name) : CommunicationChannelInterface
     {
         $this->name = $name;
         return $this;
@@ -72,14 +84,72 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
         return null;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::getConnection()
+     */
     public function getConnection() : DataConnectionInterface
     {
+        if ($this->connection === null && $this->connectionSelector !== null) {
+            $this->connection = DataConnectionFactory::createFromSelector($this->connectionSelector);
+        }
         return $this->connection;
     }
     
-    public function setConnection(DataConnectionInterface $value) : AbstractCommunicationChannel
+    /**
+     * 
+     * @param DataConnectionInterface|DataConnectionSelectorInterface|string $connectionOrSelectorOrString
+     * @return AbstractCommunicationChannel
+     */
+    public function setConnection($connectionOrSelectorOrString) : AbstractCommunicationChannel
     {
-        $this->connection = $value;
+        $this->connection = null;
+        $this->connectionSelector = null;
+        switch (true) {
+            case $connectionOrSelectorOrString instanceof DataConnectionInterface:
+                $this->connection = $connectionOrSelectorOrString;
+                break;
+            case $connectionOrSelectorOrString instanceof DataConnectionSelectorInterface:
+                $this->connectionSelector = $connectionOrSelectorOrString;
+                break;
+            default:
+                $this->connectionSelector = new DataConnectionSelector($this->getWorkbench(), $connectionOrSelectorOrString);
+        }
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     * @see AliasTrait::getAlias()
+     */
+    public function getAlias()
+    {
+        if ($this->alias === null) {
+            if ($this->selector->isAlias()) {
+                $this->alias = $this->selector::stripNamespace($this->selector->toString());
+            } else {
+                $this->alias = $this->getAliasFromSelector();
+            }
+        }
+        return $this->alias;
+    }
+    
+    /**
+     * Alias of the data type
+     *
+     * @uxon-property alias
+     * @uxon-type metamodel:datatype
+     *
+     * @param string $string
+     */
+    public function setAlias($string)
+    {
+        $selector = new CommunicationChannelSelector($this->getWorkbench(), $string);
+        $this->selector = $selector;
+        $this->alias = null;
         return $this;
     }
     
