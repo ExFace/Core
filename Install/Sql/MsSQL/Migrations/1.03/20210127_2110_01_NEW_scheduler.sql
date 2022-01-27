@@ -59,7 +59,7 @@ ALTER TABLE dbo.exf_queued_task
 	DROP COLUMN scheduler_oid;
 
 IF OBJECT_ID('dbo.exf_customizing', 'U') IS NOT NULL 	
-DROP TABLE IF EXISTS dbo.exf_customizing;
+DROP TABLE dbo.exf_customizing;
 
 IF OBJECT_ID('dbo.exf_scheduler', 'U') IS NOT NULL 
-DROP TABLE IF EXISTS dbo.exf_scheduler;
+DROP TABLE dbo.exf_scheduler;
