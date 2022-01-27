@@ -623,6 +623,8 @@ class App implements AppInterface
         switch (true) {
             case $selector instanceof DataTypeSelectorInterface:
                 return 'DataType';
+            case $selector instanceof CommunicationChannelSelectorInterface:
+                return 'Channel';
         }
         return '';
     }

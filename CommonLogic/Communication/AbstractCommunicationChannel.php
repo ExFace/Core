@@ -82,4 +82,13 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
         $this->connection = $value;
         return $this;
     }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getClassnameSuffixToStripFromAlias() : string
+    {
+        return 'Channel';
+    }
 }

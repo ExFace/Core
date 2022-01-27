@@ -45,7 +45,7 @@ class UserRoleRecipient implements RecipientGroupInterface
      */
     protected function getRecipientUids() : array
     {
-        $userData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
+        $userData = DataSheetFactory::createFromObjectIdOrAlias($this->selector->getWorkbench(), 'exface.Core.USER');
         $userData->getColumns()->addFromUidAttribute();
         if ($this->selector->isAlias()) {
             $userData->getFilters()->addConditionFromString('USER_ROLE_USERS__USER_ROLE__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);

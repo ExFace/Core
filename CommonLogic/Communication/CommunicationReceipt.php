@@ -1,13 +1,13 @@
 <?php
-namespace exface\Core\Communication\Messages;
+namespace exface\Core\CommonLogic\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\DateTimeInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Interfaces\Communication\CommunicationAcknowledgementInterface;
+use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 
-class CommunicationAcknowledgement implements CommunicationAcknowledgementInterface
+class CommunicationReceipt implements CommunicationReceiptInterface
 {
     private $message = null;
     
@@ -25,7 +25,7 @@ class CommunicationAcknowledgement implements CommunicationAcknowledgementInterf
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationAcknowledgementInterface::getMessage()
+     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getMessage()
      */
     public function getMessage(): CommunicationMessageInterface
     {
@@ -35,7 +35,7 @@ class CommunicationAcknowledgement implements CommunicationAcknowledgementInterf
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationAcknowledgementInterface::getSentTime()
+     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getSentTime()
      */
     public function getSentTime(): \DateTimeInterface
     {
@@ -45,7 +45,7 @@ class CommunicationAcknowledgement implements CommunicationAcknowledgementInterf
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationAcknowledgementInterface::getChannel()
+     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getChannel()
      */
     public function getChannel() : CommunicationChannelInterface
     {

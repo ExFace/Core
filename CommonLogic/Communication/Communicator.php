@@ -37,7 +37,7 @@ class Communicator implements CommunicatorInterface
     {
         $result = [];
         if ($chSel = $envelope->getChannelSelector()) {
-            if (null !== $ch = $this->getChannelLoaded($chSel)) {
+            if (null === $ch = $this->getChannelLoaded($chSel)) {
                 $ch = $this->loadChanne($chSel);
             }
             $result[] = $ch;

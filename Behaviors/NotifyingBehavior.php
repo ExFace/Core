@@ -5,48 +5,91 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\ConditionGroupInterface;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Communication\Messages\NotificationMessage;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
-use exface\Core\Factories\CommunicationChannelFactory;
 use exface\Core\CommonLogic\Communication\Envelope;
 use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
+use exface\Core\CommonLogic\Communication\NotificationEnvelope;
+use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Events\MetaObjectEventInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\TranslationPlaceholders;
+use exface\Core\Templates\Placeholders\SessionPlaceholders;
+use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
 /**
  * Creates user-notifications on certain conditions.
  * 
  * BETA: This behavior is not yet fully functional. Some features may not work correctly!
  * 
+ * ## Examples
+ * 
+ * ### Send an in-app notification to a user role every time a task is created
+ * 
+ * ```
+ *  {
+ *      "notify_on": "exface.Core.DataSheet.OnCreateData",
+ *      "notifications": [
+ *          {
+ *              "channel": "exface.Core.NOTIFICATION",
+ *              "recipient_roles": ["exface.Core.ADMINISTRATOR"],
+ *              "message": {
+ *                  "subject": "New ticket: [#ticket_title#]",
+ *                  "text": "A new ticket has been created!",
+ *                  "icon": "ticket"
+ *              }
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
+ * ### Send an email to the ticket author once it reaches a certain status
+ * 
+ * ```
+ *  {
+ *      "notify_on": "exface.Core.DataSheet.OnUpdateData",
+ *      "notify_if_attributes_change": [
+ *          "status"
+ *      ],
+ *      "notify_on_conditions": [{
+ *          "operator": "AND",
+ *          "conditions": ["value_left": "status", "comparator": "==", "value_right": 60]
+ *      }],
+ *      "notifications": [
+ *          {
+ *              "channel": "exface.Core.EMAIL",
+ *              "recipient_users": ["[#creator_user__username#]"],
+ *              "message": {
+ *                  "subject": "Your ticket [#id#] requires feedback",
+ *                  "text": "Your ticket [#id#] \"[#ticket_title#]\" is awaiting your feedback"
+ *              }
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *
  */
 class NotifyingBehavior extends AbstractBehavior
 {
-    private $notifyOnChangeOfAttributes = [];
+    private $notifyOn = null;
     
-    private $notifyOnCreate = false;
+    private $notifyIfAttributesChange = [];
     
-    private $notifyIf = null;
+    private $notifyIfDataMatchesConditions = null;
     
-    private $notifyUsers = [];
+    private $envelopeUxons = null;
     
-    private $notifyUserFromAttribute = null;
-    
-    private $notifyRoles = [];
-    
-    private $notifyRoleFromAttribute = null;
-    
-    private $messages = null;
-    
-    private $channelAlias = null;
+    private $envelopes = null;
 
     /**
      * 
@@ -67,13 +110,8 @@ class NotifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $dispatcher = $this->getWorkbench()->eventManager();
-        if ($this->getNotifyOnCreate()) {
-            $dispatcher->addListener(OnCreateDataEvent::getEventName(), [$this, 'onCreateNotify']);
-        }
-        if ($this->getNotifyOnUpdate()) {
-            $dispatcher->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckNotificationNeeded']);
-        }
+        $this->getWorkbench()->eventManager()
+            ->addListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
     }
     
@@ -85,9 +123,7 @@ class NotifyingBehavior extends AbstractBehavior
     protected function unregisterEventListeners() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()
-            ->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onCreateNotify'])
-            ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckNotificationNeeded'])
-            ->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onUpdateNotify']);
+            ->removeListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
     }
     
@@ -100,54 +136,9 @@ class NotifyingBehavior extends AbstractBehavior
      */
     public function exportUxonObject()
     {
+        // TODO
         $uxon = parent::exportUxonObject();
         return $uxon;
-    }
-    
-    /**
-     * 
-     * @param OnBeforeCreateDataEvent $event
-     * @return void
-     */
-    public function onCreateNotify(OnCreateDataEvent $event)
-    {
-        $dataSheet = $event->getDataSheet();
-        
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
-        // extended from it.
-        if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-        
-        $this->notify($dataSheet);
-        return;
-    }
-    
-    public function onBeforeUpdateCheckNotificationNeeded(OnBeforeUpdateDataEvent $event)
-    {
-        $data_sheet = $event->getDataSheet();
-        
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
-        // extended from it.
-        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
-    }
-    
-    /**
-     *
-     * @param OnBeforeCreateDataEvent $event
-     * @return void
-     */
-    public function onUpdateNotify(OnUpdateDataEvent $event)
-    {
-        $data_sheet = $event->getDataSheet();
-        
-        // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
-        // extended from it.
-        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
-            return;
-        }
     }
     
     /**
@@ -155,234 +146,115 @@ class NotifyingBehavior extends AbstractBehavior
      * @param DataSheetInterface $dataSheet
      * @return NotificationMessage[]
      */
-    protected function notify(DataSheetInterface $dataSheet)
+    public function onEventNotify(EventInterface $event)
     {
-        foreach ($this->getMessagesUxon() as $msgUxon) {
-            $channelAlias = $msgUxon->getProperty('channel_alias');
-            $msgUxon->unsetProperty('channel_alias');
-            
-            $json = $msgUxon->toJson();
-            foreach (array_keys($dataSheet->getRows()) as $rowNo) {
-                $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-                $renderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo));
-                $renderedUxon = UxonObject::fromJson($renderer->render($json));
-                $envelope = new Envelope($renderedUxon, new CommunicationChannelSelector($this->getWorkbench(), $channelAlias));
-                $this->getWorkbench()->getCommunicator()->send($envelope);
+        if ($this->isDisabled()) {
+            return;
+        }
+        
+        if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->is($this->getObject())) {
+            return;
+        }
+        
+        if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+            return;
+        }
+        
+        if ($event instanceof DataSheetEventInterface) {
+            $dataSheet = $event->getDataSheet();
+            if (! $dataSheet->getMetaObject()->is($this->getObject())) {
+                return;
             }
         }
         
+        $communicator = $this->getWorkbench()->getCommunicator();
+        foreach ($this->getNotificationEnvelopes($event) as $envelope)
+        {
+            $communicator->send($envelope);
+        }
         return;
     }
     
-    public function getNotifyOnCreate() : bool
+    protected function getNotifyOnEventName() : string
     {
-        return $this->notifyOnCreate;
-    }
-    
-    public function getNotifyOnUpdate() : bool
-    {
-        return empty($this->getNotifyOnChangeOfAttributeAliases()) === false;
+        return $this->notifyOn;
     }
     
     /**
-     * Set to TRUE to send notifications when new instance of the object are created.
+     * The alias of the event that should trigger the notification
      * 
-     * @uxon-property notify_on_create
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $value
-     * @return NotifyingBehavior
-     */
-    public function setNotifyOnCreate(bool $value) : NotifyingBehavior
-    {
-        $this->notifyOnCreate = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return array
-     */
-    public function getNotifyOnChangeOfAttributeAliases() : array
-    {
-        return $this->notifyOnChangeOfAttributes;
-    }
-    
-    /**
-     * Only send notifications if at least one of these attributes attributes changes.
-     * 
-     * @uxon-property notify_on_change_of_attributes
-     * @uxon-type metamodel:attribute[]
-     * @uxon-template [""]
-     * 
-     * @param UxonObject $uxonArray
-     * @return NotifyingBehavior
-     */
-    public function setNotifyOnChangeOfAttributes(UxonObject $uxonArray) : NotifyingBehavior
-    {
-        $this->notifyOnChangeOfAttributes = $uxonArray->toArray();
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string[]
-     */
-    public function getNotifyUsernames() : array
-    {
-        return $this->notifyUsers;
-    }
-    
-    /**
-     * Notify users specified in this array of user names
-     * 
-     * @uxon-property notify_users
-     * @uxon-type array
-     * @uxon-template [""]
-     * 
-     * @param UxonObject $uxonArray
-     * @return NotifyingBehavior
-     */
-    public function setNotifyUsers(UxonObject $uxonArray) : NotifyingBehavior
-    {
-        $this->notifyUsers = $uxonArray->toArray();
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string[]
-     */
-    public function getNotifyUserRoleAliases() : array
-    {
-        return $this->notifyRoles;
-    }
-    
-    /**
-     * Notify users with roles from this array of role aliases (with namespaces)
-     * 
-     * @uxon-property notify_user_roles
-     * @uxon-type array
-     * @uxon-template [""]
-     * 
-     * @param UxonObject $uxonArray
-     * @return NotifyingBehavior
-     */
-    public function setNotifyUserRoles(UxonObject $uxonArray) : NotifyingBehavior
-    {
-        $this->notifyRoles = $uxonArray->toArray();
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getNotifyUserFromAttributeAlias() : ?string
-    {
-        return $this->notifyUserFromAttribute;
-    }
-    
-    /**
-     * Notify user related to the behaviors object
-     * 
-     * @uxon-property notify_user_from_attribute
-     * @uxon-type metamodel:attribute
+     * @uxon-property notify_on_event
+     * @uxon-type metamodel:event
+     * @uxon-required true
      * 
      * @param string $value
      * @return NotifyingBehavior
      */
-    public function setNotifyUserFromAttribute(string $value) : NotifyingBehavior
+    public function setNotifyOnEvent(string $value) : NotifyingBehavior
     {
-        $this->notifyUserFromAttribute = $value;
+        $this->notifyOn = $value;
         return $this;
     }
-    
+
     /**
      * 
-     * @return string|NULL
+     * @return NotificationEnvelope[]
      */
-    public function getNotifyUserRoleFromAttributeAlias() : ?string
+    protected function getNotificationEnvelopes(EventInterface $event) : array
     {
-        return $this->notifyRoleFromAttribute;
+        foreach ($this->envelopeUxons as $uxon) {
+            $json = $uxon->toJson();
+            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+            $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
+            switch (true) {
+                case $event instanceof DataSheetEventInterface:
+                    $dataSheet = $event->getDataSheet();
+                    foreach (array_keys($dataSheet->getRows()) as $rowNo) {
+                        $rowRenderer = clone $renderer;
+                        $rowRenderer->setDefaultPlaceholderResolver(new DataRowPlaceholders($dataSheet, $rowNo, ''));
+                        $rowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo));
+                        $renderedUxon = UxonObject::fromJson($rowRenderer->render($json));
+                        $envelopes[] = new NotificationEnvelope($this->getWorkbench(), $renderedUxon);
+                    }
+                    break;
+                default:
+                    $renderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
+                    $renderedUxon = UxonObject::fromJson($renderer->render($json));
+                    $envelopes[] = new NotificationEnvelope($this->getWorkbench(), $renderedUxon);
+            }
+        }
+            
+        return $envelopes;
     }
     
     /**
-     * Notify users with the role related to the behaviors object
+     * Array of notifications to send - each with a channel, recipients and a message model.
      * 
-     * @uxon-property notify_user_role_from_attribute
-     * @uxon-type metamodel:attribute
+     * You can use the following placeholders inside any notification model - as recipient, 
+     * message subject - anywhere:
      * 
-     * @param string $value
+     * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+     * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key` 
+     * from the given app
+     * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+     * for which the notification was triggered - only works with notification on data sheet events!
+     * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+     * This means, static formulas will always work, while data-driven formulas will only work on data sheet
+     * events!
+     * 
+     * @uxon-property notifications
+     * @uxon-type \exface\Core\CommonLogic\Communication\NotificationEnvelope
+     * @uxon-template {"channel": "", "recipients": "", "message": {"subject": "", "text": ""}}
+     * 
+     * @param UxonObject $arrayOfEnvelopes
      * @return NotifyingBehavior
      */
-    public function setNotifyUserRoleFromAttribute(string $value) : NotifyingBehavior
+    protected function setNotifications(UxonObject $arrayOfEnvelopes) : NotifyingBehavior
     {
-        $this->notifyRoleFromAttribute = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return ConditionGroupInterface|NULL
-     */
-    public function getNotifyIf() : ?ConditionGroupInterface
-    {
-        return $this->notifyIf;
-    }
-    
-    /**
-     * Only send notification for data rows matching these conditions.
-     * 
-     * @uxon-property notify_if
-     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
-     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
-     *
-     * @param UxonObject $conditionGroup
-     * @return NotifyingBehavior
-     */
-    public function setNotifyIf(UxonObject $conditionGroup) : NotifyingBehavior
-    {
-        $this->notifyIf = $conditionGroup;
-        return $this;
-    }
-    
-    public function getMessagesUxon() : UxonObject
-    {
-        return $this->messages;
-    }
-    
-    protected function setMessages(UxonObject $array) : NotifyingBehavior
-    {
-        $this->messages = $array;
-        return $this;
-    }
-    
-    /**
-     * The notification to show
-     * 
-     * @uxon-property notification
-     * @uxon-type \exface\Core\Communication\Messages\NotificationMessage
-     * @uxon-template {"title": "", "body": "", "buttons": [{"caption": "", "action": {"alias": "", "object_alias": ""}}]}
-     * 
-     * @param UxonObject $value
-     * @return NotifyingBehavior
-     */
-    protected function setNotification(UxonObject $value) : NotifyingBehavior
-    {
-        // TODO remove
-        return $this;
-    }
-    
-    protected function getCommunicationChannelAlias() : string
-    {
-        return $this->channelAlias;
-    }
-    
-    public function setCommunicationChannel(string $value) : NotifyingBehavior
-    {
-        $this->channelAlias = $value;
+        $this->envelopes = null;
+        $this->envelopeUxons = $arrayOfEnvelopes;
         return $this;
     }
 }

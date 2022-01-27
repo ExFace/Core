@@ -5,18 +5,15 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Factories\FormulaFactory;
 
 /**
- * Resolves placeholders to session values: `~session:language`.
+ * Resolves placeholders by evaluating them as formulas - e.g. `=Now()`.
  * 
- * Currently supported placeholders are:
- * 
- * - `~session:language`,
- * - `~session:locale`
- *
  * @author Andrej Kabachnik
  */
-class SessionPlaceholders implements PlaceholderResolverInterface
+class FormulaPlaceholders implements PlaceholderResolverInterface
 {
     use PrefixedPlaceholderTrait;
     
@@ -24,12 +21,16 @@ class SessionPlaceholders implements PlaceholderResolverInterface
     
     private $workbench = null;
     
+    private $dataSheet = null;
+    
+    private $rowNumber = null;
+    
     /**
      * 
      * @param FacadeInterface $workbench
      * @param string $prefix
      */
-    public function __construct(WorkbenchInterface $workbench, string $prefix = '~session:')
+    public function __construct(WorkbenchInterface $workbench, DataSheetInterface $dataSheet = null, $rowNo = null, string $prefix = '=')
     {
         $this->prefix = $prefix;
         $this->workbench = $workbench;
@@ -44,21 +45,12 @@ class SessionPlaceholders implements PlaceholderResolverInterface
     {     
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $option = $this->stripPrefix($placeholder, $this->prefix);
-            switch (mb_strtolower($option)) {
-                case 'language':
-                case 'locale':
-                    $locale = $this->workbench->getContext()->getScopeSession()->getSessionLocale();
-                    if ($option === 'language') {
-                        $val = explode('_', $locale)[0];
-                    } else {
-                        $val = $locale;
-                    }
-                    break;
-                default:
-                    $val = '';
+            $placeholder = trim($placeholder);
+            if (mb_substr($placeholder, 0, 1) === '==' || mb_substr($placeholder, -1) !== ')') {
+                continue;
             }
-            $vals[$placeholder] = $val;
+            $formula = FormulaFactory::createFromString($this->workbench, $placeholder);
+            $formula->evaluate($this->dataSheet, $this->rowNumber);
         }
         return $vals;
     }
