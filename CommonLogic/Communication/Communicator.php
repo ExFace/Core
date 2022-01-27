@@ -38,7 +38,7 @@ class Communicator implements CommunicatorInterface
         $result = [];
         if ($chSel = $envelope->getChannelSelector()) {
             if (null === $ch = $this->getChannelLoaded($chSel)) {
-                $ch = $this->loadChanne($chSel);
+                $ch = $this->loadChannel($chSel);
             }
             $result[] = $ch;
         }
@@ -60,7 +60,7 @@ class Communicator implements CommunicatorInterface
      * @param CommunicationChannelSelectorInterface $selector
      * @return CommunicationChannelInterface
      */
-    private function loadChanne(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
+    private function loadChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
     {
         $ch = CommunicationChannelFactory::createFromSelector($selector);
         $this->channels[$selector->toString()] = $ch;

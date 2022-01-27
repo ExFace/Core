@@ -213,7 +213,7 @@ class NotifyingBehavior extends AbstractBehavior
                     $dataSheet = $event->getDataSheet();
                     foreach (array_keys($dataSheet->getRows()) as $rowNo) {
                         $rowRenderer = clone $renderer;
-                        $rowRenderer->setDefaultPlaceholderResolver(new DataRowPlaceholders($dataSheet, $rowNo, ''));
+                        $rowRenderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo, '~data:'));
                         $rowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo));
                         $renderedUxon = UxonObject::fromJson($rowRenderer->render($json));
                         $envelopes[] = new NotificationEnvelope($this->getWorkbench(), $renderedUxon);

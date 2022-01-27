@@ -760,8 +760,11 @@ class App implements AppInterface
      */
     protected function loadFromModel(SelectorInterface $selector) 
     {
-        if ($selector instanceof DataTypeSelectorInterface) {
-            return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        switch (true) {
+            case $selector instanceof DataTypeSelectorInterface:
+                return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+            case $selector instanceof CommunicationChannelSelector:
+                return $this->getWorkbench()->model()->getModelLoader()->loadCommunicationChannel($selector);
         }
         throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
     }

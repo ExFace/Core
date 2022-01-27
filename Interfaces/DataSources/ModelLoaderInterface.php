@@ -33,6 +33,8 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -251,4 +253,11 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return AppInterface
      */
     public function loadAppData(AppInterface $app) : AppInterface;
+    
+    /**
+     * 
+     * @param CommunicationChannelSelectorInterface $selector
+     * @return CommunicationChannelInterface
+     */
+    public function loadCommunicationChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface;
 }
