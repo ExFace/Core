@@ -396,6 +396,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.SCHEDULER'), 'APP', [
             'LAST_RUN'
         ]);
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.COMMUNICATION_CHANNEL'), 'APP');
         
         return $sheets;
     }
