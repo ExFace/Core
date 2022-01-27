@@ -1862,6 +1862,11 @@ SQL;
         return $app;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadCommunicationChannel()
+     */
     public function loadCommunicationChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
     {
         if ($selector->isAlias()) {
@@ -1871,7 +1876,7 @@ SQL;
                 $selectorWhere = "cc.alias = '{$selector->toString()}'";
             }
         } else {
-            $selectorWhere = "cc.prototype = '{$selector->toString()}'";
+            throw new CommunicationChannelNotFoundError('Cannot load communication channel "' . $selector->toString() . '" from model: this is not a valid alias!');
         }
         
         $sql = <<<SQL
@@ -1890,7 +1895,12 @@ WHERE {$selectorWhere}
 SQL;
     
         $result = $this->getDataConnection()->runSql($sql);
-        $row = $result->getResultArray()[0];
+        $rows = $result->getResultArray();
+        $row = $rows[0] ?? null;
+        
+        if (count($rows) > 1) {
+            throw new CommunicationChannelNotFoundError('Multiple communication channels found in model matching "' . $selector->toString() . '"!');
+        }
         if (! is_array($row)) {
             throw new CommunicationChannelNotFoundError('No communication channel found in model matching "' . $selector->toString() . '"!');
         }
