@@ -47,6 +47,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
+use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -689,7 +691,11 @@ class App implements AppInterface
         $cache = $this->selector_cache[$selector->toString()][get_class($selector)];
         if ($cache !== null) {
             $selector = $cache['selector'];
-            $class = $cache['class'];
+            $class = $cache['class'] ?? null;
+            $instance = $cache['instance'] ?? null;
+            if ($instance !== null) {
+                return $instance;
+            }
             if ($class !== null) {
                 if ($constructorArguments === null) {
                     return new $class($selector);
@@ -732,8 +738,8 @@ class App implements AppInterface
                 return true;
             } else {
                 try {
-                    $this->loadFromModel($selector);
-                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector];
+                    $instance = $this->loadFromModel($selector);
+                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } catch (\Throwable $e) {
                     return false;
