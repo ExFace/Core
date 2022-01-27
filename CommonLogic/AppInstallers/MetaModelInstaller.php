@@ -362,41 +362,41 @@ class MetaModelInstaller extends AbstractAppInstaller
         $app = $this->getApp();      
         $model = $this->getWorkbench()->model();
         $sheets = array();
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.APP'), 'UID', ['PUPLISHED']);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.DATATYPE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.OBJECT'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.OBJECT_BEHAVIORS'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.ATTRIBUTE'), 'OBJECT__APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.DATASRC'), 'APP', [
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.APP'), 'UID', ['PUPLISHED']);
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.DATATYPE'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT_BEHAVIORS'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE'), 'OBJECT__APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.DATASRC'), 'APP', [
             'CONNECTION',
             'CUSTOM_CONNECTION',
             'QUERYBUILDER',
             'CUSTOM_QUERY_BUILDER'
         ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.CONNECTION'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.MESSAGE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.OBJECT_ACTION'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.UXON_PRESET'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.PAGE_TEMPLATE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.ATTRIBUTE_COMPOUND'), 'COMPOUND_ATTRIBUTE__OBJECT__APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.PAGE_GROUP'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.PAGE_GROUP_PAGES'), ['PAGE__APP', 'PAGE_GROUP__APP']);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.USER_ROLE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.AUTHORIZATION_POINT'), 'APP', [
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.CONNECTION'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.MESSAGE'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT_ACTION'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.UXON_PRESET'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_TEMPLATE'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE_COMPOUND'), 'COMPOUND_ATTRIBUTE__OBJECT__APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), ['PAGE__APP', 'PAGE_GROUP__APP']);
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.USER_ROLE'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POINT'), 'APP', [
             'DEFAULT_EFFECT',
             'DEFAULT_EFFECT_LOCAL',
             'COMBINING_ALGORITHM',
             'COMBINING_ALGORITHM_LOCAL',
             'DISABLED_FLAG'
         ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.AUTHORIZATION_POLICY'), 'APP', [
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POLICY'), 'APP', [
             'DISABLED_FLAG'
         ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.QUEUE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.SCHEDULER'), 'APP', [
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.QUEUE'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.SCHEDULER'), 'APP', [
             'LAST_RUN'
         ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('ExFace.Core.COMMUNICATION_CHANNEL'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.COMMUNICATION_CHANNEL'), 'APP');
         
         return $sheets;
     }
