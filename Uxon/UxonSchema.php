@@ -53,6 +53,8 @@ use exface\Core\CommonLogic\WorkbenchCache;
  * - metamodel:event
  * - metamodel:aggregator
  * - metamodel:context
+ * - metamodel:role
+ * - metamodel:username
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * - {keyType => valueType} - object with typed keys and values

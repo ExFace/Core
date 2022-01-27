@@ -120,20 +120,4 @@ class NotificationMessage extends GenericMessage
         $this->icon = $value;
         return $this;
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::getSubject()
-     */
-    public function getSubject(): ?string
-    {
-        return $this->getTitle();
-    }
-
-    
-    public function getText(): string
-    {
-        return '';
-    }
 }

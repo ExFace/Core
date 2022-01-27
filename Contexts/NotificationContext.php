@@ -12,6 +12,10 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Communication\Messages\NotificationMessage;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -120,25 +124,31 @@ class NotificationContext extends AbstractContext
         }
         
         $btn = null;
-        foreach ($data->getRows() as $row) {
+        foreach ($data->getRows() as $rowNo => $row) {
+            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+            $renderer->addPlaceholder(new DataRowPlaceholders($data, $rowNo, '~notification:'));
+            $widgetJson = $renderer->render($row['WIDGET_UXON']);
+            
             $btn = $menu->createButton(new UxonObject([
                 'caption' => $row['TITLE'],
                 'action' => [
                     'alias' => 'exface.Core.ShowDialog',
-                    'widget' => UxonObject::fromJson($row['WIDGET_UXON'])
+                    'widget' => UxonObject::fromJson($widgetJson)
                 ]
             ]));
+            
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);
             } else {
                 $btn->setShowIcon(false);
             }
+            
             $menu->addButton($btn);
         }
         
         if ($btn) {
             $menu->addButton($menu->createButton(new UxonObject([
-                'caption' => 'Clear notifications',
+                'caption' => 'Dismiss all',
                 'icon' => 'eraser',
                 'action' => [
                     'alias' => 'exface.Core.DeleteObject',
@@ -192,25 +202,52 @@ class NotificationContext extends AbstractContext
     public function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
         $widgetUxon = new UxonObject([
-            'object_alias' => $notification->getWidgetObject()->getAliasWithNamespace(),
+            'object_alias' => 'exface.Core.NOTIFICATION',
             'width' => 1,
             'height' => 'auto',
-            'caption' => $notification->getTitle(),
+            'caption' => $notification->getSubject() ?? StringDataType::truncate($notification->getText(), 60, true),
             'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
-            'buttons' => $notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : []
+            'buttons' => $notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [
+                [
+                    'caption' => 'Dismiss',
+                    'align' => EXF_ALIGN_OPPOSITE,
+                    'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    'icon' => Icons::ERASER,
+                    'action' => [
+                        'alias' => 'exface.Core.DeleteObject',
+                        'object_alias' => 'exface.Core.NOTIFICATION',
+                        'input_rows_min' => 0,
+                        'input_data_sheet' => [
+                            'object_alias' => 'exface.Core.NOTIFICATION',
+                            'filters' => [
+                                'operator' => 'AND',
+                                'conditions' => [
+                                    [
+                                        'expression' => 'UID',
+                                        'comparator' => '==',
+                                        'value' => '[#~notification:UID#]'
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
         ]);
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($notification->getWorkbench(), 'exface.Core.NOTIFICATION');
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
         foreach ($userUids as $userUid) {
             $ds->addRow([
                 'USER' => $userUid,
-                'TITLE' => $notification->getTitle(),
+                'TITLE' => $notification->getSubject(),
                 'ICON' => $notification->getIcon(),
                 'WIDGET_UXON' => $widgetUxon->toJson()
             ]);
         }
         
-        $ds->dataCreate(false);
+        if (! $ds->isEmpty()) {
+            $ds->dataCreate(false);
+        }
         
         return $notification;
     }

@@ -8,7 +8,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 interface CommunicationChannelInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface
 {
-    public function send(CommunicationMessageInterface $message) : CommunicationAcknowledgementInterface;
+    public function send(EnvelopeInterface $envelope) : CommunicationReceiptInterface;
     
     public function getName() : string;
     

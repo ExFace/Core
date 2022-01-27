@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Communication;
 
-interface CommunicationAcknowledgementInterface
+interface CommunicationReceiptInterface
 {
     public function getMessage() : CommunicationMessageInterface;
     
