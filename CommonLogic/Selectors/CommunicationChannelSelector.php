@@ -23,6 +23,6 @@ class CommunicationChannelSelector extends AbstractSelector implements Communica
      */
     public function getComponentType() : string
     {
-        return 'message channel';
+        return 'communication channel';
     }
 }

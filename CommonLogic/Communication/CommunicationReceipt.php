@@ -2,8 +2,6 @@
 namespace exface\Core\CommonLogic\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
-use exface\Core\Interfaces\Communication\DateTimeInterface;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 
@@ -15,7 +13,7 @@ class CommunicationReceipt implements CommunicationReceiptInterface
     
     private $channel = null;
     
-    public function __construct(CommunicationMessageInterface $message, CommunicationChannelInterface $channel, \DateTimeInterface $time = null)
+    public function __construct(CommunicationMessageInterface $message, CommunicationChannelInterface $channel = null, \DateTimeInterface $time = null)
     {
         $this->message = $message;
         $this->channel = $channel;
@@ -47,7 +45,7 @@ class CommunicationReceipt implements CommunicationReceiptInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getChannel()
      */
-    public function getChannel() : CommunicationChannelInterface
+    public function getChannel() : ?CommunicationChannelInterface
     {
         return $this->channel;
     }

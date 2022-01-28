@@ -2,13 +2,24 @@
 namespace exface\Core\Interfaces\Communication;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\UxonObject;
 
+/**
+ * Generic interface for communication messages: emails, sms, notifications, chat messages, etc.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 interface CommunicationMessageInterface extends iCanBeConvertedToUxon
 {
-    public function getSubject() : ?string;
-    
+    /**
+     * 
+     * @return string
+     */
     public function getText() : string;
     
-    public function getOptionsUxon() : UxonObject;
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getSubject() : ?string;
 }

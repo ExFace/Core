@@ -15,21 +15,37 @@ class NotificationContextChannel extends AbstractCommunicationChannel
 {
     private $messageOptionsClass = null;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::send()
+     */
     public function send(EnvelopeInterface $envelope) : CommunicationReceiptInterface
     {
         $context = $this->getWorkbench()->getContext()->getScopeUser()->getContext(NotificationContext::class);
         $message = $this->createMessage($envelope->getPayloadUxon());
         
         $context->send($message, $this->getUserUids($envelope->getRecipients()));
+        
         return new CommunicationReceipt($message, $this);
     }
     
+    /**
+     * 
+     * @param UxonObject $payload
+     * @return NotificationMessage
+     */
     protected function createMessage(UxonObject $payload) : NotificationMessage
     {
-        $msg = new NotificationMessage($payload->getProperty('text'), $payload->getProperty('subject'));
+        $msg = new NotificationMessage($this->getMessageDefaults()->extend($payload));
         return $msg;
     }
     
+    /**
+     * 
+     * @param array $recipients
+     * @return array
+     */
     protected function getUserUids(array $recipients) : array
     {
         $userUids = [];
@@ -48,6 +64,11 @@ class NotificationContextChannel extends AbstractCommunicationChannel
         return $userUids;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         return new UxonObject();
