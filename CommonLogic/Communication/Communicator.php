@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\Communication;
 use exface\Core\Interfaces\Communication\CommunicatorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Factories\CommunicationChannelFactory;
+use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\EnvelopeInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
@@ -62,7 +62,7 @@ class Communicator implements CommunicatorInterface
      */
     private function loadChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
     {
-        $ch = CommunicationChannelFactory::createFromSelector($selector);
+        $ch = CommunicationFactory::createFromSelector($selector);
         $this->channels[$selector->toString()] = $ch;
         return $ch;
     }

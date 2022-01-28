@@ -15,11 +15,9 @@ class GenericMessage implements CommunicationMessageInterface
     
     private $optionsUxon = null;
     
-    public function __construct(string $text, string $subject = null, UxonObject $options = null)
+    public function __construct(UxonObject $uxon)
     {
-        $this->optionsUxon = $options;
-        $this->subject = $subject;
-        $this->text = $text;
+        $this->importUxonObject($uxon);
     }
     
     /**
@@ -32,6 +30,11 @@ class GenericMessage implements CommunicationMessageInterface
         return $this->subject;
     }
     
+    /**
+     * 
+     * @param string $value
+     * @return CommunicationMessageInterface
+     */
     public function setSubject(string $value) : CommunicationMessageInterface
     {
         $this->subject = $value;
@@ -48,25 +51,14 @@ class GenericMessage implements CommunicationMessageInterface
         return $this->text;
     }
     
+    /**
+     * 
+     * @param string $value
+     * @return CommunicationMessageInterface
+     */
     public function setText(string $value) : CommunicationMessageInterface
     {
         $this->text = $value;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::getOptionsUxon()
-     */
-    public function getOptionsUxon(): UxonObject
-    {
-        return $this->optionsUxon ?? new UxonObject();
-    }
-    
-    protected function setOptions(UxonObject $uxon) : CommunicationMessageInterface
-    {
-        $this->optionsUxon = $uxon;
         return $this;
     }
 
@@ -77,7 +69,13 @@ class GenericMessage implements CommunicationMessageInterface
      */
     public function exportUxonObject()
     {
-        // TODO
-        return new UxonObject();
+        $uxon = new UxonObject([
+            'text' => $this->getText()
+        ]);
+        
+        if ($this->getSubject() !== null) {
+            $uxon->setProperty('subject', $this->getSubject());
+        }        
+        return $this;
     }
 }

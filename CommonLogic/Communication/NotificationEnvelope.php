@@ -111,7 +111,7 @@ class NotificationEnvelope implements EnvelopeInterface, iCanBeConvertedToUxon
      * The channel to send the notification through
      * 
      * @uxon-property channel
-     * @uxon-type metamodel:communication_channel
+     * @uxon-type metamodel:exface.Core.COMMUNICATION_CHANNEL:ALIAS_WITH_NS
      * 
      * @param string $aliasOrClassOrPath
      * @return NotificationEnvelope
@@ -135,7 +135,7 @@ class NotificationEnvelope implements EnvelopeInterface, iCanBeConvertedToUxon
      * List of user names aliases to notify
      *
      * @uxon-property recipient_users
-     * @uxon-type metamodel:username
+     * @uxon-type metamodel:exface.Core.USER:USERNAME[]
      * @uxon-template [""]
      *
      * @param UxonObject $arrayOfStrings
@@ -161,7 +161,7 @@ class NotificationEnvelope implements EnvelopeInterface, iCanBeConvertedToUxon
      * List of user role aliases to notify
      * 
      * @uxon-property recipient_roles
-     * @uxon-type metamodel:role
+     * @uxon-type metamodel:exface.Core.USER_ROLE:ALIAS_WITH_NS[]
      * @uxon-template [""]
      * 
      * @param UxonObject $arrayOfStrings
@@ -195,9 +195,29 @@ class NotificationEnvelope implements EnvelopeInterface, iCanBeConvertedToUxon
         return $this->recipientAddresses;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
-        // TODO
-        return new UxonObject();
+        $uxon = new UxonObject();
+        if (null !== $val = $this->getChannelSelector()) {
+            $uxon->setProperty('channel', $val->toString());
+        }
+        if (null !== $this->recipientAddresses) {
+            $uxon->setProperty('recipients', new UxonObject($this->recipientAddresses));
+        }
+        if (null !== $this->recipientRoleSelectors) {
+            $uxon->setProperty('recipient_roles', new UxonObject($this->recipientRoleSelectors));
+        }
+        if (null !== $this->recipientUserSelectors) {
+            $uxon->setProperty('recipient_users', new UxonObject($this->recipientUserSelectors));
+        }
+        if (null !== $this->messageUxon) {
+            $uxon->setProperty('message', $this->messageUxon);
+        }
+        return $uxon;
     }
 }

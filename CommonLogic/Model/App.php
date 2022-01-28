@@ -661,6 +661,8 @@ class App implements AppInterface
                 return 'Widgets';
             case $selector instanceof CommunicationChannelSelectorInterface:
                 return 'Communication\\Channels';
+            case $selector instanceof CommunicationMessageSelectorInterface:
+                return 'Communication\\Messages';
         }
         return '';
     }
@@ -742,6 +744,7 @@ class App implements AppInterface
                     $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } catch (\Throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
                     return false;
                 }
             }

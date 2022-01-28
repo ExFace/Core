@@ -85,7 +85,7 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Selectors\DataSourceSelector;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
-use exface\Core\Factories\CommunicationChannelFactory;
+use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
 
 /**
@@ -1906,13 +1906,17 @@ SQL;
         }
         
         $prototype = $row['PROTOTYPE'];
-        $uxon = new UxonObject($row['CONFIG_UXON'] ?? []);
+        if (null !== $json = $row['CONFIG_UXON']) {
+            $uxon = UxonObject::fromJson($json);
+        } else {
+            $uxon = new UxonObject();
+        }
         $uxon->setProperty('name', $row['NAME']);
         
-        $channel = CommunicationChannelFactory::createFromUxon($prototype, $uxon, $this->getWorkbench());
+        $channel = CommunicationFactory::createChannelFromUxon($prototype, $uxon, $this->getWorkbench());
         $channel->setAlias(($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
-        if ($row['CONNECTION']) {
-            $channel->setConnection($row['CONNECTION']);
+        if ($row['DATA_CONNECTION']) {
+            $channel->setConnection($row['DATA_CONNECTION']);
         }
         return $channel;
     }

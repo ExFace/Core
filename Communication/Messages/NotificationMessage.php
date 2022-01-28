@@ -3,30 +3,21 @@ namespace exface\Core\Communication\Messages;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  *
  * @author Andrej Kabachnik
  *        
  */
-class NotificationMessage extends GenericMessage
+class NotificationMessage extends GenericMessage implements iHaveIcon
 {
-    private $icon = null;
+    use iHaveIconTrait;
     
     private $widgetUxon = null;
     
     private $buttonsUxon = null;
-    
-    /**
-     * @deprecated use setSubject()
-     * 
-     * @param string $value
-     * @return NotificationMessage
-     */
-    protected function setTitle(string $value) : NotificationMessage
-    {
-        return $this->setSubject($value);
-    }
     
     /**
      * 
@@ -36,18 +27,11 @@ class NotificationMessage extends GenericMessage
     public function getContentWidgetUxon() : ?UxonObject
     {
         if ($this->widgetUxon === null) {
-            $text = $this->getText();
-            $textUxon = $this->getOptionsUxon()->getProperty('content_widget');
-            if ($text && $textUxon) {
-                throw new RuntimeException('Cannot set notification `text` and `content_widget` at the same time!');
-            }
-            if (! $textUxon) {
-                $textUxon = new UxonObject([
-                    'widget_type' => 'Text',
-                    'hide_caption' => true,
-                    'text' => $text
-                ]);
-            }
+            $textUxon = new UxonObject([
+                'widget_type' => 'Text',
+                'hide_caption' => true,
+                'text' =>  $this->getText()
+            ]);
             $this->widgetUxon = $textUxon;
         }
         return $this->widgetUxon;
@@ -69,17 +53,6 @@ class NotificationMessage extends GenericMessage
         return $this;
     }
     
-    /**
-     * @deprecated use setText()
-     * 
-     * @param string $value
-     * @return NotificationMessage
-     */
-    protected function setBody(string $value) : NotificationMessage
-    {
-        return $this->setText($value);
-    }
-    
     public function getButtonsUxon() : ?UxonObject
     {
         return $this->buttonsUxon;
@@ -98,26 +71,6 @@ class NotificationMessage extends GenericMessage
     protected function setButtons(UxonObject $value) : NotificationMessage
     {
         $this->buttonsUxon = $value;
-        return $this;
-    }
-    
-    public function getIcon() : ?string
-    {
-        return $this->icon;
-    }
-    
-    /**
-     * An icon to show for this notification
-     * 
-     * @uxon-property icon
-     * @uxon-type icon
-     * 
-     * @param string $value
-     * @return NotificationMessage
-     */
-    public function setIcon(string $value) : NotificationMessage
-    {
-        $this->icon = $value;
         return $this;
     }
 }

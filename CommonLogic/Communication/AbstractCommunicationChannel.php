@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -13,6 +12,7 @@ use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
+use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
 
 abstract class AbstractCommunicationChannel implements CommunicationChannelInterface
 {
@@ -35,6 +35,8 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     private $appSelector = null;
     
     private $selector = null;
+    
+    private $defaultMessageUxon = null;
     
     public function __construct(CommunicationChannelSelectorInterface $selector, UxonObject $config = null)
     {
@@ -89,7 +91,7 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::getConnection()
      */
-    public function getConnection() : DataConnectionInterface
+    public function getConnection() : ?CommunicationConnectionInterface
     {
         if ($this->connection === null && $this->connectionSelector !== null) {
             $this->connection = DataConnectionFactory::createFromSelector($this->connectionSelector);
@@ -99,7 +101,7 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     
     /**
      * 
-     * @param DataConnectionInterface|DataConnectionSelectorInterface|string $connectionOrSelectorOrString
+     * @param CommunicationConnectionInterface|DataConnectionSelectorInterface|string $connectionOrSelectorOrString
      * @return AbstractCommunicationChannel
      */
     public function setConnection($connectionOrSelectorOrString) : AbstractCommunicationChannel
@@ -107,7 +109,7 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
         $this->connection = null;
         $this->connectionSelector = null;
         switch (true) {
-            case $connectionOrSelectorOrString instanceof DataConnectionInterface:
+            case $connectionOrSelectorOrString instanceof CommunicationConnectionInterface:
                 $this->connection = $connectionOrSelectorOrString;
                 break;
             case $connectionOrSelectorOrString instanceof DataConnectionSelectorInterface:
@@ -160,5 +162,26 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     protected function getClassnameSuffixToStripFromAlias() : string
     {
         return 'Channel';
+    }
+    
+    protected function getMessageDefaults() : UxonObject
+    {
+        return $this->defaultMessageUxon ?? new UxonObject();
+    }
+    
+    /**
+     * Default message model to use
+     * 
+     * @uxon-property message_defaults
+     * @uxon-type \exface\Core\Communication\Messages\GenericMessage
+     * @uxon-template {"":""}
+     * 
+     * @param UxonObject $value
+     * @return AbstractCommunicationChannel
+     */
+    public function setMessageDefaults(UxonObject $value) : AbstractCommunicationChannel
+    {
+        $this->defaultMessageUxon = $value;
+        return $this;
     }
 }

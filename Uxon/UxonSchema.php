@@ -55,6 +55,7 @@ use exface\Core\CommonLogic\WorkbenchCache;
  * - metamodel:context
  * - metamodel:role
  * - metamodel:username
+ * - metamodel:communication_channel
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * - {keyType => valueType} - object with typed keys and values
@@ -454,6 +455,9 @@ class UxonSchema implements UxonSchemaInterface
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
                 }
+                break;
+            case StringDataType::startsWith($type, 'metamodel:'):
+                $options = $this->getMetamodelData($type, $search);
                 break;
             case $this->isPropertyTypeObject($type) === true:
                 list ($keyType, $valType) = explode('=>', trim($type, "{}"));
@@ -961,5 +965,14 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return $presets;
+    }
+    
+    protected function getMetamodelData(string $uxonType, string $search = null) : array
+    {
+        list($prefix, $object, $attribute) = explode(':', $uxonType, 3);
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object);
+        $col = $ds->getColumns()->addFromExpression($attribute);
+        $ds->dataRead();
+        return $col->getValues(false);
     }
 }
