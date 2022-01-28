@@ -50,21 +50,22 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
     {     
         $phVals = [];
         $phs = $this->filterPlaceholders($placeholders, $this->prefix);
-        $phSheet = null;
+        $phSheet = DataSheetFactory::createFromObject($this->dataSheet->getMetaObject());
+        $needExtraData = false;
         foreach ($phs as $ph) {
             $expr = $this->stripPrefix($ph, $this->prefix);
+            $phSheet->getColumns()->addFromExpression($expr);
             if (! $this->dataSheet->getColumns()->getByExpression($expr)) {
-                if ($phSheet === null) {
-                    $phSheet = $this->dataSheet->copy();
-                }
-                $phSheet->getColumns()->addFromExpression($ph);
+                $needExtraData = true;
             }
         }
         
-        if ($phSheet !== null && ! $phSheet->isFresh() && $this->dataSheet->hasUidColumn()) {
+        if ($needExtraData === true && $this->dataSheet->hasUidColumn()) {
             $uidCol = $this->dataSheet->getUidColumn();
             $phSheet->getFilters()->addConditionFromExpression($uidCol->getExpressionObj(), $uidCol->getValue($this->rowNumber));
             $phSheet->dataRead();
+            // Overwrite freshly read values by those in the input data (in case they were not saved yet)
+            $phSheet->importRows($this->dataSheet);
         } else {
             $phSheet = $this->dataSheet;
         }
