@@ -556,7 +556,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
         if (count($values) > 1) {
             foreach ($values as $nr => $vals) {
-                $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
+                $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
                 $query = $data_connection->runSql($sql);
                 
                 // Now get the primary key of the last insert.
@@ -577,7 +577,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
             }
         } else {
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
             $query = $data_connection->runSql($sql);
             // Now get the primary key of the last insert.
             if ($last_uid_sql_var) {
