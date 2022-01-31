@@ -19,6 +19,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Uxon\QueryBuilderSchema;
 
 /**
  * This query builder represents whatever query builder is configured for the model data source.
@@ -353,5 +354,10 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
     {
         $this->qb->addQueryPart($qpart);
         return $this;
+    }
+    
+    public static function getUxonSchemaClass(): ?string
+    {
+        return QueryBuilderSchema::class;
     }
 }
