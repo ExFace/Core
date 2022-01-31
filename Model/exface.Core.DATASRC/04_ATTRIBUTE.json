@@ -701,7 +701,7 @@
         },
         {
             "CREATED_ON": "2022-01-25 18:30:27",
-            "MODIFIED_ON": "2022-01-25 18:30:27",
+            "MODIFIED_ON": "2022-01-28 08:26:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecb5ba7c5caa66b5ba747827435ce5",
@@ -724,7 +724,7 @@
             "COPYABLEFLAG": "0",
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL: CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#])\n@T-SQL: (CASE WHEN [#ALIAS#] IS NULL THEN NULL ELSE CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#]) END)",
+            "DATA_ADDRESS": "CONCAT(\n  (SELECT [#~alias#]_nsa.app_alias \n    FROM exf_app [#~alias#]_nsa \n    WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n  '.', \n  [#ALIAS#]\n)\n",
             "OBJECT": "0x32340000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,

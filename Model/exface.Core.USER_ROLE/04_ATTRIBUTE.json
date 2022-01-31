@@ -393,7 +393,7 @@
         },
         {
             "CREATED_ON": "2021-03-15 15:34:09",
-            "MODIFIED_ON": "2021-09-10 15:30:52",
+            "MODIFIED_ON": "2022-01-28 08:53:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebbeb480d88036beb4025041000001",
@@ -416,7 +416,7 @@
             "COPYABLEFLAG": "0",
             "ALIAS": "ALIAS_WITH_NS",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CASE\n  WHEN [#ALIAS#] IS NOT NULL AND [#APP#] IS NOT NULL THEN CONCAT((SELECT [#~alias#]_nsa.app_alias FROM exf_app [#~alias#]_nsa WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), '.', [#ALIAS#])\n  ELSE [#ALIAS#]\nEND)",
+            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)",
             "OBJECT": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
             "FORMATTER": "",
             "DISPLAYORDER": null,
