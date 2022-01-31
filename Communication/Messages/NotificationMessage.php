@@ -5,19 +5,24 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\CommonLogic\Communication\AbstractMessage;
 
 /**
  *
  * @author Andrej Kabachnik
  *        
  */
-class NotificationMessage extends GenericMessage implements iHaveIcon
+class NotificationMessage extends AbstractMessage implements iHaveIcon
 {
     use iHaveIconTrait;
     
     private $widgetUxon = null;
     
     private $buttonsUxon = null;
+    
+    private $text = null;
+    
+    private $title = null;
     
     /**
      * 
@@ -71,6 +76,46 @@ class NotificationMessage extends GenericMessage implements iHaveIcon
     protected function setButtons(UxonObject $value) : NotificationMessage
     {
         $this->buttonsUxon = $value;
+        return $this;
+    }
+    
+    public function getText() : string
+    {
+        return $this->text ?? '';
+    }
+    
+    /**
+     * A simple text for the notification (instead of complex `content_widget`)
+     * 
+     * @uxon-property text
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return NotificationMessage
+     */
+    protected function setText(string $value) : NotificationMessage
+    {
+        $this->text = $value;
+        return $this;
+    }
+    
+    public function getTitle() : ?string
+    {
+        return $this->title;
+    }
+    
+    /**
+     * The title of the notification (shown in the menu when the context icon is clicked)
+     *
+     * @uxon-property title
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return NotificationMessage
+     */
+    public function setTitle(string $value) : NotificationMessage
+    {
+        $this->title = $value;
         return $this;
     }
 }

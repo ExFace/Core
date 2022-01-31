@@ -55,4 +55,14 @@ class UserRoleRecipient implements RecipientGroupInterface
         $userData->dataRead();
         return $userData->getUidColumn()->getValues(false);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\RecipientInterface::__toString()
+     */
+    public function __toString(): string
+    {
+        return $this->selector->toString();
+    }
 }

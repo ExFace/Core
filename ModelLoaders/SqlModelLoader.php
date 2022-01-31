@@ -87,6 +87,7 @@ use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
+use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1885,8 +1886,8 @@ SELECT
     cc.name AS NAME,
     cc.alias AS ALIAS,
     a.app_alias AS APP_ALIAS,
-    cc.prototype AS PROTOTYPE,
-    cc.config_uxon AS CONFIG_UXON,
+    cc.message_default_uxon AS MESSAGE_DEFAULT_UXON,
+    cc.message_prototype AS MESSAGE_PROTOTYPE,
     {$this->buildSqlUuidSelector('cc.data_connection_oid')} AS DATA_CONNECTION
 FROM
     exf_communication_channel cc
@@ -1905,19 +1906,15 @@ SQL;
             throw new CommunicationChannelNotFoundError('No communication channel found in model matching "' . $selector->toString() . '"!');
         }
         
-        $prototype = $row['PROTOTYPE'];
-        if (null !== $json = $row['CONFIG_UXON']) {
-            $uxon = UxonObject::fromJson($json);
-        } else {
-            $uxon = new UxonObject();
+        $selector = new CommunicationChannelSelector($this->getWorkbench(), ($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
+        $channel = CommunicationFactory::createChannelEmpty($selector);
+        $channel->setName($row['NAME']);
+        $channel->setConnection($row['DATA_CONNECTION']);
+        $channel->setMessagePrototype($row['MESSAGE_PROTOTYPE']);
+        if ($row['MESSAGE_DEFAULT_UXON'] !== null) {
+            $channel->setMessageDefaults(UxonObject::fromJson($row['MESSAGE_DEFAULT_UXON']));
         }
-        $uxon->setProperty('name', $row['NAME']);
         
-        $channel = CommunicationFactory::createChannelFromUxon($prototype, $uxon, $this->getWorkbench());
-        $channel->setAlias(($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
-        if ($row['DATA_CONNECTION']) {
-            $channel->setConnection($row['DATA_CONNECTION']);
-        }
         return $channel;
     }
 }

@@ -8,11 +8,11 @@ CREATE TABLE dbo.exf_communication_channel (
   modified_by_user_oid binary(16) DEFAULT NULL,
   name nvarchar(50) NOT NULL,
   alias nvarchar(100) NOT NULL,
-  prototype nvarchar(200) NOT NULL,
   descr nvarchar(200) DEFAULT NULL,
   app_oid binary(16) DEFAULT NULL,
   data_connection_oid binary(16) DEFAULT NULL,
-  config_uxon nvarchar(max),
+  message_prototype nvarchar(200) NOT NULL,
+  message_default_uxon nvarchar(max),
   mute_flag tinyint NOT NULL DEFAULT '0',
   CONSTRAINT [PK_exf_communication_channel] PRIMARY KEY CLUSTERED (oid)
 );

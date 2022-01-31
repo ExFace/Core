@@ -7,8 +7,8 @@ interface CommunicatorInterface extends WorkbenchDependantInterface
 {
     /**
      * 
-     * @param EnvelopeInterface $envelope
-     * @return CommunicationAcknowledgementInterface[]
+     * @param CommunicationMessageInterface $message
+     * @return CommunicationReceiptInterface[]
      */
-    public function send(EnvelopeInterface $envelope) : array;
+    public function send(CommunicationMessageInterface $message) : array;
 }

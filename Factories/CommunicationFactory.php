@@ -8,6 +8,11 @@ use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
 use exface\Core\Communication\Messages\GenericMessage;
+use exface\Core\Communication\Messages\TextMessage;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\CommonLogic\Communication\CommunicationChannel;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
 
 /**
  * Produces components related to the communication framework
@@ -18,16 +23,34 @@ use exface\Core\Communication\Messages\GenericMessage;
 abstract class CommunicationFactory extends AbstractSelectableComponentFactory
 {
 
+    public static function createFromSelector(SelectorInterface $selector, array $constructorArguments = null)
+    {
+        if ($selector instanceof CommunicationChannelSelectorInterface) {
+            return $selector->getWorkbench()->model()->getModelLoader()->loadCommunicationChannel($selector);
+        }
+        return parent::createFromSelector($selector, $constructorArguments);
+    }
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
      * @param string $aliasOrClassOrPath
      * @return CommunicationChannelInterface
      */
-    public static function createChannelFromString(WorkbenchInterface $workbench, string $aliasOrClassOrPath) : CommunicationChannelInterface
+    public static function createChannelFromString(WorkbenchInterface $workbench, string $alias) : CommunicationChannelInterface
     {
-        $selector = new CommunicationChannelSelector($workbench, $aliasOrClassOrPath);
-        return parent::createFromSelector($selector);
+        $selector = new CommunicationChannelSelector($workbench, $alias);
+        return $workbench->model()->getModelLoader()->loadCommunicationChannel($selector);
+    }
+    
+    /**
+     * 
+     * @param CommunicationChannelSelectorInterface $selector
+     * @return CommunicationChannelInterface
+     */
+    public static function createChannelEmpty(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface
+    {
+        return new CommunicationChannel($selector);
     }
 
     /**
@@ -47,13 +70,17 @@ abstract class CommunicationFactory extends AbstractSelectableComponentFactory
     /**
      * 
      * @param WorkbenchInterface $workbench
-     * @param string $prototype
+     * @param CommunicationMessageSelectorInterface|string $prototype
      * @return CommunicationMessageInterface
      */
-    public static function createMessageFromPrototype(WorkbenchInterface $workbench, string $prototype) : CommunicationMessageInterface
+    public static function createMessageFromPrototype(WorkbenchInterface $workbench, $prototype, UxonObject $uxon = null) : CommunicationMessageInterface
     {
-        $selector = new CommunicationMessageSelector($workbench, $prototype);
-        return parent::createFromSelector($selector);
+        if ($prototype instanceof CommunicationMessageSelectorInterface) {
+            $selector = $prototype;
+        } else {
+            $selector = new CommunicationMessageSelector($workbench, $prototype);
+        }
+        return parent::createFromSelector($selector, [$workbench, $uxon ?? new UxonObject()]);
     }
     
     /**
@@ -62,14 +89,10 @@ abstract class CommunicationFactory extends AbstractSelectableComponentFactory
      * @param string $subject
      * @return CommunicationMessageInterface
      */
-    public static function createMessage(string $text, string $subject = null) : CommunicationMessageInterface
+    public static function createSimpleMessage(string $text) : CommunicationMessageInterface
     {
-        $msg = new GenericMessage(new UxonObject([
-            'text' => $subject
+        return new TextMessage(new UxonObject([
+            'text' => $text
         ]));
-        if ($subject !== null) {
-            $msg->setSubject($subject);
-        }
-        return $msg;
     }
 }

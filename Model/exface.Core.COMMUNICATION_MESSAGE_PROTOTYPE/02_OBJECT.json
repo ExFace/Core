@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-01-22 15:46:50",
-            "MODIFIED_ON": "2022-01-22 15:46:50",
+            "MODIFIED_ON": "2022-01-31 11:16:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec98d021fca9aa98d0025041000001",
@@ -89,7 +89,7 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
-            "NAME": "Communication channel prototype",
+            "NAME": "Communication message prototype",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
@@ -97,8 +97,8 @@
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
             "DATA_ADDRESS_PROPS": "{\"finder_depth\":\"0\"}",
             "DEFAULT_EDITOR_UXON": null,
-            "ALIAS": "COMMUNICATION_CHANNEL_PROTOTYPE",
-            "DATA_ADDRESS": "*\/*\/Communication\/Channels\/*.php"
+            "ALIAS": "COMMUNICATION_MESSAGE_PROTOTYPE",
+            "DATA_ADDRESS": "*\/*\/Communication\/Messages\/*.php"
         }
     ],
     "totals_rows": [],

@@ -4,24 +4,20 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Communication\Messages\NotificationMessage;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
-use exface\Core\CommonLogic\Communication\Envelope;
-use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 use exface\Core\CommonLogic\Communication\NotificationEnvelope;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\TranslationPlaceholders;
-use exface\Core\Templates\Placeholders\SessionPlaceholders;
 use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
+use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
+use exface\Core\Communication\Messages\Envelope;
 
 /**
  * Creates user-notifications on certain conditions.
@@ -87,9 +83,7 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $notifyIfDataMatchesConditions = null;
     
-    private $envelopeUxons = null;
-    
-    private $envelopes = null;
+    private $messageUxons = null;
 
     /**
      * 
@@ -198,11 +192,12 @@ class NotifyingBehavior extends AbstractBehavior
 
     /**
      * 
-     * @return NotificationEnvelope[]
+     * @return CommunicationMessageInterface[]
      */
     protected function getNotificationEnvelopes(EventInterface $event) : array
     {
-        foreach ($this->envelopeUxons as $uxon) {
+        $messages = [];
+        foreach ($this->messageUxons as $uxon) {
             $json = $uxon->toJson();
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
@@ -216,23 +211,23 @@ class NotifyingBehavior extends AbstractBehavior
                         $rowRenderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo, '~data:'));
                         $rowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo));
                         $renderedUxon = UxonObject::fromJson($rowRenderer->render($json));
-                        $envelopes[] = new NotificationEnvelope($this->getWorkbench(), $renderedUxon);
+                        $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
                     }
                     break;
                 default:
                     $renderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
                     $renderedUxon = UxonObject::fromJson($renderer->render($json));
-                    $envelopes[] = new NotificationEnvelope($this->getWorkbench(), $renderedUxon);
+                    $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
             }
         }
             
-        return $envelopes;
+        return $messages;
     }
     
     /**
-     * Array of notifications to send - each with a channel, recipients and a message model.
+     * Array of messages to send - each with a separate message model: channel, recipients, etc.
      * 
-     * You can use the following placeholders inside any notification model - as recipient, 
+     * You can use the following placeholders inside any message model - as recipient, 
      * message subject - anywhere:
      * 
      * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
@@ -245,16 +240,15 @@ class NotifyingBehavior extends AbstractBehavior
      * events!
      * 
      * @uxon-property notifications
-     * @uxon-type \exface\Core\CommonLogic\Communication\NotificationEnvelope
-     * @uxon-template {"channel": "", "recipients": "", "message": {"subject": "", "text": ""}}
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template {"channel": "", "recipients": ""}
      * 
      * @param UxonObject $arrayOfEnvelopes
      * @return NotifyingBehavior
      */
     protected function setNotifications(UxonObject $arrayOfEnvelopes) : NotifyingBehavior
     {
-        $this->envelopes = null;
-        $this->envelopeUxons = $arrayOfEnvelopes;
+        $this->messageUxons = $arrayOfEnvelopes;
         return $this;
     }
 }

@@ -2,6 +2,8 @@
 namespace exface\Core\Interfaces\Communication;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * Generic interface for communication messages: emails, sms, notifications, chat messages, etc.
@@ -9,8 +11,15 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * @author andrej.kabachnik
  *
  */
-interface CommunicationMessageInterface extends iCanBeConvertedToUxon
+interface CommunicationMessageInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
+    
+    /**
+     * 
+     * @return CommunicationChannelSelectorInterface|NULL
+     */
+    public function getChannelSelector() : ?CommunicationChannelSelectorInterface;
+    
     /**
      * 
      * @return string
@@ -19,7 +28,14 @@ interface CommunicationMessageInterface extends iCanBeConvertedToUxon
     
     /**
      * 
-     * @return string|NULL
+     * @return RecipientInterface[]
      */
-    public function getSubject() : ?string;
+    public function getRecipients() : array;
+    
+    /**
+     * 
+     * @param CommunicationMessageInterface $anotherMsg
+     * @return CommunicationMessageInterface
+     */
+    public static function fromOtherMessageType(CommunicationMessageInterface $anotherMsg) : CommunicationMessageInterface;
 }

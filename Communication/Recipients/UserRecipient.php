@@ -49,4 +49,14 @@ class UserRecipient implements UserRecipientInterface, EmailRecipientInterface
     {
         return $this->getUser()->getEmail();
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\RecipientInterface::__toString()
+     */
+    public function __toString(): string
+    {
+        return $this->user->getUsername();
+    }
 }

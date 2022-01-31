@@ -135,7 +135,7 @@ class FileFinderConnector extends TransparentConnector
      * @uxon-property base_path
      * @uxon-type string
      *
-     * @param unknown $value            
+     * @param string $value            
      * @return \exface\Core\DataConnectors\FileFinderConnector
      */
     public function setBasePath($value)

@@ -11,5 +11,5 @@ interface CommunicationConnectionInterface extends DataConnectionInterface
      * @param array $recipients
      * @return CommunicationReceiptInterface
      */
-    public function communicate(CommunicationMessageInterface $message, array $recipients) : CommunicationReceiptInterface;
+    public function communicate(CommunicationMessageInterface $message) : CommunicationReceiptInterface;
 }

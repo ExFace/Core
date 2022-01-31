@@ -2,7 +2,8 @@
 namespace exface\Core\CommonLogic\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
+use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
@@ -11,13 +12,15 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 use exface\Core\Interfaces\Selectors\DataConnectionSelectorInterface;
 use exface\Core\Factories\DataConnectionFactory;
-use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
+use exface\Core\Communication\Messages\TextMessage;
+use exface\Core\Communication\Messages\Envelope;
+use exface\Core\Factories\CommunicationFactory;
+use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
+use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
 
-abstract class AbstractCommunicationChannel implements CommunicationChannelInterface
+class CommunicationChannel implements CommunicationChannelInterface
 {
-    use ImportUxonObjectTrait;
-    
     use AliasTrait {
         getAlias as getAliasFromSelector;
     }
@@ -38,13 +41,12 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     
     private $defaultMessageUxon = null;
     
-    public function __construct(CommunicationChannelSelectorInterface $selector, UxonObject $config = null)
+    private $messagePrototype = null;
+    
+    public function __construct(CommunicationChannelSelectorInterface $selector)
     {
         $this->selector = $selector;
         $this->workbench = $selector->getWorkbench();
-        if ($config !== null) {
-            $this->importUxonObject($config);
-        }
     }
     
     /**
@@ -76,22 +78,13 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     {
         return $this->workbench;
     }
-
-    /**
-     * 
-     * @return string|NULL
-     */
-    public static function getUxonSchemaClass(): ?string
-    {
-        return null;
-    }
     
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::getConnection()
      */
-    public function getConnection() : ?CommunicationConnectionInterface
+    public function getConnection() : CommunicationConnectionInterface
     {
         if ($this->connection === null && $this->connectionSelector !== null) {
             $this->connection = DataConnectionFactory::createFromSelector($this->connectionSelector);
@@ -102,9 +95,9 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
     /**
      * 
      * @param CommunicationConnectionInterface|DataConnectionSelectorInterface|string $connectionOrSelectorOrString
-     * @return AbstractCommunicationChannel
+     * @return CommunicationChannel
      */
-    public function setConnection($connectionOrSelectorOrString) : AbstractCommunicationChannel
+    public function setConnection($connectionOrSelectorOrString) : CommunicationChannel
     {
         $this->connection = null;
         $this->connectionSelector = null;
@@ -129,39 +122,7 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
      */
     public function getAlias()
     {
-        if ($this->alias === null) {
-            if ($this->selector->isAlias()) {
-                $this->alias = $this->selector::stripNamespace($this->selector->toString());
-            } else {
-                $this->alias = $this->getAliasFromSelector();
-            }
-        }
-        return $this->alias;
-    }
-    
-    /**
-     * Alias of the data type
-     *
-     * @uxon-property alias
-     * @uxon-type metamodel:datatype
-     *
-     * @param string $string
-     */
-    public function setAlias($string)
-    {
-        $selector = new CommunicationChannelSelector($this->getWorkbench(), $string);
-        $this->selector = $selector;
-        $this->alias = null;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    protected function getClassnameSuffixToStripFromAlias() : string
-    {
-        return 'Channel';
+        return $this->getSelector()->toString();
     }
     
     protected function getMessageDefaults() : UxonObject
@@ -177,11 +138,50 @@ abstract class AbstractCommunicationChannel implements CommunicationChannelInter
      * @uxon-template {"":""}
      * 
      * @param UxonObject $value
-     * @return AbstractCommunicationChannel
+     * @return CommunicationChannel
      */
-    public function setMessageDefaults(UxonObject $value) : AbstractCommunicationChannel
+    public function setMessageDefaults(UxonObject $value) : CommunicationChannel
     {
         $this->defaultMessageUxon = $value;
         return $this;
+    }
+    
+    protected function getMessagePrototype() : string
+    {
+        return $this->messagePrototype ?? TextMessage::class;
+    }
+    
+    public function setMessagePrototype(string $value) : CommunicationChannel
+    {
+        $this->messagePrototype = $value;
+        return $this;
+    }
+    
+    public function send(CommunicationMessageInterface $message): CommunicationReceiptInterface
+    {
+        if ($message instanceof Envelope) {
+            $message = $this->createMessageFromEnvelope($message);
+        }
+        return $this->getConnection()->communicate($message);
+    }
+    
+    /**
+     * 
+     * @param Envelope $envelope
+     * @return CommunicationMessageInterface
+     */
+    protected function createMessageFromEnvelope(Envelope $envelope) : CommunicationMessageInterface
+    {
+        return CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $this->getMessagePrototype(), $envelope->exportUxonObject());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::getMessagePrototypeSelector()
+     */
+    public function getMessagePrototypeSelector() : CommunicationMessageSelectorInterface
+    {
+        return new CommunicationMessageSelector($this->getWorkbench(), $this->getMessagePrototype());
     }
 }
