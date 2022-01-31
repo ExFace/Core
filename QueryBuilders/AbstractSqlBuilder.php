@@ -105,7 +105,6 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
  *  |
  * ```
  * 
- * 
  * Multi-dialect statements MUST start with an `@`. Every dialect-tag (e.g. `@T-SQL:`) 
  * MUST be placed at the beginning of a new line (illustrated by the pipes in the example
  * above - don't actually use the pipes!). Everything until the next dialect-tag or the end of the field is concidered to 
@@ -137,6 +136,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-type string
      */
     const DAP_SQL_SELECT_WHERE = 'SQL_SELECT_WHERE';
+    
+    /**
+     * Custom SQL to use in FROM statements.
+     * 
+     * Use a custom SELECT here and a table name as the data address to write to the table
+     * directly while selecting from some complex view-like statement.
+     *
+     * @uxon-property SQL_READ_FROM
+     * @uxon-target object
+     * @uxon-type string
+     */
+    const DAP_SQL_READ_FROM = 'SQL_READ_FROM';
     
     /**
      * Tells the query builder what type the SQL column has.
@@ -348,6 +359,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     const DAP_SQL_ORDER_BY = 'SQL_ORDER_BY';
     
+    const OPERATION_READ = 'read';
+    
+    const OPERATION_WRITE = 'write';
+    
     // Config
     private $reserved_words = array(
         'SIZE',
@@ -418,7 +433,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
     {
-        return 'UPDATE ' . $this->buildSqlFrom() . $sqlSet . $sqlWhere;
+        return 'UPDATE ' . $this->buildSqlFrom(static::OPERATION_WRITE) . $sqlSet . $sqlWhere;
     }
     
     /**
@@ -432,7 +447,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function buildSqlQueryDelete(string $sqlWhere) : string
     {
-        return 'DELETE FROM ' . $this->buildSqlFrom() . $sqlWhere;
+        return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . $sqlWhere;
     }
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
@@ -705,7 +720,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $customUid = UUIDDataType::generateSqlOptimizedUuid();
                 $row[$uidAddress] = $customUid;
             }
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             
             $beforeSql = $before_each_insert_sqls[$nr] . ($uidBeforeEach ?? '');
             $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
@@ -1378,7 +1393,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $output;
     }
     
-    protected function buildSqlFrom()
+    protected function buildSqlFrom(string $operation = self::OPERATION_READ)
     {
         // Replace static placeholders
         $alias = $this->getMainObject()->getAlias();
@@ -2615,13 +2630,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * @return string
      */
-    protected function buildSqlDataAddress(object $qpartOrModelElement) : string
+    protected function buildSqlDataAddress(object $qpartOrModelElement, string $operation = self::OPERATION_READ) : string
     {
         switch (true) {
             case $qpartOrModelElement instanceof QueryPartAttribute:
-            case $qpartOrModelElement instanceof MetaObjectInterface:
             case $qpartOrModelElement instanceof MetaAttributeInterface:
                 $addr = $qpartOrModelElement->getDataAddress();
+                break;
+            case $qpartOrModelElement instanceof MetaObjectInterface:
+                $addr = $qpartOrModelElement->getDataAddress();
+                if ($operation === self::OPERATION_READ && $customFrom = $qpartOrModelElement->getDataAddressProperty(static::DAP_SQL_READ_FROM)) {
+                    $addr = $customFrom;   
+                }
                 break;
             default:
                 throw new QueryBuilderException('Cannot get data address from ' . get_class($qpartOrModelElement) . ': expecting query part, meta object or attribute!');

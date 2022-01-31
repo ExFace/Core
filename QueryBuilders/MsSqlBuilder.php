@@ -495,7 +495,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     public function buildSqlQueryUpdate(string $sqlSet, string $sqlWhere) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
-        return 'UPDATE ' . $table_alias  . $sqlSet . ' FROM ' . $this->buildSqlFrom() . $sqlWhere;
+        return 'UPDATE ' . $table_alias  . $sqlSet . ' FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $sqlWhere;
     }
     
     /**
@@ -506,7 +506,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     public function buildSqlQueryDelete(string $sqlWhere) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
-        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom() . $sqlWhere;
+        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $sqlWhere;
     }
     
     /**
