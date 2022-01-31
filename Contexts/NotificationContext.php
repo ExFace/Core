@@ -201,11 +201,12 @@ class NotificationContext extends AbstractContext
     
     public function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
+        $title = $notification->getTitle() ?? StringDataType::truncate($notification->getText(), 60, true);
         $widgetUxon = new UxonObject([
             'object_alias' => 'exface.Core.NOTIFICATION',
             'width' => 1,
             'height' => 'auto',
-            'caption' => $notification->getSubject() ?? StringDataType::truncate($notification->getText(), 60, true),
+            'caption' => $title,
             'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
             'buttons' => $notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [
                 [
@@ -239,7 +240,7 @@ class NotificationContext extends AbstractContext
         foreach ($userUids as $userUid) {
             $ds->addRow([
                 'USER' => $userUid,
-                'TITLE' => $notification->getSubject(),
+                'TITLE' => $title,
                 'ICON' => $notification->getIcon(),
                 'WIDGET_UXON' => $widgetUxon->toJson()
             ]);

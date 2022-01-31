@@ -26,20 +26,20 @@
             "attribute_alias": "APP"
         },
         {
-            "name": "PROTOTYPE",
-            "attribute_alias": "PROTOTYPE"
+            "name": "MESSAGE_PROTOTYPE",
+            "attribute_alias": "MESSAGE_PROTOTYPE"
         },
         {
-            "name": "CONFIG_UXON",
-            "attribute_alias": "CONFIG_UXON"
+            "name": "MESSAGE_DEFAULT_UXON",
+            "attribute_alias": "MESSAGE_DEFAULT_UXON"
         },
         {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
         {
-            "name": "DATA_CONNECTION",
-            "attribute_alias": "DATA_CONNECTION"
+            "name": "DATA_CONNECTION_DEFAULT",
+            "attribute_alias": "DATA_CONNECTION_DEFAULT"
         },
         {
             "name": "MUTE_FLAG",
@@ -57,15 +57,15 @@
     "rows": [
         {
             "CREATED_ON": "2022-01-27 13:34:52",
-            "MODIFIED_ON": "2022-01-27 13:34:52",
+            "MODIFIED_ON": "2022-01-31 16:30:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9de48727e8f69de4025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "PROTOTYPE": "exface\/Core\/Communication\/Channels\/NotificationContextChannel.php",
-            "CONFIG_UXON": null,
+            "MESSAGE_PROTOTYPE": "exface\/Core\/Communication\/Messages\/NotificationMessage.php",
+            "MESSAGE_DEFAULT_UXON": null,
             "ALIAS": "NOTIFICATIONS",
-            "DATA_CONNECTION": "",
+            "DATA_CONNECTION_DEFAULT": "0x11ecae3bb921a636ae3b025041000001",
             "MUTE_FLAG": "0",
             "DESCRIPTION": "",
             "NAME": "In-App notifications"

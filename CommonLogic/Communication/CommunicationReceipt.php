@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Communication;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
+use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
 
 class CommunicationReceipt implements CommunicationReceiptInterface
 {
@@ -11,12 +12,12 @@ class CommunicationReceipt implements CommunicationReceiptInterface
     
     private $time = null;
     
-    private $channel = null;
+    private $connection = null;
     
-    public function __construct(CommunicationMessageInterface $message, CommunicationChannelInterface $channel = null, \DateTimeInterface $time = null)
+    public function __construct(CommunicationMessageInterface $message, CommunicationConnectionInterface $connection, \DateTimeInterface $time = null)
     {
         $this->message = $message;
-        $this->channel = $channel;
+        $this->connection = $connection;
         $this->time = $time ?? new \DateTimeImmutable();
     }
     
@@ -43,10 +44,10 @@ class CommunicationReceipt implements CommunicationReceiptInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getChannel()
+     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getConnection()
      */
-    public function getChannel() : ?CommunicationChannelInterface
+    public function getConnection() : CommunicationConnectionInterface
     {
-        return $this->channel;
+        return $this->connection;
     }
 }

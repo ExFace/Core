@@ -8,11 +8,11 @@ CREATE TABLE IF NOT EXISTS `exf_communication_channel` (
   `modified_by_user_oid` binary(16) DEFAULT NULL,
   `name` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `alias` varchar(100) NOT NULL,
-  `prototype` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `descr` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `app_oid` binary(16) DEFAULT NULL,
   `data_connection_oid` binary(16) DEFAULT NULL,
-  `config_uxon` longtext,
+  `message_prototype` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `message_default_uxon` longtext,
   `mute_flag` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`oid`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;

@@ -5,7 +5,7 @@ interface CommunicationReceiptInterface
 {
     public function getMessage() : CommunicationMessageInterface;
     
-    public function getChannel() : ?CommunicationChannelInterface;
+    public function getConnection() : CommunicationConnectionInterface;
     
     public function getSentTime() : \DateTimeInterface;
 }

@@ -13,5 +13,5 @@ namespace exface\Core\Interfaces\Selectors;
  * @author Andrej Kabachnik
  *
  */
-interface CommunicationChannelSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, PrototypeSelectorInterface
+interface CommunicationChannelSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface
 {}

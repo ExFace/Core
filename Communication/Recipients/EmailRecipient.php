@@ -26,4 +26,14 @@ class EmailRecipient implements EmailRecipientInterface
     {
         return $this->email;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\RecipientInterface::__toString()
+     */
+    public function __toString(): string
+    {
+        return $this->email;
+    }
 }

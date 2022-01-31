@@ -1,15 +1,34 @@
 <?php
 namespace exface\Core\Interfaces\Communication;
 
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
 
-interface CommunicationChannelInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface
+interface CommunicationChannelInterface extends WorkbenchDependantInterface, AliasInterface
 {
-    public function send(EnvelopeInterface $envelope) : CommunicationReceiptInterface;
+    /**
+     * 
+     * @param CommunicationMessageInterface $message
+     * @return CommunicationReceiptInterface
+     */
+    public function send(CommunicationMessageInterface $message) : CommunicationReceiptInterface;
     
+    /**
+     * 
+     * @return string
+     */
     public function getName() : string;
     
-    public function getConnection() : ?CommunicationConnectionInterface;
+    /**
+     * 
+     * @return CommunicationConnectionInterface
+     */
+    public function getConnection() : CommunicationConnectionInterface;
+    
+    /**
+     * 
+     * @return CommunicationMessageSelectorInterface
+     */
+    public function getMessagePrototypeSelector() : CommunicationMessageSelectorInterface;
 }

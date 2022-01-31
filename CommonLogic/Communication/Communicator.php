@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
-use exface\Core\Interfaces\Communication\EnvelopeInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
 class Communicator implements CommunicatorInterface
@@ -19,7 +18,7 @@ class Communicator implements CommunicatorInterface
         $this->workbench = $workbench;
     }
     
-    public function send(EnvelopeInterface $envelope) : array
+    public function send(CommunicationMessageInterface $envelope) : array
     {
         $acks = [];
         foreach ($this->getChannels($envelope) as $channel) {
@@ -33,7 +32,7 @@ class Communicator implements CommunicatorInterface
      * @param CommunicationMessageInterface $message
      * @return CommunicationChannelInterface[]
      */
-    protected function getChannels(EnvelopeInterface $envelope) : array
+    protected function getChannels(CommunicationMessageInterface $envelope) : array
     {
         $result = [];
         if ($chSel = $envelope->getChannelSelector()) {

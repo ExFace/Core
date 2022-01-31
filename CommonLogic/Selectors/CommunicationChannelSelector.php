@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Selectors;
 
-use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 
 /**
  * Generic implementation of the CommunicationChannelSelectorInterface.
@@ -14,7 +14,7 @@ use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
  */
 class CommunicationChannelSelector extends AbstractSelector implements CommunicationChannelSelectorInterface
 {
-    use ResolvableNameSelectorTrait;
+    use AliasSelectorTrait;
     
     /**
      *

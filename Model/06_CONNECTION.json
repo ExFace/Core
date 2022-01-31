@@ -152,6 +152,20 @@
             "READONLY": "1",
             "ALIAS": "WORKBENCH_CONFIG",
             "FILTER_CONTEXT": null
+        },
+        {
+            "CREATED_ON": "2022-01-31 16:30:30",
+            "MODIFIED_ON": "2022-01-31 16:31:05",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecae3bb921a636ae3b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "LABEL": "Workbench Contexts",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchContextConnector.php",
+            "CONFIG": null,
+            "READONLY": "0",
+            "ALIAS": "WORKBENCH_CONTEXTS",
+            "FILTER_CONTEXT": null
         }
     ],
     "totals_rows": [],

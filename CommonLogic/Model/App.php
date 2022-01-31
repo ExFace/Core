@@ -46,9 +46,7 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
-use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -625,8 +623,6 @@ class App implements AppInterface
         switch (true) {
             case $selector instanceof DataTypeSelectorInterface:
                 return 'DataType';
-            case $selector instanceof CommunicationChannelSelectorInterface:
-                return 'Channel';
         }
         return '';
     }
@@ -659,8 +655,6 @@ class App implements AppInterface
                 return 'QueryBuilders';
             case $selector instanceof WidgetSelectorInterface:
                 return 'Widgets';
-            case $selector instanceof CommunicationChannelSelectorInterface:
-                return 'Communication\\Channels';
             case $selector instanceof CommunicationMessageSelectorInterface:
                 return 'Communication\\Messages';
         }
@@ -766,8 +760,6 @@ class App implements AppInterface
         switch (true) {
             case $selector instanceof DataTypeSelectorInterface:
                 return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
-            case $selector instanceof CommunicationChannelSelector:
-                return $this->getWorkbench()->model()->getModelLoader()->loadCommunicationChannel($selector);
         }
         throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
     }
