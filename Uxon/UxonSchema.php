@@ -437,7 +437,7 @@ class UxonSchema implements UxonSchemaInterface
                     if (substr($search, 0, 1) === '=') {
                         $type = 'metamodel:formula';
                         $options = $this->getMetamodelFormulaExpressions($search);
-                        brk;
+                        break;
                     }
                     
                     $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
