@@ -559,7 +559,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function isWritable()
     {
         $result = true;
-        $addr = $this->buildSqlDataAddress($this->getMainObject());
+        $addr = $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE);
         // First of all find out, if the object's data address is empty or a view. If so, we generally can't write to it!
         if (! $addr) {
             throw new QueryBuilderException('The data address of the object "' . $this->getMainObject()->getAlias() . '" is empty. Cannot perform writing operations!');
@@ -907,7 +907,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             
             if (count($updates_by_filter) > 0) {
-                $sql = $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
+                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
                 $query = $data_connection->runSql($sql);
                 $affected_rows = $query->countAffectedRows();
                 $query->freeResult();
@@ -1397,7 +1397,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         // Replace static placeholders
         $alias = $this->getMainObject()->getAlias();
-        $table = str_replace('[#~alias#]', $alias, $this->buildSqlDataAddress($this->getMainObject()));
+        $table = str_replace('[#~alias#]', $alias, $this->buildSqlDataAddress($this->getMainObject(), $operation));
         $from = $table . $this->buildSqlAsForTables($this->getMainTableAlias());
         
         // Replace dynamic palceholders
