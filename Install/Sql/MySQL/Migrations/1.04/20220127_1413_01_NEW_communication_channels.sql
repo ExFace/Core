@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS `exf_communication_channel` (
   `alias` varchar(100) NOT NULL,
   `descr` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `app_oid` binary(16) DEFAULT NULL,
-  `data_connection_oid` binary(16) DEFAULT NULL,
+  `data_connection_default_oid` binary(16) DEFAULT NULL,
   `message_prototype` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `message_default_uxon` longtext,
-  `mute_flag` tinyint(1) NOT NULL DEFAULT '0',
+  `mute_flag_default` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`oid`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 

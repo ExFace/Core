@@ -1,5 +1,5 @@
 {
-    "object_alias": "exface.Core.SCHEDULER",
+    "object_alias": "exface.Core.OBJECT_BEHAVIORS",
     "columns": [
         {
             "name": "CREATED_ON",
@@ -22,67 +22,63 @@
             "attribute_alias": "UID"
         },
         {
-            "name": "ACTION_UXON",
-            "attribute_alias": "ACTION_UXON"
+            "name": "BEHAVIOR",
+            "attribute_alias": "BEHAVIOR"
         },
         {
-            "name": "QUEUE_TOPICS",
-            "attribute_alias": "QUEUE_TOPICS"
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
         },
         {
-            "name": "SCHEDULE",
-            "attribute_alias": "SCHEDULE"
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
         },
         {
             "name": "APP",
             "attribute_alias": "APP"
         },
         {
-            "name": "DESCRIPTION",
-            "attribute_alias": "DESCRIPTION"
-        },
-        {
             "name": "NAME",
             "attribute_alias": "NAME"
         },
         {
-            "name": "TASK_UXON",
-            "attribute_alias": "TASK_UXON"
-        },
-        {
-            "name": "FIRST_RUN",
-            "attribute_alias": "FIRST_RUN"
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
         }
     ],
     "rows": [
         {
-            "CREATED_ON": "2021-02-01 16:24:42",
-            "MODIFIED_ON": "2022-02-01 08:37:05",
+            "CREATED_ON": "2022-02-01 13:46:36",
+            "MODIFIED_ON": "2022-02-01 13:47:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11eb92e27691c90492e2025041000001",
-            "UID": "0x11eb801a9bd7d794801a025041000001",
-            "ACTION_UXON": {
-                "alias": "exface.Core.CleanUp"
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec9260fdcfd16a9260747827435ce5",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "CONFIG_UXON": {
+                "compare_attributes": [
+                    "TABLE_NAME",
+                    "COLUMN_NAME",
+                    "ROW_UID"
+                ],
+                "on_duplicate_single_row": "update",
+                "on_duplicate_multi_row": "update"
             },
-            "QUEUE_TOPICS": "scheduler",
-            "SCHEDULE": "0 1 * * *",
+            "OBJECT": "0x11ebbe0692c9ced4be06025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "DESCRIPTION": "",
-            "NAME": "Clean up expiring data in workbench",
-            "TASK_UXON": null,
-            "FIRST_RUN": "2021-02-02 14:55:58"
+            "NAME": "Prevent multiple values per customized row",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
     "filters": {
         "operator": "AND",
-        "base_object_alias": "exface.Core.SCHEDULER",
+        "base_object_alias": "exface.Core.OBJECT_BEHAVIORS",
         "conditions": [
             {
                 "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
-                "object_alias": "exface.Core.SCHEDULER"
+                "object_alias": "exface.Core.OBJECT_BEHAVIORS"
             }
         ]
     },

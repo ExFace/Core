@@ -18,6 +18,8 @@ use exface\Core\Communication\Messages\Envelope;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
+use exface\Core\Exceptions\Communication\CommunicationNotSentError;
+use exface\Core\DataTypes\StringDataType;
 
 class CommunicationChannel implements CommunicationChannelInterface
 {
@@ -43,6 +45,8 @@ class CommunicationChannel implements CommunicationChannelInterface
     
     private $messagePrototype = null;
     
+    private $muted = false;
+    
     public function __construct(CommunicationChannelSelectorInterface $selector)
     {
         $this->selector = $selector;
@@ -58,11 +62,21 @@ class CommunicationChannel implements CommunicationChannelInterface
         return $this->selector;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::getName()
+     */
     public function getName(): string
     {
-        return $this->getName();
+        return $this->name;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::setName()
+     */
     public function setName(string $name) : CommunicationChannelInterface
     {
         $this->name = $name;
@@ -94,8 +108,8 @@ class CommunicationChannel implements CommunicationChannelInterface
     
     /**
      * 
-     * @param CommunicationConnectionInterface|DataConnectionSelectorInterface|string $connectionOrSelectorOrString
-     * @return CommunicationChannel
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::setConnection()
      */
     public function setConnection($connectionOrSelectorOrString) : CommunicationChannel
     {
@@ -115,30 +129,28 @@ class CommunicationChannel implements CommunicationChannelInterface
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AliasInterface::getAlias()
-     * @see AliasTrait::getAlias()
      */
     public function getAlias()
     {
         return $this->getSelector()->toString();
     }
     
+    /**
+     * 
+     * @return UxonObject
+     */
     protected function getMessageDefaults() : UxonObject
     {
         return $this->defaultMessageUxon ?? new UxonObject();
     }
     
     /**
-     * Default message model to use
      * 
-     * @uxon-property message_defaults
-     * @uxon-type \exface\Core\Communication\Messages\GenericMessage
-     * @uxon-template {"":""}
-     * 
-     * @param UxonObject $value
-     * @return CommunicationChannel
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::setMessageDefaults()
      */
     public function setMessageDefaults(UxonObject $value) : CommunicationChannel
     {
@@ -146,23 +158,45 @@ class CommunicationChannel implements CommunicationChannelInterface
         return $this;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getMessagePrototype() : string
     {
         return $this->messagePrototype ?? TextMessage::class;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::setMessagePrototype()
+     */
     public function setMessagePrototype(string $value) : CommunicationChannel
     {
         $this->messagePrototype = $value;
         return $this;
     }
     
-    public function send(CommunicationMessageInterface $message): CommunicationReceiptInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::send()
+     */
+    public function send(CommunicationMessageInterface $message) : ?CommunicationReceiptInterface
     {
-        if ($message instanceof Envelope) {
-            $message = $this->createMessageFromEnvelope($message);
+        if ($this->isMuted()) {
+            $this->getWorkbench()->getLogger()->debug('Ignoring message "' . StringDataType::truncate($message->getText(), 20) . '" as channel "' . $this->getName() . '" is muted!');
+            return null;
         }
-        return $this->getConnection()->communicate($message);
+        try {
+            if ($message instanceof Envelope) {
+                $message = $this->createMessageFromEnvelope($message);
+            }
+            return $this->getConnection()->communicate($message);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException(new CommunicationNotSentError($message, 'Failed to message over channel "' . $this->getName() . '": ' . $e->getMessage()));
+        }
     }
     
     /**
@@ -183,5 +217,26 @@ class CommunicationChannel implements CommunicationChannelInterface
     public function getMessagePrototypeSelector() : CommunicationMessageSelectorInterface
     {
         return new CommunicationMessageSelector($this->getWorkbench(), $this->getMessagePrototype());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::isMuted()
+     */
+    public function isMuted() : bool
+    {
+        return $this->muted;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationChannelInterface::setMuted()
+     */
+    public function setMuted(bool $value) : CommunicationChannelInterface
+    {
+        $this->muted = $value;
+        return $this;
     }
 }
