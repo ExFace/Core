@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-01-22 15:38:56",
-            "MODIFIED_ON": "2022-01-31 18:45:40",
+            "MODIFIED_ON": "2022-02-01 16:08:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9b5e07d27cb89b5e025041000001",
@@ -95,7 +95,7 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_READ_FROM\":\"(SELECT \\n\\tccm.*,\\n\\tCOALESCE(ccm.data_connection_customized_oid, data_connection_default_oid) AS data_connection_oid\\n\\tFROM (\\n\\t\\tSELECT \\n\\t\\t\\tcc.*,\\n\\t\\t\\tCONV(cdc.`value`, 16, 2) AS data_connection_customized_oid\\n\\t\\tFROM \\n\\t\\t\\texf_communication_channel cc\\n\\t\\t\\tLEFT JOIN exf_customizing cdc ON cdc.table_name = 'exf_customizing' AND cdc.column_name = 'data_connection_oid' AND cdc.row_oid = cc.oid\\n\\t) ccm\\n)\"}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_READ_FROM\":\"@MySQL: (SELECT \\n\\tcc.*,\\n\\tcdc.value,\\n\\t(CASE WHEN cdc.value IS NOT NULL THEN UNHEX(SUBSTRING(cdc.value, 3)) ELSE cc.data_connection_default_oid END) AS data_connection_oid,\\n\\tCOALESCE(cm.value, cc.mute_flag_default) AS mute_flag\\nFROM \\n\\texf_communication_channel cc\\n\\tLEFT JOIN exf_customizing cdc ON cdc.table_name = 'exf_communication_channel' AND cdc.column_name = 'data_connection_oid' AND cdc.row_oid = cc.oid\\n\\tLEFT JOIN exf_customizing cm ON cm.table_name = 'exf_communication_channel' AND cm.column_name = 'mute_flag' AND cm.row_oid = cc.oid\\n)\\n@T-SQL: (SELECT \\n\\tcc.*,\\n\\tcdc.value,\\n\\t(CASE WHEN cdc.value IS NOT NULL THEN CONVERT(binary(16),cdc.value,1) ELSE cc.data_connection_default_oid END) AS data_connection_oid,\\n\\tCOALESCE(cm.value, cc.mute_flag_default) AS mute_flag\\nFROM \\n\\texf_communication_channel cc\\n\\tLEFT JOIN exf_customizing cdc ON cdc.table_name = 'exf_communication_channel' AND cdc.column_name = 'data_connection_oid' AND cdc.row_oid = cc.oid\\n\\tLEFT JOIN exf_customizing cm ON cm.table_name = 'exf_communication_channel' AND cm.column_name = 'mute_flag' AND cm.row_oid = cc.oid\\n)\"}",
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
@@ -108,21 +108,29 @@
                                 "attribute_alias": "NAME"
                             },
                             {
-                                "attribute_alias": "APP"
+                                "widget_type": "WidgetGroup",
+                                "widgets": [
+                                    {
+                                        "attribute_alias": "APP"
+                                    },
+                                    {
+                                        "attribute_alias": "DATA_CONNECTION_DEFAULT"
+                                    },
+                                    {
+                                        "attribute_alias": "MUTE_FLAG_DEFAULT"
+                                    }
+                                ]
                             },
                             {
                                 "attribute_alias": "ALIAS"
-                            },
-                            {
-                                "attribute_alias": "DESCRIPTION",
-                                "height": 3
                             },
                             {
                                 "attribute_alias": "MESSAGE_PROTOTYPE",
                                 "id": "msg_prototype_field"
                             },
                             {
-                                "attribute_alias": "DATA_CONNECTION_DEFAULT"
+                                "attribute_alias": "DESCRIPTION",
+                                "height": 2
                             }
                         ]
                     },

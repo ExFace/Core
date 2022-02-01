@@ -26,6 +26,10 @@
             "attribute_alias": "APP"
         },
         {
+            "name": "MUTE_FLAG_DEFAULT",
+            "attribute_alias": "MUTE_FLAG_DEFAULT"
+        },
+        {
             "name": "MESSAGE_PROTOTYPE",
             "attribute_alias": "MESSAGE_PROTOTYPE"
         },
@@ -40,10 +44,6 @@
         {
             "name": "DATA_CONNECTION_DEFAULT",
             "attribute_alias": "DATA_CONNECTION_DEFAULT"
-        },
-        {
-            "name": "MUTE_FLAG",
-            "attribute_alias": "MUTE_FLAG"
         },
         {
             "name": "DESCRIPTION",
@@ -62,11 +62,11 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9de48727e8f69de4025041000001",
             "APP": "0x31000000000000000000000000000000",
+            "MUTE_FLAG_DEFAULT": "0",
             "MESSAGE_PROTOTYPE": "exface\/Core\/Communication\/Messages\/NotificationMessage.php",
             "MESSAGE_DEFAULT_UXON": null,
             "ALIAS": "NOTIFICATIONS",
             "DATA_CONNECTION_DEFAULT": "0x11ecae3bb921a636ae3b025041000001",
-            "MUTE_FLAG": "0",
             "DESCRIPTION": "",
             "NAME": "In-App notifications"
         }

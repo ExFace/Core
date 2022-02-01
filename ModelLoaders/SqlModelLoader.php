@@ -1888,10 +1888,15 @@ SELECT
     a.app_alias AS APP_ALIAS,
     cc.message_default_uxon AS MESSAGE_DEFAULT_UXON,
     cc.message_prototype AS MESSAGE_PROTOTYPE,
-    {$this->buildSqlUuidSelector('cc.data_connection_oid')} AS DATA_CONNECTION
+    {$this->buildSqlUuidSelector('cc.data_connection_default_oid')} AS DATA_CONNECTION_DEFAULT,
+    cdc.value AS DATA_CONNECTION_CUSTOMIZED,
+    cc.mute_flag_default AS MUTE_FLAG_DEFAULT,
+    cm.value AS MUTE_FLAG_CUSTOMIZED
 FROM
     exf_communication_channel cc
     LEFT JOIN exf_app a ON cc.app_oid = a.oid
+    LEFT JOIN exf_customizing cdc ON cdc.table_name = 'exf_communication_channel' AND cdc.column_name = 'data_connection_oid' AND cdc.row_oid = cc.oid
+    LEFT JOIN exf_customizing cm ON cm.table_name = 'exf_communication_channel' AND cm.column_name = 'mute_flag' AND cm.row_oid = cc.oid
 WHERE {$selectorWhere}
 SQL;
     
@@ -1909,7 +1914,8 @@ SQL;
         $selector = new CommunicationChannelSelector($this->getWorkbench(), ($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
         $channel = CommunicationFactory::createChannelEmpty($selector);
         $channel->setName($row['NAME']);
-        $channel->setConnection($row['DATA_CONNECTION']);
+        $channel->setConnection($row['DATA_CONNECTION_CUSTOMIZED'] ?? $row['DATA_CONNECTION_DEFAULT']);
+        $channel->setMuted(BooleanDataType::cast($row['MUTE_FLAG_CUSTOMIZED'] ?? $row['MUTE_FLAG_DEFAULT']));
         $channel->setMessagePrototype($row['MESSAGE_PROTOTYPE']);
         if ($row['MESSAGE_DEFAULT_UXON'] !== null) {
             $channel->setMessageDefaults(UxonObject::fromJson($row['MESSAGE_DEFAULT_UXON']));
