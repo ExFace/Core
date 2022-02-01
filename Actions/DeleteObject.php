@@ -61,7 +61,8 @@ class DeleteObject extends AbstractAction implements iDeleteData
         
         $deletedRows = $input_data->dataDelete($transaction);
         
-        $result = ResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows));
+        $message = $this->getResultMessageText() ?? $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows);
+        $result = ResultFactory::createMessageResult($task, $message);
         
         if ($deletedRows > 0) {
             $result->setDataModified(true);
