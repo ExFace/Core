@@ -700,7 +700,11 @@ class App implements AppInterface
                     return $reflector->newInstanceArgs($constructorArguments);
                 }
             } else {
-                return $this->loadFromModel($selector);
+                $instance = $this->loadFromModel($selector);
+                if ($instance === null) {
+                    throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+                }
+                return $instance;
             }
         }
         
@@ -733,12 +737,11 @@ class App implements AppInterface
                 $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'class' => $class];
                 return true;
             } else {
-                try {
-                    $instance = $this->loadFromModel($selector);
+                $instance = $this->loadFromModel($selector);
+                if ($instance !== null) {
                     $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'instance' => $instance];
                     return true;
-                } catch (\Throwable $e) {
-                    $this->getWorkbench()->getLogger()->logException($e);
+                } else {
                     return false;
                 }
             }
@@ -753,15 +756,18 @@ class App implements AppInterface
      * 
      * @param SelectorInterface $selector
      * @throws AppComponentNotFoundError
-     * @return unknown
+     * @return object|NULL
      */
-    protected function loadFromModel(SelectorInterface $selector) 
+    protected function loadFromModel(SelectorInterface $selector) : ?object
     {
         switch (true) {
             case $selector instanceof DataTypeSelectorInterface:
                 return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+            // TODO add loading other things like actions here too. Currently they are being loaded
+            // directly in their factories. It would be nicer to load them here to give app developers
+            // the freedom to use their own loading logic for certain selectors
         }
-        throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+        return null;
     }
     
     /**
