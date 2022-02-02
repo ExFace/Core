@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces\TemplateRenderers;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * Interface for classes, that render templates by replacing placeholders.
@@ -17,7 +18,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * @author andrej.kabachnik
  *
  */
-interface TemplateRendererInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
+interface TemplateRendererInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, iCanBeCopied
 {
     public function render();
     

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * Base implementation of the TemplateRendererInterface.
@@ -57,5 +58,15 @@ abstract class AbstractTemplateRenderer implements TemplateRendererInterface
     protected function getPlaceholderResolvers() : array
     {
         return $this->resolvers;
+    }
+
+    /**
+     * 
+     * @see iCanBeCopied::copy()
+     * @return TemplateRendererInterface
+     */
+    public function copy()
+    {
+        return clone $this;
     }
 }
