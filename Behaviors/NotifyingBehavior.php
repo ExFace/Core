@@ -8,7 +8,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Communication\Messages\NotificationMessage;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
-use exface\Core\CommonLogic\Communication\NotificationEnvelope;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
