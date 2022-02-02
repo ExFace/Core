@@ -376,6 +376,6 @@ class NumberDataType extends AbstractDataType
             $decimals = min([$pMax, strlen($decPart)]);
         }
         
-        return number_format($num, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+        return number_format(floatval($num), $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
     }
 }
