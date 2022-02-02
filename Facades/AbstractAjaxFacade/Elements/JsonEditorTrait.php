@@ -1146,7 +1146,7 @@ CSS;
         function {$funcPrefix}_openAceModal(node) {
             return {$funcPrefix}_openModal(
                 "{$trans['CONTEXT_MENU.EDITOR.WINDOW']}",
-                '   <div id="{$funcPrefix}_value_editor" style="height: calc(100% - 40px)">' + node.getValue() + '</div>' +
+                '   <div id="{$funcPrefix}_value_editor" style="height: calc(100% - 40px)">' + node.getValue().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") + '</div>' +
                 '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
                 '      <div class="action-buttons">' +
                 '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
