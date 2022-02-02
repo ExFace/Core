@@ -92,7 +92,11 @@ trait EnumStaticDataTypeTrait {
         throw new BadMethodCallException("No static method or enum constant '$name' in class " . get_called_class());
     }
     
-    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::cast()
+     */
     public static function cast($value)
     {
         if (static::isValueEmpty($value) === true) {
@@ -116,7 +120,7 @@ trait EnumStaticDataTypeTrait {
     
     /**
      * 
-     * @param unknown $value
+     * @param mixed $value
      * @return bool
      */
     public function isValidValue($value) : bool
@@ -165,6 +169,11 @@ trait EnumStaticDataTypeTrait {
         return $this->getValues();
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValues()
+     */
     public function getLabelOfValue($value = null) : string
     {
         $value = $value ?? $this->getValue();
@@ -172,5 +181,19 @@ trait EnumStaticDataTypeTrait {
             throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
         }
         return $this->getLabels()[$value];
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $value = parent::format($value);
+        if ($value === '') {
+            return '';
+        }
+        return $this->getLabelOfValue($value) ?? $value;
     }
 }

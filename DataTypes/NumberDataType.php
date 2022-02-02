@@ -352,5 +352,30 @@ class NumberDataType extends AbstractDataType
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.NUMBER.DECIMAL_SEPARATOR');
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $num = $this->parse($value);
+        
+        if ($num === null || $num === EXF_LOGICAL_NULL) {
+            return '';
+        }
+        
+        $pMin = $this->getPrecisionMin();
+        $pMax = $this->getPrecisionMax();
+        
+        if ($pMax === 0 || $pMax <= $pMin) {
+            $decimals = $pMax;
+        } else {
+            $decPart = explode('.', strval($num))[1] ?? '';
+            $decimals = min([$pMax, strlen($decPart)]);
+        }
+        
+        return number_format($num, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+    }
 }
-?>
