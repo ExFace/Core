@@ -257,7 +257,7 @@ class NotifyingBehavior extends AbstractBehavior
      * 
      * @uxon-property notifications
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template {"channel": "", "recipients": ""}
+     * @uxon-template {"channel": ""}
      * 
      * @param UxonObject $arrayOfEnvelopes
      * @return NotifyingBehavior
