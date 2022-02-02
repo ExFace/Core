@@ -23,6 +23,8 @@ trait BracketHashTemplateRendererTrait
 {    
     private $defaultResolver = null;
     
+    private $ignoreUnknownPlaceholders = false;
+    
     /**
      * 
      * @param string $tpl
@@ -54,10 +56,16 @@ trait BracketHashTemplateRendererTrait
             $phVals = array_merge($phVals, $defaultResolver->resolve($missingPhs));
         }
         
-        // If there are still missing placeholders, rais an error
+        // If there are still missing placeholders, either reinsert them or raise an error
         if (count($phVals) < count($placeholders)) {
             $missingPhs = array_diff($placeholders, array_keys($phVals));
-            throw new RuntimeException('Unknown placehodler(s) "[#' . implode('#]", "[#', $missingPhs) . '#]" found in template!');
+            if ($this->isIgnoringUnknownPlaceholders()) {
+                foreach ($missingPhs as $ph) {
+                    $phVals[$ph] = '[#' . $ph . '#]';
+                }
+            } else {
+                throw new RuntimeException('Unknown placehodler(s) "[#' . implode('#]", "[#', $missingPhs) . '#]" found in template!');
+            }
         }
         
         return $phVals;
@@ -100,6 +108,17 @@ trait BracketHashTemplateRendererTrait
     public function setDefaultPlaceholderResolver(PlaceholderResolverInterface $value) : TemplateRendererInterface
     {
         $this->defaultResolver = $value;
+        return $this;
+    }
+    
+    protected function isIgnoringUnknownPlaceholders() : bool
+    {
+        return $this->ignoreUnknownPlaceholders;
+    }
+    
+    public function setIgnoreUnknownPlaceholders(bool $value) : TemplateRendererInterface
+    {
+        $this->ignoreUnknownPlaceholders = $value;
         return $this;
     }
 }
