@@ -256,7 +256,7 @@ class ExportJSON extends ReadData implements iExportData
         $header = [];
         $columnWidgets = $this->getExportColumnWidgets($exportedWidget);
         foreach ($columnWidgets as $widget) {
-            if (! $widget->getHidden() && $widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
+            if (! $widget->isHidden() && $widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
                 if ($this->getUseAttributeAliasAsHeader() && ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute()) {
                     $headerName = $widget->getAttributeAlias();
                 } else {
@@ -306,7 +306,7 @@ class ExportJSON extends ReadData implements iExportData
     {
         foreach ($dataSheet->getRows() as $row) {
             $outRow = [];
-            foreach ($columnNames as $key) {
+            foreach ($columnNames as $key => $value) {
                 $outRow[$key] = $row[$key];
             }
             if ($this->firstRowWritten) {
@@ -338,7 +338,7 @@ class ExportJSON extends ReadData implements iExportData
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = fopen($this->getPathname(), 'x+');
+            $this->writer = fopen($this->getFilePathAbsolute(), 'x+');
             fwrite($this->writer, '[');
         }
         return $this->writer;
