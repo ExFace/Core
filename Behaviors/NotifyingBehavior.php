@@ -20,9 +20,30 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Communication\Messages\Envelope;
 
 /**
- * Creates user-notifications on certain conditions.
+ * Creates user-notifications on certain events and conditions.
  * 
  * BETA: This behavior is not yet fully functional. Some features may not work correctly!
+ * 
+ * Each behavior instance can be configured to send notifications on a specific event
+ * by setting the mandatory `notify_on` option. Additionally other `notify_*` options
+ * can be used to introduce further conditions. If you need notifications on multiple
+ * events - create multiple behaviors for the object.
+ * 
+ * Each behavior instance can send multiple `notifications` through different communication
+ * channels. The available configuration options for each notification depend on the message
+ * type of the selected channel.
+ * 
+ * In any case, the contents of the notificaionts can contain the follwing placeholders
+ * at any position (see `notifications` property for more details):
+ * 
+ * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+ * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key` 
+ * from the given app
+ * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+ * for which the notification was triggered - only works with notification on data sheet events!
+ * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+ * This means, static formulas will always work, while data-driven formulas will only work on data sheet
+ * events!
  * 
  * ## Examples
  * 
@@ -35,11 +56,9 @@ use exface\Core\Communication\Messages\Envelope;
  *          {
  *              "channel": "exface.Core.NOTIFICATION",
  *              "recipient_roles": ["exface.Core.ADMINISTRATOR"],
- *              "message": {
- *                  "subject": "New ticket: [#ticket_title#]",
- *                  "text": "A new ticket has been created!",
- *                  "icon": "ticket"
- *              }
+ *              "title": "New ticket: [#ticket_title#]",
+ *              "text": "A new ticket has been created!",
+ *              "icon": "ticket"
  *          }
  *      ]
  *  }
@@ -62,10 +81,8 @@ use exface\Core\Communication\Messages\Envelope;
  *          {
  *              "channel": "exface.Core.EMAIL",
  *              "recipient_users": ["[#creator_user__username#]"],
- *              "message": {
- *                  "subject": "Your ticket [#id#] requires feedback",
- *                  "text": "Your ticket [#id#] \"[#ticket_title#]\" is awaiting your feedback"
- *              }
+ *              "subject": "Your ticket [#id#] requires feedback",
+ *              "text": "Your ticket [#id#] \"[#ticket_title#]\" is awaiting your feedback"
  *          }
  *      ]
  *  }
