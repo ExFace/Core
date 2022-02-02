@@ -29,6 +29,8 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
     
     private $rowNumber = 0;
     
+    private $formatValues = true;
+    
     /**
      * 
      * @param FacadeInterface $facade
@@ -73,10 +75,30 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         foreach ($phs as $ph) {
             $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
             $val = $col->getValue($this->rowNumber);
-            // TODO $val muss Datentyp-Spezifisch formattiert werden. DataType::formatValue()???
-            $phVals[$ph] = $val;
+            $phVals[$ph] = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
         }
         
         return $phVals;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isFormattingValues() : bool
+    {
+        return $this->formatValues;
+    }
+    
+    /**
+     * Set to FALSE to use raw values instead formatting according to their data type.
+     * 
+     * @param bool $value
+     * @return DataRowPlaceholders
+     */
+    public function setFormatValues(bool $value) : DataRowPlaceholders
+    {
+        $this->formatValues = $value;
+        return $this;
     }
 }

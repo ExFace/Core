@@ -130,6 +130,14 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
     public function parse($value);
     
     /**
+     * Formats the current internal value (or the given value) to a human-readable string
+     * 
+     * @param mixed $value
+     * @return string
+     */
+    public function format($value = null) : string;
+    
+    /**
      * Returns the unique error code (error model alias) used for parsing errors of this data type.
      * 
      * @return string|NULL

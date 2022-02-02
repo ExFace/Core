@@ -166,4 +166,18 @@ trait EnumDynamicDataTypeTrait {
     {
         return $this->values;
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $value = parent::format($value);
+        if ($value === '') {
+            return '';
+        }
+        return $this->getLabelOfValue($value) ?? $value;
+    }
 }
