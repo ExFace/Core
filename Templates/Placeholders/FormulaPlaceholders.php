@@ -34,6 +34,8 @@ class FormulaPlaceholders implements PlaceholderResolverInterface
     {
         $this->prefix = $prefix;
         $this->workbench = $workbench;
+        $this->dataSheet = $dataSheet;
+        $this->rowNumber = $rowNo;
     }
 
     /**
@@ -50,7 +52,7 @@ class FormulaPlaceholders implements PlaceholderResolverInterface
                 continue;
             }
             $formula = FormulaFactory::createFromString($this->workbench, $placeholder);
-            $formula->evaluate($this->dataSheet, $this->rowNumber);
+            $vals[$placeholder] = $formula->evaluate($this->dataSheet, $this->rowNumber);
         }
         return $vals;
     }
