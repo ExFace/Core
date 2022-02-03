@@ -15,7 +15,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
  * 
  * - `=Date('25.03.2020 21:00:55')` = 2020-03-25
  * - `=Date('1585090800')` = 2020-03-25
- * - `=Date('1585090800', 'dd.MM.yyyy)` = 25.03.2020
+ * - `=Date('1585090800', 'dd.MM.yyyy')` = 25.03.2020
  * - `=Date('2020-03-25', 'yyyyMMddHHmmss')` = 20200325000000
  * - `=Date('2021-07-08', 'E')` = Thu
  * 
