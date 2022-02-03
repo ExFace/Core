@@ -33,7 +33,7 @@ use exface\Core\Actions\SaveData;
  * ```
  * {
  *  "require": {
- *      "npm-asset/jspreadsheet-ce" : "^4.4.1"
+ *      "npm-asset/jspreadsheet-ce" : "^4.10"
  *  }
  * }
  * 
@@ -44,9 +44,9 @@ use exface\Core\Actions\SaveData;
  * inlcude file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/jexcel.js",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/index.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
- *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jexcel.css",
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
  *	
  * ```
