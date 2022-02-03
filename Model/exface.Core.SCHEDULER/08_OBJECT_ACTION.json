@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-02-01 15:56:27",
-            "MODIFIED_ON": "2021-04-13 12:41:18",
+            "MODIFIED_ON": "2022-02-02 16:02:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb914ba92efe4e914b025041000001",
@@ -74,6 +74,7 @@
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
                 "icon": "toggle-off",
+                "input_rows_min": 1,
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.SCHEDULER",
@@ -104,7 +105,7 @@
         },
         {
             "CREATED_ON": "2021-02-01 15:58:35",
-            "MODIFIED_ON": "2021-04-13 12:41:06",
+            "MODIFIED_ON": "2022-02-02 16:02:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb894cf55655ba894c025041000001",
@@ -117,6 +118,7 @@
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
                 "icon": "toggle-on",
+                "input_rows_min": 1,
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.SCHEDULER",
