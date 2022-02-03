@@ -541,4 +541,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @return bool
      */
     public function isRelated() : bool;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string;
 }

@@ -1139,4 +1139,14 @@ class Attribute implements MetaAttributeInterface
         $this->copyable = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::__toString()
+     */
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '" (alias "' . $this->getAliasWithRelationPath() . '")';
+    }
 }
