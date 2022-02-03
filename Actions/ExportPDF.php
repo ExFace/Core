@@ -146,7 +146,7 @@ HTML;
         return;
     }
     
-    protected function createPdf(string $contentHtml)
+    static function createPdf(string $contentHtml, $orientation = 'landscape')
     {
         // instantiate and use the dompdf class
         $dompdf = new Dompdf();
@@ -158,7 +158,7 @@ HTML;
         $dompdf->loadHtml($contentHtml);
         
         // (Optional) Setup the paper size and orientation
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', $orientation);
         
         // Render the HTML as PDF
         $dompdf->render();
