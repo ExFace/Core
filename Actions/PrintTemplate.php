@@ -16,6 +16,8 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -29,7 +31,7 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * @author Andrej Kabachnik
  *
  */
-class PrintWithTemplate extends AbstractAction
+class PrintTemplate extends AbstractAction
 {
     private $downloadable = true;
     
@@ -75,6 +77,23 @@ class PrintWithTemplate extends AbstractAction
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $inputData = $this->getInputDataSheet($task);
+        $contents = $this->renderHtmlContents($inputData);
+        foreach ($contents as $html) {
+            file_put_contents($this->getFilePathAbsolute(), $html);
+        }
+        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute());
+        
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $inputData
+     * @return array
+     */
+    protected function renderHtmlContents (DataSheetInterface $inputData) : array
+    {
+        $contents = [];
         $mainTpl = $this->getTemplate();
         $mainPhUxon = $this->getDataPlaceholdersUxon();
         
@@ -85,9 +104,11 @@ class PrintWithTemplate extends AbstractAction
         foreach (array_keys($inputData->getRows()) as $rowNo) {
             $inputRowRenderer = $mainRenderer->copy();
             $inputRowRenderer->addPlaceholder(new DataRowPlaceholders($inputData, $rowNo, '~input:'));
+            $inputRowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo));
             
             $phRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $phRenderer->addPlaceholder((new DataRowPlaceholders($inputData, $rowNo, '~input:'))->setFormatValues(false));
+            $phRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo));
             $phRenderer->setIgnoreUnknownPlaceholders(true);
             foreach ($mainPhUxon->getPropertiesAll() as $ph => $phTemplate) {
                 $phUxon = UxonObject::fromJson($phRenderer->render($phTemplate->toJson()));
@@ -107,12 +128,9 @@ class PrintWithTemplate extends AbstractAction
             
             $inputRowRenderer->setDefaultPlaceholderResolver(new ArrayPlaceholders($dataPhValues, ''));
             $mainTplRendered = $inputRowRenderer->render($mainTpl);
-            file_put_contents($this->getFilePathAbsolute(), $mainTplRendered);
+            $contents[] = $mainTplRendered;
         }
-        
-        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute());
-        
-        return $result;
+        return $contents;
     }
 
     /**
@@ -172,7 +190,7 @@ class PrintWithTemplate extends AbstractAction
      */
     public function getMimeType() : ?string
     {
-        if ($this->mimeType === null && get_class($this) === PrintWithTemplate::class) {
+        if ($this->mimeType === null && get_class($this) === PrintTemplate::class) {
             return 'application/json';
         }
         return $this->mimeType;
@@ -226,9 +244,9 @@ class PrintWithTemplate extends AbstractAction
      * @uxon-type string
      * 
      * @param string $value
-     * @return PrintWithTemplate
+     * @return PrintTemplate
      */
-    public function setTemplatePath(string $value) : PrintWithTemplate
+    public function setTemplatePath(string $value) : PrintTemplate
     {
         $this->templatePath = FilePathDataType::isAbsolute($value) ? $value : FilePathDataType::join($this->getWorkbench()->filemanager()->getPathToVendorFolder(), $value);
         return $this;
@@ -247,9 +265,9 @@ class PrintWithTemplate extends AbstractAction
      * @uxon-template {"": {"row_template": "", "data_sheet": {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}}}}
      * 
      * @param UxonObject $value
-     * @return PrintWithTemplate
+     * @return PrintTemplate
      */
-    public function setDataPlaceholders(UxonObject $value) : PrintWithTemplate
+    public function setDataPlaceholders(UxonObject $value) : PrintTemplate
     {
         $this->placeholders = $value;
         return $this;
@@ -267,9 +285,9 @@ class PrintWithTemplate extends AbstractAction
      * @uxon-type string
      * 
      * @param string $value
-     * @return PrintWithTemplate
+     * @return PrintTemplate
      */
-    public function setTemplate(string $value) : PrintWithTemplate
+    public function setTemplate(string $value) : PrintTemplate
     {
         $this->template = $value;
         return $this;
