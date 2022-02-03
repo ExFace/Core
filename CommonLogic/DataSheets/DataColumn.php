@@ -20,6 +20,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 class DataColumn implements DataColumnInterface
 {
@@ -750,7 +751,7 @@ class DataColumn implements DataColumnInterface
                     $this->setValue($row_id, $defaultEx->evaluate($sheet, $row_id));
                 } elseif ($leaveNoEmptyValues === true) {
                     // If a value is still empty and we do not want it to be so - throw an error!
-                    throw new DataSheetRuntimeError($sheet, 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
+                    throw new DataSheetMissingRequiredValueError($sheet, 'Missing values for attribute ' . $attr->__toString() . ' of object ' . $this->getMetaObject()->__toString() . ' in row ' . $row_id . '!', '6T5UX3Q');
                 }
             }
         }
