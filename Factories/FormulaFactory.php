@@ -24,6 +24,9 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
      */
     public static function createFromString(WorkbenchInterface $workbench, string $expression)
     {
+        if (substr($expression, 0, 1) === '=') {
+            $expression = substr($expression, 1); // remove the '='
+        }
         $tokenStream = new SymfonyTokenStream($expression);
         return static::createFromTokenStream($workbench, $tokenStream);
     }

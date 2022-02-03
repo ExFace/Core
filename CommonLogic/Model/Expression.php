@@ -282,9 +282,6 @@ class Expression implements ExpressionInterface
      */
     protected function parseFormula(string $expression, string $relationPath = null) : FormulaInterface
     {
-        if (substr($expression, 0, 1) === '=') {
-            $expression = substr($expression, 1); // remove the '='
-        }
         $formula = FormulaFactory::createFromString($this->exface, $expression);
         if ($relationPath !== null && $relationPath !== '') {
             $formula = $formula->withRelationPath($relationPath);
