@@ -267,7 +267,7 @@ class DateDataType extends AbstractDataType
      */
     public function formatDate(\DateTime $date) : string
     {
-        return $this->getIntlDateFormatter()->format($this->pa);
+        return $this->getIntlDateFormatter()->format($date);
     }
     
     /**
