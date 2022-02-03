@@ -33,7 +33,7 @@ use exface\Core\Actions\SaveData;
  * ```
  * {
  *  "require": {
- *      "npm-asset/jexcel" : "^4.4.1"
+ *      "npm-asset/jspreadsheet-ce" : "^4.4.1"
  *  }
  * }
  * 
@@ -44,9 +44,9 @@ use exface\Core\Actions\SaveData;
  * inlcude file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.js",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/jexcel.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
- *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.css",
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jexcel.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
  *	
  * ```
@@ -633,10 +633,13 @@ JS;
         }
         
         $width = $col->getWidth();
+        $widthJs = '';
         if ($width->isFacadeSpecific() === true) {
             if (StringDataType::endsWith($width->getValue(), 'px') === true) {
                 $widthJs = str_replace('px', '', $width->getValue());
             }
+        } else {
+            $widthJs = "'auto'";
         }
         
         if ($widthJs) {
