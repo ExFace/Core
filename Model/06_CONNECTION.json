@@ -61,7 +61,7 @@
             "LABEL": "Local Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
             "CONFIG": null,
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "LOCAL_FOLDERS",
             "FILTER_CONTEXT": null
         },
@@ -75,9 +75,9 @@
             "LABEL": "Local Vendor Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
             "CONFIG": {
-                "use_vendor_folder_as_base": "1"
+                "use_vendor_folder_as_base": 1
             },
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "LOCAL_VENDOR_FOLDERS",
             "FILTER_CONTEXT": null
         },
@@ -91,7 +91,7 @@
             "LABEL": "PHP Annotations",
             "CONNECTOR": "exface\/Core\/DataConnectors\/PhpAnnotationsConnector.php",
             "CONFIG": null,
-            "READONLY": "1",
+            "READONLY": 1,
             "ALIAS": "PHP_ANNOTATIONS",
             "FILTER_CONTEXT": null
         },
@@ -107,7 +107,7 @@
             "CONFIG": {
                 "error_if_file_not_found": false
             },
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "LOCAL_FILE",
             "FILTER_CONTEXT": null
         },
@@ -121,7 +121,7 @@
             "LABEL": "No Connection (Transparent)",
             "CONNECTOR": "exface\/Core\/DataConnectors\/TransparentConnector.php",
             "CONFIG": null,
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "TRANSPARENT_CONNECTION",
             "FILTER_CONTEXT": null
         },
@@ -135,7 +135,7 @@
             "LABEL": "Metamodel DB",
             "CONNECTOR": "exface\/Core\/DataConnectors\/ModelLoaderConnector.php",
             "CONFIG": null,
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "METAMODEL_DB",
             "FILTER_CONTEXT": null
         },
@@ -149,7 +149,7 @@
             "LABEL": "Workbench Config",
             "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchConfigConnector.php",
             "CONFIG": null,
-            "READONLY": "1",
+            "READONLY": 1,
             "ALIAS": "WORKBENCH_CONFIG",
             "FILTER_CONTEXT": null
         },
@@ -163,7 +163,7 @@
             "LABEL": "Workbench Contexts",
             "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchContextConnector.php",
             "CONFIG": null,
-            "READONLY": "0",
+            "READONLY": 0,
             "ALIAS": "WORKBENCH_CONTEXTS",
             "FILTER_CONTEXT": null
         }

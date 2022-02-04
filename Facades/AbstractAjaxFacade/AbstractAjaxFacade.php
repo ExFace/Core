@@ -677,15 +677,7 @@ HTML;
      */
     protected function isShowingErrorDetails() : bool
     {
-        try {
-            $this->getWorkbench()->getContext()->getScopeWindow()->getContext(DebugContext::class);
-            return true;
-        } catch (ContextAccessDeniedError $e) {
-            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
-        return false;
+        return $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
     }
     
     /**

@@ -122,12 +122,12 @@
                 }
             },
             "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
         },
         {
             "CREATED_ON": "2022-02-01 16:11:02",
-            "MODIFIED_ON": "2022-02-01 16:19:29",
+            "MODIFIED_ON": "2022-02-02 16:02:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec842d2b72c708842d747827435ce5",
@@ -141,6 +141,7 @@
                 "input_object_alias": "exface.Core.CUSTOMIZING",
                 "icon": "toggle-on",
                 "result_message_text": "Channel now active",
+                "input_rows_min": 1,
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
@@ -179,12 +180,12 @@
                 ]
             },
             "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
         },
         {
             "CREATED_ON": "2022-02-01 16:13:03",
-            "MODIFIED_ON": "2022-02-01 16:19:52",
+            "MODIFIED_ON": "2022-02-02 16:01:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecb037737549feb037747827435ce5",
@@ -198,6 +199,7 @@
                 "input_object_alias": "exface.Core.CUSTOMIZING",
                 "icon": "toggle-off",
                 "result_message_text": "Channel now disabled",
+                "input_rows_min": 1,
                 "input_mappers": [
                     {
                         "from_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
@@ -223,7 +225,7 @@
                 ]
             },
             "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
         }
     ],

@@ -163,8 +163,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "Uxon",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema)"
@@ -370,8 +370,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputJson",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "Json",
             "SHORT_DESCRIPTION": ""
@@ -581,8 +581,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonWidget",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for widget definition"
@@ -603,8 +603,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonAction",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for action definition"
@@ -625,8 +625,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonDataType",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for data type definition"
@@ -647,8 +647,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonBehavior",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for behavior definition"
@@ -723,8 +723,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonDataConnection",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for data connection definition"
@@ -813,8 +813,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonFacade",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for facade configuration"
@@ -1093,8 +1093,8 @@
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "InputUxon",
-                "width": "2",
-                "height": "6"
+                "width": 2,
+                "height": 6
             },
             "ALIAS": "UxonCommunicationChannel",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for communication channel configuration"
