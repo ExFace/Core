@@ -3,8 +3,8 @@ namespace exface\Core\Formulas;
 
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\FormulaError;
+use exface\Core\DataTypes\IntegerDataType;
 
 /**
  * Calculates the number of days, months, or years between two dates.
@@ -47,42 +47,6 @@ class DateDif extends \exface\Core\CommonLogic\Model\Formula
                 throw new FormulaError('Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
         }
     }
-
-    /**
-     * 
-     * @param mixed $date
-     * @param string $formatTo
-     * @return string
-     */
-    protected function formatDate($date, string $formatTo) : string
-    {
-        $formatTo = $this->sanitizeFormat($formatTo);
-        
-        $dataType = $this->getDataType();
-        $dataType->setFormat($formatTo);
-        
-        try {
-            return $dataType->formatDate($dataType::castToPhpDate($date));
-        } catch (DataTypeCastingError $e) {
-            return $date;
-        }
-    }
-    
-    /**
-     * 
-     * @param string $formatArgument
-     * @return string|NULL
-     */
-    protected function sanitizeFormat(string $formatArgument) : ?string
-    {
-        $format = $formatArgument;
-        if ($format === 'Y-m-d') {
-            $format = 'yyyy-MM-dd';
-        } elseif ($format === 'Y-m-d H:i:s') {
-            $format = 'yyyy-MM-dd HH:mm:ss';
-        }
-        return $format;
-    }
     
     /**
      *
@@ -91,6 +55,6 @@ class DateDif extends \exface\Core\CommonLogic\Model\Formula
      */
     public function getDataType()
     {
-        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), IntegerDataType::class);
     }
 }
