@@ -2,22 +2,21 @@
 
 namespace exface\Core\Actions;
 
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Exceptions\Actions\ActionLogicError;
-use exface\Core\Factories\ResultFactory;
-use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use Dompdf\Dompdf;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Data;
+use exface\Core\Actions\Traits\iCreatePdfTrait;
+use exface\Core\Interfaces\Actions\iCreatePdf;
 
-class ExportPDF extends ExportJSON
+class ExportPDF extends ExportJSON implements iCreatePdf
 {
-    private $contentHtml = null;
+    use iCreatePdfTrait;
+    
+    private $contentHtml = null;    
     
     public function getMimeType() : ?string
     {
-        if ($this->mimeType === null && get_class($this) === ExportJSON::class) {
+        if ($this->mimeType === null && get_class($this) === ExportPDF::class) {
             return 'application/pdf';
         }
         return $this->mimeType;
@@ -42,7 +41,7 @@ class ExportPDF extends ExportJSON
      */
     protected function writeHeader(WidgetInterface $exportedWidget) : array
     {
-        $contentHtml = $this->writeHtmlBegin();
+        $contentHtml = $this->writeHtmlBegin($exportedWidget);
         $columnNames = parent::writeHeader($exportedWidget);
         $contentHtml .= <<<HTML
             <table style="border-collapse: collapse; border: 0.5pt solid black; width: 100%">
@@ -62,16 +61,24 @@ HTML;
         return $columnNames;
     }
     
-    protected function writeHtmlBegin() : string
+    protected function writeHtmlBegin(WidgetInterface $exportedWidget) : string
     {
+        $count = 0;
+        if ($exportedWidget instanceof Data) {
+            foreach ($exportedWidget->getFilters() as $filter_widget) {
+                if ($filter_widget->getValue()) {
+                    $count++;
+                }
+            }
+        }
+        $date = date("m.d.Y");
         if ($this->contentHtml === null) {
             $this->contentHtml = <<<HTML
         
-<html>
-    <head>
+<head>
         <style>
             @page {
-                margin: 100px 25px;
+                margin: 100px 28px;
             }
             header {
                 position: fixed;
@@ -88,24 +95,28 @@ HTML;
                 right: 0px;
                 height: 50px;
             }
-        </style>
+		</style>
     </head>
     <body>
-<header>
- {$this->getWidgetDefinedIn()->getCaption()}
-</header>
-<footer>
-<table style="width: 100%">
-<tbody>
-  <tr>
-    <td style="border: none; width: 25%">User</td>
-    <td style="border: none; width: 25%">Datum</td>
-    <td style="border: none; width: 25%">Filter</td>
-    <td style="border: none; width: 25%"><span class="page-number">Page </span></td>
-  </tr>
-</tbody>
-</table>
-</footer>
+        <!-- Define header and footer blocks before your content -->
+        <header>
+        <div style="text-align: center;"><span style="color:gray; font-size:0.8em;">{$exportedWidget->getMetaObject()->getName()} ({$exportedWidget->getMetaObject()->getAliasWithNamespace()})</span></div>
+        <hr style="height:2px; border-width:0; color:gray; background-color:gray">
+        </header>
+
+        <footer>
+            <hr style="height:2px; border-width:0; color:gray; background-color:gray">
+            <table style="width: 100%; font-size:0.8em;">
+                <tbody>
+                    <tr>
+                        <td style="border: none; width: 25%"><span style="color:gray;">{$this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getName()}</span></td>
+                        <td style="border: none; width: 25%"><span style="color:gray;">{$date}</span></td>
+                        <td style="border: none; width: 25%"><span style="color:gray;">Filter: {$count}</span></td>
+                        <td style="border: none; width: 25%; text-align: right;"><span class="page-number" style="color:gray;">Page </span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </footer>
         <main>
             <style type="text/css">
                 td {padding: 5px; border: 0.5pt solid black;}
@@ -142,27 +153,13 @@ HTML;
             }
             $rowsHtml .= "</tr>";
         }
-        $this->contentHtml = $contentHtml . $rowsHtml;
+        $contentHtml .= $rowsHtml;
+        $contentHtml .= <<<HTML
+                </tbody>
+            </table>
+HTML;
+        $this->contentHtml = $contentHtml;
         return;
-    }
-    
-    static function createPdf(string $contentHtml, $orientation = 'landscape')
-    {
-        // instantiate and use the dompdf class
-        $dompdf = new Dompdf();
-        $options = $dompdf->getOptions();
-        $options->setDefaultFont('Courier');
-        $options->setIsRemoteEnabled(true);
-        $options->setIsPhpEnabled(true);
-        $dompdf->setOptions($options);
-        $dompdf->loadHtml($contentHtml);
-        
-        // (Optional) Setup the paper size and orientation
-        $dompdf->setPaper('A4', $orientation);
-        
-        // Render the HTML as PDF
-        $dompdf->render();
-        return $dompdf->output();        
     }
     
     /**
@@ -174,16 +171,47 @@ HTML;
     protected function writeFileResult(DataSheetInterface $dataSheet)
     {
         $contentHtml = $this->contentHtml;
+        $contentHtml .= $this->buildFilterLegendHtml($dataSheet);
         $contentHtml .= <<<HTML
-                </tbody>
-            </table>
         </main>
     </body>
 </html>
 HTML;
-        $filecontent = $this->createPdf($contentHtml);
+        $filecontent = $this->createPdf($contentHtml, $this->getOrientation());
         fwrite($this->getWriter(), $filecontent);
         fclose($this->getWriter());
+    }
+    
+    protected function buildFilterLegendHtml(DataSheetInterface $dataSheet) : string
+    {
+        $html = '';
+        $filterData = $this->getFilterData($dataSheet);
+        if (empty($filterData)) {
+            return $html;
+        }
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $html = <<<HTML
+            <div style="page-break-before: always;">
+                <h2>{$translator->translate('ACTION.EXPORTXLSX.FILTER')}</h2>
+ 
+                <table style="border-collapse: collapse; border: 0.5pt solid black; width: 100%">                    
+                    <tbody>
+                    
+HTML;
+        foreach ($filterData as $key => $value) {
+            $html .= <<<HTML
+                        <tr>
+                            <td style="width: 25%; padding: 5px; overflow:hidden;">{$key}</td>
+                            <td style="width: 75%; padding: 5px; overflow:hidden;">{$value}</td>
+                        </tr>
+HTML;
+        }
+        $html .= <<<HTML
+                    </tbody>
+                </table>
+            </div>
+HTML;
+        return $html;
     }
     
     /**
