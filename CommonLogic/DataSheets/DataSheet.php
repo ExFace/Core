@@ -883,7 +883,7 @@ class DataSheet implements DataSheetInterface
             if ($columnAttr->isRequired() === true && $column->hasEmptyValues() === true) {
                 try {
                     $column->setValuesFromDefaults();
-                } catch (DataSheetRuntimeError $e) {
+                } catch (DataSheetMissingRequiredValueError $e) {
                     throw new DataSheetWriteError($this, 'Failed to update object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): missing values for required attribute "' . $columnAttr->getName() . '" (alias ' . $columnAttr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $column->findEmptyRows()) . '!', null, $e);
                 }
             }
@@ -1232,7 +1232,7 @@ class DataSheet implements DataSheetInterface
                 try {
                     $req_col->setValuesFromDefaults();
                 } catch (DataSheetRuntimeError $e) {
-                    throw new DataSheetMissingRequiredValueError($this, 'Required attribute "' . $req->getName() . '" (alias "' . $req->getAlias() . '") not set in row(s) ' . $req_col->findEmptyRows() . '!', null, $e);
+                    throw new DataSheetMissingRequiredValueError($this, 'Required attribute ' . $req->__toString() . ' not set in row(s): ' . implode(', ', $req_col->findEmptyRows()) . '!', null, $e);
                 }
             }
         }

@@ -175,14 +175,15 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      * Returns a ready-to-use hint text, that will generally be included in float-overs for facade elements
      *
      * @param string $hint_text            
-     * @param string $remove_linebreaks            
+     * @param bool $remove_linebreaks  
+     * @param string $forceQuotesAs          
      * @return string
      */
-    public function buildHintText($hint_text = NULL, $remove_linebreaks = false)
+    public function buildHintText(string $hint_text = null, bool $remove_linebreaks = false)
     {
         $max_hint_len = $this->getHintMaxCharsInLine();
         $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
-        $hint = str_replace('"', '\"', $hint);
+        $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
             $hint = trim(preg_replace('/\r|\n/', ' ', $hint));
         } else {
@@ -898,7 +899,7 @@ JS;
     {
         $widget = $this->getWidget();
         $caption = $widget->getCaption();
-        return ($caption ? $caption . ': ' : '') . $widget->getHint();
+        return $this->buildHintText(($caption ? $caption . ': ' : '') . $widget->getHint());
     }
     
     /**
