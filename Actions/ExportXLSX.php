@@ -279,71 +279,12 @@ class ExportXLSX extends ExportJSON
             $translator->translate('ACTION.EXPORTXLSX.FILTER') . ':'
         ]);
         // Filter mit Captions von der DataTable auslesen
-        $dataTableFilters = [];
-        $exportedWidget = $this->getWidgetDefinedIn()->getInputWidget();
-        switch (true) {
-            case $exportedWidget instanceof iShowData:
-                $dataWidget = $exportedWidget;
-                break;
-            case $exportedWidget instanceof iUseData:
-                $dataWidget = $exportedWidget->getData();
-                break;
-            default:
-                $dataWidget = null;
-        }
-        if ($dataWidget) {
-            foreach ($dataWidget->getFilters() as $filter) {
-                $dataTableFilters[$filter->getInputWidget()->getAttributeAlias()] = $filter->getInputWidget()->getCaption();
-            }
-        }
-        // Gesetzte Filter am DataSheet durchsuchen
-        foreach ($dataSheet->getFilters()->getConditions() as $condition) {
-            if (! is_null($filterValue = $condition->getValue()) && $filterValue !== '') {
-                // Name
-                if (array_key_exists(($filterExpression = $condition->getExpression())->toString(), $dataTableFilters)) {
-                    $filterName = $dataTableFilters[$filterExpression->toString()];
-                } else if ($filterExpression->isMetaAttribute()) {
-                    $filterName = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())->getName();
-                } else {
-                    $filterName = '';
-                }
-                
-                // Comparator
-                $filterComparator = $condition->getComparator();
-                if (substr($filterComparator, 0, 1) == '=') {
-                    // Wird sonst vom XLSX-Writer in eine Formel umgewandelt.
-                    $filterComparator = ' ' . $filterComparator;
-                }
-                
-                // Wert, gehoert der Filter zu einer Relation soll das Label und nicht
-                // die UID geschrieben werden
-                if ($filterExpression->isMetaAttribute()) {
-                    if ($dataSheet->getMetaObject()->hasAttribute($filterExpression->toString()) && ($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
-                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
-                        if ($relatedObject->isReadable() && empty($relatedObject->getDataAddressRequiredPlaceholders(false, true))) {
-                            $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
-                            $uidColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute())->getName();
-                            if ($relatedObject->hasLabelAttribute()) {
-                                $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
-                            } else {
-                                $labelColName = $uidColName;
-                            }
-                            $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($relatedObject->getUidAttribute()), $filterValue, $condition->getComparator()));
-                            $filterValueRequestSheet->dataRead();
-                            
-                            if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($labelColName))) {
-                                $filterValue = $requestValue;
-                            }
-                        }
-                    }
-                }
-                
-                // Zeile schreiben
-                $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
-                    $filterName,
-                    $filterComparator . ' ' . $filterValue,
-                ]);
-            }
+        $filters = $this->getFilterData($dataSheet);
+        foreach ($filters as $key => $value) {
+            $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
+                $key,
+                $value,
+            ]);
         }
     }
     
