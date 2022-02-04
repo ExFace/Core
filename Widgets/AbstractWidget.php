@@ -33,6 +33,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Contexts\DebugContext;
 
 /**
  * Basic ExFace widget
@@ -855,8 +856,8 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this->hint !== null) {
             $hint = $this->hint;
         } else {
-            if (! $this->hint_generated && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->getAttribute()) {
-                $this->hint_generated = $this->evaluatePropertyExpression($this->getAttribute()->getHint() . ' [' . $this->getAttribute()->getAlias() . ']');                
+            if (! $this->hint_generated && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
+                $this->hint_generated = $this->evaluatePropertyExpression($attr->getHint());                
             }
             $hint = $this->hint_generated;
         }
@@ -876,6 +877,11 @@ abstract class AbstractWidget implements WidgetInterface
         // Disabled reason
         if ($hint && $this->isDisabled() && $disabledReason = $this->getDisabledReason()) {
             $hint .= $disabledReason;
+        }
+        
+        // Dev-hint
+        if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
+            $hint = rtrim(rtrim($hint), '.') .  ".\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
         }
         return $hint;
     }
