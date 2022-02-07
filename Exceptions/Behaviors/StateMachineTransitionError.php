@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  *
  * @author Stefan Leupold
  */
-class StateMachineUpdateException extends DataSheetWriteError
+class StateMachineTransitionError extends DataSheetWriteError
 {
     /**
      * 
