@@ -72,12 +72,11 @@ class StateMachineBehavior extends AbstractBehavior
     private $hasNumericIds = true;
     
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
         $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
@@ -95,7 +94,20 @@ class StateMachineBehavior extends AbstractBehavior
             $this->overrideAttributeDisplayWidget();
         }
         
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        
         return $this;
     }
     

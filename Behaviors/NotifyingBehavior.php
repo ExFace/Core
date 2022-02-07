@@ -100,18 +100,6 @@ class NotifyingBehavior extends AbstractBehavior
     private $notifyIfDataMatchesConditions = null;
     
     private $messageUxons = null;
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
-     */
-    public function register() : BehaviorInterface
-    {
-        $this->registerEventListeners();
-        $this->setRegistered(true);
-        return $this;
-    }
     
     /**
      * 

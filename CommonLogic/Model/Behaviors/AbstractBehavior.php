@@ -114,7 +114,12 @@ abstract class AbstractBehavior implements BehaviorInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::activate()
      */
-    abstract public function register() : BehaviorInterface;
+    public function register() : BehaviorInterface
+    {
+        $this->registerEventListeners();
+        $this->setRegistered(true);
+        return $this;
+    }
     
     protected function registerEventListeners() : BehaviorInterface
     {

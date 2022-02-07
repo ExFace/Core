@@ -34,14 +34,13 @@ use exface\Core\Exceptions\RuntimeException;
  *
  */
 class ModelValidatingBehavior extends AbstractBehavior
-{
-    
+{    
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         // Add messages to model editors
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
@@ -55,7 +54,28 @@ class ModelValidatingBehavior extends AbstractBehavior
             'handleModelDataSave'
         ]);
         
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        // Add messages to model editors
+        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
+            $this,
+            'handleObjectEditDialog'
+        ]);
+        
+        // Add checks when saving model data
+        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
+            $this,
+            'handleModelDataSave'
+        ]);
+        
         return $this;
     }
     

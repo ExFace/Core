@@ -24,15 +24,44 @@ class PasswordHashingBehavior extends AbstractBehavior
     
     private $hashAlgorithm = null;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     */
     public function register() : BehaviorInterface
     {
         $this->getPasswordAttribute()->getDataType()->setSensitiveData(true);
+        return parent::register();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
+    protected function registerEventListeners() : BehaviorInterface
+    {
         // Give the event handlers a hight priority to make sure, the passwords are encoded before
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
         ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000)
         ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000);
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        // Give the event handlers a hight priority to make sure, the passwords are encoded before
+        // any other behaviors get their hands on the data!
+        $this->getWorkbench()->eventManager()
+        ->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'])
+        ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent']);
         return $this;
     }
     

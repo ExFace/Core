@@ -154,34 +154,64 @@ class TranslatableBehavior extends AbstractBehavior
     ];
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         $obj = $this->getObject();
         
         if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
-            $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeActionPerformedEvent::getEventName(), [
                 $this,
                 'onReadForKeyCreateFiles'
             ]);
             
-            $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onEditDictPrefill'
             ]);
         }
         
         if ($this->hasTranslatableAttributes()) {
-            $this->getWorkbench()->eventManager()->addListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
                 $this,
                 'onObjectEditorInitAddTranslateButton'
             ]);
         }
         
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $obj = $this->getObject();
+        
+        if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeActionPerformedEvent::getEventName(), [
+                $this,
+                'onReadForKeyCreateFiles'
+            ]);
+            
+            $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
+                $this,
+                'onEditDictPrefill'
+            ]);
+        }
+        
+        if ($this->hasTranslatableAttributes()) {
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
+                $this,
+                'onObjectEditorInitAddTranslateButton'
+            ]);
+        }
+        
         return $this;
     }
     

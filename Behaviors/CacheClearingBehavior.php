@@ -16,14 +16,13 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
  *
  */
 class CacheClearingBehavior extends AbstractBehavior
-{
-    
+{    
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         $handler = array(
             $this,
@@ -32,7 +31,25 @@ class CacheClearingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $handler);
         $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $handler);
         $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $handler);
-        $this->setRegistered(true);
+        
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $handler = array(
+            $this,
+            'handleEvent'
+        );
+        $this->getWorkbench()->eventManager()->removeListener(OnUpdateDataEvent::getEventName(), $handler);
+        $this->getWorkbench()->eventManager()->removeListener(OnCreateDataEvent::getEventName(), $handler);
+        $this->getWorkbench()->eventManager()->removeListener(OnDeleteDataEvent::getEventName(), $handler);
+        
         return $this;
     }
     

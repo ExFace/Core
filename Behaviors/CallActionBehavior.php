@@ -43,17 +43,28 @@ class CallActionBehavior extends AbstractBehavior
     private $actionConfig = null;
     
     private $priority = null;
-
+    
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         $handler = [$this, 'callAction'];
         $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), $handler, $this->getPriority());
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $handler = [$this, 'callAction'];
+        $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), $handler, $this->getPriority());
         return $this;
     }
 

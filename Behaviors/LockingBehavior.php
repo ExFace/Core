@@ -105,12 +105,27 @@ class LockingBehavior extends AbstractBehavior
     
     private $actionsToLockFor = [];
     
-    public function register() : BehaviorInterface
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
+    protected function registerEventListeners() : BehaviorInterface
     {
-        
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData']);
         
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData']);
+        
         return $this;
     }
     
