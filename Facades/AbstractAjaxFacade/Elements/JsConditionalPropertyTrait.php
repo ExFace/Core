@@ -49,7 +49,7 @@ trait JsConditionalPropertyTrait {
                 case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
                 case ComparatorDataType::GREATER_THAN: // >
                 case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
-                    $jsConditions[] = "$leftJs {$condition->getComparator()} $rightJs";
+                    $jsConditions[] = "($leftJs || '').toString() {$condition->getComparator()} ($rightJs || '').toString()";
                     break;
                 case ComparatorDataType::IN: // [
                 case ComparatorDataType::NOT_IN: // ![
@@ -107,8 +107,9 @@ trait JsConditionalPropertyTrait {
 
             function() {
                 var rightValues = (({$rightJs} || '').toString()).split('{$listDelimiter}');
+                var sLeftVal = ($leftJs || '').toString();
                 for (var i = 0; i < rightValues.length; i++) {
-                    if (({$leftJs} || '').toString() {$comparator} rightValues[i].trim()) {
+                    if (sLeftVal {$comparator} rightValues[i].trim()) {
                         return true;
                     }
                 }
