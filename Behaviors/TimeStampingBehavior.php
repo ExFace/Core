@@ -108,6 +108,11 @@ class TimeStampingBehavior extends AbstractBehavior
     
     private $checkForConflictsNotMandatoryForSubsheets = true;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     */
     public function register() : BehaviorInterface
     {
         if ($this->hasCreatedByAttribute()) {
@@ -138,9 +143,7 @@ class TimeStampingBehavior extends AbstractBehavior
             }
         }
         
-        $this->registerEventListeners();
-        $this->setRegistered(true);
-        return $this;
+        return parent::register();
     }
     
     /**
