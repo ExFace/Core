@@ -416,7 +416,6 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            console.log('select');
             // check if _redrawSelection is not undefined, means the select is called for a redraw with a row selected before the redraw
             if (echart._redrawSelection !== undefined) {
                 //if the selected row before the redraw is in new dataset and got selected again, dont call onChangeScripts
@@ -755,7 +754,6 @@ JS;
             case $this->chartTypes['CHART_TYPE_PIE']:
                 return <<<JS
         var params = {$params};
-        console.log('select pie');
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var echart = {$this->buildJsEChartsVar()};
         // if already a pie part is selected do the following
@@ -2496,7 +2494,6 @@ JS;
     {
         return <<<JS
         
-    console.log('redraw pie');
     var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
