@@ -465,7 +465,7 @@ JS;
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selectedRow = {$selection};
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow.name) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow._key) {
                                 return dataset[i];
                             }
                         }
@@ -767,6 +767,7 @@ JS;
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+                name = {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "name")}
                 {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
                 {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
@@ -2498,7 +2499,8 @@ JS;
     for (var i = 0; i < arrayLength; i++) {
         var item = {
             value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} ,
-            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")}
+            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} ,
+            _key: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         };
         chartData.push(item);
     }
