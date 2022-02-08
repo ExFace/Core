@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  *
@@ -101,6 +102,23 @@ trait JqueryContainerTrait {
 				})()';
         
         return $output;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter($dataColumnName = null)
+    {
+        if ($dataColumnName === null) {
+            if ($this->getMetaObject()->hasUidAttribute()) {
+                $dataColumnName = DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());
+            } else {
+                return parent::buildJsValueGetter($dataColumnName);
+            }
+        }
+        return "({$this->buildJsDataGetter()}.rows[0] || {})['{$dataColumnName}']";
     }
     
     /**
