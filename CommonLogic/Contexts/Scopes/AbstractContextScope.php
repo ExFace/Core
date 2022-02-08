@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 abstract class AbstractContextScope implements ContextScopeInterface
 {
     private $active_contexts = array();
+    
+    private $active_errors = array();
 
     private $exface = NULL;
 
@@ -81,32 +83,36 @@ abstract class AbstractContextScope implements ContextScopeInterface
     {
         // If no context matching the alias exists, try to create one
         $cache = $this->active_contexts[(string)$aliasOrSelector] ?? null;
-        switch (true) {
-            case $cache === null:
-                try {
-                    if ($aliasOrSelector instanceof ContextSelectorInterface) {
-                        $selector = $aliasOrSelector;
-                    } else {
-                        $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $aliasOrSelector);  
-                    }
-                    $context = ContextFactory::createInScope($selector, $this);
-                    // If the selector was not an alias, see if the cache already has 
-                    if ($selector->isAlias() === false && $this->active_contexts[$context->getAliasWithNamespace()] !== null) {
-                        $instance = $this->active_contexts[$context->getAliasWithNamespace()];
-                        unset($context);
-                        return $instance;
-                    }
-                    $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
-                    $this->active_contexts[$context->getAliasWithNamespace()] = $context;
-                    $this->loadContextData($context);
-                    return $context;
-                } catch (\Throwable $e) {
-                    $this->active_contexts[$context->getAliasWithNamespace()] = $e;
-                    throw $e;
+        
+        if ($cache === null) {
+            if (($err = $this->active_errors[(string)$aliasOrSelector]) !== null) {
+                throw $err;
+            }
+            try {
+                if ($aliasOrSelector instanceof ContextSelectorInterface) {
+                    $selector = $aliasOrSelector;
+                } else {
+                    $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $aliasOrSelector);  
                 }
-            case $cache instanceof \Throwable:
-                throw $cache;
+                $context = ContextFactory::createInScope($selector, $this);
+                // If the selector was not an alias, see if the cache already has 
+                if ($selector->isAlias() === false && $this->active_contexts[$context->getAliasWithNamespace()] !== null) {
+                    $instance = $this->active_contexts[$context->getAliasWithNamespace()];
+                    unset($context);
+                    return $instance;
+                }
+                $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
+                $this->active_contexts[$context->getAliasWithNamespace()] = $context;
+                $this->active_contexts[$selector->toString()] = $context;
+                $this->loadContextData($context);
+                return $context;
+            } catch (\Throwable $e) {
+                $this->active_errors[$context->getAliasWithNamespace()] = $e;
+                $this->active_errors[(string)$aliasOrSelector] = $e;
+                throw $e;
+            }
         }
+        
         return $cache;
     }
     
@@ -118,9 +124,13 @@ abstract class AbstractContextScope implements ContextScopeInterface
     public function hasContext($aliasOrSelector, bool $loadContextIfPossible = true) : bool
     {
         $cache = ($this->active_contexts[(string)$aliasOrSelector] ?? null);
-        switch (true) {
-            case $cache instanceof ContextInterface: return true;
-            case $cache instanceof \Throwable: return false;
+        if ($cache !== null) {
+            return true;
+        }
+        
+        $cache = ($this->active_errors[(string)$aliasOrSelector] ?? null);
+        if ($cache !== null) {
+            return false;
         }
         
         if ($loadContextIfPossible === true) {
@@ -213,4 +223,3 @@ abstract class AbstractContextScope implements ContextScopeInterface
         return $this->name;
     }
 }
-?>
