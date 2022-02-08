@@ -416,6 +416,7 @@ JS;
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
+            console.log('select');
             // check if _redrawSelection is not undefined, means the select is called for a redraw with a row selected before the redraw
             if (echart._redrawSelection !== undefined) {
                 //if the selected row before the redraw is in new dataset and got selected again, dont call onChangeScripts
@@ -465,7 +466,7 @@ JS;
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selectedRow = {$selection};
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow.name) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow._key) {
                                 return dataset[i];
                             }
                         }
@@ -754,6 +755,7 @@ JS;
             case $this->chartTypes['CHART_TYPE_PIE']:
                 return <<<JS
         var params = {$params};
+        console.log('select pie');
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var echart = {$this->buildJsEChartsVar()};
         // if already a pie part is selected do the following
@@ -767,6 +769,7 @@ JS;
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
+                name = {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "name")}
                 {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
                 {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
@@ -2493,12 +2496,14 @@ JS;
     {
         return <<<JS
         
+    console.log('redraw pie');
     var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
         var item = {
             value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} ,
-            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")}
+            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} ,
+            _key: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         };
         chartData.push(item);
     }
