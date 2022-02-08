@@ -80,6 +80,11 @@ class WindowContextScope extends AbstractContextScope
         }
         return $context;
     }
+    
+    public function hasContext($aliasOrSelector, bool $loadContextIfPossible = true) : bool
+    {
+        return $this->getContextManager()->getScopeSession()->hasContext($aliasOrSelector, $loadContextIfPossible);
+    }
 
     /**
      * Delegate everything to the session scope until there is a proper implementation for the window scope
