@@ -2,10 +2,15 @@
 namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 
 /**
+ * Replaces placeholders with values provided as a placeholder=>value array.
+ * 
+ * ## Examples
+ * 
+ * - `new ArrayPlaceholders(['ph1' => 'val1', 'ph2' => 'val2'])` will replace `ph1` with `val1`
+ * - `new ArrayPlaceholders(['ph1' => 'val1', 'ph2' => 'val2'], '~file:')` will replace `~file:ph1` with `val1`
  * 
  *
  * @author Andrej Kabachnik
@@ -20,7 +25,7 @@ class ArrayPlaceholders implements PlaceholderResolverInterface
     
     /**
      * 
-     * @param FacadeInterface $workbench
+     * @param array $placeholders
      * @param string $prefix
      */
     public function __construct(array $placeholders, string $prefix = '')
@@ -38,8 +43,9 @@ class ArrayPlaceholders implements PlaceholderResolverInterface
     {     
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            if (array_key_exists($placeholder, $this->placeholders)) {
-                $vals[$placeholder] = $this->placeholders[$placeholder];
+            $key = $this->stripPrefix($placeholder, $this->prefix);
+            if (array_key_exists($key, $this->placeholders)) {
+                $vals[$placeholder] = $this->placeholders[$key];
             }
         }
         return $vals;

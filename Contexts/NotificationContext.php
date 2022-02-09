@@ -104,6 +104,56 @@ class NotificationContext extends AbstractContext
         
         $container->addWidget($menu);
         
+        /*
+        $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
+        if ($authToken->isAnonymous()) {
+            return $container;
+        }
+        
+        $table = WidgetFactory::createFromUxonInParent($container, new UxonObject([
+            'widget_type' => 'DataTableResponsive',
+            'object_alias' => 'exface.Core.NOTIFICATION',
+            'hide_caption' => true,
+            'hide_footer' => true,
+            'paginate' => false,
+            'filters' => [
+                [
+                    'attribute_alias' => 'USER__USERNAME', 
+                    'value' => $authToken->getUsername(),
+                    'comparator' => ComparatorDataType::EQUALS,
+                    'hidden' => true
+                ]
+            ],
+            'columns' => [
+                [
+                    'attribute_alias' => 'TITLE',
+                    'visibility' => WidgetVisibilityDataType::PROMOTED
+                ],
+                [
+                    'attribute_alias' => 'CREATED_ON',
+                    'visibility' => WidgetVisibilityDataType::PROMOTED
+                ]
+            ],
+            'sorters' => [
+                [
+                    'attribute_alias' => 'CREATED_ON',
+                    'direction' => SortingDirectionsDataType::DESC
+                ]
+            ],
+            'buttons' => [
+                [
+                    'caption' => 'Open',
+                    'bind_to_left_click' => true,
+                    'action' => [
+                        'alias' => 'exface.Core.ShowDialogFromData',
+                        'uxon_attribute' => 'WIDGET_UXON'
+                    ]
+                ]
+            ]
+        ]));
+        
+        $container->addWidget($table);*/
+        
         return $container;
     }
     
