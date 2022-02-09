@@ -113,7 +113,7 @@ class CallActionBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
         
         if ($this->hasRestrictionOnAttributeChange()) {
-            $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
         }
         
         return $this;

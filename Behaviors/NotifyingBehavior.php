@@ -17,16 +17,20 @@ use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Communication\Messages\Envelope;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Creates user-notifications on certain events and conditions.
- * 
- * BETA: This behavior is not yet fully functional. Some features may not work correctly!
  * 
  * Each behavior instance can be configured to send notifications on a specific event
  * by setting the mandatory `notify_on` option. Additionally other `notify_*` options
  * can be used to introduce further conditions. If you need notifications on multiple
  * events - create multiple behaviors for the object.
+ * 
+ * ## Notifications and placeholders
  * 
  * Each behavior instance can send multiple `notifications` through different communication
  * channels. The available configuration options for each notification depend on the message
@@ -44,13 +48,23 @@ use exface\Core\Communication\Messages\Envelope;
  * This means, static formulas will always work, while data-driven formulas will only work on data sheet
  * events!
  * 
+ * ## Notify on certain conditions only
+ * 
+ * You can make the behavior send notifications on certain conditions only:
+ * 
+ * - `notify_if_attributes_change` - will only send a notification if one of these attribtues 
+ * is changed
+ * - `notify_if_data_matches_conditions` - will only send notifications if the `notify_on_event` 
+ * contains data and that data matches the provided conditions. In case only some of the data 
+ * rows match the conditions, notifications will be sent for these rows only!
+ * 
  * ## Examples
  * 
  * ### Send an in-app notification to a user role every time a task is created
  * 
  * ```
  *  {
- *      "notify_on": "exface.Core.DataSheet.OnCreateData",
+ *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
  *      "notifications": [
  *          {
  *              "channel": "exface.Core.NOTIFICATION",
@@ -68,11 +82,11 @@ use exface\Core\Communication\Messages\Envelope;
  * 
  * ```
  *  {
- *      "notify_on": "exface.Core.DataSheet.OnUpdateData",
+ *      "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
  *      "notify_if_attributes_change": [
  *          "status"
  *      ],
- *      "notify_on_conditions": [{
+ *      "notify_if_data_matches_conditions": [{
  *          "operator": "AND",
  *          "conditions": ["value_left": "status", "comparator": "==", "value_right": 60]
  *      }],
@@ -95,11 +109,13 @@ class NotifyingBehavior extends AbstractBehavior
 {
     private $notifyOn = null;
     
+    private $messageUxons = null;
+    
     private $notifyIfAttributesChange = [];
     
-    private $notifyIfDataMatchesConditions = null;
+    private $notifyIfDataMatchesConditionGroupUxon = null;
     
-    private $messageUxons = null;
+    private $ignoreDataSheets = [];
     
     /**
      * 
@@ -108,8 +124,16 @@ class NotifyingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
+        // Register the change-check listener first to make sure it is called before the
+        // call-action listener even if both listen the OnBeforeUpdateData event
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $this->getWorkbench()->eventManager()
+                ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
+        }
+        
         $this->getWorkbench()->eventManager()
             ->addListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
+        
         return $this;
     }
     
@@ -120,6 +144,10 @@ class NotifyingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $this->getWorkbench()->eventManager()
+                ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
+        }
         $this->getWorkbench()->eventManager()
             ->removeListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
@@ -158,19 +186,69 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
+        $dataSheet = null;
         if ($event instanceof DataSheetEventInterface) {
             $dataSheet = $event->getDataSheet();
             if (! $dataSheet->getMetaObject()->is($this->getObject())) {
                 return;
             }
+            
+            if (in_array($dataSheet, $this->ignoreDataSheets)) {
+                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
+                return;
+            }
+            
+            if ($this->hasRestrictionConditions()) {
+                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions());
+                if ($dataSheet->isEmpty()) {
+                    $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
+                    return;
+                }
+            }
+        } else {
+            // Don't send anything if the event has data restrictions, but no data!
+            if ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange()) {
+                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+                return;
+            }
         }
         
         $communicator = $this->getWorkbench()->getCommunicator();
-        foreach ($this->getNotificationEnvelopes($event) as $envelope)
+        foreach ($this->getNotificationEnvelopes($event, $dataSheet) as $envelope)
         {
             $communicator->send($envelope);
         }
         return;
+    }
+    
+    /**
+     * Checks if any of the `notify_if_attribtues_change` attributes are about to change
+     *
+     * @param OnBeforeUpdateDataEvent $event
+     * @return void
+     */
+    public function onBeforeUpdateCheckChange(OnBeforeUpdateDataEvent $event)
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+            return;
+        }
+        
+        $ignore = true;
+        foreach ($this->getNotifyIfAttributesChange() as $attrAlias) {
+            if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
+                $ignore = false;
+                break;
+            }
+        }
+        if ($ignore === true) {
+            $this->ignoreDataSheets[] = $event->getDataSheet();
+        }
     }
     
     protected function getNotifyOnEventName() : string
@@ -198,7 +276,7 @@ class NotifyingBehavior extends AbstractBehavior
      * 
      * @return CommunicationMessageInterface[]
      */
-    protected function getNotificationEnvelopes(EventInterface $event) : array
+    protected function getNotificationEnvelopes(EventInterface $event, DataSheetInterface $dataSheet = null) : array
     {
         $messages = [];
         foreach ($this->messageUxons as $uxon) {
@@ -208,8 +286,7 @@ class NotifyingBehavior extends AbstractBehavior
             $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
             $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
             switch (true) {
-                case $event instanceof DataSheetEventInterface:
-                    $dataSheet = $event->getDataSheet();
+                case $dataSheet !== null:
                     foreach (array_keys($dataSheet->getRows()) as $rowNo) {
                         $rowRenderer = clone $renderer;
                         $rowRenderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo, '~data:'));
@@ -245,7 +322,7 @@ class NotifyingBehavior extends AbstractBehavior
      * 
      * @uxon-property notifications
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template {"channel": ""}
+     * @uxon-template [{"channel": ""}]
      * 
      * @param UxonObject $arrayOfEnvelopes
      * @return NotifyingBehavior
@@ -253,6 +330,73 @@ class NotifyingBehavior extends AbstractBehavior
     protected function setNotifications(UxonObject $arrayOfEnvelopes) : NotifyingBehavior
     {
         $this->messageUxons = $arrayOfEnvelopes;
+        return $this;
+    }
+    
+    protected function getNotifyIfAttributesChange() : array
+    {
+        return $this->notifyIfAttributesChange ?? [];
+    }
+    
+    /**
+     * Only call the action if any of these attributes change (list of aliases)
+     *
+     * @uxon-property notify_if_attributes_change
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     *
+     * @param UxonObject $value
+     * @return NotifyingBehavior
+     */
+    protected function setNotifyIfAttributesChange(UxonObject $value) : NotifyingBehavior
+    {
+        $this->notifyIfAttributesChange = $value->toArray();
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function hasRestrictionOnAttributeChange() : bool
+    {
+        return $this->notifyIfAttributesChange !== null;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function hasRestrictionConditions() : bool
+    {
+        return $this->notifyIfDataMatchesConditionGroupUxon !== null;
+    }
+    
+    /**
+     *
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getNotifyIfDataMatchesConditions() : ?ConditionGroupInterface
+    {
+        if ($this->notifyIfDataMatchesConditionGroupUxon === null) {
+            return null;
+        }
+        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->notifyIfDataMatchesConditionGroupUxon, $this->getObject());
+    }
+    
+    /**
+     * Only call the action if it's input data would match these conditions
+     *
+     * @uxon-property notify_if_data_matches_conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
+     *
+     * @param UxonObject $uxon
+     * @return NotifyingBehavior
+     */
+    protected function setNotifyIfDataMatchesConditions(UxonObject $uxon) : NotifyingBehavior
+    {
+        $this->notifyIfDataMatchesConditionGroupUxon = $uxon;
         return $this;
     }
 }
