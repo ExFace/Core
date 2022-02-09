@@ -52,10 +52,10 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  *      },
  *      "action": {
  *          "alias": "exface.Core.CreateData",
- *          "object_alias": "my.App.STATE_LOG",
+ *          "object_alias": "my.App.DOC_STATE_LOG",
  *          "input_mapper": {
- *              "from_object_alias": "suedlink.KMTS.Abruf",
- *              "to_object_alias": "suedlink.KMTS.AbrufRevision",
+ *              "from_object_alias": "my.App.DOC",
+ *              "to_object_alias": my.App.DOC_STATE_LOG",
  *              "column_to_column_mappings": [
  *                  {"from": "...", "to": "..."},
  *              ]
