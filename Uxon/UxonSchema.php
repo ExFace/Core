@@ -456,6 +456,15 @@ class UxonSchema implements UxonSchemaInterface
                     $options = [];
                 }
                 break;
+            case strcasecmp($type, 'metamodel:aggregator') === 0:
+                $options = AggregatorFunctionsDataType::getKeysStatic();
+                break;
+            case strcasecmp($type, 'metamodel:datatype') === 0:
+                $options = $this->getMetamodelDatatypeAliases();
+                break;
+            case strcasecmp($type, 'metamodel:event') === 0:
+                $options = $this->getMetamodelEventAliases();
+                break;
             case StringDataType::startsWith($type, 'metamodel:'):
                 $options = $this->getMetamodelData($type, $search);
                 break;
@@ -467,15 +476,6 @@ class UxonSchema implements UxonSchemaInterface
                     $valType = $keyType;
                 }
                 $options = $valType ? $this->getValidValuesForType($valType, $search, $object) : [];
-                break;
-            case strcasecmp($type, 'metamodel:aggregator') === 0:
-                $options = AggregatorFunctionsDataType::getKeysStatic();
-                break;
-            case strcasecmp($type, 'metamodel:datatype') === 0:
-                $options = $this->getMetamodelDatatypeAliases();
-                break;
-            case strcasecmp($type, 'metamodel:event') === 0:
-                $options = $this->getMetamodelEventAliases();
                 break;
         }
         return $options;
