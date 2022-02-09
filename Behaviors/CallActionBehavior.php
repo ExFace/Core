@@ -11,6 +11,12 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\Events\TaskEventInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -18,7 +24,9 @@ use exface\Core\Interfaces\Events\TaskEventInterface;
  * For this behavior to work, it has to be attached to an object in the metamodel. The event-
  * alias and the action have to be configured in the behavior configuration.
  * 
- * Example:
+ * ## Examples
+ * 
+ * ### Call an ection every time an instance of this object is created
  * 
  * ```
  * {
@@ -30,19 +38,52 @@ use exface\Core\Interfaces\Events\TaskEventInterface;
  * 
  * ```
  * 
+ * ### Log data every time the state of a document changes to "30"
+ * 
+ * ```
+ *  {
+ *      "event_alias": "exface.Core.DataSheet.OnBeforeUpdateData",
+ *      "only_if_attributes_change": ["STATE"],
+ *      "only_if_data_matches_conditions": {
+ *          "operator": "AND",
+ *          "conditions": [
+ *              {"expression": "STATE", "comparator": "==", "value": 30}
+ *          ]
+ *      },
+ *      "action": {
+ *          "alias": "exface.Core.CreateData",
+ *          "object_alias": "my.App.STATE_LOG",
+ *          "input_mapper": {
+ *              "from_object_alias": "suedlink.KMTS.Abruf",
+ *              "to_object_alias": "suedlink.KMTS.AbrufRevision",
+ *              "column_to_column_mappings": [
+ *                  {"from": "...", "to": "..."},
+ *              ]
+ *          }
+ *      }
+ *  }
+ * 
+ * ```
+ * 
  * @author SFL
+ * @author Andrej Kabachnik
  *
  */
 class CallActionBehavior extends AbstractBehavior
 {
-
-    private $objectEventAlias = null;
+    private $eventAlias = null;
 
     private $action = null;
     
     private $actionConfig = null;
     
     private $priority = null;
+    
+    private $onlyIfAttributesChange = [];
+    
+    private $onlyIfDataMatchesConditionGroupUxon = null;
+    
+    private $ignoreDataSheets = [];
     
     /**
      *
@@ -51,8 +92,14 @@ class CallActionBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $handler = [$this, 'callAction'];
-        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), $handler, $this->getPriority());
+        // Register the change-check listener first to make sure it is called before the 
+        // call-action listener even if both listen the OnBeforeUpdateData event
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
+        }
+        
+        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
+        
         return $this;
     }
     
@@ -63,8 +110,12 @@ class CallActionBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $handler = [$this, 'callAction'];
-        $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), $handler, $this->getPriority());
+        $this->getWorkbench()->eventManager()->removeListener($this->getEventAlias(), [$this, 'onEventCallAction'], $this->getPriority());
+        
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
+        }
+        
         return $this;
     }
 
@@ -78,6 +129,15 @@ class CallActionBehavior extends AbstractBehavior
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('event_alias', $this->getEventAlias());
         $uxon->setProperty('action', $this->getAction()->exportUxonObject());
+        if ($this->getPriority() !== null) {
+            $uxon->setProperty('priority', $this->getPriority());
+        }
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $uxon->setProperty('only_if_attributes_change', new UxonObject($this->getOnlyIfAttributesChange()));
+        }
+        if ($this->hasRestrictionOnAttributeChange()) {
+            $uxon->setProperty('only_if_data_matches_conditions', $this->onlyIfDataMatchesConditionGroupUxon);
+        }
         return $uxon;
     }
 
@@ -85,15 +145,15 @@ class CallActionBehavior extends AbstractBehavior
      * 
      * @return string
      */
-    public function getEventAlias() : string
+    protected function getEventAlias() : string
     {
-        return $this->event_alias;
+        return $this->eventAlias;
     }
 
     /**
      * Alias of the event, that should trigger the action.
      * 
-     * Technically, any type of event selector will do - e.g. 
+     * Technically, any type of event selector will do - e.g.: 
      * - `exface.Core.DataSheet.OnBeforeCreateData`
      * - `\exface\Core\Events\DataSheet\OnBeforeCreateData`
      * - OnBeforeCreateData::class (in PHP)
@@ -105,9 +165,9 @@ class CallActionBehavior extends AbstractBehavior
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
      */
-    public function setEventAlias(string $aliasWithNamespace) : CallActionBehavior
+    protected function setEventAlias(string $aliasWithNamespace) : CallActionBehavior
     {
-        $this->event_alias = $aliasWithNamespace;
+        $this->eventAlias = $aliasWithNamespace;
         return $this;
     }
 
@@ -115,7 +175,7 @@ class CallActionBehavior extends AbstractBehavior
      * 
      * @return ActionInterface
      */
-    public function getAction()
+    protected function getAction()
     {
         if ($this->action === null) {
             $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
@@ -139,30 +199,47 @@ class CallActionBehavior extends AbstractBehavior
      * @param UxonObject|string $action
      * @return BehaviorInterface
      */
-    public function setAction($action)
+    protected function setAction($action)
     {
         $this->actionConfig = $action;
         return $this;
     }
 
     /**
-     * The method which is called when the configured event is fired, which executes the
-     * configured action. 
+     * Executes the action if applicable
      * 
-     * @param DataSheetEventInterface $event
+     * @param EventInterface $event
+     * @return void
      */
-    public function callAction(DataSheetEventInterface $event)
+    public function onEventCallAction(EventInterface $event)
     {
         if ($this->isDisabled()) {
             return;
+        }
+        
+        if (! $event instanceof DataSheetEventInterface) {
+            throw new BehaviorConfigurationError($this->getObject(), 'The CallActionBehavior cannot be triggered by event "' . $event->getAliasWithNamespace() . '": currently only data sheet events supported!');
         }
         
         $data_sheet = $event->getDataSheet();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
             return;
+        }
+        
+        if (in_array($data_sheet, $this->ignoreDataSheets)) {
+            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_attributes_change`', [], $data_sheet);
+            return;
+        }
+        
+        if ($this->hasRestrictionConditions()) {
+            $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions());
+            if ($data_sheet->isEmpty()) {
+                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_data_matches_conditions`', [], $data_sheet);
+                return;
+            }
         }
         
         if ($action = $this->getAction()) {
@@ -184,10 +261,40 @@ class CallActionBehavior extends AbstractBehavior
     }
     
     /**
+     * Checks if any of the `only_if_attribtues_change` attributes are about to change
+     * 
+     * @param OnBeforeUpdateDataEvent $event
+     * @return void
+     */
+    public function onBeforeUpdateCheckChange(OnBeforeUpdateDataEvent $event)
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+            return;
+        }
+        
+        $ignore = true;
+        foreach ($this->getOnlyIfAttributesChange() as $attrAlias) {
+            if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
+                $ignore = false;
+                break;
+            }
+        }
+        if ($ignore === true) {
+            $this->ignoreDataSheets[] = $event->getDataSheet();
+        }
+    }
+    
+    /**
      *
      * @return int|NULL
      */
-    public function getPriority() : ?int
+    protected function getPriority() : ?int
     {
         return $this->priority;
     }
@@ -204,6 +311,73 @@ class CallActionBehavior extends AbstractBehavior
     public function setPriority(int $value) : CallActionBehavior
     {
         $this->priority = $value;
+        return $this;
+    }
+    
+    protected function getOnlyIfAttributesChange() : array
+    {
+        return $this->onlyIfAttributesChange ?? [];
+    }
+    
+    /**
+     * Only call the action if any of these attributes change (list of aliases)
+     * 
+     * @uxon-property only_if_attributes_change
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $value
+     * @return CallActionBehavior
+     */
+    protected function setOnlyIfAttributesChange(UxonObject $value) : CallActionBehavior
+    {
+        $this->onlyIfAttributesChange = $value->toArray();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasRestrictionOnAttributeChange() : bool
+    {
+        return $this->onlyIfAttributesChange !== null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasRestrictionConditions() : bool
+    {
+        return $this->onlyIfDataMatchesConditionGroupUxon !== null;
+    }
+    
+    /**
+     * 
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getOnlyIfDataMatchesConditions() : ?ConditionGroupInterface
+    {
+        if ($this->onlyIfDataMatchesConditionGroupUxon === null) {
+            return null;
+        }
+        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->onlyIfDataMatchesConditionGroupUxon, $this->getObject());
+    }
+    
+    /**
+     * Only call the action if it's input data would match these conditions
+     * 
+     * @uxon-property only_if_data_matches_conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
+     * 
+     * @param UxonObject $uxon
+     * @return CallActionBehavior
+     */
+    protected function setOnlyIfDataMatchesConditions(UxonObject $uxon) : CallActionBehavior
+    {
+        $this->onlyIfDataMatchesConditionGroupUxon = $uxon;
         return $this;
     }
 }
