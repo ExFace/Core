@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 
 /**
  * Exception thrown if a communication message could not be sent.
@@ -10,7 +11,7 @@ use exface\Core\Exceptions\RuntimeException;
  * @author Andrej Kabachnik
  *        
  */
-class CommunicationNotSentError extends RuntimeException
+class CommunicationNotSentError extends RuntimeException implements CommunicationExceptionInterface
 {
     private $communicationMsg = null;
     
@@ -30,7 +31,8 @@ class CommunicationNotSentError extends RuntimeException
     
     /**
      * 
-     * @return CommunicationMessageInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface::getCommunicationMessage()
      */
     public function getCommunicationMessage() : CommunicationMessageInterface
     {
