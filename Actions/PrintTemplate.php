@@ -172,7 +172,7 @@ class PrintTemplate extends AbstractAction
             // Prepare a renderer for the data_placeholders config
             $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $dataTplRenderer->addPlaceholder((new DataRowPlaceholders($inputData, $rowNo, '~input:'))->setFormatValues(false));
-            $dataTplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo));
+            $dataTplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo, '~input:='));
             
             // Create group-resolver with resolvers for every data_placeholder and use
             // it as the default resolver for the input row renderer

@@ -48,10 +48,11 @@ class FormulaPlaceholders implements PlaceholderResolverInterface
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
             $placeholder = trim($placeholder);
-            if (mb_substr($placeholder, 0, 1) === '==' || mb_substr($placeholder, -1) !== ')') {
+            $exprString = $this->stripPrefix($placeholder, $this->prefix);
+            if (mb_substr($exprString, 0, 1) === '=') {
                 continue;
             }
-            $formula = FormulaFactory::createFromString($this->workbench, $placeholder);
+            $formula = FormulaFactory::createFromString($this->workbench, $exprString);
             $vals[$placeholder] = $formula->evaluate($this->dataSheet, $this->rowNumber);
         }
         return $vals;
