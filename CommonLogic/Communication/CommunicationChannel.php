@@ -20,6 +20,7 @@ use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Communication\CommunicationChannelConfigError;
 
 class CommunicationChannel implements CommunicationChannelInterface
 {
@@ -103,6 +104,11 @@ class CommunicationChannel implements CommunicationChannelInterface
         if ($this->connection === null && $this->connectionSelector !== null) {
             $this->connection = DataConnectionFactory::createFromSelector($this->connectionSelector);
         }
+        
+        if ($this->connection === null) {
+            throw new CommunicationChannelConfigError($this, 'No connection configured for communication channel ' . $this->__toString());
+        }
+        
         return $this->connection;
     }
     
@@ -195,7 +201,7 @@ class CommunicationChannel implements CommunicationChannelInterface
             }
             return $this->getConnection()->communicate($message);
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException(new CommunicationNotSentError($message, 'Failed to message over channel "' . $this->getName() . '": ' . $e->getMessage()));
+            throw new CommunicationNotSentError($message, 'Failed to send message over channel "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
         }
     }
     
@@ -238,5 +244,14 @@ class CommunicationChannel implements CommunicationChannelInterface
     {
         $this->muted = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '" [' . $this->getAliasWithNamespace() . ']';
     }
 }

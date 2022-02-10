@@ -21,6 +21,9 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
+use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -116,6 +119,8 @@ class NotifyingBehavior extends AbstractBehavior
     private $notifyIfDataMatchesConditionGroupUxon = null;
     
     private $ignoreDataSheets = [];
+    
+    private $errorIfNotSent = false;
     
     /**
      * 
@@ -213,10 +218,23 @@ class NotifyingBehavior extends AbstractBehavior
             }
         }
         
-        $communicator = $this->getWorkbench()->getCommunicator();
-        foreach ($this->getNotificationEnvelopes($event, $dataSheet) as $envelope)
-        {
-            $communicator->send($envelope);
+        try {
+            $communicator = $this->getWorkbench()->getCommunicator();
+            foreach ($this->getNotificationEnvelopes($event, $dataSheet) as $envelope)
+            {
+                $communicator->send($envelope);
+            }
+        } catch (\Throwable $e) {
+            if ($e instanceof CommunicationExceptionInterface) {
+                $sendingError = $e;
+            } else {
+                $sendingError = new CommunicationNotSentError($envelope, 'Cannot send notification: ' . $e->getMessage(), null, $e);
+            }
+            if ($this->isErrorIfNotSent() === false) {
+                $this->getWorkbench()->getLogger()->logException($sendingError);
+            } else {
+                throw $sendingError;
+            }
         }
         return;
     }
@@ -397,6 +415,27 @@ class NotifyingBehavior extends AbstractBehavior
     protected function setNotifyIfDataMatchesConditions(UxonObject $uxon) : NotifyingBehavior
     {
         $this->notifyIfDataMatchesConditionGroupUxon = $uxon;
+        return $this;
+    }
+    
+    protected function isErrorIfNotSent() : bool
+    {
+        return $this->errorIfNotSent;
+    }
+    
+    /**
+     * Set to TRUE to produce errors if at least one notification cannot be sent (will prevent saving data!!!)
+     * 
+     * @uxon-property error_if_not_sent
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    protected function setErrorIfNotSent(bool $value) : NotifyingBehavior
+    {
+        $this->errorIfNotSent = $value;
         return $this;
     }
 }

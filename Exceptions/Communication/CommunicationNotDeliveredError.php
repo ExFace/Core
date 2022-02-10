@@ -4,6 +4,7 @@ namespace exface\Core\Exceptions\Communication;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
+use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 
 /**
  * Exception thrown if a communication message was rejected (after being sent).
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
  * @author Andrej Kabachnik
  *        
  */
-class CommunicationNotDeliveredError extends RuntimeException
+class CommunicationNotDeliveredError extends RuntimeException implements CommunicationExceptionInterface
 {
     private $receipt = null;
     
@@ -36,5 +37,15 @@ class CommunicationNotDeliveredError extends RuntimeException
     public function getCommunicationReceipt() : CommunicationReceiptInterface
     {
         return $this->receipt;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface::getCommunicationMessage()
+     */
+    public function getCommunicationMessage(): CommunicationMessageInterface
+    {
+        return $this->receipt->getMessage();
     }
 }
