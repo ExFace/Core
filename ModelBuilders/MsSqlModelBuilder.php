@@ -66,7 +66,11 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                     $default = trim($default, "()");
                     break;
             }
-            if ($default === '""' || $default === "''") {
+            switch ($default) {
+                case '""': 
+                case "''":
+                case "('')":
+                case '(NULL)':
                 $default = '';
                 $isRequired = 0;
             }
