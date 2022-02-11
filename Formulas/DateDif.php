@@ -39,13 +39,19 @@ class DateDif extends \exface\Core\CommonLogic\Model\Formula
         $date2 = DateDataType::castToPhpDate($end_date);
         $interval = $date1->diff($date2);
         
+        $diff = 0;
         switch (mb_strtoupper($unit)) {
-            case self::UNIT_D: return $interval->days;
-            case self::UNIT_M: return $interval->y * 12 + $interval->m;
-            case self::UNIT_Y: return $interval->y;
+            case self::UNIT_D: $diff = $interval->days; break;
+            case self::UNIT_M: $diff = $interval->y * 12 + $interval->m; break;
+            case self::UNIT_Y: $diff = $interval->y; break;
             default:
                 throw new FormulaError('Cannot evaluate formula "' . $this->__toString() . '": invalid unit "' . $unit . '" provided!');
         }
+        
+        if ($date1 > $date2) {
+            $diff = $diff * (-1);
+        }
+        return $diff;
     }
     
     /**
