@@ -12,6 +12,8 @@ class FileFinderConnector extends TransparentConnector
 {
 
     private $base_path = null;
+    
+    private $base_path_absolute = null;
 
     private $use_vendor_folder_as_base = false;
 
@@ -23,19 +25,6 @@ class FileFinderConnector extends TransparentConnector
      */
     protected function performConnect()
     {
-        $base_path = $this->getBasePath();
-        
-        if ($this->getUseVendorFolderAsBase() != false) {
-            $base_path = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
-        } elseif (is_null($base_path)) {
-            $base_path = $this->getWorkbench()->filemanager()->getPathToBaseFolder();
-        }
-        
-        if (Filemanager::pathIsAbsolute($this->getBasePath())) {
-            $base_path = Filemanager::pathJoin($this->getWorkbench()->filemanager()->getPathToBaseFolder(), $this->getBasePath());
-        }
-        
-        $this->setBasePath($base_path);
         return;
     }
 
@@ -122,9 +111,32 @@ class FileFinderConnector extends TransparentConnector
         return $query;
     }
 
-    public function getBasePath()
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getBasePath() : ?string
     {
-        return $this->base_path;
+        if ($this->base_path_absolute === null) {
+            $fm = $this->getWorkbench()->filemanager();
+            switch (true) {
+                case $this->getUseVendorFolderAsBase()  === true:
+                    $base = $fm->getPathToVendorFolder();
+                    if ($this->base_path !== null && $this->base_path !== '') {
+                        $base = FilePathDataType::join([$base, $this->base_path]);
+                    }
+                    break;
+                case $this->base_path !== null:
+                    $base = $this->base_path;
+                    if (! FilePathDataType::isAbsolute($base)) {
+                        $base = FilePathDataType::join([$fm->getPathToBaseFolder(), $base]);
+                    }
+                    break;
+            }
+            $this->base_path_absolute = FilePathDataType::normalize($base, '/');
+        }
+        
+        return $this->base_path_absolute;
     }
 
     /**
@@ -140,6 +152,7 @@ class FileFinderConnector extends TransparentConnector
      */
     public function setBasePath($value)
     {
+        $this->base_path_absolute = null;
         if ($value) {
             $this->base_path = Filemanager::pathNormalize($value, '/');
         } else {
@@ -152,7 +165,7 @@ class FileFinderConnector extends TransparentConnector
      *
      * @return boolean
      */
-    public function getUseVendorFolderAsBase()
+    public function getUseVendorFolderAsBase() : bool
     {
         return $this->use_vendor_folder_as_base;
     }
@@ -168,9 +181,9 @@ class FileFinderConnector extends TransparentConnector
      * @param boolean $value            
      * @return \exface\Core\DataConnectors\FileFinderConnector
      */
-    public function setUseVendorFolderAsBase($value)
+    public function setUseVendorFolderAsBase(bool $value) : FileFinderConnector
     {
-        $this->use_vendor_folder_as_base = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->use_vendor_folder_as_base = $value;
         return $this;
     }
 }
