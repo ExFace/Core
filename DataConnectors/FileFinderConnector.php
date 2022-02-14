@@ -152,7 +152,7 @@ class FileFinderConnector extends TransparentConnector
      * @param string $value            
      * @return \exface\Core\DataConnectors\FileFinderConnector
      */
-    public function setBasePath($value)
+    public function setBasePath($value) : FileFinderConnector
     {
         $this->base_path_absolute = null;
         if ($value) {
