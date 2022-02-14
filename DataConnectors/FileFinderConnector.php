@@ -133,7 +133,9 @@ class FileFinderConnector extends TransparentConnector
                     }
                     break;
             }
-            $this->base_path_absolute = FilePathDataType::normalize($base, '/');
+            if ($base !== null) {
+                $this->base_path_absolute = FilePathDataType::normalize($base, '/');
+            }
         }
         
         return $this->base_path_absolute;
