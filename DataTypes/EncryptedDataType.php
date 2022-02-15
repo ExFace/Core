@@ -154,6 +154,21 @@ class EncryptedDataType extends StringDataType
     }
     
     /**
+     * Creates a base64 encoded salt for sodium encryption form the given string. A sodium salt has to be 32 characters long.
+     * Therefor only the first 32 characters of the string are use.
+     * If the string is short than 32 characters the salt gets filled up with as many `0` as neccessary.
+     * @return string
+     */
+    public static function createSaltFromString (string $string) : string
+    {
+        $salt = substr($string, 0,32);
+        while (strlen($salt) < 32) {
+            $salt .= '0';
+        }
+        return base64_encode($salt);
+    }
+    
+    /**
      * Set the inner datatype
      *
      * @uxon-property inner_data_type
@@ -193,7 +208,7 @@ class EncryptedDataType extends StringDataType
         return $this;
     }
     
-    protected function getInnerDataType() : DataTypeInterface
+    public function getInnerDataType() : DataTypeInterface
     {
         if ($this->innerDatatype === null) {
             $this->innerDatatype = DataTypeFactory::createBaseDataType($this->getWorkbench());

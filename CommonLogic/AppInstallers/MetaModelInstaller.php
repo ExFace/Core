@@ -19,6 +19,8 @@ use exface\Core\Behaviors\ModelValidatingBehavior;
 use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\EncryptedDataType;
+use exface\Core\Factories\ConfigurationFactory;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -99,6 +101,8 @@ class MetaModelInstaller extends AbstractAppInstaller
     const FOLDER_NAME_MODEL = 'Model';
     
     const FOLDER_NAME_PAGES = '99_PAGE';
+    
+    const ENCRYPTION_CONFIG_FILE = 'Encryption.config.json';
     
     private $objectSheet = null;
     
@@ -324,21 +328,32 @@ class MetaModelInstaller extends AbstractAppInstaller
     
     protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array
     {
-        $rows = $rows ?? $sheet->getRows();
+        $rows = $rows ?? $sheet->getRowsDecrypted();
         foreach ($sheet->getColumns() as $col) {
-            if ($col->getDataType() instanceof UxonDataType) {
-                $colName = $col->getName();
-                foreach ($rows as $i => $row) {
-                    $val = $row[$colName];
-                    if ($val !== null && $val !== '') {
-                        try {
-                            $valUxon = UxonObject::fromAnything($val);
-                            $rows[$i][$colName] = $valUxon->toArray();
-                        } catch (\Throwable $e) {
-                            // Ignore errors
+            $dataType = $col->getDataType();
+            switch (true) {
+                case $dataType instanceof EncryptedDataType:
+                    $colName = $col->getName();
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        $salt = $this->getAppSalt();
+                        $valEncrypted = EncryptedDataType::encrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
+                        $rows[$i][$colName] = $valEncrypted;
+                    }
+                    break;
+                case $dataType instanceof UxonDataType:
+                    $colName = $col->getName();
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        if ($val !== null && $val !== '') {
+                            try {
+                                $valUxon = UxonObject::fromAnything($val); 
+                                $rows[$i][$colName] = $valUxon->toArray();
+                            } catch (\Throwable $e) {
+                                // Ignore errors
+                            }
                         }
                     }
-                }
             }
         }
         return $rows;
@@ -611,14 +626,29 @@ class MetaModelInstaller extends AbstractAppInstaller
                 // increase readability of diffs. Need to transform them back to strings here.
                 // The check for JsonDataType is a fix upgrading older installations where the
                 // UxonDataType was not a PHP class yet.
-                if ($col->getDataType() instanceof UxonDataType || $col->getDataType() instanceof JsonDataType) {
-                    $colName = $col->getName();
-                    foreach ($rows as $i => $row) {
-                        $val = $row[$colName];
-                        if (is_array($val)) {
-                            $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
+                $dataType = $col->getDataType();
+                switch (true) {                    
+                    case $dataType instanceof EncryptedDataType:
+                        $colName = $col->getName();
+                        foreach ($rows as $i => $row) {
+                            $val = $row[$colName];
+                            if ($col->getDataType() instanceof EncryptedDataType && StringDataType::startsWith($val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT)) {
+                                $salt = $this->getAppSalt();
+                                $valDecrypt = EncryptedDataType::decrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
+                                $rows[$i][$colName] = $valDecrypt;
+                            }
                         }
-                    }
+                        break;
+                    case $dataType instanceof UxonDataType:
+                    case $dataType instanceof JsonDataType:
+                        $colName = $col->getName();
+                        foreach ($rows as $i => $row) {
+                            $val = $row[$colName];                            
+                            if (is_array($val)) {
+                                $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
+                            }
+                        }
+                        break;
                 }
             }
             
@@ -629,6 +659,18 @@ class MetaModelInstaller extends AbstractAppInstaller
             
             yield $baseSheet;
         }
+    }
+    
+    protected function getAppSalt() : string
+    {
+        $config = ConfigurationFactory::create($this->getWorkbench());
+        $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::ENCRYPTION_CONFIG_FILE);
+        if ($config->hasOption($this->getApp()->getAliasWithNamespace())) {
+            $salt = base64_encode($config->getOption($this->getApp()->getAliasWithNamespace()));
+            return $salt;
+        }
+        $salt = EncryptedDataType::createSaltFromString(substr($this->getApp()->getUid(), 2,32));
+        return $salt;
     }
     
     /**
