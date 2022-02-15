@@ -261,9 +261,9 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-11-11 10:57:52",
+            "MODIFIED_ON": "2022-02-14 12:35:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x32353500000000000000000000000000",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -283,7 +283,7 @@
             "TYPE": "D",
             "COPYABLEFLAG": 1,
             "ALIAS": "CONFIG",
-            "DATATYPE": "0x11e9e2e838086258bacde4b318306b9a",
+            "DATATYPE": "0x11ea99f0acf95c54b00c025041000001",
             "DATA_ADDRESS": "data_connector_config",
             "OBJECT": "0x33380000000000000000000000000000",
             "FORMATTER": "",
@@ -301,7 +301,11 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": {
+                "inner_data_type": {
+                    "alias": "exface.Core.UxonDataConnection"
+                }
+            }
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
