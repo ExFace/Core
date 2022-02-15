@@ -72,6 +72,15 @@ use exface\Core\Factories\ConfigurationFactory;
  * 
  * Pages are installed last by calling the dedicated `PageInstaller`.
  * 
+ * ## Encryption
+ * Every content of a attribute with `EncryptedDataType` as data type will be exported as an encrypted string.
+ * The used encryption salt will either be build from the app uid or you can provide a custom salt.
+ * The custom salt has to be placed in the `Encryption.config.json` file in the `config` folder with the app alias (with namespace) as key.
+ * The salt has to be 32 characters long. When importing the metamodell on a different PowerUi installation you will also need that config
+ * file with that key you used for encryption.
+ * CAREFUL: If you lose the used custom salt for encryption during the export you will not be able to restore the encrypted
+ * data and the affected data will be lost.
+ * 
  * ## Behaviors
  * 
  * NOTE: The `TimeStampingBehavior` of the model objects is disabled before install, so the
