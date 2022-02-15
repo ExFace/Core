@@ -336,9 +336,11 @@ class MetaModelInstaller extends AbstractAppInstaller
                     $colName = $col->getName();
                     foreach ($rows as $i => $row) {
                         $val = $row[$colName];
-                        $salt = $this->getAppSalt();
-                        $valEncrypted = EncryptedDataType::encrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
-                        $rows[$i][$colName] = $valEncrypted;
+                        if ($val !== null && $val !== '') {
+                            $salt = $this->getAppSalt();
+                            $valEncrypted = EncryptedDataType::encrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
+                            $rows[$i][$colName] = $valEncrypted;
+                        }
                     }
                     break;
                 case $dataType instanceof UxonDataType:
