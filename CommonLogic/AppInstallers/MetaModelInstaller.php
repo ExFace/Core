@@ -78,6 +78,8 @@ use exface\Core\Factories\ConfigurationFactory;
  * The custom salt has to be placed in the `Encryption.config.json` file in the `config` folder with the app alias (with namespace) as key.
  * The salt has to be 32 characters long. When importing the metamodell on a different PowerUi installation you will also need that config
  * file with that key you used for encryption.
+ * You can use the followign website to create a salt:
+ * `http://www.unit-conversion.info/texttools/random-string-generator/`
  * CAREFUL: If you lose the used custom salt for encryption during the export you will not be able to restore the encrypted
  * data and the affected data will be lost.
  * 
