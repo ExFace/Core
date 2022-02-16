@@ -36,7 +36,7 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * from the given app
  * - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
  * of the action
- * - `[#=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
+ * - `[#~input:=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
  * - `[#~file:name#]` and `[#~file:name_without_ext#]` - well be replaced by the name of the rendered file
  * with our without extension.
  * - additional custom placeholders can be defined in `data_placeholders` - see below.
@@ -50,7 +50,7 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * and a configuration for its contents:
  * 
  * - `data_sheet` to load the data 
- * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`.
+ * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`, `[#~data:=Formula()#]`..
  * 
  * ## Example 
  * 
@@ -172,7 +172,7 @@ class PrintTemplate extends AbstractAction
             // Prepare a renderer for the data_placeholders config
             $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $dataTplRenderer->addPlaceholder((new DataRowPlaceholders($inputData, $rowNo, '~input:'))->setFormatValues(false));
-            $dataTplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo));
+            $dataTplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(),$inputData,$rowNo, '~input:='));
             
             // Create group-resolver with resolvers for every data_placeholder and use
             // it as the default resolver for the input row renderer
@@ -247,7 +247,7 @@ class PrintTemplate extends AbstractAction
      * from the given app
      * - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
      * of the action
-     * - `[#=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
+     * - `[#~input:=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
      * 
      * If no file name is specified, it will be generated from the export time: 
      * e.g. `print_2018_10_22_162259.html`.
@@ -370,7 +370,7 @@ class PrintTemplate extends AbstractAction
      * from the given app
      * - `[#~input:column_name#]` - will be replaced by the value from `column_name` of the input data sheet
      * of the action
-     * - `[#=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
+     * - `[#~input:=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
      * - `[#~file:name#]` and `[#~file:name_without_ext#]` - well be replaced by the name of the rendered file
      * with our without extension.
      * - additional custom placeholders can be defined in `data_placeholders` - see below.
