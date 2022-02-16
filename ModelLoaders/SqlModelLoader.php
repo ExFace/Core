@@ -1914,11 +1914,13 @@ SQL;
         $selector = new CommunicationChannelSelector($this->getWorkbench(), ($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
         $channel = CommunicationFactory::createChannelEmpty($selector);
         $channel->setName($row['NAME']);
-        $channel->setConnection($row['DATA_CONNECTION_CUSTOMIZED'] ?? $row['DATA_CONNECTION_DEFAULT']);
         $channel->setMuted(BooleanDataType::cast($row['MUTE_FLAG_CUSTOMIZED'] ?? $row['MUTE_FLAG_DEFAULT']));
         $channel->setMessagePrototype($row['MESSAGE_PROTOTYPE']);
-        if ($row['MESSAGE_DEFAULT_UXON'] !== null) {
-            $channel->setMessageDefaults(UxonObject::fromJson($row['MESSAGE_DEFAULT_UXON']));
+        if (null !== $val = $row['MESSAGE_DEFAULT_UXON']) {
+            $channel->setMessageDefaults(UxonObject::fromJson($val));
+        }
+        if (null !== $val = ($row['DATA_CONNECTION_CUSTOMIZED'] ?? $row['DATA_CONNECTION_DEFAULT'])) {
+            $channel->setConnection($val);
         }
         
         return $channel;

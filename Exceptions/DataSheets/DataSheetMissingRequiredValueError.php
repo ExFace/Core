@@ -11,7 +11,7 @@ namespace exface\Core\Exceptions\DataSheets;
  */
 class DataSheetMissingRequiredValueError extends DataSheetRuntimeError
 {
-    protected function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5UX3Q';
     }
