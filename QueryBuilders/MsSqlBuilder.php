@@ -16,6 +16,7 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -239,23 +240,27 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlOrderByDefault(bool $useEnrichment, $select_from = '') : string
     {
-        if ($this->getMainObject()->hasUidAttribute()) {
-            $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getAlias() . '.' . $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
+        $obj = $this->getMainObject();
+        // If no order is specified, sort sort over the UID of the meta object if possible
+        if ($obj->hasUidAttribute() && $obj->getUidAttribute()->isSortable() && ! ($obj->getUidAttribute() instanceof CompoundAttributeInterface)) {
+            $orderByUidCol = ($useEnrichment ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $obj->getAlias() . '.' . $this->buildSqlDataAddress($obj->getUidAttribute());
             foreach ($this->getAttributes() as $qpart) {
-                if ($qpart->getAttribute()->isExactly($this->getMainObject()->getUidAttribute())) {
+                if ($qpart->getAttribute()->isExactly($obj->getUidAttribute())) {
                     $orderByUidCol = $this->getShortAlias($qpart->getColumnKey());
                 }
             }
-            // If no order is specified, sort sort over the UID of the meta object
             $order_by = $orderByUidCol . ' DESC';
         } else {
-            // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
+            // If the object has no UID, sort over the first column in the query, which is simple to sort (i.g. is neither an SQL statement itself nor a compound)
             foreach ($this->getAttributes() as $qpart) {
-                if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart))) {
+                if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart)) && $qpart->getAttribute()->isSortable() && ! $qpart->isCompound()) {
                     $order_by = $qpart->getColumnKey() . ' DESC';
                     break;
                 }
             }
+        }
+        if (! $order_by) {
+            throw new QueryBuilderException('Cannot determine a default ORDER BY clause for a paged MS SQL query: please add some explicit sorters!');
         }
         return ($select_from === '' ? '' : $select_from . $this->getAliasDelim()) . $order_by;
     }
