@@ -57,7 +57,7 @@ class EncryptedDataType extends StringDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::parse()
      */
-    public function parse($value) : string
+    public function parse($value)
     {
         $exface = $this->getWorkbench();
         if (StringDataType::startsWith($value, $this->getEncryptionPrefix(), true) === true) {
@@ -90,15 +90,15 @@ class EncryptedDataType extends StringDataType
      * Secret needs to be a base64 encoded string.
      * 
      * @param string $secret
-     * @param string $data
-     * @param string $prefix
+     * @param string|NULL $data
+     * @param string|NULL $prefix
      * 
      * @throws RuntimeException
      * @throws EncryptionError
      * 
-     * @return string
+     * @return string|NULL
      */
-    public static function encrypt(string $secret, string $data, string $prefix = null) : string
+    public static function encrypt(string $secret, string $data = null, string $prefix = null) : ?string
     {
         if ($data === null || $data === '') {
             return $data;
@@ -121,15 +121,15 @@ class EncryptedDataType extends StringDataType
      * Secret needs to be a base64 encoded string.
      * 
      * @param string $secret
-     * @param string $data
-     * @param string $prefix
+     * @param string|NULL $data
+     * @param string|NULL $prefix
      * 
      * @throws RuntimeException
      * @throws EncryptionError
      * 
-     * @return string
+     * @return string|NULL
      */
-    public static function decrypt(string $secret, string $data, string $prefix = null) : string
+    public static function decrypt(string $secret, string $data = null, string $prefix = null) : ?string
     {
         if ($data === null || $data === '') {
             return $data;

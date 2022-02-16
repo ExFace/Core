@@ -645,14 +645,16 @@ class MetaModelInstaller extends AbstractAppInstaller
                         $colName = $col->getName();
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
-                            if ($col->getDataType() instanceof EncryptedDataType && StringDataType::startsWith($val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT)) {
+                            if (is_string($val) && StringDataType::startsWith($val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT)) {
                                 $salt = $this->getAppSalt();
                                 $valDecrypt = EncryptedDataType::decrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
-                                $rows[$i][$colName] = $valDecrypt;
+                                $rows[$i][$colName] = $val = $valDecrypt;
+                            }
+                            if (($dataType->getInnerDataType() instanceof JsonDataType) && is_array($val)) {
+                                $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
                             }
                         }
                         break;
-                    case $dataType instanceof UxonDataType:
                     case $dataType instanceof JsonDataType:
                         $colName = $col->getName();
                         foreach ($rows as $i => $row) {
