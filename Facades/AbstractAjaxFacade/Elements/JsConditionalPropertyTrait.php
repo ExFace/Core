@@ -45,11 +45,13 @@ trait JsConditionalPropertyTrait {
             switch ($condition->getComparator()) {
                 case ComparatorDataType::EQUALS: // ==
                 case ComparatorDataType::EQUALS_NOT: // !==
+                    $jsConditions[] = "($leftJs || '').toString() {$condition->getComparator()} ($rightJs || '').toString()";
+                    break;
                 case ComparatorDataType::LESS_THAN: // <
                 case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
                 case ComparatorDataType::GREATER_THAN: // >
                 case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
-                    $jsConditions[] = "($leftJs || '').toString() {$condition->getComparator()} ($rightJs || '').toString()";
+                    $jsConditions[] = "($leftJs || null) {$condition->getComparator()} ($rightJs || null)";
                     break;
                 case ComparatorDataType::IN: // [
                 case ComparatorDataType::NOT_IN: // ![

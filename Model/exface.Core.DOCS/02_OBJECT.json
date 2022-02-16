@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-10-23 10:07:15",
-            "MODIFIED_ON": "2020-05-05 10:10:40",
+            "MODIFIED_ON": "2022-02-14 10:04:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b7d9e1203963995b0205857feb80",
@@ -96,7 +96,23 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "attribute_alias": "PATHNAME_RELATIVE",
+                        "width": "max",
+                        "disabled": false
+                    },
+                    {
+                        "attribute_alias": "CONTENTS",
+                        "widget_type": "InputMarkdown",
+                        "hide_caption": true,
+                        "height": "max",
+                        "width": "max"
+                    }
+                ]
+            },
             "ALIAS": "DOCS",
             "DATA_ADDRESS": "*\/*\/Docs\/*.md"
         }

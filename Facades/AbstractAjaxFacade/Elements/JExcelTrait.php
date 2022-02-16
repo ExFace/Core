@@ -778,7 +778,9 @@ JS;
         switch (true) {
             // If there is no action or the action 
             case $action === null:
-            case $widget->isEditable() && ($action instanceof iModifyData) && $dataObj->is($widget->getMetaObject()):
+            case $widget->isEditable() 
+            && ($action instanceof iModifyData) 
+            && $dataObj->is($widget->getMetaObject()):
                 $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
@@ -789,9 +791,11 @@ JS;
                 break;
                 
             // If we have an action, that is based on another object and does not have an input mapper for
-            // the widgets's object, the data should become a subsheet. Otherwise we just return the data
-            // as-is.
-            case $widget->isEditable() && ! $dataObj->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null:
+            // the widgets's object, the data should become a subsheet.
+            case $widget->isEditable() 
+            && ($action instanceof iModifyData) 
+            && ! $dataObj->is($widget->getMetaObject()) 
+            && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
                 // logic to find the relation to the parent. Otherwise try to find a relation to the
                 // action's object and throw an error if this fails.
@@ -832,12 +836,13 @@ JS;
             case $action instanceof iReadData:
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
             
+            // In all other cases, get the selected rows as a regular table would do
             default:
                 $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
         rows: ({$rows} || []).filter(function(oRow, i){
-            return $('#{$this->getId()}').jexcel('getSelectedRows', true).indexOf(i) >= 0;
+            return {$this->buildJsJqueryElement()}.jexcel('getSelectedRows', true).indexOf(i) >= 0;
         })
     }
 

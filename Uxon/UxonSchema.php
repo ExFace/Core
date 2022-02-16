@@ -970,6 +970,9 @@ class UxonSchema implements UxonSchemaInterface
     protected function getMetamodelData(string $uxonType, string $search = null) : array
     {
         list($prefix, $object, $attribute) = explode(':', $uxonType, 3);
+        if (mb_strtolower($prefix) !== 'metamodel' || $object === null || $attribute === null) {
+            return [];
+        }
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object);
         $col = $ds->getColumns()->addFromExpression($attribute);
         $ds->dataRead();

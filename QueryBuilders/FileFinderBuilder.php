@@ -19,6 +19,7 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataConnectors\FileFinderConnector;
 
 /**
  * Lists files and folders using Symfony Finder Component.
@@ -249,8 +250,13 @@ class FileFinderBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            if ($qpart->getAttribute()->is($this->getMainObject()->getUidAttribute()) || in_array($qpart->getAlias(), $addrPhs)) {
-                //add the base data adresse to the patterns if first attribute replacing a placeholder is found
+            if (($isPathNameFilter = $qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) || in_array($qpart->getAlias(), $addrPhs)) {
+                // Path filters need to be applied after reading too as there may be trouble with 
+                // files with the same name in different (sub-)folders mathing the folder pattern
+                if ($isPathNameFilter && $this->getAttribute($qpart->getAlias())) {
+                    $qpart->setApplyAfterReading(true);
+                }
+                // add the base data adress to the patterns if first attribute replacing a placeholder is found
                 if (in_array($qpart->getAlias(), $addrPhs)) {
                     if (empty($pathPatterns)) {
                         $pathPatterns[] = $addr;
@@ -339,15 +345,22 @@ class FileFinderBuilder extends AbstractQueryBuilder
      */
     public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $fileArray = $this->buildPathsFromValues();
+        $fileArray = $this->buildPathsFromValues($data_connection);
+        if (empty($fileArray)) {
+            throw new QueryBuilderException('Cannot create files: no paths specified!');
+        }
         foreach ($fileArray as $path) {
+            if ($path === null || $path === '') {
+                throw new QueryBuilderException('Cannot create file: path is empty!');
+            }
             $folder = FilePathDataType::findFolderPath($path);
             if (! is_dir($folder)) {
                 Filemanager::pathConstruct($folder);
             }
         }
         $contentArray = $this->buildFilesContentsFromValues();
-        return new DataQueryResultData([], $this->write($fileArray, $contentArray));
+        $touchedFilesCnt = $this->write($fileArray, $contentArray);
+        return new DataQueryResultData([], $touchedFilesCnt);
     }
     
     /**
@@ -380,12 +393,21 @@ class FileFinderBuilder extends AbstractQueryBuilder
      * 
      * @return string[]
      */
-    protected function buildPathsFromValues() : array
+    protected function buildPathsFromValues(FileFinderConnector $connection = null) : array
     {
-        
         switch (true) {
             case $qpart = $this->getValue('PATHNAME_ABSOLUTE'):
                 return $qpart->getValues();
+            case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $connection !== null && ($basePath = $connection->getBasePath()):
+                $paths = [];
+                foreach ($qpart->getValues() as $relPath) {
+                    if (! FilePathDataType::isAbsolute($relPath)) {
+                        $paths[] = FilePathDataType::join([$basePath, $relPath]);
+                    } else {
+                        $paths[] = $relPath;
+                    }
+                }
+                return $paths;
             case $qpart = $this->getValue('FILENAME'):
                 $paths = [];
                 $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress());
@@ -403,6 +425,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 }
                 return $paths;
         }
+        return [];
     }
 
     /**
@@ -472,12 +495,31 @@ class FileFinderBuilder extends AbstractQueryBuilder
     public function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $updatedFileNr = 0;
+        // Update by path (in one of the values)
+        $fileNames = $this->buildPathsFromValues($data_connection);
         
-        $query = $this->buildQuery();
-        if ($files = $data_connection->query($query)->getFinder()) {
-            $fileArray = iterator_to_array($files, false);
+        // Update by filters
+        if (empty($fileNames) && ! $this->getFilters()->isEmpty()) {
+            $fileQuery = new self($this->getSelector());
+            $fileQuery->setMainObject($this->getMainObject());
+            $fileQuery->setFilters($this->getFilters());
+            // Read both - absolute and relative paths because the filters may need to be applied after reading,
+            // so instead of trying to figure out which attribute will be needed, we just add them both here.
+            $fileQuery->addAttribute('PATHNAME_ABSOLUTE');
+            $fileQuery->addAttribute('PATHNAME_RELATIVE');
+            $fileReadResult = $fileQuery->read($data_connection);
+            foreach ($fileReadResult->getResultRows() as $row) {
+                $fileNames[] = $row['PATHNAME_ABSOLUTE'];
+                if (count($fileNames) > 1) {
+                    throw new QueryBuilderException('Cannot update more than 1 file at a time by filters!');   
+                }
+            }
+        }
+        
+        // Do the updating
+        if (empty($fileNames) === false) {
             $contentArray = $this->getValue('CONTENTS')->getValues();
-            $updatedFileNr = $this->write($fileArray, $contentArray);
+            $updatedFileNr = $this->write($fileNames, $contentArray);
         }
         
         return new DataQueryResultData([], $updatedFileNr);
@@ -519,7 +561,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
     {
         $writtenFileNr = 0;
         if (count($fileArray) !== count($contentArray)) {
-            throw new BehaviorRuntimeError($this->getMainObject(), 'The number of passed files doen\'t match the number of passed file contents.');
+            throw new QueryBuilderException('The number of passed files doen\'t match the number of passed file contents.');
         }
         
         for ($i = 0; $i < count($fileArray); $i ++) {

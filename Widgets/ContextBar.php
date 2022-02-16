@@ -98,18 +98,16 @@ class ContextBar extends Toolbar
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
                 continue;
             }
+            $uxon->unsetProperty('visibility');
             
             try {
                 $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
                 $uxon->unsetProperty('context_alias');
                 
-                // IDEA Make contexts totally configurable by importing the UXON from
-                // the config into each context. This would need the contexts to be
-                // compatible with the ImportUxonTrait though. Currently many contexts
-                // like ObjectBasketContext, ActionContext, etc. use non-standard
-                // UXON Objects.
-                // $context->importUxonObject($uxon);
+                if (! $uxon->isEmpty()) {
+                    $context->importUxonObject($uxon);
+                }
                 
                 if ($context instanceof UserContext) {
                     $userContextInitialized = true;

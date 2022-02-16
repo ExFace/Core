@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-02-01 10:25:41",
-            "MODIFIED_ON": "2022-02-01 16:15:38",
+            "MODIFIED_ON": "2022-02-10 16:10:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca804ecd9e79aa804025041000001",
@@ -93,6 +93,7 @@
                     "buttons": [
                         {
                             "align": "opposite",
+                            "visibility": "promoted",
                             "action": {
                                 "alias": "exface.Core.SaveData",
                                 "object_alias": "exface.Core.CUSTOMIZING",
@@ -113,6 +114,33 @@
                                         {
                                             "from": "DATA_CONNECTION",
                                             "to": "VALUE"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "caption": "Reset to default connection",
+                            "action": {
+                                "alias": "exface.Core.DeleteObject",
+                                "object_alias": "exface.Core.CUSTOMIZING",
+                                "input_rows_min": 0,
+                                "input_mapper": {
+                                    "column_to_filter_mappings": [
+                                        {
+                                            "from": "'exf_communication_channel'",
+                                            "to": "TABLE_NAME",
+                                            "comparator": "=="
+                                        },
+                                        {
+                                            "from": "'data_connection_oid'",
+                                            "to": "COLUMN_NAME",
+                                            "comparator": "=="
+                                        },
+                                        {
+                                            "from": "UID",
+                                            "to": "ROW_UID",
+                                            "comparator": "=="
                                         }
                                     ]
                                 }
