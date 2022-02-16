@@ -24,7 +24,7 @@ use exface\Core\Factories\RelationPathFactory;
 abstract class Formula implements FormulaInterface
 {
 
-    private $required_attributes = array();
+    private $required_attributes = null;
 
     private $currentDataSheet = null;
 
@@ -143,18 +143,23 @@ abstract class Formula implements FormulaInterface
      */
     public function getRequiredAttributes(bool $withRelationPath = true) : array
     {
-        $tStream = $this->getTokenStream();
-        if ($tStream === null) {
-            return [];
+        if ($this->required_attributes === null) {
+            $tStream = $this->getTokenStream();
+            if ($tStream === null) {
+                return [];
+            }
+            
+            $attrs = $tStream->getAttributes();            
+            $this->required_attributes = $attrs;
         }
-        
-        $attrs = $tStream->getAttributes();
         if ($withRelationPath && $this->hasRelationPath()) {
+            $attrs = $this->required_attributes;
             foreach ($attrs as $i => $attr) {
                 $attrs[$i] = RelationPath::relationPathAdd($this->getRelationPathString(), $attr);
+                return $attrs;
             }
         }
-        return $attrs;
+        return $this->required_attributes;
     }
 
     /**
