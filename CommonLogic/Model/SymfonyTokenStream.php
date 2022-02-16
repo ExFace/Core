@@ -127,7 +127,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     {
         if ($this->nestedForms === null) {
             $nestedForms = $this->getFormulas();
-            array_shift($nestedForms); 
+            array_shift($nestedForms);
+            $nestedForms = array_unique($nestedForms);
             $this->nestedForms = $nestedForms;
         }
         return $this->nestedForms;
@@ -158,6 +159,7 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                     }
                 }
             }
+            $attributes = array_unique($attributes);
             $this->attributes = $attributes;
         }
         return $this->attributes;
