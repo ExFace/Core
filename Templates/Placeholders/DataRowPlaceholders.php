@@ -67,7 +67,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
             $phSheet->getFilters()->addConditionFromExpression($uidCol->getExpressionObj(), $uidCol->getValue($this->rowNumber));
             $phSheet->dataRead();
             // Overwrite freshly read values by those in the input data (in case they were not saved yet)
-            $phSheet->importRows($this->dataSheet);
+            $phSheet->importRows($this->dataSheet->copy()->removeRows()->addRow($this->dataSheet->getRow($this->rowNumber)));
         } else {
             $phSheet = $this->dataSheet;
         }
