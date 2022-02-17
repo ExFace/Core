@@ -117,7 +117,7 @@ trait JqueryInputValidationTrait {
      * 
      * @return string
      */
-    protected function getValidationErrorText() : string
+    public function getValidationErrorText() : string
     {
         $widget = $this->getWidget();
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
