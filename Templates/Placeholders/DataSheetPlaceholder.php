@@ -82,7 +82,7 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
      * 
      * @uxon-property data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
-     * @uxon-template 
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}}
      * 
      * @param UxonObject $value
      * @return DataSheetPlaceholder
