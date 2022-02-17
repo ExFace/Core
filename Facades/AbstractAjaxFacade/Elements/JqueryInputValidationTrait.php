@@ -32,6 +32,9 @@ trait JqueryInputValidationTrait {
     /**
      * Returns an inline JS expression, that evaluates to FALSE if validation fails and TRUE if it passes.
      * 
+     * NOTE: The parameter $valJs is required for in-table inputs, where the validation must
+     * be integrated into the table code!
+     * 
      * If no validation required, override this method with `return 'true'` - see typical InputCheckBox
      * implementations.
      * 
