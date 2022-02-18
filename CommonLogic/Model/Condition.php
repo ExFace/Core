@@ -464,6 +464,16 @@ class Condition implements ConditionInterface
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
         $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        
+        // Normalize empty values according to the data type of the expression
+        $dataType = $this->getExpression()->getDataType();
+        if ($dataType->isValueEmpty($leftVal)) {
+            $leftVal = null;
+        }
+        if ($dataType->isValueEmpty($rightVal)) {
+            $rightVal = null;
+        }
+        
         return $this->compare($leftVal, $this->getComparator(), $rightVal, $listDelimiter);
     }
     
