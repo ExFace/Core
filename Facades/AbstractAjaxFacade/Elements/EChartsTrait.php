@@ -824,6 +824,8 @@ JS;
                 return '';
             default:
                 return <<<JS
+
+        console.log('Select');
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
@@ -834,17 +836,25 @@ JS;
         });
         // if the chart is a barchart
         if (("_bar" in options.series[params.seriesIndex]) == true) {
+            var value = dataRow[options.series[params.seriesIndex].encode.y];
+            if (value === null) {
+                value = "null";
+            }
             newOptions.series[params.seriesIndex].markLine.data = [
                 {
-    				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+    				yAxis: value
     			}
             ];
             newOptions.series[params.seriesIndex].markLine._show = true;
         // if the chart is not a barchart
         } else {
+            var value = dataRow[options.series[params.seriesIndex].encode.x];
+            if (value === null) {
+                value = "null";
+            }
             newOptions.series[params.seriesIndex].markLine.data = [
                 {
-    				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+    				xAxis: value
     			}
             ];
             newOptions.series[params.seriesIndex].markLine._show = true;
