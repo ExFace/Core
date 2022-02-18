@@ -14,6 +14,8 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -56,7 +58,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     
     private $compareAttributeAliases = [];
     
+    private $allowEmptyValuesForAttributeAliases = [];
+    
+    private $compareWithConditions = null;
+    
     private $errorCode = null;
+    
+    private $errorMessage = null;
     
     /**
      *
@@ -178,8 +186,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
         }
         
-        $errorMessage = $this->createDuplicatesErrorMessage($eventSheet, $duplicates);
-        throw new DataSheetDuplicatesError($eventSheet, $errorMessage, $this->getDuplicateErrorCode());
+        throw $this->createDuplicatesError($eventSheet, $duplicates);
     }
     
     /**
@@ -218,8 +225,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (empty($duplicates)) {
             return;
         }
-        $errorMessage = $this->createDuplicatesErrorMessage($eventSheet, $duplicates);
-        throw new DataSheetDuplicatesError($eventSheet, $errorMessage, $this->getDuplicateErrorCode());
+        
+        throw $this->createDuplicatesError($eventSheet, $duplicates);
     }
     
     /**
@@ -241,6 +248,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     {   
         $eventDataCols = $eventSheet->getColumns();
         
+        $duplicates = [];
         $compareCols = [];
         $missingCols = [];
         $missingAttrs = [];
@@ -276,9 +284,28 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
         }
         
+        // See if there are duplicates within the current set of data
+        if (count($eventRows) > 1) {
+            if ($this->hasCustomConditions()) {
+                $selfCheckSheet = DataSheetFactory::createFromObject($eventSheet->getMetaObject());
+                $selfCheckSheet->addRows($eventRows);
+                $selfCheckFilters = ConditionGroupFactory::createForDataSheet($selfCheckSheet, $this->getCompareWithConditions()->getOperator());
+                foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
+                    if ($selfCheckSheet->getColumns()->getByExpression($cond->getExpression())) {
+                        $selfCheckFilters->addCondition($cond);
+                    }
+                }
+                $selfCheckRows = $selfCheckSheet->extract($selfCheckFilters)->getRows();
+            } else {
+                $selfCheckRows = $eventRows;
+            }
+            $duplicates = $this->findDuplicatesInRows($eventRows, $selfCheckRows, array_merge($compareCols, $missingCols), ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null));
+        }
+        
         // Create a data sheet to search for possible duplicates
         $checkSheet = $eventSheet->copy();
         $checkSheet->removeRows();
+        $checkSheet->getFilters()->removeAll();
         
         // Add columns even for attributes that are not present in the original event sheet
         foreach ($missingAttrs as $attr) {
@@ -288,18 +315,26 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         // Add system attributes in case we are going to update
         $checkSheet->getColumns()->addFromSystemAttributes();
         
+        // Add custom filters if defined
+        if (null !== $customFilters = $this->getCompareWithConditions()) {
+            $checkSheet->getFilters()->addNestedGroup($customFilters);
+        }
+        
         // To get possible duplicates transform every row in event data sheet into a filter for 
         // the check sheet
         $orFilterGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_OR, $checkSheet->getMetaObject());
         foreach ($eventRows as $rowNo => $row) {
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
-                $dataType = $col->getDataType();
-                $value = $row[$col->getName()];
-                if ($value === null || $value === '') {
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): no input data found for attribute "' . $col->getAttributeAlias() . '"!');
+                if (! array_key_exists($col->getName(), $row)) {
+                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!');
                 }
-                $rowFilterGrp->addConditionFromString($col->getAttributeAlias(), $value, ComparatorDataType::EQUALS);
+                $value = $row[$col->getName()];
+                
+                if (($value === null || $value === '') && $col->getAttribute()->isRequired()) {
+                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!');
+                }
+                $rowFilterGrp->addConditionFromString($col->getAttributeAlias(), ($value === '' || $value === null ? EXF_LOGICAL_NULL : $value), ComparatorDataType::EQUALS);
             }
             $orFilterGroup->addNestedGroup($rowFilterGrp);
         }
@@ -314,10 +349,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return [];
         }
         
+        $duplicates = array_merge_recursive($duplicates, $this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null)));
+        
+        return $duplicates;
+    }
+    
+    protected function findDuplicatesInRows(array $eventRows, array $checkRows, array $compareCols, DataColumn $uidCol = null) : array
+    {
         $duplicates = [];
-        for ($eventRowNo = 0; $eventRowNo < count($eventRows); $eventRowNo++) {
+        $eventRowCnt = count($eventRows);
+        for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
+            // For each row loaded from data source
             foreach ($checkRows as $chRow) {
                 $isDuplicate = true;
+                // Compare all the relevant columns: if any value differs, it is NOT a duplicate
                 foreach ($compareCols as $col) {
                     $dataType = $col->getDataType();
                     $key = $col->getName();
@@ -326,22 +371,25 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         break;
                     }
                 }
-                if ($eventSheet->hasUidColumn(true)) {
-                    $col = $eventSheet->getUidColumn();
-                    $dataType = $col->getDataType();
-                    $key = $col->getName();
+                
+                // If the data source row has matching columns, check if the UID also matches: if so,
+                // it is the same row and, thus, NOT a duplicate
+                if ($uidCol !== null) {
+                    $dataType = $uidCol->getDataType();
+                    $key = $uidCol->getName();
                     if ($dataType->parse($eventRows[$eventRowNo][$key]) == $dataType->parse($chRow[$key])) {
                         $isDuplicate = false;
-                        break;
+                        // Don't bread here as other $checkRows may still be duplicates!!!
                     }
                 }
+                
+                // If it is still a potential duplicate, it really is one
                 if ($isDuplicate === true) {
                     $duplicates[$eventRowNo][] = $chRow;
                     break;
                 }
             }
         }
-        
         return $duplicates;
     }
     
@@ -349,15 +397,16 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * 
      * @param DataSheetInterface $dataSheet
      * @param array[] $duplicates
-     * @return string
+     * @return DataSheetDuplicatesError
      */
-    protected function createDuplicatesErrorMessage(DataSheetInterface $dataSheet, array $duplicates) : string
+    protected function createDuplicatesError(DataSheetInterface $dataSheet, array $duplicates) : DataSheetDuplicatesError
     {
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
         $rows = $dataSheet->getRows();
         $errorRowDescriptor = '';
         $errorMessage = '';
+        
         foreach (array_keys($duplicates) as $duplRowNo) {
             $row = $rows[$duplRowNo];
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
@@ -367,13 +416,17 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
         }
         $errorRowDescriptor = substr($errorRowDescriptor, 0, -2);
+        
         try {
             $errorMessage = $this->translate('BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%object%' => '"' . $object->getName() . '" (' . $object->getAliasWithNamespace() . ')']);
+            $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $this->getDuplicateErrorCode());
+            $ex->setUseExceptionMessageAsTitle(true);
         } catch (\Exception $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            $errorMessage = 'Cannot update/create data, as it contains duplicates of already existing data!';
+            $ex = new DataSheetDuplicatesError($dataSheet, 'Cannot update/create data, as it contains duplicates of already existing data!', $this->getDuplicateErrorCode());
         }
-        return $errorMessage;
+        
+        return $ex;
     }
     
     /**
@@ -409,6 +462,40 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         return $this->compareAttributeAliases;
     }
     
+    
+    protected function getCompareWithConditions() : ?ConditionGroupInterface
+    {
+        if ($this->compareWithConditions instanceof UxonObject) {
+            $this->compareWithConditions = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->compareWithConditions, $this->getObject());
+        }
+        return $this->compareWithConditions;
+    }
+    
+    /**
+     * Custom filters to use to look for potential duplicates
+     * 
+     * @uxon-property compare_with_conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}
+     * 
+     * @param UxonObject $value
+     * @return PreventDuplicatesBehavior
+     */
+    protected function setCompareWithConditions(UxonObject $value) : PreventDuplicatesBehavior
+    {
+        $this->compareWithConditions = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasCustomConditions() : bool
+    {
+        return $this->compareWithConditions !== null;
+    }
+    
     /**
      * Set what should happen if a duplicate is found in a multi row create operation.
      * To ignore duplicates set it to ´ignore´.
@@ -417,7 +504,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * 
      * @uxon-property on_duplicate_multi_row
      * @uxon-type [error,ignore,update]
-     * 
+     * @uxon-default error
      * 
      * @param string $value
      * @return PreventDuplicatesBehavior
@@ -450,8 +537,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * To ignore duplicates set it to ´ignore´.
      * To update the existing duplicate data row instead of creating a new one set it to ´update´.
      * To show an error when duplicate is found set it to ´error´, that is the default behavior.
+     * 
      * @uxon-property on_duplicate_single_row
      * @uxon-type [error,ignore,update]
+     * @uxon-default error
      * 
      * @param string $value
      * @return PreventDuplicatesBehavior
