@@ -23,7 +23,7 @@ use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Interfaces\Actions\iModifyData;
-use exface\Core\Actions\SaveData;
+use exface\Core\Widgets\Input;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -200,12 +200,37 @@ JS;
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         
+        $parsersJson = '{';
+        $formattersJson = '{';
+        $validatorsJson = '{';
+        foreach ($widget->getColumns() as $col) {
+            // If the values were formatted according to their data types in buildJsConvertDataToArray()
+            // parse them back here
+            if ($this->needsDataFormatting($col)) {
+                $parsersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '},';
+                // For those cells, that do not have a specific editor, use the data type formatter
+                // to format the values before showing them and parse them back in buildJsConvertArrayToData()
+                $formattersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '},';
+            }
+            
+            if (! $col->isHidden() && $col->isEditable()) {
+                $cellEl = $this->getFacade()->getElement($col->getCellWidget());
+                if ($cellEl->getWidget() instanceof Input) {
+                    $validatorsJson .= $col->getDataColumnName() . ': function(value){ return ' . $cellEl->buildJsValidator('value') . ' ? true : ' . json_encode($cellEl->getValidationErrorText()) . ' },';
+                }
+            }
+            
+        }
+        $parsersJson .= '}';
+        $formattersJson .= '}';
+        $validatorsJson .= '}';
+        
+        
         return <<<JS
 
     {$this->buildJsJqueryElement()}
-    .data('_exfColumnNames', {$colNamesJson})
     {$this->buildJsResetSelection('')}
-    .jexcel({
+    .jspreadsheet({
         data: [ [] ],
         allowRenameColumn: false,
         allowInsertColumn: false,
@@ -221,6 +246,15 @@ JS;
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
+        },
+        onbeforechange: function(instance, cell, x, y, value) {
+            instance.exfWidget.validateCell(cell, x, y, value);
+            if (instance.exfWidget.hasChanged(x, y, value)) {
+                $(cell).addClass('exf-spreadsheet-change');
+            } else {
+                $(cell).removeClass('exf-spreadsheet-change');
+                return instance.exfWidget.getInitValue(x, y);
+            }
         },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs
@@ -248,8 +282,148 @@ JS;
             if (oSel.x1 !== null) {
                 $(el).jexcel('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
             }
+        },
+        onundo: function(el, historyRecord) {
+            // TODO validate cell!!!
+        },
+        onredo: function(el, historyRecord) {
+            // TODO validate cell!!!
         }
     });
+
+    {$this->buildJsJqueryElement()}[0].exfWidget = {
+        _dom: {$this->buildJsJqueryElement()}[0],
+        _colNames: {$colNamesJson},
+        _initData: [],
+        _parsers: $parsersJson,
+        _formatters: $formattersJson,
+        _validators: $validatorsJson,
+        getJExcel: function(){
+            return this._dom.jexcel;
+        },
+        getDom: function(){
+            return this._dom;
+        },
+        getDataLastLoaded: function(){
+            return this._initData;
+        },
+        getColumnName: function(iColIdx) {
+            return this._colNames[this.getJExcel().getHeader(iColIdx)];
+        },
+        getInitValue: function(iCol, iRow) {
+            return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
+        },
+        getParser: function(iCol) {
+            return this._parsers[this.getColumnName(iCol)] || null;
+        },
+        getValidator: function(iCol) {
+            return this._validators[this.getColumnName(iCol)] || null;
+        },
+        hasChanged: function(iCol, iRow, mValue){
+            var mInitVal = this.getInitValue(iCol, iRow);
+            var fnParser = this.getParser(iCol);
+            mValue = fnParser ? fnParser(mValue) : mValue;
+            if (mValue === undefined || mValue === null) {
+                mValue = '';
+            }
+            if (mInitVal === undefined || mInitVal === null) {
+                mInitVal = '';
+            }
+            return mInitVal.toString() != mValue.toString();
+        },
+        validateValue: function(iCol, iRow, mValue) {
+            var fnValidator = this.getValidator(iCol);
+            if (fnValidator === null) {
+                return true;
+            }
+            return fnValidator(mValue);
+        },
+        validateCell: function (cell, iCol, iRow, mValue) {
+            var mValidationResult = this.validateValue(iCol, iRow, mValue);
+            if (mValidationResult === true) {
+                $(cell).removeClass('exf-spreadsheet-invalid');
+                //instance.jspreadsheet.setStyle(jexcel.getColumnNameFromId([iCol, iRow]), null, null);
+                cell.title = '';
+            } else {
+                $(cell).addClass('exf-spreadsheet-invalid');
+                //instance.jspreadsheet.setStyle(jexcel.getColumnNameFromId([iCol, iRow]), 'border', '2px solid #b00');
+                cell.title = (mValidationResult || '');
+            }
+        },
+        convertArrayToData: function(aDataArray) {
+            var aData = [];
+            var jExcel = $(this._dom);
+            var oColNames = this._colNames;
+            var aParsers = this._parsers;
+            aDataArray.forEach(function(aRow, i){
+                var oRow = {};
+                var sHeaderName;
+                var sColName;
+                aRow.forEach(function(val, iColIdx){
+                    try {
+                        sHeaderName = jExcel.jexcel('getHeader', iColIdx);
+                    } catch (e) {
+                        sHeaderName = '';
+                    }
+                    sColName = oColNames[sHeaderName];
+                    if (sColName) {
+                        oRow[sColName] = aParsers[sColName] ? aParsers[sColName](val) : val;
+                    }
+                });
+                aData.push(oRow);
+            });
+            
+            for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
+                aData.pop();
+            }
+            return aData;
+        },
+        convertDataToArray: function(aDataRows) {
+            var aData = [];
+            var jExcel = $(this._dom);
+            var oColNames = this._colNames;
+            var aColHeaders = jExcel.jexcel('getHeaders').split(',');
+            var oColIdxCache = {};
+            var aFormatters = this._formatters;
+            aDataRows.forEach(function(oRow, i){
+                var oRowIndexed = {};
+                var aRow = [];
+                var sHeaderName, iColIdx, iLastIdx;
+                for (var sColName in oRow) {
+                    if (oColIdxCache[sColName] !== undefined) {
+                        oColIdxCache[sColName].forEach(function(iColIdx) {
+                            oRowIndexed[iColIdx] = oRow[sColName];
+                        });
+                    }
+        
+                    Object.keys(oColNames)
+                    .filter(key => oColNames[key] === sColName)
+                    .forEach(function(sHeaderName) {
+                        if (! sHeaderName) return;
+                        iColIdx = aColHeaders.indexOf(sHeaderName);
+                        if (iColIdx >= 0) {
+                            oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
+                            oColIdxCache[sColName] = [...(oColIdxCache[sColName] || []), ...[iColIdx]];
+                        }
+                    });
+                }
+                
+                iLastIdx = -1;
+                Object.keys(oRowIndexed).sort(function(a, b){return a-b}).forEach(function(iIdx) {
+                    while (iIdx > iLastIdx + 1) {
+                        aRow.push(null);
+                        iLastIdx++;
+                    }
+                    aRow.push(oRowIndexed[iIdx]);
+                    iLastIdx++;
+                });
+                
+                aData.push(aRow);
+            });
+        
+            return aData;
+        }
+    };
     
     {$this->buildJsFixAutoColumnWidth()}
     {$this->buildJsFixContextMenuPosition()}
@@ -293,6 +467,10 @@ JS;
             // with visible columns. This is important because a user would not understand
             // why his column keeps gettin a sequence-number even if there are no visible
             // naming conflicts.
+            if ($col->isEditable() && $col->getCellWidget()->isRequired()) {
+                $col->setCaption($col->getCaption() . ' *');
+            }
+            
             if ($col->isHidden() === true) {
                 $col->setCaption($col->getCaption() . ' (hidden)');
             }
@@ -865,8 +1043,12 @@ JS;
 !function() {    
     var oData = {$jsData};    
     var aData = [];
+
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
+        {$this->buildJsJqueryElement()}[0].exfWidget._initData = oData.rows;
+    } else {
+        {$this->buildJsJqueryElement()}[0].exfWidget._initData = [];
     }
     if (aData.length === 0) {
         for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
@@ -882,110 +1064,12 @@ JS;
         
     protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
-        $parsersJson = '{';
-        foreach ($this->getWidget()->getColumns() as $col) {
-            // If the values were formatted according to their data types in buildJsConvertDataToArray()
-            // parse them back here
-            if ($this->needsDataFormatting($col)) {
-                $parsersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '},';
-            }
-        }
-        $parsersJson .= '}';
-        return <<<JS
-function() {
-    var aDataArray = {$arrayOfArraysJs};
-    var aData = [];
-    var jExcel = {$this->buildJsJqueryElement()};
-    var oColNames = jExcel.data('_exfColumnNames');
-    var aParsers = $parsersJson;
-    aDataArray.forEach(function(aRow, i){
-        var oRow = {};
-        var sHeaderName;
-        var sColName;
-        aRow.forEach(function(val, iColIdx){
-            try {
-                sHeaderName = jExcel.jexcel('getHeader', iColIdx);
-            } catch (e) {
-                sHeaderName = '';
-            }
-            sColName = oColNames[sHeaderName];
-            if (sColName) {
-                oRow[sColName] = aParsers[sColName] ? aParsers[sColName](val) : val;
-            }
-        });
-        aData.push(oRow);
-    });
-    
-    for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
-        aData.pop();
-    }
-    return aData;
-}()
-
-JS;
+        return "{$this->buildJsJqueryElement()}[0].exfWidget.convertArrayToData({$arrayOfArraysJs})";
     }
     
     protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
     {
-        $formattersJson = '{';
-        foreach ($this->getWidget()->getColumns() as $col) {
-            // For those cells, that do not have a specific editor, use the data type formatter
-            // to format the values before showing them and parse them back in buildJsConvertArrayToData()
-            if ($this->needsDataFormatting($col)) {
-                $formattersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '},';
-            }
-        }
-        $formattersJson .= '}';
-        return <<<JS
-        
-function() {
-    var aDataRows = {$arrayOfObjectsJs};
-    var aData = [];
-    var jExcel = {$this->buildJsJqueryElement()};
-    var oColNames = jExcel.data('_exfColumnNames');
-    var aColHeaders = jExcel.jexcel('getHeaders').split(',');
-    var oColIdxCache = {};
-    var aFormatters = $formattersJson;
-    aDataRows.forEach(function(oRow, i){
-        var oRowIndexed = {};
-        var aRow = [];
-        var sHeaderName, iColIdx, iLastIdx;
-        for (var sColName in oRow) {
-            if (oColIdxCache[sColName] !== undefined) {
-                oColIdxCache[sColName].forEach(function(iColIdx) {
-                    oRowIndexed[iColIdx] = oRow[sColName];
-                });
-            }
-
-            Object.keys(oColNames)
-            .filter(key => oColNames[key] === sColName)
-            .forEach(function(sHeaderName) {
-                if (! sHeaderName) return;
-                iColIdx = aColHeaders.indexOf(sHeaderName);
-                if (iColIdx >= 0) {
-                    oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
-                    oColIdxCache[sColName] = [...(oColIdxCache[sColName] || []), ...[iColIdx]];
-                }
-            });
-        }
-        
-        iLastIdx = -1;
-        Object.keys(oRowIndexed).sort(function(a, b){return a-b}).forEach(function(iIdx) {
-            while (iIdx > iLastIdx + 1) {
-                aRow.push(null);
-                iLastIdx++;
-            }
-            aRow.push(oRowIndexed[iIdx]);
-            iLastIdx++;
-        });
-        
-        aData.push(aRow);
-    });
-
-    return aData;
-}()
-
-JS;
+        return "{$this->buildJsJqueryElement()}[0].exfWidget.convertDataToArray({$arrayOfObjectsJs})";
     }
     
     protected function needsDataFormatting(DataColumn $col) : bool
