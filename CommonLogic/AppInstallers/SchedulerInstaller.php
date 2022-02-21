@@ -84,6 +84,22 @@ class SchedulerInstaller extends AbstractAppInstaller
                     throw new CliExecException($cmd, $output);
                 }
                 break;
+                /* TODO has yet to be verified if it is working correctly on Linux based systems
+            case 'Linux':
+                $cronExpr = $this->getCronExpression($intervalInMinutes);
+                $cmd = "crontab -e $cronExpr {$vendorPath}\bin\action {$command} >/dev/null 2>&1 #{$name}";
+                if ($overwrite === true) {
+                    $delCmd = "crontab -l | sed '/#{$name}/d' | crontab -";
+                    exec($delCmd, $output, $returnVar);
+                    if ($returnVar === 1) {
+                        throw new CliExecException($delCmd, $output);
+                    }
+                }
+                exec($cmd, $output, $returnVar);
+                if ($returnVar === 1) {
+                    throw new CliExecException($cmd, $output);
+                }
+                break;*/
             default:
                 // TODO
                 throw new RuntimeException('SchedulerInstaller does not (yet) support OS ' . $this->getOsFamily());
@@ -91,6 +107,29 @@ class SchedulerInstaller extends AbstractAppInstaller
         
         return $this;
     }
+    
+    /*
+    protected function getCronExpression(int $intervallInMinutes) : string
+    {
+        $min = '* ';
+        $hour = '* ';
+        $day = '* ';
+        $month = '* ';
+        if ($monthInterval = floor($intervallInMinutes / (60*24*12)) >= 1) {
+            $month = "*\/{$monthInterval} ";
+            $intervallInMinutes = $intervallInMinutes - ($monthInterval * 60*24*12);
+        }
+        if ($dayInterval = floor($intervallInMinutes / (60*24)) >= 1) {
+            $month = "*\/{$dayInterval} ";
+            $intervallInMinutes = $intervallInMinutes - ($dayInterval * 60*24);
+        }
+        if ($hourInterval = floor($intervallInMinutes / (60)) >= 1) {
+            $month = "*\/{$hourInterval} ";
+            $intervallInMinutes = $intervallInMinutes - ($hourInterval * 60);
+        }
+        $min = "*\/{$intervallInMinutes} ";
+        return $min . $hour . $day . $month . '*';
+    }*/
     
     /**
      * The operating system family PHP was built for. One of 'Windows', 'BSD', 'Darwin', 'Solaris', 'Linux' or 'Unknown'
