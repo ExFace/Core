@@ -715,6 +715,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $insertedCounter = 0;
         
         foreach ($values as $nr => $row) {
+            $customUid = null;
             // if optimized uids should be used, build them here and add them to the row
             if ($uid_qpart && $uid_qpart->hasValues() === false && $uidIsOptimizedUUID === true) {
                 $customUid = UUIDDataType::generateSqlOptimizedUuid();
