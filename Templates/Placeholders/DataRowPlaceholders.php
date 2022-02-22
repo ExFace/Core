@@ -74,7 +74,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         
         foreach ($phs as $ph) {
             $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
-            $val = $col->getValue($this->rowNumber);
+            $val = $col->getValue(0);
             $phVals[$ph] = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
         }
         
