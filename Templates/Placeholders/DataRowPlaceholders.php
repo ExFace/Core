@@ -68,13 +68,15 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
             $phSheet->dataRead();
             // Overwrite freshly read values by those in the input data (in case they were not saved yet)
             $phSheet->importRows($this->dataSheet->copy()->removeRows()->addRow($this->dataSheet->getRow($this->rowNumber)));
+            $phRowNo = 0;
         } else {
             $phSheet = $this->dataSheet;
+            $phRowNo = $this->rowNumber;
         }
         
         foreach ($phs as $ph) {
             $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
-            $val = $col->getValue($this->rowNumber);
+            $val = $col->getValue($phRowNo);
             $phVals[$ph] = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
         }
         
