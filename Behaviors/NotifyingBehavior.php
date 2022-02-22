@@ -224,7 +224,7 @@ class NotifyingBehavior extends AbstractBehavior
                 $communicator->send($envelope);
             }
         } catch (\Throwable $e) {
-            if ($e instanceof CommunicationExceptionInterface) {
+            if (($e instanceof CommunicationExceptionInterface) || $envelope === null) {
                 $sendingError = $e;
             } else {
                 $sendingError = new CommunicationNotSentError($envelope, 'Cannot send notification: ' . $e->getMessage(), null, $e);
