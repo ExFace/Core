@@ -380,9 +380,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (empty($checkRows)) {
             return [];
         }
-        
-        $duplicates = array_merge_recursive($duplicates, $this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null)));
-        
+
+        foreach ($this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null)) as $rowNo => $rows) {
+            $duplicates[$rowNo] = array_merge(($duplicates[$rowNo] ?? []), $rows);
+        }
         return $duplicates;
     }
     
@@ -438,14 +439,19 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $rows = $dataSheet->getRows();
         $errorRowDescriptor = '';
         $errorMessage = '';
-        
+        $duplValues = [];
         foreach (array_keys($duplicates) as $duplRowNo) {
             $row = $rows[$duplRowNo];
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
-                $errorRowDescriptor .= "'{$row[$labelAttributeAlias]}', ";
+                $duplValues[] = "'{$row[$labelAttributeAlias]}'";
             } else {
-                $errorRowDescriptor .= strval($duplRowNo + 1) . ", ";
+                $duplValues[] = strval($duplRowNo + 1);
             }
+        }
+        //remove duplicate values that were added by using the LabelAttributeAlias to create error values
+        $duplValues = array_unique($duplValues);
+        foreach ($duplValues as $value) {
+            $errorRowDescriptor .= $value . ', ';
         }
         $errorRowDescriptor = substr($errorRowDescriptor, 0, -2);
         
