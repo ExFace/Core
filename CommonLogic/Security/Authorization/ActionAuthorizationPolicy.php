@@ -351,12 +351,17 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function isActionTriggerWidgetValid(ActionInterface $action, TaskInterface $task = null) : bool
     {
         if ($task) {
+            // If the action shows a widget, don't bother - the PageAuthorizationPoint will do
             if ($action->isExactly(ShowWidget::class) && $task->isTriggeredOnPage()) {
                 return true;
             }
+            // If the action prefills a widget, don't bother - if the widget is visible, we can do the prefill
             if ($action->isExactly(ReadPrefill::class) && $task->isTriggeredByWidget()) {
                 return true;
             }
+            
+            // If we know, what triggered the task, see if the action defined in the trigger matches the action
+            // we received with the task
             if ($task->isTriggeredByWidget()) {
                 $triggerWidget = $task->getWidgetTriggeredBy();
                 if (! ($triggerWidget instanceof iTriggerAction)) {
@@ -368,19 +373,27 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $widgetAction = $triggerWidget->getAction();
                 
                 switch (true) {
+                    // In case of action chains and other actions that call other actions, we need to check
+                    // the action itself and its subactions as both are allowed to be called!
                     case $widgetAction instanceof iCallOtherActions:
+                        if ($widgetAction === $action) {
+                            return true;
+                        }
                         foreach ($widgetAction->getActions() as $chainedAction) {
                             if ($chainedAction === $action) {
                                 return true;
                             }
                         }
                         return false;
+                    // In all other cases, the check if the action of the widget is really the action being called
                     default:
                         return $widgetAction === $action;
                 }
             }
         }
         
+        // At this point, we know, the task had no trigger, so this would only allow actions that do not originate from
+        // a widget (otherwise the task would have a trigger, wouldn't it?)
         if ($action->isDefinedInWidget()) {
             return true;
         }
