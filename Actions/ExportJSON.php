@@ -17,6 +17,9 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Container;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
