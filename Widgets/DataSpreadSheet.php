@@ -42,6 +42,8 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
     
     private $allowToDeleteRows = null;
     
+    private $allowEmptyRows = false;
+    
     protected function init()
     {
         parent::init();
@@ -182,6 +184,34 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
     public function setAllowToDeleteRows(bool $value) : DataSpreadSheet
     {
         $this->allowToDeleteRows = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAllowEmptyRows() : bool
+    {
+        return $this->allowEmptyRows;
+    }
+    
+    /**
+     * Set to TRUE to include empty rows in action data
+     * 
+     * By default, visually empty rows (= empty except for hidden columns) are ignored and
+     * not treated as part of the data passed to actions.
+     * 
+     * @uxon-property allow_empty_rows
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setAllowEmptyRows(bool $value) : DataSpreadSheet
+    {
+        $this->allowEmptyRows = $value;
         return $this;
     }
 }

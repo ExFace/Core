@@ -198,36 +198,52 @@ JS;
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
+        $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         
-        $parsersJson = '{';
-        $formattersJson = '{';
-        $validatorsJson = '{';
-        $tooltipsJson = '[';
+        /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $col) {
-            $tooltipsJson .= json_encode($col->getHint()) . ',';
-            
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
-                $parsersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '},';
+                $parserJs = 'function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '}';
                 // For those cells, that do not have a specific editor, use the data type formatter
                 // to format the values before showing them and parse them back in buildJsConvertArrayToData()
-                $formattersJson .= $col->getDataColumnName() . ': function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '},';
+                $formatterJs = 'function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '}';
+            } else {
+                $parserJs = 'function(value){ return value; }';
+                $formatterJs = 'function(value){ return value; }';
             }
             
+            $validatorJs = '';
             if (! $col->isHidden() && $col->isEditable()) {
                 $cellEl = $this->getFacade()->getElement($col->getCellWidget());
                 if ($cellEl->getWidget() instanceof Input) {
-                    $validatorsJson .= $col->getDataColumnName() . ': function(value){ return ' . $cellEl->buildJsValidator('value') . ' ? true : ' . json_encode($cellEl->getValidationErrorText()) . ' },';
+                    $validatorJs = 'function(value){ return ' . $cellEl->buildJsValidator('value') . ' ? true : ' . json_encode($cellEl->getValidationErrorText()) . ' }';
                 }
             }
+            if (! $validatorJs) {
+                $validatorJs = 'function(value){return true}';
+            }
             
+            $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
+            $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
+            
+            $columnsJson .= <<<JS
+                "{$col->getDataColumnName()}": {
+                    dataColumnName: "{$col->getDataColumnName()}",
+                    caption: {$this->escapeString($col->getCaption())},
+                    tooltip: {$this->escapeString($col->getHint())},
+                    parser: {$parserJs},
+                    formatter: {$formatterJs},
+                    validator: {$validatorJs},
+                    hidden: {$hiddenFlagJs},
+                    system: {$systemFlagJs},
+                }, 
+
+JS;           
         }
-        $parsersJson .= '}';
-        $formattersJson .= '}';
-        $validatorsJson .= '}';
-        $tooltipsJson .= ']';
+        $columnsJson = '{' . $columnsJson . '}';
         
         return <<<JS
 
@@ -246,15 +262,15 @@ JS;
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
-            var oColNames = instance.exfWidget !== undefined ? instance.exfWidget.getColumnNames() : {};
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
             
             try {
                 if (instance.exfWidget !== undefined) {
                     jqSelf.find('thead > tr > td').each(function(iIdx, oTD) {
-                        var sColCaption = oTD.innerText;
                         var iX = $(oTD).data('x');
-                        oTD.title = instance.exfWidget._tooltips[iX];
+                        if (iX !== undefined) {
+                            oTD.title = instance.exfWidget.getColumnModel(iX).tooltip;
+                        }
                     });
                 }
             } catch (e) {
@@ -311,11 +327,8 @@ JS;
     {$this->buildJsJqueryElement()}[0].exfWidget = {
         _dom: {$this->buildJsJqueryElement()}[0],
         _colNames: {$colNamesJson},
+        _cols: {$columnsJson},
         _initData: [],
-        _parsers: $parsersJson,
-        _formatters: $formattersJson,
-        _validators: $validatorsJson,
-        _tooltips: $tooltipsJson,
         getJExcel: function(){
             return this._dom.jexcel;
         },
@@ -331,18 +344,15 @@ JS;
         getColumnNames: function() {
             return this._colNames;
         },
+        getColumnModel: function(iColIdx) {
+            return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
-        getParser: function(iCol) {
-            return this._parsers[this.getColumnName(iCol)] || null;
-        },
-        getValidator: function(iCol) {
-            return this._validators[this.getColumnName(iCol)] || null;
-        },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
-            var fnParser = this.getParser(iCol);
+            var fnParser = this.getColumnModel(iCol).parser;
             mValue = fnParser ? fnParser(mValue) : mValue;
             if (mValue === undefined || mValue === null) {
                 mValue = '';
@@ -353,7 +363,7 @@ JS;
             return mInitVal.toString() != mValue.toString();
         },
         validateValue: function(iCol, iRow, mValue) {
-            var fnValidator = this.getValidator(iCol);
+            var fnValidator = this.getColumnModel(iCol).validator;
             if (fnValidator === null) {
                 return true;
             }
@@ -374,11 +384,10 @@ JS;
             var iDataCnt = aDataArray.length;
             var jExcel = $(this._dom);
             var oColNames = this._colNames;
-            var aParsers = this._parsers;
+            var oWidget = this;
+            var bAllowEmptyRows = {$allowEmptyRows};
             aDataArray.forEach(function(aRow, i){
                 var oRow = {};
-                var sHeaderName;
-                var sColName;
                 var bEmptyRow = true;
 
                 if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
@@ -386,22 +395,18 @@ JS;
                 }
 
                 aRow.forEach(function(val, iColIdx){
-                    try {
-                        sHeaderName = jExcel.jexcel('getHeader', iColIdx);
-                    } catch (e) {
-                        sHeaderName = '';
-                    }
-                    sColName = oColNames[sHeaderName];
+                    var oCol = oWidget.getColumnModel(iColIdx);
+                    var sColName = oWidget.getColumnName(iColIdx);
                     if (sColName) {
-                        val = aParsers[sColName] ? aParsers[sColName](val) : val;
-                        if (val !== undefined && val !== '' && val !== null) {
+                        val = oCol.parser ? oCol.parser(val) : val;
+                        if (val !== undefined && val !== '' && val !== null && oCol.hidden === false) {
                             bEmptyRow = false;
                         }
                         oRow[sColName] = val;
                     }
                 });
 
-                if (bEmptyRow === false) {
+                if (bEmptyRow === false || bAllowEmptyRows === true) {
                     aData.push(oRow);
                 }
             });
@@ -411,10 +416,10 @@ JS;
         convertDataToArray: function(aDataRows) {
             var aData = [];
             var jExcel = $(this._dom);
+            var oWidget = this;
             var oColNames = this._colNames;
             var aColHeaders = jExcel.jexcel('getHeaders').split(',');
             var oColIdxCache = {};
-            var aFormatters = this._formatters;
             aDataRows.forEach(function(oRow, i){
                 var oRowIndexed = {};
                 var aRow = [];
@@ -429,10 +434,12 @@ JS;
                     Object.keys(oColNames)
                     .filter(key => oColNames[key] === sColName)
                     .forEach(function(sHeaderName) {
+                        var fnFormatter;
                         if (! sHeaderName) return;
                         iColIdx = aColHeaders.indexOf(sHeaderName);
                         if (iColIdx >= 0) {
-                            oRowIndexed[iColIdx] = aFormatters[sColName] ? aFormatters[sColName](oRow[sColName]) : oRow[sColName];
+                            fnFormatter = oWidget.getColumnModel(iColIdx).formatter;
+                            oRowIndexed[iColIdx] = fnFormatter ? fnFormatter(oRow[sColName]) : oRow[sColName];
                             oColIdxCache[sColName] = [...(oColIdxCache[sColName] || []), ...[iColIdx]];
                         }
                     });
@@ -957,10 +964,24 @@ JS;
         return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToAddRows());
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getAllowDeleteRows() : bool
     {
         $widget = $this->getWidget();
         return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows());
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getAllowEmptyRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowEmptyRows();
     }
      
     /**
