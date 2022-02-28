@@ -12,6 +12,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -112,6 +113,15 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return array
      */
     public function getValues($include_totals = false);
+    
+    /**
+     * Returns an array of values of this column normalized according to the columns data type.
+     * 
+     * @throws DataSheetInvalidValueError
+     * 
+     * @return array
+     */
+    public function getValuesNormalized() : array;
 
     /**
      * Returns the value of the given row within this column
