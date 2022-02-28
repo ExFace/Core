@@ -29,10 +29,11 @@ trait DataSheetExceptionTrait {
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     * 
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface::getDataSheet()
      */
-    public function getDataSheet()
+    public function getDataSheet() : DataSheetInterface
     {
         return $this->data_sheet;
     }

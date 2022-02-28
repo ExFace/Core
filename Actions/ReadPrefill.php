@@ -60,6 +60,21 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         $logSheets = [];
         $targetWidget = $this->getWidgetToReadFor($task);
         
+        // If the prefill is read for a widget opened by a trigger (e.g. a button),
+        // any mappers or checks used on the original action of the button must be
+        // applied to the prefill too!
+        if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
+            $showWidgetAction = $targetWidget->getParent()->getAction();
+            foreach ($showWidgetAction->getInputChecks() as $check) {
+                $this->getInputChecks()->add($check);
+            }
+            /* FIXME get input/output mappers from ShowWidget-action too!!!
+            foreach ($showWidgetAction->getInputMappers() as $mapper) {
+                $this->addInputMapper($mapper);
+            }*/
+        }
+        
+        
         // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
         // Otherwise get the input/prefill data and refresh it if neccessary
         if ($targetWidget !== null) {

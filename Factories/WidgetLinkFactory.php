@@ -30,18 +30,4 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
     {
         return new WidgetLink($sourcePage, null, $stringOrUxon);
     }
-    
-    /**
-     * 
-     * @param WidgetInterface $widget
-     * @return WidgetLinkInterface
-     */
-    public static function createForWidget(WidgetInterface $widget) : WidgetLinkInterface
-    {
-        $link = new WidgetLink($widget->getWorkbench());
-        $link->setWidgetId($widget->getId());
-        $link->setPageAlias($widget->getPage()->getAliasWithNamespace());
-        return $link;
-    }
 }
-?>

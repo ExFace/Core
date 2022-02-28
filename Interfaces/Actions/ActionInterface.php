@@ -516,4 +516,10 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return ActionInterface
      */
     public function addEffect(MetaObjectInterface $effectedObject, string $name = null, MetaRelationPathInterface $relationPathFromActionObject = null) : ActionInterface;
+    
+    /**
+     * 
+     * @return ActionDataCheckListInterface
+     */
+    public function getInputChecks() : ActionDataCheckListInterface;
 }

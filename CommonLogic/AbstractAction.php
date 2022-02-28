@@ -8,7 +8,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -49,6 +48,11 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\ActionEffectFactory;
 use exface\Core\CommonLogic\Tasks\ResultData;
+use exface\Core\CommonLogic\Actions\ActionDataCheckList;
+use exface\Core\Interfaces\Actions\ActionDataCheckListInterface;
+use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
+use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -95,6 +99,8 @@ abstract class AbstractAction implements ActionInterface
     private $input_mappers_used = [];
     
     private $output_mappers = [];
+    
+    private $input_checks = null;
 
     /**
      * @var string
@@ -144,6 +150,7 @@ abstract class AbstractAction implements ActionInterface
         if ($trigger_widget) {
             $this->setWidgetDefinedIn($trigger_widget);
         }
+        $this->input_checks = new ActionDataCheckList($this->getWorkbench(), $this);
         $this->init();
     }
 
@@ -630,20 +637,36 @@ abstract class AbstractAction implements ActionInterface
     {
         $uxon = new UxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        if ($this->getWidgetDefinedIn()) {
-            $uxon->setProperty('trigger_widget', WidgetLinkFactory::createForWidget($this->getWidgetDefinedIn())->exportUxonObject());
-        }
+        /*if ($this->isDefinedInWidget()) {
+            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->getId());
+        }*/
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
         }
         $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
         if (empty($this->getInputMappers())){
-            $input_mappers = new UxonObject();
-            foreach ($this->getInputMappers() as $nr => $mapper){
-                $input_mappers->setProperty($nr, $mapper->exportUxonObject());
+            $inner_uxon = new UxonObject();
+            foreach ($this->getInputMappers() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
             }
-            $uxon->setProperty('input_mappers', $input_mappers);
+            $uxon->setProperty('input_mappers', $inner_uxon);
+        }
+        
+        if (empty($this->getOutputMappers())){
+            $inner_uxon = new UxonObject();
+            foreach ($this->getOutputMappers() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
+            }
+            $uxon->setProperty('output_mappers', $inner_uxon);
+        }
+        
+        if (empty($this->getInputChecks())){
+            $inner_uxon = new UxonObject();
+            foreach ($this->getInputChecks() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
+            }
+            $uxon->setProperty('input_checks', $inner_uxon);
         }
         
         return $uxon;
@@ -1064,7 +1087,8 @@ abstract class AbstractAction implements ActionInterface
             $inputData = $sheet;
         }
         
-        // Validate the input data and dispatch an event for event-based validation
+        // Validate the input data and dispatch events for event-based validation
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $inputData = $this->validateInputData($inputData);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
         
@@ -1112,6 +1136,18 @@ abstract class AbstractAction implements ActionInterface
         }
         if (true === $this->hasInputObjectRestriction() && ! $sheet->isBlank() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
+        }
+        
+        if ($this->getInputChecks()->isDisabled() === false) {
+            foreach ($this->getInputChecks() as $check) {
+                if ($check->isApplicable($sheet)) {
+                    try {
+                        $check->check($sheet);
+                    } catch (DataCheckExceptionInterface $e) {
+                        throw new ActionInputError($this, $e->getMessage(), null, $e);
+                    }
+                }
+            }
         }
         
         return $sheet;
@@ -1650,6 +1686,42 @@ abstract class AbstractAction implements ActionInterface
     public function addOutputMapper(DataSheetMapperInterface $mapper)
     {
         $this->output_mappers[] = $mapper;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputChecks()
+     */
+    public function getInputChecks() : ActionDataCheckListInterface
+    {
+        return $this->input_checks;
+    }
+    
+    /**
+     * Check input data against these conditions before the action is performed
+     * 
+     * If any of these conditions are not met, an error will be raised before the action and
+     * it will not be performed. Each check may contain it's own error message to make the
+     * errors better understandable for the user.
+     * 
+     * @uxon-property input_invalid_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
+     * @param UxonObject $arrayOfDataChecks
+     * @return AbstractAction
+     */
+    protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
+    {
+        switch (true) {
+            case $arrayOfDataChecks instanceof UxonObject:
+                foreach($arrayOfDataChecks as $uxon) {
+                    $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
+                }
+                //TODO
+        }
         return $this;
     }
 }
