@@ -281,13 +281,7 @@ JS;
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
         onbeforechange: function(instance, cell, x, y, value) {
-            instance.exfWidget.validateCell(cell, x, y, value);
-            if (instance.exfWidget.hasChanged(x, y, value)) {
-                $(cell).addClass('exf-spreadsheet-change');
-            } else {
-                $(cell).removeClass('exf-spreadsheet-change');
-                return instance.exfWidget.getInitValue(x, y);
-            }
+            return instance.exfWidget.validateCell(cell, x, y, value);
         },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs
@@ -317,10 +311,10 @@ JS;
             }
         },
         onundo: function(el, historyRecord) {
-            // TODO validate cell!!!
+            el.exfWidget.validateAll();
         },
         onredo: function(el, historyRecord) {
-            // TODO validate cell!!!
+            el.exfWidget.validateAll();
         }
     });
 
@@ -340,9 +334,6 @@ JS;
         },
         getColumnName: function(iColIdx) {
             return this._colNames[this.getJExcel().getHeader(iColIdx)];
-        },
-        getColumnNames: function() {
-            return this._colNames;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
@@ -371,6 +362,14 @@ JS;
         },
         validateCell: function (cell, iCol, iRow, mValue) {
             var mValidationResult = this.validateValue(iCol, iRow, mValue);
+
+            if (this.hasChanged(iCol, iRow, mValue)) {
+                $(cell).addClass('exf-spreadsheet-change');
+            } else {
+                $(cell).removeClass('exf-spreadsheet-change');
+                mValue = this.getInitValue(iRow, iCol);
+            }
+
             if (mValidationResult === true) {
                 $(cell).removeClass('exf-spreadsheet-invalid');
                 cell.title = '';
@@ -378,6 +377,22 @@ JS;
                 $(cell).addClass('exf-spreadsheet-invalid');
                 cell.title = (mValidationResult || '');
             }
+
+            return mValue;
+        },
+        validateAll: function() {
+            var aData = this.getJExcel().getData() || [];
+            var iDataCnt = aData.length;
+            var oWidget = this;
+            aData.forEach(function(aRow, iRowIdx) {
+                if (iRowIdx >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+                aRow.forEach(function(mValue, iColIdx) {
+                    var oCell = oWidget.getJExcel().getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1));
+                    oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue);
+                });
+            });
         },
         convertArrayToData: function(aDataArray) {
             var aData = [];
