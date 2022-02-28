@@ -98,7 +98,7 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * nested groups is lost, but this method can be usefull to search for conditions with certain properties
      * (e.g. an attribute, a comparator, etc.)
      *
-     * @return ConditionGroupInterface[]
+     * @return ConditionInterface[]
      */
     public function getConditionsRecursive() : array;
     

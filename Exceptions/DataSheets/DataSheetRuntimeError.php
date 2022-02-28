@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetExceptionTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 
