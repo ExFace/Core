@@ -363,16 +363,15 @@ JS;
             var mValidationResult = this.validateValue(iCol, iRow, mValue);
             if (mValidationResult === true) {
                 $(cell).removeClass('exf-spreadsheet-invalid');
-                //instance.jspreadsheet.setStyle(jexcel.getColumnNameFromId([iCol, iRow]), null, null);
                 cell.title = '';
             } else {
                 $(cell).addClass('exf-spreadsheet-invalid');
-                //instance.jspreadsheet.setStyle(jexcel.getColumnNameFromId([iCol, iRow]), 'border', '2px solid #b00');
                 cell.title = (mValidationResult || '');
             }
         },
         convertArrayToData: function(aDataArray) {
             var aData = [];
+            var iDataCnt = aDataArray.length;
             var jExcel = $(this._dom);
             var oColNames = this._colNames;
             var aParsers = this._parsers;
@@ -380,6 +379,12 @@ JS;
                 var oRow = {};
                 var sHeaderName;
                 var sColName;
+                var bEmptyRow = true;
+
+                if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+
                 aRow.forEach(function(val, iColIdx){
                     try {
                         sHeaderName = jExcel.jexcel('getHeader', iColIdx);
@@ -388,15 +393,19 @@ JS;
                     }
                     sColName = oColNames[sHeaderName];
                     if (sColName) {
-                        oRow[sColName] = aParsers[sColName] ? aParsers[sColName](val) : val;
+                        val = aParsers[sColName] ? aParsers[sColName](val) : val;
+                        if (val !== undefined && val !== '' && val !== null) {
+                            bEmptyRow = false;
+                        }
+                        oRow[sColName] = val;
                     }
                 });
-                aData.push(oRow);
+
+                if (bEmptyRow === false) {
+                    aData.push(oRow);
+                }
             });
-            
-            for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
-                aData.pop();
-            }
+
             return aData;
         },
         convertDataToArray: function(aDataRows) {
