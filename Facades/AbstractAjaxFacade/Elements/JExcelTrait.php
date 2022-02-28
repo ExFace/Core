@@ -203,7 +203,10 @@ JS;
         $parsersJson = '{';
         $formattersJson = '{';
         $validatorsJson = '{';
+        $tooltipsJson = '[';
         foreach ($widget->getColumns() as $col) {
+            $tooltipsJson .= json_encode($col->getHint()) . ',';
+            
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
@@ -224,7 +227,7 @@ JS;
         $parsersJson .= '}';
         $formattersJson .= '}';
         $validatorsJson .= '}';
-        
+        $tooltipsJson .= ']';
         
         return <<<JS
 
@@ -242,7 +245,20 @@ JS;
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
+            var oColNames = instance.exfWidget !== undefined ? instance.exfWidget.getColumnNames() : {};
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
+            
+            try {
+                if (instance.exfWidget !== undefined) {
+                    jqSelf.find('thead > tr > td').each(function(iIdx, oTD) {
+                        var sColCaption = oTD.innerText;
+                        var iX = $(oTD).data('x');
+                        oTD.title = instance.exfWidget._tooltips[iX];
+                    });
+                }
+            } catch (e) {
+                console.warn('Cannot set tooltips for columns:', e);
+            }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
@@ -298,6 +314,7 @@ JS;
         _parsers: $parsersJson,
         _formatters: $formattersJson,
         _validators: $validatorsJson,
+        _tooltips: $tooltipsJson,
         getJExcel: function(){
             return this._dom.jexcel;
         },
@@ -309,6 +326,9 @@ JS;
         },
         getColumnName: function(iColIdx) {
             return this._colNames[this.getJExcel().getHeader(iColIdx)];
+        },
+        getColumnNames: function() {
+            return this._colNames;
         },
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
