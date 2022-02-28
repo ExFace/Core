@@ -180,6 +180,8 @@
     "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
     "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
+	"DATASHEET.ERROR.INVALID_VALUES": "Falsche Werte für \"%column%\"!",
+	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Falscher Wert für \"%column%\" auf Zeile(n) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" auf Zeile(n) %rows%!",
 	

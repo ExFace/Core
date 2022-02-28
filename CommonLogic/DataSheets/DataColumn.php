@@ -21,6 +21,8 @@ use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
 class DataColumn implements DataColumnInterface
 {
@@ -296,6 +298,25 @@ class DataColumn implements DataColumnInterface
     public function getValues($include_totals = false)
     {
         return $this->getDataSheet()->getColumnValues($this->getName(), $include_totals);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getValuesNormalized()
+     */
+    public function getValuesNormalized() : array
+    {
+        $type = $this->getDataType();
+        $vals = [];
+        foreach ($this->getValues(false) as $rowIdx => $val) {
+            try {
+                $vals[$rowIdx] = $type->parse($val);
+            } catch (DataTypeValidationError $e) {
+                throw new DataSheetInvalidValueError($this->getDataSheet(), null, null, $e, $this, [$rowIdx]);
+            }
+        }
+        return $vals;
     }
 
     /**

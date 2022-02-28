@@ -52,6 +52,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -793,7 +794,7 @@ class DataSheet implements DataSheetInterface
                         foreach ($emptyUidRowsInCreateSheet as $i => $r) {
                             $uidCol->setValue($emptyUidRows[$i], $create_ds->getUidColumn()->getCellValue($r));
                         }
-                    } catch (DataSheetMissingRequiredValueError $e) {
+                    } catch (DataSheetMissingRequiredValueError | DataSheetInvalidValueError $e) {
                         // If the create-operation failed due to missing values, we will need to
                         // tell the user where they are in the original sheet (as the user does not
                         // know anything about our additional create-sheet!). Here we calculate
@@ -803,7 +804,8 @@ class DataSheet implements DataSheetInterface
                                 return $emptyUidRows[array_search($createRowIdx, $emptyUidRowsInCreateSheet)]; 
                             }, $brokenRowsInCreateSheet);
                         }
-                        throw new DataSheetMissingRequiredValueError($this, null, null, $e, $e->getColumnName(), $brokenRowIdxs);
+                        $eClass = get_class($e);
+                        throw new $eClass($this, null, null, $e, $e->getColumnName(), $brokenRowIdxs);
                     }
                 }
             } else {
@@ -894,11 +896,7 @@ class DataSheet implements DataSheetInterface
             // If the column represents a required attribute, check if all rows have values.
             // If not, try to generate them from default and fixed values of the attribute.
             if ($columnAttr->isRequired() === true && $column->hasEmptyValues() === true) {
-                try {
-                    $column->setValuesFromDefaults();
-                } catch (DataSheetMissingRequiredValueError $e) {
-                    throw new DataSheetWriteError($this, 'Failed to update object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): missing values for required attribute "' . $columnAttr->getName() . '" (alias ' . $columnAttr->getAliasWithRelationPath() . ') on row(s) ' . implode(', ', $column->findEmptyRows()) . '!', null, $e);
-                }
+                $column->setValuesFromDefaults();
             }
             
             // Use the UID column as a filter to make sure, only these rows are affected
@@ -942,11 +940,11 @@ class DataSheet implements DataSheetInterface
                     $uid_data_sheet->dataRead();
                     $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                 }
-                $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false), $uid_column->getValues(false));
+                $query->addValues($column->getExpressionObj()->toString(), $column->getValuesNormalized(), $uid_column->getValues(false));
             } else {
                 // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
                 // In this case all object matching the filter will get updated by this value
-                $query->addValue($column->getExpressionObj()->toString(), $column->getValues(false)[0]);
+                $query->addValue($column->getExpressionObj()->toString(), $column->getValuesNormalized()[0]);
             }
         }
         
@@ -1270,7 +1268,7 @@ class DataSheet implements DataSheetInterface
                 $values_found = true;
             }
             // Add all other columns to values
-            $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false));
+            $query->addValues($column->getExpressionObj()->toString(), $column->getValuesNormalized());
         }
         
         if (! $values_found) {
