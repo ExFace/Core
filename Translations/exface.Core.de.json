@@ -180,6 +180,9 @@
     "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
     "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
+	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\"!",
+	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" auf Zeile(n) %rows%!",
+	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",

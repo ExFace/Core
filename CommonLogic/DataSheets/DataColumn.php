@@ -738,22 +738,26 @@ class DataColumn implements DataColumnInterface
         
         if ($fixedEx && $this->getIgnoreFixedValues() === false) {
             // Fixed values MUST be calculated unless this feature is explicitly disabled for the column
-            foreach ($this->getValues(false) as $row_id => $val) {
-                $this->setValue($row_id, $fixedEx->evaluate($sheet, $row_id));
+            foreach ($this->getValues(false) as $rowIdx => $val) {
+                $this->setValue($rowIdx, $fixedEx->evaluate($sheet, $rowIdx));
             }
         }
         
         // After fixed values were calculated (which theoretically could also lead to empty values!), we
         // will proceed with calculating default values for empty cells
-        foreach ($this->getValues(false) as $row_id => $val) {
+        $missingInRowIdxs = [];
+        foreach ($this->getValues(false) as $rowIdx => $val) {
             if ($val === null || $val === '') {
                 if ($attr->getDefaultValue()) {
-                    $this->setValue($row_id, $defaultEx->evaluate($sheet, $row_id));
+                    $this->setValue($rowIdx, $defaultEx->evaluate($sheet, $rowIdx));
                 } elseif ($leaveNoEmptyValues === true) {
                     // If a value is still empty and we do not want it to be so - throw an error!
-                    throw new DataSheetMissingRequiredValueError($sheet, 'Missing values for attribute ' . $attr->__toString() . ' of object ' . $this->getMetaObject()->__toString() . ' in row ' . $row_id . '!', '6T5UX3Q');
+                    $missingInRowIdxs[] = $rowIdx;
                 }
             }
+        }
+        if (! empty($missingInRowIdxs)) {
+            throw new DataSheetMissingRequiredValueError($sheet, null, null, null, $this, $missingInRowIdxs);
         }
         
         return $this;
