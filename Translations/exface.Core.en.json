@@ -178,7 +178,10 @@
     "CONTEXT.USER.NAME": "User",
     "CONTEXT.USER.NOT_LOGGED_IN_HINT": "You are not logged in. Please Login!",
 	"CONTEXT.USER.LOGGED_IN_HINT": "You are logged in.",
-	"CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
+	"CONTEXT.USER.MY_ACCOUNT": "My account",
+	
+	"DATASHEET.ERROR.MISSING_VALUES": "Missing values for \"%column%\"!",
+	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Missing values for \"%column%\" on row(s) %rows%!",
 	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
@@ -460,6 +463,6 @@
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.SUPPORT_HINT_WITH_EMAIL": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=Support%20request%20[%system_name%]%20%log_id%\">support</a>: \"%log_id%\"!",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%log_id%\"!",
-	"WARNING.CAPTION": "Warning"
 	
+	"WARNING.CAPTION": "Warning"
 }

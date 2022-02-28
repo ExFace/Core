@@ -774,23 +774,36 @@ class DataSheet implements DataSheetInterface
                     foreach ($missing_uids as $missing_uid) {
                         $create_ds->addRow($this->getRowByColumnValue($uidCol->getName(), $missing_uid));
                     }
-                    // For rows with empty UIDs we will need to remember the row number of
+                    // For rows with empty UIDs we will need to remember the index of
                     // each row, so we can update it with the created UID once we've received
                     // them back from the data source.
                     $emptyUidRowsInCreateSheet = [];
                     foreach ($emptyUidRows as $newRowNr) {
                         // Since we may alread have rows in the $create_ds, that have non-empty
-                        // UIDs, we need get the exact number of the inserted row (not just
-                        // count them starting with 0) - that is the next row number since rows
+                        // UIDs, we need get the exact index of the inserted row (not just
+                        // count them starting with 0) - that is the next index since rows
                         // are allways numbered sequentially.
                         $emptyUidRowsInCreateSheet[] = $create_ds->countRows();
                         $create_ds->addRow($this->getRow($newRowNr));
                     }
-                    $counter += $create_ds->dataCreate(false, $transaction);
-                    // Now update the UID column of the original sheet with values from the create-sheet
-                    // on all rows, that previously did not have a UID value.
-                    foreach ($emptyUidRowsInCreateSheet as $i => $r) {
-                        $uidCol->setValue($emptyUidRows[$i], $create_ds->getUidColumn()->getCellValue($r));
+                    try {
+                        $counter += $create_ds->dataCreate(false, $transaction);
+                        // Now update the UID column of the original sheet with values from the create-sheet
+                        // on all rows, that previously did not have a UID value.
+                        foreach ($emptyUidRowsInCreateSheet as $i => $r) {
+                            $uidCol->setValue($emptyUidRows[$i], $create_ds->getUidColumn()->getCellValue($r));
+                        }
+                    } catch (DataSheetMissingRequiredValueError $e) {
+                        // If the create-operation failed due to missing values, we will need to
+                        // tell the user where they are in the original sheet (as the user does not
+                        // know anything about our additional create-sheet!). Here we calculate
+                        // the original sheet's row numbers an rethrow the exception with these
+                        if (null !== $brokenRowsInCreateSheet = $e->getRowIndexes()) {
+                            $brokenRowIdxs = array_map(function(int $createRowIdx) use ($emptyUidRowsInCreateSheet, $emptyUidRows) { 
+                                return $emptyUidRows[array_search($createRowIdx, $emptyUidRowsInCreateSheet)]; 
+                            }, $brokenRowsInCreateSheet);
+                        }
+                        throw new DataSheetMissingRequiredValueError($this, null, null, $e, $e->getColumnName(), $brokenRowIdxs);
                     }
                 }
             } else {
@@ -1229,11 +1242,7 @@ class DataSheet implements DataSheetInterface
                     }
                 }
             } else {
-                try {
-                    $req_col->setValuesFromDefaults();
-                } catch (DataSheetRuntimeError $e) {
-                    throw new DataSheetMissingRequiredValueError($this, 'Required attribute ' . $req->__toString() . ' not set in row(s): ' . implode(', ', $req_col->findEmptyRows()) . '!', null, $e);
-                }
+               $req_col->setValuesFromDefaults();
             }
         }
         
