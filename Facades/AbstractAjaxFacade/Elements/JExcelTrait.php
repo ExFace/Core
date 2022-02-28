@@ -235,6 +235,7 @@ JS;
     {$this->buildJsResetSelection('')}
     .jspreadsheet({
         data: [ [] ],
+        columnSorting:false,
         allowRenameColumn: false,
         allowInsertColumn: false,
         allowDeleteColumn: false,
