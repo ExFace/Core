@@ -61,6 +61,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getWidgetDefinedIn());
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
+        $dialog->setCacheable(false);
         
         /* @var $table \exface\Core\Widgets\DataTable */
         $table = WidgetFactory::create($dialog->getPage(), 'DataTable', $dialog);

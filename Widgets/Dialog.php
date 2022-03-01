@@ -34,6 +34,8 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $header = null;
     
     private $hide_header = null;
+    
+    private $cacheable = true;
 
     protected function init()
     {
@@ -374,5 +376,34 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
             $result = array_merge($result, $this->getHeader()->getInputWidgets($depth ? $depth - 1 : null));
         }
         return $result;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isCacheable() : bool
+    {
+        return $this->cacheable;
+    }
+    
+    /**
+     * Set to FALSE to make the dialog fully load every time
+     * 
+     * By default, dialogs may be partially cached by the facade to reduce network load:
+     * e.g. only the prefill data may be loaded. Set this to FALSE to force loading the
+     * entire dialog every time!
+     * 
+     * @uxon-property cacheable
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Dialog
+     */
+    public function setCacheable(bool $value) : Dialog
+    {
+        $this->cacheable = $value;
+        return $this;
     }
 }
