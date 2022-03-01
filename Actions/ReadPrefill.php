@@ -64,7 +64,6 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // any mappers or checks used on the original action of the button must be
         // applied to the prefill too!
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
-            $showWidgetAction = $targetWidget->getParent()->getAction();
             foreach ($showWidgetAction->getInputChecks() as $check) {
                 $this->getInputChecks()->add($check);
             }
