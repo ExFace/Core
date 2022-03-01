@@ -180,10 +180,16 @@
     "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
     "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
-	"DATASHEET.ERROR.INVALID_VALUES": "Falsche Werte für \"%column%\"!",
-	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Falscher Wert für \"%column%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.INVALID_VALUES": "Ungültige Werte für \"%column%\"!",
+	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" auf Zeile(n) %rows%!",
 	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" auf Zeile(n) %rows%!",
+	
+	"DATATYPE.VALIDATION.MUST": "Muss",
+	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
+	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
+	"DATATYPE.VALIDATION.AND": "und",
+	"DATATYPE.VALIDATION.MINMAX_CONDITION": "%condition% sein",
 	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
@@ -433,10 +439,6 @@
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	"WIDGET.INPUT.REQUIRED_HINT": "Diese Eingabe ist Pflicht!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
-	"WIDGET.INPUT.VALIDATION_MUST": "Muss",
-	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "%condition% Zeichen lang sein",
-	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "der Maske %regex% entsprechen",
-	"WIDGET.INPUT.VALIDATION_AND": "und",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
 	
 	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
