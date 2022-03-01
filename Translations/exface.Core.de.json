@@ -169,6 +169,8 @@
     "CONTEXT.FILTER.NAME": "Filter",
     
     "CONTEXT.NOTIFICATION.NAME": "Benachrichtigungen",
+    "CONTEXT.NOTIFICATION.DISMISS": "Ausblenden",
+    "CONTEXT.NOTIFICATION.DISMISS_ALL": "Alle ausblenden",
     
 	"CONTEXT.OBJECTBASKET.NAME": "Objektkorb",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",

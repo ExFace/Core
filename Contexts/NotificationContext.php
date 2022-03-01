@@ -183,7 +183,7 @@ class NotificationContext extends AbstractContext
                 'caption' => $row['TITLE'],
                 'action' => [
                     'alias' => 'exface.Core.ShowDialog',
-                    'widget' => UxonObject::fromJson($widgetJson)
+                    'widget' => UxonObject::fromJson($widgetJson)->setProperty('cacheable', false)
                 ]
             ]));
             
@@ -198,7 +198,7 @@ class NotificationContext extends AbstractContext
         
         if ($btn) {
             $menu->addButton($menu->createButton(new UxonObject([
-                'caption' => 'Dismiss all',
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS_ALL'),
                 'icon' => 'eraser',
                 'action' => [
                     'alias' => 'exface.Core.DeleteObject',
@@ -252,17 +252,18 @@ class NotificationContext extends AbstractContext
     public function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
         $title = $notification->getTitle() ?? StringDataType::truncate($notification->getText(), 60, true);
+        $buttonsArray = ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : []);
         $widgetUxon = new UxonObject([
             'object_alias' => 'exface.Core.NOTIFICATION',
             'width' => 1,
             'height' => 'auto',
             'caption' => $title,
             'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
-            'buttons' => $notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [
+            'buttons' => array_merge($buttonsArray, [
                 [
-                    'caption' => 'Dismiss',
+                    'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS'),
                     'align' => EXF_ALIGN_OPPOSITE,
-                    'visibility' => WidgetVisibilityDataType::PROMOTED,
+                    'visibility' => empty($buttonsArray) ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL,
                     'icon' => Icons::ERASER,
                     'action' => [
                         'alias' => 'exface.Core.DeleteObject',
@@ -283,7 +284,7 @@ class NotificationContext extends AbstractContext
                         ]
                     ]
                 ]
-            ]
+            ])
         ]);
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
