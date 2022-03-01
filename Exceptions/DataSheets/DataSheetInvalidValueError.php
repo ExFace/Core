@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\CommonLogic\Log\Logger;
 
 /**
  * Exception thrown if a value within the data sheet is not valid 
@@ -41,6 +42,8 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
             if ($col) {
                 $message = $this->generateMessage($col, $this->getRowNumbers());
                 $this->setUseExceptionMessageAsTitle(true);
+                $this->setLogLevel($this->getDefaultLogLevel());
+                $this->setAlias($this->getDefaultAlias());
             }
         }
         
@@ -82,7 +85,17 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
      */
     public function getDefaultAlias()
     {
-        return '6T5UX3Q';
+        return '7K8KI39';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return Logger::ERROR;
     }
     
     /**

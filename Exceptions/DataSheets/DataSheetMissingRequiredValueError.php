@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use Monolog\Logger;
 
 /**
  * Exception thrown if a value required for some operation on the data sheet is missing 
@@ -43,5 +44,25 @@ class DataSheetMissingRequiredValueError extends DataSheetInvalidValueError
             }
         }
         return $message;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '6T5UX3Q';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return Logger::ERROR;
     }
 }
