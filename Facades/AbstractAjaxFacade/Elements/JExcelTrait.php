@@ -343,14 +343,18 @@ JS;
         },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
-            var fnParser = this.getColumnModel(iCol).parser;
-            mValue = fnParser ? fnParser(mValue) : mValue;
+            var oCol = this.getColumnModel(iCol);
+
+            mValue = oCol.parser ? oCol.parser(mValue) : mValue;
             if (mValue === undefined || mValue === null) {
                 mValue = '';
             }
             if (mInitVal === undefined || mInitVal === null) {
                 mInitVal = '';
+            } else {
+                mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
             }
+
             return mInitVal.toString() != mValue.toString();
         },
         validateValue: function(iCol, iRow, mValue) {
@@ -812,10 +816,16 @@ JS;
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
                 $numberType = $cellWidget->getValueDataType();
                 if ($numberType->getBase() === 10) {
-                    $type = "numeric";
                     $options .= 'allowEmpty: true,';
                     $decimal = $numberType->getDecimalSeparator();
-                    //$options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
+                    // FIXME what to do with the thousands/group-separator???
+                    $type = "numeric";
+                    // Add a mask for DataSpreadSheet but not for the DataImporter (it needs to accept any number format!)
+                    if ($this->getWidget() instanceof DataSpreadSheet) {
+                        $options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
+                    }
+                    //$type = "numeral";
+                    //$options .= "mask: '0', decimal:'{$decimal}', thousands:'{$thousands}',";
                 }
                 $align = EXF_ALIGN_RIGHT;
                 break;
@@ -1138,9 +1148,16 @@ JS;
         return "{$this->buildJsJqueryElement()}[0].exfWidget.convertDataToArray({$arrayOfObjectsJs})";
     }
     
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
     protected function needsDataFormatting(DataColumn $col) : bool
     {
-        return $this->buildJsJExcelColumnEditorOptions($col) === null && ! ($col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting());
+        $editorConfigured = $this->buildJsJExcelColumnEditorOptions($col) !== null;
+        $formattingDisabled = $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting();
+        return ! $formattingDisabled && (($col->getDataType() instanceof NumberDataType) || ! $editorConfigured);
     }
     
     /**
