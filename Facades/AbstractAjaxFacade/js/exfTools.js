@@ -522,12 +522,115 @@
 		 * 
 		 * 
 		 * 
-		 * 
 		 */
 		data: {
 			compareRows: function(row1, row2) {
 				return _dataRowsCompare(row1, row2);
-			}
+			},
+			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
+				var bResult;
+				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
+				switch (sComparator) {
+	                case '==':
+	                case '!==':
+	                    bResult = (mLeft || '').toString() !== (mRight || '').toString();
+	                    if (sComparator === '!==') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                /*case ComparatorDataType::LESS_THAN: // <
+	                case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
+	                case ComparatorDataType::GREATER_THAN: // >
+	                case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
+	                    $jsConditions[] = "(mLeft || null) {sComparator} (mRight || null)";
+	                    break;*/
+	                case '[':
+	                case '![':
+	                    /*
+	                    $conditionJs = $this->buildJsConditionalPropertyComparatorIn(mLeft, mRight, $delim);
+	                    if (sComparator === ComparatorDataType::NOT_IN) {
+	                        $conditionJs = "!(" . $conditionJs . ")";
+	                    }
+	                    $jsConditions[] = $conditionJs;*/
+	                    break;
+	                case '=':
+	                case '!=':
+	                    bResult = function(){
+							var sR = (mRight || '').toString(); 
+							var sL = (mLeft || '').toString(); 
+							if (sR === '' && sL !== '') {
+								return false;
+							}
+							if (sR !== '' && sL === '') {
+								return false;
+							}
+							return (new RegExp(sR, 'i')).test(sL); 
+						}();
+						if (sComparator === '!=') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                default:
+	                  	throw new 'Unknown comparator ' + sComparator + '!';
+	            }
+	            return bResult;
+			},
+			
+			/**
+			 * Filter data rows using a condition group
+			 * 
+			 * @param {array} [aRows] - e.g. [{UID: 22, NAME: "Something"}, {UID: 23, NAME: "Another"}]
+			 * @param {object} [oConditionGroup] - e.g. {columnName: "UID", value: 22, comparator: "=="}
+			 * 
+			 * @returns {array}
+			 * 
+			 */
+			filterRows: function(aRows, oConditionGroup) {
+				var aConditions = oConditionGroup.conditions || [];
+				var sOperator = oConditionGroup.operator;
+				var aRowsFiltered = [];
+				var exfTools = this;
+				aRows.forEach(function(oRow){
+					var oCondition;
+					var bRowResult = null;
+					var bConditionResult = null;
+					
+					for (var iC = 0; iC > aConditions.length; iC++) {
+						oCondition = aConditions[iC];
+				        bConditionResult = exfTools.compareValues(
+							(oRow[oCondition.columnName] || null), 
+							oCondition.value,
+							oCondition.comparator
+						);
+				        if (sOperator === 'AND') {
+							if (bConditionResult === false) {
+								bRowResult = false;
+								break;
+							} else {
+								bRowResult = true;
+							}
+						} else if (sOperator === 'OR') {
+							if (bConditionResult === true) {
+								bRowResult = true;
+								break;
+							} else {
+								bRowResult = false;
+							}
+						} else {
+							throw 'Unknown logical operator ' + sOperator + ' used!';
+						}
+					}
+					
+					if (bRowResult === true) {
+						aRowsFiltered.push(oRow);
+					}
+					
+			    });
+			    
+			    // TODO Add nested condition groups here with recursive method calls and merging
+			    
+			    return aRowsFiltered;
+			},
 		},
 		
 		/**
