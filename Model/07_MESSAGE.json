@@ -2318,6 +2318,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2022-03-01 08:22:16",
+            "MODIFIED_ON": "2022-03-01 08:22:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecbb4e52b1182cbb4e025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7K8KI39",
+            "TITLE": "Invalid value",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
