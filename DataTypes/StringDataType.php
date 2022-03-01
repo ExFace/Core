@@ -48,6 +48,36 @@ class StringDataType extends AbstractDataType
         $this->regexValidator = $regularExpression;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $and = $translator->translate('DATATYPE.VALIDATION.AND');
+        $text = '';
+        if ($this->getLengthMin() > 0) {
+            $lengthCond = ' ≥ ' . $this->getLengthMin();
+        }
+        if ($this->getLengthMax() > 0) {
+            $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $this->getLengthMax();
+        }
+        if ($lengthCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
+        }
+        if ($this->getValidatorRegex()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidatorRegex()]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
+    }
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.

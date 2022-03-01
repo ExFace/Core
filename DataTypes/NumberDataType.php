@@ -102,6 +102,33 @@ class NumberDataType extends AbstractDataType
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $and = $translator->translate('DATATYPE.VALIDATION.AND');
+        $text = '';
+        if ($this->getMin() !== null) {
+            $minMaxCond = ' ≥ ' . $this->getMin();
+        }
+        if ($this->getMax() !== null) {
+            $minMaxCond .= ($minMaxCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $this->getMax();
+        }
+        if ($minMaxCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.MINMAX_CONDITION', ['%condition%' => $minMaxCond]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultSortingDirection()

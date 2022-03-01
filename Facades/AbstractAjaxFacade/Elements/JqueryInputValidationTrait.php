@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Input;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * This trait contains a generic buildJsValidator() method and some usefull helpers for 
@@ -86,11 +87,12 @@ trait JqueryInputValidationTrait {
     {
         $js = '';
         $nullStr = "'" . EXF_LOGICAL_NULL . "'";
+        $nullCheckJs = "$valueJs.toString() !== '' && $valueJs.toString() !== $nullStr";
         switch (true) {
             case $type instanceof StringDataType:
                 // Validate string min legnth
                 if ($type->getLengthMin() > 0) {
-                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
+                    $js .= "if($nullCheckJs && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
                 }
                 
                 // Validate string max length
@@ -99,13 +101,29 @@ trait JqueryInputValidationTrait {
                     break;
                 }
                 if ($type->getLengthMax() > 0) {
-                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && $valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
+                    $js .= "if($nullCheckJs && $valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
                 }
                 
                 if ($type->getValidatorRegex() !== null) {
-                    $js .= "if($valueJs.toString() !== '' && $valueJs.toString() !== $nullStr && {$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
+                    $js .= "if($nullCheckJs && {$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
                 }
                 
+                break;
+            case $type instanceof NumberDataType:
+                if ($type->getBase() !== 10) {
+                    break;
+                }
+                $checks = [];
+                if ($type->getMin() !== null) {
+                    $checks[] = "parseFloat($valueJs) < {$type->getMin()}";
+                }
+                if ($type->getMax() !== null) {
+                    $checks[] = "parseFloat($valueJs) > {$type->getMax()}";
+                }
+                $checksJs = implode(' || ', $checks);
+                if ($checksJs) {
+                    $js .= "if($nullCheckJs && ($checksJs)){ {$onFailJs} } \n";
+                }
                 break;
         }
         return $js;
@@ -126,41 +144,14 @@ trait JqueryInputValidationTrait {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $text = '';
         
-        $type = $widget->getValueDataType();
-        if ($type->getValidationErrorCode()) {
-            // TODO get message from error message model
-        }
-        if ($msg = $type->getValidationErrorMessage()) {
+        if ($msg = $widget->getValueDataType()->getValidationErrorMessage()) {
             $text = $msg->getTitle();
-            if ($text) {
-                return $text;
-            }
-        }
-        switch (true) {
-            case $type instanceof StringDataType:
-                $and = $translator->translate('WIDGET.INPUT.VALIDATION_AND');
-                if ($type->getLengthMin() > 0) {
-                    $lengthCond = ' ≥ ' . $type->getLengthMin();
-                }
-                if ($type->getLengthMax() > 0 && ($widget instanceof Input && $widget->getMultipleValuesAllowed() === false)) {
-                    $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $type->getLengthMax();
-                }
-                if ($lengthCond) {
-                    $text .= $translator->translate('WIDGET.INPUT.VALIDATION_LENGTH_CONDITION', ['%condition%' => $lengthCond]);
-                }
-                if ($type->getValidatorRegex()) {
-                    $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('WIDGET.INPUT.VALIDATION_REGEX_CONDITION', ['%regex%' => $type->getValidatorRegex()]);
-                }
-                break;
-        }
-        
-        if ($text !== '') {
-            $text = $translator->translate('WIDGET.INPUT.VALIDATION_MUST') . ' ' . $text;
         }
         
         if ($widget->isRequired()) {
-            $text .= ($text ? '. ' : '') . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
+            $text = ($text ? rtrim($text, ".") . '. ' : $text) . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
         }
+        
         return $text;
     }
 }

@@ -185,6 +185,12 @@
 	"DATASHEET.ERROR.MISSING_VALUES": "Missing values for \"%column%\"!",
 	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Missing values for \"%column%\" on row(s) %rows%!",
 	
+	"DATATYPE.VALIDATION.MUST": "Must",
+	"DATATYPE.VALIDATION.LENGTH_CONDITION": "have %condition% characters",
+	"DATATYPE.VALIDATION.REGEX_CONDITION": "match the pattern %regex%",
+	"DATATYPE.VALIDATION.MINMAX_CONDITION": "be %condition%",
+	"DATATYPE.VALIDATION.AND": "and",
+	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
@@ -445,10 +451,6 @@
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	"WIDGET.INPUT.REQUIRED_HINT": "This field cannot be empty!",
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
-	"WIDGET.INPUT.VALIDATION_MUST": "Must",
-	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "have %condition% characters",
-	"WIDGET.INPUT.VALIDATION_REGEX_CONDITION": "match the pattern %regex%",
-	"WIDGET.INPUT.VALIDATION_AND": "and",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Uses",
 	
 	"WIDGET.NAVTILES.EMPTY": "This menu is empty or you don't have permissions for its items.",

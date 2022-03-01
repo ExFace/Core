@@ -65,16 +65,21 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
                 $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', ['%column%' => $colCaption, '%rows%' => $rowNoList]);
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
-                $message = 'Invalid values for "' . $colCaption . '" on row(s) ' . $rowNoList . '!';
+                $message = 'Invalid values for "' . $colCaption . '" on row(s) ' . $rowNoList;
             }
         } else {
             try {
                 $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES', ['%column%' => $colCaption, '%rows%' => $rowNoList]);
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
-                $message = 'Invalid values for "' . $colCaption . '"!';
+                $message = 'Invalid values for "' . $colCaption . '"';
             }
         }
+        
+        if (null !== $msg = $col->getDataType()->getValidationErrorMessage()) {
+            $message .= ' ' . $msg->getTitle();
+        }
+        
         return $message;
     }
     
