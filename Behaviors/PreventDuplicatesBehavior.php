@@ -378,7 +378,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $checkRows = $checkSheet->getRows();
         
         if (empty($checkRows)) {
-            return [];
+            return $duplicates;
         }
 
         foreach ($this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null)) as $rowNo => $rows) {
@@ -393,13 +393,15 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $eventRowCnt = count($eventRows);
         for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
             // For each row loaded from data source
+            $uidMatchProcessed = false;
             foreach ($checkRows as $chRow) {
                 $isDuplicate = true;
+                $eventRow = $eventRows[$eventRowNo];
                 // Compare all the relevant columns: if any value differs, it is NOT a duplicate
                 foreach ($compareCols as $col) {
                     $dataType = $col->getDataType();
                     $key = $col->getName();
-                    if ($dataType->parse($eventRows[$eventRowNo][$key]) != $dataType->parse($chRow[$key])) {
+                    if ($dataType->parse($eventRow[$key]) != $dataType->parse($chRow[$key])) {
                         $isDuplicate = false;
                         break;
                     }
@@ -407,11 +409,12 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 
                 // If the data source row has matching columns, check if the UID also matches: if so,
                 // it is the same row and, thus, NOT a duplicate
-                if ($uidCol !== null) {
+                if ($isDuplicate === true && $uidCol !== null) {
                     $dataType = $uidCol->getDataType();
                     $key = $uidCol->getName();
-                    if ($dataType->parse($eventRows[$eventRowNo][$key]) == $dataType->parse($chRow[$key])) {
+                    if ($dataType->parse($eventRow[$key]) == $dataType->parse($chRow[$key]) && $uidMatchProcessed === false) {
                         $isDuplicate = false;
+                        $uidMatchProcessed = true;
                         // Don't bread here as other $checkRows may still be duplicates!!!
                     }
                 }
@@ -456,7 +459,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $errorRowDescriptor = substr($errorRowDescriptor, 0, -2);
         
         try {
-            $errorMessage = $this->translate('BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%object%' => '"' . $object->getName() . '" (' . $object->getAliasWithNamespace() . ')']);
+            $errorMessage = $this->translate('BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR', ['%row%' => $errorRowDescriptor, '%object%' => '"' . $object->getName() . '"']);
             $ex = new DataSheetDuplicatesError($dataSheet, $errorMessage, $this->getDuplicateErrorCode());
             $ex->setUseExceptionMessageAsTitle(true);
         } catch (\Exception $e) {
