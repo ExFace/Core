@@ -24,6 +24,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Widgets\Input;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -908,16 +911,46 @@ JS;
         if ($cellWidget->isBoundToAttribute() === false) {
             throw new FacadeLogicError('TODO');
         }
-        
+        $filterJs = '';
         if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
                     $srcSheet = $cellWidget->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
+                    $conditions = $srcSheet->getFilters()->getConditionsRecursive();
+                    foreach ($conditions as $cond) {
+                        $srcSheet->getColumns()->addFromExpression($cond->getExpression());                        
+                    }
+                    $srcSheetOrig = $srcSheet->copy();
+                    $srcSheet->getFilters()->removeAll();
                     $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
                     $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
                     $srcSheet->dataRead(0, 0); // Read all rows regardless of the settings in the data sheet!!!
+                    
+                    //TODO finish build javascript condition group from php filters
+                    //TODO check if column names in datesheet and filter condition expression  string match
+                    $filterCond = $srcSheetOrig->getFilters();
+                    $condArray = [];
+                    foreach ($filterCond->getConditions() as $cond) {
+                        $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue);
+                        $condPart = [
+                            'columnName' => '_' . $cond->getExpression()->toString(),
+                            'comparator' => $cond->getComparator(),
+                            'value' => $this->buildJsFilterPropertyValue($valueExpr, $cellWidget)                            
+                        ];
+                        $condArray[] = json_encode($condPart);
+                    }
+                    $conditionGroup = ['operator' => $filterCond->getOperator(), 'conditions' => json_encode($condArray)];
+                    $conditionJson = json_encode($conditionGroup);
+                    $filterJs = <<<JS
+filter: function(instance, cell, c, r, source) {
+        var sourceNew = exfTools.filterRows(source, {$conditionJson}
+        return sourceNew;
+    }
+},
+
+JS;
                 } else {
                     $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
                     
@@ -938,7 +971,13 @@ JS;
                 
                 $srcData = [];
                 foreach ($srcSheet->getRows() as $row) {
-                    $srcData[] = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
+                    $data = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
+                    
+                    foreach ($srcSheet->getColumns() as $col) {
+                        $key = '_' . $col->getExpressionObj()->toString();
+                        $data[$key] = $row[$col->getExpressionObj()->toString()];
+                    }
+                    $srcData[] = $data;
                 }
             } else {
                 $srcData = [];
@@ -953,7 +992,7 @@ JS;
             
         }
         
-        return "source: {$srcJson},";
+        return "source: {$srcJson}, {$filterJs}";
     }
     
     /**
@@ -1324,5 +1363,25 @@ JS;
     protected function buildJsResetSelection(string $elementJs) : string
     {
         return "$elementJs.data('_exfSelection', {x1: null, y1: null, x2: null, y2: null})";
+    }
+    
+    // TODO finalize removing conditionalProperty usage
+    private function buildJsFilterPropertyValue(ExpressionInterface $expr, WidgetInterface $cellWidget = null) : string
+    {
+        switch (true) {
+            case $expr->isReference() === true:
+                $link = $expr->getWidgetLink($cellWidget);
+                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
+                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                }
+                break;
+            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
+                $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
+                break;
+            default:
+                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values and widget links supported!');
+        }
+        
+        return $valueJs;
     }
 }
