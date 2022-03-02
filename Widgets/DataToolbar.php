@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Events\Widget\OnGlobalActionsAddedEvent;
 
 /**
  * A special toolbar for data widgets that includes global actions and search actions automatically.
@@ -21,6 +22,8 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
  * widget.
  * 
  * @see Toolbar
+ * 
+ * @triggers \exface\Core\Events\Widgets\OnGlobalActionsAddedEvent
  *
  * @author Andrej Kabachnik
  *        
@@ -167,6 +170,8 @@ class DataToolbar extends Toolbar
                 $btn->setVisibility(WidgetVisibilityDataType::OPTIONAL);
                 $this->global_action_button_group->addButton($btn);
             }
+            
+            $this->getWorkbench()->eventManager()->dispatch(new OnGlobalActionsAddedEvent($this->getDataWidget(), $this->global_action_button_group));
         }
         
         if ($this->getIncludeSearchActions()) {
