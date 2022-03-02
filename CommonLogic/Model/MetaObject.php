@@ -514,13 +514,30 @@ class MetaObject implements MetaObjectInterface
         }
         
         // Inherit Relations
-        foreach ($parent->getRelations() as $rel) {
-            $rel_clone = clone $rel;
-            // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-            if (is_null($rel->getInheritedFromObjectId())) {
-                $rel_clone->setInheritedFromObjectId($parent->getId());
+        if ($parent instanceof self) {
+            // If we can access the relations array directly, iterate over it instead of
+            // calling getRelations() as the latter might trigger loading right objects
+            // when calculation the alias with modifier. Skipping this saves us a couple
+            // of object loading operations when objects with reverse relations are inherited
+            foreach ($parent->relations as $relSet) {
+                foreach ($relSet as $rel) {
+                    $rel_clone = clone $rel;
+                    // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
+                    if (null === $rel->getInheritedFromObjectId()) {
+                        $rel_clone->setInheritedFromObjectId($parent->getId());
+                    }
+                    $this->addRelation($rel_clone);
+                }
             }
-            $this->addRelation($rel_clone);
+        } else {
+            foreach ($parent->getRelations() as $rel) {
+                $rel_clone = clone $rel;
+                // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
+                if (null === $rel->getInheritedFromObjectId()) {
+                    $rel_clone->setInheritedFromObjectId($parent->getId());
+                }
+                $this->addRelation($rel_clone);
+            }
         }
         
         // Inherit behaviors
