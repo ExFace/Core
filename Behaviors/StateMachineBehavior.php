@@ -557,10 +557,11 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         
         $widget = $event->getWidget();
+        $thisObj = $this->getObject();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $widget->getMetaObject()->is($this->getObject())) {
+        if (! $widget->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
@@ -570,7 +571,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         // Throw an error if the current state is not in the state machine definition!
         if ($current_state && ! $this->getState($current_state)) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
+            throw new BehaviorRuntimeError($thisObj, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
         }
         
         $state = $this->getState($current_state);
@@ -594,11 +595,11 @@ class StateMachineBehavior extends AbstractBehavior
         // Disable buttons saving or deleting data if the respecitve operations are disabled in the current state.
         if ($widget instanceof iHaveButtons) {
             foreach ($widget->getButtons() as $btn) {
-                if (! $btn->getMetaObject()->is($this->getObject())) {
+                if (! $btn->getMetaObject()->isExactly($thisObj)) {
                     continue;
                 }
                 
-                if ($btn->hasAction() && $btn->getAction()->getMetaObject()->is($this->getObject())) {
+                if ($btn->hasAction() && $btn->getAction()->getMetaObject()->isExactly($thisObj)) {
                     if ($state->isActionDisabled($btn->getAction()) === true) {
                         $btn->setDisabled(true);
                     }
@@ -625,10 +626,11 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         $data_sheet = $event->getDataSheet();
+        $thisObj = $this->getObject();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if (! $data_sheet->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
@@ -639,14 +641,14 @@ class StateMachineBehavior extends AbstractBehavior
         
         $stateCol = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute());
         if (! $stateCol) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot check if DELETE operation allowed in current state of ' . $this->getObject()->__toString() . ': no state value found in input data of action!');
+            throw new BehaviorRuntimeError($thisObj, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
         }
         
         foreach ($states as $state) {
             $stateId = $state->getStateId();
             foreach ($stateCol->getValues(false) as $stateVal) {
                 if ($stateVal == $stateId) {
-                    throw new DataSheetDeleteForbiddenError($data_sheet, 'Not allowed to delete "' . $this->getObject()->getName() . '" in state "' . $state->getName() . '"!');
+                    throw new DataSheetDeleteForbiddenError($data_sheet, 'Not allowed to delete "' . $thisObj->getName() . '" in state "' . $state->getName() . '"!');
                 }
             }
         }
@@ -674,16 +676,17 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         $data_sheet = $event->getDataSheet();
+        $thisObj = $this->getObject();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if (! $data_sheet->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
         // Read the unchanged object from the database
-        $check_sheet = DataSheetFactory::createFromObject($this->getObject());
-        foreach ($this->getObject()->getAttributes() as $attr) {
+        $check_sheet = DataSheetFactory::createFromObject($thisObj);
+        foreach ($thisObj->getAttributes() as $attr) {
             $check_sheet->getColumns()->addFromAttribute($attr);
         }
         $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
@@ -710,8 +713,8 @@ class StateMachineBehavior extends AbstractBehavior
                         break;
                     }
                     foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
-                        if ($event->willChangeAttribute($this->getObject()->getAttribute($disabledAttrAlias))) {
-                            $error = 'no changes to attribute "' . $this->getObject()->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
+                        if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
+                            $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
                             break 2;
                         }
                     }
@@ -729,8 +732,8 @@ class StateMachineBehavior extends AbstractBehavior
                     }
                 }
                 foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
-                    if ($event->willChangeAttribute($this->getObject()->getAttribute($disabledAttrAlias))) {
-                        $error = 'no changes to attribute "' . $this->getObject()->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
+                    if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
+                        $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
                         break;
                     }
                 }
