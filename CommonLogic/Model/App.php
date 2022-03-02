@@ -320,7 +320,7 @@ class App implements AppInterface
     {
         if ($this->uid === null) {
             try {
-                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
             } catch (AppNotFoundError $e) {
                 return null;
             }
@@ -470,7 +470,7 @@ class App implements AppInterface
     {
         if ($this->defaultLanguageCode === null) {
             try {
-                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
             } catch (AppNotFoundError $e) {
                 $this->defaultLanguageCode = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             }
@@ -823,7 +823,7 @@ class App implements AppInterface
     {
         if ($this->name === null) {
             try {
-                $this->getWorkbench()->model()->getModelLoader()->loadAppData($this);
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
             } catch (AppNotFoundError $e) {
                 $this->name = '';
             }
