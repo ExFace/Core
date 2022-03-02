@@ -2,7 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
@@ -79,18 +78,14 @@ abstract class AppFactory extends AbstractSelectableComponentFactory
      */
     public static function createFromUid($uid, Workbench $exface) : AppInterface
     {
-        $appObject = $exface->model()->getObject('exface.Core.APP');
-        $appDataSheet = DataSheetFactory::createFromObject($appObject);
-        $appDataSheet->getColumns()->addFromAttribute($appObject->getAttribute('ALIAS'));
-        $appDataSheet->getFilters()->addConditionFromString($appObject->getUidAttributeAlias(), $uid);
-        $appDataSheet->dataRead();
-        
-        if ($appDataSheet->countRows() === 0) {
-            throw new AppNotFoundError('No class found for app "' . $uid . '"!', '6T5DXWP');
-        }
-        return self::createFromAlias($appDataSheet->getCellValue('ALIAS', 0), $exface);
+        return $exface->model()->getModelLoader()->loadApp(new AppSelector($exface, $uid));
     }
     
+    /**
+     * 
+     * @param AppSelectorInterface $selector
+     * @return string
+     */
     protected static function getClassname(AppSelectorInterface $selector) : string
     {
         $string = $selector->toString();

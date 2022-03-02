@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -248,11 +249,11 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
     
     /**
      *
-     * @param AppInterface $app
+     * @param AppInterface|AppSelectorInterface $appOrSelector
      * @throws AppNotFoundError
      * @return AppInterface
      */
-    public function loadAppData(AppInterface $app) : AppInterface;
+    public function loadApp($appOrSelector) : AppInterface;
     
     /**
      * 

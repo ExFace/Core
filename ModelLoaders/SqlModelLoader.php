@@ -88,6 +88,9 @@ use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
 use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Factories\AppFactory;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1835,9 +1838,9 @@ SQL;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAppData()
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadApp()
      */
-    public function loadAppData(AppInterface $app) : AppInterface
+    public function loadApp($appOrSelector) : AppInterface
     {
         if ($this->apps_loaded === null) {
             $sql = <<<SQL
@@ -1847,7 +1850,18 @@ SQL;
             $result = $this->getDataConnection()->runSql($sql);
             $this->apps_loaded = $result->getResultArray();
         }
-        $selector = $app->getSelector();
+        
+        if ($appOrSelector instanceof AppSelectorInterface) {
+            $selector = $appOrSelector;
+            $app = null;
+        } elseif ($appOrSelector instanceof AppInterface) {
+            $selector = $appOrSelector->getSelector();
+            $app = $appOrSelector;
+        } else {
+            throw new InvalidArgumentException('Invalid argument for ' . get_class($this) . '::getApp(): "' . get_class($appOrSelector) . '"! Expecting AppInterface or AppSelectorInterface');
+        }
+        
+        $selector = $appOrSelector instanceof AppSelectorInterface ? $appOrSelector : $app->getSelector();
         $rows = array_filter($this->apps_loaded, function($row) use ($selector) {
             if ($selector->isUid()) {
                 return strcasecmp($row['UID'], $selector->toString()) === 0;
@@ -1859,7 +1873,13 @@ SQL;
             throw new AppNotFoundError('App "' . $selector->toString() . '" not found in meta model!');
         }
         $row = reset($rows);
+        
+        if ($app === null) {
+            $app = AppFactory::createFromAlias($row['ALIAS'], $this->getWorkbench());
+        }
+        
         $app->importUxonObject(UxonObject::fromArray($row, CASE_LOWER));
+        
         return $app;
     }
     
