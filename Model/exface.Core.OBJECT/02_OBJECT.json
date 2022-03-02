@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-08-13 11:29:14",
+            "MODIFIED_ON": "2022-03-02 08:43:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -343,6 +343,9 @@
                                     {
                                         "object_alias": "exface.Core.OBJECT_BEHAVIORS",
                                         "widget_type": "DataTable",
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "BEHAVIOR"
+                                        },
                                         "filters": [
                                             {
                                                 "attribute_alias": "OBJECT",
@@ -358,7 +361,16 @@
                                                 "attribute_alias": "BEHAVIOR"
                                             },
                                             {
-                                                "attribute_alias": "APP__LABEL"
+                                                "attribute_alias": "APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "DESCRIPTION"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "NAME",
+                                                "direction": "asc"
                                             }
                                         ],
                                         "buttons": [
@@ -390,6 +402,9 @@
                                     {
                                         "object_alias": "exface.Core.OBJECT_ACTION",
                                         "widget_type": "DataTable",
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "ACTION_PROTOTYPE"
+                                        },
                                         "filters": [
                                             {
                                                 "attribute_alias": "OBJECT",
@@ -416,6 +431,12 @@
                                             },
                                             {
                                                 "attribute_alias": "SHORT_DESCRIPTION"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "NAME",
+                                                "direction": "asc"
                                             }
                                         ],
                                         "buttons": [
