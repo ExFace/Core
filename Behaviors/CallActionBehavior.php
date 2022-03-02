@@ -225,7 +225,7 @@ class CallActionBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
@@ -274,7 +274,7 @@ class CallActionBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
