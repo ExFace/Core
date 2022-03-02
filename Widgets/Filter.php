@@ -868,6 +868,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         }
         return $this->attributeAlias !== null;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::isBoundToLabelAttribute()
+     */
+    public function isBoundToLabelAttribute() : bool
+    {
+        if ($this->isInputWidgetInitialized() === true && $this->getInputWidget() instanceof iShowSingleAttribute) {
+            return $this->getInputWidget()->isBoundToLabelAttribute();
+        }
+        return false;
+    }
 
     /**
      * 

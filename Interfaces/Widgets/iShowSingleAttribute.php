@@ -48,4 +48,11 @@ interface iShowSingleAttribute extends WidgetInterface
      * @return boolean
      */
     public function isBoundToAttribute() : bool;
+    
+    /**
+     * Returns TRUE if this column has an attribute alias ending with __LABEL and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isBoundToLabelAttribute() : bool;
 }
