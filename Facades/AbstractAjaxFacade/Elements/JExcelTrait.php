@@ -44,14 +44,14 @@ use exface\Core\Interfaces\WidgetInterface;
  * 
  * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
  * to the facade config file. Make sure, each config option points to an existing
- * inlcude file!
+ * include file!
  * 
  * ```
  *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/index.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
  *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
- *	
+ *	"LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"
  * ```
  * 
  * @method Data getWidget()
@@ -163,6 +163,7 @@ JS;
         return [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
@@ -927,30 +928,36 @@ JS;
                     $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
                     $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
                     $srcSheet->dataRead(0, 0); // Read all rows regardless of the settings in the data sheet!!!
-                    
-                    //TODO finish build javascript condition group from php filters
-                    //TODO check if column names in datesheet and filter condition expression  string match
-                    $filterCond = $srcSheetOrig->getFilters();
-                    $condArray = [];
-                    foreach ($filterCond->getConditions() as $cond) {
-                        $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue());
-                        $condPart = [
-                            'columnName' => '_' . $cond->getExpression()->toString(),
-                            'comparator' => $cond->getComparator(),
-                            'value' => $this->buildJsFilterPropertyValue($valueExpr, $cellWidget)                            
-                        ];
-                        $condArray[] = json_encode($condPart);
-                    }
-                    $conditionGroup = ['operator' => $filterCond->getOperator(), 'conditions' => json_encode($condArray)];
-                    $conditionJson = json_encode($conditionGroup);
-                    $filterJs = <<<JS
-filter: function(instance, cell, c, r, source) {
-        var sourceNew = exfTools.filterRows(source, {$conditionJson}
-        return sourceNew;
-    }
-},
 
+                    $filter = $srcSheetOrig->getFilters();
+                    if (! empty($filter->getConditions())) {
+                        $conditionJs = <<<JS
+
+            var conditionGroup = {'operator': "{$filter->getOperator()}"};
+            var conditions = [];
 JS;
+                        foreach ($filter->getConditions() as $key=>$cond) {
+                            $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue());
+                            $conditionJs .= <<<JS
+
+            var filterValue_{$key} = {$this->buildJsFilterPropertyValue($valueExpr, $cellWidget)};
+            var columnName_{$key} = '_' + "{$cond->getExpression()->toString()}";
+            conditions.push({'columnName': columnName_{$key}, 'comparator': "{$cond->getComparator()}", 'value':filterValue_{$key}})
+JS;
+                        }
+                        $conditionJs .= <<<JS
+
+            conditionGroup.conditions = conditions;
+JS;
+                        $filterJs = <<<JS
+
+filter: function(instance, cell, c, r, source) {
+{$conditionJs}
+            var sourceNew = exfTools.data.filterRows(source, conditionGroup);
+            return sourceNew;
+        },
+JS;
+                    }
                 } else {
                     $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
                     
@@ -1365,7 +1372,6 @@ JS;
         return "$elementJs.data('_exfSelection', {x1: null, y1: null, x2: null, y2: null})";
     }
     
-    // TODO finalize removing conditionalProperty usage
     private function buildJsFilterPropertyValue(ExpressionInterface $expr, WidgetInterface $cellWidget = null) : string
     {
         switch (true) {
@@ -1379,7 +1385,7 @@ JS;
                 $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
                 break;
             default:
-                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values and widget links supported!');
+                throw new WidgetConfigurationError('Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
         }
         
         return $valueJs;
