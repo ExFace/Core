@@ -6,7 +6,7 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * Authentication token for the anonymous user.
+ * Authentication token for a remembered user.
  * 
  * @author Andrej Kabachnik
  *
