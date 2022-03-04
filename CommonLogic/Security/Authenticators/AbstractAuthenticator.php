@@ -141,7 +141,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      *
      * @uxon-property token_liftetime_seconds
      * @uxon-type integer
-     * @uxon-default 604800
      *
      * @param int $seconds
      * @return AbstractAuthenticator
