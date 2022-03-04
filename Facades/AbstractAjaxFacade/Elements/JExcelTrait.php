@@ -933,7 +933,7 @@ JS;
                     $filterCond = $srcSheetOrig->getFilters();
                     $condArray = [];
                     foreach ($filterCond->getConditions() as $cond) {
-                        $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue);
+                        $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue());
                         $condPart = [
                             'columnName' => '_' . $cond->getExpression()->toString(),
                             'comparator' => $cond->getComparator(),
