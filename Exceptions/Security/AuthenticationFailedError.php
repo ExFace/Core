@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Events\Security\OnAuthenticationFailedEvent;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * Exception thrown if an authentication attempt fails
@@ -17,6 +18,8 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
 {
     private $provider = null;
     
+    private $token = null;
+    
     /**
      * 
      * @param AuthenticationProviderInterface $authProvider
@@ -27,10 +30,11 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
      * @triggers \exface\Core\Events\Security\OnAuthenticationFailedEvent
      * 
      */
-    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null)
+    public function __construct(AuthenticationProviderInterface $authProvider, $message, $alias = null, $previous = null, AuthenticationTokenInterface $token = null)
     {
         parent::__construct($message, $alias, $previous);
         $this->provider = $authProvider;
+        $this->token = $token;
         $authProvider->getWorkbench()->eventManager()->dispatch(new OnAuthenticationFailedEvent($authProvider->getWorkbench(), $this));
     }
     
@@ -52,6 +56,16 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
     public function getAuthenticationProvider() : AuthenticationProviderInterface
     {
         return $this->provider;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface::getAuthenticationToken()
+     */
+    public function getAuthenticationToken() : ?AuthenticationTokenInterface
+    {
+        return $this->token;
     }
     
     /**
