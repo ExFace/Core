@@ -533,7 +533,7 @@
 				switch (sComparator) {
 	                case '==':
 	                case '!==':
-	                    bResult = (mLeft || '').toString() !== (mRight || '').toString();
+	                    bResult = (mLeft || '').toString() == (mRight || '').toString();
 	                    if (sComparator === '!==') {
 							bResult = ! bResult;
 						}
@@ -595,7 +595,7 @@
 					var bRowResult = null;
 					var bConditionResult = null;
 					
-					for (var iC = 0; iC > aConditions.length; iC++) {
+					for (var iC = 0; iC < aConditions.length; iC++) {
 						oCondition = aConditions[iC];
 				        bConditionResult = exfTools.compareValues(
 							(oRow[oCondition.columnName] || null), 
