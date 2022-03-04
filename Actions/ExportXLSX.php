@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\DataTypes\NumberEnumDataType;
 
 /**
  * Exports data to an Excel file (XLSX).
@@ -132,7 +133,7 @@ class ExportXLSX extends ExportJSON
             // Width
             if ($dataType instanceof TimestampDataType || $dataType instanceof DateTimeDataType) {
                 $colOptions['width'] = '19';
-            } elseif ($dataType instanceof StringDataType) {
+            } elseif ($dataType instanceof StringDataType || $dataType instanceof NumberEnumDataType) {
                 $colOptions['width'] = '25';
             }
             
@@ -314,6 +315,8 @@ class ExportXLSX extends ExportJSON
                 return 'price';
             case ($dataType instanceof IntegerDataType):
                 return 'integer';
+            case ($dataType instanceof NumberEnumDataType):
+                return 'string';
             case ($dataType instanceof NumberDataType):
                 return '';
             default:
