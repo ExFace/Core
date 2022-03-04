@@ -933,28 +933,28 @@ JS;
                     if (! empty($filter->getConditions())) {
                         $conditionJs = <<<JS
 
-            var conditionGroup = {'operator': "{$filter->getOperator()}"};
-            var conditions = [];
+            var oConditionGroup = {'operator': "{$filter->getOperator()}"};
+            var aConditions = [];
 JS;
                         foreach ($filter->getConditions() as $key=>$cond) {
                             $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue());
                             $conditionJs .= <<<JS
 
-            var filterValue_{$key} = {$this->buildJsFilterPropertyValue($valueExpr, $cellWidget)};
-            var columnName_{$key} = '_' + "{$cond->getExpression()->toString()}";
-            conditions.push({'columnName': columnName_{$key}, 'comparator': "{$cond->getComparator()}", 'value':filterValue_{$key}})
+            var sFilterValue_{$key} = {$this->buildJsFilterPropertyValue($valueExpr, $cellWidget)};
+            var sColumnName_{$key} = '_' + "{$cond->getExpression()->toString()}";
+            aConditions.push({'columnName': sColumnName_{$key}, 'comparator': "{$cond->getComparator()}", 'value':sFilterValue_{$key}})
 JS;
                         }
                         $conditionJs .= <<<JS
 
-            conditionGroup.conditions = conditions;
+            oConditionGroup.conditions = aConditions;
 JS;
                         $filterJs = <<<JS
 
 filter: function(instance, cell, c, r, source) {
 {$conditionJs}
-            var sourceNew = exfTools.data.filterRows(source, conditionGroup);
-            return sourceNew;
+            var aSourceNew = exfTools.data.filterRows(source, oConditionGroup);
+            return aSourceNew;
         },
 JS;
                     }
