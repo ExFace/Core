@@ -20,6 +20,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\NumberEnumDataType;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -222,6 +223,17 @@ class ExportJSON extends ReadData implements iExportData
             $dataSheet->setRowsLimit($rowsOnPage);
             $dataSheet->setRowsOffset($rowOffset);
             $dataSheet->dataRead();
+            
+            foreach ($dataSheet->getColumns() as $col) {
+                if ($col->getDataType() instanceof NumberEnumDataType) {
+                    $values = $col->getValues();
+                    $newValues = [];
+                    foreach ($values as $val) {
+                        $newValues[] = $col->getDataType()->getLabelOfValue($val);
+                    }
+                    $col->setValues($newValues);
+                }
+            }
             
             $this->writeRows($dataSheet, $columnNames);
             
