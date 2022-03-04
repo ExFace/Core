@@ -12,6 +12,9 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
+use exface\Core\Interfaces\Security\RememberedTokenInterface;
+use exface\Core\Interfaces\Security\RememberMeAuthenticatorInterface;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -27,7 +30,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *
  */
-class RememberMeAuthenticator extends AbstractAuthenticator
+class RememberMeAuthenticator extends AbstractAuthenticator implements RememberMeAuthenticatorInterface
 {    
     CONST SESSION_DATA_DELIMITER = ':';
     
@@ -267,5 +270,15 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {
         return $container;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\RememberMeAuthenticatorInterface::getTokenRemembered()
+     */
+    public function getTokenRemembered() : ?RememberedTokenInterface
+    {
+        return new RememberMeToken();
     }
 }

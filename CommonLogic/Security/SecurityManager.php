@@ -14,7 +14,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
@@ -27,6 +26,7 @@ use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
+use exface\Core\Interfaces\Security\RememberMeAuthenticatorInterface;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -136,9 +136,17 @@ class SecurityManager implements SecurityManagerInterface
     public function getAuthenticatedToken() : AuthenticationTokenInterface
     {
         if ($this->authenticatedToken === null) {
-            try {
-                $token = $this->authenticate(new RememberMeAuthToken());
-            } catch (AuthenticationFailedError $e) {
+            $token = null;
+            foreach ($this->getAuthenticators() as $authenticator) {
+                if (($authenticator instanceof RememberMeAuthenticatorInterface) && null !== $rememberedToken = $authenticator->getTokenRemembered()) {
+                    try {
+                        $token = $authenticator->authenticate($rememberedToken);
+                    } catch (AuthenticationFailedError $e) {
+                        $token = null;
+                    }     
+                }
+            }
+            if ($token === null) {
                 $token = new AnonymousAuthToken($this->getWorkbench());
             }
             $this->authenticatedToken = $token;
