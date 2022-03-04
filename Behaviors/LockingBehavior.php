@@ -134,7 +134,7 @@ class LockingBehavior extends AbstractBehavior
         $action = $event->getAction();
         
         try {
-            if ($action->getMetaObject()->is($this->getObject()) === false) {
+            if ($action->getMetaObject()->isExactly($this->getObject()) === false) {
                 return;
             }
         } catch (ActionObjectNotSpecifiedError $e) {

@@ -80,7 +80,7 @@ class PasswordHashingBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         

@@ -182,18 +182,18 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
-        if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->is($this->getObject())) {
+        if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
-        if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+        if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
         $dataSheet = null;
         if ($event instanceof DataSheetEventInterface) {
             $dataSheet = $event->getDataSheet();
-            if (! $dataSheet->getMetaObject()->is($this->getObject())) {
+            if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
                 return;
             }
             
@@ -252,7 +252,7 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
