@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Security\RememberedTokenInterface;
 
 /**
  * Authentication token for the anonymous user.
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * @author Andrej Kabachnik
  *
  */
-class RememberMeAuthToken implements AuthenticationTokenInterface
+class RememberMeAuthToken implements AuthenticationTokenInterface, RememberedTokenInterface
 {
     private $workbench = null;
     
