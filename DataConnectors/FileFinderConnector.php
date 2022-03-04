@@ -40,17 +40,19 @@ class FileFinderConnector extends TransparentConnector
      */
     protected function performQuery(DataQueryInterface $query)
     {
-        if (! ($query instanceof FileFinderDataQuery))
+        if (! ($query instanceof FileFinderDataQuery)) {
             throw new DataConnectionQueryTypeError($this, 'DataConnector "' . $this->getAliasWithNamespace() . '" expects an instance of FileFinderDataQuery as query, "' . get_class($query) . '" given instead!', '6T5W75J');
+        }
         
         $paths = array();
+        $basePath = $this->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
         // Prepare an array of absolut paths to search in
         foreach ($query->getFolders() as $path) {
-            if (! Filemanager::pathIsAbsolute($path) && ! is_null($this->getBasePath())) {
-                $paths[] = FilePathDataType::normalize(FilePathDataType::join(array(
-                    $this->getBasePath(),
+            if (! Filemanager::pathIsAbsolute($path)) {
+                $paths[] = FilePathDataType::normalize(FilePathDataType::join([
+                    $basePath,
                     $path
-                )), DIRECTORY_SEPARATOR);
+                ]), DIRECTORY_SEPARATOR);
             } else {
                 $paths[] = FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
             }
@@ -58,7 +60,7 @@ class FileFinderConnector extends TransparentConnector
         
         // If the query does not have a base path, use the base path of the connection
         if (! $query->getBasePath()) {
-            $query->setBasePath($this->getBasePath());
+            $query->setBasePath($basePath);
         }
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
@@ -74,7 +76,6 @@ class FileFinderConnector extends TransparentConnector
                 unset($paths[$nr]);
             }
         }
-        
         // If there are no paths at this point, we don't have any existing folder to look in,
         // so add an empty result to the finder and return it. We must call in() or append()
         // to be able to iterate over the finder!
