@@ -1082,10 +1082,12 @@ class Data
         $data_sheet = DataSheetFactory::createFromObject($table->getMetaObject());
         
         foreach ($this->getFilters() as $filter) {
+            $hint = $filter->getHint();
+            $title = $filter->getCaption();
             $row = array(
                 'TITLE' => $filter->getCaption(),
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS'),
-                'DESCRIPTION' => $filter->getHint()
+                'DESCRIPTION' => ($title == $hint ? '' : $hint)
             );
             $data_sheet->addRow($row);
         }
@@ -1094,10 +1096,12 @@ class Data
             if ($col->isHidden() === true) {
                 continue;
             }
+            $title = $col->getCaption();
+            $hint = $col->getHint();
             $row = array(
-                'TITLE' => $col->getCaption(),
+                'TITLE' => $title,
                 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'),
-                'DESCRIPTION' => $col->getHint()
+                'DESCRIPTION' => ($title == $hint ? '' : $hint)
             );            
             $data_sheet->addRow($row);
         }

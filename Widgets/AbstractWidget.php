@@ -856,14 +856,26 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this->hint !== null) {
             $hint = $this->hint;
         } else {
-            if (! $this->hint_generated && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-                $this->hint_generated = $this->evaluatePropertyExpression($attr->getHint());                
+            if (! $this->hint_generated && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute()) {
+                $attr = $this->getAttribute();
+                switch (true) {
+                    case $this->hasAggregator():
+                        $hint = '';
+                        break;
+                    case $attr->getRelationPath()->isEmpty() === false && $this->isBoundToLabelAttribute():
+                        $hint = $attr->getRelationPath()->getRelationLast()->getLeftKeyAttribute()->getHint();
+                        break;
+                    default:
+                        $hint = $attr->getHint();
+                        break;
+                }
+                $this->hint_generated = $this->evaluatePropertyExpression($hint);                
             }
             $hint = $this->hint_generated;
         }
         
         // Input specific formatting 
-        if ($this instanceof iTakeInput && $this instanceof iShowSingleAttribute && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
+        if ($this instanceof iTakeInput && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
             if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
                 $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;

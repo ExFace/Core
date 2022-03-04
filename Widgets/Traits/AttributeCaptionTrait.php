@@ -5,6 +5,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  * This trait provides a getCaption() for widgets, that can be bound to metamodel attributes.
@@ -61,7 +62,7 @@ trait AttributeCaptionTrait
     /**
      * Returns TRUE if this column has an attribute alias ending with __LABEL and FALSE otherwise.
      *
-     * @return bool
+     * @see iShowSingleAttribute::isBoundToLabelAttribute()
      */
     public function isBoundToLabelAttribute() : bool
     {
