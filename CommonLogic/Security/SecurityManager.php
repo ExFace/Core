@@ -27,6 +27,8 @@ use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
+use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
+use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeExpiredToken;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -89,6 +91,17 @@ class SecurityManager implements SecurityManagerInterface
                 return $authenticated;
             } catch (AuthenticationExceptionInterface $e) {
                 $errors[] = $e;
+                if ($authenticator instanceof RememberMeAuthenticator) {
+                    if (null !== $eToken = $e->getAuthenticationToken()){
+                        if ($eToken instanceof RememberMeExpiredToken) {
+                            try {
+                                $authenticated = $this->authenticate($eToken);
+                            } catch (AuthenticationFailedError $eRetry) {
+                                $errors[] = $eRetry;
+                            }
+                        }
+                    }
+                }
             }
         }
         
