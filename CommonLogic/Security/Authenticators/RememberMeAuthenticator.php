@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeExpiredToken;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -100,7 +101,8 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. Hash is invalid!');
         }
         if ($sessionData['expires'] < time()) {
-            throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. Session login time expired!');
+            $token = new RememberMeExpiredToken($token->getUsername(), $token->getFacade());
+            throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. Session login time expired!', null, null, $token);
         }
         return $token;
     }
