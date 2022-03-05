@@ -4,11 +4,13 @@
     global.exfTools = factory(global.moment)
 }(this, (function (moment) { 'use strict';
 	//ICU format to moment format
-	(function(m){
-		m.fn.formatICU = function(format){
-			return this.format(_ICUFormatToMoment (format));
-		};
-	}(moment));
+	if (moment !== undefined) {
+		(function(m){
+			m.fn.formatICU = function(format){
+				return this.format(_ICUFormatToMoment (format));
+			};
+		}(moment));
+	}
 	
 	/**
 	 * Translates the ICU format syntax into moment.js syntax
