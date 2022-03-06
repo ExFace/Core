@@ -163,19 +163,19 @@ class TranslatableBehavior extends AbstractBehavior
         $obj = $this->getObject();
         
         if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
-            $this->getWorkbench()->eventManager()->removeListener(OnBeforeActionPerformedEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [
                 $this,
                 'onReadForKeyCreateFiles'
             ]);
             
-            $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onEditDictPrefill'
             ]);
         }
         
         if ($this->hasTranslatableAttributes()) {
-            $this->getWorkbench()->eventManager()->removeListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
                 $this,
                 'onObjectEditorInitAddTranslateButton'
             ]);
