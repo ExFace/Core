@@ -933,6 +933,7 @@ JS;
                     if (! empty($filter->getConditions())) {
                         $conditionJs = <<<JS
 
+            var aSourcenew = [];
             var oConditionGroup = {'operator': "{$filter->getOperator()}"};
             var aConditions = [];
 JS;
@@ -953,7 +954,7 @@ JS;
 
 filter: function(instance, cell, c, r, source) {
 {$conditionJs}
-            var aSourceNew = exfTools.data.filterRows(source, oConditionGroup);
+            aSourceNew = exfTools.data.filterRows(source, oConditionGroup);
             return aSourceNew;
         },
 JS;
