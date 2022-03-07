@@ -5,6 +5,7 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 
 /**
  * Resolves placeholders containing translation keys: `~translate:app_alias:translation_key`.
@@ -16,6 +17,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 class TranslationPlaceholders implements PlaceholderResolverInterface
 {
     use PrefixedPlaceholderTrait;
+    
+    use SanitizedPlaceholderTrait;
     
     private $prefix = null;
     
@@ -41,9 +44,10 @@ class TranslationPlaceholders implements PlaceholderResolverInterface
     {     
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $value = $this->stripPrefix($placeholder, $this->prefix);
-            list($appAlias, $message) = explode(':', $value);
-            $vals[$placeholder] = $this->workbench->getApp($appAlias)->getTranslator()->translate(mb_strtoupper($message));
+            $phStripped = $this->stripPrefix($placeholder, $this->prefix);
+            list($appAlias, $message) = explode(':', $phStripped);
+            $val = $this->workbench->getApp($appAlias)->getTranslator()->translate(mb_strtoupper($message));
+            $vals[$placeholder] = $this->sanitizeValue($val);
         }
         return $vals;
     }

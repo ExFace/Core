@@ -306,9 +306,16 @@ class NotifyingBehavior extends AbstractBehavior
                 case $dataSheet !== null:
                     foreach (array_keys($dataSheet->getRows()) as $rowNo) {
                         $rowRenderer = clone $renderer;
-                        $rowRenderer->addPlaceholder(new DataRowPlaceholders($dataSheet, $rowNo, '~data:'));
-                        $rowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo));
-                        $renderedUxon = UxonObject::fromJson($rowRenderer->render($json));
+                        $rowRenderer->addPlaceholder(
+                            (new DataRowPlaceholders($dataSheet, $rowNo, '~data:'))
+                            ->setSanitizeAsUxon()
+                        );
+                        $rowRenderer->addPlaceholder(
+                            (new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo))
+                            //->setSanitizeAsUxon()
+                        );
+                        $renderedJson = $rowRenderer->render($json);
+                        $renderedUxon = UxonObject::fromJson($renderedJson);
                         $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
                     }
                     break;

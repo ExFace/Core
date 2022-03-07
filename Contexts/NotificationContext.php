@@ -176,7 +176,10 @@ class NotificationContext extends AbstractContext
         $btn = null;
         foreach ($data->getRows() as $rowNo => $row) {
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-            $renderer->addPlaceholder(new DataRowPlaceholders($data, $rowNo, '~notification:'));
+            $renderer->addPlaceholder(
+                (new DataRowPlaceholders($data, $rowNo, '~notification:'))
+                ->setSanitizeAsUxon(true)
+            );
             $widgetJson = $renderer->render($row['WIDGET_UXON']);
             
             $btn = $menu->createButton(new UxonObject([
