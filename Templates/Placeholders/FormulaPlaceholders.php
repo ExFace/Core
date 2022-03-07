@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\FormulaFactory;
+use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 
 /**
  * Resolves placeholders by evaluating them as formulas - e.g. `=Now()`.
@@ -16,6 +17,8 @@ use exface\Core\Factories\FormulaFactory;
 class FormulaPlaceholders implements PlaceholderResolverInterface
 {
     use PrefixedPlaceholderTrait;
+    
+    use SanitizedPlaceholderTrait;
     
     private $prefix = null;
     
@@ -53,7 +56,7 @@ class FormulaPlaceholders implements PlaceholderResolverInterface
                 continue;
             }
             $formula = FormulaFactory::createFromString($this->workbench, $exprString);
-            $vals[$placeholder] = $formula->evaluate($this->dataSheet, $this->rowNumber);
+            $vals[$placeholder] = $this->sanitizeValue($formula->evaluate($this->dataSheet, $this->rowNumber));
         }
         return $vals;
     }

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 
 /**
  * Resolves placeholders to facade propertis: `~facade:property`.
@@ -18,6 +19,8 @@ use exface\Core\Factories\DataSheetFactory;
 class DataRowPlaceholders implements PlaceholderResolverInterface
 {
     use PrefixedPlaceholderTrait;
+    
+    use SanitizedPlaceholderTrait;
     
     private $prefix = null;
     
@@ -77,7 +80,8 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         foreach ($phs as $ph) {
             $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
             $val = $col->getValue($phRowNo);
-            $phVals[$ph] = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+            $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+            $phVals[$ph] = $this->sanitizeValue($formatted);
         }
         
         return $phVals;
