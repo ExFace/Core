@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 
 /**
@@ -21,6 +22,8 @@ class ConditionalProperty implements WidgetPartInterface
     
     private $widget = null;
     
+    private $baseObject = null;
+    
     private $propertyName = null;
     
     private $operator = null;
@@ -33,9 +36,10 @@ class ConditionalProperty implements WidgetPartInterface
      * @param string $propertyName
      * @param UxonObject $uxon
      */
-    public function __construct(WidgetInterface $widget, string $propertyName, UxonObject $uxon)
+    public function __construct(WidgetInterface $widget, string $propertyName, UxonObject $uxon, MetaObjectInterface $baseObject = null)
     {
         $this->widget = $widget;
+        $this->baseObject = $baseObject ?? $widget->getMetaObject();
         $this->propertyName = $propertyName;
         $this->importUxonObject($uxon);
     }
@@ -95,6 +99,15 @@ class ConditionalProperty implements WidgetPartInterface
     public function getWidget() : WidgetInterface
     {
         return $this->widget;
+    }
+    
+    /**
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getBaseObject() : MetaObjectInterface
+    {
+        return $this->baseObject ?? $this->getWidget()->getMetaObject();
     }
     
     /**

@@ -18,7 +18,7 @@ abstract class ExpressionFactory
      * TODO Make the object a mandatory parameter. This requires a lot of changes to formulas, however. Probably will do that when rewriting the formula parser.
      *
      * @param WorkbenchInterface $exface            
-     * @param string $expression            
+     * @param string|mixed|NULL $expression            
      * @param MetaObjectInterface $object            
      * @return ExpressionInterface
      */

@@ -918,31 +918,48 @@ JS;
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
-                    $srcSheet = $cellWidget->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
-                    $conditions = $srcSheet->getFilters()->getConditionsRecursive();
-                    foreach ($conditions as $cond) {
-                        $srcSheet->getColumns()->addFromExpression($cond->getExpression());                        
+                    $srcSheet = $cellWidget->getOptionsDataSheet();
+                    
+                    // See if the widget has additional filters
+                    // If so, add any attributes required for them to the $srcSheet
+                    $filters = $cellWidget->getFilters();
+                    if ($filters !== null) {
+                        foreach ($filters->getConditions() as $cond) {
+                            $expr = $cond->getValueLeftExpression();
+                            if (! $expr->isReference() && ! $expr->isConstant()) {
+                                $srcSheet->getColumns()->addFromExpression($expr);
+                            }  
+                            $expr = $cond->getValueRightExpression();
+                            if (! $expr->isReference() && ! $expr->isConstant()) {
+                                $srcSheet->getColumns()->addFromExpression($expr);
+                            } 
+                        }
                     }
-                    $srcSheetOrig = $srcSheet->copy();
-                    $srcSheet->getFilters()->removeAll();
+                    foreach ($srcSheet->getFilters()->getConditions() as $cond) {
+                        if ($cond->getRightExpression()->isReference()) {
+                            $srcSheet->getFilters()->removeCondition($cond);
+                        }
+                    }
                     $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
                     $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
                     $srcSheet->dataRead(0, 0); // Read all rows regardless of the settings in the data sheet!!!
 
-                    $filter = $srcSheetOrig->getFilters();
-                    if (! empty($filter->getConditions())) {
+                    // If the widget has additional filters, generate the JS to evaluate them
+                    // here and put it into the `filter` property of the column
+                    if ($filters !== null) {
                         $conditionJs = <<<JS
 
             var aSourcenew = [];
-            var oConditionGroup = {'operator': "{$filter->getOperator()}"};
+            var oConditionGroup = {'operator': "{$filters->getOperator()}"};
             var aConditions = [];
 JS;
-                        foreach ($filter->getConditions() as $key=>$cond) {
-                            $valueExpr = ExpressionFactory::createFromString($cond->getWorkbench(), $cond->getValue());
+                        foreach ($filters->getConditions() as $key => $cond) {
+                            $valueExpr = $cond->getValueRightExpression();
+                            $colName = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($cond->getValueLeftExpression()->toString());
                             $conditionJs .= <<<JS
 
             var sFilterValue_{$key} = {$this->buildJsFilterPropertyValue($valueExpr, $cellWidget)};
-            var sColumnName_{$key} = '_' + "{$cond->getExpression()->toString()}";
+            var sColumnName_{$key} = '_' + "{$colName}";
             aConditions.push({'columnName': sColumnName_{$key}, 'comparator': "{$cond->getComparator()}", 'value':sFilterValue_{$key}})
 JS;
                         }
@@ -982,8 +999,8 @@ JS;
                     $data = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
                     
                     foreach ($srcSheet->getColumns() as $col) {
-                        $key = '_' . $col->getExpressionObj()->toString();
-                        $data[$key] = $row[$col->getExpressionObj()->toString()];
+                        $key = '_' . \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($col->getExpressionObj()->toString());
+                        $data[$key] = $row[$col->getName()];
                     }
                     $srcData[] = $data;
                 }

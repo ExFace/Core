@@ -415,4 +415,17 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         
         return $data_sheet;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::setOptionsFromDataSheet()
+     */
+    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = null)
+    {
+        if ($readIfNotFresh === null) {
+            $readIfNotFresh = ! $this->getLazyLoading();
+        }
+        return parent::setOptionsFromDataSheet($data_sheet, $readIfNotFresh);
+    }
 }

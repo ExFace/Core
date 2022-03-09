@@ -6,7 +6,6 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
@@ -20,6 +19,9 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -169,6 +171,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     private $lookupActionUxon = null;
     
     private $lookupButton = null;
+    
+    private $tableDataSheet = null;
     
     /**
      * 
@@ -556,61 +560,88 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         return $this->getOptionsObject();
     }
 
+    
+    
     /**
-     * Sets an optional array of filter-objects to be used when fetching autosugest data from a data source.
+     * Condition group to filter rows of the table.
+     * 
+     * In contrast to `filters` inside the `table` definition, these filters here are meant to be evaluated
+     * after the data was read from the data source. Thus, they can contain live references to current
+     * values of other widgets.
      *
-     * For example, if we have a InputComboTable for customer ids, but we only wish to show customers of a certain
-     * class (assuming every custer hase a relation "CUSOMTER_CLASS"), we would need the following InputComboTable:
+     * For example, if we have a InputComboTable for customer ids, which is placed in a form, where the 
+     * customer class can be selected explicitly in another InputComboTable or a InputSelect with the id 
+     * "customer_class_selector".
+     *
+     * ```
+     *  {
+     *      "options_object_alias": "my.app.CUSTOMER",
+     *      "filters": {
+     *          "operator": "AND",
+     *          "conditions": [
+     *              {
+     *                  "value_left": "CUSTOMER_CLASS__ID", 
+     *                  "comparator": "==", 
+     *                  "value_right": "=customer_class_selector!ID"
+     *              }
+     *          ]
+     *      }
+     *  }
+     *
+     * ```
+     * 
+     * On the other hand, if the customer class is static, the configuration would look like this:
      * 
      * ```
      *  {
      *      "options_object_alias": "my.app.CUSTOMER",
-     *      "filters": [
-     *          {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "VIP", "comparator": "="}
-     *      ]
+     *      "filters": {
+     *          "operator": "AND",
+     *          "conditions": [
+     *              {
+     *                  "value_left": "CUSTOMER_CLASS__ID", 
+     *                  "comparator": "=", 
+     *                  "value_right": "VIP"
+     *              }
+     *          ]
+     *      }
      *  }
-     *  
-     * ```
      *
-     * We can even use widget references to get the filters. Imagine, the InputComboTable for customers above is
-     * placed in a form, where the customer class can be selected explicitly in another InputComboTable or a InputSelect
-     * with the id "customer_class_selector".
-     * 
-     * ```
-     *  {
-     *      "options_object_alias": "my.app.CUSTOMER",
-     *      "filters": [
-     *          {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "=customer_class_selector!ID"}
-     *      ]
-     *  }
-     *  
      * ```
      *
      * @uxon-property filters
-     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "==", "value_right": ""}]}
      *
-     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
-     * @return \exface\Core\Widgets\InputSelect
+     * @see \exface\Core\Widgets\InputCombo::setFilters($uxon)
      */
-    public function setFilters($conditions_or_uxon_objects)
+    public function setFilters(UxonObject $uxon)
     {
-        if (! $this->getTableUxon()->hasProperty('filters')) {
-            $this->getTableUxon()->setProperty('filters', array());
+        // Handle legacy syntax `[{"attribute_alias": "", "value": "", "comparator": "="}]`
+        if ($uxon->isArray()) {
+            if (! $this->getTableUxon()->hasProperty('filters')) {
+                $this->getTableUxon()->setProperty('filters', []);
+            }
+            $filterPropUxon = new UxonObject([
+                'operator' => EXF_LOGICAL_AND,
+                'conditions' => []
+            ]);
+            foreach ($uxon as $filterUxon) {
+                if ($filterUxon instanceof UxonObject) {
+                    $this->getTableUxon()->appendToProperty('filters', $filterUxon);
+                    $filterPropUxon->appendToProperty('conditions', new UxonObject([
+                        'value_left' => $filterUxon->getProperty('attribute_alias'),
+                        'comparator' => $filterUxon->getProperty('comparator') ?? ComparatorDataType::EQUALS,
+                        'value_right' => $filterUxon->getProperty('value')
+                    ]));
+                } else {
+                    throw new WidgetPropertyInvalidValueError($this, 'Cannot set filters of ' . $this->getWidgetType() . ': expecting instantiated conditions or their UXON descriptions - ' . gettype($filterUxon) . ' given instead!');
+                }
+            }
+            return parent::setFilters($filterPropUxon);
         }
         
-        foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
-            if ($condition_or_uxon_object instanceof Condition) {
-                // TODO
-            } elseif ($condition_or_uxon_object instanceof UxonObject) {
-                $this->getTableUxon()->setProperty('filters', array_merge($this->getTableUxon()->getProperty('filters')->toArray(), array(
-                    $condition_or_uxon_object
-                )));
-            } else {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot set filters of ' . $this->getWidgetType() . ': expecting instantiated conditions or their UXON descriptions - ' . gettype($condition_or_uxon_object) . ' given instead!');
-            }
-        }
-        return $this;
+        return parent::setFilters($uxon);
     }
 
     /**
@@ -846,5 +877,41 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         }
         
         return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::getOptionsDataSheet()
+     */
+    public function getOptionsDataSheet() : DataSheetInterface
+    {
+        if ($this->tableDataSheet === null) {
+            if ($this->getLazyLoading() === false && $this->isBoundToAttribute() && $this->getAttribute()->isRelation()) {
+                $rel = $this->getAttribute()->getRelation();
+                $sheet = $this->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
+                if (null !== ($filters = $this->getFilters())) {
+                    $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getOperator());
+                    foreach ($filters->getConditions() as $cond) {
+                        /* @var $cond \exface\Core\Widgets\Parts\ConditionalPropertyCondition */
+                        if ($cond->hasLiveReference()) {
+                            continue;
+                        }
+                        if ($cond->getValueLeftExpression()->isMetaAttribute()) {
+                            $condGroup->addConditionFromExpression($cond->getValueLeftExpression(), $cond->getValueRightExpression()->__toString(), $cond->getComparator());
+                        } else {
+                            throw new WidgetConfigurationError($this, 'Invalid configuration of filter in ' . $this->getWidgetType() . ': the left side must be an attribute alias!');
+                        }
+                    }
+                    if ($condGroup->isEmpty() === false) {
+                        $sheet->getFilters()->addNestedGroup($condGroup);
+                    }
+                }
+                $this->tableDataSheet = $sheet;
+            } else {
+                return parent::getOptionsDataSheet();
+            }
+        }
+        return $this->tableDataSheet;
     }
 }

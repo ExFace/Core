@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 
 /**
@@ -147,8 +148,7 @@ class ConditionalPropertyCondition implements WidgetPartInterface
             if ($this->valueLeft instanceof ExpressionInterface) {
                 $this->valueLeftExpr = $this->valueLeft;
             } else {
-                $widget = $this->getWidget();
-                $this->valueLeftExpr = ExpressionFactory::createFromString($widget->getWorkbench(), $this->valueLeft, $widget->getMetaObject());
+                $this->valueLeftExpr = ExpressionFactory::createFromString($this->getWorkbench(), $this->valueLeft, $this->getBaseObject());
             }
         }
         return $this->valueLeftExpr;
@@ -183,8 +183,7 @@ class ConditionalPropertyCondition implements WidgetPartInterface
             if ($this->valueRight instanceof ExpressionInterface) {
                 $this->valueRightExpr = $this->valueRight;
             } else {
-                $widget = $this->getWidget();
-                $this->valueRightExpr = ExpressionFactory::createFromString($widget->getWorkbench(), $this->valueRight, $widget->getMetaObject());
+                $this->valueRightExpr = ExpressionFactory::createFromString($this->getWorkbench(), $this->valueRight, $this->getBaseObject());
             }
         }
         return $this->valueRightExpr;
@@ -204,5 +203,23 @@ class ConditionalPropertyCondition implements WidgetPartInterface
         $this->valueRight = $stringOrExpression;
         $this->valueRightExpr = null;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getBaseObject() : MetaObjectInterface
+    {
+        return $this->conditionGroup->getBaseObject();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasLiveReference() : bool
+    {
+        return $this->getValueLeftExpression()->isReference() || $this->getValueRightExpression()->isReference();
     }
 }
