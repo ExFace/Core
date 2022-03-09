@@ -98,6 +98,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     
     private $compareWithConditions = null;
     
+    private $compareCaseSensitive = false;
+    
     private $errorCode = null;
     
     private $errorText = null;
@@ -395,6 +397,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     {
         $duplicates = [];
         $eventRowCnt = count($eventRows);
+        $caseSensitive = $this->getCompareCaseSensitive();
         for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
             // For each row loaded from data source
             $uidMatchProcessed = false;
@@ -405,7 +408,16 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 foreach ($compareCols as $col) {
                     $dataType = $col->getDataType();
                     $key = $col->getName();
-                    if ($dataType->parse($eventRow[$key]) != $dataType->parse($chRow[$key])) {
+                    $eventVal = $dataType->parse($eventRow[$key]);
+                    $checkVal = $dataType->parse($chRow[$key]);
+                    // If both values are strings, use a case-insensitive comparison if required
+                    // Otherwise compare directly
+                    if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
+                        if (strcasecmp($eventVal, $checkVal) !== 0) {
+                            $isDuplicate = false;
+                            break;  
+                        }
+                    } elseif ($eventVal != $checkVal) {
                         $isDuplicate = false;
                         break;
                     }
@@ -413,10 +425,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 
                 // If the data source row has matching columns, check if the UID also matches: if so,
                 // it is the same row and, thus, NOT a duplicate
-                if ($isDuplicate === true && $uidCol !== null) {
+                if ($isDuplicate === true && $uidCol !== null && $uidMatchProcessed === false) {
                     $dataType = $uidCol->getDataType();
                     $key = $uidCol->getName();
-                    if ($dataType->parse($eventRow[$key]) == $dataType->parse($chRow[$key]) && $uidMatchProcessed === false) {
+                    $eventVal = $dataType->parse($eventRow[$key]);
+                    $checkVal = $dataType->parse($chRow[$key]);
+                    // If both values are strings, use a case-insensitive comparison if required
+                    // Otherwise compare directly
+                    if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
+                        if (strcasecmp($eventVal, $checkVal) === 0) {
+                            $isDuplicate = false;
+                            $uidMatchProcessed = true;
+                            // Don't bread here as other $checkRows may still be duplicates!!!
+                        }
+                    } elseif ($eventVal == $checkVal) {
                         $isDuplicate = false;
                         $uidMatchProcessed = true;
                         // Don't bread here as other $checkRows may still be duplicates!!!
@@ -682,5 +704,30 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getCompareCaseSensitive() : bool
+    {
+        return $this->compareCaseSensitive;
+    }
+    
+    /**
+     * Set to TRUE for case sensitive string comparison
+     * 
+     * @uxon-property compare_case_sensitive
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return PreventDuplicatesBehavior
+     */
+    protected function setCompareCaseSensitive(bool $value) : PreventDuplicatesBehavior
+    {
+        $this->compareCaseSensitive = $value;
+        return $this;
     }
 }
