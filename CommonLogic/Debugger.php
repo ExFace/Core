@@ -63,10 +63,12 @@ class Debugger implements DebuggerInterface
      */
     protected function setPrettifyErrors(bool $value) : DebuggerInterface
     {
-        $this->prettify_errors = true;
-        $handler = new ErrorHandler(null, $this->prettify_errors);
-        $handler->setDefaultLogger($this->logger, $this->error_reporting);
-        ErrorHandler::register($handler, true);
+        $this->prettify_errors = $value;
+        if ($value === true) {
+            $handler = new ErrorHandler(null, $this->prettify_errors);
+            $handler->setDefaultLogger($this->logger, $this->error_reporting);
+            ErrorHandler::register($handler, true);
+        }
         return $this;
     }
 
