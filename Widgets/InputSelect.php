@@ -6,8 +6,6 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Factories\ConditionFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
@@ -20,6 +18,8 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Widgets\iHaveValues;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * A dropdown menu to select from: each dropdown item has a value and a text. 
@@ -114,6 +114,10 @@ class InputSelect extends Input implements iSupportMultiSelect
     private $use_prefill_to_filter_options = true;
 
     private $use_prefill_values_as_options = false;
+    
+    private $filtersUxon = null;
+    
+    private $filters = null;
     
     /**
      * 
@@ -527,11 +531,13 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param DataSheetInterface $data_sheet
      * @return \exface\Core\Widgets\InputSelect
      */
-    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet)
+    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = true)
     {
         $data_sheet->getColumns()->addFromAttribute($this->getValueAttribute());
         $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
-        $data_sheet->dataRead();
+        if ($readIfNotFresh !== false && ! $data_sheet->isFresh()) {
+            $data_sheet->dataRead();
+        }
         $this->setSelectableOptions($data_sheet->getColumns()->getByAttribute($this->getValueAttribute())->getValues(false), $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())->getValues(false));
         return $this;
     }
@@ -845,7 +851,12 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this;
     }
 
-    public function getOptionsDataSheet()
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     */
+    public function getOptionsDataSheet() : DataSheetInterface
     {
         if (is_null($this->options_data_sheet)) {
             $sheet = DataSheetFactory::createFromObject($this->getOptionsObject());
@@ -854,6 +865,23 @@ class InputSelect extends Input implements iSupportMultiSelect
             }
             if (($tAttr = $this->getTextAttribute()) && $tAttr !== $vAttr) {
                 $sheet->getColumns()->addFromAttribute($tAttr);
+            }
+            if (null !== ($filters = $this->getFilters())) {
+                $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getOperator());
+                foreach ($filters->getConditions() as $cond) {
+                    /* @var $cond \exface\Core\Widgets\Parts\ConditionalPropertyCondition */
+                    if ($cond->hasLiveReference()) {
+                        continue;
+                    }
+                    if ($cond->getValueLeftExpression()->isMetaAttribute()) {
+                        $condGroup->addConditionFromExpression($cond->getValueLeftExpression(), $cond->getValueRightExpression()->__toString(), $cond->getComparator());
+                    } else {
+                        throw new WidgetConfigurationError($this, 'Invalid configuration of filter in ' . $this->getWidgetType() . ': the left side must be an attribute alias!');
+                    }
+                }
+                if ($condGroup->isEmpty() === false) {
+                    $sheet->getFilters()->addNestedGroup($condGroup);
+                }
             }
             $this->options_data_sheet = $sheet;
         }
@@ -884,47 +912,56 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Sets an optional array of filter-objects to be used when fetching selectable options from a data source.
+     * Condition group to filter the selectable options.
+     * 
+     * Each condition can either be a static filter or contain live references to current values
+     * of other widgets.
      *
-     * For example, if we have a select for values of attributes of a meta object, but we only wish to show
-     * values of active instances (assuming our object has the attribute "ACTIVE"), we would need the following
-     * select:
+     * For example, if we have a select for some data loaded from the data source and each data item
+     * has a `VALUE`, `NAME` and `ACTIVE` attributes, we can filter values to show only active items 
+     * as follows:
      * 
      * ```
-     * {
-     *  "options_object_alias": "my.app.myobject",
-     *  "value_attribute_alias": "VALUE",
-     *  "text_attribute_alias": "NAME",
-     *  "filters": [
-     *      {"attribute_alias": "ACTIVE", "value": "1", "comparator": "="}
-     *  ]
-     * }
+     *  {
+     *      "options_object_alias": "my.app.myobject",
+     *      "value_attribute_alias": "VALUE",
+     *      "text_attribute_alias": "NAME",
+     *      "filters": {
+     *          "operator": "AND",
+     *          "conditions": [
+     *              {"value_left": "ACTIVE", "comparator": "==", "value_right": "1"}
+     *          ]
+     *      }
+     *  }
      * 
      * ```
-     *
+     * 
+     * Instad of using the static value `1` we could also use a live reference like `=other_widget_id`.
+     * 
      * @uxon-property filters
-     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "==", "value_right": ""}]}
      *
-     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
+     * @param UxonObject $uxon            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters($conditions_or_uxon_objects)
+    public function setFilters(UxonObject $uxon)
     {
-        foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
-            if ($condition_or_uxon_object instanceof Condition) {
-                $this->getOptionsDataSheet()->getFilters()->addCondition($condition_or_uxon_object);
-            } elseif ($condition_or_uxon_object instanceof UxonObject) {
-                $uxon = $condition_or_uxon_object;
-                if (! $uxon->hasProperty('object_alias')) {
-                    $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
-                }
-                $this->getOptionsDataSheet()->getFilters()->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
-            } else {
-                throw new WidgetPropertyInvalidValueError('Cannot set filters for ' . $this->getWidgetType() . ': invalid format ' . gettype($condition_or_uxon_object) . ' given instead of and instantiated condition or its UXON description.');
-            }
-        }
+        $this->filters = null;
+        $this->filtersUxon = $uxon;
         return $this;
+    }
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getFilters() : ?ConditionalProperty
+    {
+        if ($this->filters === null && $this->filtersUxon !== null) {
+            $this->filters = new ConditionalProperty($this, 'filters', $this->filtersUxon, $this->getOptionsObject());
+        }
+        return $this->filters;
     }
 
     /**
@@ -1072,7 +1109,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
-        if (! $this->hasOption($value) && strpos($value, $this->getMultiSelectValueDelimiter())) {
+        if (strpos($value, $this->getMultiSelectValueDelimiter()) > 0 && ! $this->hasOption($value)) {
             if (! $this->getMultiSelect()) {
                 return parent::setValue(explode($this->getMultiSelectValueDelimiter(), $value)[0], $parseStringAsExpression);
             }
