@@ -16,4 +16,18 @@ Place in the facade config (e.g. `config/exface.JEasyUIFacade.config.json`):
 
 ## Hiding error details
 
-TODO
+To hide error details add/edit the following lines in the `php.ini` of the server to the given values:
+
+```
+display_errors = Off
+display_startup_errors = Off
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+```
+
+Also place in the system config (`config/System.config.json`) the following:
+
+```
+{
+	"DEBUG.PHP_ERROR_REPORTING": "E_ALL & ~E_DEPRECATED & ~E_STRICT"
+}
+```
