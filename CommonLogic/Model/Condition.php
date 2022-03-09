@@ -19,6 +19,7 @@ use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -93,6 +94,16 @@ class Condition implements ConditionInterface
     {
         return $this->expression;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getLeftExpression()
+     */
+    public function getLeftExpression() : ExpressionInterface
+    {
+        return $this->getExpression();
+    }
 
     /**
      * The left side of the condition.
@@ -117,6 +128,16 @@ class Condition implements ConditionInterface
     public function getValue() : ?string
     {
         return $this->value;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getRightExpression()
+     */
+    public function getRightExpression() : ExpressionInterface
+    {
+        return ExpressionFactory::createFromString($this->getWorkbench(), $this->value, $this->getLeftExpression()->getMetaObject());
     }
 
     /**

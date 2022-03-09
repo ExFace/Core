@@ -29,11 +29,23 @@ interface ConditionInterface extends ConditionalExpressionInterface
     public function getExpression() : ExpressionInterface;
     
     /**
+     * 
+     * @return ExpressionInterface
+     */
+    public function getLeftExpression() : ExpressionInterface;
+    
+    /**
      * Returns the value to compare to
      *
      * @return mixed
      */
     public function getValue() : ?string;
+    
+    /**
+     * 
+     * @return ExpressionInterface
+     */
+    public function getRightExpression() : ExpressionInterface;
     
     /**
      * Changes right side of the condition.
