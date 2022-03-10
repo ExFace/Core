@@ -39,7 +39,8 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
                 'NAME' => $authenticator->getName(),
                 'CLASS' => '\\' . get_class($authenticator),
                 'ID' => $this->getAuthenticatorId($authenticator),
-                'POSITION' => $pos
+                'POSITION' => $pos,
+                'DISABLED' => $authenticator->isDisabled()
             ];
             
             $rows[] = $row;
