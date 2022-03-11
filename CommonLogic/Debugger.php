@@ -19,8 +19,10 @@ class Debugger implements DebuggerInterface
     private $error_reporting = null;
 
     private $logger = null;
+    
+    private $tracer = null;
 
-    function __construct(LoggerInterface $logger, ConfigurationInterface $config)
+    public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTime = null)
     {
         $this->logger = $logger;
         try {
@@ -37,6 +39,9 @@ class Debugger implements DebuggerInterface
         error_reporting($errorReportingFlags);
         
         $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
+        if ($config->getOption('DEBUG.TRACE') === true) {
+            $this->tracer = new Tracer($config->getWorkbench(), $workbenchStartTime);
+        }
     }
 
     /**
@@ -88,5 +93,10 @@ class Debugger implements DebuggerInterface
             $dumper = new CliDumper();
             return $dumper->dump($cloner->cloneVar($anything), true);
         }
+    }
+    
+    public function getTracer() : ?Tracer
+    {
+        return $this->tracer;
     }
 }
