@@ -19,6 +19,9 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
+use exface\Core\Interfaces\Events\DataQueryEventInterface;
+use exface\Core\Events\Contexts\OnContextInitEvent;
+use exface\Core\Interfaces\Events\ContextEventInterface;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -183,30 +186,23 @@ class Tracer extends Profiler
             $this,
             'logEvent'
         ]);
+        $event_manager->addListener(OnContextInitEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ]);
         
         return $this;
     }
     
     public function logEvent(EventInterface $event)
     {
-        $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
-        switch (true) {
-            case $event instanceof OnAuthenticatedEvent:
-                if ($token = $event->getToken()) {
-                    $name .= ' (' . $token->getUsername() . ')';
-                }
-                break;
-            case $event instanceof OnMetaObjectLoadedEvent:
-                $name .= ' (' . $event->getObject()->getAliasWithNamespace() . ')';
-                break;
-        }
-        $this->start($event, $name, 'event');
+        $this->start($event, $this->getLapName($event), 'event');
     }
     
     public function startAction(ActionEventInterface $event)
     {
         try {
-            $msg = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+            $msg = $this->getLapName($event);
             $this->getWorkbench()->getLogger()->debug($msg, array());
             $this->start($event->getAction(), $msg, 'action');
         } catch (\Throwable $e) {
@@ -228,20 +224,25 @@ class Tracer extends Profiler
         
         try {
             $duration = $ms !== null ? ' in ' . $ms . ' ms' : '';
-            $this->getWorkbench()->getLogger()->debug('Action "' . $event->getAction()->getAliasWithNamespace() . '" finished' . $duration . '.', array());
+            $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' finished' . $duration . '.', array());
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
         }
     }
     
+    /**
+     * 
+     * @param OnBeforeQueryEvent $event
+     */
     public function startDataQuery(OnBeforeQueryEvent $event)
     {
-        $conn = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
-        $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $event->getQuery()->toString(false));
-        $extract = mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
-        $this->start($event->getQuery(), $conn . ': ' . $extract, 'query');
+        $this->start($event->getQuery(), $this->getLapName($event), 'query');
     }
     
+    /**
+     * 
+     * @param OnQueryEvent $event
+     */
     public function stopDataQuery(OnQueryEvent $event)
     {
         try {
@@ -250,19 +251,53 @@ class Tracer extends Profiler
             $ms = $this->stop($query);
             $this->dataQueriesCnt++;
             
-            $conn = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
-            $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false));
-            $extract = mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+            $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
                 $this->dataQueriesTotalMS += $ms;
             } else {
                 $duration = '';
             }
-            $this->getWorkbench()->getLogger()->debug($conn . ': ' . $extract . $duration, array(), $query);
+            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $query);
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
+    }
+    
+    protected function getLapName(EventInterface $event) : string
+    {
+        switch (true) {
+            case $event instanceof DataQueryEventInterface:
+                $name = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
+                $queryString = str_replace(
+                    ["\r", "\n", "\t", "  "],
+                    [' ', ' ', '', ''],
+                    $event->getQuery()->toString(false)
+                    );
+                $name .= ': ' . mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+                break;
+            case $event instanceof ActionEventInterface:
+                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                break;
+            default: 
+                $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
+                switch (true) {
+                    case $event instanceof OnAuthenticatedEvent:
+                        if ($token = $event->getToken()) {
+                            $name .= ' (' . $token->getUsername() . ')';
+                        }
+                        break;
+                    case $event instanceof OnMetaObjectLoadedEvent:
+                        $name .= ' (' . $event->getObject()->getAliasWithNamespace() . ')';
+                        break;
+                    case $event instanceof ContextEventInterface:
+                        $name .= ' (' . $event->getContext()->getAliasWithNamespace() . ')';
+                        break;
+                }
+                break;
+        }
+        
+        return $name;
     }
     
     public function startConnection(OnBeforeConnectEvent $event)
