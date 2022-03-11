@@ -15,6 +15,7 @@ use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\CommonLogic\Tracer;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -47,19 +48,6 @@ class DebugContext extends AbstractContext
     }
     
     /**
-     * 
-     * @param boolean $true_or_false
-     */
-    public function setDebugging($true_or_false)
-    {
-        $value = BooleanDataType::cast($true_or_false);
-        if ($value){
-            $this->startDebugging();
-        } else {
-            $this->stopDebugging();
-        }
-    }
-    /**
      * Starts the debugger for the current context scope
      * 
      * @return DebugContext
@@ -67,8 +55,13 @@ class DebugContext extends AbstractContext
     public function startDebugging()
     {
         $this->is_debugging = true;
-        $this->startTracer();
-        
+        $this->getWorkbench()->getConfig()->setOption('DEBUG.TRACE', true, AppInterface::CONFIG_SCOPE_SYSTEM);
+        $this->excludeDebugContextFromTrace();
+        return $this;
+    }
+    
+    protected function excludeDebugContextFromTrace()
+    {
         // Make sure the tracer is disabled for all actions dealing with this context, so
         // we don't caption stop-tracing and debug-menu actions.
         $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
@@ -79,8 +72,6 @@ class DebugContext extends AbstractContext
             $this,
             'onContextActionDisableTracer'
         ));
-        
-        return $this;
     }
     
     public function onContextActionDisableTracer(ActionEventInterface $e)
@@ -88,7 +79,9 @@ class DebugContext extends AbstractContext
         $action = $e->getAction();
         if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
         || $action instanceof ContextApi && $action->getContext() === $this){
-            $this->getTracer()->disable();
+            if (null !== $tracer = $this->getTracer()) {
+                $tracer->disable();
+            }
         }
     }
     
@@ -100,6 +93,7 @@ class DebugContext extends AbstractContext
     public function stopDebugging()
     {
         $this->is_debugging = false;
+        $this->getWorkbench()->getConfig()->setOption('DEBUG.TRACE', false, AppInterface::CONFIG_SCOPE_SYSTEM);
         return $this;
     }
 
@@ -152,7 +146,10 @@ class DebugContext extends AbstractContext
     
     public function importUxonObject(UxonObject $uxon){
         if ($uxon->hasProperty('debugging')){
-            $this->setDebugging($uxon->getProperty('debugging'));
+            $this->is_debugging = $uxon->getProperty('debugging');
+            if ($this->is_debugging === true) {
+                $this->excludeDebugContextFromTrace();
+            }
         }
         return;
     }
@@ -255,17 +252,11 @@ class DebugContext extends AbstractContext
     }
     
     /**
+     * 
      * @return Tracer
      */
-    public function getTracer() : Tracer
+    public function getTracer() : ?Tracer
     {
-        return $this->tracer;
-    }    
-    
-    protected function startTracer() : Tracer
-    {
-        $this->tracer = new Tracer($this->getWorkbench());
-        return $this->tracer;
+        return $this->getWorkbench()->getDebugger()->getTracer();
     }
 }
-?>

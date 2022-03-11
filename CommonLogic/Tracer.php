@@ -11,6 +11,14 @@ use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\Events\DataConnection\OnBeforeConnectEvent;
+use exface\Core\Events\DataConnection\OnConnectEvent;
+use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\Workbench\OnStartEvent;
+use exface\Core\Events\Security\OnAuthenticatedEvent;
+use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -31,6 +39,14 @@ class Tracer extends Profiler
     private $log_handlers = [];
     
     private $disabled = false;
+    
+    private $dataQueriesTotalMS = 0;
+    
+    private $dataQueriesCnt = 0;
+    
+    private $conncetionsCnt = 0;
+    
+    private $connectionsTotalMS = 0;
     
     /**
      * 
@@ -117,33 +133,82 @@ class Tracer extends Profiler
         $event_manager = $this->getWorkbench()->eventManager();
         
         // Actions
-        $event_manager->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
+        $event_manager->addListener(OnBeforeActionPerformedEvent::getEventName(), [
             $this,
             'startAction'
-        ));
-        $event_manager->addListener(OnActionPerformedEvent::getEventName(), array(
+        ]);
+        $event_manager->addListener(OnActionPerformedEvent::getEventName(), [
             $this,
             'stopAction'
-        ));
+        ]);
         
         // Data Queries
-        $event_manager->addListener(OnBeforeQueryEvent::getEventName(), array(
+        $event_manager->addListener(OnBeforeConnectEvent::getEventName(), [
+            $this,
+            'startConnection'
+        ]);
+        $event_manager->addListener(OnConnectEvent::getEventName(), [
+            $this,
+            'stopConnection'
+        ]);
+        $event_manager->addListener(OnBeforeQueryEvent::getEventName(), [
             $this,
             'startDataQuery'
-        ));
-        $event_manager->addListener(OnQueryEvent::getEventName(), array(
+        ]);
+        $event_manager->addListener(OnQueryEvent::getEventName(), [
             $this,
             'stopDataQuery'
-        ));
+        ]);
+        
+        // Performance summary
+        $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
+            $this,
+            'stopWorkbench'
+        ]);
+        
+        // Milestones
+        $event_manager->addListener(OnStartEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ], -1000);
+        $event_manager->addListener(OnAuthenticatedEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ], -1000);
+        $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ], -1000);
+        $event_manager->addListener(OnMetaObjectLoadedEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ]);
         
         return $this;
+    }
+    
+    public function logEvent(EventInterface $event)
+    {
+        $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
+        switch (true) {
+            case $event instanceof OnAuthenticatedEvent:
+                if ($token = $event->getToken()) {
+                    $name .= ' (' . $token->getUsername() . ')';
+                }
+                break;
+            case $event instanceof OnMetaObjectLoadedEvent:
+                $name .= ' (' . $event->getObject()->getAliasWithNamespace() . ')';
+                break;
+        }
+        $this->start($event, $name, 'event');
     }
     
     public function startAction(ActionEventInterface $event)
     {
         try {
-            $this->getWorkbench()->getLogger()->debug('Action "' . $event->getAction()->getAliasWithNamespace() . '" started.', array());
-            $this->start($event->getAction());
+            $msg = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+            $this->getWorkbench()->getLogger()->debug($msg, array());
+            $this->start($event->getAction(), $msg, 'action');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
         }
@@ -171,7 +236,10 @@ class Tracer extends Profiler
     
     public function startDataQuery(OnBeforeQueryEvent $event)
     {
-        $this->start($event->getQuery());
+        $conn = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
+        $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $event->getQuery()->toString(false));
+        $extract = mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+        $this->start($event->getQuery(), $conn . ': ' . $extract, 'query');
     }
     
     public function stopDataQuery(OnQueryEvent $event)
@@ -180,15 +248,44 @@ class Tracer extends Profiler
             $query = $event->getQuery();
             
             $ms = $this->stop($query);
+            $this->dataQueriesCnt++;
             
             $conn = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
             $queryString = str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false));
             $extract = mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
-            $duration = $ms !== null ? ' (' . $ms . ' ms)' : '';
+            if ($ms !== null) {
+                $duration = ' (' . $ms . ' ms)';
+                $this->dataQueriesTotalMS += $ms;
+            } else {
+                $duration = '';
+            }
             $this->getWorkbench()->getLogger()->debug($conn . ': ' . $extract . $duration, array(), $query);
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
     }
+    
+    public function startConnection(OnBeforeConnectEvent $event)
+    {
+        $this->start($event->getConnection(), 'Connect ' . $event->getConnection()->getAliasWithNamespace(), 'connection');
+        $this->conncetionsCnt++;
+    }
+    
+    public function stopConnection(OnConnectEvent $event)
+    {
+        try {
+            $ms = $this->stop($event->getConnection());
+            $this->connectionsTotalMS += $ms;
+        } catch (\Throwable $e){
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+    }
+    
+    /**
+     * 
+     * @param OnBeforeStopEvent $event
+     */
+    public function stopWorkbench(OnBeforeStopEvent $event = null) {
+        $this->getWorkbench()->getLogger()->debug('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+    }
 }
-?>

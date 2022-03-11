@@ -72,9 +72,13 @@ class Workbench implements WorkbenchInterface
     private $security = null;
     
     private $communicator = null;
+    
+    private $startTime = null;
 
     public function __construct(array $config = null)
     {   
+        $this->startTime = microtime(true);
+        
         $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
         $this->installation_path = Filemanager::pathNormalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
         
@@ -129,7 +133,7 @@ class Workbench implements WorkbenchInterface
         $logger = $this->getLogger();
 
         // Start the error handler
-        $dbg = new Debugger($logger, $config);
+        $dbg = new Debugger($logger, $config, $this->startTime);
         $this->setDebugger($dbg);
         
         $this->eventManager()->dispatch(new OnStartEvent($this));
