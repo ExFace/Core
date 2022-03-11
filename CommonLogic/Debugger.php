@@ -22,6 +22,14 @@ class Debugger implements DebuggerInterface
     
     private $tracer = null;
 
+    /**
+     * 
+     * @param LoggerInterface $logger
+     * @param ConfigurationInterface $config
+     * @param float $workbenchStartTime
+     * @throws RuntimeException
+     * @throws \Throwable
+     */
     public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTime = null)
     {
         $this->logger = $logger;
@@ -93,10 +101,5 @@ class Debugger implements DebuggerInterface
             $dumper = new CliDumper();
             return $dumper->dump($cloner->cloneVar($anything), true);
         }
-    }
-    
-    public function getTracer() : ?Tracer
-    {
-        return $this->tracer;
     }
 }

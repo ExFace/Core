@@ -44,7 +44,7 @@ class DebugContext extends AbstractContext
      */
     public function isDebugging()
     {
-        return $this->is_debugging;
+        return $this->is_debugging || ($this->tracer !== null && ! $this->tracer->isDisabled());
     }
     
     /**
@@ -60,6 +60,9 @@ class DebugContext extends AbstractContext
         return $this;
     }
     
+    /**
+     * @return void
+     */
     protected function excludeDebugContextFromTrace()
     {
         // Make sure the tracer is disabled for all actions dealing with this context, so
@@ -74,6 +77,10 @@ class DebugContext extends AbstractContext
         ));
     }
     
+    /**
+     * 
+     * @param ActionEventInterface $e
+     */
     public function onContextActionDisableTracer(ActionEventInterface $e)
     {
         $action = $e->getAction();
@@ -144,6 +151,11 @@ class DebugContext extends AbstractContext
         return $uxon;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
+     */
     public function importUxonObject(UxonObject $uxon){
         if ($uxon->hasProperty('debugging')){
             $this->is_debugging = $uxon->getProperty('debugging');
@@ -253,10 +265,21 @@ class DebugContext extends AbstractContext
     
     /**
      * 
-     * @return Tracer
+     * @param Tracer $tracer
+     * @return DebugContext
      */
-    public function getTracer() : ?Tracer
+    public function setTracer(Tracer $tracer) : DebugContext
     {
-        return $this->getWorkbench()->getDebugger()->getTracer();
+        $this->tracer = $tracer;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return Tracer|NULL
+     */
+    protected function getTracer() : ?Tracer
+    {
+        return $this->tracer;
     }
 }
