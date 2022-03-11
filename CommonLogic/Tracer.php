@@ -22,23 +22,20 @@ use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Interfaces\Events\DataQueryEventInterface;
 use exface\Core\Events\Contexts\OnContextInitEvent;
 use exface\Core\Interfaces\Events\ContextEventInterface;
+use exface\Core\Contexts\DebugContext;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
  * 
- * The tracer creates debug log messages for the following events:
- * 
- * - Actions: before/after perform
- * - Data sources: after each query
- * 
- * The tracer can be temporarily disabled using `disable()` and `enable()`.
+ * The tracer will automatically register itself in the DebugContext once instantiated.
+ * As long as the tracer is there and is not disabled, the DebugContext will be in debugging
+ * state. The tracer can be temporarily disabled using `disable()` and `enable()`.
  * 
  * @author Andrej Kabachnik
  *
  */
 class Tracer extends Profiler
 {
-    
     private $log_handlers = [];
     
     private $disabled = false;
@@ -61,6 +58,11 @@ class Tracer extends Profiler
         parent::__construct($workbench, $startOffsetMs);
         $this->registerLogHandlers();
         $this->registerEventHandlers();
+        $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), function(OnContextInitEvent $event){
+            if ($event->getContext() instanceof DebugContext) {
+                $event->getContext()->setTracer($this);
+            }
+        });
     }
     
     /**
@@ -109,6 +111,9 @@ class Tracer extends Profiler
         return $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
     }
     
+    /**
+     * 
+     */
     protected function registerLogHandlers()
     {
         // Log everything
@@ -131,6 +136,10 @@ class Tracer extends Profiler
         }
     }
     
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Tracer
+     */
     protected function registerEventHandlers()
     {
         $event_manager = $this->getWorkbench()->eventManager();
@@ -194,11 +203,62 @@ class Tracer extends Profiler
         return $this;
     }
     
+    /**
+     *
+     * @param EventInterface $event
+     * @return string
+     */
+    protected function getLapName(EventInterface $event) : string
+    {
+        switch (true) {
+            case $event instanceof DataQueryEventInterface:
+                $name = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
+                $queryString = str_replace(
+                    ["\r", "\n", "\t", "  "],
+                    [' ', ' ', '', ''],
+                    $event->getQuery()->toString(false)
+                    );
+                $name .= ': ' . mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+                break;
+            case $event instanceof ActionEventInterface:
+                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                break;
+            default:
+                $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
+                switch (true) {
+                    case $event instanceof OnAuthenticatedEvent:
+                        if ($token = $event->getToken()) {
+                            $name .= ' (' . $token->getUsername() . ')';
+                        }
+                        break;
+                    case $event instanceof OnMetaObjectLoadedEvent:
+                        $name .= ' (' . $event->getObject()->getAliasWithNamespace() . ')';
+                        break;
+                    case $event instanceof ContextEventInterface:
+                        $name .= ' (' . $event->getContext()->getAliasWithNamespace() . ')';
+                        break;
+                }
+                break;
+        }
+        
+        return $name;
+    }
+    
+    /**
+     * 
+     * @param EventInterface $event
+     * @return void
+     */
     public function logEvent(EventInterface $event)
     {
         $this->start($event, $this->getLapName($event), 'event');
     }
     
+    /**
+     * 
+     * @param ActionEventInterface $event
+     * @return void
+     */
     public function startAction(ActionEventInterface $event)
     {
         try {
@@ -210,6 +270,11 @@ class Tracer extends Profiler
         }
     }
     
+    /**
+     * 
+     * @param ActionEventInterface $event
+     * @return void
+     */
     public function stopAction(ActionEventInterface $event)
     {
         try {
@@ -233,6 +298,7 @@ class Tracer extends Profiler
     /**
      * 
      * @param OnBeforeQueryEvent $event
+     * @return void
      */
     public function startDataQuery(OnBeforeQueryEvent $event)
     {
@@ -242,6 +308,7 @@ class Tracer extends Profiler
     /**
      * 
      * @param OnQueryEvent $event
+     * @return void
      */
     public function stopDataQuery(OnQueryEvent $event)
     {
@@ -264,48 +331,22 @@ class Tracer extends Profiler
         }
     }
     
-    protected function getLapName(EventInterface $event) : string
-    {
-        switch (true) {
-            case $event instanceof DataQueryEventInterface:
-                $name = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
-                $queryString = str_replace(
-                    ["\r", "\n", "\t", "  "],
-                    [' ', ' ', '', ''],
-                    $event->getQuery()->toString(false)
-                    );
-                $name .= ': ' . mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
-                break;
-            case $event instanceof ActionEventInterface:
-                $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
-                break;
-            default: 
-                $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
-                switch (true) {
-                    case $event instanceof OnAuthenticatedEvent:
-                        if ($token = $event->getToken()) {
-                            $name .= ' (' . $token->getUsername() . ')';
-                        }
-                        break;
-                    case $event instanceof OnMetaObjectLoadedEvent:
-                        $name .= ' (' . $event->getObject()->getAliasWithNamespace() . ')';
-                        break;
-                    case $event instanceof ContextEventInterface:
-                        $name .= ' (' . $event->getContext()->getAliasWithNamespace() . ')';
-                        break;
-                }
-                break;
-        }
-        
-        return $name;
-    }
-    
+    /**
+     * 
+     * @param OnBeforeConnectEvent $event
+     * @return void
+     */
     public function startConnection(OnBeforeConnectEvent $event)
     {
         $this->start($event->getConnection(), 'Connect ' . $event->getConnection()->getAliasWithNamespace(), 'connection');
         $this->conncetionsCnt++;
     }
     
+    /**
+     * 
+     * @param OnConnectEvent $event
+     * @return void
+     */
     public function stopConnection(OnConnectEvent $event)
     {
         try {
@@ -319,6 +360,7 @@ class Tracer extends Profiler
     /**
      * 
      * @param OnBeforeStopEvent $event
+     * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
         $this->getWorkbench()->getLogger()->debug('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);

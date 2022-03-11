@@ -7,18 +7,25 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 
 /**
- * The profiler can be used to stop the time for things like actions, data queries, etc.
+ * The profiler can be used to stop the time for any objects (e.g. actions, data queries, etc.)
  * 
  * For example, to stop the time for an action call `->start($action)` and `->stop($action)`
  * - the latter will give you the time between these two calls in milliseconds for this
  * specific action instance.
+ * 
+ * The profiler can generate a debug widget with a timeline for all stopped "laps". A lap
+ * is the time between a start and a stop for the same subject (object).
  * 
  * @author Andrej Kabachnik
  *
  */
 class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 {
-
+    const LAP_START = 'start';
+    const LAP_STOP = 'stop';
+    const LAP_NAME = 'name';
+    const LAP_CATEGORY = 'category';
+    
     private $startMicrotime = 0;
     
     private $workbench = null;
@@ -63,9 +70,9 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     {
         $lapId = $this->getLapId($subject);
         $this->lapData[$lapId][] = [
-            'name' => $name,
-            'category' => $category,
-            'start' => microtime(true)
+            self::LAP_NAME => $name,
+            self::LAP_CATEGORY => $category,
+            self::LAP_START => microtime(true)
         ];
         return $lapId;
     }
@@ -81,8 +88,8 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         $lapId = $this->getLapId($subject);
         if (null !== $data = $this->lapData[$lapId]) {
             $lastIdx = count($data)-1;
-            $this->lapData[$lapId][$lastIdx]['stop'] = $now = microtime(true);
-            return $this->toMs($now - $data[$lastIdx]['start']);
+            $this->lapData[$lapId][$lastIdx][self::LAP_STOP] = $now = microtime(true);
+            return $this->toMs($now - $data[$lastIdx][self::LAP_START]);
         }
         return null;
     }
@@ -102,8 +109,8 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
             return null;
         }
         $data = $this->getLapData($subject);
-        $stop = $data['stop'] ?? null;
-        $start = $data['start'] ?? null;
+        $stop = $data[self::LAP_STOP] ?? null;
+        $start = $data[self::LAP_START] ?? null;
         return $start === null || $stop === null ? null : $this->toMs($stop - $start);
     }
     
@@ -117,6 +124,11 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         return $this->toMs(microtime(true) - $this->startMicrotime);
     }
     
+    /**
+     * 
+     * @param mixed $subject
+     * @return float|NULL
+     */
     public function getStartTime($subject = null) : ?float
     {
         if ($subject === null) {
@@ -126,11 +138,16 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
             return null;
         }
         if (null !== $data = $this->getLapData($subject)) {
-            return $this->toMs($data['start']);
+            return $this->toMs($data[self::LAP_START]);
         }
         return null;
     }
     
+    /**
+     * 
+     * @param mixed $subject
+     * @return float|NULL
+     */
     public function getEndTime($subject = null) : ?float
     {
         if ($subject === null) {
@@ -145,11 +162,21 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         return null;
     }
     
+    /**
+     * 
+     * @param mixed $subject
+     * @return bool
+     */
     protected function hasLapData($subject) : bool
     {
         in_array($subject, $this->lapIds);
     }
     
+    /**
+     * 
+     * @param mixed $subject
+     * @return array|NULL
+     */
     protected function getLapData($subject) : ?array
     {
         return $this->lapData[$this->getLapId($subject)] ?? null;
@@ -199,6 +226,11 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         return $debug_widget;
     }
     
+    /**
+     * 
+     * @param string $id
+     * @return string
+     */
     protected function buildHtmlProfilerTable(string $id) : string
     {
         $startTime = $this->getStartTime();
@@ -231,12 +263,12 @@ HTML;
             }
         }
         usort($laps, function($lap1, $lap2){
-            return ($lap1['start'] < $lap2['start']) ? -1 : 1;
+            return ($lap1[self::LAP_START] < $lap2[self::LAP_START]) ? -1 : 1;
         });
         
         foreach ($laps as $lap) {
-            $eventStart = $lap['start'] !== null ? $this->toMs($lap['start']) : null;
-            $eventEnd = $lap['stop'] !== null ? $this->toMs($lap['stop']) : null;
+            $eventStart = $lap[self::LAP_START] !== null ? $this->toMs($lap[self::LAP_START]) : null;
+            $eventEnd = $lap[self::LAP_STOP] !== null ? $this->toMs($lap[self::LAP_STOP]) : null;
             $eventOffset = round(($eventStart - $startTime) / $totalDur * 100) . '%';
             if ($eventEnd !== null) {
                 $eventDur = round($eventEnd - $eventStart, $this->msDecimals);
@@ -248,19 +280,35 @@ HTML;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
-            $html .= $this->buildHtmlProfilerRow($eventStart, $lap['name'], $eventOffset, $eventWidth, $eventSymbol, $eventDur);
+            $html .= $this->buildHtmlProfilerRow($eventStart, $lap[self::LAP_NAME], $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY]);
         }
         
         $html .= '</tbody></table>';
         return $html;
     }
     
-    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null) : string
+    /**
+     * 
+     * @param float $start
+     * @param string $name
+     * @param string $cssOffset
+     * @param string $cssWidth
+     * @param string $symbol
+     * @param float $duration
+     * @return string
+     */
+    protected function buildHtmlProfilerRow(float $start, string $name, string $cssOffset, string $cssWidth, string $symbol, float $duration = null, string $category = null) : string
     {
         $durationText = $duration === null ? '' : $duration . ' ms';
-        return "<tr><td title=\"$start\">{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
+        $cssClass = $category ?? '';
+        return "<tr class=\"{$cssClass}\"><td title=\"$start\">{$name}</td><td><span class=\"waterfall-offset\" style=\"width: {$cssOffset}\">{$durationText}</span><span class = \"waterfall-bar\" style=\"width: {$cssWidth}\">{$symbol}</span></td></tr>";
     }
     
+    /**
+     * 
+     * @param float $microtime
+     * @return float
+     */
     protected function toMs(float $microtime) : float
     {
         return round(($microtime * 1000), $this->msDecimals);
