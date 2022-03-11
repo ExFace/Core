@@ -244,6 +244,7 @@ HTML;
                 $eventWidth = $eventDurPercent > 0 ? $eventDurPercent . '%' : $minWidth;
                 $eventSymbol = $emptySymbol;
             } else {
+                $eventDur = null;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
