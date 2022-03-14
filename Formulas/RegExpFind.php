@@ -11,10 +11,13 @@ namespace exface\Core\Formulas;
  * 3. Which match to return: e.g. `1` for the first match (default), `2` for the 
  * second or `-1` for the last one.
  * 
+ * **NOTE:** backslashes in the pattern MUST be escaped as the pattern is a
+ * quoted string!
+ * 
  * Examples:
  * 
  * - `=RegExpFind('Hello World', '/W.*$/mi')` will yield `World`
- * - `=RegExpFind('1.2.3', '/\.\d/mi', -1)` will yield `.3`
+ * - `=RegExpFind('1.2.3', '/\\.\\d/mi', -1)` will yield `.3`
  * 
  * @author Andrej Kabachnik
  *        
@@ -35,7 +38,7 @@ class RegExpFind extends \exface\Core\CommonLogic\Model\Formula
             return $search;
         }
         
-        if ($pattern = null || $pattern === '') {
+        if ($pattern === null || $pattern === '') {
             return $search;
         }
         
