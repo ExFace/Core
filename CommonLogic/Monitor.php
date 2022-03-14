@@ -159,7 +159,7 @@ class Monitor extends Profiler
             return;
         }
         
-        $this->start($event->getAction(), $event->getAction()->getName());
+        $this->start($event->getAction(), 'Action "' . $event->getAction()->getAliasWithNamespace() . '"');
     }
     
     /**
