@@ -99,8 +99,6 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
                 $this->authenticators[] = $authenticator;
                 $this->ids[] = $id;
             }
-            $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
-            $this->ids[] = 'DEFAULT_REMEMBER_ME_AUTH';
         }
         
         return $this->authenticators;
