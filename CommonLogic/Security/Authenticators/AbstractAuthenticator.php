@@ -43,6 +43,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     private $lifetime = null;
     
+    private $disabled = false;
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
@@ -159,6 +161,29 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int
     {
         return $this->lifetime;
+    }
+    
+    /**
+     * Disable the authenticator, it won't be possible to login anymore using this authenticator and
+     * it won't be shown in the login dialog.
+     * 
+     * @param bool $values
+     * @return AbstractAuthenticator
+     */
+    protected function setDisabled(bool $values) : AbstractAuthenticator
+    {
+        $this->disabled = $values;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isDisabled()
+     */
+    public function isDisabled() : bool
+    {
+        return $this->disabled;
     }
     
     /**

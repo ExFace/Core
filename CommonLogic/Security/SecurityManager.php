@@ -78,7 +78,7 @@ class SecurityManager implements SecurityManagerInterface
     {      
         $errors = [];
         foreach ($this->getAuthenticators() as $authenticator) {
-            if ($authenticator->isSupported($token) === false) {
+            if ($authenticator->isDisabled() || $authenticator->isSupported($token) === false) {
                 continue;
             }
             try {
@@ -296,6 +296,9 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         foreach ($this->getAuthenticators() as $authenticator) {
+            if ($authenticator->isDisabled()) {
+                continue;
+            }
             $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
             $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
             try {
@@ -373,5 +376,15 @@ class SecurityManager implements SecurityManagerInterface
     public function getTokenLifetime(AuthenticationTokenInterface $token): ?int
     {
         return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isDisabled()
+     */
+    public function isDisabled(): bool
+    {
+        return false;
     }
 }
