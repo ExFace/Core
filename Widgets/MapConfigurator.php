@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A configurator widget for maps combining filters and sorters from all data layers.
@@ -56,7 +57,7 @@ class MapConfigurator extends DataConfigurator
      */
     public function getDataWidget() : Data
     {
-        return $this->getLayerDataWidgets()[0];
+        return $this->getLayerDataWidgets()[0] ?? WidgetFactory::create($this->getPage(), 'Data', $this->getParent());
     }
     
     /**
