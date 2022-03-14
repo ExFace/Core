@@ -825,7 +825,6 @@ JS;
             default:
                 return <<<JS
 
-        console.log('Select');
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
