@@ -60,4 +60,11 @@ interface AuthenticatorInterface extends AuthenticationProviderInterface
      * @return int|NULL
      */
     public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int;
+    
+    /**
+     * Returns TRUE if the authenticator is disabled and can not be used to authenticate and FALSE otherwise
+     * 
+     * @return bool
+     */
+    public function isDisabled() : bool;
 }
