@@ -5,6 +5,7 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * The profiler can be used to stop the time for any objects (e.g. actions, data queries, etc.)
@@ -25,6 +26,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     const LAP_STOP = 'stop';
     const LAP_NAME = 'name';
     const LAP_CATEGORY = 'category';
+    const LAP_SUBJECT = 'subject';
     
     private $startMicrotime = 0;
     
@@ -66,13 +68,14 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * @param mixed $subject
      * @return int
      */
-    public function start($subject, string $name, string $category = null) : int
+    public function start($subject, string $name = null, string $category = null) : int
     {
         $lapId = $this->getLapId($subject);
         $this->lapData[$lapId][] = [
             self::LAP_NAME => $name,
             self::LAP_CATEGORY => $category,
-            self::LAP_START => microtime(true)
+            self::LAP_START => microtime(true),
+            self::LAP_SUBJECT => $subject
         ];
         return $lapId;
     }
@@ -280,7 +283,24 @@ HTML;
                 $eventWidth = '0px';
                 $eventSymbol = $milestoneSymbol;
             }
-            $html .= $this->buildHtmlProfilerRow($eventStart, $lap[self::LAP_NAME], $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY]);
+            if (null === $name = $lap[self::LAP_NAME]) {
+                $subj = $lap[self::LAP_SUBJECT];
+                if (is_object($subj)) {
+                    if (method_exists($subj , '__toString')) {
+                        $name = str_replace(["\r", "\n"], ' ', $subj->__toString());
+                    } else {
+                        $name = get_class($subj);
+                    }
+                } else {
+                    if (is_array($subj)) {
+                        $name = json_encode($subj);
+                    } else {
+                        $name = (string) $subj;
+                    }
+                }
+                $name = StringDataType::truncate($name, 40);
+            }
+            $html .= $this->buildHtmlProfilerRow($eventStart, $name, $eventOffset, $eventWidth, $eventSymbol, $eventDur, $lap[self::LAP_CATEGORY]);
         }
         
         $html .= '</tbody></table>';
