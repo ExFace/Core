@@ -79,7 +79,8 @@ class GenericUrlTiles extends AbstractBaseMap
             $attribution = json_encode($layer->getAttribution() ?? '');
             return <<<JS
 L.tileLayer('{$url}', {
-                    attribution: $attribution
+                    attribution: $attribution,
+                    {$this->buildJsPropertyZoom()}
                 })
 JS;
             
