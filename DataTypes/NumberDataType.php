@@ -90,12 +90,14 @@ class NumberDataType extends AbstractDataType
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
         }
         
-        if (! is_null($this->getMin()) && $number < $this->getMin()) {
-            throw $this->createValidationError($number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
-        }
-        
-        if (! is_null($this->getMax()) && $number > $this->getMax()) {
-            throw $this->createValidationError($number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+        if (! $this->isValueEmpty($number)) {
+            if (! is_null($this->getMin()) && $number < $this->getMin()) {
+                throw $this->createValidationError($number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+            }
+            
+            if (! is_null($this->getMax()) && $number > $this->getMax()) {
+                throw $this->createValidationError($number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+            }
         }
         
         return $number;
