@@ -1,11 +1,6 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps\BaseMaps;
 
-use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Widgets\Parts\Maps\AbstractBaseMap;
-use exface\Core\Widgets\Map;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 
