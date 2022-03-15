@@ -21,6 +21,7 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Factories\ConfigurationFactory;
+use exface\Core\Exceptions\EncryptionError;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -118,6 +119,8 @@ class MetaModelInstaller extends AbstractAppInstaller
     private $objectSheet = null;
     
     private $additions = [];
+    
+    private $salt = null;
 
     /**
      *
@@ -678,14 +681,33 @@ class MetaModelInstaller extends AbstractAppInstaller
     
     protected function getAppSalt() : string
     {
+        if ($this->salt) {
+            return $this->salt;
+        }
         $config = ConfigurationFactory::create($this->getWorkbench());
         $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::ENCRYPTION_CONFIG_FILE);
         if ($config->hasOption($this->getApp()->getAliasWithNamespace())) {
             $salt = base64_encode($config->getOption($this->getApp()->getAliasWithNamespace()));
+            $this->salt = $salt;
             return $salt;
         }
-        $salt = EncryptedDataType::createSaltFromString(substr($this->getApp()->getUid(), 2,32));
-        return $salt;
+        if ($this->getApp()->isInstalled()) {
+            $uid = $this->getApp()->getUid();
+        } else {
+            $filePath = $this->getApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'composer.json';
+            if (file_exists($filePath)) {
+                $json = json_decode(file_get_contents($filePath), true);
+            } else {
+                $json = [];
+            }
+            $uid = $json['extra']['app']['app_uid'] ?? null;
+        }
+        if (! $uid) {
+            throw new EncryptionError("No encryption/decryption salt can be created for the app '{$this->getApp()->getAliasWithNamespace()}' !");
+        }
+        $salt = EncryptedDataType::createSaltFromString(substr($uid, 2,32));
+        $this->salt = $salt;
+        return $this->salt;
     }
     
     /**
