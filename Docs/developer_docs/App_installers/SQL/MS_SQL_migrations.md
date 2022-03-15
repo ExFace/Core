@@ -51,12 +51,12 @@ IF adding a required column without a default value, we need to provide values f
 IF COL_LENGTH('dbo.{TABLE_NAME}', '{COLUMN_NAME}') IS NULL
 BEGIN
 	ALTER TABLE "dbo"."{TABLE_NAME}"
-		ADD "{COLUMN_NAME}" BIGINT NULL;
+		ADD "{COLUMN_NAME}" BIGINT NULL
 
-	EXEC sys.sp_executesql @query = N'UPDATE dbo.{TABLE_NAME} SET {COLUMN_NAME} = 0;';
+	EXEC sys.sp_executesql @query = N'UPDATE dbo.{TABLE_NAME} SET {COLUMN_NAME} = 0;'
 
 	ALTER TABLE "dbo"."{TABLE_NAME}"
-		ALTER COLUMN "{COLUMN_NAME}" BIGINT NOT NULL;
+		ALTER COLUMN "{COLUMN_NAME}" BIGINT NOT NULL
 END
 ```
 
@@ -70,7 +70,7 @@ BEGIN
 	DECLARE @sql NVARCHAR(MAX),
 			@schema NVARCHAR(50) = 'dbo',
 			@table NVARCHAR(50) = '{TABLE_NAME}',
-			@column NVARCHAR(50) = '{COLUMN_NAME}';
+			@column NVARCHAR(50) = '{COLUMN_NAME}'
 	WHILE 1=1
 	BEGIN
 		SELECT TOP 1 @sql = N'ALTER TABLE '+@schema+'.'+@table+' DROP CONSTRAINT ['+dc.NAME+N']'
@@ -82,6 +82,6 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 		EXEC (@sql)
 	END
-	EXEC(N'ALTER TABLE ['+@schema+'].['+@table+'] DROP COLUMN ['+@column+']');
+	EXEC(N'ALTER TABLE ['+@schema+'].['+@table+'] DROP COLUMN ['+@column+']')
 END
 ```
