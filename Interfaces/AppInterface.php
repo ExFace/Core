@@ -232,4 +232,11 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * @return string
      */
     public function getPrototypeClass(PrototypeSelectorInterface $selector) : string;
+    
+    /**
+     * Returns TRUE if the app is currently installed and FALSE if not.
+     * 
+     * @return bool
+     */
+    public function isInstalled() : bool;
 }

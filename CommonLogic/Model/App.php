@@ -841,4 +841,19 @@ class App implements AppInterface
         $this->name = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::isInstalled()
+     */
+    public function isInstalled() : bool
+    {
+        try {
+            $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            return true;
+        } catch (AppNotFoundError $e) {
+            return false;
+        }
+    }
 }
