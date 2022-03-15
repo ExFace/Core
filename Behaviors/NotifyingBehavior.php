@@ -308,11 +308,11 @@ class NotifyingBehavior extends AbstractBehavior
                         $rowRenderer = clone $renderer;
                         $rowRenderer->addPlaceholder(
                             (new DataRowPlaceholders($dataSheet, $rowNo, '~data:'))
-                            ->setSanitizeAsUxon()
+                            ->setSanitizeAsUxon(true)
                         );
                         $rowRenderer->addPlaceholder(
                             (new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo))
-                            //->setSanitizeAsUxon()
+                            //->setSanitizeAsUxon(true)
                         );
                         $renderedJson = $rowRenderer->render($json);
                         $renderedUxon = UxonObject::fromJson($renderedJson);
