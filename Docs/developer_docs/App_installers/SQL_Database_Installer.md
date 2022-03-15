@@ -3,6 +3,7 @@
 - [Initializing the installer](SQL_Database_Installer.md#init)
 - [Folder structure recommendations](SQL_Database_Installer.md#folders)
 - [Migration files: syntax, name conventions, etc.](SQL_Database_Installer.md#migrations)
+- [Recommendations on SQL migrations for different DBMS](SQL/index.md)
 - [Configuration options](SQL_Database_Installer.md#config)
 - [Skipping migrations](SQL_Database_Installer.md#skipping)
 - [Installing demo data](SQL_Database_Installer.md#demodata)
