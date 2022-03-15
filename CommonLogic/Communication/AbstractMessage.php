@@ -88,8 +88,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface
             $this->recipients = [];
             foreach ($this->getRecipientAddresses() as $addr) {
                 // TODO move to factory
-                if (filter_var($addr, FILTER_VALIDATE_EMAIL)) {
-                    $this->recipients[] = new EmailRecipient($addr);
+                if (false !== $filtered = filter_var($addr, FILTER_VALIDATE_EMAIL)) {
+                    $this->recipients[] = new EmailRecipient($filtered);
                 }
             }
             foreach ($this->getRecipientUsers() as $str) {
