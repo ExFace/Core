@@ -125,6 +125,15 @@ class RelationPath implements MetaRelationPathInterface
         $path = trim($path, self::RELATION_SEPARATOR);
         return $path;
     }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return $this->toString();
+    }
 
     public function getWorkbench()
     {
