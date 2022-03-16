@@ -74,6 +74,8 @@ class DataSheet implements DataSheetInterface
     private $filters = null;
 
     private $sorters = array();
+    
+    private $autosort = true;
 
     private $total_row_count = null;
     
@@ -463,13 +465,30 @@ class DataSheet implements DataSheetInterface
                     $lastRelPath = $relPath;
                 }
                 
+                // Determine the attribute alias for the subsheet
+                // Also find out if we will need to aggregate the subsheet
+                $subsheet_attribute_alias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
+                if ($attribute_aggregator) {
+                    $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
+                    // If the attribute, we are looking for has an aggregator, we need to aggregate
+                    // the subsheet over the key, that we are going to use for our join later on.
+                    $needGroup = true;
+                } else {
+                    $needGroup = false;
+                }
+                
                 // Create a subsheet for the relation if not yet existent and add the required attribute
-                if (! $subsheet = $this->getSubsheets()->get($relPathToSubsheet->toString())) {
+                // NOTE: if we have multiple attributes to join via the same relation, we need to do it separately for
+                // those with aggregations and those without. Aggregated subsheets will not be able to read non-aggregated
+                // attributes. On the other hand, we can't aggregate the automatically as we do not really know, what this
+                // will mean for the specific data.
+                $subsheetId = $relPathToSubsheet->toString() . ($needGroup ? ':GROUPED' : '');
+                if (! $subsheet = $this->getSubsheets()->get($subsheetId)) {
                     $subsheet_object = $relPathToSubsheet->getEndObject();
                     $parentSheetKeyAlias = $relPathInParentSheet->getAttributeOfEndObject($relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias())->getAliasWithRelationPath();
                     $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
                     $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
-                    $this->getSubsheets()->add($subsheet, $relPathToSubsheet->toString());
+                    $this->getSubsheets()->add($subsheet, $subsheetId);
                     // Add the foreign key to the main query
                     // If the foreign key is calculated, add all attributes required to the query, otherwise just add
                     // the attribute itself
@@ -487,19 +506,12 @@ class DataSheet implements DataSheetInterface
                 }
                 
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
-                $subsheet_attribute_alias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
-                if ($attribute_aggregator) {
-                    $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
-                    // If the attribute, we are looking for has an aggregator, we need to aggregate
-                    // the subsheet over the key, that we are going to use for our join later on.
-                    $needGroup = true;
-                } else {
-                    $needGroup = false;
-                }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
                 
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
                 $subsheet->getColumns()->addFromExpression($subsheet->getJoinKeyAliasOfSubsheet());
+                
+                // Aggregate of the right key of the future JOIN if there are attributes, that need aggregation
                 if ($needGroup === true) {
                     $subsheet->getAggregations()->addFromString($subsheet->getJoinKeyAliasOfSubsheet()); 
                 }
@@ -554,7 +566,10 @@ class DataSheet implements DataSheetInterface
         }
         
         // set sorting
-        $sorters = $this->hasSorters() ? $this->getSorters() : $thisObject->getDefaultSorters();
+        $sorters = $this->getSorters();
+        if ($sorters->isEmpty() && $this->getAutoSort() === true) {
+            $sorters = $this->getMetaObject()->getDefaultSorters();
+        }
         $postprocessorSorters = new DataSorterList($this->getWorkbench(), $this);
         foreach ($sorters as $sorter) {
             // If the sorter can be applied by the query, pass it to the query, otherwise
@@ -606,6 +621,10 @@ class DataSheet implements DataSheetInterface
                 }));
                 // Also add a filter over the UIDs of this sheet for the later JOIN
                 $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                
+                // Do not sort subsheets and do not count data in data source!
+                $subsheet->setAutoSort(false);
+                $subsheet->setAutoCount(false);
                 
                 // Read data
                 $subsheet->dataRead();
@@ -1642,6 +1661,27 @@ class DataSheet implements DataSheetInterface
             return false;
         }
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getAutoSort()
+     */
+    public function getAutoSort() : bool
+    {
+        return $this->autosort;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setAutoSort()
+     */
+    public function setAutoSort(bool $value) : DataSheetInterface
+    {
+        $this->autosort = $value;
+        return $this;
+    }
 
     /**
      * 
@@ -1990,6 +2030,14 @@ class DataSheet implements DataSheetInterface
             $arr['sorters'][] = $sorter->exportUxonObject()->toArray();
         }
         
+        if ($this->getAutoSort() !== true) {
+            $arr['auto_sort'] = $this->getAutoSort();
+        }
+        
+        if ($this->getAutoCount() !== true) {
+            $arr['auto_count'] = $this->getAutoSort();
+        }
+        
         foreach ($this->getAggregations() as $aggr) {
             $arr['aggregators'][] = $aggr->exportUxonObject()->toArray();
         }
@@ -2064,6 +2112,14 @@ class DataSheet implements DataSheetInterface
         
         if ($uxon->hasProperty('aggregators')) {
             $this->getAggregations()->importUxonObject($uxon->getProperty('aggregators'));
+        }
+        
+        if (null !== $val = $uxon->getProperty('auto_sort')) {
+            $this->setAutoSort($val);
+        }
+        
+        if (null !== $val = $uxon->getProperty('auto_count')) {
+            $this->setAutoCount($val);
         }
     }
 
@@ -2479,6 +2535,9 @@ class DataSheet implements DataSheetInterface
         
         if ($sorters === null) {
             $sorters = $this->getSorters();
+            if ($sorters->isEmpty() && $this->getAutoSort() === true) {
+                $sorters = $this->getMetaObject()->getDefaultSorters();
+            }
         }
         
         $sorter = new RowDataArraySorter();

@@ -672,6 +672,19 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array
      */
     public function getRowsDecrypted($how_many = 0, $offset = 0) : array;
+    
+    /**
+     * Returns TRUE if automatic sorting according to the metamodel is to be used and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function getAutoSort() : bool;
+    
+    /**
+     * Disable/enable automatic sorting according to the metamodel
+     * 
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    public function setAutoSort(bool $value) : DataSheetInterface;
 }
-
-?>
