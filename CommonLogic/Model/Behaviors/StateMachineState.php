@@ -221,11 +221,20 @@ class StateMachineState implements iHaveIcon
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function hasDisabledAttributes() : bool
+    {
+        return ! empty($this->disabled_attributes_aliases);
+    }
+    
+    /**
      * Returns TRUE if transitions were defined for this state and FALSE otherwise.
      * 
      * @return bool
      */
-    protected function hasTransitionRestrictions() : bool
+    public function hasTransitionRestrictions() : bool
     {
         return $this->transitions !== null;
     }
