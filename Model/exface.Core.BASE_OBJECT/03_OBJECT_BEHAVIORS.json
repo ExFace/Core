@@ -64,6 +64,54 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Create\/Update tracking + optimistic locking",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2022-03-16 17:16:25",
+            "MODIFIED_ON": "2022-03-16 17:16:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec9f526d908cc09f52747827435ce5",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/GlobalActionsBehavior.php",
+            "CONFIG_UXON": {
+                "buttons": [
+                    {
+                        "icon": "info",
+                        "caption": "Object info",
+                        "action": {
+                            "alias": "exface.Core.ShowDialog",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1,
+                            "dialog": {
+                                "maximized": false,
+                                "width": 1,
+                                "height": "auto",
+                                "readonly": true,
+                                "widgets": [
+                                    {
+                                        "attribute_alias": "UID"
+                                    },
+                                    {
+                                        "attribute_alias": "CREATED_ON"
+                                    },
+                                    {
+                                        "attribute_alias": "CREATED_BY_USER__LABEL"
+                                    },
+                                    {
+                                        "attribute_alias": "MODIFIED_ON"
+                                    },
+                                    {
+                                        "attribute_alias": "MODIFIED_BY_USER__LABEL"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            "OBJECT": "0x32370000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Info-button for system attributes",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
