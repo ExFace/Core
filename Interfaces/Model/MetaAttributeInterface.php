@@ -126,7 +126,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setCopyable(bool $value) : MetaAttributeInterface;
     
     /**
-     * Returns the formatter expression as a string
+     * Returns the expression for a calculated attribute or NULL for other attribute types
      * 
      * @return ExpressionInterface|NULL
      */
