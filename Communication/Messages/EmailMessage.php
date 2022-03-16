@@ -5,24 +5,28 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\EmailDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\EmailPriorityDataType;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 
 /**
+ * Email message to be sent to one or multiple email addresses, users or user groups
  * 
+ * The to-addresses can be specified explicitly via `recipients` or by naming
+ * `recipient_users` and `recipient_roles` to get the email addresses from.
  * 
- * @author andrej.kabachnik
+ * The email consists of the body `text` (either plain text or HTML) and an optional `subject`. 
+ * Additionally you can set a `priority`.
+ * 
+ * @author Andrej Kabachnik
  *
  */
 class EmailMessage extends TextMessage
-{
-    private $html = null;
-    
+{    
     private $subject = null;
     
-    private $from = null;
-    
-    private $headers = [
-        'X-Auto-Response-Suppress' => 'OOF, DR, RN, NRN, AutoReply'
-    ];
+    private $priority = null;
     
     /**
      * 
@@ -50,107 +54,50 @@ class EmailMessage extends TextMessage
     
     /**
      * 
-     * @return string
+     * @return bool
      */
-    public function getHtml() : ?string
-    {
-        return $this->html;
-    }
-    
     public function isHtml() : bool
     {
-        return $this->html !== null;
+        return HtmlDataType::isValueHtml($this->getText());
     }
     
     /**
-     * 
-     * @param string $value
-     * @return EmailMessage
-     */
-    public function setHtml(string $value) : EmailMessage
-    {
-        $this->html = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getFrom() : string
-    {
-        return $this->from;
-    }
-    
-    /**
-     * From email address
-     * 
-     * @uxon-property from
+     * The body of the message - either plain text or HTML
+     *
+     * @uxon-property text
      * @uxon-type string
-     * 
-     * @param string $value
-     * @return EmailMessage
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Communication\Messages\TextMessage::setText()
      */
-    public function setFrom(string $value) : EmailMessage
+    public function setText(string $value) : CommunicationMessageInterface
     {
-        try {
-            $email = EmailDataType::cast($value);
-        } catch (DataTypeCastingError $e) {
-            throw new InvalidArgumentException('Invalid from-address for email message: "' . $email . '"!');
-        }
-        $this->from = $email;
+        $this->text = $value;
         return $this;
     }
     
     /**
      * 
-     * @return string[]
+     * @return int|NULL
      */
-    public function getMessageHeaders() : array
+    public function getPriority() : ?int
     {
-        return $this->headers;
+        return $this->priority;
     }
     
     /**
-     * Custom message headers
+     * Message priority: highest, high, normal, low, lowest.
      * 
-     * @uxon-property message_headers
-     * @uxon-type object
-     * @uxon-template {"X-Auto-Response-Suppress": "OOF, DR, RN, NRN, AutoReply"}
+     * @uxon-property priority
+     * @uxon-type [highest,high,normal,low,lowest]
+     * @uxon-default normal
      * 
-     * @param string[]|UxonObject $value
+     * @param string|int $value
      * @return EmailMessage
      */
-    public function setMessageHeaders($value) : EmailMessage
+    public function setPriority($value) : EmailMessage
     {
-        if ($value instanceof UxonObject) {
-            $array  = $value->toArray();
-        } elseif (is_array($value)) {
-            $array = $value;
-        } else {
-            throw new InvalidArgumentException('Invalid email message headers: "' . $value . '" - expecting array or UXON!');
-        }
-        $this->headers = $array;
-        return $this;
-    }
-    
-    /**
-     * Set to TRUE to tell auto-repliers ("email holiday mode") to not reply to this message because it's an automated email
-     * 
-     * @uxon-property suppress_auto_response
-     * @uxon-type boolean
-     * @uxon-default true
-     * 
-     * @param bool $value
-     * @return EmailMessage
-     */
-    public function setSuppressAutoResponse(bool $value) : EmailMessage
-    {
-        if ($value === true) {
-            $this->headers['X-Auto-Response-Suppress'] = 'OOF, DR, RN, NRN, AutoReply';
-        } else {
-            unset ($this->headers['X-Auto-Response-Suppress']);
-        }
+        $this->priority = EmailPriorityDataType::cast($value);
         return $this;
     }
 }
