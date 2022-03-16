@@ -684,80 +684,91 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         }
         
-        // Read the unchanged object from the database
-        $check_sheet = DataSheetFactory::createFromObject($thisObj);
-        foreach ($thisObj->getAttributes() as $attr) {
-            $check_sheet->getColumns()->addFromAttribute($attr);
-        }
-        $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-        $check_sheet->dataRead();
-        $check_column = $check_sheet->getColumns()->getByAttribute($this->getStateAttribute());
-        $check_cnt = count($check_column->getValues());
-        
-        // Check if the state column is present in the sheet, if so get the old value and check
-        // if the transition is allowed, throw an error if not
-        if ($updated_column = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute())) {
-            $update_cnt = count($updated_column->getValues());
-            $error = null;
+        if ($this->hasTransitionRestrictions()) {
             
-            if ($check_cnt == $update_cnt) {
-                // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
-                // ueber Knopf $check_nr == 1, $update_nr == 1
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
-                foreach ($updated_column->getValues() as $row_nr => $updated_val) {
-                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
-                    $from_state = $this->getState($check_val);
+            // Read the unchanged object from the database
+            $check_sheet = DataSheetFactory::createFromObject($thisObj);
+            $check_column = $check_sheet->getColumns()->addFromAttribute($this->getStateAttribute());
+            if ($this->getObject()->hasUidAttribute()) {
+                $check_sheet->getColumns()->addFromUidAttribute();
+            }
+            if ($data_sheet->hasUidColumn(true)) {
+                $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+            } else {
+                $check_sheet->setFilters($data_sheet->getFilters()->copy());
+            }
+            
+            $check_sheet->dataRead();
+            $check_cnt = count($check_column->getValues());
+            
+            // Check if the state column is present in the sheet, if so get the old value and check
+            // if the transition is allowed, throw an error if not
+            if ($updated_column = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute())) {
+                $update_cnt = count($updated_column->getValues());
+                $error = null;
+                
+                if ($check_cnt == $update_cnt) {
+                    // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
+                    // ueber Knopf $check_nr == 1, $update_nr == 1
+                    // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
+                    foreach ($updated_column->getValues() as $row_nr => $updated_val) {
+                        $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
+                        $from_state = $this->getState($check_val);
+                        $to_state = $this->getState($updated_val);
+                        if ($from_state->isTransitionAllowed($to_state) === false) {
+                            $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';
+                            break;
+                        }
+                        foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
+                            if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
+                                $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
+                                break 2;
+                            }
+                        }
+                    }
+                } else if ($check_cnt > 1 && $update_cnt == 1) {
+                    // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
+                    // $check_nr > 1, $update_nr == 1
+                    $updated_val = $updated_column->getValues()[0];
                     $to_state = $this->getState($updated_val);
-                    if ($from_state->isTransitionAllowed($to_state) === false) {
-                        $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';
-                        break;
+                    foreach ($check_column->getValues() as $row_nr => $check_val) {
+                        $from_state = $this->getState($check_val);
+                        if ($from_state->isTransitionAllowed($to_state) === false) {
+                            $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';    
+                            break;
+                        }
                     }
                     foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
                         if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
                             $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
-                            break 2;
+                            break;
                         }
                     }
                 }
-            } else if ($check_cnt > 1 && $update_cnt == 1) {
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
-                // $check_nr > 1, $update_nr == 1
-                $updated_val = $updated_column->getValues()[0];
-                $from_state = $this->getState($check_val);
-                $to_state =$this->getState($updated_val);
-                foreach ($check_column->getValues() as $row_nr => $check_val) {
-                    if ($from_state->isTransitionAllowed($to_state) === false) {
-                        $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';    
-                        break;
-                    }
-                }
-                foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
-                    if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
-                        $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
-                        break;
-                    }
+                
+                if ($error !== null) {
+                    $data_sheet->dataMarkInvalid();
+                    throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $error . '!', '6VC040N');
                 }
             }
             
-            if ($error !== null) {
-                $data_sheet->dataMarkInvalid();
-                throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $error . '!', '6VC040N');
-            }
         }
         
         // Check all the updated attributes for disabled attributes, if a disabled attribute
         // is changed throw an error
-        foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
-            $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
-            $check_state_val = $check_column->getCellValue($check_row_nr);
-            $state = $this->getState($check_state_val);            
-            foreach ($updated_row as $colum_name => $updated_val) {
-                $col = $data_sheet->getColumns()->get($colum_name);
-                if ($col->isAttribute() === true && $state->isAttributeDisabled($col->getAttribute()) === true) {
-                    $check_val = $col->getCellValue($check_row_nr);
-                    if ($updated_val != $check_val) {
-                        $data_sheet->dataMarkInvalid();
-                        throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $attr->getName() . ' (' . $attr->getAliasWithNamespace() . ') is disabled in the current state "' . $state->getName() . '"!', '6VC07QH');
+        if ($this->hasDisabledAttributes()) {
+            foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
+                $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
+                $check_state_val = $check_column->getCellValue($check_row_nr);
+                $state = $this->getState($check_state_val);            
+                foreach ($updated_row as $colum_name => $updated_val) {
+                    $col = $data_sheet->getColumns()->get($colum_name);
+                    if ($col->isAttribute() === true && $state->isAttributeDisabled($col->getAttribute()) === true) {
+                        $check_val = $col->getCellValue($check_row_nr);
+                        if ($updated_val != $check_val) {
+                            $data_sheet->dataMarkInvalid();
+                            throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $col->getAttribute()->__toString() . ' is disabled in the current state "' . $state->getName() . '"!', '6VC07QH');
+                        }
                     }
                 }
             }
@@ -929,5 +940,33 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         return $arr;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasTransitionRestrictions() : bool
+    {
+        foreach ($this->getStates() as $state) {
+            if ($state->hasTransitionRestrictions()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasDisabledAttributes() : bool
+    {
+        foreach ($this->getStates() as $state) {
+            if ($state->hasDisabledAttributes()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
