@@ -470,8 +470,17 @@ class DataSheet implements DataSheetInterface
                     $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
                     $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
                     $this->getSubsheets()->add($subsheet, $relPathToSubsheet->toString());
-                    // add the foreign key to the main query and to this sheet
-                    $query->addAttribute($parentSheetKeyAlias);
+                    // Add the foreign key to the main query
+                    // If the foreign key is calculated, add all attributes required to the query, otherwise just add
+                    // the attribute itself
+                    if (null !== $parentSheetKeyExpr = $this->getMetaObject()->getAttribute($parentSheetKeyAlias)->getCalculationExpression()) {
+                        foreach ($parentSheetKeyExpr->getRequiredAttributes() as $alias) {
+                            $query->addAttribute($alias);
+                        }
+                    } else {
+                        $query->addAttribute($parentSheetKeyAlias);
+                    }
+                    // Also add the foreign key to this sheet
                     // IDEA do we need to add the column to the sheet? This is just useless data...
                     // Additionally it would make trouble when the column has formatters...
                     $this->getColumns()->addFromExpression($parentSheetKeyAlias, null, true);
@@ -499,12 +508,7 @@ class DataSheet implements DataSheetInterface
             }
             
             if ($attribute->hasCalculation()) {
-                $col->setFormatter($attribute->getCalculationExpression());
-                /*if ($aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString())) {
-                    // FIXME #Formulas who should handle the aggregator? Maybe the formula itself?
-                    $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
-                }*/
-                foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
+                foreach ($attribute->getCalculationExpression()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
                         $column = $this->getColumns()->addFromExpression($req, '', true);
                         $this->dataReadAddColumnToQuery($column, $query);
@@ -585,6 +589,10 @@ class DataSheet implements DataSheetInterface
             foreach ($this->getSubsheets() as $subsheet) {
                 // Add filter over parent keys
                 $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
+                // If the foreign key column is calculated, do the calculation first!
+                if (null !== $parentSheetKeyExpr = $parentSheetKeyCol->getAttribute()->getCalculationExpression()) {
+                    $this->setColumnValues($parentSheetKeyCol->getName(), $parentSheetKeyExpr->evaluate($this));
+                }
                 $foreign_keys = $parentSheetKeyCol->getValues(false);
                 if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
@@ -613,8 +621,8 @@ class DataSheet implements DataSheetInterface
                 case $col->getExpressionObj()->isStatic() === true:
                     $expr = $col->getExpressionObj();
                     break;
-                case $col->getFormatter() !== null && $col->getFormatter()->isFormula() === true:
-                    $expr = $col->getFormatter();
+                case $col->isAttribute() && $col->getAttribute()->hasCalculation():
+                    $expr = $col->getAttribute()->getCalculationExpression();
                     break;
                 default:
                     continue 2;

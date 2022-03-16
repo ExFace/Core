@@ -73,18 +73,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @return ExpressionInterface
-     */
-    public function getFormatter();
-
-    /**
-     *
-     * @param ExpressionInterface|string $expression            
-     */
-    public function setFormatter($expression);
-
-    /**
-     *
      * @return AbstractDataType
      */
     public function getDataType();

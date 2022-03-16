@@ -52,9 +52,6 @@ class DataColumn implements DataColumnInterface
     /** @var Formula */
     private $formula = null;
 
-    /** @var ExpressionInterface */
-    private $formatter = null;
-
     function __construct($expression, $name = '', DataSheetInterface $data_sheet)
     {
         $this->data_sheet = $data_sheet;
@@ -197,31 +194,6 @@ class DataColumn implements DataColumnInterface
     public function setHidden($value)
     {
         $this->hidden = BooleanDataType::cast($value);
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getFormatter()
-     */
-    public function getFormatter()
-    {
-        return $this->formatter;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormatter()
-     */
-    public function setFormatter($expression)
-    {
-        if (! ($expression instanceof ExpressionInterface)) {
-            $expression = $this->getWorkbench()->model()->parseExpression($expression);
-        }
-        $this->formatter = $expression;
         return $this;
     }
 
