@@ -69,6 +69,21 @@
             "DATA_CONNECTION_DEFAULT": "0x11ecae3bb921a636ae3b025041000001",
             "DESCRIPTION": "",
             "NAME": "In-App notifications"
+        },
+        {
+            "CREATED_ON": "2022-03-16 12:41:43",
+            "MODIFIED_ON": "2022-03-16 12:41:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec884b0dc484e8884b747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTE_FLAG_DEFAULT": 0,
+            "MESSAGE_PROTOTYPE": "exface\/Core\/Communication\/Messages\/EmailMessage.php",
+            "MESSAGE_DEFAULT_UXON": null,
+            "ALIAS": "EMAIL",
+            "DATA_CONNECTION_DEFAULT": "",
+            "DESCRIPTION": "",
+            "NAME": "Email notifications"
         }
     ],
     "totals_rows": [],
