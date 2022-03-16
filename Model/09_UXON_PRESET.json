@@ -4783,7 +4783,7 @@
         },
         {
             "CREATED_ON": "2022-03-16 11:48:05",
-            "MODIFIED_ON": "2022-03-16 11:49:10",
+            "MODIFIED_ON": "2022-03-16 17:08:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca7948fa58d52a794747827435ce5",
@@ -4793,7 +4793,8 @@
             "PROTOTYPE": "exface\/Core\/DataConnectors\/SmtpConnector.php",
             "UXON": {
                 "host": "",
-                "port": 25
+                "port": 25,
+                "from": ""
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
@@ -4801,7 +4802,7 @@
         },
         {
             "CREATED_ON": "2022-03-16 11:49:03",
-            "MODIFIED_ON": "2022-03-16 11:49:03",
+            "MODIFIED_ON": "2022-03-16 17:09:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca153b1cc966ea153747827435ce5",
@@ -4814,7 +4815,8 @@
                 "port": 587,
                 "tls": true,
                 "user": "",
-                "password": ""
+                "password": "",
+                "from": ""
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",

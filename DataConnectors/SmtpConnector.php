@@ -416,6 +416,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
      *
      * @uxon-property from
      * @uxon-type string
+     * @uxon-required true
      *
      * @param string $value
      * @return EmailMessage
