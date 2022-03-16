@@ -424,6 +424,7 @@
 		        var timeParsed = false;
 		        var timeValid = false;
 		        var output = null;
+		        var iMsPos, iMs;
 		        
 		        if (sTime === '' || sTime === null) {
 					return output;
@@ -439,8 +440,16 @@
 						}
 					}
 				}
+				
+				iMsPos = sTime.lastIndexOf('.');
+				if (iMsPos !== -1) {
+					iMs = parseInt(sTime.substring(iMsPos + 1));
+					if (! isNaN(iMs)) {
+						sTime = sTime.substring(0, iMsPos);
+					}
+				}
 		        
-		     // HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
+		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
 		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
 		        	var hh, mm, ss, am_pm;
 		            hh = Number(match[1]);
@@ -495,9 +504,9 @@
 			format: function(sTime, sICUFormat) {
 				if (sTime !== null && sTime !== undefined && sTime !== '') {
 					if (sICUFormat === undefined) {
-						return moment('1970-01-01 ' + sTime).format('LTS');
+						return moment(new Date('1970-01-01 ' + sTime)).format('LTS');
 					} else {
-						return moment('1970-01-01 ' + sTime).formatICU(sICUFormat);
+						return moment(new Date('1970-01-01 ' + sTime)).formatICU(sICUFormat);
 					}
 				}
 				return sTime;
