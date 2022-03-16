@@ -101,10 +101,6 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                         // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
                         // be in the wrong direction here
                         $colCopy->setExpression($col->getExpressionObj()->withRelationPath($relationPath));
-                        // Update the formatter
-                        if ($col->getFormatter()) {
-                            $colCopy->setFormatter($col->getFormatter()->withRelationPath($relationPath));
-                        }
                         // Add the column, but do not transfer values.
                         // This won't be possible anyway, as $colCopy currently still may belong to another sheet and we changed
                         // it's name, so even if the original $col had values, they won't be associated with the modified $colCopy!

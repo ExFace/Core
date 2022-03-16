@@ -275,7 +275,7 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormatter()
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCalculation()
      */
     public function setCalculation(string $expressionString) : MetaAttributeInterface
     {
