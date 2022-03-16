@@ -61,6 +61,11 @@ class ShowMassEditDialog extends ShowDialog
      */
     protected function enhanceDialogWidget(Dialog $dialog)
     {
+        if ($dialog->countWidgetsVisible() === 1) {
+            $dialog->setHeight('auto');
+            $dialog->setWidth(1);
+        }
+        
         // Add a message widget that displays what exactly we are editing here
         $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
         $this->setAffectedCounterWidget($counter_widget);
@@ -105,11 +110,11 @@ class ShowMassEditDialog extends ShowDialog
                 $filter_conditions = array_merge($input_data->getFilters()->getConditions(), $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($input_data->getMetaObject()));
                 if (is_array($filter_conditions) && count($filter_conditions) > 0) {
                     foreach ($filter_conditions as $cond) {
-                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' (' . $cond->getExpression()->getAttribute()->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();
+                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' ' . $cond->getComparator() . ' ' . $cond->getValue();
                     }
-                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER', array(
-                        '%filters%' => implode($filters, ' AND ')
-                    ));
+                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER', [
+                        '%filters%' => implode(' AND ', $filters)
+                    ]);
                 } else {
                     return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_ALL');
                 }
