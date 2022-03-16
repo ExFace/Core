@@ -284,6 +284,14 @@ JS;
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
         onbeforechange: function(instance, cell, x, y, value) {
+            var fnParser = instance.exfWidget.getColumnModel(x).parser;
+            var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
+            if (fnParser) {
+                value = fnParser(value);
+                if (fnFormatter) {
+                    value = fnFormatter(value);
+                }
+            }
             return instance.exfWidget.validateCell(cell, x, y, value);
         },
         onchange: function(instance, cell, col, row, value, oldValue) {
