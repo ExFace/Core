@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-02-14 12:35:46",
+            "MODIFIED_ON": "2022-03-16 11:51:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x33380000000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -102,7 +102,7 @@
                     {
                         "type": "info",
                         "caption": "Storing passwords and keys securely",
-                        "text": "You can store passwords and keys here to make the connection usable by anybody who has access to it's objects and corresponding UI pages. However, any information entered here will be stored unencrypted, remain visible to all admins and will be exported as part of the apps model. Alternatively you can use the encrypted credential storage in `Administration > Users & Security > Credential Storage` - in this case you can create multiple credential sets for each connection and assign them to users manually. Last but not least, you can omit sensitive information completely to show a login promt for every new user trying to access data through this connection (this only work for connections that support authentication!)."
+                        "text": "You can store passwords and keys here to make the connection usable by anybody who has access to it's objects and corresponding UI pages. This configuration is stored encrypted, but is visible to administrators. \n\nAlternatively you can use the user-specific credential storage in `Administration > Users & Security > Credential Storage` - in this case you can create multiple credential sets for a single connection and assign them to users explicitly. \n\nLast but not least, you can omit credentials (passwords, tokens, etc.) completely to show a login promt for every new user trying to access data through this connection - this only work for connections that support authentication, however!"
                     }
                 ],
                 "widgets": [
