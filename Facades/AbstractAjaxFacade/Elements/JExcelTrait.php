@@ -25,7 +25,6 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Widgets\Input;
 use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
@@ -480,7 +479,7 @@ JS;
                 
                 aData.push(aRow);
             });
-        
+
             return aData;
         }
     };
@@ -1219,9 +1218,20 @@ JS;
      */
     protected function needsDataFormatting(DataColumn $col) : bool
     {
-        $editorConfigured = $this->buildJsJExcelColumnEditorOptions($col) !== null;
-        $formattingDisabled = $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting();
-        return ! $formattingDisabled && (($col->getDataType() instanceof NumberDataType) || ! $editorConfigured);
+        switch (true) {
+            // No formatting if explicitly disabled
+            case $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting():
+                return false;
+            // No formatting for dropdowns (need raw values here!)
+            case $col->getCellWidget() instanceof InputSelect:
+                return false;
+            // Force formatting for numbers and columns without special editors
+            case $col->getDataType() instanceof NumberDataType:
+            case $this->buildJsJExcelColumnEditorOptions($col) === null:
+                return true;
+        }
+        // No formatting by default
+        return false;
     }
     
     /**
