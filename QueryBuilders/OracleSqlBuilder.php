@@ -189,7 +189,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // Check if we need some UIDs from the core tables to join the enrichments afterwards
                 if ($first_rel = $qpart->getFirstRelation()) {
                     if ($first_rel->isForwardRelation()) {
-                        $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAlias())->excludeFromResult(true);
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                         $core_selects[$this->buildSqlDataAddress($first_rel_qpart->getAttribute())] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }

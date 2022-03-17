@@ -152,7 +152,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     $first_rel = false;
                     if (! empty($rels)) {
                         $first_rel = reset($rels);
-                        $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier());
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAliasWithModifier())->excludeFromResult(true);
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                         $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
