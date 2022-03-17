@@ -30,16 +30,16 @@ Replace `{TABLE_NAME}` and `{COLUMN_NAME}` with the name of the respective table
 ### Add columns - nullable
 
 ```
-IF COL_LENGTH('dbo.{COLUMN_NAME}','{TABLE_NAME}') IS NULL
-ALTER TABLE "dbo"."{COLUMN_NAME}"
+IF COL_LENGTH('dbo.{TABLE_NAME}','{COLUMN_NAME}') IS NULL
+ALTER TABLE "dbo"."{TABLE_NAME}"
 	ADD "{COLUMN_NAME}" INT NULL;
 ```
 
 ### Add columns - not nullable, with default values
 
 ```
-IF COL_LENGTH('dbo.{COLUMN_NAME}','{TABLE_NAME}') IS NULL
-ALTER TABLE "dbo"."{COLUMN_NAME}"
+IF COL_LENGTH('dbo.{TABLE_NAME}','{COLUMN_NAME}') IS NULL
+ALTER TABLE "dbo"."{TABLE_NAME}"
 	ADD "{COLUMN_NAME}" INT NOT NULL DEFAULT 0;
 ```
 
@@ -84,4 +84,13 @@ BEGIN
 	END
 	EXEC(N'ALTER TABLE ['+@schema+'].['+@table+'] DROP COLUMN ['+@column+']')
 END
+```
+
+### Add/Remove multiple columns
+
+```
+ALTER TABLE [dbo].[{TABLE_NAME}]
+	ADD 	[{COLUMN_NAME_1}] NVARCHAR(max) NULL,
+			[{COLUMN_NAME_2}] NVARCHAR(max) NULL;
+
 ```
