@@ -410,6 +410,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     private $customFilterSqlPredicates = [];
     
+    private $dirtyFlag = false;
+    
     public function getSelectDistinct()
     {
         return $this->select_distinct;
@@ -452,7 +454,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $query = $this->buildSqlQuerySelect();
+        // Run the query builder logic. See if changes to the query occur while the query is built (e.g. 
+        // query parts are added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than 5 times to avoid infinite recursion
+        $buildAttempts = 0;
+        do {
+            $this->setDirty(false);
+            $query = $this->buildSqlQuerySelect();
+            $buildAttempts++;
+        } while ($this->isDirty() && $buildAttempts <= 5);
+        
         $q = new SqlDataQuery();
         $q->setSql($query);
         // first do the main query
@@ -523,6 +534,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             foreach ($this->getAttributes() as $qpart) {
+                if (($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true) {
+                    $colKey = $qpart->getColumnKey();
+                    foreach ($rows as $nr => $row) {
+                        unset ($rows[$nr][$colKey]);
+                    }
+                }
                 if ($qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface) {
                     foreach ($rows as $nr => $row) {
                         $compValues = [];
@@ -1081,14 +1098,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * Another idea might be to enforce grouping after every reverse relation. Don't know, how it would look like in SQL though...
      *
      * @param QueryPart $qpart
-     * @param string $select_from
-     * @param string $select_column
-     * @param string $select_as
-     *            set to false or '' to remove the "AS xxx" part completely
-     * @param boolean|AggregatorInterface $aggregator
-     *            set to FALSE to remove grouping completely
-     * @param boolean $make_groupable
-     *            set to TRUE to force the result to be compatible with GROUP BY
+     * @param string|NULL $select_from
+     * @param string|NULL $select_column
+     * @param string|NULL|bool $select_as set to false or '' to remove the "AS xxx" part completely
+     * @param AggregatorInterface|bool $aggregator set to FALSE to remove grouping completely
+     * @param bool $make_groupable set to TRUE to force the result to be compatible with GROUP BY
+     * 
      * @return string
      */
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
@@ -2331,6 +2346,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $related_to_aggregator;
     }
     
+    /**
+     * 
+     * @param string $data_address
+     * @param RelationPath $relation_path
+     * @param array $static_placeholders
+     * @param string $select_from
+     * @throws QueryBuilderException
+     * @return mixed
+     */
     protected function replacePlaceholdersInSqlAddress($data_address, RelationPath $relation_path = null, array $static_placeholders = null, $select_from = null)
     {
         $original_data_address = $data_address;
@@ -2345,25 +2369,31 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $prefix = $relation_path->toString();
         }
         
+        $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
+            $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
+            // If the placeholder is not part of the query already, create a new query part.
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
-                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, null, DataColumn::sanitizeColumnName($string));
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, null, null);
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }
-                // Throw an error if the placeholder contains a relation path (relative to the object of the
-                // attribute, where it was used.
-                // TODO it would be really cool to support relations in placeholders, but how to add corresponding
-                // joins? An attempt was made in feature/sql-placeholders-with-relation, but without ultimate success.
-                // Alternatively we could add the query parts to the query and restart it's generation...
-                if ($relation_path !== null && ! $relation_path->getEndObject()->getAttribute($ph)->getRelationPath()->isEmpty()){
-                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": placeholders for related attributes currently not supported in SQL query builders unless all required attributes are explicitly selected in the query too.');
+                // If the new query part includes relations (= requires joins), add it to the query and mark the query
+                // as dirty to force recalculation of the SQL. In the next SQL build attempt, the placeholder will already
+                // be part of the query and thus will also make sure, that all JOINs are there.
+                if ($ph_has_relation){
+                    $this->setDirty(true);
+                    $this->addQueryPart($qpart->excludeFromResult(true));
                 }
             }
-            $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
+            if ($ph_has_relation) {
+                $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, null, null, false), $data_address);
+            } else {
+                $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
+            }
         }
         return $data_address;
     }
@@ -2682,5 +2712,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function getSqlDialects() : array
     {
         return ['OTHER'];
+    }
+    
+    protected function setDirty(bool $trueOrFalse) : AbstractSqlBuilder
+    {
+        $this->dirtyFlag = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function isDirty() : bool
+    {
+        return $this->dirtyFlag;
     }
 }
