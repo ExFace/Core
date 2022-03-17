@@ -249,8 +249,10 @@ class MetaModelInstaller extends AbstractAppInstaller
         $package_props = array(
             'app_uid' => $app->getUid(),
             'app_alias' => $app->getAliasWithNamespace(),
+            /* TODO remove hash and timestamp completely as they mainly cause merge conflicts
+             * and their value is not proportional.
             'model_md5' => md5($model_string),
-            'model_timestamp' => $last_modification_time
+            'model_timestamp' => $last_modification_time*/
         );
         
         $packageManager = $this->getWorkbench()->getApp("axenox.PackageManager");
