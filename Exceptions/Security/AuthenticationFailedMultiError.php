@@ -4,6 +4,7 @@ namespace exface\Core\Exceptions\Security;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * Exception thrown if a multi-provider authentication attempt fails
@@ -68,5 +69,15 @@ class AuthenticationFailedMultiError extends RuntimeException implements Authent
     public function getNestedAuthenticatorErrors() : array
     {
         return $this->authErrors;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface::getAuthenticationToken()
+     */
+    public function getAuthenticationToken(): ?AuthenticationTokenInterface
+    {
+        return null;
     }
 }
