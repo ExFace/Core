@@ -4189,7 +4189,7 @@
         },
         {
             "CREATED_ON": "2021-05-05 11:41:40",
-            "MODIFIED_ON": "2021-05-05 11:49:35",
+            "MODIFIED_ON": "2022-03-18 16:50:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8e9b1808dd368e9b025041000001",
@@ -4198,7 +4198,7 @@
             "DESCRIPTION": "If you have a mapping between an object and predefined categories, use this preset to create a dropdown-selector inside a widget based on the main object. Since the `InputComboTabel` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the category-object.\n\nUsing an `InputComboTable` allows to display additional information about each category like a description. For simpler objects like tags also consider `InputTags`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/InputComboTable.php",
             "UXON": {
-                "widget_type": "InputTags",
+                "widget_type": "InputComboTable",
                 "object_alias": "\/\/ REPLACE WITH ALIAS OF MAPPING-OBJECT",
                 "attribute_alias": "\/\/ REPLACE WITH RELATION FROM MAPPING TO TAG",
                 "required": false,
@@ -4820,6 +4820,192 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-17 12:03:04",
+            "MODIFIED_ON": "2022-03-17 12:10:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb3eed1f6b8f4b3ee747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Change status with confirmation and status log",
+            "DESCRIPTION": "This action shows a confirmation dialog for a status change on a document. The dialog has an info message explaining what will happen and an optional comment field. If the change is confirmed, an action chain is called, that will change the status of the document object and add an entry to a status log object, so that all status changes are tracked.\n\nNote, that the value of the comment field is passed through the action chain in a non-attribute column \"_Comment\", that is mapped to the actual comment-attribute only once the CreateData action for the status log is really called.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "\/\/ REPLACE with document object alias",
+                "icon": "",
+                "dialog": {
+                    "height": "auto",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "maximized": false,
+                    "caption": "",
+                    "widgets": [
+                        {
+                            "widget_type": "Message",
+                            "type": "info",
+                            "text": "\/\/ REPLACE with description of what the status change will actually do"
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "Kommentar",
+                            "widgets": [
+                                {
+                                    "data_column_name": "_Comment",
+                                    "widget_type": "InputText",
+                                    "caption": "Grund",
+                                    "hide_caption": true
+                                }
+                            ]
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "result_message_text": "",
+                                "alias": "exface.Core.ActionChain",
+                                "actions": [
+                                    {
+                                        "alias": "exface.Core.UpdateData",
+                                        "object_alias": "\/\/ REPLACE with document object alias",
+                                        "input_mapper": {
+                                            "column_to_column_mappings": [
+                                                {
+                                                    "from": "\/\/ REPLACE with new status value",
+                                                    "to": "\/\/ REPLACE with status attribute alias"
+                                                },
+                                                {
+                                                    "from": "_Comment",
+                                                    "to": "_Comment"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "alias": "exface.Core.CreateData",
+                                        "object_alias": "\/\/ REPLACE with document object alias",
+                                        "input_mapper": {
+                                            "from_object_alias": "\/\/ REPLACE with document object alias",
+                                            "to_object_alias": "\/\/ REPLACE with status log object alias",
+                                            "column_to_column_mappings": [
+                                                {
+                                                    "from": "\/\/ REPLACE with document UID attribute alias",
+                                                    "to": "\/\/ REPLACE with status log document relation alias"
+                                                },
+                                                {
+                                                    "from": "\/\/ REPLACE with status attribute alias",
+                                                    "to": "\/\/ REPLACE with status attribute alias"
+                                                },
+                                                {
+                                                    "from": "_Comment",
+                                                    "to": "\/\/ REPLACE with status log comment attribute alias"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-17 12:10:17",
+            "MODIFIED_ON": "2022-03-17 12:10:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8c63d3b78e108c63747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Change atribute with confirmation dialog",
+            "DESCRIPTION": "This action shows a confirmation dialog before changing some attribute of its object. Such dialogs are often used for status changes, cancellation or similar. A confirmation dialog often includes some additional information about the object - like the label attribute included here.\n\nThe actual change is done via `input_mapper` in the action triggered by the primary button of the dialog. ",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
+                "dialog": {
+                    "height": "auto",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "maximized": false,
+                    "caption": "",
+                    "widgets": [
+                        {
+                            "widget_type": "Message",
+                            "type": "info",
+                            "text": "\/\/ REPLACE with description of what the change will actually do"
+                        },
+                        {
+                            "attribute_alias": "LABEL",
+                            "display_only": true
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "alias": "exface.Core.UpdateData",
+                                "input_mapper": {
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "\/\/ REPLACE with new value",
+                                            "to": "\/\/ REPLACE with target attribute alias"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-18 18:02:13",
+            "MODIFIED_ON": "2022-03-18 18:02:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca879286681a0a879025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Show large dialog",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": "",
+                "input_rows_max": "",
+                "dialog": {
+                    "header": {
+                        "title_attribute_alias": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    "widgets": [
+                        {
+                            "": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
         }
     ],
