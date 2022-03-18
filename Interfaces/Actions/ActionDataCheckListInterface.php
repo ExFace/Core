@@ -7,6 +7,11 @@ use exface\Core\Interfaces\EntityListInterface;
 /**
  *
  * @author Andrej Kabachnik
+ * 
+ * @method DataCheckInterface get()
+ * @method DataCheckInterface getFirst()
+ * @method DataCheckInterface[] getAll()
+ * @method DataCheckInterface|DataCheckInterface[] getIterator()
  *        
  */
 interface ActionDataCheckListInterface extends EntityListInterface

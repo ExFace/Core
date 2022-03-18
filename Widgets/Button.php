@@ -23,6 +23,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -598,5 +601,78 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         $this->inputDataUxon = $value;
         return $this;
+    }
+    
+    /**
+     * The button will attempt generate its disabled_if automatically from action input_invalid_if
+     * 
+     * @see \exface\Core\Widgets\AbstractWidget::getDisabledIf()
+     */
+    public function getDisabledIf() : ?ConditionalProperty
+    {
+        // If there is a disabled_if already, use it
+        $ownProperty = parent::getDisabledIf();
+        if ($ownProperty !== null) {
+            return $ownProperty;
+        }
+        // Otherwise see if we can generate one from the action
+        if (! $this->hasAction()) {
+            return null;
+        }
+        
+        // Currently this will only work if there is exactly one input check
+        // applicable to the input object
+        $inputWidget = $this->getInputWidget();
+        $inputWidgetObject = $inputWidget->getMetaObject();
+        $check = null;
+        /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
+        foreach ($this->getAction()->getInputChecks() as $c) {
+            if ($c->isApplicableToObject($inputWidgetObject)) {
+                if ($check === null) {
+                    $check = $c;
+                } else {
+                    return null;
+                }
+            }
+        }
+        if ($check === null) {
+            return null;
+        }
+        
+        // If we have found a check, we need to make sure, the input widget will
+        // be able to supply enough data.
+        /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
+        $condGrp = $check->getConditionGroup($this->getMetaObject());
+        if (! empty($condGrp->getNestedGroups())) {
+            return null;
+        }
+        switch (true) {
+            case $inputWidget instanceof iShowData:
+                $dataWidget = $inputWidget;
+                break;
+            case $inputWidget instanceof iUseData:
+                $dataWidget = $inputWidget->getData();
+                break;
+            default:
+                return null;
+        }
+        $uxon = new UxonObject([
+            'operator' => $condGrp->getOperator()
+        ]);
+        // The data widget will be able to supply required data if each condition compares
+        // an existing column with a scalar value
+        foreach ($condGrp->getConditions() as $cond) {
+            if (! $cond->getExpression()->isMetaAttribute() || ! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
+                return null;
+            }
+            $uxon->appendToProperty('conditions', new UxonObject([
+                "value_left" => "=~input!" . $col->getDataColumnName(),
+                "comparator" => $cond->getComparator(),
+                "value_right" => $cond->getValue()
+            ]));
+        }
+        $this->setDisabledIf($uxon);
+        
+        return parent::getDisabledIf();
     }
 }
