@@ -22,6 +22,8 @@ class Text extends Display implements iShowText
     private $size = null;
 
     private $style = null;
+    
+    private $multiLine = true;
 
     public function getText()
     {
@@ -116,5 +118,30 @@ class Text extends Display implements iShowText
         }
         return $uxon;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isMultiLine() : bool
+    {
+        return $this->multiLine;
+    }
+    
+    /**
+     * Set to FALSE to force a single-line text widget
+     * 
+     * @uxon-property multi_line
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * 
+     * @param bool $value
+     * @return Text
+     */
+    public function setMultiLine(bool $value) : Text
+    {
+        $this->multiLine = $value;
+        return $this;
+    }
 }
-?>

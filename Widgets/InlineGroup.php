@@ -208,7 +208,8 @@ class InlineGroup extends Container
             "widget_type" => "Text",
             "text" => $this->getSeparator(),
             "align" => "center",
-            "width" => $this->getSeparatorWidth()
+            "width" => $this->getSeparatorWidth(),
+            "multi_line" => false
         ]);
     }
     
