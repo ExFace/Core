@@ -26,6 +26,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Events\Widget\OnWidgetDataPreparedEvent;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -90,7 +91,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function getAction()
     {
         if ($this->action === null) {
-            if ($this->getActionAlias()) {
+            if ($this->action_alias !== null) {
                 $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
                 if ($this->action_uxon !== null) {
                     $this->action->importUxonObject($this->action_uxon);
@@ -109,7 +110,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function hasAction() : bool
     {
-        return $this->getAction() ? true : false;
+        return $this->action !== null || $this->action_alias !== null || $this->action_uxon !== null;
     }
 
     /**
@@ -153,7 +154,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // If the action has already been instantiated, return it's qualified alias. This is mostly the same as the alias in $this->action_alias
         // but they may differ in case ($this->action_alias is entered by the user!). In addition this approach would allow to switch the
         // action of the button programmatically, still getting the right alias here.
-        if ($this->action) {
+        if ($this->action !== null) {
             return $this->getAction()->getAliasWithNamespace();
         }
         return $this->action_alias;
@@ -620,13 +621,27 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return null;
         }
         
+        if (null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
+            $this->setDisabledIf($uxon);
+        }
+        
+        return parent::getDisabledIf();
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @return UxonObject|NULL
+     */
+    protected function getDisabledIfFromAction(ActionInterface $action) : ?UxonObject
+    {
         // Currently this will only work if there is exactly one input check
         // applicable to the input object
         $inputWidget = $this->getInputWidget();
         $inputWidgetObject = $inputWidget->getMetaObject();
         $check = null;
         /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($this->getAction()->getInputChecks() as $c) {
+        foreach ($action->getInputChecks() as $c) {
             if ($c->isApplicableToObject($inputWidgetObject)) {
                 if ($check === null) {
                     $check = $c;
@@ -662,8 +677,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
-            if (! $cond->getExpression()->isMetaAttribute() || ! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
+            if (! $cond->getExpression()->isMetaAttribute()) {
                 return null;
+            }
+            if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
+                $col = $dataWidget->createColumnFromAttribute($cond->getExpression()->getAttribute());
+                $dataWidget->addColumn($col, null, true);
             }
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
@@ -671,8 +690,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 "value_right" => $cond->getValue()
             ]));
         }
-        $this->setDisabledIf($uxon);
-        
-        return parent::getDisabledIf();
+        return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        if ($this->hasAction() && parent::getDisabledIf() === null) {
+            $this->getDisabledIf();
+        }
+        return $data_sheet;
     }
 }
