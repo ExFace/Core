@@ -124,7 +124,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param string $operator
      * @return ConditionGroupInterface
      */
-    public function createForObject(MetaObjectInterface $object, string $operator) : ConditionGroupInterface
+    public static function createForObject(MetaObjectInterface $object, string $operator) : ConditionGroupInterface
     {
         return static::createEmpty($object->getWorkbench(), $operator, $object);
     }
@@ -134,7 +134,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param MetaObjectInterface $object
      * @return ConditionGroupInterface
      */
-    public function createAND(MetaObjectInterface $object) : ConditionGroupInterface
+    public static function createAND(MetaObjectInterface $object) : ConditionGroupInterface
     {
         return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_AND, $object);
     }
@@ -144,7 +144,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param MetaObjectInterface $object
      * @return ConditionGroupInterface
      */
-    public function createOR(MetaObjectInterface $object) : ConditionGroupInterface
+    public static function createOR(MetaObjectInterface $object) : ConditionGroupInterface
     {
         return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_OR, $object);
     }
@@ -154,7 +154,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param MetaObjectInterface $object
      * @return ConditionGroupInterface
      */
-    public function createXOR(MetaObjectInterface $object) : ConditionGroupInterface
+    public static function createXOR(MetaObjectInterface $object) : ConditionGroupInterface
     {
         return static::createEmpty($object->getWorkbench(), EXF_LOGICAL_XOR, $object);
     }
