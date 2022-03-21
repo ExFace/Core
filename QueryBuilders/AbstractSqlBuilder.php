@@ -657,11 +657,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $values[$row][$column] = $insert_sql;
                 
                 if ($before_each_insert_sql) {
-                    $before_each_insert_sqls[$row] = $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                    $before_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
                 }
                 
                 if ($after_each_insert_sql) {
-                    $after_each_insert_sqls[$row] = $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                    $after_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
                 }
             }
         }
