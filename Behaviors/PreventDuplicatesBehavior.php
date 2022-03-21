@@ -146,7 +146,6 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         $eventSheet = $event->getDataSheet();
-        //$eventSheet->getColumns()->set
         $object = $eventSheet->getMetaObject();        
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not extended from it.
         if (! $object->isExactly($this->getObject())) {
