@@ -59,6 +59,35 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2022-03-21 15:57:29",
+            "MODIFIED_ON": "2022-03-21 16:06:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec87ff3af4d3ac87ff025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "CONFIG_UXON": {
+                "compare_attributes": [
+                    "OBJECT",
+                    "LABELFLAG"
+                ],
+                "compare_with_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "LABELFLAG",
+                            "comparator": "==",
+                            "value": 1
+                        }
+                    ]
+                },
+                "duplicate_error_code": "73A6BVD"
+            },
+            "OBJECT": "0x32350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Only one label per object",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
