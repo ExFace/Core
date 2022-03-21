@@ -519,9 +519,9 @@ class Condition implements ConditionInterface
         }
         switch ($comparator) {
             case ComparatorDataType::IS:
-                return $rightVal === null || mb_stripos($leftVal, $rightVal) !== false;
+                return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
             case ComparatorDataType::IS_NOT:
-                return mb_stripos($leftVal, $rightVal ?? '') === false;
+                return mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) === false;
             case ComparatorDataType::EQUALS:
                 return $leftVal === $rightVal;
             case ComparatorDataType::EQUALS_NOT:
