@@ -20,10 +20,8 @@ interface iShowData extends iHaveColumns, iHaveFilters, iHaveConfigurator
      * Set to TRUE to make the table editable or add a column with an editor.
      * FALSE by default.
      *
-     * @uxon-property editable
-     * @uxon-type boolean
-     *
-     * @return \exface\Core\Widgets\Data
+     * @param bool $value
+     * @return iShowData
      */
-    public function setEditable($value = true) : iShowData;
+    public function setEditable(bool $value = true) : iShowData;
 }

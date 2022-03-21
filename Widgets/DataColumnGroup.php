@@ -48,7 +48,13 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             $parent = $this->getParent();
             if ($parent instanceof iShowData) {
                 $parent->setEditable(true);
-                $parent->addColumnsForSystemAttributes();
+                // Make sure the parent includes are all system columns as they will surely
+                // be needed when passing the data to the saving-action
+                // BUT: do not add system columns if we are in the process of adding one
+                // right now as this would result in an infinite loop
+                if (! ($column->isBoundToAttribute() && $column->getAttribute()->isSystem())) {
+                    $parent->addColumnsForSystemAttributes();
+                }
                 // If an attribute of a related object should be editable, we need it's system attributes as columns -
                 // that is, at least a column with the UID of the related object, but maybe also some columns needed for
                 // the behaviors of the related object
@@ -431,9 +437,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * @param bool|string $trueOrFalse
      * @return DataColumn
      */
-    public function setEditable($trueOrFalse) : DataColumnGroup
+    public function setEditable(bool $trueOrFalse) : DataColumnGroup
     {
-        $this->editable = BooleanDataType::cast($trueOrFalse);
+        $this->editable = $trueOrFalse;
         if ($this->editable === true && $this->getDataWidget() instanceof iShowData) {
             $this->getDataWidget()->setEditable(true);
         }
