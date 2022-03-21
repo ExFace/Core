@@ -236,7 +236,7 @@ JS;
                 "{$col->getDataColumnName()}": {
                     dataColumnName: "{$col->getDataColumnName()}",
                     caption: {$this->escapeString($col->getCaption())},
-                    tooltip: {$this->escapeString($col->getHint())},
+                    tooltip: {$this->escapeString($col->getHint() ?? '')},
                     parser: {$parserJs},
                     formatter: {$formatterJs},
                     validator: {$validatorJs},
