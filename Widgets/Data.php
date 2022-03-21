@@ -145,6 +145,12 @@ class Data
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
+        if ($this->hasButtons()) {
+            foreach ($this->getButtons() as $btn) {
+                $data_sheet = $btn->prepareDataSheetToRead($data_sheet);
+            }
+        }
+        
         // Columns & Totals
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
