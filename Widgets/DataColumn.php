@@ -404,9 +404,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\DataColumn
      */
-    public function setEditable($true_or_false)
+    public function setEditable(bool $true_or_false) : DataColumn
     {
-        $this->editable = BooleanDataType::cast($true_or_false);
+        $this->editable = $true_or_false;
         if ($this->editable === true) {
             $this->getDataColumnGroup()->setEditable(true);
         }

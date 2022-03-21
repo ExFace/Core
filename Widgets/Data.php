@@ -971,9 +971,9 @@ class Data
      * 
      * @see \exface\Core\Interfaces\Widgets\iShowData::setEditable()
      */
-    public function setEditable($value = true) : iShowData
+    public function setEditable(bool $value = true) : iShowData
     {
-        $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->is_editable = $value;
         return $this;
     }
     
