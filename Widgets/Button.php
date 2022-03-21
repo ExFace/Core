@@ -26,7 +26,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
-use exface\Core\Events\Widget\OnWidgetDataPreparedEvent;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -682,7 +681,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             }
             if (! $col = $dataWidget->getColumnByAttributeAlias($cond->getExpression()->__toString())) {
                 $col = $dataWidget->createColumnFromAttribute($cond->getExpression()->getAttribute());
-                $dataWidget->addColumn($col, null, true);
+                $col->setHidden(true);
+                $dataWidget->addColumn($col);
             }
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
