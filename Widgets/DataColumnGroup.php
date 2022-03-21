@@ -9,7 +9,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 
