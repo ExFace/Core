@@ -1270,7 +1270,7 @@ JS;
      */
     public function buildJsDestroy() : string
     {
-        return "jexcel.destroy({$this->buildJsJqueryElement()}[0], true); $('.exf-partof-{$this->getId()}').remove();";
+        return "jexcel.destroy({$this->buildJsJqueryElement()}[0], false); $('.exf-partof-{$this->getId()}').remove();";
     }
     
     /**
