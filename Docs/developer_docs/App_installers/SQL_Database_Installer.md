@@ -104,6 +104,23 @@ ALTER TABLE tablename
 	DROP columnname4;
 ```
 
+### Batch delimiters
+
+Each migration script (UP or DOWN) is executed as a single batch by default. Some database engines allow to control batch boundaries by using special keywords (e.g. `GO` in Microsoft SQL). You can also set a custom batch delimiter for a specific script using the `-- BATCH-DELIMITER` keyword. In the following example, a semicolon `;` followed by a line break is used as batch delimiter in the UP-script, so the `INSERT` statements will be executed separately. In the DOWN-script they will be executed as a single multi-statement query.
+
+The batch delimiter can either be a simple string or a regular expression.
+
+```
+-- UP
+-- BATCH-DELIMITER /;\R/
+INSERT INTO ...;
+INSERT INTO ...;
+
+-- DOWN
+INSERT INTO ...;
+INSERT INTO ...;
+```
+
 ## <a name="config"></a>Configuration options
 
 By default, this installer offers the following configuration options to control it's behavior on a specific installation. These options can be added to the config of the app being installed.
@@ -116,14 +133,9 @@ all SQL-installers.
 		
 ## <a name="skipping"></a>Skipping Migrations
 
-There are two options to skip migrations during installation or roll back already performed and still applied migrations.
+To skip a failed migration, find it in the migration log in `Administration > Logs` and disable it.
 
-First option is to just delete the `.sql` files of the migrations you want to skip/rollback in the folder.
-
-Second option is to keep the files in the folders and tell the installer what files it should skip.  
-To do so create, if not already existing, a `config` folder in the base folder of the App and in that folder create, if not already existing, a config `.json` file. The file needs to be named like `%vendor%.%AppName%.config.json` where the App Name needs to be without spaces. So for an App called `Demo MES` with the vendor `powerui` the config file would be named `powerui.DemoMES.config.json`. 
-In this file include the option `"INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS":` and in square brackets, in quotation marks, separated by commas add the file names of the migrations you want to skip or rollback. The file name needs to include the `.sql` ending but not the order structure.  
-Example for two migration files that should be skipped/rolled back:
+To skip a migration, that had not been attempted yet, add the option `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` to the local configuration file of the app being installed and place the migration names in this array. Like this:
 
 ```
 {
@@ -134,7 +146,7 @@ Example for two migration files that should be skipped/rolled back:
 }	
 ```
 
-It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption`. 
+It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption()`. 
 
 ## <a name="demodata"></a>Installing demo data
 

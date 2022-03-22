@@ -1,6 +1,6 @@
 IF OBJECT_ID('dbo.exf_user_policy', 'V') IS NOT NULL
     DROP VIEW [dbo].[exf_user_policy];
-
+GO
 CREATE VIEW [dbo].[exf_user_policy] (
    [user_oid], 
    [oid], 

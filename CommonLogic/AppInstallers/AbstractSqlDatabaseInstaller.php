@@ -12,6 +12,7 @@ use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -74,12 +75,14 @@ use exface\Core\DataTypes\FilePathDataType;
  }
  
  * 3) Change the setFoldersWithMigrations array and the setFoldersWitStatcSql fitting
- * to your folder structur in Install/Sql/%SqlDbType%/ 
+ * to your folder structure in Install/Sql/%SqlDbType%/ 
  *
  * ## Transaction handling
  * 
  * The abstract installer does not handle transactions. Transactions must be started/committed in
  * the concrete implementations as not all DBMS support transactional DDL statements.
+ * 
+ * @link Docs/developer_docs/App_installers/SQL_Database_Installer.md
  * 
  * @author Ralf Mulansky
  *
@@ -458,6 +461,18 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns the string, that sets a custom batch delimiter for a script.
+     * 
+     * Override this method to define a custom marker for a specific SQL dialect.
+     * 
+     * @return string
+     */
+    protected function getMarkerBatchDelimiter() : string
+    {
+        return '-- BATCH-DELIMITER';
+    }
+    
+    /**
      * Function to perform migrations on the database.
      * 
      * @param SqlMigration $migration
@@ -651,8 +666,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getMigrationScript(string $filename, string $src, bool $up = true) : string
     {
         $length=strlen($src);
-        $cut_down=strpos($src, $this->getMarkerDown());
-        $cut_up=strpos($src, $this->getMarkerUp());
+        $cut_down=stripos($src, $this->getMarkerDown());
+        $cut_up=stripos($src, $this->getMarkerUp());
         if ($cut_down == FALSE){
             if ($up == TRUE){
                 $migstr = $src;
@@ -677,6 +692,22 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             }                
         }
         return $this->stripLinebreaks($migstr);
+    }
+    
+    /**
+     * 
+     * @param string $sql
+     * @return string|NULL
+     */
+    protected function getBatchDelimiter(string $sql) : ?string
+    {
+        $matches = [];
+        $found = preg_match_all('/^' . preg_quote($this->getMarkerBatchDelimiter(), '/') . ' (.*)$/', $sql, $matches);
+        if ($found && is_array($matches[1])) {
+            $delim = trim($matches[1][0]);
+            return $delim === '' ? null : $delim;
+        }
+        return null;
     }
     
     /**
@@ -741,16 +772,18 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             if ($wrapInTransaction === true) {
                 $connection->transactionStart();
             }
-            /* IDEA Not quite sure if multi-statement scripts are always possible, so this splitting code
-             * is still here. If problems arise we might introduce some sort of user control (keyword?)
-             * to decide if a migration should be split or not. Maybe even an option to define a delimiter
-             * inside the script.
-            foreach (preg_split("/;\R/", $script) as $statement) {
-                if ($statement) {
-                    $result[] = $connection->runSql($statement);
+            if (null !== $delim = $this->getBatchDelimiter($script)) {
+                if (! RegularExpressionDataType::isRegex($delim)) {
+                    $delim = '/' . preg_quote($delim, '/') . '/';
                 }
-            }*/
-            $result[] = $connection->runSql($script, true);
+                foreach (preg_split($delim, $script) as $statement) {
+                    if ($statement) {
+                        $result[] = $connection->runSql($statement);
+                    }
+                }
+            } else {
+                $result[] = $connection->runSql($script, true);
+            }
             
             if ($wrapInTransaction === true) {
                 $connection->transactionCommit();
@@ -800,7 +833,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Removes linebreaks from a SQl string
+     * Removes linebreaks from a SQL string
      * 
      * @param string $sql
      * @return string
