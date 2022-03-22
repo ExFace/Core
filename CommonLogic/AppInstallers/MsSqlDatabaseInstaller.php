@@ -44,6 +44,16 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::getBatchDelimiter()
+     */
+    protected function getBatchDelimiter(string $sql) : ?string
+    {
+        return parent::getBatchDelimiter($sql) ?? '/GO;?/';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\MySqlDatabaseInstaller::installDatabase()
      */
     protected function installDatabase(SqlDataConnectorInterface $connection, string $indent = '') : \Iterator

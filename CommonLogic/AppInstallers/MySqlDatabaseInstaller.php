@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
@@ -32,6 +31,8 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  */
 class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
 {   
+    private $migrationTableCheckedFlag = false;
+    
     /**
      *
      * @return string
@@ -80,6 +81,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
      */
     protected function ensureMigrationsTableExists(SqlDataConnectorInterface $connection) : void
     {
+        if ($this->migrationTableCheckedFlag === true) {
+            return;
+        }
         try {
             $migrations_table_create = $this->buildSqlMigrationTableCreate();
             $this->runSqlMultiStatementScript($connection, $migrations_table_create);
@@ -88,6 +92,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $this->getWorkbench()->getLogger()->logException($e);
             throw new InstallerRuntimeError($this, 'Generating Migration table failed! ' . $e->getMessage(), null, $e);
         }
+        $this->migrationTableCheckedFlag = true;
         return;
     }
 

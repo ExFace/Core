@@ -1,6 +1,6 @@
 IF OBJECT_ID('dbo.exf_page_policy', 'V') IS NOT NULL
     DROP VIEW [dbo].[exf_page_policy];
-
+GO
 CREATE VIEW [dbo].[exf_page_policy] (
 	[page_oid], 
 	[oid], 

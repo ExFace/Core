@@ -1,6 +1,6 @@
 IF OBJECT_ID('dbo.exf_relation_tree', 'V') IS NOT NULL
     DROP VIEW [dbo].[exf_relation_tree];
-
+GO
 /* List of all attributes, that are relations with their relation aliases, directions, etc. */
 CREATE VIEW [dbo].[exf_relation_tree] (
 	[oid], 
