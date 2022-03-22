@@ -741,12 +741,16 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             if ($wrapInTransaction === true) {
                 $connection->transactionStart();
             }
-            
+            /* IDEA Not quite sure if multi-statement scripts are always possible, so this splitting code
+             * is still here. If problems arise we might introduce some sort of user control (keyword?)
+             * to decide if a migration should be split or not. Maybe even an option to define a delimiter
+             * inside the script.
             foreach (preg_split("/;\R/", $script) as $statement) {
                 if ($statement) {
                     $result[] = $connection->runSql($statement);
                 }
-            }
+            }*/
+            $result[] = $connection->runSql($script, true);
             
             if ($wrapInTransaction === true) {
                 $connection->transactionCommit();
