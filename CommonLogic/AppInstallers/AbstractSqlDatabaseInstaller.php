@@ -702,9 +702,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     protected function getBatchDelimiter(string $sql) : ?string
     {
         $matches = [];
-        $found = preg_match_all('/^' . preg_quote($this->getMarkerBatchDelimiter(), '/') . ' (.*)$/', $sql, $matches);
-        if ($found && is_array($matches[1])) {
-            $delim = trim($matches[1][0]);
+        $found = preg_match('/' . $this->getMarkerBatchDelimiter() . ' (.*)/', $sql, $matches);
+        if ($found && $matches[1] !== null) {
+            $delim = trim($matches[1]);
             return $delim === '' ? null : $delim;
         }
         return null;

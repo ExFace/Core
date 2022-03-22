@@ -244,6 +244,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         // already existing installations will be updated
         return <<<SQL
 
+-- BATCH-DELIMITER /;\R/
+
 -- creation of migrations table       
 CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     `id` int(8) NOT NULL AUTO_INCREMENT,
