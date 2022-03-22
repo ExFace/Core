@@ -94,3 +94,25 @@ ALTER TABLE [dbo].[{TABLE_NAME}]
 			[{COLUMN_NAME_2}] NVARCHAR(max) NULL;
 
 ```
+
+## Data
+
+### Initial data
+
+```
+MERGE dbo.{TABLE_NAME} with(HOLDLOCK) as target
+	USING (VALUES 
+		(1001, 'InitDB', 'InitDB', GETDATE(), GETDATE(), 'Name1'),
+		(1002, 'InitDB', 'InitDB', GETDATE(), GETDATE(), 'Name2')
+	) AS source ("Id", "ModifiedBy", "CreatedBy", "ModifiedOn", "CreatedOn", "Name")
+	ON target.Id = source.Id 
+WHEN MATCHED THEN
+    UPDATE
+    SET 	Name = source.Name,
+    	  	ModifiedBy = 'InitDB',
+    	  	ModifiedOn = GETDATE()
+WHEN NOT MATCHED THEN
+    INSERT ("Id", "ModifiedBy", "CreatedBy", "ModifiedOn", "CreatedOn", "Name")
+    VALUES ("Id", "ModifiedBy", "CreatedBy", "ModifiedOn", "CreatedOn", "Name");
+
+```
