@@ -14,6 +14,8 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Widgets\Parts\Maps\DataSelectionMarkerLayer;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\SaveData;
+use exface\Core\Widgets\Map;
+use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -28,6 +30,7 @@ use exface\Core\Actions\SaveData;
  *     	"npm-asset/leaflet.locatecontrol" : "~0.72",
  *     	"npm-asset/esri-leaflet" : "^3.0",
  *     	"npm-asset/leaflet.markercluster" : "^1.4"
+ *     
  *      ```
  * 2. Add the config options to the facade:
  *      ```
@@ -42,6 +45,7 @@ use exface\Core\Actions\SaveData;
  *  	"LIBS.LEAFLET.LOCATECONTROL_CSS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.css",
  *  	"LIBS.LEAFLET.LOCATECONTROL_JS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.js",
  *  	"LIBS.LEAFLET.ESRI.JS": "npm-asset/esri-leaflet/dist/esri-leaflet.js",
+ *  
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or 
  * property `buildJsLeafletVar()` and calling `buildJsLeafletInit()` at a time, 
@@ -170,11 +174,31 @@ JS;
     protected function buildJsMapOptions() : string
     {
         $widget = $this->getWidget();
-        
         $mapOptions = '';
+        
         if ($widget->getShowFullScreenButton()) {
             $mapOptions .= "
         fullscreenControl: true,";
+        }
+        
+        if (Map::COORDINATE_SYSTEM_AUTO !== $crs = $widget->getCoordinateSystem()) {
+            switch ($crs) {
+                case Map::COORDINATE_SYSTEM_PIXELS:
+                    $mapOptions .= "
+        crs: L.CRS.Simple,";
+                    break;
+                default:
+                    throw new FacadeUnsupportedWidgetPropertyWarning('Map coordinate system "' . $crs . '" currently not supported in this facade!');
+            }
+        }
+        
+        if (null !== $val = $widget->getZoomMin()) {
+            $mapOptions .= "
+        minZoom: {$val},";
+        }
+        if (null !== $val = $widget->getZoomMax()) {
+            $mapOptions .= "
+        maxZoom: {$val},";
         }
         
         return $mapOptions;
