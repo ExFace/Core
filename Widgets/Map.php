@@ -46,6 +46,10 @@ class Map extends AbstractWidget implements
     }
     use iCanAutoloadDataTrait;
     
+    const COORDINATE_SYSTEM_PIXELS = 'pixels';
+    
+    const COORDINATE_SYSTEM_AUTO = 'auto';
+    
     const COORDINATE_LAT = 'latitude';
     
     const COORDINATE_LON = 'longitude';
@@ -70,6 +74,10 @@ class Map extends AbstractWidget implements
     
     private $zoom = null;
     
+    private $zoomMin = null;
+    
+    private $zoomMax = null;
+    
     private $showFullScreenButton = true;
     
     private $showGpsLocateButton = true;
@@ -80,6 +88,8 @@ class Map extends AbstractWidget implements
      * @var bool
      */
     private $hide_header = null;
+    
+    private $coordinateSystem = self::COORDINATE_SYSTEM_AUTO;
     
     /**
      *
@@ -113,6 +123,10 @@ class Map extends AbstractWidget implements
      */
     public function setBaseMaps(UxonObject $uxon) : Map
     {
+        $crs = $this->getCoordinateSystem();
+        if ($crs === self::COORDINATE_SYSTEM_AUTO) {
+            $crs = null;
+        }
         foreach ($uxon->getPropertiesAll() as $nr => $baseMapUxon) {
             $type = $baseMapUxon->getProperty('type');
             if (! $type) {
@@ -120,6 +134,13 @@ class Map extends AbstractWidget implements
             }
             $class = $this->getLayerClassFromType($type, self::PART_FOLDER_BASE_MAPS);
             $baseMap = new $class($this, $baseMapUxon);
+            if ($crs !== null && $crs !== $baseMap->getCoordinateSystem()) {
+                throw new WidgetConfigurationError('Cannot use different coordinate systems on a single map: make sure to use only `base_maps` with the same coordinate system!');
+            } 
+            if ($crs === null){
+                $crs = $baseMap->getCoordinateSystem();
+                $this->setCoordinateSystem($crs);
+            }
             $this->baseMaps[] = $baseMap;
         }
         return $this;
@@ -275,7 +296,7 @@ class Map extends AbstractWidget implements
         
         foreach ($this->getLayers() as $layer) {
             foreach ($layer->getWidgets() as $w) {
-                $w->doPrefill($data_sheet);
+                $w->prefill($data_sheet);
             }
         }
         return;
@@ -623,6 +644,54 @@ class Map extends AbstractWidget implements
     
     /**
      * 
+     * @return int|NULL
+     */
+    public function getZoomMin() : ?int
+    {
+        return $this->zoomMin;
+    }
+    
+    /**
+     * The minimum zoom value for this map
+     * 
+     * @uxon-property zoom_min
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return Map
+     */
+    public function setZoomMin(int $value) : Map
+    {
+        $this->zoomMin = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getZoomMax() : ?int
+    {
+        return $this->zoomMax;
+    }
+    
+    /**
+     * The maximum zoom value for this map
+     * 
+     * @uxon-property zoom_max
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return Map
+     */
+    public function setZoomMax(int $value) : Map
+    {
+        $this->zoomMax = $value;
+        return $this;
+    }
+    
+    /**
+     * 
      * @return bool
      */
     public function getShowFullScreenButton() : bool
@@ -710,5 +779,25 @@ class Map extends AbstractWidget implements
         }
         
         return $result;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getCoordinateSystem() : string
+    {
+        return $this->coordinateSystem;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return Map
+     */
+    protected function setCoordinateSystem(string $value) : Map
+    {
+        $this->coordinateSystem = $value;
+        return $this;
     }
 }

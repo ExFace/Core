@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
+use exface\Core\Widgets\Map;
 
 /**
  *
@@ -111,5 +112,15 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
             $zoom .= 'zoomMin: ' . $val . ',';
         }
         return $zoom;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface::getCoordinateSystem()
+     */
+    public function getCoordinateSystem() : string
+    {
+        return Map::COORDINATE_SYSTEM_AUTO;
     }
 }

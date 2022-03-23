@@ -8,5 +8,9 @@ namespace exface\Core\Widgets\Parts\Maps\Interfaces;
  */
 interface BaseMapInterface extends MapLayerInterface
 {
-    
+    /**
+     * 
+     * @return string
+     */
+    public function getCoordinateSystem() : string;
 }
