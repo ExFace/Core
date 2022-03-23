@@ -368,6 +368,25 @@ JS;
 
             return mInitVal.toString() != mValue.toString();
         },
+        hasChanges: function() {
+            var aData = this.getJExcel().getData() || [];
+            var bChanged = false;
+            var oWidget = this;
+            var oRow;
+            for (var iRowIdx = 0; iRowIdx < aData.length - {$this->getMinSpareRows()}; iRowIdx++) {
+                oRow = aData[iRowIdx];
+                for (var iColIdx = 0; iColIdx < oRow.length; iColIdx++) {
+                    bChanged = oWidget.hasChanged(iColIdx, iRowIdx, oRow[iColIdx]);
+                    if (bChanged) {
+                        break;
+                    }
+                }
+                if (bChanged) {
+                    break;
+                }
+            }
+            return bChanged;
+        },
         validateValue: function(iCol, iRow, mValue) {
             var fnValidator = this.getColumnModel(iCol).validator;
             if (fnValidator === null) {
