@@ -401,7 +401,7 @@ JS;
                 $(cell).addClass('exf-spreadsheet-change');
             } else {
                 $(cell).removeClass('exf-spreadsheet-change');
-                mValue = this.getInitValue(iRow, iCol);
+                mValue = this.getInitValue(iCol, iRow);
             }
 
             if (mValidationResult === true) {
