@@ -302,7 +302,19 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         if (empty($missingAttrs) === false) {
             if ($eventSheet->hasUidColumn(true) === false) {
-                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
+                $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
+                $missingCols = [];
+                foreach ($missingAttrs as $attr) {
+                    $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
+                }
+                foreach ($eventRows as $rowNo => $row) {
+                    foreach ($missingCols as $missingCol) {
+                        if ($missingCol->getAttribute()->hasDefaultValue() === false) {
+                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
+                        }
+                        $eventRows[$rowNo][$missingCol->getName()] = $missingCol->getAttribute()->getDefaultValue();
+                    }
+                }
             } else {
                 $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
                 $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
