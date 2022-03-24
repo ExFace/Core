@@ -1,12 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Interfaces\Widgets\iCanBeDisabled;
-use exface\Core\Exceptions\Facades\FacadeRuntimeError;
-use exface\Core\Widgets\Parts\ConditionalProperty;
-use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-
 /**
  * This trait includes JS-generator methods to make an control disabled on certain conditions.
  * 
