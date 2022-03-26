@@ -328,22 +328,34 @@ JS;
         if (($urlType = $widget->getImageUrlColumn()->getDataType()) && $urlType instanceof UrlDataType) {
             $base = $urlType->getBaseUrl();
         }
+        if ($widget->hasMimeTypeColumn()) {
+            $mimeTypeJs = "oRow['{$widget->getMimeTypeColumn()->getDataColumnName()}']";
+        } else {
+            $mimeTypeJs = 'null';
+        }
         
         return <<<JS
 
                 (function(){
-                    var src = '';
-                    var title = '';
-    				var aRows = $oDataJs.rows;
                     $jqSlickJs.data('_exfData', $oDataJs);
     
                     $jqSlickJs.slick('removeSlide', null, null, true);
     
-    				for (var i in aRows) {
-                        src = '{$base}' + aRows[i]['{$widget->getImageUrlColumn()->getDataColumnName()}'];
-                        title = aRows[i]['{$widget->getImageTitleColumn()->getDataColumnName()}'];
-                        $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + src + '\" title=\"' + title + '\" alt=\"' + title + '\" />'")});
-                    }
+    				($oDataJs.rows || []).forEach(function(oRow, i) {
+                        var sSrc = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                        var sTitle = oRow['{$widget->getImageTitleColumn()->getDataColumnName()}'];
+                        var sMimeType = {$mimeTypeJs};
+                        var sIcon = '';
+                        if (sMimeType === null || sMimeType.startsWith('image')) {
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
+                        } else {
+                            switch (sMimeType.toLowerCase()) {
+                                case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
+                                default: sIcon = 'fa fa-file-o';
+                            }
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\"></i>'", 'imagecarousel-icon')});
+                        }
+                    });
     
                     $('#{$this->getIdOfSlick()} .imagecarousel-item').click(function(e) {
                         $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
@@ -354,9 +366,9 @@ JS;
 JS;
     }
     
-    protected function buildJsSlideTemplate(string $imgJs) : string
+    protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '') : string
     {
-        return "'<div class=\"imagecarousel-item\">' + {$imgJs} + '</div>'";
+        return "'<div class=\"imagecarousel-item {$cssClass}\">' + {$imgJs} + '</div>'";
     }
     
     /**
