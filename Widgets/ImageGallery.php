@@ -108,6 +108,10 @@ class ImageGallery extends Data implements iCanUseProxyFacade
     
     private $image_title_attribute_alias = null;
     
+    private $mimeTypeAttributeAlias = null;
+    
+    private $mimeTypeColumn = null;
+    
     private $orientation = self::ORIENTATION_HORIZONTAL;
     
     private $uploader = null;
@@ -181,6 +185,12 @@ class ImageGallery extends Data implements iCanUseProxyFacade
     {
         $this->image_url_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
+        // so facades, that do not have a gallery implementation, can simply fall back to a table and it
+        // would automatically show the images.
+        $col->setCellWidget(new UxonObject([
+            "widget_type" => "Image"
+        ]));
         $this->addColumn($col);
         $this->image_url_column = $col;       
         return $this;
@@ -199,14 +209,44 @@ class ImageGallery extends Data implements iCanUseProxyFacade
     {
         $this->image_title_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
-        // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
-        // so facades, that do not have a gallery implementation, can simply fall back to a table and it
-        // would automatically show the images.
-        $col->setCellWidget(new UxonObject([
-            "widget_type" => "Image"
-        ]));
         $this->addColumn($col);
         $this->image_title_column = $col;
+        return $this;
+    }
+    
+    /**
+     *
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
+    public function getMimeTypeColumn() : DataColumn
+    {
+        if ($this->mimeTypeColumn !== null) {
+            return $this->mimeTypeColumn;
+        }
+        throw new WidgetConfigurationError($this, 'No data column with mime type found!');
+    }
+    
+    public function hasMimeTypeColumn() : bool
+    {
+        return $this->mimeTypeAttributeAlias !== null;
+    }
+    
+    /**
+     * The attribute for the mime type - e.g. `application/pdf`, etc.
+     *
+     * @uxon-property mime_type_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return FileList
+     */
+    public function setMimeTypeAttributeAlias(string $value) : ImageGallery
+    {
+        $this->mimeTypeAttributeAlias = $value;
+        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        $this->addColumn($col);
+        $this->mimeTypeColumn = $col;
         return $this;
     }
     

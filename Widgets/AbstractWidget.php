@@ -71,6 +71,8 @@ abstract class AbstractWidget implements WidgetInterface
 
     private $disabled = null;
     
+    private $disabled_if = null;
+    
     private $disabled_reason = null;
 
     private $width = null;
@@ -78,6 +80,8 @@ abstract class AbstractWidget implements WidgetInterface
     private $height = null;
 
     private $visibility = null;
+    
+    private $hidden_if = null;
 
     /** @var \exface\Core\Widgets\AbstractWidget the parent widget */
     private $parent = null;
@@ -95,8 +99,6 @@ abstract class AbstractWidget implements WidgetInterface
     private $do_not_prefill = false;
 
     private $id_space = null;
-    
-    private $disabled_if = null;
 
     private $parentByType = [];
     
@@ -950,6 +952,65 @@ abstract class AbstractWidget implements WidgetInterface
             $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
         }
         return $this;
+    }
+    
+    /**
+     * Sets a condition to hide the widget.
+     *
+     * Examples
+     *
+     * Hide an `Input` if a checkbox not checked:
+     *
+     * ```json
+     *  "widget_type": "Input"
+     *  "disabled_if": {
+     *      "value_left": "=id_of_checkbox",
+     *      "comparator": "!=",
+     *      "value_right": "1"
+     *  }
+     *
+     * ```
+     * 
+     * Hide an `Input` if is is empty:
+     *
+     * ```json
+     *  "widget_type": "Input"
+     *  "disabled_if": {
+     *      "value_left": "=self",
+     *      "comparator": "==",
+     *      "value_right": ""
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property hidden_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setHiddenIf(UxonObject $uxon) : WidgetInterface
+    {
+        $this->hidden_if = $uxon;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getHiddenIf() : ?ConditionalProperty
+    {
+        if ($this->hidden_if === null) {
+            return null;
+        }
+        
+        if (! ($this->hidden_if instanceof ConditionalProperty)) {
+            $this->hidden_if = new ConditionalProperty($this, 'hidden_if', $this->hidden_if);
+        }
+        
+        return $this->hidden_if;
     }
 
     /**

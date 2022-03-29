@@ -39,12 +39,6 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
     
     /**
      * 
-     * @var bool
-     */
-    private $hideIfEmpty = false;
-    
-    /**
-     * 
      * @var string
      */
     private $color = null;
@@ -82,27 +76,18 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
     }
     
     /**
-     *
-     * @return bool
-     */
-    public function getHideIfEmpty() : bool
-    {
-        return $this->hideIfEmpty;
-    }
-    
-    /**
-     * Set to TRUE to hide the entire widget if there is no value set.
-     *
-     * @uxon-property hide_if_empty
-     * @uxon-type boolean
-     * @uxon-default false
-     *
+     * @deprecated use setHiddenIf() instead!
+     * 
      * @param bool $value
      * @return Value
      */
-    public function setHideIfEmpty($trueOrFalse) : Value
+    protected function setHideIfEmpty(bool $trueOrFalse) : Value
     {
-        $this->hideIfEmpty = BooleanDataType::cast($trueOrFalse);
+        $this->setHiddenIf(new UxonObject([
+            "value_left" => "=self",
+            "comparator" => "==",
+            "value_right" => ""
+        ]));
         return $this;
     }
     
