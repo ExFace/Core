@@ -286,6 +286,9 @@ JS;
         onbeforechange: function(instance, cell, x, y, value) {
             var fnParser = instance.exfWidget.getColumnModel(x).parser;
             var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
+            if (value === undefined) {
+                return;
+            }
             if (fnParser) {
                 value = fnParser(value);
                 if (fnFormatter) {
