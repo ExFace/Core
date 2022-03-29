@@ -431,12 +431,17 @@ class MsSqlBuilder extends AbstractSqlBuilder
         switch ($function_name) {
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
-                // This is a VERY strang way to concatennate row values, but it seems to be the only
-                // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')
+                // This is a VERY strange way to concatennate row values, but it seems to be the only
+                // one available in SQL Server: STUFF(CAST(( SELECT ... FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, {LengthOfDelimiter}, '')
                 // Since in case of subselects the `...` needs to be replaced by the whole subselect,
                 // we need to split the logic in two: `STUFF...` goes here and `FOR XML...` goes in
                 // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
                 // columns a bit differently.
+                
+                // Make sure to cast any non-string things to nvarchar BEFORE they are concatennated
+                if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
+                    $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
+                }
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = " . ($args[0] ? $args[0] : "', '") . " + {$sql}";
             default:
