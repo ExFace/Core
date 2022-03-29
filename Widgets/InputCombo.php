@@ -276,19 +276,33 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             return;
         }
         
-        // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
-        // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
-        // and see if their related object is the same as the related object of the relation represented by the combo.
+        // If the object of the prefill data is not the one selected within the combo, than we 
+        // still can look for columns in the sheet, that contain selectors (UIDs) of the combo object. 
+        // This means, we need to look for data columns showing relations and see if they either
+        // match the relation of the combo (good match) or at least their related object is the 
+        // same as the right object of the combos relation (not the best match, but helpful in
+        // some cases?).
+        // In any case, do not use this prefill method if multiple columns in the prefill data
+        // fulfill the abov criteria!
+        $fitsRelation = null;
+        $fitsRightObject = null;
         foreach ($data_sheet->getColumns()->getAll() as $column) {
             if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
                 $colRel = $colAttr->getRelation();
                 if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
-                    $this->setValuesFromArray($column->getValues(false), false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
-                    return;
+                    if ($colRel->is($this->getRelation())) {
+                        if ($fitsRelation !== null) {
+                            return;
+                        }
+                        $fitsRelation = $column;
+                    } else {
+                        if ($fitsRightObject !== null) {
+                            return;
+                        }
+                        $fitsRightObject = $column;
+                    }
                 }
-                /* TODO add other options to prefill from related data
+                /* TODO add other options to prefill from related data?
                  if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
                  $this->setValuesFromArray($column->getValues(false));
                  $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
@@ -297,6 +311,16 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                  }*/
             }
         }
+        
+        $column = $fitsRelation !== null ? $fitsRelation : $fitsRightObject;
+        
+        if ($column !== null) {
+            $this->setValuesFromArray($column->getValues(false), false);
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
+        }
+        
+        return;
     }
     
     /**
