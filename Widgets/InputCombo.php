@@ -276,6 +276,8 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             return;
         }
         
+        $fitsRightObject = null;
+        $fitsRelation = null;
         // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
         // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
         // and see if their related object is the same as the related object of the relation represented by the combo.
@@ -283,10 +285,17 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
             if (($colAttr = $column->getAttribute()) && $colAttr->isRelation()) {
                 $colRel = $colAttr->getRelation();
                 if ($colRel->getRightObject()->is($this->getRelation()->getRightObject())) {
-                    $this->setValuesFromArray($column->getValues(false), false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
-                    return;
+                    if ($colRel->is($this->getRelation())) {
+                        if ($fitsRelation !== null) {
+                            return;
+                        }
+                        $fitsRelation = $column;
+                    } else {
+                        if ($fitsRightObject !== null) {
+                            return;
+                        }
+                        $fitsRightObject = $column;
+                    }
                 }
                 /* TODO add other options to prefill from related data
                  if ($colRel->getLeftKeyAttribute()->isExactly($this->getAttribute())) {
@@ -297,6 +306,16 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                  }*/
             }
         }
+        
+        $column = $fitsRelation !== null ? $fitsRelation : $fitsRightObject;
+        
+        if ($column !== null) {
+            $this->setValuesFromArray($column->getValues(false), false);
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
+        }
+        
+        return;
     }
     
     /**
