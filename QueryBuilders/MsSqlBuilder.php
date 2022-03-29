@@ -437,6 +437,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // we need to split the logic in two: `STUFF...` goes here and `FOR XML...` goes in
                 // buildSqlSelectSubselect() or buildSqlSelectGrouped() for subselects and regular
                 // columns a bit differently.
+                if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
+                    $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
+                }
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = " . ($args[0] ? $args[0] : "', '") . " + {$sql}";
             default:
