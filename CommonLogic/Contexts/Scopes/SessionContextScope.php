@@ -274,7 +274,7 @@ class SessionContextScope extends AbstractContextScope
                     } else {
                         session_start();
                         $sessionId = session_id();
-                        setcookie($cookieName, $sessionId);
+                        setcookie($cookieName, $sessionId, (time() + $this->getWorkbench()->getConfig()->getOption('SECURITY.SESSION_COOKIE_LIFETIME')));
                         session_write_close();
                     }
                 }
