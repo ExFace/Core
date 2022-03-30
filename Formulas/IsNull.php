@@ -8,7 +8,7 @@ use exface\Core\DataTypes\BooleanDataType;
 /**
  * Executes the not operator on the value and returns the result.
  */
-class NotNull extends Formula
+class IsNull extends Formula
 {
     /**
      * 
@@ -17,7 +17,7 @@ class NotNull extends Formula
      */
     public function run($value = null)
     {
-        if ($value !== null) {
+        if ($value == null || $value == '') {
             return true;
         }
         return false;
