@@ -170,8 +170,7 @@ class DataToolbar extends Toolbar
                 $btn->setVisibility(WidgetVisibilityDataType::OPTIONAL);
                 $this->global_action_button_group->addButton($btn);
             }
-            
-            $this->getWorkbench()->eventManager()->dispatch(new OnGlobalActionsAddedEvent($this->getDataWidget(), $this->global_action_button_group));
+            $this->getWorkbench()->eventManager()->dispatch(new OnGlobalActionsAddedEvent($this->global_action_button_group));
         }
         
         if ($this->getIncludeSearchActions()) {
