@@ -2,13 +2,12 @@
 namespace exface\Core\Events\Widget;
 
 use exface\Core\Widgets\ButtonGroup;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 
 /**
  * Event fired after global actions were added to a toolbar.
  * 
- * The event can be used to add additional global actions - e.g. in GlobalActionBehavior
+ * The event can be used to add additional global actions - e.g. in GlobalActionBehavior. The event
+ * is fired for the `ButtonGroup` widget, that contains the global actions buttons.
  * 
  * @event exface.Core.Widget.OnGlobalActionsAdded
  *
@@ -17,14 +16,6 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  */
 class OnGlobalActionsAddedEvent extends AbstractWidgetEvent
 {
-    private $btnGroup = null;
-    
-    public function __construct(WidgetInterface $widget, iHaveButtons $globalActionsButtonGroup)
-    {
-        parent::__construct($widget);
-        $this->btnGroup = $globalActionsButtonGroup;
-    }
-    
     /**
      * {@inheritdoc}
      * @see \exface\Core\Events\AbstractEvent::getEventName()
@@ -40,6 +31,6 @@ class OnGlobalActionsAddedEvent extends AbstractWidgetEvent
      */
     public function getGlobalActionsButtongGroup() : ButtonGroup
     {
-        return $this->btnGroup;
+        return $this->getWidget();
     }
 }
