@@ -221,20 +221,33 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      */
     public function setButtons($buttons)
     {
-        $btn_grps = [];
+        $align_grps = [];
+        $explicit_groups = [];
         foreach ($buttons as $btn){
-            if ($btn instanceof UxonObject){
-                $btn_grps[$btn->hasProperty('align') ? $btn->getProperty('align') : EXF_ALIGN_DEFAULT][] = $btn;
-            } elseif ($btn instanceof Button){
-                $btn_grps[$btn->getAlign()][] = $btn;
-            } else {
-                $btn_grps[EXF_ALIGN_DEFAULT] = $btn;
+            switch (true) {
+                case $btn instanceof UxonObject:
+                    if ($btn->hasProperty('widget_type') && $btn->getProperty('widget_type') === 'ButtonGroup') {
+                        $explicit_groups[] = $btn;
+                    } else {
+                        $align_grps[$btn->hasProperty('align') ? $btn->getProperty('align') : EXF_ALIGN_DEFAULT][] = $btn;
+                    }
+                    break;
+                case $btn instanceof Button:
+                    $align_grps[$btn->getAlign()][] = $btn;
+                    break;
+                default:
+                    $align_grps[EXF_ALIGN_DEFAULT] = $btn;
             }
         }
         
-        foreach ($btn_grps as $align => $btns){
+        foreach ($align_grps as $align => $btns){
             $this->getButtonGroupFirst($align)->setButtons($btns);
         }
+        
+        foreach ($explicit_groups as $uxon) {
+            $this->addButtonGroup($this->createButtonGroup($uxon));
+        }
+        
         return $this;
     }
     
