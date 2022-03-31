@@ -48,7 +48,7 @@ class MsSqlDatabaseInstaller extends MySqlDatabaseInstaller
      */
     protected function getBatchDelimiter(string $sql) : ?string
     {
-        return parent::getBatchDelimiter($sql) ?? '/GO;?/';
+        return parent::getBatchDelimiter($sql) ?? '/^GO;?/m';
     }
     
     /**
