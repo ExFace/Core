@@ -112,7 +112,7 @@ class RegularExpressionDataType extends StringDataType
         if (strlen($pattern) <= 2) {
             return null;
         }
-        
+        $pattern = rtrim($pattern, "im");
         $delimiters = $delimiters ?? self::DELIMITERS;
         foreach ($delimiters as $delim) {
             if (StringDataType::startsWith($pattern, $delim) === true && StringDataType::endsWith($pattern, $delim) === true) {
