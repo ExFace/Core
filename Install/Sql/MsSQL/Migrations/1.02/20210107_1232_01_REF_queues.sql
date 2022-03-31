@@ -16,8 +16,8 @@ ALTER TABLE [exf_queue]
 	
 -- DOWN
 
-sp_rename 'exf_queued_task.owner_oid', 'owner', 'COLUMN';
-sp_rename 'exf_queued_task.queue_oid', 'queue', 'COLUMN';
+exec sp_rename 'exf_queued_task.owner_oid', 'owner', 'COLUMN';
+exec sp_rename 'exf_queued_task.queue_oid', 'queue', 'COLUMN';
 
 ALTER TABLE [exf_queued_task]
 	DROP COLUMN [channel],
