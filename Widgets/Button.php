@@ -26,6 +26,9 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -662,14 +665,17 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
         switch (true) {
             case $inputWidget instanceof iShowData:
-                $dataWidget = $inputWidget;
-                break;
+                return $this->getDisabledIfForData($inputWidget, $condGrp);
             case $inputWidget instanceof iUseData:
-                $dataWidget = $inputWidget->getData();
-                break;
-            default:
-                return null;
+                return $this->getDisabledIfForData($inputWidget->getData(), $condGrp);
+            case $inputWidget instanceof iContainOtherWidgets:
+                return $this->getDisabledIfForContainer($inputWidget, $condGrp);
         }
+        return null;
+    }
+    
+    protected function getDisabledIfForData(Data $dataWidget, ConditionGroupInterface $condGrp) : ?UxonObject
+    {
         $uxon = new UxonObject([
             'operator' => $condGrp->getOperator()
         ]);
@@ -686,6 +692,38 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             }
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
+                "comparator" => $cond->getComparator(),
+                "value_right" => $cond->getValue()
+            ]));
+        }
+        return $uxon;
+    }
+    
+    protected function getDisabledIfForContainer(iContainOtherWidgets $containerWidget, ConditionGroupInterface $condGrp) : ?UxonObject
+    {
+        $uxon = new UxonObject([
+            'operator' => $condGrp->getOperator()
+        ]);
+        // The data widget will be able to supply required data if each condition compares
+        // an existing column with a scalar value
+        foreach ($condGrp->getConditions() as $cond) {
+            if (! $cond->getExpression()->isMetaAttribute()) {
+                return null;
+            }
+            $attrAlias = $cond->getExpression()->__toString();
+            if (! $this->getMetaObject()->hasAttribute($attrAlias)) {
+                return null;
+            }
+            $attr = $this->getMetaObject()->getAttribute($attrAlias);
+            if (! $w = $containerWidget->findChildrenByAttribute($attr)[0] ?? null) {
+                $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
+                    'widget_type' => 'InputHidden',
+                    'attribute_alias' => $attrAlias
+                ]));
+                $containerWidget->addWidget($w);
+            }
+            $uxon->appendToProperty('conditions', new UxonObject([
+                "value_left" => "=" . $w->getId(),
                 "comparator" => $cond->getComparator(),
                 "value_right" => $cond->getValue()
             ]));
