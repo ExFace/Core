@@ -48,6 +48,7 @@
     
     "SECURITY.DISABLE_ANONYMOUS_ACCESS": false,
     "SECURITY.SESSION_COOKIE_LIFETIME": "604800",
+    "SECURITY.FORCE_HTTPS": false,
 	"SECURITY.PASSWORD_CONFIG": {
 		"validator_regex": "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|[_])).{8,}$/",
 		"validation_error_code": "7INNL87"
