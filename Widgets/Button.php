@@ -29,6 +29,8 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -714,16 +716,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             if (! $this->getMetaObject()->hasAttribute($attrAlias)) {
                 return null;
             }
-            $attr = $this->getMetaObject()->getAttribute($attrAlias);
-            if (! $w = $containerWidget->findChildrenByAttribute($attr)[0] ?? null) {
+            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias) {
+                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($this->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
+            });
+            if (! $w = $matches[0] ?? null) {
+                /*
                 $w = WidgetFactory::createFromUxonInParent($containerWidget, new UxonObject([
                     'widget_type' => 'InputHidden',
                     'attribute_alias' => $attrAlias
                 ]));
-                $containerWidget->addWidget($w);
+                $containerWidget->addWidget($w);*/
+                return null;
             }
             $uxon->appendToProperty('conditions', new UxonObject([
-                "value_left" => "=" . $w->getId(),
+                "value_left" => "=~input!" . $w->getDataColumnName(),
                 "comparator" => $cond->getComparator(),
                 "value_right" => $cond->getValue()
             ]));
