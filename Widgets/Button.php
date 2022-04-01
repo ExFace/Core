@@ -177,7 +177,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function setActionAlias($value)
     {
-        $this->action_alias = $value;
+        $this->action_alias = $value === '' ? null : $value;
         return $this;
     }
 
