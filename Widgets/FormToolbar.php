@@ -92,7 +92,7 @@ class FormToolbar extends Toolbar
     {
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic
-        if ($action = $button->getAction()) {
+        if (null !== $action = $button->getAction()) {
             $obj = $container->getMetaObject();
             $workbench = $this->getWorkbench();
             $page = $container->getPage();
