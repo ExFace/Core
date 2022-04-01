@@ -474,7 +474,8 @@ JS;
             element: '{$uploader->getInstantUploadButton()->getId()}',
             object: '{$widget->getMetaObject()->getId()}',
             action: '{$uploader->getInstantUploadAction()->getAliasWithNamespace()}'
-        }
+        },
+        dropZone: $('#{$this->getIdOfSlick()} .imagecarousel-upload')
     })
     .on('fileuploadsend', function(e, data) {
         var oParams = data.formData;
