@@ -62,17 +62,30 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         
         // If the prefill is read for a widget opened by a trigger (e.g. a button),
         // any mappers or checks used on the original action of the button must be
-        // applied to the prefill too!
+        // applied to the prefill too! 
+        // Note, however, that checks/mappers defined inside the button will be applied 
+        // automatically as the UXON from the button is imported into the prefill action too.
+        // But if the button calls an object action from the meta model, that has checks/mappers
+        // defined, they will not be part of the imported UXON and need to be added manually here.
         if (null !== $showWidgetAction = $this->getPrefillTriggerAction($task)) {
+            // Inherit all checks
+            // IDEA should we only get checks, that are different from those alread in the prefill action?
             foreach ($showWidgetAction->getInputChecks() as $check) {
                 $this->getInputChecks()->add($check);
             }
-            /* FIXME get input/output mappers from ShowWidget-action too!!!
+            
+            // Inherit mappers for objects, that are not handled by already existing mappers
             foreach ($showWidgetAction->getInputMappers() as $mapper) {
-                $this->addInputMapper($mapper);
-            }*/
+                if (null === $this->getInputMapper($mapper->getFromMetaObject())) {
+                    $this->addInputMapper($mapper);
+                }
+            }
+            foreach ($showWidgetAction->getOutputMappers() as $mapper) {
+                if (null === $this->getOutputMapper($mapper->getFromMetaObject())) {
+                    $this->addOutputMapper($mapper);
+                }
+            }
         }
-        
         
         // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
         // Otherwise get the input/prefill data and refresh it if neccessary
