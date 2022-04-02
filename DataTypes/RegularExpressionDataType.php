@@ -14,6 +14,8 @@ class RegularExpressionDataType extends StringDataType
 {
     const DELIMITERS = ['/', '~', '@', ';', '%', '`'];
     
+    const MODIFIERS = ['i', 'm', 's', 'x', 'A', 'D', 'S', 'U', 'X', 'J', 'u'];
+    
     private $customDelimiters = null;
     
     private $delimitersRequired = true;
@@ -112,7 +114,7 @@ class RegularExpressionDataType extends StringDataType
         if (strlen($pattern) <= 2) {
             return null;
         }
-        $pattern = rtrim($pattern, "im");
+        $pattern = rtrim($pattern, implode('', self::MODIFIERS));
         $delimiters = $delimiters ?? self::DELIMITERS;
         foreach ($delimiters as $delim) {
             if (StringDataType::startsWith($pattern, $delim) === true && StringDataType::endsWith($pattern, $delim) === true) {
