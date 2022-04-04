@@ -1571,7 +1571,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $join_side = $data_address;
         if ($this->checkForSqlStatement($join_side)) {
-            $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
+            $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
+            if (! empty(StringDataType::findPlaceholders($join_side))) {
+                throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
+            }
+            // IDEA Allow placeholders in JOINed data addresses. This would allow to use compound
+            // attributes with placeholders for JOINs very effectively. However, replacePlaceholdersInSqlAddress()
+            // will need the correct base object then - a different one on each side. Not quite sure
+            // how to do this.
+            // $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
         } else {
             $join_side = $table_alias . $this->getAliasDelim() . $join_side;
         }
