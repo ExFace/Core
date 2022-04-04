@@ -317,7 +317,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
      * {@inheritDoc}
      * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithDefaults()
      */
-    public function getPrefillWithDefaults(TaskInterface $task = null) : bool
+    public function getPrefillWithDefaults(TaskInterface $task = null) : ?bool
     {
         if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
             return $action->getPrefillWithDefaults() ?? true;
