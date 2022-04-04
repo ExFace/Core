@@ -454,16 +454,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        // Run the query builder logic. See if changes to the query occur while the query is built (e.g. 
-        // query parts are added for placeholders, etc.) and rerun the query builder if required.
-        // However, do not run it more than 5 times to avoid infinite recursion
-        $buildAttempts = 0;
-        do {
-            $this->setDirty(false);
-            $query = $this->buildSqlQuerySelect();
-            $buildAttempts++;
-        } while ($this->isDirty() && $buildAttempts <= 5);
-        
+        $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
         // first do the main query
@@ -1584,7 +1575,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $join_side = $data_address;
         if ($this->checkForSqlStatement($join_side)) {
-            $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
+            $join_side = $this->replacePlaceholdersInSqlAddress($join_side, null, ['~alias' => $table_alias], $table_alias);
         } else {
             $join_side = $table_alias . $this->getAliasDelim() . $join_side;
         }
