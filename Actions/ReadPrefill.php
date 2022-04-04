@@ -157,7 +157,9 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         
-        if ($this->getPrefillWithDefaults($task) !== false) {
+        $prefillWithDefaults = $this->getPrefillWithDefaults($task);
+        $log .= '- Property `prefill_with_input_data` is `' . ($prefillWithDefaults === null ? 'null' : ($prefillWithDefaults ? 'true' : 'false')) . '`.' . PHP_EOL;
+        if ($prefillWithDefaults !== false) {
             $defaults = [];
             // Add event listeners to see, what the prefill would do
             // 1) Before a widget is prefilled, remember its default value
@@ -182,20 +184,28 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $targetWidget->prefill($mainSheet);
             // If there are $defaults, place the respective values in every empty cell of the data
             // columns used by widgets with default values
+            $log .= '   - Found ' . count($defaults) . ' default values.' . PHP_EOL;
             if (! empty($defaults)) {
                 $defaultsRow = [];
                 foreach ($defaults as $vals) {
                     $defaultsRow = array_merge($defaultsRow, $vals);
                 }
                 if ($mainSheet->isEmpty()) {
+                    $log .= '   - Adding row with defaults to empty data sheet.' . PHP_EOL;
                     $mainSheet->addRow($defaultsRow);
                 } else {
                     foreach ($defaultsRow as $colName => $default) {
                         if ($col = $mainSheet->getColumns()->get($colName)) {
+                            $log .= '   - Replacing empty values in column "' . $colName . '" with defaults.' . PHP_EOL;
                             foreach ($col->getValues() as $rowNo => $val) {
                                 if ($val === '' || $val === null) {
                                     $mainSheet->setCellValue($colName, $rowNo, $default);
                                 }
+                            }
+                        } else {
+                            $log .= '   - Adding new column "' . $colName . '" with defaults.' . PHP_EOL;
+                            foreach (array_keys($mainSheet->getRows()) as $rowNo) {
+                                $mainSheet->setCellValue($colName, $rowNo, $default);
                             }
                         }
                     }
