@@ -178,7 +178,7 @@ class FileFinderConnector extends TransparentConnector
      * 
      * All data addresses in this conneciton will then be resolved relative to the vendor folder.
      *
-     * @uxon-property base_path
+     * @uxon-property use_vendor_folder_as_base
      * @uxon-type boolean
      *
      * @param boolean $value            
