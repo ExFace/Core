@@ -15,6 +15,13 @@ use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Actions\Traits\iPrefillWidgetTrait;
 use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Events\Widget\OnBeforePrefillEvent;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -43,6 +50,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         getPrefillWithFilterContext as getPrefillWithFilterContextViaTrait;
         getPrefillWithInputData as getPrefillWithInputDataViaTrait;
         getPrefillWithPrefillData as getPrefillWithPrefillDataViaTrait;
+        getPrefillWithDefaults as getPrefillWithDefaultsViaTrait;
         getPrefillDataPreset as getPrefillDataPresetViaTrait;
         hasPrefillDataPreset as hasPrefillDataPresetViaTrait;
         getPrefillDataSheet as getPrefillDataSheetViaTrait;
@@ -147,6 +155,52 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         if ($mainSheet === null) {
             $log .= '- No prefill data found so far: creating an empty data sheet.' . PHP_EOL;
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+        }
+        
+        if ($this->getPrefillWithDefaults($task) !== false) {
+            $defaults = [];
+            // Add event listeners to see, what the prefill would do
+            // 1) Before a widget is prefilled, remember its default value
+            $this->getWorkbench()->eventManager()->addListener(OnBeforePrefillEvent::getEventName(), function(OnBeforePrefillEvent $event) use (&$defaults) {
+                $widget = $event->getWidget();
+                if (($widget instanceof iHaveDefaultValue) && ($widget instanceof iShowDataColumn) && $widget->hasDefaultValue() && $widget->getMetaObject()->is($event->getDataSheet()->getMetaObject())) {
+                    $value = $widget->getDefaultValue();
+                    if ($widget instanceof iHaveValue) {
+                        $value = $widget->getValueDataType()->parse($value);
+                    }
+                    $defaults[$widget->getId()] = [$widget->getDataColumnName() => $value];
+                }
+            });
+            // 2) If the widget gets a regular prefill value, discard the default
+            $this->getWorkbench()->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), function(OnPrefillChangePropertyEvent $event) use (&$defaults) {
+                $widget = $event->getWidget();
+                if (array_key_exists($widget->getId(), $defaults) && $event->getPrefillValue() !== '' && $event->getPrefillValue() !== null) {
+                    unset ($defaults[$widget->getId()]);
+                }
+            });
+            // Do the prefill to trigger the events
+            $targetWidget->prefill($mainSheet);
+            // If there are $defaults, place the respective values in every empty cell of the data
+            // columns used by widgets with default values
+            if (! empty($defaults)) {
+                $defaultsRow = [];
+                foreach ($defaults as $vals) {
+                    $defaultsRow = array_merge($defaultsRow, $vals);
+                }
+                if ($mainSheet->isEmpty()) {
+                    $mainSheet->addRow($defaultsRow);
+                } else {
+                    foreach ($defaultsRow as $colName => $default) {
+                        if ($col = $mainSheet->getColumns()->get($colName)) {
+                            foreach ($col->getValues() as $rowNo => $val) {
+                                if ($val === '' || $val === null) {
+                                    $mainSheet->setCellValue($colName, $rowNo, $default);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // Fire the event, log it to make it appear in the tracer
@@ -256,6 +310,20 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
         
         return $this->getPrefillWithPrefillDataViaTrait();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\Traits\iPrefillWidgetTrait::getPrefillWithDefaults()
+     */
+    public function getPrefillWithDefaults(TaskInterface $task = null) : bool
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task)) instanceof iShowWidget) {
+            return $action->getPrefillWithDefaults() ?? true;
+        }
+        
+        return $this->getPrefillWithDefaultsViaTrait();
     }
     
     /**
