@@ -31,6 +31,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
  */
 class OracleSqlBuilder extends AbstractSqlBuilder
 {
+    const MAX_BUILD_RUNS = 5;
     
     /**
      * 
@@ -64,8 +65,10 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return 28;
     }
     
-    public function buildSqlQuerySelect()
+    public function buildSqlQuerySelect(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $where = '';
         $having = '';
         $group_by = '';
@@ -317,11 +320,26 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by;
             }
         }
+        
+        // See if changes to the query occur while the query was built (e.g. query parts are
+        // added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than X times to avoid infinite recursion.
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQuerySelect($buildRun+1);
+        }
+        
         return $query;
     }
 
-    public function buildSqlQueryTotals()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryTotals()
+     */
+    public function buildSqlQueryTotals(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
@@ -371,6 +389,13 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $totals_query = "\n SELECT COUNT(*) AS EXFCNT " . $totals_select . " FROM (SELECT " . $totals_core_select . ' FROM ' . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having . ") EXFCOREQ";
         } else {
             $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
+        }
+        
+        // See if changes to the query occur while the query was built (e.g. query parts are
+        // added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than X times to avoid infinite recursion.
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQueryTotals($buildRun+1);
         }
         
         return $totals_query;

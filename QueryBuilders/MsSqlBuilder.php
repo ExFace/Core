@@ -32,6 +32,8 @@ use exface\Core\Interfaces\Model\CompoundAttributeInterface;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    const MAX_BUILD_RUNS = 5;
+    
     /**
      *
      * @param QueryBuilderSelectorInterface $selector
@@ -79,8 +81,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQuerySelect()
      */
-    public function buildSqlQuerySelect()
+    public function buildSqlQuerySelect(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $where = '';
         $having = '';
         $group_by = '';
@@ -225,6 +229,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
         }
         
+        // See if changes to the query occur while the query was built (e.g. query parts are 
+        // added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than X times to avoid infinite recursion.
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQuerySelect($buildRun+1);
+        }
+        
         return $query;
     }
     
@@ -310,8 +321,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryTotals()
      */
-    public function buildSqlQueryTotals()
+    public function buildSqlQueryTotals(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $group_by = '';
         $totals_joins = array();
         $totals_core_selects = array();
@@ -364,6 +377,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
         } else {
             $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by;
         }
+        
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQueryTotals($buildRun+1);
+        }
+        
         return $totals_query;
     }
     
