@@ -25,6 +25,8 @@ trait iPrefillWidgetTrait
     
     private $prefill_with_prefill_data = true;
     
+    private $prefill_with_defaults = null;
+    
     private $prefill_with_data_from_widget_link = null;
     
     /** @var DataSheetInterface */
@@ -529,6 +531,33 @@ trait iPrefillWidgetTrait
     public function setPrefillWithPrefillData($prefill_with_prefill_data) : iPrefillWidget
     {
         $this->prefill_with_prefill_data = $prefill_with_prefill_data;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    public function getPrefillWithDefaults() : ?bool
+    {
+        return $this->prefill_with_defaults;
+    }
+    
+    /**
+     * Set to TRUE to include default values of widgets in prefill data
+     * 
+     * If not set explicitly, this option will be up to the facade: some will set defaults via
+     * prefill, others - when generating the widget.
+     * 
+     * @uxon-property prefill_with_defaults
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return iPrefillWidgetTrait
+     */
+    public function setPrefillWithDefaults(bool $value) : iPrefillWidgetTrait
+    {
+        $this->prefill_with_defaults = $value;
         return $this;
     }
     
