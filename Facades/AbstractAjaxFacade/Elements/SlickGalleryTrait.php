@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -139,6 +141,11 @@ JS;
         {$this->buildJsSlickOptions()}
     });
     {$lightboxInit}
+    
+    $(document).on('click', '#{$this->getIdOfSlick()} .imagecarousel-item', function(e) {
+        $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
+        $(e.target).closest('.imagecarousel-item').addClass('selected');
+    });
 
 JS;
     }
@@ -295,6 +302,7 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
+        $dataObj = $this->getMetaObjectForDataGetter($action);
         
         switch (true) {
             case $action === null:
@@ -304,6 +312,38 @@ JS;
                 // If we are reading, than we need the special data from the configurator
                 // widget: filters, sorters, etc.
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            case $widget->getUploader()->isInstantUpload() === false
+            && ($action instanceof iModifyData)
+            && ! $dataObj->is($widget->getMetaObject())
+            && $action->getInputMapper($widget->getMetaObject()) === null:
+                // If the action is based on the same object as the widget's parent, use the widget's
+                // logic to find the relation to the parent. Otherwise try to find a relation to the
+                // action's object and throw an error if this fails.
+                if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
+                    $relAlias = $relPath->toString();
+                } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
+                    $relAlias = $relPath->toString();
+                }
+                
+                if ($relAlias === null || $relAlias === '') {
+                    throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
+                }
+                
+                return <<<JS
+    {
+        oId: '{$dataObj->getId()}',
+        rows: [
+            {
+                '{$relAlias}': $('#{$this->getIdOfSlick()}').data('_exfPending')
+            }
+        ],
+        filters: [
+        
+        ]
+    }
+    
+JS;
+            break;
         }
         
         return <<<JS
@@ -338,6 +378,7 @@ JS;
 
                 (function(){
                     $jqSlickJs.data('_exfData', $oDataJs);
+                    $jqSlickJs.data('_exfPending', {});
     
                     $jqSlickJs.slick('removeSlide', null, null, true);
     
@@ -355,11 +396,6 @@ JS;
                             }
                             $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\"></i>'", 'imagecarousel-icon')});
                         }
-                    });
-    
-                    $('#{$this->getIdOfSlick()} .imagecarousel-item').click(function(e) {
-                        $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
-                        $(e.target).closest('.imagecarousel-item').addClass('selected');
                     });
                 })();
 
@@ -382,6 +418,7 @@ JS;
         
             $('#{$this->getIdOfSlick()} .slick-track').empty();
             $('#{$this->getIdOfSlick()}').data('_exfData', {});
+            $('#{$this->getIdOfSlick()}').data('_exfPending', {});
            
 JS;
     }
@@ -420,6 +457,11 @@ JS;
         $widget = $this->getWidget();
         $uploader = $this->getWidget()->getUploader();
         $uploadButtonEl = $this->getFacade()->getElement($uploader->getInstantUploadButton());
+        if ($widget->getUploader()->isInstantUpload()) {
+            $uploadJs = $this->buildJsUploadSend('oParams', $this->buildJsBusyIconHide() . $uploadButtonEl->buildJsTriggerActionEffects($uploader->getInstantUploadAction()));
+        } else {
+            $uploadJs = $this->buildJsUploadStore('oParams', $this->buildJsBusyIconHide());
+        }
         
         $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
         $contentColName = DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
@@ -482,7 +524,7 @@ JS;
         
         data.files.forEach(function(file){
             var fileReader = new FileReader();
-            $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""')}).append(file.preview)[0]);
+            $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
             fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
                 {$this->buildJsBusyIconShow()};
@@ -496,7 +538,7 @@ JS;
                     }]
                 };
                 {$this->buildJsBusyIconShow()}
-                {$this->buildJsUploadSend('oParams', $this->buildJsBusyIconHide() . $uploadButtonEl->buildJsTriggerActionEffects($uploader->getInstantUploadAction()))}
+                {$uploadJs}
             };
             fileReader.readAsBinaryString(file);
         });
@@ -536,5 +578,32 @@ JS;
         } else {
             return '';
         }
+    }
+    
+    /**
+     * 
+     * @param string $oParamsJs
+     * @param string $onUploadCompleteJs
+     * @return string
+     */
+    protected function buildJsUploadStore(string $oParamsJs, string $onUploadCompleteJs) : string
+    {
+        return <<<JS
+
+            (function(){
+                var oLoaded = $('#{$this->getIdOfSlick()}').data('_exfData') || {};
+                var oPending = $('#{$this->getIdOfSlick()}').data('_exfPending') || {};
+                var oNew = $oParamsJs.data;console.log(oPending);
+                if (Object.keys(oPending).length === 0) {
+                    oPending = oNew;
+                } else {
+                    oPending.rows = oPending.rows.concat(oNew.rows);
+                }
+                oPending.rows = oPending.rows.concat(oLoaded.rows || []);
+                $('#{$this->getIdOfSlick()}').data('_exfPending', oPending);
+                {$onUploadCompleteJs}
+            })();
+
+JS;
     }
 }

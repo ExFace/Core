@@ -8,6 +8,10 @@ use exface\Core\DataTypes\ImageUrlDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Uploader;
 use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Widgets\Traits\EditableTableTrait;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -93,9 +97,10 @@ use exface\Core\CommonLogic\WidgetDimension;
  * @author Andrej Kabachnik
  *
  */
-class ImageGallery extends Data implements iCanUseProxyFacade
+class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
 {
     use iCanUseProxyFacadeTrait;
+    use EditableTableTrait;
     
     const ORIENTATION_HORIZONTAL = 'horizontal';
     const ORIENTATION_VERTICAL = 'vertical';
@@ -415,5 +420,29 @@ class ImageGallery extends Data implements iCanUseProxyFacade
             $this->setHeight(WidgetDimension::MAX);
         }
         return parent::getHeight();
+    }
+    
+    /**
+     * In an ImageGallery readonly means it cannot upload, so there is no point in an
+     * extra uxon-property here.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
+     */
+    public function setReadonly($true_or_false) : WidgetInterface
+    {
+        $this->setUploadEnabled(BooleanDataType::cast($true_or_false));
+        return $this;
+    }
+    
+    /**
+     * An ImageGallery is readonly if it does not do upload as part of form data.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
+     */
+    public function isReadonly() : bool
+    {
+        return $this->isUploadEnabled() === false || $this->getUploader()->isInstantUpload();
     }
 }
