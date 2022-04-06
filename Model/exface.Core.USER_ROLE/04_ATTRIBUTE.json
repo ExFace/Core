@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:29:06",
-            "MODIFIED_ON": "2022-03-02 18:01:15",
+            "MODIFIED_ON": "2022-04-06 13:40:34",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0dcd585e8db2cfe4b318306b9a",
@@ -206,8 +206,8 @@
             "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
             "RELATED_OBJ": "",
-            "SORTERPOS": null,
-            "SORTERDIR": "",
+            "SORTERPOS": 1,
+            "SORTERDIR": "ASC",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
