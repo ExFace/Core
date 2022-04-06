@@ -28,8 +28,6 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
@@ -91,6 +89,17 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * @var string[]
      */
     private $resetWidgetIds = [];
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->hiddenIfAccessDenied = $this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED');
+    }
 
     public function getAction()
     {
@@ -506,9 +515,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * Set this property if the button should be hidden if a user is not allowed access to the action bound to it.
      * 
+     * The default value is set in the core configuration file `exface.Core.config.json` as 
+     * `WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED`.
+     * 
      * @uxon-property hidden_if_access_denied
      * @uxon-type boolean
-     * @uxon-default false
      * 
      * @param bool $trueOrFalse
      * @return Button
