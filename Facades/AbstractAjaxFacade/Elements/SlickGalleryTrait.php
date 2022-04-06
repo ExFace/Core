@@ -458,7 +458,7 @@ JS;
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                 default: sIcon = 'fa fa-file-o';
                             }
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\"></i>'", 'imagecarousel-file')});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType')});
                         }
                     });
 
@@ -476,6 +476,20 @@ JS;
     protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '') : string
     {
         return "'<div class=\"imagecarousel-item {$cssClass}\">' + {$imgJs} + '</div>'";
+    }
+    
+    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '') : string
+    {
+        return <<<JS
+                            (function(){
+                                switch ($sMimeTypeJs.toLowerCase()) {
+                                    case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
+                                    default: sIcon = 'fa fa-file-o';
+                                }
+                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sFileNameJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
+                            })()
+
+JS;
     }
     
     /**
@@ -611,17 +625,21 @@ JS;
         data.files.forEach(function(file){
             var fileReader = new FileReader();
             $('#{$this->getIdOfSlick()}-nodata').hide();
-            $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
+            if (file.type.startsWith('image')){
+                $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
+            } else {
+                $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', '.imagecarousel-pending')}));
+            }
             fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
                 {$this->buildJsBusyIconShow()};
                 oParams.data = {
                     oId: '{$this->getMetaObject()->getId()}',
                     rows: [{
-                        '{$filenameColName}': (file.name || 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png'),
+                        {$filenameColName}: (file.name || 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png'),
                         {$fileModificationColumnJs}
                         {$mimeTypeColumnJs}
-                        '{$contentColName}': sContent,
+                        {$contentColName}: sContent,
                     }]
                 };
                 {$this->buildJsBusyIconShow()}
