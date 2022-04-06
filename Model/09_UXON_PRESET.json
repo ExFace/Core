@@ -4651,7 +4651,7 @@
         },
         {
             "CREATED_ON": "2021-07-14 12:11:12",
-            "MODIFIED_ON": "2021-07-14 12:11:40",
+            "MODIFIED_ON": "2022-04-01 09:30:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb495d15bde82b495025041000001",
@@ -4675,7 +4675,7 @@
                     }
                 ]
             },
-            "WRAP_PATH": "",
+            "WRAP_PATH": "$.buttons[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/menubutton.gif"
         },
