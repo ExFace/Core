@@ -4,6 +4,8 @@
     "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
 	
+	"WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED": true,
+	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
 	       	{
