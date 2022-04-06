@@ -125,7 +125,9 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     private $uploadEnabled = false;
     
-    private $zoom = false;
+    private $zoom = true;
+    
+    private $zoomOnClick = false;
     
     protected function init()
     {
@@ -381,11 +383,11 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     }
     
     /**
-     * Set to TRUE to enable a lightbox-style zoom effect on click
+     * Set to TRUE to enable a lightbox-style zoom effect
      * 
      * @uxon-property zoomable
      * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-default true
      * 
      * @param bool $value
      * @return ImageGallery
@@ -393,6 +395,31 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     public function setZoomable(bool $value) : ImageGallery
     {
         $this->zoom = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isZoomOnClick() : bool
+    {
+        return $this->zoomOnClick;
+    }
+    
+    /**
+     * Set to TRUE to zoom when an image is clicked
+     * 
+     * @uxon-property zoom_on_click
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ImageGallery
+     */
+    public function setZoomOnClick(bool $value) : ImageGallery
+    {
+        $this->zoomOnClick = $value;
         return $this;
     }
     

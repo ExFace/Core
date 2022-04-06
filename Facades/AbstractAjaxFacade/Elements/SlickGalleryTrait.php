@@ -16,6 +16,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -61,8 +62,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 .slick-carousel.horizontal .slick-prev.slick-arrow {left: 5px; z-index: 1;}
 .slick-carousel.horizontal .slick-next.slick-arrow {right: 5px; z-index: 1;}
 .slick-carousel.horizontal .slick-arrow:before {color: #404040}
+.slick-carousel .slick-slide {overflow: hidden;}
 .slick-carousel .slick-slide.selected {border: 5px solid #9cc8f7}
 .slick-lightbox .slick-prev.slick-arrow {z-index: 1}
+.imagecarousel-file {height: 100%; width: 150px; position: relative; background-color: #f5f5f5; cursor: pointer;}
+.imagecarousel-file > i {position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200%}
 
  * ```
  * 
@@ -76,6 +80,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 trait SlickGalleryTrait
 {
     private $btnZoom = null;
+    
+    private $btnMinus = null;
+    
+    private $btnBrowse = null;
     
     /**
      *
@@ -113,7 +121,7 @@ HTML;
                 $lightboxCaption = "caption: function(element, info){var oData = $('#{$this->getIdOfSlick()}').data('_exfData'); if (oData) {return (oData.rows || [])[info.index]['{$this->getWidget()->getImageTitleColumn()->getDataColumnName()}'] } else {return '';} },";
             }
             
-            $zoomOnClickJs = $this->getWidget()->getHideHeader() ? 'true' : 'false';
+            $zoomOnClickJs = $this->getWidget()->isZoomOnClick() ? 'true' : 'false';
             
             $lightboxInit = <<<JS
 
@@ -146,6 +154,8 @@ JS;
         $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
         $(e.target).closest('.imagecarousel-item').addClass('selected');
     });
+
+    $("#{$this->getIdOfSlick()}").append({$this->escapeString($this->buildHtmlNoDataOverlay())});
 
 JS;
     }
@@ -228,28 +238,76 @@ JS;
      */
     protected function addCarouselFeatureButtons(ButtonGroup $btnGrp, int $index = 0) : void
     {        
-        $this->btnZoom = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
-            'widget_type' => 'DataButton',
-            'icon' => 'arrows-alt',
-            'caption' => 'Zoom',
-            'align' => 'right',
-            'action' => [
-                'alias' => 'exface.Core.CustomFacadeScript',
-                'script' => <<<JS
-                    var jqActiveSlide;
-                    var jqCarousel = $('#{$this->getIdOfSlick()}');
-                    jqCarousel.data('_exfZoomOnClick', true); 
-                    jqActiveSlide = jqCarousel.find('.imagecarousel-item.selected');
-                    if (jqActiveSlide.length === 0) {
-                        jqActiveSlide = jqCarousel.find('.imagecarousel-item:first-of-type'); 
-                    }
-                    jqActiveSlide.find('img').click();
-                    setTimeout(function(){ 
-                        jqCarousel.data('_exfZoomOnClick', false) 
-                    }, 100);
+        $widget = $this->getWidget();
+        
+        if ($widget->isUploadEnabled()) {
+            $this->btnBrowse = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                'widget_type' => 'DataButton',
+                'icon' => Icons::FOLDER_OPEN_O,
+                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE'),
+                'hide_caption' => true,
+                'align' => 'right',
+                'action' => [
+                    'alias' => 'exface.Core.CustomFacadeScript',
+                    'script' => <<<JS
+                        $('#{$this->getIdOfSlick()}-uploader').click();
 JS
-            ]
-        ])), $index);
+                ]
+            ])), $index);
+            
+            if ($widget->getUploader()->isInstantUpload() === false) {
+                $this->btnMinus = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                'widget_type' => 'DataButton',
+                'icon' => Icons::TRASH,
+                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_REMOVE'),
+                'hide_caption' => true,
+                'align' => 'right',
+                'action' => [
+                    'alias' => 'exface.Core.CustomFacadeScript',
+                    'script' => <<<JS
+                        var jqCarousel = $('#{$this->getIdOfSlick()}');
+                        var jqActiveSlide = jqCarousel.find('.imagecarousel-item.selected');
+                        var iSlideIdx = jqActiveSlide.index();
+                        var oData = jqCarousel.data('_exfData');
+                        if (jqActiveSlide.length !== 0 && oData.rows !== undefined && iSlideIdx > -1) {
+                            jqCarousel.slick('slickRemove', iSlideIdx);
+                            oData.rows.splice(iSlideIdx, 1);
+                            if (oData.rows.length === 0) {
+                                $('#{$this->getIdOfSlick()}-nodata').show();
+                            }
+                            jqCarousel.data('_exfData', oData);
+                        }
+JS
+                    ]
+                ])), $index);
+            }
+        }
+        
+        if ($widget->isZoomable()) {
+            $this->btnZoom = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                'widget_type' => 'DataButton',
+                'icon' => Icons::SEARCH_PLUS,
+                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_ZOOM'),
+                'hide_caption' => true,
+                'align' => 'right',
+                'action' => [
+                    'alias' => 'exface.Core.CustomFacadeScript',
+                    'script' => <<<JS
+                        var jqActiveSlide;
+                        var jqCarousel = $('#{$this->getIdOfSlick()}');
+                        jqCarousel.data('_exfZoomOnClick', true); 
+                        jqActiveSlide = jqCarousel.find('.imagecarousel-item.selected');
+                        if (jqActiveSlide.length === 0) {
+                            jqActiveSlide = jqCarousel.find('.imagecarousel-item:first-of-type'); 
+                        }
+                        jqActiveSlide.find('img').click();
+                        setTimeout(function(){ 
+                            jqCarousel.data('_exfZoomOnClick', false) 
+                        }, 100);
+JS
+                ]
+            ])), $index);
+        }
         
         return;
     }
@@ -334,7 +392,13 @@ JS;
         oId: '{$dataObj->getId()}',
         rows: [
             {
-                '{$relAlias}': $('#{$this->getIdOfSlick()}').data('_exfPending')
+                '{$relAlias}': $.extend(
+                    {}, 
+                    {
+                        "oId": "{$widget->getMetaObject()->getId()}"
+                    }, 
+                    $('#{$this->getIdOfSlick()}').data('_exfData')
+                )
             }
         ],
         filters: [
@@ -377,12 +441,12 @@ JS;
         return <<<JS
 
                 (function(){
+                    var aRows = ($oDataJs.rows || []);
                     $jqSlickJs.data('_exfData', $oDataJs);
-                    $jqSlickJs.data('_exfPending', {});
     
-                    $jqSlickJs.slick('removeSlide', null, null, true);
+                    $jqSlickJs.slick('slickRemove', null, null, true);
     
-    				($oDataJs.rows || []).forEach(function(oRow, i) {
+    				aRows.forEach(function(oRow, i) {
                         var sSrc = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
                         var sTitle = oRow['{$widget->getImageTitleColumn()->getDataColumnName()}'];
                         var sMimeType = {$mimeTypeJs};
@@ -394,9 +458,16 @@ JS;
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                 default: sIcon = 'fa fa-file-o';
                             }
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\"></i>'", 'imagecarousel-icon')});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\"></i>'", 'imagecarousel-file')});
                         }
                     });
+
+                    if (aRows.length > 0) {
+                        $('#{$this->getIdOfSlick()}-nodata').hide();
+                    } else {
+                        $('#{$this->getIdOfSlick()}-nodata').show();
+                    }
+
                 })();
 
 JS;
@@ -416,9 +487,9 @@ JS;
     {
         return <<<JS
         
-            $('#{$this->getIdOfSlick()} .slick-track').empty();
-            $('#{$this->getIdOfSlick()}').data('_exfData', {});
-            $('#{$this->getIdOfSlick()}').data('_exfPending', {});
+            $('#{$this->getIdOfSlick()}')
+                .slick('slickRemove', null, null, true)
+                .data('_exfData', {});
            
 JS;
     }
@@ -483,7 +554,7 @@ JS;
         // place $_FILES in the data sheet if the column names match.
         $output = <<<JS
             
-    $jqSlickJs.slick('slickAdd', '<a class="imagecarousel-upload pastearea"><i class="fa fa-upload"></i></a>');
+    /*$jqSlickJs.slick('slickAdd', '<a class="imagecarousel-upload pastearea"><i class="fa fa-upload"></i></a>');
     $jqSlickJs.find('.imagecarousel-upload').on('click', function(){
         var jqA = $(this);
         if (! jqA.hasClass('armed')) {
@@ -495,20 +566,35 @@ JS;
             jqA.children('span').remove();
             jqA.children('.fa-upload').show();
         }
-    });
-    
-	$('#{$this->getIdOfSlick()} .pastearea').pastableNonInputable();
-	$('#{$this->getIdOfSlick()} .pastearea').on('pasteImage', function(ev, data){
-        $('#{$this->getIdOfSlick()} .imagecarousel-upload').fileupload('add', {files: [data.blob]});
-    });
-    
-    $('#{$this->getIdOfSlick()} .imagecarousel-upload').fileupload({
+    });*/
+
+    /*
+    $('#{$this->getId()}').on('dragenter', function(){
+        $('#{$this->getIdOfSlick()}-nodata').hide();
+        $('#{$this->getIdOfSlick()}-dropzone').show();
+    })
+
+    $('#{$this->getId()}').on('dragleave', function(){console.log('leave');
+        $('#{$this->getIdOfSlick()}-dropzone').hide();
+        $('#{$this->getIdOfSlick()}-nodata').show();
+    })*/
+
+    $('#{$this->getIdOfSlick()}')
+        .addClass('pastearea')
+    	.pastableNonInputable()
+    	.on('pasteImage', function(ev, data){
+            $('#{$this->getIdOfSlick()}').parent().find('.dropzone').fileupload('add', {files: [data.blob]});
+        });
+
+    $('#{$this->getIdOfSlick()}').append('<input id="{$this->getIdOfSlick()}-uploader" style="display:none" type="file" name="files[]" multiple="">');
+   
+    $('#{$this->getIdOfSlick()}').fileupload({
         url: '{$this->getAjaxUrl()}',
         dataType: 'json',
         autoUpload: true,
         {$this->buildJsUploadAcceptedFileTypesFilter()}
         maxFileSize: {$maxFileSizeInBytes},
-        previewMaxHeight: $('#{$this->getIdOfSlick()} .imagecarousel-upload').height(),
+        previewMaxHeight: ($('#{$this->getIdOfSlick()}').height() - 20),
         previewMaxWidth: $('#{$this->getIdOfSlick()}').width(),
         previewCrop: false,
         formData: {
@@ -517,13 +603,14 @@ JS;
             object: '{$widget->getMetaObject()->getId()}',
             action: '{$uploader->getInstantUploadAction()->getAliasWithNamespace()}'
         },
-        dropZone: $('#{$this->getIdOfSlick()} .imagecarousel-upload')
+        dropZone: $('#{$this->getIdOfSlick()}')
     })
     .on('fileuploadsend', function(e, data) {
         var oParams = data.formData;
         
         data.files.forEach(function(file){
             var fileReader = new FileReader();
+            $('#{$this->getIdOfSlick()}-nodata').hide();
             $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
             fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
@@ -591,19 +678,42 @@ JS;
         return <<<JS
 
             (function(){
-                var oLoaded = $('#{$this->getIdOfSlick()}').data('_exfData') || {};
-                var oPending = $('#{$this->getIdOfSlick()}').data('_exfPending') || {};
-                var oNew = $oParamsJs.data;console.log(oPending);
-                if (Object.keys(oPending).length === 0) {
-                    oPending = oNew;
+                var oData = $('#{$this->getIdOfSlick()}').data('_exfData') || {};
+                var oNew = $oParamsJs.data;
+                if (Object.keys(oData).length === 0) {
+                    oData = oNew;
                 } else {
-                    oPending.rows = oPending.rows.concat(oNew.rows);
+                    oData.rows = oData.rows.concat(oNew.rows);
                 }
-                oPending.rows = oPending.rows.concat(oLoaded.rows || []);
-                $('#{$this->getIdOfSlick()}').data('_exfPending', oPending);
+                $('#{$this->getIdOfSlick()}').data('_exfData', oData);
                 {$onUploadCompleteJs}
             })();
 
 JS;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildHtmlNoDataOverlay() : string
+    {
+        if ($this->getWidget()->isUploadEnabled()) {
+            $message = $this->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
+        } else {
+            $message = $this->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
+        }
+        return <<<HTML
+        
+            <div id="{$this->getIdOfSlick()}-nodata" style="position: absolute; top: 0; z-index: 1; width: 100%; height: 100%">
+                <div class="imagecarousel-nodata">
+                    <i class="fa fa-file-image-o" aria-hidden="true"></i>
+                    <div class="imagecarousel-nodata-text">
+                        {$message}
+                    </div>
+                </li>
+            </div>
+            
+HTML;
     }
 }
