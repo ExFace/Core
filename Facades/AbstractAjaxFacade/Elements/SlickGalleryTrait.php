@@ -67,6 +67,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 .slick-lightbox .slick-prev.slick-arrow {z-index: 1}
 .imagecarousel-file {height: 100%; width: 150px; position: relative; background-color: #f5f5f5; cursor: pointer;}
 .imagecarousel-file > i {position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200%}
+.imagecarousel-overlay {position: absolute; top: 0; width: 100%; height: 100%}
 
  * ```
  * 
@@ -723,13 +724,45 @@ JS;
         }
         return <<<HTML
         
-            <div id="{$this->getIdOfSlick()}-nodata" style="position: absolute; top: 0; z-index: 1; width: 100%; height: 100%">
+            <div id="{$this->getIdOfSlick()}-nodata" class="imagecarousel-overlay">
                 <div class="imagecarousel-nodata">
                     <i class="fa fa-file-image-o" aria-hidden="true"></i>
-                    <div class="imagecarousel-nodata-text">
+                    <div>
                         {$message}
                     </div>
-                </li>
+                </div>
+            </div>
+            
+HTML;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildHtmlUploadOverlay() : string
+    {
+        return <<<HTML
+        
+            <div id="{$this->getIdOfSlick()}-uploader" class="imagecarousel-overlay">
+                <div class="imagecarousel-uploader">
+                    <i class="fa fa-mouse-pointer" aria-hidden="true"></i>
+                    <div>
+                        {$this->translate('WIDGET.IMAGEGALLERY.HINT_DROP_HERE')}
+                    </div>
+                </div>
+                <div class="imagecarousel-uploader">
+                    <i class="fa fa-clipboard" aria-hidden="true"></i>
+                    <div>
+                        {$this->translate('WIDGET.IMAGEGALLERY.HINT_PASTE_HERE')}
+                    </div>
+                </div>
+                <div class="imagecarousel-uploader">
+                    <i class="fa fa-folder-open-o" aria-hidden="true"></i>
+                    <div>
+                        {$this->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE')}
+                    </div>
+                </div>
             </div>
             
 HTML;
