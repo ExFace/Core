@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -332,8 +333,11 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     public function getUploader() : Uploader
     {
         if ($this->uploader === null) {
+            if ($this->isUploadEnabled() === false) {
+                throw new LogicException('Cannot get the uploader for ' . $this->getWidgetType() . ': upload is generally disabled!');
+            }
             if ($this->uploaderUxon === null) {
-                throw new WidgetConfigurationError('Please configure the `uploader` option of widget "' . $this->getWidgetType() . '"!');
+                throw new WidgetConfigurationError($this, 'Please configure the `uploader` option of widget "' . $this->getWidgetType() . '"!');
             }
             $this->uploader = new Uploader($this, $this->uploaderUxon);
         }
