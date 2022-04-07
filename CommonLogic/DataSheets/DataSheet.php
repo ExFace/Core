@@ -280,7 +280,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getColumnValues()
      */
-    public function getColumnValues($column_name, $include_totals = false)
+    public function getColumnValues(string $column_name, bool $include_totals = false) : array
     {
         $col = array();
         $rows = $include_totals ? array_merge($this->rows, $this->totals_rows) : $this->rows;
@@ -296,7 +296,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setColumnValues()
      */
-    public function setColumnValues($column_name, $column_values, $totals_values = null)
+    public function setColumnValues(string $column_name, $column_values, $totals_values = null) : DataSheetInterface
     {
         // If the column is not yet there, add it, but make it hidden
         if (! $this->getColumn($column_name)) {
@@ -335,7 +335,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getCellValue()
      */
-    public function getCellValue($column_name, $row_number)
+    public function getCellValue(string $column_name, int $row_number)
     {
         if ($row = $this->rows[$row_number]) {
             return $row[$column_name];
@@ -351,7 +351,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setCellValue()
      */
-    public function setCellValue($column_name, $row_number, $value)
+    public function setCellValue(string $column_name, int $row_number, $value) : DataSheetInterface
     {
         // Create the column, if not already there
         if (! $this->getColumn($column_name)) {
@@ -373,10 +373,9 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getTotalValue()
      */
-    public function getTotalValue($column_name, $row_number)
+    public function getTotalValue(string $column_name, int $row_number)
     {
         return $this->totals_rows[$row_number][$column_name];
     }
@@ -913,7 +912,7 @@ class DataSheet implements DataSheetInterface
                 case $column->getDataType() instanceof DataSheetDataType:
                     // Update nested sheets - i.e. replace all rows in the data source, that are related to
                     // the each row of the main sheet with the nested rows here.
-                    $this->dataUpdateNestedSheets($column, $transaction);
+                    $this->dataUpdateNestedSheets($column, $create_if_uid_not_found, $transaction);
                     continue 2;                
                 case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString()):
                     // Skip columns with aggregate functions
@@ -1016,7 +1015,7 @@ class DataSheet implements DataSheetInterface
      * 
      * @return int
      */
-    protected function dataUpdateNestedSheets(DataColumnInterface $column, DataTransactionInterface $transaction) : int
+    protected function dataUpdateNestedSheets(DataColumnInterface $column, bool $createIfUidNotFound, DataTransactionInterface $transaction) : int
     {
         $counter = 0;
         
@@ -1104,11 +1103,13 @@ class DataSheet implements DataSheetInterface
                         // Search for matching rows of the original sheet
                         $nestedSheetIdxs = $nestedSheet->findRowsByValues($nestedUidRow);
                         // If it's a single row exactly - we would end up with non-unique UIDs which is bad...
-                        if (count($nestedSheetIdxs) !== 1) {
+                        if ((empty($nestedSheetIdxs) && $createIfUidNotFound === false) || count($nestedSheetIdxs) > 1) {
                             throw new DataSheetWriteError($this, 'Cannot process subsheet for "' . $column->getAttributeAlias() . '": UID count mismatch!');
                         }
                         // If everything worked well, put the UID into the original nested sheet
-                        $nestedSheet->setCellValue($nestedUidColName, $nestedSheetIdxs[0], $nestedUid);
+                        if (! empty($nestedSheetIdxs)) {
+                            $nestedSheet->setCellValue($nestedUidColName, $nestedSheetIdxs[0], $nestedUid);
+                        }
                     }
                 }
             }

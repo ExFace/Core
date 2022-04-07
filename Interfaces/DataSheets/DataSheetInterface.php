@@ -99,14 +99,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Returns the values a column of the data sheet as an array
+     * 
+     * If $include_totals is set to ture, the total rows will be appended to the data rows
      *
-     * @param
-     *            string column_name
-     * @param
-     *            boolean include_totals if set to ture, the total rows will be appended to the data rows
-     * @return boolean|array
+     * @param string $column_name
+     * @param boolean $include_totals
+     * @return array
      */
-    public function getColumnValues($column_name, $include_totals = false);
+    public function getColumnValues(string $column_name, bool $include_totals = false) : array;
 
     /**
      * Overwrites all values of a data sheet column using a given array with values per row or
@@ -120,13 +120,32 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param mixed|array totals_values
      * @return DataSheetInterface
      */
-    public function setColumnValues($column_name, $column_values, $totals_values = null);
+    public function setColumnValues(string $column_name, $column_values, $totals_values = null) : DataSheetInterface;
 
-    public function getCellValue($column_name, $row_number);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @return mixed|NULL
+     */
+    public function getCellValue(string $column_name, int $row_number);
 
-    public function setCellValue($column_name, $row_number, $value);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @param mixed $value
+     * @return DataSheetInterface
+     */
+    public function setCellValue(string $column_name, int $row_number, $value) : DataSheetInterface;
 
-    public function getTotalValue($column_name, $row_number);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @return mixed|NULL
+     */
+    public function getTotalValue(string $column_name, int $row_number);
 
     /**
      * Populates the data sheet with actual data from the respecitve data sources.
