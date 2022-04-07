@@ -371,7 +371,7 @@ JS;
                 // If we are reading, than we need the special data from the configurator
                 // widget: filters, sorters, etc.
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
-            case $widget->getUploader()->isInstantUpload() === false
+            case $widget->isUploadEnabled() && $widget->getUploader()->isInstantUpload() === false
             && ($action instanceof iModifyData)
             && ! $dataObj->is($widget->getMetaObject())
             && $action->getInputMapper($widget->getMetaObject()) === null:
@@ -505,6 +505,7 @@ JS;
             $('#{$this->getIdOfSlick()}')
                 .slick('slickRemove', null, null, true)
                 .data('_exfData', {});
+            $('#{$this->getIdOfSlick()}-nodata').show();
            
 JS;
     }
