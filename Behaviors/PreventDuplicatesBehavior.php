@@ -344,6 +344,14 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $checkSheet->removeRows();
         $checkSheet->getFilters()->removeAll();
         
+        // Make sure the check-sheet always has a UID column if there is a UID attribute
+        // This is important in case the event sheet did not have a UID and we would not
+        // be able to do proper comparisons below. This is a difference to the self-compare
+        // above!
+        if (! $checkSheet->hasUidColumn(false) && $checkSheet->getMetaObject()->hasUidAttribute()) {
+            $checkSheet->getColumns()->addFromUidAttribute();
+        }
+        
         // Add columns even for attributes that are not present in the original event sheet
         foreach ($missingAttrs as $attr) {
             $checkSheet->getColumns()->addFromAttribute($attr);
@@ -386,29 +394,62 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return $duplicates;
         }
 
-        foreach ($this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null)) as $rowNo => $rows) {
+        foreach ($this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($checkSheet->hasUidColumn() ? $checkSheet->getUidColumn() : null)) as $rowNo => $rows) {
             $duplicates[$rowNo] = array_merge(($duplicates[$rowNo] ?? []), $rows);
         }
         return $duplicates;
     }
     
+    /**
+     * 
+     * @param array $eventRows
+     * @param array $checkRows
+     * @param array $compareCols
+     * @param DataColumn|NULL $uidCol
+     * @return array
+     */
     protected function findDuplicatesInRows(array $eventRows, array $checkRows, array $compareCols, DataColumn $uidCol = null) : array
     {
         $duplicates = [];
         $eventRowCnt = count($eventRows);
         $caseSensitive = $this->getCompareCaseSensitive();
+        $uidType = $uidCol !== null ? $uidCol->getDataType() : null;
+        
+        // Extract and parse values relevant for the search. Do it once here in order to
+        // improve performance on large data sets. 
+        $eventRowsKeys = [];
+        foreach ($eventRows as $eventRowNo => $eventRow) {
+            foreach ($compareCols as $col) {
+                $keys[$col->getName()] = $col->getDataType()->parse($eventRow[$col->getName()]);
+            }
+            if ($uidCol !== null) {
+                $keys[$uidCol->getName()] = $uidType->parse($eventRow[$uidCol->getName()]);
+            }
+            $eventRowsKeys[$eventRowNo] = $keys;
+        }
+        $checkRowsKeys = [];
+        foreach ($checkRows as $chRowNo => $chRow) {
+            foreach ($compareCols as $col) {
+                $keys[$col->getName()] = $col->getDataType()->parse($chRow[$col->getName()]);
+            }
+            if ($uidCol !== null) {
+                $keys[$uidCol->getName()] = $uidType->parse($chRow[$uidCol->getName()]);
+            }
+            $checkRowsKeys[$chRowNo] = $keys;
+        }
+        
+        // Now compare the keys of each event row to each check row
         for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
             // For each row loaded from data source
             $uidMatchProcessed = false;
-            foreach ($checkRows as $chRow) {
+            $eventRow = $eventRowsKeys[$eventRowNo];
+            foreach ($checkRowsKeys as $chRow) {
                 $isDuplicate = true;
-                $eventRow = $eventRows[$eventRowNo];
                 // Compare all the relevant columns: if any value differs, it is NOT a duplicate
                 foreach ($compareCols as $col) {
-                    $dataType = $col->getDataType();
                     $key = $col->getName();
-                    $eventVal = $dataType->parse($eventRow[$key]);
-                    $checkVal = $dataType->parse($chRow[$key]);
+                    $eventVal = $eventRow[$key];
+                    $checkVal = $chRow[$key];
                     // If both values are strings, use a case-insensitive comparison if required
                     // Otherwise compare directly
                     if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
@@ -423,24 +464,29 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 }
                 
                 // If the data source row has matching columns, check if the UID also matches: if so,
-                // it is the same row and, thus, NOT a duplicate
-                if ($isDuplicate === true && $uidCol !== null && $uidMatchProcessed === false) {
-                    $dataType = $uidCol->getDataType();
-                    $key = $uidCol->getName();
-                    $eventVal = $dataType->parse($eventRow[$key]);
-                    $checkVal = $dataType->parse($chRow[$key]);
-                    // If both values are strings, use a case-insensitive comparison if required
-                    // Otherwise compare directly
-                    if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
-                        if (strcasecmp($eventVal, $checkVal) === 0) {
+                // it is the same row and, thus, NOT a duplicate. If there is no UID, just ignore the
+                // first match.
+                if ($isDuplicate === true && $uidMatchProcessed === false) {
+                    if ($uidCol !== null) {
+                        $key = $uidCol->getName();
+                        $eventVal = $eventRow[$key];
+                        $checkVal = $chRow[$key];
+                        // If both values are strings, use a case-insensitive comparison if required
+                        // Otherwise compare directly
+                        if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
+                            if (strcasecmp($eventVal, $checkVal) === 0) {
+                                $isDuplicate = false;
+                                $uidMatchProcessed = true;
+                                // Don't break here as other $checkRows may still be duplicates!!!
+                            }
+                        } elseif ($eventVal == $checkVal) {
                             $isDuplicate = false;
                             $uidMatchProcessed = true;
-                            // Don't bread here as other $checkRows may still be duplicates!!!
+                            // Don't break here as other $checkRows may still be duplicates!!!
                         }
-                    } elseif ($eventVal == $checkVal) {
+                    } else {
                         $isDuplicate = false;
                         $uidMatchProcessed = true;
-                        // Don't bread here as other $checkRows may still be duplicates!!!
                     }
                 }
                 
@@ -451,6 +497,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 }
             }
         }
+        
         return $duplicates;
     }
     
