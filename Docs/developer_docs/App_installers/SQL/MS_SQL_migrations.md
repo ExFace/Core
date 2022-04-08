@@ -71,6 +71,7 @@ BEGIN
 			@schema NVARCHAR(50) = 'dbo',
 			@table NVARCHAR(50) = '{TABLE_NAME}',
 			@column NVARCHAR(50) = '{COLUMN_NAME}'
+	/* DROP default constraints	*/
 	WHILE 1=1
 	BEGIN
 		SELECT TOP 1 @sql = N'ALTER TABLE '+@schema+'.'+@table+' DROP CONSTRAINT ['+dc.NAME+N']'
@@ -82,6 +83,19 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 		EXEC (@sql)
 	END
+	/* DROP foreign keys */
+	WHILE 1=1
+	BEGIN
+		SELECT TOP 1 @sql = N'ALTER TABLE '+@schema+'.'+@table+' DROP CONSTRAINT ['+fk.NAME+N']'
+			FROM sys.foreign_keys fk
+				JOIN sys.foreign_key_columns fk_cols ON fk_cols.constraint_object_id = fk.object_id
+			WHERE 
+				fk.parent_object_id = OBJECT_ID(@table)
+				AND COL_NAME(fk.parent_object_id, fk_cols.parent_column_id) = @column
+		IF @@ROWCOUNT = 0 BREAK
+		EXEC (@sql)
+	END
+	/* DROP column */
 	EXEC(N'ALTER TABLE ['+@schema+'].['+@table+'] DROP COLUMN ['+@column+']')
 END
 ```
