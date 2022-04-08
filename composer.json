@@ -53,7 +53,8 @@
 		"npm-asset/workbox-sw" : "^5.1.3",
 		"npm-asset/dexie" : "^2.0.4",
 		"ramsey/uuid" : "^3.0||^4.0",
-		"dragonmantank/cron-expression" : "^3.1"
+		"dragonmantank/cron-expression" : "^3.1",
+		"intervention/image" : "^2.7"
 	},
 	"bin" : [
 		"Facades/ConsoleFacade/bin/action"
@@ -61,9 +62,7 @@
 	"extra" : {
 		"app" : {
 			"app_uid" : "0x31000000000000000000000000000000",
-			"app_alias" : "exface.Core",
-			"model_md5" : "727e5c309a531641d2251e83860d396b",
-			"model_timestamp" : "2022-03-07 08:37:47"
+			"app_alias" : "exface.Core"
 		}
 	},
 	"autoload" : {
