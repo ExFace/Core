@@ -443,7 +443,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             // For each row loaded from data source
             $uidMatchProcessed = false;
             $eventRow = $eventRowsKeys[$eventRowNo];
-            foreach ($checkRowsKeys as $chRow) {
+            foreach ($checkRowsKeys as $chRowNo => $chRow) {
                 $isDuplicate = true;
                 // Compare all the relevant columns: if any value differs, it is NOT a duplicate
                 foreach ($compareCols as $col) {
@@ -492,7 +492,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 
                 // If it is still a potential duplicate, it really is one
                 if ($isDuplicate === true) {
-                    $duplicates[$eventRowNo][] = $chRow;
+                    $duplicates[$eventRowNo][] = $checkRows[$chRowNo];
                     break;
                 }
             }
