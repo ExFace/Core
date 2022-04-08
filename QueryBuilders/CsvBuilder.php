@@ -1,27 +1,41 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use League\Csv\Reader;
-use League\Csv\Statement;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
-use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
-use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\QueryBuilders\Traits\CsvBuilderTrait;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 
 /**
  * A query builder to read CSV files.
  * 
- * This query builder is internally based on the PHP leagues CSV package:
- * https://csv.thephpleague.com/.
+ * ## Data source configuration
+ * 
+ * To access CSV files create a data source with this query builder and a connection with the `FileContentsConnector`.
+ * 
+ * ## Object data addresses
+ * 
+ * The meta object address is the file path - either absolute or relative to the base of the corresponding connection.
+ * 
+ * ## Attribute data addresses
+ * 
+ * - CSV column number starting with 0 - e.g. `0` for the first column, '1' for the second, etc.
+ * - `~row_number` for the current row number (starting with 0, EXCLUDING header rows)
+ * - File-related data addresses as available in the `FileContentsBuilder`
+ *      - `~filepath`
+ *      - `~filepath_relative`
+ *      - `~contents`
  *
  * @author Andrej Kabachnik
  *        
  */
 class CsvBuilder extends FileContentsBuilder
 {    
+    use CsvBuilderTrait;
+    
     /**
      * Delimiter between row values - defaults to `,` (comma)
      *
@@ -71,112 +85,9 @@ class CsvBuilder extends FileContentsBuilder
         }
         
         // Prepare filters
-        $statementFiltering = $this->prepareFilters($query);
+        $readAll = $this->prepareFilters($query);
         
-        // Prepare sorting
-        foreach ($this->getSorters() as $qpart) {
-            $qpart->setAlias($qpart->getDataAddress());
-            $qpart->setApplyAfterReading(true);
-        }
-        
-        // Initialize the CSV reader
-        $csvReader = $this->initCsvReader($query);
-        
-        // Create a statement for advanced record selection
-        $statement = Statement::create();
-        
-        // Add a WHERE to the statement based on "normal" filtering
-        $statement = $statement->where(function ($row) {
-            return parent::applyFilters([$row]);
-        });
-        
-        // pagination
-        if ($statementFiltering === false) {
-            // Increase offset if there is a header row and another time to find out if more rows are there
-            $offset = ($this->hasHeaderRow() ? $this->getOffset() + 1 : $this->getOffset());
-            $statement = $statement
-                ->limit($this->getLimit()+1)
-                ->offset($offset);
-        }
-        
-        // sorting
-        $statement = $statement->orderBy(function($row1, $row2){
-            $sorted = parent::applySorting([$row1, $row2]);
-            if ($sorted[0] === $row1)
-                return -1;
-            else
-                return 1;
-        });
-        
-        $result_rows = [];
-        $hasMoreRows = false;
-        $records = $statement->process($csvReader);
-        $maxRow = $this->getLimit() > 0 ? $this->getLimit() + $this->getOffset() : null;
-        try {
-            foreach ($this->getAttributes() as $qpart) {
-                $colKey = $qpart->getColumnKey();
-                $rowKey = $qpart->getDataAddress();
-                if (is_numeric($rowKey) === false) {
-                    continue;
-                }
-                $rowNr = 0;
-                foreach ($records as $row) {
-                    if ($maxRow !== null) {
-                        if ($rowNr >= $maxRow) {
-                            $hasMoreRows = true;
-                            break;
-                        }
-                    }
-                    $result_rows[$rowNr][$colKey] = $row[$rowKey];
-                    $rowNr++;
-                }
-            }
-        } catch (\OutOfBoundsException $e) {
-            $result_rows = [];
-        }
-        
-        // add static values
-        foreach ($static_values as $alias => $val) {
-            foreach (array_keys($result_rows) as $row_nr) {
-                $result_rows[$row_nr][$alias] = $val;
-            }
-        }
-        
-        $rowCnt = count($result_rows);
-        if ($this->getLimit() > 0 && $hasMoreRows === true) {
-            $affectedRowCount = $this->getLimit();
-        } else {
-            $affectedRowCount = $rowCnt;
-        }
-        
-        return new DataQueryResultData($result_rows, $affectedRowCount, ($this->getOffset() > 0 || $hasMoreRows));
-    }
-    
-    protected function initCsvReader(DataQueryInterface $query) : Reader
-    {
-        switch (true) {
-            case $query instanceof FileContentsDataQuery:
-                $splFileInfo = $query->getFileInfo();
-                if ($splFileInfo === null) {
-                    return new DataQueryResultData([], 0, false);
-                }
-                $csvReader = Reader::createFromPath($splFileInfo);
-                break;
-            case is_a($query, 'exface\UrlDataConnector\Psr7DataQuery'):
-                $response = $query->getResponse() ? $query->getResponse()->__toString() : null;
-                if ($response === null) {
-                    return new DataQueryResultData([], 0, false);
-                }
-                $csvReader = Reader::createFromString($response);
-                break;
-            default:
-                throw new QueryBuilderException('Cannot use "' . get_class($query) . '" as query in a CsvBuilder!');
-                
-        }
-        $csvReader->setDelimiter($this->getDelimiter());
-        $csvReader->setEnclosure($this->getEnclosure());
-        
-        return $csvReader;
+        return $this->readCsv($query, $static_values, $readAll);
     }
     
     /**
@@ -199,34 +110,6 @@ class CsvBuilder extends FileContentsBuilder
         }
         return $readerFiltering;
     }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getDelimiter() : string
-    {
-        return $this->getMainObject()->getDataAddressProperty(self::DAP_DELIMITER) ?? ',';
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getEnclosure() : string
-    {
-        return $this->getMainObject()->getDataAddressProperty(self::DAP_ENCLOSURE) ?? '"';
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    protected function hasHeaderRow() : bool
-    {
-        $prop = $this->getMainObject()->getDataAddressProperty(self::DAP_HAS_HEADER_ROW);
-        return $prop === null ? false : BooleanDataType::cast($prop);
-    }
 
     /**
      * 
@@ -237,34 +120,35 @@ class CsvBuilder extends FileContentsBuilder
     {
         $query = $data_connection->query($this->buildQuery());
         $this->prepareFilters($query);
-        $csvReader = $this->initCsvReader($query);
-        $rowCount = $this->countRowsFiltered($csvReader);
-        if ($this->hasHeaderRow() === true) {
-            $rowCount = max(0, $rowCount - 1);
-        }
-        
+        $rowCount = $this->countCsvRows($query);
         return new DataQueryResultData([], $rowCount, false, $rowCount);
     }
-
+    
     /**
-     * Returns the row count after filtering the CSV.
-     * This has to be done on a separate CSV object. Otherwise the complete row count is returned instead of the
-     * filtered count.
      *
-     * @param Reader $csvReader            
-     * @return int row count after filtering
+     * @see CsvBuilderTrait::getDelimiter()
      */
-    private function countRowsFiltered(Reader $csvReader)
-    {        
-        // add filter based on "normal" filtering
-        $statement = Statement::create();
-        $statement = $statement->where(function ($row) {
-            return parent::applyFilters(array(
-                $row
-            ));
-        });
-        
-        $records = $statement->process($csvReader);
-        return count($records);
+    protected function getDelimiter(MetaObjectInterface $object) : string
+    {
+        return $object->getDataAddressProperty(self::DAP_DELIMITER) ?? ',';
+    }
+    
+    /**
+     *
+     * @see CsvBuilderTrait::getEnclosure()
+     */
+    protected function getEnclosure(MetaObjectInterface $object) : string
+    {
+        return $object->getDataAddressProperty(self::DAP_ENCLOSURE) ?? '"';
+    }
+    
+    /**
+     *
+     * @see CsvBuilderTrait::getHeaderRowsNumber()
+     */
+    protected function getHeaderRowsNumber(MetaObjectInterface $object) : int
+    {
+        $hasHeader = BooleanDataType::cast($object->getDataAddressProperty(self::DAP_HAS_HEADER_ROW));
+        return $hasHeader === true ? 1  : 0;
     }
 }
