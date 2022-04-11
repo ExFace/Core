@@ -11,8 +11,7 @@ use exface\Core\Exceptions\FormulaError;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Factories\RelationPathFactory;
+
 /**
  * Data functions are much like Excel functions.
  * They calculate the value of a cell in a data_sheet based on other data from
