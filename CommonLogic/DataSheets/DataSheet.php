@@ -920,9 +920,10 @@ class DataSheet implements DataSheetInterface
             }
             
             // If the column represents a required attribute, check if all rows have values.
-            // If not, try to generate them from default and fixed values of the attribute.
+            // If not, make sure empty values are ignored (cannot empty a required field!)
+            $ignoreEmptyValues = false;
             if ($columnAttr->isRequired() === true && $column->hasEmptyValues() === true) {
-                $column->setValuesFromDefaults();
+                $ignoreEmptyValues = true;
             }
             
             // Use the UID column as a filter to make sure, only these rows are affected
@@ -966,7 +967,19 @@ class DataSheet implements DataSheetInterface
                     $uid_data_sheet->dataRead();
                     $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                 }
-                $query->addValues($column->getExpressionObj()->toString(), $column->getValuesNormalized(), $uid_column->getValues(false));
+                
+                $values = $column->getValuesNormalized();
+                $uids = $uid_column->getValues(false);
+                if ($ignoreEmptyValues) {
+                    $columnTyle = $column->getDataType();
+                    foreach ($values as $r => $val) {
+                        if ($columnTyle->isValueEmpty($val)) {
+                            unset($values[$r]);
+                            unset($uids[$r]);
+                        }
+                    }
+                }
+                $query->addValues($column->getExpressionObj()->toString(), $values, $uids);
             } else {
                 // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
                 // In this case all object matching the filter will get updated by this value

@@ -400,11 +400,11 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 return $qpart->getValues();
             case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $connection !== null && ($basePath = $connection->getBasePath()):
                 $paths = [];
-                foreach ($qpart->getValues() as $relPath) {
+                foreach ($qpart->getValues() as $rowIdx => $relPath) {
                     if (! FilePathDataType::isAbsolute($relPath)) {
-                        $paths[] = FilePathDataType::join([$basePath, $relPath]);
+                        $paths[$rowIdx] = FilePathDataType::join([$basePath, $relPath]);
                     } else {
-                        $paths[] = $relPath;
+                        $paths[$rowIdx] = $relPath;
                     }
                 }
                 return $paths;
@@ -421,7 +421,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                             $phVals[$ph] = $phQpart->getValues()[$rowIdx];
                         }
                     }
-                    $paths[] = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
+                    $paths[$rowIdx] = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
                 }
                 return $paths;
         }
