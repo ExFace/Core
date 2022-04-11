@@ -54,6 +54,8 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     private $refreshDataAfterMapping = false;
     
+    private $readMissingData = true;
+    
     public function __construct(Workbench $workbench)
     {
         $this->workbench = $workbench;
@@ -170,7 +172,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         // use the additional data sheet to load the data. This makes sure, the values
         // in the original sheet (= the input values) are not overwrittten by the read
         // operation.
-        if (! $data_sheet->isFresh()){
+        if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
             $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
             $additionSheet->dataRead();
             $uidCol = $data_sheet->getUidColumn();
@@ -767,5 +769,30 @@ class DataSheetMapper implements DataSheetMapperInterface
             $mapping->importUxonObject($uxon);
         }
         return $mapping;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getReadMissingFromData() : bool
+    {
+        return $this->readMissingData;
+    }
+    
+    /**
+     * Set to FALSE to disable autoloading missing from-columns from the data source
+     * 
+     * @uxon-property read_missing_from_data
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataSheetMapper
+     */
+    protected function setReadMissingFromData(bool $value) : DataSheetMapper
+    {
+        $this->readMissingData = $value;
+        return $this;
     }
 }
