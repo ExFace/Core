@@ -64,4 +64,15 @@ class CronDataType extends StringDataType
         $shouldRun = self::findNextRunTime($cronString, $previousRunTime);
         return $shouldRun <= (new \DateTime());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        return $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $translator->translate('DATATYPE.VALIDATION.CRON') . '.';
+    }
 }

@@ -192,6 +192,7 @@
 	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
 	"DATATYPE.VALIDATION.AND": "und",
 	"DATATYPE.VALIDATION.MINMAX_CONDITION": "%condition% sein",
+	"DATATYPE.VALIDATION.CRON": "ein valider CRON-Ausdruck sein (z.B. \"0 0 * ? * * *\")",
 	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
