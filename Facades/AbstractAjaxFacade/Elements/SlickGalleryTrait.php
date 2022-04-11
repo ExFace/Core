@@ -128,7 +128,7 @@ HTML;
 
     $("#{$this->getIdOfSlick()}")
     .slickLightbox({
-        src: 'src',
+        src: 'src-large',
         itemSelector: '.imagecarousel-item img',
         shouldOpen: function(slick, element, event){
             return $("#{$this->getIdOfSlick()}").data('_exfZoomOnClick') || false;
@@ -430,9 +430,17 @@ JS;
     protected function buildJsSlickSlidesFromData(string $jqSlickJs, string $oDataJs) : string
     {
         $widget = $this->getWidget();
+        
         if (($urlType = $widget->getImageUrlColumn()->getDataType()) && $urlType instanceof UrlDataType) {
             $base = $urlType->getBaseUrl();
         }
+        
+        if ($widget->hasCustomThumbnails()) {
+            $thumbJs = "oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
+        } else {
+            $thumbJs = "'{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', oRow['{$widget->getUidColumn()->getDataColumnName()}'])";
+        }
+        
         if ($widget->hasMimeTypeColumn()) {
             $mimeTypeJs = "oRow['{$widget->getMimeTypeColumn()->getDataColumnName()}']";
         } else {
@@ -448,12 +456,13 @@ JS;
                     $jqSlickJs.slick('slickRemove', null, null, true);
     
     				aRows.forEach(function(oRow, i) {
-                        var sSrc = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                        var sSrc = {$thumbJs};
+                        var sSrcLarge = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
                         var sTitle = oRow['{$widget->getImageTitleColumn()->getDataColumnName()}'];
                         var sMimeType = {$mimeTypeJs};
                         var sIcon = '';
                         if (sMimeType === null || sMimeType.startsWith('image')) {
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-large=\"' + sSrcLarge + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
                         } else {
                             switch (sMimeType.toLowerCase()) {
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;

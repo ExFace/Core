@@ -145,10 +145,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $handler->handle($request);
     }
     
-    protected function resizeImage($src, $width, $height)
+    protected function resizeImage(string $src, int $width, int $height)
     {
         $img = (new ImageManager())->make($src);
-        $img->resize(400, 400, function ($constraint) {
+        $img->resize($width, $height, function ($constraint) {
             $constraint->aspectRatio();
             $constraint->upsize();
         });
