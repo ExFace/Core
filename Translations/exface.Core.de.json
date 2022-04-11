@@ -444,6 +444,13 @@
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
 	
+	"WIDGET.IMAGEGALLERY.BUTTON_ZOOM": "Zoom",
+	"WIDGET.IMAGEGALLERY.BUTTON_REMOVE": "Entfernen",
+	"WIDGET.IMAGEGALLERY.BUTTON_BROWSE": "Durchsuchen",
+	"WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD": "Herunterladen",
+	"WIDGET.IMAGEGALLERY.HINT_UPLOAD": "Dateien für Upload hierher ziehen oder Button \"Durchsuchen\" verwenden.",
+	"WIDGET.IMAGEGALLERY.HINT_EMPTY": "Keine Dateien vorhanden",
+	
 	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Weiter", 

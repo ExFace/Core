@@ -17,6 +17,7 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Actions\DownloadFile;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -86,6 +87,8 @@ trait SlickGalleryTrait
     
     private $btnBrowse = null;
     
+    private $btnDownload = null;
+    
     /**
      *
      * @param string $oParamsJs
@@ -128,7 +131,7 @@ HTML;
 
     $("#{$this->getIdOfSlick()}")
     .slickLightbox({
-        src: 'src-large',
+        src: 'src-download',
         itemSelector: '.imagecarousel-item img',
         shouldOpen: function(slick, element, event){
             return $("#{$this->getIdOfSlick()}").data('_exfZoomOnClick') || false;
@@ -240,12 +243,13 @@ JS;
     protected function addCarouselFeatureButtons(ButtonGroup $btnGrp, int $index = 0) : void
     {        
         $widget = $this->getWidget();
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
         
         if ($widget->isUploadEnabled()) {
             $this->btnBrowse = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
                 'widget_type' => 'DataButton',
                 'icon' => Icons::FOLDER_OPEN_O,
-                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE'),
+                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE'),
                 'hide_caption' => true,
                 'align' => 'right',
                 'action' => [
@@ -260,7 +264,7 @@ JS
                 $this->btnMinus = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
                 'widget_type' => 'DataButton',
                 'icon' => Icons::TRASH,
-                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_REMOVE'),
+                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_REMOVE'),
                 'hide_caption' => true,
                 'align' => 'right',
                 'action' => [
@@ -284,11 +288,34 @@ JS
             }
         }
         
+        if ($widget->isDownloadEnabled()) {
+            $filenameJs = $widget->hasFilenameColumn() ? "oRow['{$widget->getFilenameColumn()->getDataColumnName()}']" : "''";
+            $this->btnDownload = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
+                'widget_type' => 'DataButton',
+                'icon' => Icons::DOWNLOAD,
+                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD'),
+                'hide_caption' => true,
+                'align' => 'right',
+                'action' => [
+                    'alias' => 'exface.Core.CustomFacadeScript',
+                    'script' => <<<JS
+                        var aRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), DownloadFile::class, $widget))}.rows || [];
+                        aRows.forEach(function(oRow) {
+                            var a = $("<a>").attr("href", oRow['{$widget->getImageUrlColumn()->getDataColumnName()}']).attr("download", {$filenameJs}).appendTo("body");
+                            a[0].click();
+                            a.remove();
+                        });
+                        
+JS
+                ]
+                ])), $index);
+        }
+        
         if ($widget->isZoomable()) {
             $this->btnZoom = $btnGrp->addButton($btnGrp->createButton(new UxonObject([
                 'widget_type' => 'DataButton',
                 'icon' => Icons::SEARCH_PLUS,
-                'caption' => $this->translate('WIDGET.IMAGEGALLERY.BUTTON_ZOOM'),
+                'caption' => $translator->translate('WIDGET.IMAGEGALLERY.BUTTON_ZOOM'),
                 'hide_caption' => true,
                 'align' => 'right',
                 'action' => [
@@ -462,7 +489,7 @@ JS;
                         var sMimeType = {$mimeTypeJs};
                         var sIcon = '';
                         if (sMimeType === null || sMimeType.startsWith('image')) {
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-large=\"' + sSrcLarge + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
                         } else {
                             switch (sMimeType.toLowerCase()) {
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
@@ -728,9 +755,9 @@ JS;
     protected function buildHtmlNoDataOverlay() : string
     {
         if ($this->getWidget()->isUploadEnabled()) {
-            $message = $this->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
         } else {
-            $message = $this->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
         }
         return <<<HTML
         
@@ -752,25 +779,26 @@ HTML;
      */
     protected function buildHtmlUploadOverlay() : string
     {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         return <<<HTML
         
             <div id="{$this->getIdOfSlick()}-uploader" class="imagecarousel-overlay">
                 <div class="imagecarousel-uploader">
                     <i class="fa fa-mouse-pointer" aria-hidden="true"></i>
                     <div>
-                        {$this->translate('WIDGET.IMAGEGALLERY.HINT_DROP_HERE')}
+                        {$translator->translate('WIDGET.IMAGEGALLERY.HINT_DROP_HERE')}
                     </div>
                 </div>
                 <div class="imagecarousel-uploader">
                     <i class="fa fa-clipboard" aria-hidden="true"></i>
                     <div>
-                        {$this->translate('WIDGET.IMAGEGALLERY.HINT_PASTE_HERE')}
+                        {$translator->translate('WIDGET.IMAGEGALLERY.HINT_PASTE_HERE')}
                     </div>
                 </div>
                 <div class="imagecarousel-uploader">
                     <i class="fa fa-folder-open-o" aria-hidden="true"></i>
                     <div>
-                        {$this->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE')}
+                        {$translator->translate('WIDGET.IMAGEGALLERY.BUTTON_BROWSE')}
                     </div>
                 </div>
             </div>

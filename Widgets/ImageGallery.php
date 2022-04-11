@@ -132,6 +132,12 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     private $uploadEnabled = false;
     
+    private $downloadEnabled = true;
+    
+    private $filenameAttributeAlias = null;
+    
+    private $filenameColumn = null;
+    
     private $zoom = true;
     
     private $zoomOnClick = false;
@@ -533,6 +539,9 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      * 
      * If not set, a thumbnail will be generated automatically via `HttpFileServerFacade`.
      * 
+     * @uxon-property thumbnail_url_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
      * @param string $value
      * @return ImageGallery
      */
@@ -542,6 +551,67 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
         $this->addColumn($col);
         $this->thumbnailUrlColumn = $col;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isDownloadEnabled() : bool
+    {
+        return $this->downloadEnabled;
+    }
+    
+    /**
+     * Set to FALSE to remove the download button
+     * 
+     * @uxon-property download_enabled
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return ImageGallery
+     */
+    public function setDownloadEnabled(bool $value) : ImageGallery
+    {
+        $this->downloadEnabled = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return DataColumn
+     */
+    public function getFilenameColumn() : ?DataColumn
+    {
+        return $this->filenameColumn;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasFilenameColumn() : bool
+    {
+        return $this->filenameAttributeAlias !== null;
+    }
+    
+    /**
+     * Alias of the attribute containing the file name (e.g. for downloads)
+     * 
+     * @uxon-property filename_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return ImageGallery
+     */
+    public function setFilenameAttributeAlias(string $value) : ImageGallery
+    {
+        $this->filenameAttributeAlias = $value;
+        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        $this->addColumn($col);
+        $this->filenameColumn = $col;
         return $this;
     }
 }

@@ -456,6 +456,13 @@
 	"WIDGET.INPUT.VALIDATION_REQUIRED": "Cannot be empty!",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Uses",
 	
+	"WIDGET.IMAGEGALLERY.BUTTON_ZOOM": "Zoom",
+	"WIDGET.IMAGEGALLERY.BUTTON_REMOVE": "Remove",
+	"WIDGET.IMAGEGALLERY.BUTTON_BROWSE": "Browser",
+	"WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD": "Download",
+	"WIDGET.IMAGEGALLERY.HINT_UPLOAD": "Drag files here or press \"Browse\" button.",
+	"WIDGET.IMAGEGALLERY.HINT_EMPTY": "No files found",
+	
 	"WIDGET.NAVTILES.EMPTY": "This menu is empty or you don't have permissions for its items.",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Next", 
