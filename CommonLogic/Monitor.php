@@ -319,7 +319,7 @@ class Monitor extends Profiler
                 'USER' => $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUid(),
                 'TIME' => $item['time'],
                 'DATE' => DateDataType::cast($item['time']),
-                'DURATION' => $item['duration']
+                'DURATION' => $this->getDurationTotal()
             ]);
             $ds->dataCreate();
             
