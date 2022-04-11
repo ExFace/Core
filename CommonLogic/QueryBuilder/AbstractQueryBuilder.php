@@ -450,19 +450,28 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
 
     /**
      * Adds a value column with multiple rows (in other words multiple values for a single database column).
-     * The values
-     * are passed as an array with row ids as keys. What column is meant by "row id" can optionally be specified via the
-     * $row_id_attribute_alias parameter. If not set, the UID column of the main object of the query will be used.
+     * 
+     * The values are passed as an array with row indexes as keys. This means, every attribute
+     * in a query may have values on different rows. This is important as an update may contain
+     * rows, that simply don't have a value for a certain data column, which does not mean, 
+     * it should be emptied in the data source!
+     * 
+     * The third argument is an optional array containing UIDs for rows to be updated.
+     * Only knowing the UIDs allows us to be sure to update the right item in the data source!
+     * If no UIDs are provided, the query builder will attempt to do an update by filters.
+     * Note: The number of items in the values and uids array MUST be equal!  
      *
      * @param string $attribute_alias            
-     * @param array $values
-     *            [ row_id_attribute_alias_value => value_to_be_saved ]
-     * @param array $uids_for_values            
+     * @param array $values [ row_index => value_to_be_saved ]
+     * @param array $uids_for_values  [ row_index => row_uid ]  
      * @return QueryPartValue
      */
-    public function addValues($attribute_alias, array $values, array $uids_for_values = array())
+    public function addValues($attribute_alias, array $values, array $uids_for_values = [])
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
+        if (! empty($uids_for_values) && count($values) !== count($uids_for_values)) {
+            throw new QueryBuilderException('Invalid values passed for an update operation');
+        }
         $qpart->setValues($values);
         $qpart->setUids($uids_for_values);
         $this->values[$attribute_alias] = $qpart;

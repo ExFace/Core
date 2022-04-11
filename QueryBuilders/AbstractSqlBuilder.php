@@ -857,7 +857,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
                 
-                if (count($qpart->getValues()) == 1) {
+                // If there is only and there is not UID for it, it will become an update-by-filter
+                // Otherwise we will do an UPDATE with a WHERE over the UID-column
+                if (count($qpart->getValues()) == 1 && (empty($qpart->getUids()) || null === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? null)) {
                     $values = $qpart->getValues();
                     try {
                         $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
@@ -867,7 +869,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
-                        $updates_by_filter[]= $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
+                        $updates_by_filter[] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                     } else {
                         $updates_by_filter[] = $column . ' = ' . $value;
                     }
