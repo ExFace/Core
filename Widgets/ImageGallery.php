@@ -13,6 +13,8 @@ use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Facades\HttpFileServerFacade;
+use exface\Core\Factories\FacadeFactory;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -118,6 +120,10 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     private $mimeTypeColumn = null;
     
+    private $thumbnailUrlAttributeAlias = null;
+    
+    private $thumbnailUrlColumn = null;
+    
     private $orientation = self::ORIENTATION_HORIZONTAL;
     
     private $uploader = null;
@@ -129,6 +135,8 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     private $zoom = true;
     
     private $zoomOnClick = false;
+    
+    private $filesFacade = null;
     
     protected function init()
     {
@@ -475,5 +483,65 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     public function isReadonly() : bool
     {
         return $this->isUploadEnabled() === false || $this->getUploader()->isInstantUpload();
+    }
+    
+    /**
+     * 
+     * @return HttpFileServerFacade
+     */
+    protected function getFilesFacade() : HttpFileServerFacade
+    {
+        if ($this->filesFacade === null) {
+            $this->filesFacade = FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench());
+        }
+        return $this->filesFacade;
+    }
+    
+    /**
+     * 
+     * @param string|number $uid
+     * @return string
+     */
+    public function buildUrlForThumbnail($uid = null, $width = '[#width#]', $height = '[#height#]', bool $relativeToSiteRoot = true) : string
+    {
+        if ($uid === null) {
+            $uid = '[#' . $this->getUidColumn()->getDataColumnName() . '#]';
+        }
+        return "{$this->getFilesFacade()->buildUrlToFacade($relativeToSiteRoot)}/{$this->getMetaObject()->getAliasWithNamespace()}/{$uid}?&resize={$width}x{$height}";
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getThumbnailUrlColumn() : ?DataColumn
+    {
+        return $this->thumbnailUrlColumn;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasCustomThumbnails() : bool
+    {
+        return $this->thumbnailUrlAttributeAlias !== null;
+    }
+
+    /**
+     * Alias of the attribute, that contains a custom thumbnail URL
+     * 
+     * If not set, a thumbnail will be generated automatically via `HttpFileServerFacade`.
+     * 
+     * @param string $value
+     * @return ImageGallery
+     */
+    public function setThumbnailUrlAttributeAlias(string $value) : ImageGallery
+    {
+        $this->thumbnailUrlAttributeAlias = $value;
+        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        $this->addColumn($col);
+        $this->thumbnailUrlColumn = $col;
+        return $this;
     }
 }
