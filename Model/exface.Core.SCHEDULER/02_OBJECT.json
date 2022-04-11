@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-10-13 18:24:32",
+            "MODIFIED_ON": "2022-04-10 23:35:17",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -145,10 +145,11 @@
                                         "widget_type": "WidgetGroup",
                                         "caption": "Action",
                                         "width": "max",
+                                        "height": "max",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "ACTION_UXON",
-                                                "height": 15,
+                                                "height": "100%",
                                                 "widget_type": "InputUxon",
                                                 "width": "max",
                                                 "hide_caption": true,
