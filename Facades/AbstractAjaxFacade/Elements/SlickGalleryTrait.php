@@ -155,8 +155,10 @@ JS;
     {$lightboxInit}
     
     $(document).on('click', '#{$this->getIdOfSlick()} .imagecarousel-item', function(e) {
+        var jqEl = $(e.target);
         $('#{$this->getIdOfSlick()} .imagecarousel-item').removeClass('selected');
-        $(e.target).closest('.imagecarousel-item').addClass('selected');
+        jqEl.closest('.imagecarousel-item').addClass('selected');
+        {$this->getOnChangeScript()}
     });
 
     $("#{$this->getIdOfSlick()}").append({$this->escapeString($this->buildHtmlNoDataOverlay())});
@@ -308,7 +310,7 @@ JS
                         
 JS
                 ]
-                ])), $index);
+            ])), $index);
         }
         
         if ($widget->isZoomable()) {
