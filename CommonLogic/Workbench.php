@@ -162,7 +162,7 @@ class Workbench implements WorkbenchInterface
         $this->security = new SecurityManager($this);
         
         if ($config->getOption('MONITOR.ENABLED')) {
-            Monitor::register($this);
+            Monitor::register($this, $this->startTime);
         }
         
         // Now the workbench is fully loaded and operational

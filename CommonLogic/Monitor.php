@@ -46,9 +46,9 @@ class Monitor extends Profiler
      * @param Workbench $workbench
      * @param int $startOffsetMs
      */
-    public function __construct(Workbench $workbench, int $startOffsetMs = 0)
+    public function __construct(Workbench $workbench, int $startMicrotime = null)
     {
-        parent::__construct($workbench, $startOffsetMs);
+        parent::__construct($workbench, $startMicrotime);
     }
     
     /**
