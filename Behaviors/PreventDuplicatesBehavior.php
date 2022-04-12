@@ -413,29 +413,21 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $duplicates = [];
         $eventRowCnt = count($eventRows);
         $caseSensitive = $this->getCompareCaseSensitive();
-        $uidType = $uidCol !== null ? $uidCol->getDataType() : null;
         
         // Extract and parse values relevant for the search. Do it once here in order to
         // improve performance on large data sets. 
         $eventRowsKeys = [];
-        foreach ($eventRows as $eventRowNo => $eventRow) {
-            foreach ($compareCols as $col) {
-                $keys[$col->getName()] = $col->getDataType()->parse($eventRow[$col->getName()]);
-            }
-            if ($uidCol !== null) {
-                $keys[$uidCol->getName()] = $uidType->parse($eventRow[$uidCol->getName()]);
-            }
-            $eventRowsKeys[$eventRowNo] = $keys;
-        }
         $checkRowsKeys = [];
-        foreach ($checkRows as $chRowNo => $chRow) {
-            foreach ($compareCols as $col) {
-                $keys[$col->getName()] = $col->getDataType()->parse($chRow[$col->getName()]);
+        $keyCols = $uidCol !== null ? array_merge($compareCols, [$uidCol]) : $compareCols;
+        foreach ($keyCols as $col) {
+            $key = $col->getName();
+            $type = $col->getDataType();
+            foreach ($eventRows as $eventRowNo => $eventRow) {
+                $eventRowsKeys[$eventRowNo][$key] = $type->parse($eventRow[$key]);
             }
-            if ($uidCol !== null) {
-                $keys[$uidCol->getName()] = $uidType->parse($chRow[$uidCol->getName()]);
+            foreach ($checkRows as $chRowNo => $chRow) {
+                $checkRowsKeys[$chRowNo][$key] = $type->parse($chRow[$key]);
             }
-            $checkRowsKeys[$chRowNo] = $keys;
         }
         
         // Now compare the keys of each event row to each check row
