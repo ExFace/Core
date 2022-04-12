@@ -8,7 +8,8 @@ use exface\Core\Factories\DataTypeFactory;
  * Parses (almost) any value into a date and time in the internal format or a given ICU format.
  *
  * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format.
+ * the ICU date format. Additionall the source format can be defined in the third parameter
+ * if it cannot be parsed automatically.
  *
  * Examples:
  *
@@ -26,12 +27,15 @@ class DateTime extends Date
 {
     /**
      * 
-     * @param string $date
-     * @param string $format
+     * {@inheritDoc}
+     * @see \exface\Core\Formulas\Date::run()
      */
-    public function run($date = null, $format = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL)
+    public function run($date = null, $returnFormat = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL, $inputFormat = null)
     {
-        return parent::run($date, $format);
+        if ($returnFormat === null) {
+            $returnFormat = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL;
+        }
+        return parent::run($date, $returnFormat, $inputFormat);
     }
     
     /**

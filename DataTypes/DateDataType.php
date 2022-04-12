@@ -100,6 +100,17 @@ class DateDataType extends AbstractDataType
         return static::cast($string, true);
     }
     
+    public static function castFromFormat($string, string $format, string $locale, bool $returnPhpDate = false)
+    {
+        $intl = static::createIntlDateFormatter($locale, $format);
+        $ts = $intl->parse($string);
+        if ($ts === false) {
+            throw new DataTypeCastingError('Cannot cast "' . $string . '" to date using format "' . $format . '" and locale "' . $locale . '"!');
+        }
+        $date = (new \DateTime)->setTimestamp($ts);
+        return $returnPhpDate ? $date : static::formatDateNormalized($date);
+    }
+    
     /**
      * 
      * {@inheritDoc}
