@@ -58,7 +58,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     public function reset(int $startMicrotime = null) : Profiler
     {
-        $this->startMicrotime = $startMicrotime ?? microtime(true);
+        $this->startMicrotime = $startMicrotime > 0 ? $startMicrotime : microtime(true);
         return $this;
     }
     
