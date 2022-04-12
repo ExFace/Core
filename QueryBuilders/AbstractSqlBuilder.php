@@ -1985,6 +1985,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 return EXF_LOGICAL_NULL;
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
+            case $data_type instanceof TimeDataType:
                 $output = "'" . $this->escapeString($value) . "'";
                 break;
             default:
