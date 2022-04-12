@@ -114,7 +114,6 @@ class HttpRequestHandler implements RequestHandlerInterface
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
-                end;
             } else {
                 // Let the default error handler do its job
                 throw $e;
