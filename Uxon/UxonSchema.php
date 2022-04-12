@@ -108,6 +108,10 @@ class UxonSchema implements UxonSchemaInterface
     {
         $rootPrototypeClass = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
+        if ($rootPrototypeClass === '') {
+            return $rootPrototypeClass;
+        }
+        
         if (count($path) > 0 && ($uxon->getProperty($path[0]) instanceof UxonObject)) {
             $prop = array_shift($path);
             
