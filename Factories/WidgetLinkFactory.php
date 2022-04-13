@@ -17,6 +17,9 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
      */
     public static function createFromWidget(WidgetInterface $sourceWidget, $stringOrUxon) : WidgetLinkInterface
     {
+        if (is_string($stringOrUxon)) {
+            $stringOrUxon = ltrim($stringOrUxon, "=");
+        }
         return new WidgetLink($sourceWidget->getPage(), $sourceWidget, $stringOrUxon);
     }
     
