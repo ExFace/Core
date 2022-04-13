@@ -8,6 +8,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Instantiates condition groups
@@ -127,6 +129,50 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     public static function createForObject(MetaObjectInterface $object, string $operator) : ConditionGroupInterface
     {
         return static::createEmpty($object->getWorkbench(), $operator, $object);
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param MetaObjectInterface $object
+     * @throws RuntimeException
+     * @return ConditionGroupInterface
+     */
+    public static function createFromString(string $string, MetaObjectInterface $object, string $operator = EXF_LOGICAL_AND) : ConditionGroupInterface
+    {
+        $string = trim($string);
+        if (substr($string, 0, 1) === '{' && substr($string, -1) === '}') {
+            return static::createFromUxon($object->getWorkbench(), UxonObject::fromJson($string));
+        }
+        /* TODO write a parser
+        $grp = null;
+        
+        $remain = $string;
+        $tokens = [EXF_LOGICAL_AND, EXF_LOGICAL_OR, EXF_LOGICAL_XOR, '('];
+        $nextPos = false;
+        $nextToken = null;
+        
+        do {
+            foreach ($tokens as $t) {
+                $pos = stripos($remain, $t);
+                if ($pos !== false && ($nextPos === false || $nextPos > $pos)) {
+                    $nextPos = $pos;
+                    $nextToken = $t;
+                }
+            }
+            
+            switch ($nextToken) {
+                case null:
+                    if ($grp === null) {
+                        $grp = static::createForObject($object, $operator);
+                    }
+                    $remain = '';
+                    break;
+            }
+        } while ($remain !== '');
+        */
+        
+        throw new RuntimeException('Cannot parse conditional expression "' . $string . '": parsing non-UXON conditions not implemented yet!');
     }
     
     /**

@@ -858,6 +858,9 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultAggregateFunction($value)
     {
+        if ($value === '') {
+            $value = null;
+        }
         $this->default_aggregate_function = $value;
         return $this;
     }
