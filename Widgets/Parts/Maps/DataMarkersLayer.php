@@ -13,6 +13,9 @@ use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 
 /**
  *
@@ -31,9 +34,13 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     
     private $latitudeColumn = null;
     
+    private $latitudeLink = null;
+    
     private $longitudeAttributeAlias = null;
     
     private $longitudeColumn = null;
+    
+    private $longitudeLink = null;
     
     private $valueAttributeAlias = null;
     
@@ -44,6 +51,12 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     private $tooltipColumn = null;
     
     private $clustering = null;
+    
+    private $addMarkers = false;
+    
+    private $addMarkerMax = null;
+    
+    private $draggable = false;
     
     /**
      * 
@@ -77,6 +90,32 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     public function getLatitudeColumn() : DataColumn
     {
         return $this->latitudeColumn;
+    }
+    
+    /**
+     * 
+     * @return WidgetLinkInterface|NULL
+     */
+    public function getLatitudeWidgetLink() : ?WidgetLinkInterface
+    {
+        return $this->latitudeLink;
+    }
+    
+    /**
+     * The id of the widget to sync the latitude to (e.g. InputHidden)
+     * 
+     * Only works in conjuction with longitude_widget_link!
+     *
+     * @uxon-property latitude_widget_link
+     * @uxon-type uxon:$..id
+     *
+     * @param string $value
+     * @return DataMarkersLayer
+     */
+    protected function setLatitudeWidgetLink(string $value) : DataMarkersLayer
+    {
+        $this->latitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
+        return $this;
     }
     
     /**
@@ -134,6 +173,32 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     public function setValueAttributeAlias(string $value) : DataMarkersLayer
     {
         $this->valueAttributeAlias = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return WidgetLinkInterface|NULL
+     */
+    public function getLongitudeWidgetLink() : ?WidgetLinkInterface
+    {
+        return $this->longitudeLink;
+    }
+    
+    /**
+     * The id of the widget to sync the longitude to (e.g. InputHidden)
+     * 
+     * Only works in conjuction with longitude_widget_link!
+     * 
+     * @uxon-property longitude_widget_link
+     * @uxon-type uxon:$..id
+     * 
+     * @param string $value
+     * @return DataMarkersLayer
+     */
+    protected function setLongitudeWidgetLink(string $value) : DataMarkersLayer
+    {
+        $this->longitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
         return $this;
     }
     
@@ -303,7 +368,7 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
      */
     public function isClusteringMarkers() : ?bool
     {
-        return $this->clustering;
+        return $this->clustering ?? ($this->isEditable() ? false : null);
     }
     
     /**
@@ -320,6 +385,85 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     public function setClusterMarkers(bool $value) : DataMarkersLayer
     {
         $this->clustering = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isEditable() : bool
+    {
+        return $this->hasAllowToAddMarkers() || $this->hasAllowToMoveMarkers();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasAllowToAddMarkers() : bool
+    {
+        return $this->addMarkers;
+    }
+    
+    /**
+     * Set to TRUE to allow adding markers
+     * 
+     * @uxon-property allow_to_add_markers
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataMarkersLayer
+     */
+    public function setAllowToAddMarkers(bool $value) : DataMarkersLayer
+    {
+        $this->addMarkers = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getAllowToAddMarkersMax() : ?int
+    {
+        if ($this->hasAllowToAddMarkers() === false) {
+            return 0;
+        }
+        if ($link = $this->getLatitudeWidgetLink()) {
+            $w = $link->getTargetWidget();
+            if (($w instanceof iSupportMultiSelect) && $w->getMultiSelect() === true) {
+                return null;
+            } else {
+                return 1;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasAllowToMoveMarkers() : bool
+    {
+        return $this->draggable;
+    }
+    
+    /**
+     * Set to TRUE to allow moving markers
+     * 
+     * @uxon-property allow_to_move_markers
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataMarkersLayer
+     */
+    public function setAllowToMoveMarkers(bool $value) : DataMarkersLayer
+    {
+        $this->draggable = $value;
         return $this;
     }
 }

@@ -8,6 +8,7 @@ use exface\Core\Widgets\Map;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  *
@@ -22,19 +23,21 @@ class ImageMap extends AbstractBaseMap
     
     private $imageWidth = null;
     
+    private $zoomForActualSize = null;
+    
     public function __construct(Map $widget, UxonObject $uxon = null)
     {
         parent::__construct($widget, $uxon);
         $widget->getWorkbench()->eventManager()->addListener(OnFacadeWidgetRendererExtendedEvent::getEventName(), [$this, 'onLeafletRendererRegister']);
         
         if ($widget->getZoomMin() === null) {
-            $widget->setZoomMin(1);
+            $widget->setZoomMin($this->getZoomMin());
         }
         if ($widget->getZoomMax() === null) {
-            $widget->setZoomMax(4);
+            $widget->setZoomMax($this->getZoomMax());
         }
         if ($widget->getZoom() === null) {
-            $widget->setZoom(1);
+            $widget->setZoom($this->getZoomMin());
         }
     }
     
@@ -87,7 +90,7 @@ class ImageMap extends AbstractBaseMap
             return;
         }
         
-        $facadeElement->addLeafletLayerRenderer(function(MapLayerInterface $layer){
+        $facadeElement->addLeafletLayerRenderer(function(MapLayerInterface $layer) use ($facadeElement) {
         
             
             if ($layer !== $this) {
@@ -95,17 +98,29 @@ class ImageMap extends AbstractBaseMap
             }
             
             $url = $layer->getImageUrl();
-            $url = str_replace('{a|b|c}', '{s}', $url);
-            return <<<JS
-L.imageOverlay('{$url}', (
-    new L.LatLngBounds(
-        leaflet_Map.unproject([0, {$this->getImageHeight()}], leaflet_Map.getMaxZoom()-1),
-        leaflet_Map.unproject([{$this->getImageWidth()}, 0], leaflet_Map.getMaxZoom()-1)
-    )
-))
-JS;
             
-           
+            if (Expression::detectReference($url)) {
+                $initJs = <<<JS
+(function(){
+    
+})()
+
+JS;
+            } else {
+                $zoomOffset = ($this->getZoomMax() - $this->getZoomForActualSize());
+                $initJs = <<<JS
+(function() {
+    var oMap = {$facadeElement->buildJsLeafletVar()};
+    var oBounds = new L.LatLngBounds(
+        oMap.unproject([0, {$this->getImageHeight()}], oMap.getMaxZoom()-$zoomOffset),
+        oMap.unproject([{$this->getImageWidth()}, 0], oMap.getMaxZoom()-$zoomOffset)
+    );
+    oMap.setMaxBounds(oBounds);
+    return L.imageOverlay('{$url}', oBounds);
+})()
+JS;
+            }
+            return $initJs;
         });
     }
     
@@ -167,5 +182,40 @@ JS;
     {
         $this->imageWidth = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function getZoomForActualSize() : int
+    {
+        return $this->zoomForActualSize ?? 3;
+    }
+    
+    /**
+     * Zoom level at which the image is to be at 1:1 scale
+     * 
+     * @uxon-property zoom_for_actual_size
+     * @uxon-type integer
+     * @uxon-default 3
+     * 
+     * @param int $value
+     * @return ImageMap
+     */
+    public function setZoomForActualSize(int $value) : ImageMap
+    {
+        $this->zoomForActualSize = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractBaseMap::getZoomMax()
+     */
+    public function getZoomMax() : ?int
+    {
+        return parent::getZoomMax() ?? 4;
     }
 }

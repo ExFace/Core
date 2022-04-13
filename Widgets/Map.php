@@ -80,7 +80,7 @@ class Map extends AbstractWidget implements
     
     private $showFullScreenButton = true;
     
-    private $showGpsLocateButton = true;
+    private $showGpsLocateButton = null;
     
     private $showScale = true;
 
@@ -721,7 +721,14 @@ class Map extends AbstractWidget implements
      */
     public function getShowGpsLocateButton() : bool
     {
-        return $this->showGpsLocateButton;
+        if ($this->showGpsLocateButton === null) {
+            foreach ($this->getBaseMaps() as $map) {
+                if ($map->getCoordinateSystem() === self::COORDINATE_SYSTEM_PIXELS) {
+                    return false;
+                }
+            }
+        }
+        return $this->showGpsLocateButton ?? true;
     }
 
     /**
