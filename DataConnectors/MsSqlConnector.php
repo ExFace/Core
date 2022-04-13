@@ -69,7 +69,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         if (! $conn = sqlsrv_connect($this->getHost() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
-            throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastError());
+            throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastErrorMessage());
         } else {
             $this->setCurrentConnection($conn);
         }
@@ -106,7 +106,7 @@ class MsSqlConnector extends AbstractSqlConnector
             
             $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
             if ($stmt === false) {
-                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo + 1) . ' failed! ' . $this->getLastError());
+                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo + 1) . ' failed! ' . $this->getLastErrorMessage());
             } else {
                 $query->setResultResource($stmt);
             }
@@ -130,14 +130,14 @@ class MsSqlConnector extends AbstractSqlConnector
                 }
             }
             if($next_result === false) {
-                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo+1) . ' failed! ' . $this->getLastError());
+                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo+1) . ' failed! ' . $this->getLastErrorMessage());
             }
         } else {
             if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
                 $sql .= '; SELECT SCOPE_IDENTITY() AS IDENTITY_COLUMN_NAME';
             }
             if (! $result = sqlsrv_query($this->getCurrentConnection(), $sql)) {
-                throw $this->createQueryError($query, "SQL query failed! " . $this->getLastError());
+                throw $this->createQueryError($query, "SQL query failed! " . $this->getLastErrorMessage());
             } else {
                 $query->setResultResource($result);
             }
@@ -151,11 +151,14 @@ class MsSqlConnector extends AbstractSqlConnector
      * @param string $message
      * @return DataQueryExceptionInterface
      */
-    protected function createQueryError(DataQueryInterface $query, string $message) : DataQueryExceptionInterface
+    protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
     {
-        $sqlErrorNo = $this->getLastErrorCode();
+        $err = $this->getLastError();
+        if ($message === null) {
+            $message = $this->getLastErrorMessage();
+        }
         
-        switch ($sqlErrorNo) {
+        switch ($err['code']) {
             case 2627:
             case 2601:
                 return new DataQueryConstraintError($query, $message, '73II64M');
@@ -199,7 +202,7 @@ class MsSqlConnector extends AbstractSqlConnector
         // if no counting was possible.
         switch (true) {
             case $cnt === false:
-                if ($err = $this->getLastError()) {
+                if ($err = $this->getLastErrorMessage()) {
                     throw new DataQueryFailedError($query, "Cannot count affected rows in SQL query: " . $err, '6T2TCL6');
                 } else {
                     return null;
@@ -212,22 +215,46 @@ class MsSqlConnector extends AbstractSqlConnector
     
     /**
      *
-     * @return string|NULL
+     * @return array|NULL
      */
-    protected function getLastError() : ?string
+    protected function getLastError() : ?array
     {
-        $errors = $this->getErrors();
-        return $errors[0]['message'];
+        return $this->getErrors()[0] ?? null;
     }
     
     /**
-     *
-     * @return int|string|NULL
+     * 
+     * @return string
      */
-    protected function getLastErrorCode()
+    protected function getLastErrorMessage() : string
     {
-        $errors = $this->getErrors();
-        return $errors[0]['code'];
+        $err = $this->getLastError();
+        if ($err === null) {
+            return 'Unknown SQL error';
+        }
+        
+        $code = $err['code'];
+        $msg = $err['message'];
+        
+        // Workaround for strang error in some multi-sequence queries
+        if ($msg === '[Microsoft][ODBC Driver Manager] Function sequence error') {
+            $errors = $this->getErrors();
+            if (count($errors) > 1) {
+                for ($i = 1; $i < count($errors); $i++) {
+                    $msg = rtrim($msg, " .") . '. ' . $errors[$i]['message'];
+                }
+            }
+        }
+        
+        // Remove error origin markers
+        $msg = str_replace([
+            '[Microsoft]',
+            '[ODBC Driver Manager]',
+            '[SQL Server]'
+        ], '', $msg);
+        $msg = preg_replace('/\\[ODBC Driver \\d+ for SQL Server\\]/', '', $msg);
+        
+        return $msg . ($code ? ' (code ' . $code . ')' : '');
     }
     
     /**
@@ -282,7 +309,7 @@ class MsSqlConnector extends AbstractSqlConnector
             $this->connect();
         }
         if (! sqlsrv_begin_transaction($this->getCurrentConnection())) {
-            throw new DataConnectionTransactionStartError($this, 'Cannot start transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastError(), '6T2T2JM');
+            throw new DataConnectionTransactionStartError($this, 'Cannot start transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastErrorMessage(), '6T2T2JM');
         } else {
             $this->setTransactionStarted(true);
         }
@@ -302,7 +329,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         if (! sqlsrv_commit($this->getCurrentConnection())) {
-            throw new DataConnectionCommitFailedError($this, 'Cannot commit transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastError(), '6T2T2O9');
+            throw new DataConnectionCommitFailedError($this, 'Cannot commit transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastErrorMessage(), '6T2T2O9');
         } else {
             $this->setTransactionStarted(false);
         }
@@ -322,7 +349,7 @@ class MsSqlConnector extends AbstractSqlConnector
         }
         
         if (! sqlsrv_rollback($this->getCurrentConnection())) {
-            throw new DataConnectionRollbackFailedError($this, $this->getLastError(), '6T2T2S1');
+            throw new DataConnectionRollbackFailedError($this, $this->getLastErrorMessage(), '6T2T2S1');
         } else {
             $this->setTransactionStarted(false);
         }
