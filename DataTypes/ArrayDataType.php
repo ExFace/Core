@@ -151,12 +151,15 @@ class ArrayDataType extends AbstractDataType
         }
         
         $output = '';
+        $removeEmptyVals = function($val){
+            return $val !== '' && $val !== null;
+        };
         switch ($func) {
             case AggregatorFunctionsDataType::LIST_ALL:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $values);
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_filter($values, $removeEmptyVals));
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_unique($values));
+                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_filter(array_unique($values), $removeEmptyVals));
                 break;
             case AggregatorFunctionsDataType::MIN:
                 $output = count($values) > 0 ? min($values) : 0;
