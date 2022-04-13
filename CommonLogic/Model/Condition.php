@@ -20,6 +20,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * A condition is a simple conditional predicate consisting of a (left) expression,
@@ -150,6 +151,14 @@ class Condition implements ConditionInterface
      */
     public function setValue(string $value) : ConditionInterface
     {
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value, $this->getLeftExpression()->getMetaObject());
+            if ($expr->isStatic()) {
+                $value = $expr->evaluate();
+            } else {
+                throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
+            }
+        }
         $this->value_set = true;
         try {
             $value = $this->getDataType()->parse($value);
