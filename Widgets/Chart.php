@@ -581,7 +581,7 @@ class Chart extends AbstractWidget implements
      * and other setting of the target data widget.
      *
      * @uxon-property data_widget_link
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * {@inheritdoc}
      *

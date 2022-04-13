@@ -21,6 +21,8 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     
     private $autoZoomToSeeAll = null;
     
+    private $autoZoomMax = null;
+    
     private $visibility = null;
     
     /**
@@ -72,6 +74,26 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     public function setAutoZoomToSeeAll(bool $value) : AbstractDataLayer
     {
         $this->autoZoomToSeeAll = $value;
+        return $this;
+    }
+    
+    public function getAutoZoomMax() : ?int
+    {
+        return $this->autoZoomMax;
+    }
+    
+    /**
+     * Maximum zoom level for auto_zoom_to_see_all
+     * 
+     * @uxon-property auto_zoom_max
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return AbstractMapLayer
+     */
+    protected function setAutoZoomMax(int $value) : AbstractMapLayer
+    {
+        $this->autoZoomMax = $value;
         return $this;
     }
     

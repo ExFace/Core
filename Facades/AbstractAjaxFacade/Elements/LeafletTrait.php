@@ -407,7 +407,7 @@ JS;
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
                      
         if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
-            $autoZoomJs = $this->buildJsAutoZoom('oLayer');
+            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
         }
         
         if ($layer->isClusteringMarkers() !== false) {
@@ -420,14 +420,41 @@ JS;
             $clusterInitJs = 'null';
         }
         
-        if ($link = $layer->getDataWidgetLink()) {
-            $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
-            if ($layer instanceof DataSelectionMarkerLayer) {
-                $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
-            } else {
-                $asIfForAction = null;
-            }
-            $exfRefreshJs = <<<JS
+        switch (true) {
+            case ($latLink = $layer->getLatitudeWidgetLink()) && ($lngLink = $layer->getLongitudeWidgetLink()):
+                $latEl = $this->getFacade()->getElement($latLink->getTargetWidget());
+                $lngEl = $this->getFacade()->getElement($lngLink->getTargetWidget());
+                $exfRefreshJs = <<<JS
+function() {
+                    var aRows = [{
+                        {$latEl->getWidget()->getDataColumnName()}: {$latEl->buildJsValueGetter()},
+                        {$lngEl->getWidget()->getDataColumnName()}: {$lngEl->buildJsValueGetter()}
+                    }];
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                    
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                    
+                    oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
+                    
+                    if (oClusterLayer !== null) {
+                        oClusterLayer.clearLayers().addLayer(oLayer);
+                    }
+                }
+                
+JS;
+                
+                break;
+            case $link = $layer->getDataWidgetLink():
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+                if ($layer instanceof DataSelectionMarkerLayer) {
+                    $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
+                } else {
+                    $asIfForAction = null;
+                }
+                $exfRefreshJs = <<<JS
 function() {
                     var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
                     var aRows = oData.rows || []; 
@@ -446,8 +473,9 @@ function() {
                 }
                 
 JS;
-        } else {
-            $exfRefreshJs = <<<JS
+                break;
+            default: 
+                $exfRefreshJs = <<<JS
 function() {
                     var oParams = {
                         resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
@@ -474,9 +502,45 @@ function() {
                             oClusterLayer.clearLayers().addLayer(oLayer);
                         }
                         
-")}
+                    ")}
                 }
 JS;
+        }
+        
+        $initEditingJs = '';
+        if ($layer->isEditable()) {
+            if ($layer->hasAllowToAddMarkers()) {
+                $updateLinksJs = '';
+                if ($latEl && $lngEl) {
+                    $updateLinksJs = $latEl->buildJsValueSetter('e.latlng.lat') . ';' . $lngEl->buildJsValueSetter('e.latlng.lng') . ';';
+                }
+                $maxMarkers = $layer->getAllowToAddMarkersMax() ?? 'null';
+                $initEditingJs = <<<JS
+
+                oLeaflet.on('click', function(e){
+                    var iMaxMarkers = $maxMarkers;
+                    if (iMaxMarkers === 1) {
+                        oLayer.clearLayers();
+                    }
+                    oLayer.addData([
+                        {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [e.latlng.lng, e.latlng.lat],
+                            },
+                            properties: {
+                                layer: {$this->getWidget()->getLayerIndex($layer)},
+                                object: '{$layer->getMetaObject()->getId()}',
+                                data: {}
+                            }
+                        }
+                    ]);
+                    $updateLinksJs
+                });
+
+JS;
+            }
         }
         
         return <<<JS
@@ -510,6 +574,8 @@ JS;
                     }
                 });
 
+                $initEditingJs
+
                 oLayer._exfRefresh = $exfRefreshJs;
 
                 oLeaflet.on('exfRefresh', oLayer._exfRefresh);
@@ -530,11 +596,21 @@ JS;
      */
     protected function buildJsConvertDataRowsToGeoJSON(iUseData $layer, string $aRowsJs, string $aGeoJsonJs, string $aRowsSkippedJs) : string
     {
+        if ($link = $layer->getLatitudeWidgetLink()) {
+            $latColName = $link->getTargetWidget()->getDataColumnName();
+        } else {
+            $latColName = $layer->getLatitudeColumn()->getDataColumnName();
+        }
+        if ($link = $layer->getLongitudeWidgetLink()) {
+            $lngColName = $link->getTargetWidget()->getDataColumnName();
+        } else {
+            $lngColName = $layer->getLatitudeColumn()->getDataColumnName();
+        }
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
-                            var fLat = parseFloat(oRow.{$layer->getLatitudeColumn()->getDataColumnName()});
-                            var fLng = parseFloat(oRow.{$layer->getLongitudeColumn()->getDataColumnName()});
+                            var fLat = parseFloat(oRow.{$latColName});
+                            var fLng = parseFloat(oRow.{$lngColName});
         
                             if (isNaN(fLat) || isNaN(fLng)) {
                                 $aRowsSkippedJs.push(oRow);
@@ -566,8 +642,9 @@ JS;
      * @param string $oLayerJs
      * @return string
      */
-    public function buildJsAutoZoom(string $oLayerJs) : string
+    public function buildJsAutoZoom(string $oLayerJs, int $maxZoom = null) : string
     {
+        $maxZoomJs = $maxZoom !== null ? 'maxZoom: ' . $maxZoom . ',' : '';
         return <<<JS
 
                     setTimeout(function() {
@@ -575,7 +652,7 @@ JS;
                         var oMap = {$this->buildJsLeafletVar()};
                         if (oBounds !== undefined && oBounds.isValid()) {
                             if (oMap.getBoundsZoom(oBounds) < oMap.getZoom() || oMap.getZoom() === oMap._exfState.initialZoom) {
-                                {$this->buildJsLeafletVar()}.fitBounds(oBounds, {padding: [10,10]});
+                                {$this->buildJsLeafletVar()}.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
                             }
                         }
                 	},100);

@@ -155,7 +155,7 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
      * of the target data widget.
      *
      * @uxon-property data_widget_link
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @see \exface\Core\Interfaces\Widgets\iUseData::setDataWidgetLink()
      */
