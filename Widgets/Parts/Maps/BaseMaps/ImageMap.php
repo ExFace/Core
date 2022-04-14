@@ -76,6 +76,15 @@ class ImageMap extends AbstractBaseMap
     
     /**
      * 
+     * @return bool
+     */
+    public function isImageBoundToWidgetLink() : bool
+    {
+        return $this->url === null ? false : Expression::detectReference($this->url);
+    }
+    
+    /**
+     * 
      * @param OnFacadeWidgetRendererExtendedEvent $event
      */
     public function onLeafletRendererRegister(OnFacadeWidgetRendererExtendedEvent $event)
