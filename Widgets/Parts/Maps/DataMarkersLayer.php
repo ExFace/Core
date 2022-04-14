@@ -426,7 +426,7 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
      * 
      * @return int|NULL
      */
-    public function getAllowToAddMarkersMax() : ?int
+    public function hasAllowToAddMarkersMax() : ?int
     {
         if ($this->hasAllowToAddMarkers() === false) {
             return 0;

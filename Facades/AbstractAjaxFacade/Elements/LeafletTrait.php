@@ -303,9 +303,12 @@ JS;
 JS;
     }
     
-    protected function buildJsLayerGetter(MapLayerInterface $layer) : string
+    protected function buildJsLayerGetter(MapLayerInterface $layer, string $leafletVarJs = null) : string
     {
-        return "{$this->buildJsLeafletVar()}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
+        if ($leafletVarJs === null) {
+            $leafletVarJs = $this->buildJsLeafletVar();
+        }
+        return "{$leafletVarJs}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
     }
     
     /**
@@ -508,35 +511,39 @@ JS;
         }
         
         $initEditingJs = '';
+        $updateMarker = '';
         if ($layer->isEditable()) {
             if ($layer->hasAllowToAddMarkers()) {
-                $updateLinksJs = '';
                 if ($latEl && $lngEl) {
-                    $updateLinksJs = $latEl->buildJsValueSetter('e.latlng.lat') . ';' . $lngEl->buildJsValueSetter('e.latlng.lng') . ';';
+                    $updateMarker = $latEl->buildJsValueSetter('fLat') . ';' . $lngEl->buildJsValueSetter('fLng') . ';';
                 }
-                $maxMarkers = $layer->getAllowToAddMarkersMax() ?? 'null';
+                $maxMarkers = $layer->hasAllowToAddMarkersMax() ?? 'null';
                 $initEditingJs = <<<JS
 
                 oLeaflet.on('click', function(e){
                     var iMaxMarkers = $maxMarkers;
-                    if (iMaxMarkers === 1) {
-                        oLayer.clearLayers();
-                    }
+                    var fLat = e.latlng.lat;
+                    var fLng = e.latlng.lng;
+
+                    if (oLayer.getLayers().length >= iMaxMarkers) return;
+
                     oLayer.addData([
                         {
                             type: 'Feature',
                             geometry: {
                                 type: 'Point',
-                                coordinates: [e.latlng.lng, e.latlng.lat],
+                                coordinates: [fLng, fLat],
                             },
                             properties: {
                                 layer: {$this->getWidget()->getLayerIndex($layer)},
                                 object: '{$layer->getMetaObject()->getId()}',
+                                draggable: true,
+                                autoPan: true,
                                 data: {}
                             }
                         }
                     ]);
-                    $updateLinksJs
+                    $updateMarker
                 });
 
 JS;
@@ -550,10 +557,21 @@ JS;
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
                         var oRow = feature.properties.data;
-                        return L.marker(latlng, { 
+                        var bDraggable = feature.properties.draggable || false;
+                        var oMarker = L.marker(latlng, { 
                             icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
+                            draggable: bDraggable,
+                            autoPan: bDraggable,
                             $markerProps 
                         });
+                        if (bDraggable === true) {
+                            oMarker.on('dragend', function(e){
+                                var fLat = oMarker.getLatLng().lat;
+                                var fLng = oMarker.getLatLng().lng;
+                                $updateMarker
+                            });
+                        }
+                        return oMarker;
                     },
                     onEachFeature: function(feature, layer) {
                         {$showPopupJs}                       
@@ -606,6 +624,7 @@ JS;
         } else {
             $lngColName = $layer->getLatitudeColumn()->getDataColumnName();
         }
+        $bDraggableJs = ($layer instanceof DataMarkersLayer) && $layer->hasAllowToMoveMarkers() ? 'true' : 'false';
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
@@ -626,6 +645,7 @@ JS;
                                 properties: {
                                     layer: {$this->getWidget()->getLayerIndex($layer)},
                                     object: '{$layer->getMetaObject()->getId()}',
+                                    draggable: {$bDraggableJs},
                                     data: oRow
                                 }
                             });
@@ -652,7 +672,9 @@ JS;
                         var oMap = {$this->buildJsLeafletVar()};
                         if (oBounds !== undefined && oBounds.isValid()) {
                             if (oMap.getBoundsZoom(oBounds) < oMap.getZoom() || oMap.getZoom() === oMap._exfState.initialZoom) {
-                                {$this->buildJsLeafletVar()}.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                                oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                            } else if (! oMap.getBounds().contains(oBounds)) {
+                                oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
                             }
                         }
                 	},100);
