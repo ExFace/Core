@@ -9,15 +9,40 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\WidgetLinkFactory;
 
 /**
- *
+ * Allows to use an image (e.g. a construction plan) as a base map
+ * 
+ * ## Zooming
+ * 
+ * Concider the following example:
+ * 
+ * ```
+ *  {
+ *      "type": "ImageMap",
+ *      "image_url":"vendor/my/app/Assets/Maps/map.jpg",
+ *      "image_width": 2268,
+ *      "image_height": 1604,
+ *      "zoom_min": 1,
+ *      "zoom_max": 4,
+ *      "zoom_for_actual_size": 3
+ *  }
+ *  
+ * ```
+ * 
+ * We want to be able to zoom over 4 levels (1 to 4). Zoom level 3 is going to be the actual size 
+ * (1 to 1) of the image. That means zoom level 4 will be twice as big, zoom level 2 will half as 
+ * big, and zoom level 1 a quarter of the original size.
+ * 
  * @author Andrej Kabachnik
  *
  */
 class ImageMap extends AbstractBaseMap
 {
     private $url = null;
+    
+    private $urlLink = null;
     
     private $imageHeight = null;
     
@@ -57,19 +82,24 @@ class ImageMap extends AbstractBaseMap
     }
     
     /**
-     * The URL to get the tiles from.
+     * The URL of the image or a link to a widget holding the url.
      * 
-     * Accepts any format compatible with the facade used to render the map. OpenStreetMap-style 
-     * tile URLs are very common: https://wiki.openstreetmap.org/wiki/Tiles#Base_maps.
+     * You can load images dynamically by using widget links: e.g. if you have an
+     * `InputComboTable` with id `MapSelector` and a column named `MapUrl`, you can
+     * use `=MapSelector!MapUrl` to load the image dynamically depending on the
+     * selection in the combo.
      * 
      * @uxon-property url
-     * @uxon-type url
+     * @uxon-type url|metamodel:widget_link
      * 
      * @param string $value
      * @return GenericUrlTiles
      */
     protected function setImageUrl(string $value) : BaseMapInterface
     {
+        if (Expression::detectReference($value)) {
+            $this->urlLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
+        }
         $this->url = $value;
         return $this;
     }
@@ -80,7 +110,7 @@ class ImageMap extends AbstractBaseMap
      */
     public function isImageBoundToWidgetLink() : bool
     {
-        return $this->url === null ? false : Expression::detectReference($this->url);
+        return $this->urlLink !== null;
     }
     
     /**
@@ -107,28 +137,41 @@ class ImageMap extends AbstractBaseMap
             }
             
             $url = $layer->getImageUrl();
-            
-            if (Expression::detectReference($url)) {
-                $initJs = <<<JS
-(function(){
-    
-})()
+            if ($this->isImageBoundToWidgetLink()) {
+                $link = $this->urlLink;
+                $linkedEl = $facadeElement->getFacade()->getElement($link->getTargetWidget());
+                $urlJs = $linkedEl->buildJsValueGetter($link->getTargetColumnId());
+                $urlJs = '(' . $urlJs . ' || "")';
+                $linkedEl->addOnChangeScript("$('#{$facadeElement->getIdLeaflet()}').data('_exfLeaflet').fire('exfRefresh');");
+                $updateMapJs .= <<<JS
+                    oMap.on('exfRefresh', function(){
+                        var oLayer = {$facadeElement->buildJsBaseMapGetter($this, 'oMap')};
+                        var sUrl = $urlJs;
+                        oLayer.setUrl(sUrl);
+                    });
 
 JS;
             } else {
-                $zoomOffset = ($this->getZoomMax() - $this->getZoomForActualSize());
-                $initJs = <<<JS
-(function() {
-    var oMap = {$facadeElement->buildJsLeafletVar()};
-    var oBounds = new L.LatLngBounds(
-        oMap.unproject([0, {$this->getImageHeight()}], oMap.getMaxZoom()-$zoomOffset),
-        oMap.unproject([{$this->getImageWidth()}, 0], oMap.getMaxZoom()-$zoomOffset)
-    );
-    oMap.setMaxBounds(oBounds);
-    return L.imageOverlay('{$url}', oBounds);
-})()
-JS;
+                $urlJs = json_encode($url);
+                $updateMapJs = '';
             }
+            
+            $zoomOffset = ($this->getZoomMax() - $this->getZoomForActualSize());
+            $initJs = <<<JS
+                (function() {
+                    var oMap = {$facadeElement->buildJsLeafletVar()};
+                    var oBounds = new L.LatLngBounds(
+                        oMap.unproject([0, {$this->getImageHeight()}], oMap.getMaxZoom()-$zoomOffset),
+                        oMap.unproject([{$this->getImageWidth()}, 0], oMap.getMaxZoom()-$zoomOffset)
+                    );
+                    var oLayer;
+                    oMap.setMaxBounds(oBounds);
+                    oLayer = L.imageOverlay({$urlJs}, oBounds);
+                    $updateMapJs
+                    return oLayer;
+                })()
+            JS;
+            
             return $initJs;
         });
     }
