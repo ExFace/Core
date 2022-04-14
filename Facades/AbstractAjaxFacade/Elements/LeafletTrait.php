@@ -16,6 +16,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\SaveData;
 use exface\Core\Widgets\Map;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -151,6 +152,7 @@ HTML;
             }
         ]"), "[latlng.lat,latlng.lng]")}
     });
+    $('#{$this->getIdLeaflet()}').data('_exfLeaflet', {$this->buildJsLeafletVar()});
 
     {$this->buildJsLeafletVar()}._exfState = {
         selectedFeature: null,
@@ -236,8 +238,8 @@ JS;
     {
         $baseMapsJs = '';
         $baseSelected = $this->getWidget()->getBaseMap(0);
-        foreach ($this->getWidget()->getBaseMaps() as $idx => $layer) {
-            $captionJs = json_encode($layer->getCaption() ?? 'Map ' . ($idx+1));
+        foreach ($this->getWidget()->getBaseMaps() as $layer) {
+            $captionJs = json_encode($layer->getCaption());
             $visible = ($baseSelected === $layer);
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
@@ -299,16 +301,26 @@ JS;
     .addTo({$this->buildJsLeafletVar()});
 
     {$this->buildJsLeafletVar()}._exfLayers = aLayers;
+    {$this->buildJsLeafletVar()}._exfBaseMaps = oBaseMapsList;
 
 JS;
     }
     
-    protected function buildJsLayerGetter(MapLayerInterface $layer, string $leafletVarJs = null) : string
+    public function buildJsLayerGetter(MapLayerInterface $layer, string $leafletVarJs = null) : string
     {
         if ($leafletVarJs === null) {
             $leafletVarJs = $this->buildJsLeafletVar();
         }
         return "{$leafletVarJs}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
+    }
+    
+    public function buildJsBaseMapGetter(BaseMapInterface $layer, string $leafletVarJs = null) : string
+    {
+        if ($leafletVarJs === null) {
+            $leafletVarJs = $this->buildJsLeafletVar();
+        }
+        $caption = json_encode($layer->getCaption());
+        return "{$leafletVarJs}._exfBaseMaps[{$caption}]";
     }
     
     /**

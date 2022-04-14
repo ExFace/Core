@@ -123,4 +123,14 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
     {
         return Map::COORDINATE_SYSTEM_AUTO;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
+     */
+    public function getCaption() : ?string
+    {
+        return parent::getCaption() ?? 'Map ' . ($this->getMap()->getBaseMapIndex($this) + 1);
+    }
 }
