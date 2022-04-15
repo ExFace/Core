@@ -84,6 +84,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     private $inputDataUxon = null;
     
+    private $hiddenIfInputInvalid = false;
+    
+    private $disabledIfInputInvalid = true;
+    
     /**
      * 
      * @var string[]
@@ -636,11 +640,35 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return null;
         }
         
-        if (null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
+        if ($this->isDisabledIfInputInvalid() === true && null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
             $this->setDisabledIf($uxon);
         }
         
         return parent::getDisabledIf();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHiddenIf()
+     */
+    public function getHiddenIf() : ?ConditionalProperty
+    {
+        // If there is a disabled_if already, use it
+        $ownProperty = parent::getHiddenIf();
+        if ($ownProperty !== null) {
+            return $ownProperty;
+        }
+        // Otherwise see if we can generate one from the action
+        if (! $this->hasAction()) {
+            return null;
+        }
+        
+        if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
+            $this->setHiddenIf($uxon);
+        }
+        
+        return parent::getHiddenIf();
     }
     
     /**
@@ -759,5 +787,67 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             $this->getDisabledIf();
         }
         return $data_sheet;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isHiddenIfInputInvalid() : bool
+    {
+        return $this->hiddenIfInputInvalid;
+    }
+    
+    /**
+     * Set to TRUE to hide the button if the input does not match the actions `input_invalid_if`.
+     * 
+     * NOTE: this only works if the buttons input widget contains all values required to
+     * evaluate the `input_invalid_if` conditions (and if the facade used supports this
+     * feature of course). If anything is missing, the button will remain visible and active
+     * and the `input_invalid_if` conditions will be evaluate regularly - when trying to perform
+     * the action.
+     * 
+     * @uxon-property hidden_if_input_invalid
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Button
+     */
+    public function setHiddenIfInputInvalid(bool $value) : Button
+    {
+        $this->hiddenIfInputInvalid = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isDisabledIfInputInvalid() : bool
+    {
+        return $this->disabledIfInputInvalid;
+    }
+    
+    /**
+     * Set to TRUE to disable the button if the input does not match the actions `input_invalid_if`.
+     * 
+     * @uxon-property disabled_if_input_invalid
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * NOTE: this only works if the buttons input widget contains all values required to
+     * evaluate the `input_invalid_if` conditions (and if the facade used supports this
+     * feature of course). If anything is missing, the button will remain active
+     * and the `input_invalid_if` conditions will be evaluate regularly - when trying to perform
+     * the action.
+     * 
+     * @param bool $value
+     * @return Button
+     */
+    public function setDisabledIfInputInvalid(bool $value) : Button
+    {
+        $this->disabledIfInputInvalid = $value;
+        return $this;
     }
 }

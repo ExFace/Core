@@ -205,4 +205,26 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     {
         return $this->getInputWidget()->hasUidData();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Button::setHiddenIfInputInvalid()
+     */
+    public function setHiddenIfInputInvalid(bool $value) : Button
+    {
+        $this->getMenu()->setButtonsHiddenIfInputInvalid($value);
+        return parent::setHiddenIfInputInvalid($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Button::setDisabledIfInputInvalid($value)
+     */
+    public function setDisabledIfInputInvalid(bool $value) : Button
+    {
+        $this->getMenu()->setButtonsDisabledIfInputInvalid($value);
+        return parent::setDisabledIfInputInvalid($value);
+    }
 }
