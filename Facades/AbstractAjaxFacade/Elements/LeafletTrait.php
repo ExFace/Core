@@ -634,7 +634,7 @@ JS;
         if ($link = $layer->getLongitudeWidgetLink()) {
             $lngColName = $link->getTargetWidget()->getDataColumnName();
         } else {
-            $lngColName = $layer->getLatitudeColumn()->getDataColumnName();
+            $lngColName = $layer->getLongitudeColumn()->getDataColumnName();
         }
         $bDraggableJs = ($layer instanceof DataMarkersLayer) && $layer->hasAllowToMoveMarkers() ? 'true' : 'false';
         return <<<JS
