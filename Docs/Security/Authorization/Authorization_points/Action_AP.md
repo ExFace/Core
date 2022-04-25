@@ -4,20 +4,27 @@ This authorization point allows to restrict access to specific actions to select
 
 Most actions are accessible by any user by default but it might be necessary to restrict access to certain actions, e.g. the action to delete a dataset.
 
-## How to restrict access to a facade
+## How to restrict access to an action
 
 ### Restrict access for all users except for certain user roles
 
 To restrict access to an action for users and make it accessible for only a certain user role, e.g only users with the role `Manager` should be allowed to delete datasets, use this authorization point.
 
-First the authorization point `Policy combining algorithm` needs to be set to `Permit Overrides`. The `Default Effect` of the authorization point needs to beset to `Permit`. This means if no policy can be applied for for a user he will have access to the action.
+First, add a policy denying any user the access to the delete action: 
 
-Second add a policy to that authorization point denying every user the access to the delete action. The policy needs to have `Deny` as `Effect` and no user role. It is possible to either set `Action prototype` or `Action Model` for a policy but **NOT** both at the same time. Set `Action prototype` if every action based on that prototype, eg. `exface.core.DeleteObject`, should be restriced, or set `Action Model` if only that specific action model should be restricted. After adding this policy no user will be able to use that action, so a second policy is needed to allow the desired user role, e.g. `Manager`, access to that action.
+- Authoriziation point: `Access to actions`
+- Effect: `Deny`
+- User role: emtpy
+- Action prototype: `exface.Core.DeleteObject`
 
-Third add a second policy with the `Effect` `Permit`, the desired user role, e.g. `Manager`, as `User role` and the action as in the first policy.
+After adding this policy no user without explicit permission will be able to use that action, so a second policy is needed to allow the desired user role, e.g. `Manager`, access to that action:
 
-Those settings will have the effect that no user, except users with the role `Manager`, will have access to the action.
-Should also users with another user role be able to access that action, just add a third policy with the same settings as the second one, except the new user roles as `User role`.
+- Authoriziation point: `Access to actions`
+- Effect: `Permit`
+- User role: `my.App.Manager`
+- Action prototype: `exface.Core.DeleteObject`
+
+Should other user roles also be able to access that action, just add more permitting policies in the same manner.
 
 ### Restrict access for certain user role
 
