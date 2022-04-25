@@ -1831,6 +1831,11 @@ SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_o
 SQL;
         $result = $this->getDataConnection()->runSql($sql);
         $row = $result->getResultArray()[0];
+        
+        if (empty($row)) {
+            return $message;
+        }
+        
         $message->setTitle($row['title']);
         $message->setType($row['type']);
         
