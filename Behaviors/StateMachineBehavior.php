@@ -371,45 +371,22 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
+     * 
      * ```
      *  "states": {
      *      "10": {
-     *          "buttons": {
-     *              "10": {
-     *                  "caption": "20 Annahme bestätigen",
-     *                  "action": {
-     *                      "alias": "exface.Core.UpdateData",
-     *                      "input_data_sheet": {
-     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     *                          "columns": [
-     *                              {
-     *                                  "attribute_alias": "STATE_ID",
-     *                                  "formula": "=NumberValue('20')"
-     *                              },
-     *                              {
-     *                                  "attribute_alias": "TS_UPDATE"
-     *                              }
-     *                          ]
-     *                      }
-     *                  }
-     *              }
-     *          },
+     *          "name": "Received",
+     *          "transitions": [
+     *              10: "",
+     *              20: "my.App.ComplaintApprove",
+     *              90: "my.App.ComplaintCancel"
+     *          ],
      *          "disabled_attributes_aliases": [
      *              "COMPLAINT_NO"
-     *          ],
-     *          "transitions": [
-     *              10,
-     *              20,
-     *              30,
-     *              50,
-     *              60,
-     *              70,
-     *              90,
-     *              99
      *          ]
      *      },
      *      "20": {
-     *          "buttons": ...,
+     *          "name": "Approved",
      *          "transitions": ...,
      *          ...
      *      }
@@ -434,16 +411,7 @@ class StateMachineBehavior extends AbstractBehavior
                 if (is_numeric($state) === false) {
                     $this->hasNumericIds = false;
                 }
-                $smstate = new StateMachineState($this);
-                $smstate->setStateId($state);
-                if ($uxon_smstate) {
-                    try {
-                        $uxon_smstate->mapToClassSetters($smstate);
-                    } catch (UxonMapError $e) {
-                        throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
-                    }
-                }
-                $this->addState($smstate);
+                $this->addState(new StateMachineState($this, $state, $uxon_smstate));
             }
         } elseif (is_array($value)) {
             $this->states = $value;
