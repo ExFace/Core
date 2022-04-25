@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
 
 /**
  * This behavior validates the model when an editor is opened for the object, it is attached to.
@@ -92,6 +93,8 @@ class ModelValidatingBehavior extends AbstractBehavior
             return;
         }
         
+        $model = $this->getWorkbench()->model();
+        
         if ($result->getData()->getMetaObject()->is('exface.Core.OBJECT')) {
             $data = $result->getData();
             if (false === $data->hasUidColumn(true)) {
@@ -99,8 +102,8 @@ class ModelValidatingBehavior extends AbstractBehavior
             }
             foreach ($data->getUidColumn()->getValues(false) as $objectUid) {
                 try {
-                    $object = $this->getWorkbench()->model()->getObject($objectUid);
-                    $object = $this->getWorkbench()->model()->reloadObject($object);
+                    $object = $model->getObject($objectUid);
+                    $object = $model->reloadObject($object);
                     $messageList = WidgetFactory::create(UiPageFactory::createBlank($this->getWorkbench(), ''), 'MessageList');
                     $this->validateObject($object, $messageList);
                     //$this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $messageList));
@@ -127,8 +130,8 @@ class ModelValidatingBehavior extends AbstractBehavior
                 $objectUid = $objectCol->getCellValue($rownr);
                 $attributeAlias = $row['ALIAS'];
                 try {
-                    $object = $this->getWorkbench()->model()->getObject($objectUid);
-                    $object = $this->getWorkbench()->model()->reloadObject($object);
+                    $object = $model->getObject($objectUid);
+                    $object = $model->reloadObject($object);
                     $attribute = $object->getAttribute($attributeAlias);
                     $messageList = WidgetFactory::create(UiPageFactory::createBlank($this->getWorkbench(), ''), 'MessageList');
                     $this->validateAttribute($attribute, $messageList);
@@ -160,6 +163,7 @@ class ModelValidatingBehavior extends AbstractBehavior
      * 
      * @triggers \exface\Core\Events\DataSheet\OnMetaObjectModelValidatedEvent
      * @triggers \exface\Core\Events\DataSheet\OnMetaAttributeModelValidatedEvent
+     * @triggers \exface\Core\Events\DataSheet\OnBehaviorModelValidatedEvent
      * 
      * @param DataSheetEventInterface $event
      * @return void
@@ -197,7 +201,7 @@ class ModelValidatingBehavior extends AbstractBehavior
             }
         }
         
-        if ($action->getMetaObject()->is('exface.Core.ATTRIBUTE')) {
+        if ($action->getMetaObject()->isExactly('exface.Core.ATTRIBUTE')) {
             $widget = $action->getWidget();
             $foundObject = false;
             $foundAttribute = false;
@@ -231,6 +235,42 @@ class ModelValidatingBehavior extends AbstractBehavior
                         $this->getWorkbench()->eventManager()->dispatch(new OnMetaAttributeModelValidatedEvent($attribute, $widget->getMessageList()));
                         break;
                     }
+                }
+            }
+        }
+        
+        if ($action->getMetaObject()->isExactly('exface.Core.OBJECT_BEHAVIORS') && $this->getObject()->isExactly('exface.Core.OBJECT_BEHAVIORS')) {
+            $widget = $action->getWidget();
+            $foundObject = null;
+            $foundBehavior = null;
+            foreach ($widget->getChildrenRecursive() as $child) {
+                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
+                    $attrAlias = $child->getAttributeAlias();
+                    if (($attrAlias === 'OBJECT')) {
+                        if ($child->hasValue() === false) {
+                            break;
+                        }
+                        $foundObject = $child->getValue();
+                    }
+                    if (($attrAlias === 'UID')) {
+                        if ($child->hasValue() === false) {
+                            break;
+                        }
+                        $foundBehavior = $child->getValue();
+                    }
+                    
+                    if ($foundBehavior !== null && $foundObject !== null) {
+                        break;
+                    }
+                }
+            }
+            if ($foundBehavior !== null && $foundObject !== null) {
+                try {
+                    $object = $this->getWorkbench()->model()->getObject($foundObject);
+                    $behavior = $object->getBehaviors()->getByUid($foundBehavior);
+                    $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorModelValidatedEvent($behavior, $widget->getMessageList()));
+                } catch (\Throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
                 }
             }
         }

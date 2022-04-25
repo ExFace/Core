@@ -22,6 +22,7 @@ use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
+use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -94,6 +95,8 @@ class StateMachineBehavior extends AbstractBehavior
             $this->overrideAttributeDisplayWidget();
         }
         
+        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
+        
         return $this;
     }
     
@@ -107,6 +110,8 @@ class StateMachineBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->removeListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        
+        $this->getWorkbench()->eventManager()->removeListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
@@ -936,5 +941,77 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         return false;
+    }
+    
+    public function onModelValidatedAddDiagram(OnBehaviorModelValidatedEvent $event)
+    {
+        if ($event->getBehavior() !== $this) {
+            return;
+        }
+        
+        $widget = $event->getMessageList()->getParent();
+        $widget->addButton($widget->createButton(new UxonObject([
+            'caption' => 'Diagram',
+            'action' => [
+                'alias' => 'exface.Core.ShowDialog',
+                'dialog' => [
+                    'widgets' => [
+                        [
+                            'widget_type' => 'Markdown',
+                            'value' => $this->buildMermaidDiagram()
+                        ]
+                    ]
+                ]
+            ]
+        ])));
+    }
+    
+    protected function buildMermaidDiagram() : string
+    {
+        return <<<TXT
+
+```mermaid
+stateDiagram-v2
+    10 : Draft
+    30 : Abgewiesen
+    note left of 30
+        #9993; Notification: 
+        - suedlink.Baudoku.AN_Tiefbau
+    end note
+    50 : Zur Prüfung RPB
+    note left of 50
+        RPB prüft das Dokument und kann es entweder 
+        abweisen oder an VHT weitergeben.
+        #9993; Notification: 
+        - suedlink.Baudoku.RPB
+    end note
+    70 : Zur Prüfung VHT
+    note left of 70
+        #9993; Notification: 
+        - suedlink.Baudoku.VHT
+    end note
+    90 : Storniert
+    99 : Freigegeben
+    note left of 99
+        #9993; Notification: 
+        - [#AutorPerson__User#] 
+        #9993; Email: 
+        - [#AutorPerson__User__EMAIL#] 
+        - [#BautagesberichtHistorie__UserNeu__EMAIL:LIST#]
+    end note
+    [*] --> 10
+    10 --> 50 : Zur Prüfung RPB
+    10 --> 10 : Revision erstellen
+    30 --> 50 : Zur Prüfung RPB
+    50 --> 70 : Zur Prüfung VHT
+    50 --> 30 : Abweisen
+    70 --> 30 : Abweisen
+    70 --> 90 : Stornieren
+    70 --> 99 : Freigeben
+    90 --> [*]
+    99 --> [*]
+```
+
+TXT;
     }
 }
