@@ -100,6 +100,8 @@ class InputSelect extends Input implements iSupportMultiSelect
     private $multi_select_text_delimiter = null;
 
     private $selectable_options = array();
+    
+    private $selectable_null = null;
 
     private $text_attribute_alias = null;
 
@@ -240,7 +242,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
         }
         // Select empty option if based on an attribute that is not required
-        if ($this->isBoundToAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired()){
+        if ($this->isSelectableNull()){
             $generic_options[EXF_LOGICAL_NULL] = $this->translate('WIDGET.SELECT_EMPTY');
         }
         return $generic_options;
@@ -312,7 +314,34 @@ class InputSelect extends Input implements iSupportMultiSelect
         $this->selectable_options = $options;
         return $this;
     }
-
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isSelectableNull() : bool
+    {
+        return $this->selectable_null ?? (($this->getParent() instanceof Filter) && $this->isBoundToAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired());
+    }
+    
+    /**
+     * Set to TRUE/FALSE to include/exclude the empty value (null) from `selectable_options`.
+     * 
+     * By default the empty value (null) will be included automatically in filters
+     * over non-required attributes.
+     * 
+     * @uxon-property selectable_null
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return InputSelect
+     */
+    public function setSelectableNull(bool $value) : InputSelect
+    {
+        $this->selectable_null = $value;
+        return $this;
+    }
+    
     /**
      * Returns the current number of selectable options
      *
