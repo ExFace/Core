@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
@@ -14,17 +13,20 @@ use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * Defines a state for the StateMachineBehavior.
  *
- * @author SFL
+ * @author Andrej Kabachnik
  */
 class StateMachineState implements iHaveIcon
 {
     use TranslatablePropertyTrait;
     
     use iHaveIconTrait;
+    
+    use ImportUxonObjectTrait;
 
     private $state_id = null;
 
@@ -36,6 +38,10 @@ class StateMachineState implements iHaveIcon
     
     private $disable_delete = false;
 
+    /**
+     * 
+     * @var string[]|NULL
+     */
     private $transitions = null;
 
     private $name = null;
@@ -48,9 +54,13 @@ class StateMachineState implements iHaveIcon
     
     private $stateMachine = null;
     
-    public function __construct(StateMachineBehavior $stateMachine)
+    public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
         $this->stateMachine = $stateMachine;
+        $this->state_id = $stateId;
+        if ($uxon !== null) {
+            $this->importUxonObject($uxon);
+        }
     }
 
     /**
@@ -64,18 +74,6 @@ class StateMachineState implements iHaveIcon
     }
 
     /**
-     * Defines the state id.
-     *
-     * @param integer|string $value            
-     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
-     */
-    public function setStateId($value)
-    {
-        $this->state_id = $value;
-        return $this;
-    }
-
-    /**
      * Returns the buttons for the state.
      *
      * @return UxonObject
@@ -83,8 +81,9 @@ class StateMachineState implements iHaveIcon
     public function getButtons()
     {
         if ($this->buttons === null) {
-            if (! empty($this->getTransitions())) {
-                foreach ($this->getTransitions() as $stateId) {
+            $this->buttons = [];
+            foreach ($this->getTransitions() as $stateId => $actionAlias) {
+                if ($actionAlias === '' || $actionAlias === null) {
                     $state = $this->getStateMachine()->getState($stateId);
                     $btnUxon = new UxonObject([
                         "action" => [
@@ -112,10 +111,12 @@ class StateMachineState implements iHaveIcon
                             $btnUxon->setProperty('icon_set', $state->getIconSet());
                         }
                     }
-                    $this->buttons[$stateId] = $btnUxon;
+                } else {
+                    $btnUxon = new UxonObject([
+                        "action_alias" => $actionAlias
+                    ]);
                 }
-            } else {
-                $this->buttons = [];
+                $this->buttons[$stateId] = $btnUxon;
             }
         }
         return $this->buttons;
@@ -164,7 +165,7 @@ class StateMachineState implements iHaveIcon
      * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setButtons($value)
+    protected function setButtons($value)
     {
         $this->buttons = $value;
         return $this;
@@ -197,7 +198,7 @@ class StateMachineState implements iHaveIcon
      * @param UxonObject|string[] $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setDisabledAttributesAliases($value)
+    protected function setDisabledAttributesAliases($value)
     {
         if ($value instanceof UxonObject){
             $array = $value->toArray();
@@ -238,71 +239,99 @@ class StateMachineState implements iHaveIcon
     {
         return $this->transitions !== null;
     }
-
+    
     /**
-     * Returns the allowed transitions for the state.
-     *
-     * @return number[]|string[]
+     * 
+     * @return string[]
      */
-    public function getTransitions()
+    protected function getTransitions() : array
     {
-        if ($this->transitions === null) {
-            return $this->getStateMachine()->getStateIds();
+        $array = $this->transitions;
+        if ($array === null) {
+            foreach($this->getStateMachine()->getStateIds() as $id) {
+                $array[$id] = '';
+            }
+        } else {
+            if ($this->getDisableEditing() !== true && ! array_key_exists($this->getStateId(), $array)) {
+                $array[$this->getStateId()] = '';
+            }
         }
-        return $this->transitions ?? [];
+        
+        return $array;
     }
 
     /**
      * Defines the allowed transitions for the state (if not set, transitions to all states are allowed).
      * 
-     * Set to an empty array to forbid any transitions from a state (including to itself!). Set to
-     * an array containing only the key of this state to forbid any transitions, but still allow
+     * If set, it will only be possible to change the state of the object to the listed states!
+     * The transition validation is done automatically with every DataSheet operation, so it is
+     * a pretty solid restriction.
+     * 
+     * Use an empty object to forbid any transitions from a state (including to itself!). Set to
+     * an list containing only the key of this state to forbid any transitions, but still allow
      * changing data in this state.
+     * 
+     * Additionally an action can be specified for each transition. In contrast to the state
+     * transition itself, this is not a restriction, but rather a helpful hint for the metamodel
+     * logic and also for human model designers. If an action is defined, auto-generated state 
+     * buttons will trigger that action instead of a generic state value update. However, this
+     * does not mean, the transition to the given state can only be done via this action: it
+     * can still happen by explicit state value update or by another action and so on.
+     * 
+     * Also make sure, transition actions always have `input_invalid_if` conditions to make sure
+     * they are applied in the correct state - this validation is not done by the behavior 
+     * automatically!
      *
      * The below example illustrates a state machine with the following rules:
      * 
-     * - From state 10 any state can be reached except 80. 
-     * - In state 20 too, but there is no going back to 10. 
-     * - From only transitions to 80 or 99 are allowed. 
-     * - In 80 an object can be saved, but the state cannot change
-     * - In state 99 no writing to the instance is possible (even without changing the state!).
+     * - A drafted document (state 10) needs to be approved before being submitted. 
+     * - An approved document (state 50) can be submitted or modified, but cannot become a draft again
+     * - A submitted document (state 99) cannot be changed at all - even without changing the state!
      * 
      * ```
      *  {
-     *      10: {
-     *          transitions: [ 10, 20, 50, 99 ]
+     *      "10": {
+     *          "name": "Draft",
+     *          "transitions": {
+     *              "10": "",
+     *              "50": "my.App.Approve"
+     *          }
      *      },
-     *      20: {
-     *          transitions: [ 20, 50, 99 ]
+     *      "50": {
+     *          "Approved",
+     *          "transitions": {
+     *              "50": "",
+     *              "99": "my.App.Submit"
+     *          }
      *      },
-     *      50: {
-     *          transitions: [ 80, 99 ]
-     *      },
-     *      80: {
-     *          transitions: [ 80 ]
-     *      },
-     *      99: {
-     *          transitions: []
+     *      "99": {
+     *          "name": "Submitted",
+     *          "transitions": {}
      *      }
      *  }
      *  
      * ``` 
      *  
      * @uxon-property transitions
-     * @uxon-type array
-     * @uxon-template ["10", "20", "99"]
+     * @uxon-type metamodel:action[]
+     * @uxon-template {"10": "", "": ""}
      *
-     * @param UxonObject|integer[] $value            
+     * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setTransitions($value)
+    protected function setTransitions(UxonObject $value)
     {
-        if ($value instanceof UxonObject){
+        $array = [];
+        
+        // Legacy syntax where transitions were merely an array with state ids
+        if ($value->isArray()) {
+            foreach ($value as $stateId) {
+                $array[$stateId] = '';
+            }
+        } 
+        // New syntax where each transition may be an action
+        else {
             $array = $value->toArray();
-        } elseif (is_array($value)){
-            $array = $value;
-        } else {
-            throw new UnexpectedValueException('Invalid format for transitions definition ins StateMachineBehavior! Array expected!');
         }
         $this->transitions = $array;
         return $this;
@@ -316,7 +345,7 @@ class StateMachineState implements iHaveIcon
      *
      * @param string $name            
      */
-    public function setName($name)
+    protected function setName($name)
     {
         $this->name = $name;
     }
@@ -351,7 +380,7 @@ class StateMachineState implements iHaveIcon
      * @param string $color_name_or_code
      * @return StateMachineState
      */
-    public function setColor($color_name_or_code)
+    protected function setColor($color_name_or_code)
     {
         $this->color = $color_name_or_code;
         return $this;
@@ -376,7 +405,7 @@ class StateMachineState implements iHaveIcon
     }
 
     /**
-     * Prevents instances of the object from being edited/changed in this state if set to TRUE.
+     * Prevents instances of the object from being edited/modified in this state if set to TRUE.
      * 
      * This is a shortcut to putting all editable attributes into disabled_attribute_aliases.
      * 
@@ -384,12 +413,12 @@ class StateMachineState implements iHaveIcon
      * @uxon-type bool
      * @uxon-default false
      * 
-     * @param int|string|bool $trueOrFalse
+     * @param bool $trueOrFalse
      * @return StateMachineState
      */
-    public function setDisableEditing($trueOrFalse) : StateMachineState
+    protected function setDisableEditing(bool $trueOrFalse) : StateMachineState
     {
-        $this->disable_editing = BooleanDataType::cast($trueOrFalse);
+        $this->disable_editing = $trueOrFalse;
         return $this;
     }
 
@@ -412,9 +441,9 @@ class StateMachineState implements iHaveIcon
      * @param int|string|bool $trueOrFalse
      * @return StateMachineState
      */
-    public function setDisableDelete($trueOrFalse) : StateMachineState
+    protected function setDisableDelete(bool $trueOrFalse) : StateMachineState
     {
-        $this->disable_delete = BooleanDataType::cast($trueOrFalse);
+        $this->disable_delete = $trueOrFalse;
         return $this;
     }
 
@@ -426,7 +455,7 @@ class StateMachineState implements iHaveIcon
      */
     public function isTransitionAllowed(StateMachineState $toState) : bool
     {
-        return $this->hasTransitionRestrictions() === false || in_array($toState->getStateId(), $this->getTransitions()) === true;
+        return $this->hasTransitionRestrictions() === false || array_key_exists($toState->getStateId(), $this->getTransitions()) === true;
     }
     
     /**
