@@ -82,18 +82,20 @@ class DataCheck implements DataCheckInterface
         }
         $filter = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->getConditionGroupUxon(), $data->getMetaObject());
         
-        $missingExprs = [];
+        $missingCols = [];
         foreach ($filter->getConditionsRecursive() as $cond) {
-            if (! $data->getColumns()->getByExpression($cond->getExpression())) {
-                $missingExprs[] = $cond->getExpression();
+            foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
+                if (! $data->getColumns()->getByExpression($attrAlias)) {                                        
+                    $missingCols[] = $attrAlias;
+                }
             }
         }
-        if (! empty($missingExprs)) {
-            if ($data->hasUidColumn(true)) {
+        if (! empty($missingCols)) {
+            if ($data->hasUidColumn(true)) {                
                 $missingSheet = DataSheetFactory::createFromObject($data->getMetaObject());
                 $missingSheet->getColumns()->addFromUidAttribute();
-                foreach ($missingExprs as $expr) {
-                    $missingSheet->getColumns()->addFromExpression($expr);
+                foreach ($missingCols as $alias) {
+                    $missingSheet->getColumns()->addFromExpression($alias);
                 }
                 $missingSheet->getFilters()->addConditionFromColumnValues($data->getUidColumn());
                 $missingSheet->dataRead();
