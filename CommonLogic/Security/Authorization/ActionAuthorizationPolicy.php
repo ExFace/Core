@@ -35,7 +35,7 @@ use exface\Core\CommonLogic\Tasks\ScheduledTask;
  * 
  * Possible targets:
  * 
- * - User group
+ * - User role - policy applies to users with this role only
  * - Object action - policy only applies to this particular action model
  * - Action prototype - policy applies to all actions of this prototype
  * - Meta object - policy applies to all actions on this meta object
