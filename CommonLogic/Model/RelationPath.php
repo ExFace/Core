@@ -383,9 +383,10 @@ class RelationPath implements MetaRelationPathInterface
     /**
      * Copies the relation path keeping the start object, but copying all relations
      *
-     * @return RelationPath
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = RelationPathFactory::createForObject($this->getStartObject());
         foreach ($this->getRelations() as $rel) {

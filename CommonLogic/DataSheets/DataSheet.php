@@ -2365,7 +2365,7 @@ class DataSheet implements DataSheetInterface
      *
      * @return DataSheetInterface
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
         // Copy internal properties, that do not get exported to UXON

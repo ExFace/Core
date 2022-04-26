@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -30,7 +31,7 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iCanBeCopied
 {
     /**
      * 
@@ -299,7 +300,7 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface;
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : self;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns

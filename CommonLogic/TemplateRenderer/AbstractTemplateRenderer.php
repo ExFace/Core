@@ -65,7 +65,7 @@ abstract class AbstractTemplateRenderer implements TemplateRendererInterface
      * @see iCanBeCopied::copy()
      * @return TemplateRendererInterface
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

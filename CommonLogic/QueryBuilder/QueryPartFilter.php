@@ -158,7 +158,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
      * 
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         $copy->condition = $this->getCondition()->copy();

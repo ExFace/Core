@@ -304,7 +304,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::copy()
      */
-    public function copy() : MetaRelationInterface
+    public function copy() : self
     {
         return clone $this;
     }

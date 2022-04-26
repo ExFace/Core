@@ -470,7 +470,7 @@ class Condition implements ConditionInterface
      * 
      * @return \exface\Core\Interfaces\iCanBeConvertedToUxon|\exface\Core\CommonLogic\Model\Condition
      */
-    public function copy()
+    public function copy() : self
     {
         return ConditionFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
     }

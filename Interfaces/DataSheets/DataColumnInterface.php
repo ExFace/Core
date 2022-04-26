@@ -160,13 +160,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function setFresh($value);
 
     /**
-     * Clones the column and returns the new copy
-     *
-     * @return DataColumnInterface
-     */
-    public function copy();
-
-    /**
      * Returns the sequential number of the first row, that contains the given value or FALSE if none of the
      * cells of this column match the value.
      * It's a shortcut to getting the first element of find_rows_by_value(),

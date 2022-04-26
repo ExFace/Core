@@ -604,9 +604,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * The copy will point to the same meta object, but will
      * have separate columns, filters, aggregations, etc.
      *
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy();
+    public function copy() : self;
 
     /**
      *

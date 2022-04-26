@@ -16,8 +16,6 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 use exface\Core\Uxon\DatatypeSchema;
 use exface\Core\Exceptions\SecurityException;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Factories\MessageFactory;
 
@@ -326,7 +324,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

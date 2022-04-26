@@ -243,7 +243,7 @@ class UxonObject implements \IteratorAggregate
      *
      * @return UxonObject
      */
-    public function copy()
+    public function copy() : self
     {
         return new self($this->array);
     }

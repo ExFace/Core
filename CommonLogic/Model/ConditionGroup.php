@@ -365,7 +365,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $exface = $this->getWorkbench();
         $copy = ConditionGroupFactory::createFromUxon($exface, $this->exportUxonObject());
