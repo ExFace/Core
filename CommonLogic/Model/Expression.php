@@ -54,7 +54,9 @@ class Expression implements ExpressionInterface
     private $type = null;
 
     private $relation_path = null;
-
+    
+    private $relation_path_string = null;
+    
     private $originalString = '';
 
     private $data_type = null;
@@ -145,7 +147,7 @@ class Expression implements ExpressionInterface
         } else {
             // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             try {
-                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
+                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $expression) : $expression))) {
                     $isAttributeAlias = true;
                 } else {
                     $isAttributeAlias = false;
@@ -322,8 +324,8 @@ class Expression implements ExpressionInterface
             // If in single row context, do the actual evaluation
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
-                    if ($this->relation_path !== null) {
-                        $attrAlias = RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias);
+                    if ($this->relation_path_string !== null) {
+                        $attrAlias = RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias);
                     } else {
                         $attrAlias = $this->attribute_alias;
                     }
@@ -347,10 +349,10 @@ class Expression implements ExpressionInterface
     public function getRequiredAttributes() : array
     {
         switch ($this->getType()) {
-                case self::TYPE_ATTRIBUTE:
-                    return [($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias)];
-                case self::TYPE_FORMULA:
-                    return $this->getFormula()->getRequiredAttributes();           
+        	case self::TYPE_ATTRIBUTE:
+        		return [($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias)];
+        	case self::TYPE_FORMULA:
+        		return $this->getFormula()->getRequiredAttributes();           
         }
         return [];
     }
@@ -368,9 +370,9 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRelationPath()
      */
-    public function getRelationPath()
+    public function getRelationPath() : ?MetaRelationPathInterface
     {
-        return $this->relation_path;
+        return $this->relation_path === null ? null : $this->relation_path;
     }
     
     /**
@@ -378,9 +380,10 @@ class Expression implements ExpressionInterface
      * @param string $pathString
      * @return ExpressionInterface
      */
-    private function setRelationPath(string $pathString) : ExpressionInterface
+    private function setRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
-        $this->relation_path = $pathString;
+        $this->relation_path_string = $path->toString();
+        $this->relation_path = $path;
         // Unset cached formula to force its reinitialization when getFormula() is called.
         $this->formula = null;
         return $this;
@@ -393,7 +396,11 @@ class Expression implements ExpressionInterface
      */
     public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
-        return $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path->toString());
+        $copy = $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path);
+        if ($copy->isConstant() === false) {
+            $copy->parse($copy->originalString);
+        }
+        return $copy;
     }
 
     /**
@@ -418,7 +425,7 @@ class Expression implements ExpressionInterface
                 // premise that chaining withRelationPath() will replace the previous path is fulfilled here.
                 // There are also many places in the code, that assume that toString() of an attribute
                 // expression will yield the alias including the relation path...
-                return ($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias);
+                return ($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias) : $this->attribute_alias);
             default:
                 return $this->originalString ?? '';
         }
@@ -644,7 +651,7 @@ class Expression implements ExpressionInterface
         return self::detectCalculation($value) && strpos($value, '(') > 0;
     }
     
-     /**
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectCalculation()
@@ -714,7 +721,7 @@ class Expression implements ExpressionInterface
         }
         
         if ($this->formula === null) {
-            $this->formula = $this->parseFormula($this->originalString, $this->relation_path);
+            $this->formula = $this->parseFormula($this->originalString, $this->relation_path_string);
         }
         
         return $this->formula;
