@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-10 19:49:17",
-            "MODIFIED_ON": "2020-05-29 09:39:03",
+            "MODIFIED_ON": "2022-04-27 00:25:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea63083a80f8c8a2e30205857feb80",
@@ -244,12 +244,13 @@
                         "widget_type": "WidgetGroup",
                         "caption": "Additional conditions",
                         "width": "max",
+                        "height": "max",
                         "widgets": [
                             {
                                 "attribute_alias": "CONDITION_UXON",
                                 "widget_type": "InputUxon",
                                 "root_prototype": "=auth_point_combo!POLICY_PROTOTYPE_CLASS",
-                                "height": 12,
+                                "height": "100%",
                                 "width": "max",
                                 "hide_caption": true
                             }
