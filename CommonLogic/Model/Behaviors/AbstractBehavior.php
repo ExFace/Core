@@ -223,7 +223,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return BehaviorInterface
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

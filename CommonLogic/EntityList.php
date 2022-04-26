@@ -6,6 +6,7 @@ use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace.
@@ -21,8 +22,9 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * @author Andrej Kabachnik
  *        
  */
-class EntityList extends AbstractExfaceClass implements EntityListInterface
+class EntityList implements EntityListInterface, WorkbenchDependantInterface, iCanBeCopied
 {
+    private $exface = null;
 
     private $content_array = array();
 
@@ -40,10 +42,25 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      */
     public function __construct(Workbench $exface, $parent_object)
     {
-        parent::__construct($exface);
+        $this->exface = $exface;
         $this->setParent($parent_object);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->exface;
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
@@ -293,7 +310,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      * @throws InvalidArgumentException
      * @return EntityList
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         $copy->reset();

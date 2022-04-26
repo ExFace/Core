@@ -8,6 +8,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * A relation in the metamodel symbolizes a key-based relationship between to objects.
@@ -33,7 +34,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-interface MetaRelationInterface extends WorkbenchDependantInterface
+interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     /**
      * 
@@ -188,13 +189,6 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * @return MetaRelationInterface
      */
     public function reverse() : MetaRelationInterface;
-    
-    /**
-     * Clones the attribute keeping the model and object
-     *
-     * @return MetaRelationInterface
-     */
-    public function copy() : MetaRelationInterface;
     
     /**
      *

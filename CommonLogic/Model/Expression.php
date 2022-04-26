@@ -608,7 +608,7 @@ class Expression implements ExpressionInterface
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return ExpressionInterface
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         if ($this->isConstant() === false) {

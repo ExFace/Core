@@ -5,8 +5,9 @@ interface iCanBeCopied extends WorkbenchDependantInterface
 {
 
     /**
-     * Copies
+     * Copies the current instance including sub-elements (deep-copy)
+     * 
+     * @return self
      */
-    public function copy();
+    public function copy() : self;
 }
-?>

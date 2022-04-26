@@ -381,7 +381,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         if ($this->getExpressionObj()) {
