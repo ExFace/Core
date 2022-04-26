@@ -896,8 +896,11 @@ class InputSelect extends Input implements iSupportMultiSelect
                 $sheet->getColumns()->addFromAttribute($tAttr);
             }
             if (null !== ($filters = $this->getFilters())) {
-                $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getOperator());
-                foreach ($filters->getConditions() as $cond) {
+                $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getConditionGroup()->getOperator());
+                if ($filters->getConditionGroup()->hasNestedGroups()) {
+                    throw new WidgetConfigurationError($this, 'Nested condition groups in `filters` of ' . $this->getWidgetType() . ' not (yet) supported!');
+                }
+                foreach ($filters->getConditionGroup()->getConditions() as $cond) {
                     /* @var $cond \exface\Core\Widgets\Parts\ConditionalPropertyCondition */
                     if ($cond->hasLiveReference()) {
                         continue;

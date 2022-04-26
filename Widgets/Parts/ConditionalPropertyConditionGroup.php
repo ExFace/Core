@@ -171,6 +171,15 @@ class ConditionalPropertyConditionGroup implements WidgetPartInterface
         return $this;
     }
     
+    /**
+     *
+     * @return bool
+     */
+    public function hasNestedGroups() : bool
+    {
+        return ! empty($this->conditionGroups);
+    }
+    
     public function addConditionGroup(ConditionalPropertyConditionGroup $group) : ConditionalPropertyConditionGroup
     {
         $this->conditionGroups[] = $group;
