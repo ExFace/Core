@@ -11,7 +11,7 @@ use exface\Core\Interfaces\DataSheets\DataCheckInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
-use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 
 /**
  * Standard implementation of DataCheckInterface
@@ -82,33 +82,11 @@ class DataCheck implements DataCheckInterface
         }
         $filter = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->getConditionGroupUxon(), $data->getMetaObject());
         
-        $missingCols = [];
-        foreach ($filter->getConditionsRecursive() as $cond) {
-            foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
-                if (! $data->getColumns()->getByExpression($attrAlias)) {                                        
-                    $missingCols[] = $attrAlias;
-                }
-            }
+        try {
+            return $data->extract($filter, true);
+        } catch (DataSheetExtractError $e) {
+            throw new DataCheckNotApplicableError($data, 'Cannot validate data: information required for conditions is not available in the data sheet!', null, $e);
         }
-        if (! empty($missingCols)) {
-            if ($data->hasUidColumn(true)) {                
-                $missingSheet = DataSheetFactory::createFromObject($data->getMetaObject());
-                $missingSheet->getColumns()->addFromUidAttribute();
-                foreach ($missingCols as $alias) {
-                    $missingSheet->getColumns()->addFromExpression($alias);
-                }
-                $missingSheet->getFilters()->addConditionFromColumnValues($data->getUidColumn());
-                $missingSheet->dataRead();
-                $checkSheet = $data->copy();
-                $checkSheet->joinLeft($missingSheet, $checkSheet->getUidColumnName(), $missingSheet->getUidColumnName());
-            } else {
-                throw new DataCheckNotApplicableError($data, 'Cannot validate data: information required for conditions is not available in the data sheet!');
-            }
-        } else {
-            $checkSheet = $data;
-        }
-        
-        return $checkSheet->extract($filter);
     }
     
     /**

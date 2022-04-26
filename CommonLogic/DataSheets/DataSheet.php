@@ -53,6 +53,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
+use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2520,20 +2521,47 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extract()
      */
-    public function extract(ConditionalExpressionInterface $conditionOrGroup) : DataSheetInterface
+    public function extract(ConditionalExpressionInterface $conditionOrGroup, bool $readMissingData = false) : DataSheetInterface
     {
-        $conditions = $conditionOrGroup->toConditionGroup();
-        $ds = $this->copy();
+        $condGrp = $conditionOrGroup->toConditionGroup();
+        
+        if ($readMissingData === true) {
+            foreach ($condGrp->getConditionsRecursive() as $cond) {
+                foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getColumns()->getByExpression($attrAlias)) {
+                        $missingCols[] = $attrAlias;
+                    }
+                }
+            }
+            if (! empty($missingCols)) {
+                if ($this->hasUidColumn(true)) {
+                    $missingSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                    $missingSheet->getColumns()->addFromUidAttribute();
+                    foreach ($missingCols as $alias) {
+                        $missingSheet->getColumns()->addFromExpression($alias);
+                    }
+                    $missingSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
+                    $missingSheet->dataRead();
+                    $checkSheet = $this->copy();
+                    $checkSheet->joinLeft($missingSheet, $checkSheet->getUidColumnName(), $missingSheet->getUidColumnName());
+                } else {
+                    throw new DataSheetExtractError($this, 'Cannot filter data rows: information required for conditions is not available in the data sheet!', null, null, $condGrp);
+                }
+            } else {
+                $checkSheet = $this;
+            }
+        } else {
+            $checkSheet = $this;
+        }
         
         $extractedRows = [];
         foreach ($this->getRows() as $rowNr => $row) {
-            if ($conditions->evaluate($this, $rowNr) === true) {
+            if ($condGrp->evaluate($checkSheet, $rowNr) === true) {
                 $extractedRows[] = $row;
             }
         }
         
-        $ds->removeRows()->addRows($extractedRows);
-        return $ds;
+        return $this->copy()->removeRows()->addRows($extractedRows);
     }
     
     /**
