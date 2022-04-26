@@ -235,7 +235,7 @@ class CallActionBehavior extends AbstractBehavior
         }
         
         if ($this->hasRestrictionConditions()) {
-            $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions());
+            $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
             if ($data_sheet->isEmpty()) {
                 $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_data_matches_conditions`', [], $data_sheet);
                 return;

@@ -657,11 +657,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasColumTotals();
     
     /**
+     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
      * 
      * @param ConditionalExpressionInterface $condition
+     * @param bool $readMissingData
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
+    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
     
     /**
      * Sorts the current rows using the sorters defined in the sheet or a given sorter list.

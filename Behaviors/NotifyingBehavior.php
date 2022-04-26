@@ -203,7 +203,7 @@ class NotifyingBehavior extends AbstractBehavior
             }
             
             if ($this->hasRestrictionConditions()) {
-                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions());
+                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
                 if ($dataSheet->isEmpty()) {
                     $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
                     return;
