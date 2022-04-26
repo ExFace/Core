@@ -144,7 +144,7 @@ trait JqueryButtonTrait {
         if (($conditionalProperty = $this->getWidget()->getDisabledIf()) !== null) {
             $js_check_button_state = <<<JS
             
-                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
                         return false;
                     }
 

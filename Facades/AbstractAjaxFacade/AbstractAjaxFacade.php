@@ -783,9 +783,19 @@ HTML;
         }
     }
     
+    /**
+     * Returns the common script/css tags to include in the <head> of the HTML page.
+     * 
+     * By default, the built-in JS-library exfTools is always included
+     * 
+     * @return string[]
+     */
     protected function buildHtmlHeadCommonIncludes() : array
     {
-        return [];
+        return [
+            '<script type="text/javascript" src="' . $this->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
+            '<script type="text/javascript" src="' . $this->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>'
+        ];
     }
     
     /**

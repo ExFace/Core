@@ -49,9 +49,10 @@ use exface\Core\Interfaces\WidgetInterface;
  *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/index.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
  *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
- *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
- *	"LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"
+ *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css"
  * ```
+ * 
+ * NOTE: This trait requires the exfTools JS library to be available!
  * 
  * @method Data getWidget()
  * 
@@ -162,7 +163,6 @@ JS;
         return [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];

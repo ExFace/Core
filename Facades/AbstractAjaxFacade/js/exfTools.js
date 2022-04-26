@@ -549,20 +549,33 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                /*case ComparatorDataType::LESS_THAN: // <
-	                case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
-	                case ComparatorDataType::GREATER_THAN: // >
-	                case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
-	                    $jsConditions[] = "(mLeft || null) {sComparator} (mRight || null)";
-	                    break;*/
+	                case '<': // <
+	                	bResult = (mLeft || null) < (mRight || null);
+	                	break;
+	                case '<=': // <=
+	                	bResult = (mLeft || null) <= (mRight || null);
+	                	break;
+	                case '>': // >
+	                	bResult = (mLeft || null) > (mRight || null);
+	                	break;
+	                case '>=': // >=
+	                	bResult = (mLeft || null) >= (mRight || null);
+	                	break;
 	                case '[':
 	                case '![':
-	                    /*
-	                    $conditionJs = $this->buildJsConditionalPropertyComparatorIn(mLeft, mRight, $delim);
-	                    if (sComparator === ComparatorDataType::NOT_IN) {
-	                        $conditionJs = "!(" . $conditionJs . ")";
-	                    }
-	                    $jsConditions[] = $conditionJs;*/
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+			                var sLeftVal = (mLeft || '').toString().toLowerCase();
+			                for (var i = 0; i < rightValues.length; i++) {
+			                    if (sLeftVal === rightValues[i].trim().toLowerCase()) {
+			                        return true;
+			                    }
+			                }
+			                return false;
+			            }();
+						if (sComparator === '![') {
+							bResult = ! bResult;
+						}
 	                    break;
 	                case '=':
 	                case '!=':
@@ -582,7 +595,7 @@
 						}
 	                    break;
 	                default:
-	                  	throw new 'Unknown comparator ' + sComparator + '!';
+	                  	throw 'Unknown comparator "' + sComparator + '"!';
 	            }
 	            return bResult;
 			},

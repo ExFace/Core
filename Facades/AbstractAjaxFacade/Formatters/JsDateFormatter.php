@@ -38,9 +38,10 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * to be added to the facade:
  * 
  * ```
- *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
- *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
+ *  "LIBS.MOMENT.LOCALES": "npm-asset/moment/locale",
  * ```
+ * 
+ * NOTE: This formatter requires the exfTools JS library to be available!
  *
  * @method DateDataType getDataType()
  *        
@@ -167,11 +168,8 @@ JS;
      */
     public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
-        $momentLocaleJs = $this->buildJsMomentLocale($facade);
         return [
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
-            $momentLocaleJs
+            $this->buildJsMomentLocale($facade)
         ];
     }
     

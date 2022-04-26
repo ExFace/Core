@@ -19,14 +19,7 @@ use exface\Core\DataTypes\TimeDataType;
  * }
  * ```
  * 
- * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
- * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
- * to be added to the facade:
- * 
- * ```
- *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
- *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
- * ```
+ * NOTE: This formatter requires the exfTools JS library to be available!
  * 
  * @method TimeDataType getDataType()
  * 
