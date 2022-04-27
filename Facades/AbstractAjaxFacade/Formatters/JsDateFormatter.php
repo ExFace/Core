@@ -166,10 +166,13 @@ JS;
     /**
      * Generates the moment locale include script based on the session locale
      *
-     * @return string
+     * @return string[]
      */
-    public static function buildJsMomentLocale(FacadeInterface $facade) : string
+    public static function buildHtmlHeadMomentIncludes(FacadeInterface $facade) : array
     {
+        $includes = [
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
+        ];
         $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
         $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
         $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
@@ -177,16 +180,16 @@ JS;
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         $locale = substr($fullLocale, 0, strpos($fullLocale, '_'));
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         
-        return '';
+        return $includes;
     }
 
 
