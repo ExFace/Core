@@ -33,6 +33,14 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * }
  * ```
  * 
+ * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
+ * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
+ * to be added to the facade:
+ * 
+ * ```
+ *  "LIBS.MOMENT.LOCALES": "npm-asset/moment/locale",
+ * ```
+ * 
  * NOTE: This formatter requires the exfTools JS library to be available!
  *
  * @method DateDataType getDataType()
@@ -152,17 +160,29 @@ JS;
     {
         return [];
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
+     */
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
+    {
+        return [
+            $this->buildJsMomentLocale($facade)
+        ];
+    }
     
     /**
      * Generates the moment locale include script based on the session locale
      *
      * @return string
      */
-    public static function buildJsMomentLocale(FacadeInterface $facade) : string
+    protected function buildJsMomentLocale(FacadeInterface $facade) : string
     {
-        $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
+        $localesPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
         $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
-        $fullLocale = $facade->getDataType()->getLocale();
+        $fullLocale = $this->getDataType()->getLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
