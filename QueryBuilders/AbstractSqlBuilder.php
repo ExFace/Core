@@ -38,6 +38,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\CommonLogic\Model\Aggregator;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1293,13 +1294,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": the compound attribute keys on both sides have different number of components!');
                     }
                     foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
-                        $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), '(' . $select_from . $this->getAliasDelim() . $this->buildSqlDataAddress($junction_attribute->getComponent($compIdx)->getAttribute()) . ')', EXF_COMPARATOR_EQUALS);
+                        $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute->getComponent($compIdx)->getAttribute(), $select_from), EXF_COMPARATOR_EQUALS);
                     }
                 } else {
                     if (! $this->buildSqlDataAddress($junction_attribute) && ! $customJoinOn) {
                         throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": one of the relation key attributes has neither a data address nor an SQL_JOIN_ON custom address property!');
                     }
-                    $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), '(' . $select_from . $this->getAliasDelim() . $this->buildSqlDataAddress($junction_attribute) . ')', EXF_COMPARATOR_EQUALS);
+                    $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute, $select_from), EXF_COMPARATOR_EQUALS);
                 }
                 
                 if ($customJoinOn) {
@@ -1315,6 +1316,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $output = '(' . $relq->buildSqlQuerySelect() . ')';
             
             return $output;
+    }
+    
+    /**
+     * Returns the SQL for y in `<subselect> WHERE x = y`
+     * 
+     * @param QueryPart $qpart
+     * @param MetaAttributeInterface $junctionAttribute
+     * @param string $select_from
+     * @return string
+     */
+    protected function buildSqlSelectSubselectJunctionWhere(QueryPart $qpart, MetaAttributeInterface $junctionAttribute, string $select_from) : string
+    {
+        return '(' . $select_from . $this->getAliasDelim() . $this->buildSqlDataAddress($junctionAttribute) . ')';
     }
     
     /**
@@ -2641,6 +2655,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return true;
     }
     
+    /**
+     * 
+     * @return bool
+     */
+    public function isAggregated() : bool
+    {
+        return ! empty($this->getAggregations());
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
     protected function isSubquery() : bool
     {
         return $this->query_id > 0;
