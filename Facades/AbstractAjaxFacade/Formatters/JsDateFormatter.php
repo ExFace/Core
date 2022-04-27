@@ -152,6 +152,16 @@ JS;
     {
         return [];
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
+     */
+    public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
+    {
+        return [];
+    }
     
     /**
      * Generates the moment locale include script based on the session locale
@@ -162,7 +172,7 @@ JS;
     {
         $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
         $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
-        $fullLocale = $facade->getDataType()->getLocale();
+        $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
