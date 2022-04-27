@@ -793,7 +793,6 @@ HTML;
     protected function buildHtmlHeadCommonIncludes() : array
     {
         return [
-            JsDateFormatter::buildJsMomentLocale($this) .
             '<script type="text/javascript" src="' . $this->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
             '<script type="text/javascript" src="' . $this->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>'
         ];
