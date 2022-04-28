@@ -147,7 +147,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                             $dataFilters->addNestedGroup($nestedGrp);   
                         }
                         break;
-                    case $dataSheet->getOperator() === EXF_LOGICAL_AND:
+                    case $dataFilters->getOperator() === EXF_LOGICAL_AND:
                         $dataSheet->getFilters()->addNestedGroup($condGrp);
                         break;
                     default:
