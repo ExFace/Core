@@ -133,6 +133,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, TaskInterface $task = null): PermissionInterface
     {
         $applied = false;
+        
         try {
             if ($action === null) {
                 throw new InvalidArgumentException('Cannot evalute action access policy: no action provided!');
@@ -144,7 +145,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     case $selector->isFilepath():
                         $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
                         $actionClassPath = FilePathDataType::normalize(get_class($action));
-                        $applied = $selectorClassPath === $actionClassPath;
+                        $applied = strcasecmp($selectorClassPath, $actionClassPath) === 0;
                         break;
                     case $selector->isClassname():
                         $applied = trim(get_class($action), "\\") === trim($selector->toString(), "\\");
