@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
  * This trait contains typical options for tabular data widgets.
@@ -16,7 +17,12 @@ trait DataTableTrait
 
     private $nowrap = true;
 
-    public function getNowrap()
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanWrapText::getNowrap()
+     */
+    public function getNowrap() : bool
     {
         return $this->nowrap;
     }
@@ -28,10 +34,9 @@ trait DataTableTrait
      * @uxon-type boolean
      * @uxon-default true
      *
-     * @param boolean $value            
-     * @return \exface\Core\Widgets\DataTable
+     * @see iCanWrapText::getNowrap()
      */
-    public function setNowrap(bool $value) : iShowData
+    public function setNowrap(bool $value) : iCanWrapText
     {
         $this->nowrap = $value;
         return $this;

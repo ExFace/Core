@@ -11,6 +11,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
  * An Excel-like table with editable cells.
@@ -31,7 +32,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *
  */
-class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput
+class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, iCanWrapText
 {
     use EditableTableTrait;
     use DataTableTrait;
