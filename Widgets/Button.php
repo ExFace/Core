@@ -541,8 +541,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function isHidden()
     {
-        if ($this->hiddenIfAccessDenied === false || $this->hasAction() === false) {
-            return parent::isHidden();
+        $hiddenExplicitly = parent::isHidden();
+        if ($hiddenExplicitly === true || $this->hiddenIfAccessDenied === false || $this->hasAction() === false) {
+            return $hiddenExplicitly;
         }        
         return $this->getAction()->isAuthorized() === false;
                    
