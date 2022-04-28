@@ -32,6 +32,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -51,7 +52,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @author Andrej Kabachnik
  *        
  */
-class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned
+class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned, iCanWrapText
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -95,6 +96,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $data_column_name = null;
     
     private $calculationExpr = null;
+    
+    private $nowrap = null;
 
     public function getAttributeAlias()
     {
@@ -792,6 +795,23 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getWidth()
+     */
+    public function getWidth() : WidgetDimension
+    {
+        $dim = parent::getWidth();
+        if ($dim->isUndefined()) {
+            $cellDim = $this->getCellWidget()->getWidth();
+            if (! $cellDim->isUndefined() && $cellDim->getValue() !== '100%') {
+                return $cellDim;
+            }
+        }
+        return $dim;
+    }
+    
+    /**
+     * 
      * @return WidgetDimension
      */
     public function getWidthMax() : WidgetDimension
@@ -939,5 +959,31 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
         }
         return $caption;
+    }
+    
+    /**
+     * 
+     * @see iCanWrapText::getNowrap()
+     */
+    public function getNowrap() : bool
+    {
+        return $this->nowrap ?? ($this->getDataWidget() instanceof iCanWrapText ? $this->getDataWidget()->getNowrap() : true);
+    }
+    
+    /**
+     * Set to FALSE to enable text wrapping in this column only.
+     * 
+     * NOTE: This may not work for all widgets/facades. Just try it out.
+     *
+     * @uxon-property nowrap
+     * @uxon-type boolean
+     *
+     * @param boolean $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setNowrap(bool $value) : iCanWrapText
+    {
+        $this->nowrap = $value;
+        return $this;
     }
 }
