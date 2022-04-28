@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-03-02 08:43:05",
+            "MODIFIED_ON": "2022-04-28 18:17:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -510,6 +510,16 @@
                                         "row_grouper": {
                                             "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL"
                                         },
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                "direction": "asc"
+                                            },
+                                            {
+                                                "attribute_alias": "NAME",
+                                                "direction": "asc"
+                                            }
+                                        ],
                                         "columns": [
                                             {
                                                 "attribute_alias": "AUTHORIZATION_POINT__LABEL"

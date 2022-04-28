@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2022-04-27 00:23:15",
+            "MODIFIED_ON": "2022-04-28 18:15:41",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -318,6 +318,16 @@
                                                             "group_by_attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true
                                                         },
+                                                        "sorters": [
+                                                            {
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
+                                                                "direction": "asc"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__NAME",
+                                                                "direction": "asc"
+                                                            }
+                                                        ],
                                                         "filters": [
                                                             {
                                                                 "attribute_alias": "POLICY__TARGET_PAGE_GROUP",
