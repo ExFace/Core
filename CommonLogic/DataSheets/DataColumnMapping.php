@@ -1,14 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
-use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
-use exface\Core\Uxon\DataSheetMapperSchema;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -18,34 +14,13 @@ use exface\Core\Uxon\DataSheetMapperSchema;
  * @author Andrej Kabachnik
  *
  */
-class DataColumnMapping implements DataColumnMappingInterface 
+class DataColumnMapping extends AbstractDataSheetMapping
 {
-    use ImportUxonObjectTrait;
-    
-    private $mapper = null;
-    
     private $fromExpression = null;
     
     private $toExpression = null;
     
     private $createRowInEmptyData = false;
-    
-    public function __construct(DataSheetMapper $mapper)
-    {
-        $this->mapper = $mapper;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = new UxonObject();
-        // TODO
-        return $uxon;
-    }
     
     /**
      * 
@@ -127,27 +102,6 @@ class DataColumnMapping implements DataColumnMappingInterface
         return $this;
     }
     
-   
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getMapper()
-     */
-    public function getMapper()
-    {
-        return $this->mapper;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->getMapper()->getWorkbench();
-    }
-    
     /**
      * 
      * {@inheritDoc}
@@ -222,15 +176,5 @@ class DataColumnMapping implements DataColumnMappingInterface
     {
         $this->createRowInEmptyData = $value;
         return $this;
-    }
-    
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::getUxonSchemaClass()
-     */
-    public static function getUxonSchemaClass() : ?string
-    {
-        return DataSheetMapperSchema::class;
     }
 }
