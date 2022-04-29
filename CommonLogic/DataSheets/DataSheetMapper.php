@@ -14,6 +14,7 @@ use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -31,6 +32,8 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
  * - `column_to_filter_mappings` create filters in the to-sheet from values of from-heet columns.
  * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
  * - `joins` can join arbitrary data in a way similar to SQL JOINs
+ * - `action_to_column_mappings` will perform an action on the from-sheet and map data from
+ * the actions result to the to-sheet
  * 
  * ## Order of execution
  * 
@@ -177,7 +180,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         foreach ($this->getMappings() as $map){
             // Only use mappings that use a from-column
             // TODO give mappings a prepare() method and put the logic in there - see other comment few lines above.
-            if ($map instanceof DataFilterToColumnMappingInterface || $map instanceof DataJoinMapping) {
+            if (! ($map instanceof DataColumnMappingInterface) || ($map instanceof DataFilterToColumnMappingInterface)) {
                 continue;
             }
             $from_expression = $map->getFromExpression();
