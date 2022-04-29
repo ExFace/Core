@@ -5,6 +5,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -14,7 +15,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
  * @author Andrej Kabachnik
  *
  */
-class DataColumnMapping extends AbstractDataSheetMapping
+class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMappingInterface
 {
     private $fromExpression = null;
     
