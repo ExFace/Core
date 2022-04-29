@@ -10,15 +10,48 @@ use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
-use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Factories\DataColumnFactory;
-use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 
 /**
- * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
+ * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
+ * 
+ * The mapper performs multiple mapping operations consequently transfering (= mapping) 
+ * data from the from-data-sheet to the to-data-sheet. 
+ * 
+ * ## Mappings types 
+ * 
+ * How exactly the data is mapped depends on the type of mapping being used: 
+ * 
+ * - `column_to_column_mappings` transfer values from columns of the from-sheet to columns
+ * in the to-sheet. Their `from` expression can also be a calculation allowing to change
+ * values within the mapping (e.g. `=(version + 1)` or even use static calculation like `=Now()`.
+ * - `column_to_filter_mappings` create filters in the to-sheet from values of from-heet columns.
+ * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
+ * - `joins` can join arbitrary data in a way similar to SQL JOINs
+ * 
+ * ## Order of execution
+ * 
+ * Mappings are applied in the order of definition: e.g. if you place `joins` first in the mappers 
+ * UXON followed by `column_to_column_mappings`, the column mappings will be applied after the
+ * data was joined, so you will be able to map newly joined columns.
+ * 
+ * If you need full control over the order of the mappings, use the generic `mappings` array
+ * where you must define the class of each mapping however. All the specific arrays like
+ * `column_to_column_mappings` are just there for convenience - technically they all just fill 
+ * the `mappings`.
+ * 
+ * ## Inheriting properties of the from-sheet
+ * 
+ * To decrease the number of explicit mappings, the mapper can make the to-sheet inherit columns, 
+ * filter and other things from the to-sheet:
+ * 
+ * - `inherit_columns`
+ * - `inherit_column_only_for_system_attributes`
+ * - `inherit_filters`
+ * - `inherit_sorters`
  * 
  * @see DataSheetMapperInterface
  * 
@@ -27,7 +60,6 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
  */
 class DataSheetMapper implements DataSheetMapperInterface 
 {
-    
     use ImportUxonObjectTrait;
     
     private $workbench = null;
@@ -36,13 +68,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     private $toMetaObject = null;
     
-    private $columnMappings = [];
-    
-    private $columnFilterMappings = [];
-    
-    private $filterColumnMappings = [];
-    
-    private $joinMappings = [];
+    private $mappings = [];
     
     private $inheritColumns = null;
     
@@ -295,27 +321,33 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         return $this->setToMetaObject($this->getWorkbench()->model()->getObject($alias_with_namespace));
     }
-
+    
     /**
+     * Map column expressions of the from-sheet to new columns of the to-sheet.
      * 
-     * @return DataColumnMappingInterface[]
+     * @uxon-property mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\AbstractDataSheetMapping[]
+     * @uxon-template [{"class": "", "": ""}]
+     * 
+     * @param UxonObject $uxonArray
+     * @throws DataSheetMapperError
+     * @return DataSheetMapperInterface
      */
-    protected function getColumnToColumnMappings() : array
+    protected function setMappings(UxonObject $uxonArray) : DataSheetMapperInterface
     {
-        return $this->columnMappings;
-    }
-
-    /**
-     * @deprecated Obsolet! Use setColumnToColumnMappings()
-     * This method is only here for UXON backwards compatibility
-     */
-    protected function setColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
-    {
-        return $this->setColumnToColumnMappings($uxon);
+        foreach ($uxonArray as $uxon) {
+            $class = $uxon->getProperty('class');
+            if (! $class || ! class_exists($class)) {
+                throw new DataSheetMapperError($this, 'Invalid data mapper class "' . $class . '"!');
+            }
+            $mapping = new $class($this, $uxon);
+            $this->addMapping($mapping);
+        }
+        return $this;
     }
     
     /**
-     * Maps column expressions of the from-sheet to new columns of the to-sheet.
+     * Map column expressions of the from-sheet to new columns of the to-sheet.
      * 
      * @uxon-property column_to_column_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnMapping[]
@@ -326,11 +358,19 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     protected function setColumnToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
-        foreach ($uxon as $instance){
-            $map = $this->createColumnToColumnMapping($instance);
-            $this->addColumnToColumnMapping($map);
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnMapping($this, $prop));
         }
         return $this;
+    }
+    
+    /**
+     * @deprecated Obsolete! Use setColumnToColumnMappings()
+     * This method is only here for UXON backwards compatibility
+     */
+    protected function setColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        return $this->setColumnToColumnMappings($uxon);
     }
     
     /**
@@ -345,35 +385,14 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     protected function setColumnToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
-        foreach ($uxon as $instance){
-            $map = $this->createColumnToFilterMapping($instance);
-            $this->addColumnToFilterMapping($map);
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnToFilterMapping($this, $prop));
         }
         return $this;
     }
     
     /**
-     * 
-     * @param DataColumnToFilterMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) : DataSheetMapperInterface
-    {
-        $this->columnFilterMappings[] = $map;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return DataColumnToFilterMappingInterface[]
-     */
-    protected function getColumnToFilterMappings() : array
-    {
-        return $this->columnFilterMappings;
-    }
-    
-    /**
-     * Creates columns from the values of filters
+     * Create columns from the values of filters
      *
      * @uxon-property filter_to_column_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataFilterToColumnMapping[]
@@ -384,43 +403,46 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     protected function setFilterToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
-        foreach ($uxon as $instance){
-            $map = $this->createFilterToColumnMapping($instance);
-            $this->addFilterToColumnMapping($map);
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataFilterToColumnMapping($this, $prop));
         }
         return $this;
     }
     
     /**
-     * 
-     * @param DataFilterToColumnMappingInterface $map
+     * Join other data similarly to left/right JOINs in SQL
+     *
+     * @uxon-property joins
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataJoinMapping[]
+     * @uxon-template [{"join": "left", "join_input_data_on_attribute": "", "join_data_sheet_on_attribute": "", "data_sheet": {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", comparator: "==", "value": ""}]}}}]
+     *
+     * @param UxonObject $uxon
      * @return DataSheetMapperInterface
      */
-    protected function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) : DataSheetMapperInterface
+    protected function setJoins(UxonObject $uxon) : DataSheetMapperInterface
     {
-        $this->filterColumnMappings[] = $map;
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataJoinMapping($this, $prop));
+        }
         return $this;
     }
     
     /**
-     * 
-     * @return DataFilterToColumnMappingInterface[]
+     * Join other data similarly to left/right JOINs in SQL
+     *
+     * @uxon-property action_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\ActionToColumnMapping[]
+     * @uxon-template [{"from": "", "to": "", "action": {"alias": ""}}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
      */
-    protected function getFilterToColumnMappings() : array
+    protected function setActionToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
     {
-        return $this->filterColumnMappings;
-    }
-    
-    /**
-     * @return DataFilterToColumnMappingInterface
-     */
-    protected function createFilterToColumnMapping(UxonObject $uxon = null) : DataFilterToColumnMappingInterface
-    {
-        $mapping = new DataFilterToColumnMapping($this);
-        if (!is_null($uxon)){
-            $mapping->importUxonObject($uxon);
+        foreach ($uxon as $prop){
+            $this->addMapping(new ActionToColumnMapping($this, $prop));
         }
-        return $mapping;
+        return $this;
     }
     
    /**
@@ -430,12 +452,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     */
     public function getMappings() : array
     {
-        return array_merge(
-            $this->getColumnToColumnMappings(),
-            $this->getColumnToFilterMappings(),
-            $this->getFilterToColumnMappings(),
-            $this->getJoins()
-        );
+        return $this->mappings;
     }
     
     /**
@@ -443,74 +460,10 @@ class DataSheetMapper implements DataSheetMapperInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addMapping()
      */
-    public function addMapping(DataMappingInterface $map) : DataSheetMapperInterface
+    public function addMapping(DataMappingInterface $mapping) : DataSheetMapperInterface
     {
-        switch (true) {
-            case $map instanceof DataColumnToFilterMappingInterface:
-                $this->addColumnToFilterMapping($map);
-                break;
-            case $map instanceof DataFilterToColumnMappingInterface:
-                $this->addFilterToColumnMapping($map);
-                break;
-            case $map instanceof DataJoinMapping:
-                $this->addJoin($map);
-                break;
-            case $map instanceof DataColumnMappingInterface:
-            default:
-                $this->addColumnToColumnMapping($map);
-                break;
-        }
+        $this->mappings[] = $mapping;
         return $this;
-    }
-    
-    /**
-     * @return DataColumnMappingInterface
-     */
-    protected function createColumnToColumnMapping(UxonObject $uxon = null) : DataColumnMappingInterface
-    {
-        $mapping = new DataColumnMapping($this);
-        if (!is_null($uxon)){
-            $mapping->importUxonObject($uxon);
-        }
-        return $mapping;
-    }
-    
-    /**
-     * @return DataColumnToFilterMappingInterface
-     */
-    protected function createColumnToFilterMapping(UxonObject $uxon = null) : DataColumnToFilterMappingInterface
-    {
-        $mapping = new DataColumnToFilterMapping($this);
-        if (!is_null($uxon)){
-            $mapping->importUxonObject($uxon);
-        }
-        return $mapping;
-    }
-    
-    /**
-     * 
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    protected function addColumnToColumnMapping(DataColumnMappingInterface $map) : DataSheetMapperInterface
-    {
-        $this->columnMappings[] = $map;
-        return $this;
-    }
-
-    /**
-     * Map anything using provided expressions: columns, filters, sorters, aggregators, etc.
-     * 
-     * @uxon-property expression_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnMapping[]
-     * @uxon-template [{"from": "", "to": ""}]
-     * 
-     * @param UxonObject $uxonObjects
-     * @return DataSheetMapperInterface
-     */
-    protected function setExpressionMappings(UxonObject $uxonObjects) : DataSheetMapperInterface
-    {
-        return $this->setColumnToColumnMappings($uxonObjects);
     }
     
     /**
@@ -716,59 +669,6 @@ class DataSheetMapper implements DataSheetMapperInterface
     public static function getUxonSchemaClass() : ?string
     {
         return DataSheetMapperSchema::class;
-    }
-    
-    /**
-     * Joins other data similarly to left/right JOINs in SQL
-     *
-     * @uxon-property joins
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataJoinMapping[]
-     * @uxon-template [{"join": "left", "join_input_data_on_attribute": "", "join_data_sheet_on_attribute": "", "data_sheet": {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", comparator: "==", "value": ""}]}}}]
-     *
-     * @param UxonObject $uxon
-     * @return DataSheetMapperInterface
-     */
-    protected function setJoins(UxonObject $uxon) : DataSheetMapperInterface
-    {
-        foreach ($uxon as $instance){
-            $map = $this->createJoin($instance);
-            $this->addJoin($map);
-        }
-        return $this;
-    }
-    
-    /**
-     * 
-     * @param DataJoinMapping $map
-     * @return DataSheetMapperInterface
-     */
-    protected function addJoin(DataJoinMapping $map) : DataSheetMapperInterface
-    {
-        $this->joinMappings[] = $map;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return DataJoinMapping[]
-     */
-    protected function getJoins() : array
-    {
-        return $this->joinMappings;
-    }
-    
-    /**
-     * 
-     * @param UxonObject $uxon
-     * @return DataJoinMapping
-     */
-    protected function createJoin(UxonObject $uxon = null) : DataJoinMapping
-    {
-        $mapping = new DataJoinMapping($this);
-        if (!is_null($uxon)){
-            $mapping->importUxonObject($uxon);
-        }
-        return $mapping;
     }
     
     /**

@@ -3,8 +3,6 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\DataSheets\DataMappingInterface;
-use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Factories\DataSheetFactory;
 
 /**
@@ -66,15 +64,11 @@ use exface\Core\Factories\DataSheetFactory;
  * @author Andrej Kabachnik
  *
  */
-class DataJoinMapping implements DataMappingInterface 
+class DataJoinMapping extends AbstractDataSheetMapping 
 {
-    use ImportUxonObjectTrait;
-    
     const JOIN_TYPE_LEFT = 'left';
     
     const JOIN_TYPE_RIGHT = 'right';
-    
-    private $mapper = null;
     
     private $joinType = self::JOIN_TYPE_LEFT;
     
@@ -84,14 +78,6 @@ class DataJoinMapping implements DataMappingInterface
     
     private $joinSheetKey = null;
     
-    /**
-     * 
-     * @param DataSheetMapper $mapper
-     */
-    public function __construct(DataSheetMapper $mapper)
-    {
-        $this->mapper = $mapper;
-    }
     /**
      * 
      * {@inheritDoc}
@@ -109,45 +95,6 @@ class DataJoinMapping implements DataMappingInterface
             case self::JOIN_TYPE_RIGHT:
                 return $joinSheet->joinLeft($toSheet, $this->getJoinDataSheetOnAttributeAlias(), $this->getJoinInputDataOnAttributeAlias());
         }
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        return new UxonObject();
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getMapper()
-     */
-    public function getMapper()
-    {
-        return $this->mapper;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->getMapper()->getWorkbench();
-    }
-
-    /**
-     * 
-     * @return string|NULL
-     */
-    public static function getUxonSchemaClass(): ?string
-    {
-        return null;
     }
     
     /**
