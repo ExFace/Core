@@ -21,10 +21,13 @@ interface EventManagerInterface extends WorkbenchDependantInterface
      * Registers a regular listener for the given event name.
      * 
      * The listener can be any PHP-callable.
+     * 
+     * If not $priority is specified, listeners are called in the order they are added. Set a higher priority
+     * to ensure a listener is called earlier.
      *
      * @param string $eventName            
      * @param callable $listener_callable            
-     * @param int $priority            
+     * @param int|NULL $priority The higher this value, the earlier the listener will be triggered in the chain            
      * @return EventManagerInterface
      */
     public function addListener(string $eventName, callable $listener_callable, int $priority = null) : EventManagerInterface;

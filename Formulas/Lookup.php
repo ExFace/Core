@@ -13,7 +13,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
  * Examples
  * 
  * - `=Lookup('ALIAS:LIST', 'exface.Core.APP')` - returns a comma-separated list of app aliases
- * - `=Lookup('ALIAS:LIST', 'exface.Core.OBJECT', '{"operator": "AND", conditions[{"expression": "APP__ALIAS", "comparator": "==", "value": "exface.Core"}]}')` - 
+ * - `=Lookup('ALIAS:LIST', 'exface.Core.OBJECT', '{"operator": "AND", "conditions": [{"expression": "APP__ALIAS", "comparator": "==", "value": "exface.Core"}]}')` - 
  * returns a comma-separated list of object aliases in the Core app
  * 
  */
