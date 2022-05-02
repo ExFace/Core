@@ -54,6 +54,8 @@ class StateMachineState implements iHaveIcon
     
     private $stateMachine = null;
     
+    private $notifications = null;
+    
     public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
         $this->stateMachine = $stateMachine;
@@ -489,5 +491,51 @@ class StateMachineState implements iHaveIcon
     public function getStateMachine() : StateMachineBehavior
     {
         return $this->stateMachine;
+    }
+    
+    /**
+     * Array of messages to send when this state is reached - each with their own channel, recipients, etc.
+     *
+     * You can use the following placeholders inside any message model - as recipient,
+     * message subject - anywhere:
+     *
+     * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+     * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+     * from the given app
+     * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+     * for which the notification was triggered - only works with notification on data sheet events!
+     * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+     * This means, static formulas will always work, while data-driven formulas will only work on data sheet
+     * events!
+     *
+     * @uxon-property notifications
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template [{"channel": ""}]
+     * 
+     * @param UxonObject $uxonArray
+     * @return StateMachineState
+     */
+    protected function setNotifications(UxonObject $uxonArray) : StateMachineState
+    {
+        $this->notifications = $uxonArray;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasNotifications() : bool
+    {
+        return $this->notifications !== null;
+    }
+    
+    /**
+     * 
+     * @return UxonObject|NULL
+     */
+    public function getNotificationsUxon() : ?UxonObject
+    {
+        return $this->notifications;
     }
 }
