@@ -15,6 +15,14 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Communication\UserRecipientInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\Uxon\CommunicationMessageSchema;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Selectors\UserSelector;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -37,6 +45,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface
     private $recipientAddresses = [];
     
     private $recipients = [];
+    
+    private $recipientUserFilter = null;
     
     /**
      * 
@@ -86,18 +96,46 @@ abstract class AbstractMessage implements CommunicationMessageInterface
     {
         if ($this->recipients === null) {
             $this->recipients = [];
+            
             foreach ($this->getRecipientAddresses() as $addr) {
                 // TODO move to factory
                 if (false !== $filtered = filter_var($addr, FILTER_VALIDATE_EMAIL)) {
                     $this->recipients[] = new EmailRecipient($filtered);
                 }
             }
-            foreach ($this->getRecipientUsers() as $str) {
-                $this->recipients[] = new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, $str));
+            
+            $userRecipients = [];
+            
+            // If there are user filters, create a data sheet to read user UIDs from users, roles and the filters.
+            // Otherwise use the users/roles explicitly
+            if ($filterUxon = $this->recipientUserFilter) {
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.USER');
+                $filterForRecipients = ConditionGroupFactory::createOR($ds->getMetaObject());
+                foreach ($this->getRecipientUsers() as $str) {
+                    $selector = new UserSelector($this->workbench, $str);
+                    $filterForRecipients->addConditionFromString(($selector->isUid() ? 'UID' : 'USERNAME'), $str, ComparatorDataType::EQUALS);
+                }
+                foreach ($this->getRecipientRoles() as $str) {
+                    $selector = new UserRoleSelector($this->workbench, $str);
+                    $filterForRecipients->addConditionFromString(($selector->isUid() ? 'USER_ROLE_USERS__USER_ROLE' : 'USER_ROLE_USERS__USER_ROLE__ALIAS_WITH_NS'), $str, ComparatorDataType::EQUALS);
+                }
+                $ds->getColumns()->addFromUidAttribute();
+                $ds->getFilters()->addNestedGroup($filterForRecipients);
+                $ds->getFilters()->addNestedGroup(ConditionGroupFactory::createFromUxon($this->workbench, $filterUxon, $ds->getMetaObject()));
+                $ds->dataRead();
+                foreach ($ds->getUidColumn()->getValues() as $userUid) {
+                    $userRecipients[] = new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, $userUid));
+                }
+            } else {
+                foreach ($this->getRecipientUsers() as $str) {
+                    $userRecipients[] = new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, $str));
+                }
+                foreach ($this->getRecipientRoles() as $str) {
+                    $userRecipients[] = new UserRoleRecipient(new UserRoleSelector($this->workbench, $str));
+                }
             }
-            foreach ($this->getRecipientRoles() as $str) {
-                $this->recipients[] = new UserRoleRecipient(new UserRoleSelector($this->workbench, $str));   
-            }
+            
+            $this->recipients = array_merge($this->recipients, $userRecipients);
         }
         return $this->recipients;
     }
@@ -108,14 +146,30 @@ abstract class AbstractMessage implements CommunicationMessageInterface
      */
     protected function getRecipientUsers() : array
     {
+        foreach ($this->recipientUserSelectors as $i => $str) {
+            if (Expression::detectFormula($str)) {
+                unset($this->recipientUserSelectors[$i]);
+                $expr = ExpressionFactory::createForObject(MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.USER'), $str);
+                if (! $expr->isStatic()) {
+                    throw new RuntimeException('Cannot use non-static expression "' . $str . '" as user recipient for communication!');
+                }
+                $evalStr = $expr->evaluate();
+                if ($evalStr === null || $evalStr === '') {
+                    continue;
+                }
+                foreach (explode(EXF_LIST_SEPARATOR, $evalStr) as $val) {
+                    $this->recipientUserSelectors[] = $val;
+                }
+            }
+        }
         return $this->recipientUserSelectors;
     }
     
     /**
-     * List of user names aliases to notify
-     *
+     * List of user names or UIDs to notify or static formulas to calculate usernames/UIDs
+     * 
      * @uxon-property recipient_users
-     * @uxon-type metamodel:exface.Core.USER:USERNAME[]
+     * @uxon-type metamodel:exface.Core.USER:USERNAME[]|metamodel:formula
      * @uxon-template [""]
      *
      * @param UxonObject $arrayOfStrings
@@ -129,19 +183,51 @@ abstract class AbstractMessage implements CommunicationMessageInterface
     }
     
     /**
+     * Additional filter for user recipients (effects `recipient_users` and `recipient_roles`)
+     * 
+     * @uxon-property recipient_users_filter
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * 
+     * @param UxonObject $conditionGroupUxon
+     * @return CommunicationMessageInterface
+     */
+    public function setRecipientUsersFilter(UxonObject $conditionGroupUxon) : CommunicationMessageInterface
+    {
+        $this->recipientUserFilter = $conditionGroupUxon;
+        return $this;
+    }
+    
+    /**
      *
      * @return string[]
      */
     protected function getRecipientRoles() : array
     {
+        foreach ($this->recipientRoleSelectors as $i => $str) {
+            if (Expression::detectFormula($str)) {
+                unset($this->recipientRoleSelectors[$i]);
+                $expr = ExpressionFactory::createForObject(MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.USER_ROLE'), $str);
+                if (! $expr->isStatic()) {
+                    throw new RuntimeException('Cannot use non-static expression "' . $str . '" as user role recipient for communication!');
+                }
+                $evalStr = $expr->evaluate();
+                if ($evalStr === null || $evalStr === '') {
+                    continue;
+                }
+                foreach (explode(EXF_LIST_SEPARATOR, $evalStr) as $val) {
+                    $this->recipientRoleSelectors[] = $val;
+                }
+            }
+        }
         return $this->recipientRoleSelectors;
     }
     
     /**
-     * List of user role aliases to notify
+     * List of user role aliases or UIDs to notify or static formulas to calculate aliases/UIDs
      *
      * @uxon-property recipient_roles
-     * @uxon-type metamodel:exface.Core.USER_ROLE:ALIAS_WITH_NS[]
+     * @uxon-type metamodel:exface.Core.USER_ROLE:ALIAS_WITH_NS[]|metamodel:formula
      * @uxon-template [""]
      *
      * @param UxonObject $arrayOfStrings
