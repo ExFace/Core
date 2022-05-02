@@ -712,8 +712,48 @@ class DataSheet implements DataSheetInterface
             }
         }
         
+        // Look for conditions based on related expressions that cannot be read by the query and try to get 
+        // their values here by reading them separately. 
+        $foreignConditions = [];
+        foreach ($this->getFilters()->getConditionsRecursive() as $cond) {
+            if ($cond->getExpression()->isMetaAttribute()) {
+                $condAttr = $cond->getExpression()->getAttribute();
+                if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr)) {
+                    $foreignConditions[] = $cond;
+                }
+            }
+        }
+        // If there are no foreign conditions, just pass the filters of the data sheet to the query.
+        // If foreign conditions are found, replace them with IN conditions on the foreign key in this
+        // object (the relations left key attribute) having explicit key values. These key values
+        // are read separately in the foreach() below. This should even work for relations over multiple
+        // data sources as the $condDS might again use this technique resolve its foreign conditions, etc.
+        if (empty($foreignConditions)) {
+            $queryFilters = $this->getFilters();
+        } else {
+            $queryFilters = $this->getFilters()->copy();
+            foreach ($foreignConditions as $foreignCond) {
+                /* @var $cond \exface\Core\CommonLogic\Model\Condition */
+                foreach ($queryFilters->getConditionsRecursive() as $cond) {
+                    if ($cond->exportUxonObject()->toArray() === $foreignCond->exportUxonObject()->toArray()) {
+                        $condAttr = $cond->getExpression()->getAttribute();
+                        $condRelPath = $condAttr->getRelationPath();
+                        if (! $condRelPath->isEmpty()) {
+                            $condRel = $condRelPath->getRelationFirst();
+                            $condDS = DataSheetFactory::createFromObject($condRel->getRightObject());
+                            $condCol = $condDS->getColumns()->addFromAttribute($condRel->getRightKeyAttribute());
+                            $condDS->getFilters()->addConditionFromExpression($cond->getExpression()->rebase($condRel->getAliasWithModifier()), $cond->getValue(), $cond->getComparator());
+                            $condDS->dataRead();
+                            $newCond = ConditionFactory::createFromAttribute($condRel->getLeftKeyAttribute(), implode($condAttr->getValueListDelimiter(), array_filter(array_unique($condCol->getValues()))), ComparatorDataType::IN);
+                            $queryFilters->replaceCondition($cond, $newCond);
+                        }
+                    }
+                }
+            }
+        }
+        
         // Set explicitly defined filters
-        $query->setFiltersConditionGroup($this->getFilters());
+        $query->setFiltersConditionGroup($queryFilters);
         // Add filters from the contexts
         foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
             $query->addFilterCondition($cond);

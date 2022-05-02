@@ -617,4 +617,26 @@ class ConditionGroup implements ConditionGroupInterface
         $this->addConditionFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::replaceCondition()
+     */
+    public function replaceCondition(ConditionInterface $conditionToReplace, ConditionInterface $replaceWith, bool $recursive = true) : ConditionGroupInterface
+    {
+        foreach ($this->getConditions() as $cond) {
+            if ($cond === $conditionToReplace) {
+                $this->removeCondition($conditionToReplace);
+                $this->addCondition($replaceWith);
+                return $this;
+            }
+        }
+        if ($recursive === true) {
+            foreach ($this->getNestedGroups() as $grp) {
+                $grp->replaceCondition($conditionToReplace, $replaceWith);
+            }
+        }
+        return $this;
+    }
 }

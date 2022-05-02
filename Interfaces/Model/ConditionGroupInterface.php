@@ -170,4 +170,13 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @see \exface\Core\Interfaces\Model\ConditionalExpressionInterface::isEmpty()
      */
     public function isEmpty(bool $checkValues = false) : bool;
+    
+    /**
+     * 
+     * @param ConditionInterface $conditionToReplace
+     * @param ConditionInterface $replaceWith
+     * @param bool $recursive
+     * @return ConditionGroupInterface
+     */
+    public function replaceCondition(ConditionInterface $conditionToReplace, ConditionInterface $replaceWith, bool $recursive = true) : ConditionGroupInterface;
 }
