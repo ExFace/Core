@@ -348,12 +348,12 @@ class NotifyingBehavior extends AbstractBehavior
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
      * @uxon-template [{"channel": ""}]
      * 
-     * @param UxonObject $arrayOfEnvelopes
+     * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
      */
-    protected function setNotifications(UxonObject $arrayOfEnvelopes) : NotifyingBehavior
+    protected function setNotifications(UxonObject $arrayOfMessages) : NotifyingBehavior
     {
-        $this->messageUxons = $arrayOfEnvelopes;
+        $this->messageUxons = $arrayOfMessages;
         return $this;
     }
     
