@@ -401,7 +401,7 @@ JS;
                 // widget: filters, sorters, etc.
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
             case $widget->isUploadEnabled() && $widget->getUploader()->isInstantUpload() === false
-            && ($action instanceof iModifyData)
+            && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject())
             && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's

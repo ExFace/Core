@@ -1126,7 +1126,7 @@ JS;
             // If there is no action or the action 
             case $action === null:
             case $widget->isEditable() 
-            && ($action instanceof iModifyData) 
+            && $action->implementsInterface('iModifyData')
             && $dataObj->is($widget->getMetaObject()):
                 $data = <<<JS
     {
