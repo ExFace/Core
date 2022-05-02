@@ -169,6 +169,9 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function disable() : BehaviorInterface
     {
+        if ($this->disabled === true) {
+            return $this;
+        }
         $this->unregisterEventListeners();
         $this->disabled = true;
         return $this;
@@ -182,6 +185,10 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function enable() : BehaviorInterface
     {
+        if ($this->disabled === false) {
+            return $this;
+        }
+        
         if (! $this->isRegistered()) {
             $this->register();
         } else {
