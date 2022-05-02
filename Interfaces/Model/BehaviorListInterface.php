@@ -5,6 +5,13 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
 interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 {
+    /**
+     * 
+     * @param BehaviorInterface $behavior
+     * @param mixed $key
+     * @return BehaviorListInterface
+     */
+    public function add($behavior, $key = null);
 
     /**
      *
@@ -66,4 +73,3 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
      */
     public function isEmpty();
 }
-?>

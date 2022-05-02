@@ -7,7 +7,6 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\StateMachineTransitionError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -22,6 +21,9 @@ use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\BehaviorFactory;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -71,6 +73,8 @@ class StateMachineBehavior extends AbstractBehavior
     
     private $hasNumericIds = true;
     
+    private $behaviors = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -94,6 +98,12 @@ class StateMachineBehavior extends AbstractBehavior
             $this->overrideAttributeDisplayWidget();
         }
         
+        $this->registerNotifications();
+        foreach ($this->behaviors as $behavior) {
+            if ($behavior->is)
+            $behavior->enable();
+        }
+        
         return $this;
     }
     
@@ -107,6 +117,10 @@ class StateMachineBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->removeListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        
+        foreach ($this->behaviors as $behavior) {
+            $behavior->disable();
+        }
         
         return $this;
     }
@@ -936,5 +950,39 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         return false;
+    }
+    
+    protected function registerNotifications() : StateMachineBehavior
+    {
+        // Only register behaviors once!
+        if ($this->behaviors !== null) {
+            return $this;
+        } else {
+            $this->behaviors = [];
+        }
+        
+        foreach ($this->getStates() as $state) {
+            if (null !== $notifications = $state->getNotificationsUxon()) {
+                $uxon = new UxonObject([
+                    "notify_on_event" => OnUpdateDataEvent::getEventName(),
+                    "notify_if_attributes_change" => [$this->getStateAttributeAlias()],
+                    "notify_if_data_matches_conditions" => [
+                        "operator" => EXF_LOGICAL_AND,
+                        "conditions" => [
+                            [
+                                "expression" => $this->getStateAttributeAlias(),
+                                "comparator" => ComparatorDataType::EQUALS,
+                                "value" => $state->getStateId()
+                            ]
+                        ]
+                    ],
+                    'notifications' => $notifications
+                ]);
+                $behavior = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                $this->getObject()->getBehaviors()->add($behavior);
+                $this->behaviors[] = $behavior;
+            }
+        }
+        return $this;
     }
 }
