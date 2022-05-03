@@ -402,7 +402,7 @@
 			},
 			
 			validate: function (sDate) {				
-				return sTime === null || sTime === '' || sTime === undefined || this.parse(sDate) !== null;						
+				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
 			}
 		},
 		
