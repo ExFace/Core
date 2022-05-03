@@ -416,27 +416,28 @@
 			 * 
 			 * @returns {string}
 			 */
-			parse: function(sTime, timeFormat) {
+			parse: function(sTime, sTimeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
-		        var match = null;
-		        var timeParsed = false;
-		        var timeValid = false;
-		        var output = null;
+		        var aMatches = null;
+		        var bTimeParsed = false;
+		        var bTimeValid = false;
+		        var oMoment = null;
 		        var iMsPos, iMs;
-		        
+		        var iHH, iMM, iSS, sAmPm;
+		            
 		        if (sTime === '' || sTime === null) {
-					return output;
+					return null;
 				}
 		        
-		        if (timeFormat !== undefined) {
-					output = moment(sTime, _ICUFormatToMoment(timeFormat), true);
-					if (output.isValid()) {
-						if (timeFormat.indexOf('a') !== '-1') {
-							return output.format('hh:mm:ss a');
+		        if (sTimeFormat !== undefined) {
+					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
+					if (oMoment.isValid()) {
+						if (sTimeFormat.indexOf('a') !== '-1') {
+							return oMoment.format('hh:mm:ss a');
 						} else {
-							return output.format('HH:mm:ss');
+							return oMoment.format('HH:mm:ss');
 						}
 					}
 				}
@@ -450,55 +451,50 @@
 				}
 		        
 		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
-		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
-		        	var hh, mm, ss, am_pm;
-		            hh = Number(match[1]);
-		            mm = Number(match[2]);
-		            ss = Number(match[3]);
-		            if (match[4]) {
-		            	am_pm = match[4].toUpperCase();
+		        if (!bTimeParsed && (aMatches = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
+		        	iHH = Number(aMatches[1]);
+		            iMM = Number(aMatches[2]);
+		            iSS = Number(aMatches[3]);
+		            if (aMatches[4]) {
+		            	sAmPm = aMatches[4].toUpperCase();
 		            }
-		            if (isNaN(ss)) {
-		            	ss = 0;
+		            if (isNaN(iSS)) {
+		            	iSS = 0;
 		            }
-		            timeParsed = true;
-		            timeValid = _validateTime (hh, mm, ss) ;
+		            bTimeParsed = true;
+		            bTimeValid = _validateTime(iHH, iMM, iSS) ;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	return hh + ':' + mm + ':' + ss + (am_pm !== undefined ? ' ' + am_pm : '');
+		        if (bTimeParsed && bTimeValid) {
+		        	return iHH + ':' + iMM + ':' + iSS + (sAmPm !== undefined ? ' ' + sAmPm : '');
 		        }
 		        
 		        // (+/-)? ... (H/h/M/m/S/s)?
-		        if (!timeParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
-		            output = moment();
-		            switch (match[2].toUpperCase()) {
+		        if (!bTimeParsed && (aMatches = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
+		            oMoment = moment();
+		            switch (aMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	output.add(Number(match[1]), 'hours');
+		                	oMoment.add(Number(aMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	output.add(Number(match[1]), 'minutes');
+		                	oMoment.add(Number(aMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	output.add(Number(match[1]), 'seconds');
+		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
-		            timeParsed = true;
-		            timeValid = true;
+		            bTimeParsed = true;
+		            bTimeValid = true;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	var hh = output.hour();
-		        	var mm = output.minute();
-		        	var ss = output.second();
-		        	return output.format('HH:mm:ss');
-		        	//return  hh + ':' + mm + ':' + ss
+		        if (bTimeParsed && bTimeValid) {
+		        	return oMoment.format('HH:mm:ss');
 		        }
 		        
-		        return output;
+		        return null;
 			},
 			
 			format: function(sTime, sICUFormat) {
@@ -613,7 +609,7 @@
 				var aConditions = oConditionGroup.conditions || [];
 				var sOperator = oConditionGroup.operator;
 				var aRowsFiltered = [];
-				var exfTools = this;
+				var oSelf = this;
 				aRows.forEach(function(oRow){
 					var oCondition;
 					var bRowResult = null;
@@ -621,7 +617,7 @@
 					
 					for (var iC = 0; iC < aConditions.length; iC++) {
 						oCondition = aConditions[iC];
-				        bConditionResult = exfTools.compareValues(
+				        bConditionResult = oSelf.compareValues(
 							(oRow[oCondition.columnName] || null), 
 							oCondition.value,
 							oCondition.comparator
