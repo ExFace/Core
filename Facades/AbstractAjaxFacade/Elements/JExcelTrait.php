@@ -286,16 +286,24 @@ JS;
         onbeforechange: function(instance, cell, x, y, value) {
             var fnParser = instance.exfWidget.getColumnModel(x).parser;
             var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
+            var mValueParsed, mValidated;
+
             if (value === undefined) {
                 return;
             }
-            if (fnParser) {
-                value = fnParser(value);
-                if (fnFormatter) {
-                    value = fnFormatter(value);
-                }
+
+            mValueParsed = fnParser ? fnParser(value) : value;
+            if ((mValueParsed === '' || mValueParsed === null) && mValueParsed !== value) {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, value);
+            } else {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, mValueParsed);
             }
-            return instance.exfWidget.validateCell(cell, x, y, value);
+            
+            if (mValueParsed === mValidated && fnFormatter) {
+                mValidated = fnFormatter(mValueParsed);
+            }
+
+            return mValidated;
         },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs

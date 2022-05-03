@@ -142,6 +142,23 @@ function() {
         
 JS;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $formatQuoted = json_encode($this->getFormat());
+        return <<<JS
+function() {
+                var mVal = {$jsValue};
+                return mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+            }()
+            
+JS;
+    }
 
     /**
      *

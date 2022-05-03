@@ -64,4 +64,6 @@ interface JsDataTypeFormatterInterface
      * @return string
      */
     public function buildJsFormatParser($jsInput);
+    
+    public function buildJsValidator(string $jsValue) : string;
 }

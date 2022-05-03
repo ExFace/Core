@@ -85,48 +85,20 @@ trait JqueryInputValidationTrait {
      */
     protected function buildJsValidatorCheckDataType(string $valueJs, string $onFailJs, DataTypeInterface $type) : string
     {
-        $js = '';
-        $nullStr = "'" . EXF_LOGICAL_NULL . "'";
-        $nullCheckJs = "$valueJs.toString() !== '' && $valueJs.toString() !== $nullStr";
         switch (true) {
             case $type instanceof StringDataType:
-                // Validate string min legnth
-                if ($type->getLengthMin() > 0) {
-                    $js .= "if($nullCheckJs && $valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
-                }
-                
-                // Validate string max length
-                // ... unless multi-value input is allowed!
+                // Do not validate max-length if multiple values are allowed
+                // TODO split values here instead?
                 if (($this->getWidget() instanceof Input) && $this->getWidget()->getMultipleValuesAllowed() === true) {
+                    $formatter = $this->getFacade()->getDataTypeFormatter($type->copy()->setLengthMax(null));
                     break;
                 }
-                if ($type->getLengthMax() > 0) {
-                    $js .= "if($nullCheckJs && $valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
-                }
-                
-                if ($type->getValidatorRegex() !== null) {
-                    $js .= "if($nullCheckJs && {$type->getValidatorRegex()}.test({$valueJs}) == false) { {$onFailJs} } \n";
-                }
-                
-                break;
-            case $type instanceof NumberDataType:
-                if ($type->getBase() !== 10) {
-                    break;
-                }
-                $checks = [];
-                if ($type->getMin() !== null) {
-                    $checks[] = "parseFloat($valueJs) < {$type->getMin()}";
-                }
-                if ($type->getMax() !== null) {
-                    $checks[] = "parseFloat($valueJs) > {$type->getMax()}";
-                }
-                $checksJs = implode(' || ', $checks);
-                if ($checksJs) {
-                    $js .= "if($nullCheckJs && ($checksJs)){ {$onFailJs} } \n";
-                }
+            default:
+                $formatter = $this->getFacade()->getDataTypeFormatter($type);
                 break;
         }
-        return $js;
+        $typeValidator = $formatter->buildJsValidator($valueJs);
+        return $typeValidator ? "if($typeValidator === false) {$onFailJs};" : '';
     }
     
     /**
@@ -149,10 +121,10 @@ trait JqueryInputValidationTrait {
         }
         
         if ($widget->isRequired()) {
-            $text = ($text ? rtrim($text, ".") . '. ' : $text) . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
+            $text = ($text ? rtrim($text, ".!") . '. ' : $text) . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
         }
         
-        return $text;
+        return $text ? $text : $translator->translate('WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR');
     }
 }
 ?>
