@@ -98,6 +98,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $calculationExpr = null;
     
     private $nowrap = null;
+    
+    private $customHint = null;
 
     public function getAttributeAlias()
     {
@@ -985,5 +987,26 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $this->nowrap = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setHint()
+     */
+    public function setHint($value)
+    {
+        $this->customHint = $this->evaluatePropertyExpression($value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHint()
+     */
+    public function getHint()
+    {
+        return $this->customHint ?? $this->getCellWidget()->getHint();
     }
 }
