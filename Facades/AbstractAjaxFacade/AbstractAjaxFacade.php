@@ -62,6 +62,7 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
 
 /**
  * 
@@ -408,6 +409,7 @@ HTML;
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
             case $dataType instanceof TimeDataType: return new JsTimeFormatter($dataType);
             case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
+            case $dataType instanceof StringDataType: return new JsStringFormatter($dataType);
         }
         return new JsTransparentFormatter($dataType);
     }

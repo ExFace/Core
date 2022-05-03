@@ -113,6 +113,23 @@ class JsTimeFormatter extends JsDateFormatter
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $formatQuoted = json_encode($this->getFormat());
+        return <<<JS
+function() {
+                var mVal = {$jsValue};
+                return mVal === null || mVal === '' || mVal === undefined || exfTools.time.parse(mVal, {$formatQuoted}) !== null;
+            }()
+            
+JS;
+    }
+    
+    /**
      * Returns the format string for the interna date/time format (e.g. 2012-01-31 24:00:00) compatible
      * with the javscript library used for formatting.
      * 

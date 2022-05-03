@@ -32,6 +32,16 @@ class JsTransparentFormatter extends AbstractJsDataTypeFormatter
     {
         return $jsInput;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        return 'true';
+    }
 
     /**
      * 
