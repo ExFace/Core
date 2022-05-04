@@ -14,7 +14,6 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateTimeDataType;
-use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Actions\DownloadFile;
@@ -303,7 +302,14 @@ JS
                     'script' => <<<JS
                         var aRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), DownloadFile::class, $widget))}.rows || [];
                         aRows.forEach(function(oRow) {
-                            var a = $("<a>").attr("href", oRow['{$widget->getImageUrlColumn()->getDataColumnName()}']).attr("download", {$filenameJs}).appendTo("body");
+                            var sUrl = oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                            var a;
+
+                            if (! sUrl) {
+                                {$this->buildJsShowMessageError($this->escapeString($this->translate('WIDGET.IMAGEGALLERY.CANNOT_DOWNLOAD_WITHOUT_URL')))}
+                            }
+
+                            a = $("<a>").attr("href", sUrl).attr("download", {$filenameJs}).appendTo("body");
                             a[0].click();
                             a.remove();
                         });
