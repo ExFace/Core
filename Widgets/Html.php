@@ -283,7 +283,7 @@ class Html extends Display
         if ($base = $this->getBaseUrl()) {
             $fm = $this->getWorkbench()->filemanager();
             if ($fm::pathGetCommonBase([$base, $fm->getPathToBaseFolder()])) {
-                $base = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $base);
+                $base = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $base);
             }
             $base = rtrim($base, "/\\") . '/';
             $html = preg_replace('#(href|src)="([^:"]*)("|(?:(?:%20|\s|\+)[^"]*"))#','$1="' . $base . '$2$3', $html);

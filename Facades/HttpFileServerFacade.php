@@ -18,6 +18,9 @@ use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use GuzzleHttp\Psr7\Response;
 use function GuzzleHttp\Psr7\stream_for;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Factories\FacadeFactory;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -41,11 +44,22 @@ class HttpFileServerFacade extends AbstractHttpFacade
 {    
     /**
      * 
-     * @param WorkbenchInterface $workbench
-     * @param string $absolutePath
-     * @return string
+     * @deprecated use buildUrlToDownloadFile()
      */
     public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
+    {
+        return static::buildUrlToDownloadFile($workbench, $absolutePath, $relativeToSiteRoot);
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $absolutePath
+     * @param bool $relativeToSiteRoot
+     * @throws FacadeRuntimeError
+     * @return string
+     */
+    public static function buildUrlToDownloadFile(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
     {
         // TODO route downloads over api/files and add an authorization point - see handle() method
         $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
@@ -59,6 +73,20 @@ class HttpFileServerFacade extends AbstractHttpFacade
         } else {
             return $workbench->getUrl() . ltrim($relativePath, "/");
         }
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true) : string
+    {
+        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
 
     /**
@@ -95,23 +123,16 @@ class HttpFileServerFacade extends AbstractHttpFacade
             return new Response(404);
         }
         
-        $attrContent = null;
-        $attrMime = null;
-        foreach ($ds->getMetaObject()->getAttributes() as $attr) {
-            switch (true) {
-                case $attr->getDataType() instanceof BinaryDataType:
-                    $attrContent = $attr;
-                    $ds->getColumns()->addFromAttribute($attr);
-                    break;
-                case $attr->getDataType() instanceof MimeTypeDataType:
-                    $attrMime = $attr;
-                    $ds->getColumns()->addFromAttribute($attr);
-                    break;
-            }
-        }
-        if ($attrContent === null) {
+        $attrContent = static::findAttributeForContents($ds->getMetaObject());
+        if ($attrContent) {
+            $ds->getColumns()->addFromAttribute($attrContent);
+        } else {
             $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError());
             return new Response(404);
+        }
+        $attrMime = static::findAttributeForMimeType($ds->getMetaObject());
+        if ($attrMime) {
+            $ds->getColumns()->addFromAttribute($attrMime);
         }
         
         $ds->getFilters()->addConditionFromAttribute($ds->getMetaObject()->getUidAttribute(), $uid, ComparatorDataType::EQUALS);
@@ -143,6 +164,42 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $response;
         
         return $handler->handle($request);
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaAttributeInterface|NULL
+     */
+    public function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
+    {
+        if ($object->is('exface.Core.FILE')) {
+            return $object->getAttribute('CONTENTS');
+        }
+        
+        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
+            return ($attr->getDataType() instanceof BinaryDataType);
+        });
+        
+        return $attrs->count() === 1 ? $attrs->getFirst() : null;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaAttributeInterface|NULL
+     */
+    public function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
+    {
+        if ($object->is('exface.Core.FILE')) {
+            return null;
+        }
+        
+        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
+            return ($attr->getDataType() instanceof MimeTypeDataType);
+        });
+            
+        return $attrs->count() === 1 ? $attrs->getFirst() : null;
     }
     
     protected function resizeImage(string $src, int $width, int $height)
