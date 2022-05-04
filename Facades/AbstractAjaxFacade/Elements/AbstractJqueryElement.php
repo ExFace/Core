@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
