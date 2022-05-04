@@ -670,14 +670,25 @@ class FileFinderBuilder extends AbstractQueryBuilder
     }
     
     /**
-     * The FileFinderBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * The FileFinderBuilder can only handle attributes FILE objects, so no relations to
+     * other objects than those based on exface.Core.FILE can be read directly.
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
      */
     public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
-        return $attribute->getRelationPath()->isEmpty();
+        if ($attribute->getRelationPath()->isEmpty()) {
+            return true;
+        }
+        
+        foreach ($attribute->getRelationPath()->getRelations() as $rel) {
+            if (! $rel->getRightObject()->is('exface.Core.FILE')) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 ?>
