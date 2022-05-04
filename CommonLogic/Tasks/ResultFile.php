@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
-use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Task result containing a file.

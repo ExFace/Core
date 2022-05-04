@@ -81,7 +81,7 @@ class DownloadZippedFolder extends AbstractAction
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $zip = $this->createZip($task);
-        return ResultFactory::createDownloadResult($task, $zip->getFilePath());
+        return ResultFactory::createDownloadResultFromFile($task, $zip->getFilePath());
     }
     
     /**

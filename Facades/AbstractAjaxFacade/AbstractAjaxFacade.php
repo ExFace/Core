@@ -484,8 +484,8 @@ HTML;
                 break;
                 
             case $result instanceof ResultFileInterface:
-                $url = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
-                $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '" download>here</a>.';
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
                 $json = [
@@ -501,14 +501,21 @@ HTML;
                     $uri = $result->getUri();
                 }
                 
-                if ($result->getOpenInNewWindow()) {
-                    $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+                if ($result->isDownload()) {
+                    $json = [
+                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]),
+                        "download" => $uri->__toString()
+                    ];
+                } else {
+                    if ($result->isOpenInNewWindow()) {
+                        $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+                    }
+                    
+                    $json = [
+                        "success" => $result->getMessage(),
+                        "redirect" => $uri->__toString()
+                    ];
                 }
-                
-                $json = [
-                    "success" => $result->getMessage(),
-                    "redirect" => $uri->__toString()
-                ];
                 break;  
             case $result instanceof ResultTextContentInterface:
                 $headers['Content-type'] = $result->getMimeType();

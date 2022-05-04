@@ -33,6 +33,7 @@
 	"ACTION.CLEARCACHE.RESULT": "Cache cleared!",
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
+	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download ready. If it does not start automatically, click <a href=\"%url%\" download>here</a>.",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "Export CSV",
