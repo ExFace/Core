@@ -23,15 +23,15 @@ class JsStringFormatter extends JsTransparentFormatter
 
         // Validate string min legnth
         if ($type->getLengthMin() > 0) {
-            $js .= "if($nullCheckJs && $jsValue.toString().length < {$type->getLengthMin()}) { return false; } \n";
+            $js .= "($nullCheckJs && $jsValue.toString().length < {$type->getLengthMin()} ? false : true) \n";
         }
         
         if ($type->getLengthMax() > 0) {
-            $js .= "if($nullCheckJs && $jsValue.toString().length > {$type->getLengthMax()}) { return false; } \n";
+            $js .= "($nullCheckJs && $jsValue.toString().length > {$type->getLengthMax()} ? false : true) \n";
         }
         
         if ($type->getValidatorRegex() !== null) {
-            $js .= "if($nullCheckJs && {$type->getValidatorRegex()}.test({$jsValue}) === false) { return false; } \n";
+            $js .= "($nullCheckJs && {$type->getValidatorRegex()}.test({$jsValue}) === false ? false : true ) \n";
         }
         
         return $js;
