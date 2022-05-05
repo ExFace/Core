@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
  * Displays multiline text with an optional title (created from the caption of the widget) and some simple formatting.
@@ -13,7 +14,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Text extends Display implements iShowText
+class Text extends Display implements iShowText, iCanWrapText
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -144,4 +145,25 @@ class Text extends Display implements iShowText
         $this->multiLine = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanWrapText::getNowrap()
+     */
+    public function getNowrap(): bool
+    {
+        return ! $this->isMultiLine();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanWrapText::setNowrap()
+     */
+    public function setNowrap(bool $value): iCanWrapText
+    {
+        return $this->setMultiLine(! $value);
+    }
+
 }
