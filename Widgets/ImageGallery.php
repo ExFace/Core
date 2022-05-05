@@ -15,13 +15,18 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\FacadeFactory;
+use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
  * 
  * This widget makes it easy to produce image galleries from data with image URLs: All 
  * you need to do, is define `image_url_attribute_alias` and optionally an 
- * `image_title_attribute_alias`.
+ * `image_title_attribute_alias`. 
+ * 
+ * If the gallery shows an object with the `FileBehavior`, many properties related
+ * to file attributes will be configured automatically.
  * 
  * The galleries can be oriented vertically or horizontally. Facades should produce
  * a scrollable column or row of similarly sized images, depending on the `orientation`
@@ -144,6 +149,8 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     private $filesFacade = null;
     
+    private $checkedBehaviorForObject = null;
+    
     protected function init()
     {
         parent::init();
@@ -179,6 +186,9 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function getImageTitleColumn() : DataColumn
     {
+        if ($this->image_title_attribute_alias === null) {
+            $this->guessColumns();
+        }
         if ($this->image_title_column !== null) {
             return $this->image_title_column;
         } 
@@ -219,7 +229,10 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     }
     
     /**
-     * The alias of the attribute with the image titles
+     * The alias of the attribute with the image titles.
+     * 
+     * If the gallery shows an object with `FileBehavior`, the filename attribute will be used for
+     * `image_title_attribute_alias` by default.
      * 
      * @uxon-property image_title_attribute_alias
      * @uxon-type metamodel:attribute
@@ -243,6 +256,9 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function getMimeTypeColumn() : DataColumn
     {
+        if ($this->mimeTypeAttributeAlias === null) {
+            $this->guessColumns();
+        }
         if ($this->mimeTypeColumn !== null) {
             return $this->mimeTypeColumn;
         }
@@ -251,12 +267,18 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     public function hasMimeTypeColumn() : bool
     {
+        if ($this->mimeTypeAttributeAlias === null) {
+            $this->guessColumns();
+        }
         return $this->mimeTypeAttributeAlias !== null;
     }
     
     /**
      * The attribute for the mime type - e.g. `application/pdf`, etc.
      *
+     * If the gallery shows an object with `FileBehavior`, the `mime_type_attribute_alias`
+     * will be determined automatically by default.
+     * 
      * @uxon-property mime_type_attribute_alias
      * @uxon-type metamodel:attribute
      *
@@ -585,6 +607,9 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function getFilenameColumn() : ?DataColumn
     {
+        if ($this->filenameAttributeAlias === null) {
+            $this->guessColumns();
+        }
         return $this->filenameColumn;
     }
     
@@ -594,11 +619,17 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function hasFilenameColumn() : bool
     {
+        if ($this->filenameAttributeAlias === null) {
+            $this->guessColumns();
+        }
         return $this->filenameAttributeAlias !== null;
     }
     
     /**
-     * Alias of the attribute containing the file name (e.g. for downloads)
+     * Alias of the attribute containing the file name (e.g. for downloads).
+     * 
+     * If the gallery shows an object with `FileBehavior`, the `filename_attribute_alias`
+     * will be determined automatically by default.
      * 
      * @uxon-property filename_attribute_alias
      * @uxon-type metamodel:attribute
@@ -613,5 +644,46 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
         $this->addColumn($col);
         $this->filenameColumn = $col;
         return $this;
+    }
+    
+    protected function guessColumns()
+    {
+        /* @var $behavior \exface\Core\Behaviors\FileBehavior */
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+            if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
+                $this->setFilenameAttributeAlias($attr->getAlias());
+            }
+            
+            if ($this->image_title_column === null && $attr = $behavior->getFilenameAttribute()) {
+                $this->setImageTitleAttributeAlias($attr->getAlias());
+            }
+            
+            if ($this->mimeTypeColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+                $this->setMimeTypeAttributeAlias($attr->getAlias());
+            }
+        }
+        $this->checkedBehaviorForObject = $this->getMetaObject();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $dataSheet = null) : DataSheetInterface
+    {
+        $this->guessColumns();
+        return parent::prepareDataSheetToPrefill($dataSheet);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $dataSheet = null) : DataSheetInterface
+    {
+        $this->guessColumns();
+        return parent::prepareDataSheetToRead($dataSheet);
     }
 }

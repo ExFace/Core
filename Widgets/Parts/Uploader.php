@@ -14,6 +14,7 @@ use exface\Core\Actions\CreateData;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Behaviors\FileBehavior;
 
 
 /**
@@ -27,6 +28,10 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  * 
  * The two modes are controlled by the `instant_upload` property. If `instant_upload` is
  * enabled, the `instant_upload_action` can be used to customize the upload action. 
+ * 
+ * The uploader can be automatically configured if its object has the `FileBehavior`.
+ * If not, you will need to set `filename_attribute_alias`, `file_content_attribute_alias`,
+ * etc.
  * 
  * In any case, restrictions can be applied, regulating how many and what type of files 
  * can be uploaded:
@@ -70,6 +75,8 @@ class Uploader implements WidgetPartInterface
     
     private $mimeTypeAttributeAlias = null;
     
+    private $uxon = null;
+    
     /**
      * 
      * @param WidgetInterface $widget
@@ -82,7 +89,9 @@ class Uploader implements WidgetPartInterface
         $this->instantUpload = $instantUpload;
         if ($uxon !== null) {
             $this->importUxonObject($uxon);
+            $this->uxon = $uxon;
         }
+        $this->guessColumns();
     }
     
     public function getMetaObject() : MetaObjectInterface
@@ -97,9 +106,17 @@ class Uploader implements WidgetPartInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject([
-            
-        ]);
+        $uxon = $this->uxon ?? new UxonObject();
+        
+        if (! empty($this->allowedFileExtensions)) {
+            $uxon->setProperty('allowed_file_extensions', $this->allowedFileExtensions);
+        }
+        
+        if (! empty($this->allowedMimeTypes)) {
+            $uxon->setProperty('allowed_mime_types', $this->allowedMimeTypes);
+        }
+        
+        // TODO add other properties
         
         return $uxon;
     }
@@ -380,6 +397,9 @@ class Uploader implements WidgetPartInterface
     /**
      * The alias of the attribute to save the content type (mime type) to
      * 
+     * If the uploader is based on an object with `FileBehavior`, the `file_mime_type_attribute_alias`
+     * will be determined automatically by default.
+     * 
      * @uxon-property file_mime_type_attribute
      * @uxon-type metamodel:attribute
      * 
@@ -392,11 +412,19 @@ class Uploader implements WidgetPartInterface
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getFilenameAttributeAlias() : ?string
     {
         return $this->filenameAttributeAlias;
     }
     
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
     public function getFilenameAttribute() : MetaAttributeInterface
     {
         return $this->getMetaObject()->getAttribute($this->getFilenameAttributeAlias());
@@ -405,6 +433,9 @@ class Uploader implements WidgetPartInterface
     /**
      * The alias of the attribute to save the filename to
      *
+     * If the uploader is based on an object with `FileBehavior`, the `filename_attribute_alias`
+     * will be determined automatically by default.
+     * 
      * @uxon-property filename_attribute
      * @uxon-type metamodel:attribute
      *
@@ -416,12 +447,20 @@ class Uploader implements WidgetPartInterface
         $this->filenameAttributeAlias = $value;
         return $this;
     }
-    
+
+    /**
+     * 
+     * @return string|NULL
+     */
     protected function getFileContentAttributeAlias() : ?string
     {
         return $this->fileContentAttributeAlias;
     }
     
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
     public function getFileContentAttribute() : MetaAttributeInterface
     {
         return $this->getMetaObject()->getAttribute($this->getFileContentAttributeAlias());
@@ -430,6 +469,9 @@ class Uploader implements WidgetPartInterface
     /**
      * The alias of the attribute to save the (binary) content to
      *
+     * If the uploader is based on an object with `FileBehavior`, the `file_content_attribute_alias`
+     * will be determined automatically by default.
+     * 
      * @uxon-property file_content_attribute
      * @uxon-type metamodel:attribute
      *
@@ -482,5 +524,30 @@ class Uploader implements WidgetPartInterface
     {
         $this->fileModificationTimeAttributeAlias = $value;
         return $this;
+    }
+    
+    /**
+     * @return void
+     */
+    protected function guessColumns()
+    {
+        /* @var $behavior \exface\Core\Behaviors\FileBehavior */
+        if ($behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+            if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
+                $this->setFileContentAttribute($attr->getAlias());
+            }
+            
+            if ($this->filenameAttributeAlias === null && $attr = $behavior->getFilenameAttribute()) {
+                $this->setFilenameAttribute($attr->getAlias());
+            }
+            
+            if ($this->mimeTypeAttributeAlias === null && $attr = $behavior->getMimeTypeAttribute()) {
+                $this->setFileMimeTypeAttribute($attr->getAlias());
+            }
+            
+            if ($this->maxFileSizeMb === null && null !== $val = $behavior->getMaxFileSizeInMb()) {
+                $this->setMaxFileSizeMb($val);
+            }
+        }
     }
 }
