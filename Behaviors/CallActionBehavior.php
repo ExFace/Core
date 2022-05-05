@@ -402,7 +402,7 @@ class CallActionBehavior extends AbstractBehavior
     /**
      * Set to FALSE to silence errors if the called action fails
      * 
-     * @uxon-property set_error_if_action_fails
+     * @uxon-property error_if_action_fails
      * @uxon-type boolean
      * @uxon-default true
      * 
