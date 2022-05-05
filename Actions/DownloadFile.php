@@ -15,11 +15,13 @@ use exface\Core\Facades\HttpFileServerFacade;
 /**
  * Downloads a file either represented by input data or linked to.
  * 
- * If the input object is some sort of a file there is no special configuration required
+ * If the input object has the FileBehavior, no extra configuration is needed - the
+ * download will work right out of the box. Otherwise you can explicitly specify
+ * the attribute containing the path to the file to download in `file_path_attribute`.
  * 
  * ## Examples
  * 
- * ### File-based objects
+ * ### Objects with FileBehavior
  * 
  * ```
  *  {
@@ -113,7 +115,7 @@ class DownloadFile extends AbstractAction
     }
     
     /**
-     * The attribute with the absolute path to the file to be downloaded.
+     * The attribute with the path to the file to be downloaded (either absolute or relative to workbench).
      * 
      * @uxon-property file_path_attribute
      * @uxon-type metamodel:attribute
