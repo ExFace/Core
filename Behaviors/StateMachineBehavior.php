@@ -24,6 +24,8 @@ use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\BehaviorFactory;
+use exface\Core\Factories\WidgetDimensionFactory;
+use exface\Core\CommonLogic\WidgetDimension;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -74,6 +76,8 @@ class StateMachineBehavior extends AbstractBehavior
     private $hasNumericIds = true;
     
     private $behaviors = null;
+    
+    private $displayWidgetWidth = null;
     
     /**
      * 
@@ -255,6 +259,9 @@ class StateMachineBehavior extends AbstractBehavior
                 'text_scale' => new UxonObject($texts),
                 'color_scale' => new UxonObject($colorMap)
             ]);
+            if ($this->getDisplayWidgetWidth()) {
+                $uxon->setProperty('width', $this->getDisplayWidgetWidth()->getValue());
+            }
             $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         }
         
@@ -780,6 +787,35 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $this->overrideAttributeDisplayWidget = BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * Sets the width of the widget.
+     * Set to `1` for default widget width in a facade or `max` for maximum width possible.
+     *
+     * The width can be specified either in
+     * - facade-specific relative units (e.g. `width: 2` makes the widget twice as wide
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `width: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `width: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property display_widget_width
+     * @uxon-type string
+     **/ 
+    public function setDisplayWidgetWidth($value)
+    {
+        $exface = $this->getWorkbench();
+        $this->displayWidgetWidth = WidgetDimensionFactory::createFromAnything($exface, $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return WidgetDimension|NULL
+     */
+    protected function getDisplayWidgetWidth() : ?WidgetDimension
+    {
+        return $this->displayWidgetWidth;
     }
     
     /**
