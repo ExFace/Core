@@ -21,6 +21,7 @@ use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Behaviors\FileBehavior;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -123,16 +124,23 @@ class HttpFileServerFacade extends AbstractHttpFacade
             return new Response(404);
         }
         
-        $attrContent = static::findAttributeForContents($ds->getMetaObject());
-        if ($attrContent) {
-            $ds->getColumns()->addFromAttribute($attrContent);
+        $colFilename = null;
+        $colMime = null;
+        $colContents = null;
+        $attr = $this->findAttributeForContents($ds->getMetaObject());
+        if ($attr) {
+            $colContents = $ds->getColumns()->addFromAttribute($attr);
         } else {
             $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError());
             return new Response(404);
         }
-        $attrMime = static::findAttributeForMimeType($ds->getMetaObject());
-        if ($attrMime) {
-            $ds->getColumns()->addFromAttribute($attrMime);
+        $attr = $this->findAttributeForMimeType($ds->getMetaObject());
+        if ($attr) {
+            $colMime = $ds->getColumns()->addFromAttribute($attr);
+        }
+        $attr = $this->findAttributeForFilename($ds->getMetaObject());
+        if ($attr) {
+            $colFilename = $ds->getColumns()->addFromAttribute($attr);
         }
         
         $ds->getFilters()->addConditionFromAttribute($ds->getMetaObject()->getUidAttribute(), $uid, ComparatorDataType::EQUALS);
@@ -142,25 +150,44 @@ class HttpFileServerFacade extends AbstractHttpFacade
             return new Response(404);
         }
         
-        $binary = $attrContent->getDataType()->convertToBinary($ds->getColumns()->getByAttribute($attrContent)->getCellValue(0));
+        $contentType = $colContents->getDataType();
+        $binary = null;
+        $plain = null;
+        $headers = [
+            'Expires' => 0,
+            'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma' => 'public'
+        ];
+        switch (true) {
+            case $contentType instanceof BinaryDataType:
+                $binary = $colContents->getDataType()->convertToBinary($colContents->getValue(0));
+                $headers['Content-Transfer-Encoding'] = 'binary';
+                break;
+            default:
+                $plain = $colContents->getValue(0);
+                break;
+        }
+        
         
         // See if there are additional parameters 
         $params = [];
         parse_str($uri->getQuery() ?? '', $params);
         
         // Resize images
-        if (null !== $resize = $params['resize'] ?? null) {
+        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
             list($width, $height) = explode('x', $resize);
             $binary = $this->resizeImage($binary, $width, $height);
         }
         
         // Create a response
-        $headers = [];
-        if ($attrMime !== null) {
-            $headers['Content-Type'] = $ds->getColumns()->getByAttribute($attrMime)->getCellValue(0);
+        if ($colMime !== null) {
+            $headers['Content-Type'] = $colMime->getValue(0);
+        }
+        if ($colFilename !== null) {
+            $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
         }
         
-        $response = new Response(200, $headers, stream_for($binary));
+        $response = new Response(200, $headers, stream_for($binary ?? $plain));
         return $response;
         
         return $handler->handle($request);
@@ -171,10 +198,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param MetaObjectInterface $object
      * @return MetaAttributeInterface|NULL
      */
-    public function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
+    protected function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($object->is('exface.Core.FILE')) {
-            return $object->getAttribute('CONTENTS');
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+            return $fileBehavior->getContentsAttribute();
         }
         
         $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
@@ -185,14 +212,32 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }
     
     /**
+     *
+     * @param MetaObjectInterface $object
+     * @return MetaAttributeInterface|NULL
+     */
+    protected function findAttributeForFilename(MetaObjectInterface $object) : ?MetaAttributeInterface
+    {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+            return $fileBehavior->getFilenameAttribute();
+        }
+        
+        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
+            return ($attr->getDataType() instanceof BinaryDataType);
+        });
+            
+            return $attrs->count() === 1 ? $attrs->getFirst() : null;
+    }
+    
+    /**
      * 
      * @param MetaObjectInterface $object
      * @return MetaAttributeInterface|NULL
      */
-    public function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
+    protected function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($object->is('exface.Core.FILE')) {
-            return null;
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+            return $fileBehavior->getMimeTypeAttribute();
         }
         
         $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
