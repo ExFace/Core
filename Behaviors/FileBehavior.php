@@ -25,9 +25,9 @@ class FileBehavior extends AbstractBehavior
     
     /**
      * 
-     * @return MetaAttributeInterface|NULL
+     * @return MetaAttributeInterface
      */
-    public function getFilenameAttribute() : ?MetaAttributeInterface
+    public function getFilenameAttribute() : MetaAttributeInterface
     {
         return $this->getObject()->getAttribute($this->filenameAttributeAlias);
     }
@@ -75,9 +75,9 @@ class FileBehavior extends AbstractBehavior
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * @return MetaAttributeInterface|NULL
      */
-    public function getMimeTypeAttribute() : MetaAttributeInterface
+    public function getMimeTypeAttribute() : ?MetaAttributeInterface
     {
         return $this->getObject()->getAttribute($this->mimeTypeAttributeAlias);
     }
