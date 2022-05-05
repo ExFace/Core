@@ -802,14 +802,15 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getWidth() : WidgetDimension
     {
-        $dim = parent::getWidth();
-        if ($dim->isUndefined()) {
-            $cellDim = $this->getCellWidget()->getWidth();
-            if (! $cellDim->isUndefined() && $cellDim->getValue() !== '100%') {
-                return $cellDim;
+        $ownWidth = parent::getWidth();
+        if ($ownWidth->isUndefined()) {
+            $cellWidth = $this->getCellWidget()->getWidth();
+            if (! $cellWidth->isUndefined() && $cellWidth->getValue() !== '100%') {
+                $this->setWidth($cellWidth->getValue());
+                $this->getCellWidget()->setWidth('100%');
             }
         }
-        return $dim;
+        return parent::getWidth();
     }
     
     /**
