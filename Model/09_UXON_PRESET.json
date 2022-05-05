@@ -5007,6 +5007,55 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-05-05 08:30:54",
+            "MODIFIED_ON": "2022-05-05 08:30:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca3d5eb50dfe2a3d5025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Error on duplicates excl. NULL-values",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "UXON": {
+                "compare_attributes": [
+                    ""
+                ],
+                "compare_with_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "\/\/ REPLACE with alias of nullable attribute",
+                            "comparator": "==",
+                            "value": "NULL"
+                        }
+                    ]
+                },
+                "duplicate_error_code": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-05-05 08:31:59",
+            "MODIFIED_ON": "2022-05-05 08:32:42",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec80471101a9888047025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "File object with mime type",
+            "DESCRIPTION": "Will allow widgets and facades to recognize instances of the object as files regardless of their data source: e.g. for files stored in DB",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/FileBehavior.php",
+            "UXON": {
+                "filename_attribute": "",
+                "contents_attribute": "",
+                "mime_type_attribute": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
