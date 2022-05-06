@@ -146,19 +146,18 @@ JS;
         }
         $checks = [];
         if ($type->getMin() !== null) {
-            $checks[] = "parseFloat($jsValue) < {$type->getMin()}";
+            $checks[] = "parseFloat(mVal) >= {$type->getMin()}";
         }
         if ($type->getMax() !== null) {
-            $checks[] = "parseFloat($jsValue) > {$type->getMax()}";
+            $checks[] = "parseFloat(mVal) <= {$type->getMax()}";
         }
         $checksJs = ! empty($checks) ? implode(' || ', $checks) : 'true';
         $nullStr = '" . EXF_LOGICAL_NULL . "';
         return <<<JS
-function() {
-                var mVal = {$jsValue};
-                var bEmpty = $jsValue.toString() === '' || $jsValue.toString() === $nullStr;
+function(mVal) {
+                var bEmpty = mVal.toString() === '' || mVal.toString() === $nullStr;
                 return (bEmpty || $checksJs);
-            }()
+            }($jsValue)
 JS;
     }
 }
