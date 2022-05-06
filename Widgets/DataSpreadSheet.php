@@ -12,6 +12,7 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * An Excel-like table with editable cells.
@@ -45,6 +46,15 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
     
     private $allowEmptyRows = false;
     
+    private $rowNumberAttributeAlias = null;
+    
+    private $rowNumberColumn = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
     protected function init()
     {
         parent::init();
@@ -52,6 +62,11 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
         $this->setEditable(true);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getWidth()
+     */
     public function getWidth()
     {
         if (parent::getWidth()->isUndefined()) {
@@ -214,5 +229,65 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
     {
         $this->allowEmptyRows = $value;
         return $this;
+    }
+    
+    /**
+     * Save row numbers to an attribute.
+     * 
+     * NOTE: this will automatically add a sorter over this attribute if no sorters are explicitly
+     * defined for the widget. However, if sorters are manually set, they should take care of
+     * the proper sorting of row numbers!
+     * 
+     * @uxon-property row_number_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return DataSpreadSheet
+     */
+    public function setRowNumberAttributeAlias(string $value) : DataSpreadSheet
+    {
+        if (! $col = $this->getColumnByAttributeAlias($value)) {
+            $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+            $this->addColumn($col);
+        }
+        $this->rowNumberAttributeAlias = $value;
+        $this->rowNumberColumn = $col;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return DataColumn|NULL
+     */
+    public function getRowNumberColumn() : ?DataColumn
+    {
+        return $this->rowNumberColumn;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasRowNumberAttribute() : bool
+    {
+        return $this->rowNumberAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getSorters()
+     */
+    public function getSorters() : array 
+    {
+        $sorters = parent::getSorters();
+        // Sort over the row number attribute if applicable
+        if (empty($sorters) && $this->rowNumberAttributeAlias !== null) {
+            $sorters[] = new UxonObject([
+                'attribute_alias' => $this->rowNumberAttributeAlias,
+                'direction' => SortingDirectionsDataType::ASC
+            ]);
+        }
+        return $sorters;
     }
 }

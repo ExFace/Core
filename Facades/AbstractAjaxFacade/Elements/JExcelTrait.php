@@ -248,6 +248,8 @@ JS;
         }
         $columnsJson = '{' . $columnsJson . '}';
         
+        $rowNumberColName = $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
+        
         return <<<JS
 
     {$this->buildJsJqueryElement()}
@@ -344,6 +346,7 @@ JS;
         _dom: {$this->buildJsJqueryElement()}[0],
         _colNames: {$colNamesJson},
         _cols: {$columnsJson},
+        _rowNumberColName: $rowNumberColName,
         _initData: [],
         getJExcel: function(){
             return this._dom.jexcel;
@@ -467,6 +470,9 @@ JS;
                 });
 
                 if (bEmptyRow === false || bAllowEmptyRows === true) {
+                    if (oWidget._rowNumberColName !== null) {
+                        oRow[oWidget._rowNumberColName] = (i+1);
+                    }
                     aData.push(oRow);
                 }
             });
