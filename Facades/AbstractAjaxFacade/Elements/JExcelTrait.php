@@ -923,12 +923,19 @@ JS;
         
         $width = $col->getWidth();
         $widthJs = '';
-        if ($width->isFacadeSpecific() === true) {
-            if (StringDataType::endsWith($width->getValue(), 'px') === true) {
+        switch (true) {
+            case $width->isFacadeSpecific() === true && StringDataType::endsWith($width->getValue(), 'px'):
                 $widthJs = str_replace('px', '', $width->getValue());
-            }
-        } else {
-            $widthJs = "'auto'";
+                break;
+            case $width->isFacadeSpecific():
+            case $width->isPercentual():
+                $widthJs = $this->escapeString($width->getValue());
+                break;
+            case $width->isRelative():
+                $widthJs = $this->getWidthRelativeUnit() * $width->getValue();
+                break;
+            default:
+                $widthJs = "'auto'";
         }
         
         if ($widthJs) {
