@@ -144,19 +144,21 @@ JS;
         if ($type->getBase() !== 10) {
             return 'true';
         }
-        $checks = [];
+        
+        $checksOk = [];
         if ($type->getMin() !== null) {
-            $checks[] = "parseFloat(mVal) >= {$type->getMin()}";
+            $checksOk[] = "parseFloat(mVal) >= {$type->getMin()}";
         }
         if ($type->getMax() !== null) {
-            $checks[] = "parseFloat(mVal) <= {$type->getMax()}";
+            $checksOk[] = "parseFloat(mVal) <= {$type->getMax()}";
         }
-        $checksJs = ! empty($checks) ? implode(' || ', $checks) : 'true';
+        $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
+        
         $nullStr = '" . EXF_LOGICAL_NULL . "';
         return <<<JS
 function(mVal) {
                 var bEmpty = mVal.toString() === '' || mVal.toString() === $nullStr;
-                return (bEmpty || $checksJs);
+                return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;
     }

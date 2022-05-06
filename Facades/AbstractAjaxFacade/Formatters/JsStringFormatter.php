@@ -17,23 +17,27 @@ class JsStringFormatter extends JsTransparentFormatter
     public function buildJsValidator(string $jsValue) : string
     {
         $type = $this->getDataType();
-        $js = '';
-        $nullStr = "'" . EXF_LOGICAL_NULL . "'";
-        $nullCheckJs = "$jsValue.toString() !== '' && $jsValue.toString() !== $nullStr";
-
-        // Validate string min legnth
+        
+        $checksOk = [];
         if ($type->getLengthMin() > 0) {
-            $js .= "($nullCheckJs && $jsValue.toString().length < {$type->getLengthMin()} ? false : true) \n";
+            $checksOk[] = "mVal.toString().length >= {$type->getLengthMin()} \n";
         }
         
         if ($type->getLengthMax() > 0) {
-            $js .= "($nullCheckJs && $jsValue.toString().length > {$type->getLengthMax()} ? false : true) \n";
+            $checksOk[] = "mVal.toString().length <= {$type->getLengthMax()} \n";
         }
         
         if ($type->getValidatorRegex() !== null) {
-            $js .= "($nullCheckJs && {$type->getValidatorRegex()}.test({$jsValue}) === false ? false : true ) \n";
+            $checksOk[] = "{$type->getValidatorRegex()}.test({$jsValue}) !== false \n";
         }
+        $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
         
-        return $js;
+        $nullStr = '" . EXF_LOGICAL_NULL . "';
+        return <<<JS
+function(mVal) {
+                var bEmpty = mVal.toString() === '' || mVal.toString() === $nullStr;
+                return (bEmpty || ($checksOkJs));
+            }($jsValue)
+JS;
     }   
 }
