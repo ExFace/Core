@@ -200,6 +200,7 @@ JS;
         $widget = $this->getWidget();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
+        $allowDragRow = $this->getWidget()->getAllowToDragRows() ? 'true' : 'false';
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
@@ -261,6 +262,7 @@ JS;
         allowInsertColumn: false,
         allowDeleteColumn: false,
         allowInsertRow: $allowInsertRow,
+        rowDrag: $allowDragRow,
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
