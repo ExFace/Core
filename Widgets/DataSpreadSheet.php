@@ -17,10 +17,10 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 /**
  * An Excel-like table with editable cells.
  * 
- * THe spreadsheet is very handy for editing multiple rows of data. Depending on the facade used,
+ * The spreadsheet is very handy for editing multiple rows of data. Depending on the facade used,
  * it will have Excel-like features like autofill, formulas, etc.
  * 
- *  An editor widget can be defined for every column. If no editor is explicitly defined, the default
+ * An editor widget can be defined for every column. If no editor is explicitly defined, the default
  * editor for the attribute will be used - similarly to a DataTable with editable columns.
  * 
  * In contrast to a `DataTable`, it does not offer row grouping, row details, etc. - it's focus
@@ -29,6 +29,12 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * 
  * - `editable` is `true` by default
  * - `paginate` is `false` by default 
+ * 
+ * It is possible to save row numbers of the spreadsheet in an attribute using `row_number_attribute_alias`. 
+ * This is important if the user should be able to insert new rows between existing ones or sort
+ * rows. However, if this feature is used, you should be careful with filtering and sorting - each
+ * time the data is saved, the row-number-attribute will be overwritten with the current row number
+ * in the sheet!
  * 
  * @author Andrej Kabachnik
  *
@@ -43,6 +49,8 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
     private $allowToAddRows = null;
     
     private $allowToDeleteRows = null;
+    
+    private $allowToDragRows = null;
     
     private $allowEmptyRows = false;
     
@@ -207,6 +215,37 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
      * 
      * @return bool
      */
+    public function getAllowToDragRows() : bool
+    {
+        return $this->allowToDragRows ?? $this->hasRowNumberAttribute();
+    }
+    
+    /**
+     * Set to TRUE to allow reordering rows by drag and drop.
+     * 
+     * Draggin rows is enabled automatically once a `row_number_attribute_alias` is set. You
+     * can disable it manually in this case.
+     * 
+     * Should dragging rows be enabled without `row_number_attribute_alias`, make sure the
+     * order of rows is stored in some other way - otherwise the position of a dragged row
+     * will not be saved and will be restored after the data has been read again.
+     * 
+     * @uxon-property allow_to_drag_rows
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setAllowToDragRows(bool $value) : DataSpreadSheet
+    {
+        $this->allowToDragRows = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
     public function getAllowEmptyRows() : bool
     {
         return $this->allowEmptyRows;
@@ -237,6 +276,8 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, 
      * NOTE: this will automatically add a sorter over this attribute if no sorters are explicitly
      * defined for the widget. However, if sorters are manually set, they should take care of
      * the proper sorting of row numbers!
+     * 
+     * 
      * 
      * @uxon-property row_number_attribute_alias
      * @uxon-type metamodel:attribute
