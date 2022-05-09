@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-04-28 18:10:55",
+            "MODIFIED_ON": "2022-05-07 23:47:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
@@ -370,6 +370,9 @@
                                                             },
                                                             {
                                                                 "attribute_alias": "POLICY__TARGET_USER_ROLE__LABEL"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__APP__ALIAS"
                                                             },
                                                             {
                                                                 "attribute_alias": "POLICY__DESCRIPTION"
