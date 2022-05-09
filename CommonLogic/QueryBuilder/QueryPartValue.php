@@ -73,12 +73,25 @@ class QueryPartValue extends QueryPartAttribute
      */
     public function hasValues() : bool
     {
-        $nonEmptyVals = array_filter($this->values,
-            function($val){
-                return $val !== '' && $val !== null;
+        foreach ($this->getValues() as $val) {
+            if ($val !== null && $val !== '') {
+                return true;
             }
-        );
-        return empty($nonEmptyVals) === false;
+        }
+        return false;
+    }
+    
+    /**
+     * Returns TRUE if the query part has non-empty UIDs (i.e. other than '' and null).
+     * @return bool
+     */
+    public function hasUids() : bool
+    {
+        foreach ($this->getUids() as $val) {
+            if ($val !== null && $val !== '') {
+                return true;
+            }
+        }
+        return false;
     }
 }
-?>
