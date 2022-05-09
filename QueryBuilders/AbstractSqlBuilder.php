@@ -38,7 +38,6 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
-use exface\Core\CommonLogic\Model\Aggregator;
 
 /**
  * A query builder for generic SQL syntax.
@@ -858,9 +857,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
                 
-                // If there is only and there is not UID for it, it will become an update-by-filter
+                // If there is only a single row and there is no UID for it, it will become an update-by-filter
                 // Otherwise we will do an UPDATE with a WHERE over the UID-column
-                if (count($qpart->getValues()) == 1 && (empty($qpart->getUids()) || null === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? null)) {
+                if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
                     $values = $qpart->getValues();
                     try {
                         $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));

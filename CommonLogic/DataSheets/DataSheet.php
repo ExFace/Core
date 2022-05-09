@@ -856,10 +856,16 @@ class DataSheet implements DataSheetInterface
                     }
                     try {
                         $counter += $create_ds->dataCreate(false, $transaction);
-                        // Now update the UID column of the original sheet with values from the create-sheet
-                        // on all rows, that previously did not have a UID value.
-                        foreach ($emptyUidRowsInCreateSheet as $i => $r) {
-                            $uidCol->setValue($emptyUidRows[$i], $create_ds->getUidColumn()->getCellValue($r));
+                        // Now update the columns of the original sheet with values from the create-sheet
+                        // on all rows, that previously did not have a UID value. Doing this for all
+                        // mutual columns instead of just the UID ensures, that default values and
+                        // those altered by behaviors are not lost
+                        foreach ($create_ds->getColumns() as $create_col) {
+                            if ($col = $this->getColumns()->getByExpression($create_col->getExpressionObj())) {
+                                foreach ($emptyUidRowsInCreateSheet as $i => $r) {
+                                    $col->setValue($emptyUidRows[$i], $create_col->getCellValue($r));
+                                }
+                            }
                         }
                     } catch (DataSheetMissingRequiredValueError | DataSheetInvalidValueError $e) {
                         // If the create-operation failed due to missing values, we will need to
