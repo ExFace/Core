@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy to restrict access to UI pages and navigation (menu) items.
@@ -126,7 +127,7 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
-            $menuItem->getWorkbench()->getLogger()->logException($e);
+            $menuItem->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
