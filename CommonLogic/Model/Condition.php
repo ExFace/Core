@@ -532,9 +532,9 @@ class Condition implements ConditionInterface
             case ComparatorDataType::IS_NOT:
                 return mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) === false;
             case ComparatorDataType::EQUALS:
-                return $leftVal === $rightVal;
+                return $leftVal == $rightVal;
             case ComparatorDataType::EQUALS_NOT:
-                return $leftVal !== $rightVal;
+                return $leftVal != $rightVal;
             case ComparatorDataType::GREATER_THAN:
                 return $leftVal > $rightVal;
             case ComparatorDataType::LESS_THAN:
