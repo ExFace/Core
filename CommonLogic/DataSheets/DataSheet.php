@@ -718,7 +718,7 @@ class DataSheet implements DataSheetInterface
         foreach ($this->getFilters()->getConditionsRecursive() as $cond) {
             if ($cond->getExpression()->isMetaAttribute()) {
                 $condAttr = $cond->getExpression()->getAttribute();
-                if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr)) {
+                if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr) && ! $cond->isEmpty()) {
                     $foreignConditions[] = $cond;
                 }
             }
