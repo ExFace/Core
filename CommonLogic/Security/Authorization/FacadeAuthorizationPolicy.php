@@ -19,6 +19,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy for access to facades.
@@ -123,7 +124,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
-            $facade->getWorkbench()->getLogger()->logException($e);
+            $facade->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

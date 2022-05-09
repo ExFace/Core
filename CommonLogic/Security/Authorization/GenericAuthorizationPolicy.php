@@ -20,6 +20,7 @@ use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * 
@@ -144,7 +145,7 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
-            $this->workbench->getLogger()->logException($e);
+            $this->workbench->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

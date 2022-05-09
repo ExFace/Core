@@ -16,6 +16,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy for access to data.
@@ -164,7 +165,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
-            $dataSheet->getWorkbench()->getLogger()->logException($e);
+            $dataSheet->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

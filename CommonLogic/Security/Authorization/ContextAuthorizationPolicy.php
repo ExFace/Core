@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy to restrict access to workbench contexts.
@@ -97,7 +98,7 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this);
             }
         } catch (\Throwable $e) {
-            $context->getWorkbench()->getLogger()->logException($e);
+            $context->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
