@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 
 /**
  * Resolves placeholders to facade propertis: `~facade:property`.
@@ -79,6 +80,9 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         
         foreach ($phs as $ph) {
             $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
+            if ($col == false) {
+                throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' not found in data sheet and it could not be loaded automatically.");
+            }
             $val = $col->getValue($phRowNo);
             $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
             $phVals[$ph] = $this->sanitizeValue($formatted);
