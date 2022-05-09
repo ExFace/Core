@@ -1002,7 +1002,7 @@ JS;
                         $conditionJs = <<<JS
 
             var aSourcenew = [];
-            var oConditionGroup = {'operator': "{$filters->getOperator()}"};
+            var oConditionGroup = {'operator': "{$filters->getConditionGroup()->getOperator()}"};
             var aConditions = [];
 JS;
                         foreach ($filters->getConditions() as $key => $cond) {
