@@ -747,6 +747,29 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
+		},
+		
+		/**
+		 * String tools
+		 * 
+		 * 
+		 * 
+		 */
+		string: {
+			
+			/**
+			 * Replaces line breaks with the given HTML tag - like PHP nl2br()
+			 *
+			 * @param {string} [str]
+			 * @param {string} [breakTag] - default: '<br>'
+			 * 
+			 * @returns {string}
+			 */
+			nl2br: function(str, breakTag) {
+				breakTag = breakTag || '<br>';
+	  			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+			}
+			
 		}
 	}
 })));
