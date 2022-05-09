@@ -36,7 +36,27 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * Each image is a separate data item (comparable to a table row or a list item), so
  * it can be selected and passed to actions as input data. 
  * 
- * Facades may also provide additional image-specific functionality like uploading.
+ * As any data widget, the image gallery can contain filters, columns, buttons, etc.
+ * In particular, buttons can be used to navigate to business objects, represented
+ * by the images (e.g. products) or to modify/delete image data. 
+ * 
+ * Additional columns may be added to the data widget manually: depending on the facade,
+ * this additional information may be displayed in overlays or descriptions of some kind.
+ * While this functionality is optional, the additional information however must be
+ * passed to actions, performed on the meta object behind each image.
+ * 
+ * ## Upload/Download
+ * 
+ * Image galleries have `upload_enabled` and `download_enabled` properties to control
+ * if the user should be able to upload or download images. The `uploader` settings
+ * can be used to add file restrictions.
+ * 
+ * ## Non-image files
+ * 
+ * Image galleries also support file types other than images, but will not disply
+ * thumbnails in this case. Non-images can be uploaded and downloaded however.
+ * 
+ * ## Examples
  * 
  * The following simple exmple will produce a default gallery (the facade will choose
  * it's orientation):
@@ -50,15 +70,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * }
  * 
  * ```
- * 
- * As any data widget, the image gallery can contain filters, columns, buttons, etc.
- * In particular, buttons can be used to navigate to business objects, represented
- * by the images (e.g. products) or to modify/delete image data. 
- * 
- * Additional columns may be added to the data widget manually: depending on the facade,
- * this additional information may be displayed in overlays or descriptions of some kind.
- * While this functionality is optional, the additional information however must be
- * passed to actions, performed on the meta object behind each image.
  * 
  * Here is an example with custom filters, columns and buttons. Note, that you need to
  * explicitly let the widget show a header, if you want your filters to be visible from
