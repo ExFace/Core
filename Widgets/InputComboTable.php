@@ -891,7 +891,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
                 $rel = $this->getAttribute()->getRelation();
                 $sheet = $this->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
                 if (null !== ($filters = $this->getFilters())) {
-                    $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getOperator());
+                    $condGroup = ConditionGroupFactory::createForDataSheet($sheet, $filters->getConditionGroup()->getOperator());
                     foreach ($filters->getConditions() as $cond) {
                         /* @var $cond \exface\Core\Widgets\Parts\ConditionalPropertyCondition */
                         if ($cond->hasLiveReference()) {
