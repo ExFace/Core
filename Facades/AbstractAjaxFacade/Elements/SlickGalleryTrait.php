@@ -121,7 +121,7 @@ HTML;
     {
         if ($this->getWidget()->isZoomable()) {
             if ($this->getWidget()->hasImageTitleColumn()) {
-                $lightboxCaption = "caption: function(element, info){var oData = $('#{$this->getIdOfSlick()}').data('_exfData'); if (oData) {return (oData.rows || [])[info.index]['{$this->getWidget()->getImageTitleColumn()->getDataColumnName()}'] } else {return '';} },";
+                $lightboxCaption = "caption: function(element, info){ return $('<p></p>').html(exfTools.string.nl2br(element.title)).prop('outerHTML'); },";
             }
             
             $zoomOnClickJs = $this->getWidget()->isZoomOnClick() ? 'true' : 'false';
@@ -482,6 +482,22 @@ JS;
             $mimeTypeJs = 'null';
         }
         
+        $tooltipJs = '';
+        foreach ($widget->getColumns() as $col) {
+            if ($col->isHidden()) {
+                continue;
+            }
+            $colFormatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $tooltipJs .= ($tooltipJs !== '' ? 'sTooltip += "\\n";' : '') . "sTooltip += " . ($col->getCaption() ? '"' . $this->escapeString($col->getCaption(), false) . ': " ' : '""') . " + " . $colFormatter->buildJsFormatter("oRow['{$col->getDataColumnName()}']") . ";\n";
+        }
+        $titleJs = '';
+        if ($widget->hasImageTitleColumn()) {
+            $col = $widget->getImageTitleColumn();
+            $titleJs = 'sTitle = ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter("oRow['{$col->getDataColumnName()}']") . ';';
+            $tooltipJs = "sTooltip += sTitle;\n" . ($tooltipJs !== '' ? 'sTooltip += "\\n\\n";' . $tooltipJs : '');
+        }
+        
+        
         return <<<JS
 
                 (function(){
@@ -493,17 +509,22 @@ JS;
     				aRows.forEach(function(oRow, i) {
                         var sSrc = {$thumbJs};
                         var sSrcLarge = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
-                        var sTitle = oRow['{$widget->getImageTitleColumn()->getDataColumnName()}'];
+                        var sTitle = '';
+                        var sTooltip = '';
                         var sMimeType = {$mimeTypeJs};
                         var sIcon = '';
+
+                        {$titleJs}
+                        {$tooltipJs}
+
                         if (sMimeType === null || sMimeType.startsWith('image')) {
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTooltip + '\" alt=\"' + sTitle + '\" />'")});
                         } else {
                             switch (sMimeType.toLowerCase()) {
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                 default: sIcon = 'fa fa-file-o';
                             }
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType')});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType', '', 'sTooltip')});
                         }
                     });
 
@@ -518,20 +539,34 @@ JS;
 JS;
     }
     
+    /**
+     * 
+     * @param string $imgJs
+     * @param string $cssClass
+     * @return string
+     */
     protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '') : string
     {
         return "'<div class=\"imagecarousel-item {$cssClass}\">' + {$imgJs} + '</div>'";
     }
     
-    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '') : string
+    /**
+     * 
+     * @param string $sFileNameJs
+     * @param string $sMimeTypeJs
+     * @param string $cssClass
+     * @return string
+     */
+    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null) : string
     {
+        $sTooltipJs = $sTooltipJs ?? $sFileNameJs;
         return <<<JS
                             (function(){
                                 switch ($sMimeTypeJs.toLowerCase()) {
                                     case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                     default: sIcon = 'fa fa-file-o';
                                 }
-                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sFileNameJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
+                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sTooltipJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
                             })()
 
 JS;
