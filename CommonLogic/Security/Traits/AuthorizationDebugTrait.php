@@ -194,8 +194,12 @@ trait AuthorizationDebugTrait
                     'attribute_alias' => 'NAME'
                 ],
                 [
-                    'data_column_name' => 'DECISION',
+                    'data_column_name' => '_DECISION',
                     'caption' => 'Decision'
+                ],
+                [
+                    'data_column_name' => '_EXPLANATION',
+                    'caption' => 'Explanation'
                 ]
             ]
         ]);
@@ -207,7 +211,8 @@ trait AuthorizationDebugTrait
             'EFFECT',
             'NAME'
         ]);
-        $dataSheet->getColumns()->addFromExpression('DECISION');
+        $dataSheet->getColumns()->addFromExpression('_DECISION');
+        $dataSheet->getColumns()->addFromExpression('_EXPLANATION');
         
         foreach ($permissions as $permission) {
             switch (true) {
@@ -223,7 +228,8 @@ trait AuthorizationDebugTrait
             $dataSheet->addRow([
                 'EFFECT' => $effect,
                 'NAME' => $name,
-                'DECISION' => $permission->toXACMLDecision()
+                '_DECISION' => $permission->toXACMLDecision(),
+                '_EXPLANATION' => $permission->getExplanation()
             ]);
         }
         

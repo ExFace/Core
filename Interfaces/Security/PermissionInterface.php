@@ -25,5 +25,7 @@ interface PermissionInterface
     
     public function getPolicy() : ?AuthorizationPolicyInterface;
     
+    public function getExplanation() : ?string;
+    
     public function toXACMLDecision() : string;
 }
