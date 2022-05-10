@@ -172,7 +172,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '')
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
     {
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
@@ -181,14 +181,14 @@ class DataSheet implements DataSheetInterface
         }
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
-        if (! is_null($left_key_column) && ! is_null($right_key_column)) {
+        if (! is_null($leftKeyColName) && ! is_null($rightKeyColName)) {
             foreach ($this->rows as $left_row_nr => $row) {
                 // Check if the right column is really present in the data to be joined
-                if (! $rCol = $other_sheet->getColumns()->get($right_key_column)) {
-                    throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
+                if (! $rCol = $other_sheet->getColumns()->get($rightKeyColName)) {
+                    throw new DataSheetMergeError($this, 'Cannot find right key column "' . $rightKeyColName . '" for a left join!', '6T5E849');
                 }
                 // Find rows in the other sheet, that match the currently processed key
-                $right_row_nrs = $rCol->findRowsByValue($row[$left_key_column]);
+                $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
                     // to loop through them. The first row is simply joined to the current left row
@@ -215,7 +215,7 @@ class DataSheet implements DataSheetInterface
                     }
                 }
             }
-        } elseif (is_null($left_key_column) && is_null($right_key_column)) {
+        } elseif (is_null($leftKeyColName) && is_null($rightKeyColName)) {
             // TODO this only joins the first other sheet row. A real LEFT OUT JOIN would
             // need to dublicate rows as in the case above - but it's unclear, what should
             // happen if there are actually no key columns...
@@ -1334,11 +1334,50 @@ class DataSheet implements DataSheetInterface
         
         // Add values to the query and/or create subsheets
         $values_found = false;
+        $relatedSheets = [];
         foreach ($this->getColumns() as $column) {
             // Skip columns, that do not represent a meta attribute
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 continue;
             }
+            
+            // Move related columns to subsheets based on their objects
+            // Do it before handling nested sheets as nested sheets with
+            // multi-step relations should be moved to subsheets too!
+            if (! $column->getAttribute()->getRelationPath()->isEmpty()) {
+                // If the column contains nested data, its attribute alias is a relation. So we only need a subsheet
+                // if the relation path has more than one relation in it (otherwise it would be regular nested data).
+                // Regular related data always goes into a subsheet
+                if ($column->getDataType() instanceof DataSheetDataType) {
+                    $relPath = $column->getAttribute()->getRelationPath()->getSubpath(0, -1);
+                    // If it is regular nested data, put it into the $nestedSheetCols array and skip the rest for
+                    // this column.
+                    if ($relPath->isEmpty()) {
+                        $nestedSheetCols[] = $column;
+                        continue;
+                    }
+                    // If it is nested data to put in a subsheet, make the subsheet be based on the second-last
+                    // relation in the path - so that exactly one relation remains.
+                    $relSheetAttrAlias = $column->getAttribute()->getRelationPath()->getSubpath(-1)->toString();
+                } else {
+                    $relPath = $column->getAttribute()->getRelationPath();
+                    $relSheetAttrAlias = $column->getAttribute()->getAlias();
+                }
+                // Do not create a subsheet if it will not have any data - that would only cause errors. This
+                // check also allow optional subsheets - no values, no subsheet.
+                if ($column->isEmpty(true)) {
+                    continue;
+                }
+                // Now we are ready to create a subsheet and pass data to it
+                if (null === $relSheet = $relatedSheets[$relPath->toString()]) {
+                    //$relSheet = DataSheetFactory::createFromObject($relPath->getEndObject());
+                    $relSheet = DataSheetFactory::createSubsheet($this, $relPath->getEndObject(), $relPath->getRelationLast()->getRightKeyAttribute()->getAlias(), $relPath->getRelationFirst()->getLeftKeyAttribute()->getAlias(), $relPath);
+                    $relatedSheets[$relPath->toString()] = $relSheet;
+                }
+                $relSheet->getColumns($relSheetAttrAlias)->addFromExpression($relSheetAttrAlias)->setValues($column->getValues());
+                continue;
+            }
+            
             // if the column contains nested data sheets, we will need to save them after we
             // created the data for the main sheet - so skip them here.
             if ($column->getDataType() instanceof DataSheetDataType) {
@@ -1355,6 +1394,7 @@ class DataSheet implements DataSheetInterface
             if ($column->isEmpty() === false) {
                 $values_found = true;
             }
+            
             // Add all other columns to values
             $query->addValues($column->getExpressionObj()->toString(), $column->getValuesNormalized());
         }
@@ -1393,6 +1433,21 @@ class DataSheet implements DataSheetInterface
         // Save the new UIDs in the data sheet
         if (! empty($new_uids)) {
             $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
+        }
+        
+        // Handle subsheet with columns with relations
+        foreach ($relatedSheets as $relatedSheet) {
+            $relatedKeyCol = $relatedSheet->getColumns()->addFromExpression($relatedSheet->getJoinKeyAliasOfSubsheet());
+            $thisKeyCol = $relatedSheet->getJoinKeyColumnOfParentSheet();
+            foreach ($thisKeyCol->getValues() as $r => $val) {
+                $relatedKeyCol->setValue($r, $val);
+            }
+            $relatedSheet->dataCreate($update_if_uid_found, $transaction);
+            // TODO update data in the main sheet with values from the related sheet - only for those columns with
+            // corresponding relation path. This would make the main sheet also get default values and values altered
+            // be behaviors. See if($create_if_uid_not_found) {...} in dataUpdate() for similar logic. Perhaps both
+            // can be combined into a new method. Using joinLeft() does not work as it would add all sorts of system
+            // columns of the related sheet too.
         }
         
         // Create data for the nested sheets
