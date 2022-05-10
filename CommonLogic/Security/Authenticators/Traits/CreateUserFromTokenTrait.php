@@ -22,6 +22,14 @@ trait CreateUserFromTokenTrait
     private $newUsersRoles = [];
     
     /**
+     * Extracts the username to be used internally from an authenticated token.
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return string
+     */
+    abstract protected function getUsernameInWorkbench(AuthenticationTokenInterface $token) : string;
+    
+    /**
      * Set if a new PowerUI user should be created if no user with that username already exists.
      *
      * @uxon-property create_new_users
@@ -87,7 +95,7 @@ trait CreateUserFromTokenTrait
     {
         $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
         $row = [];
-        $row['USERNAME'] = $token->getUsername();
+        $row['USERNAME'] = $this->getUsernameInWorkbench($token);
         $row['MODIFIED_BY_USER'] = UserSelector::ANONYMOUS_USER_OID;
         $row['LOCALE'] = $exface->getConfig()->getOption("SERVER.DEFAULT_LOCALE");
         $row = array_merge($row, $userData);
