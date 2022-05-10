@@ -337,11 +337,11 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * 
      * Examples:
      * 
-     * - `["\/@.*\/": ""]` to extract the username from an email address (the part before `@`)
+     * - `{"\/@.*\/": ""}` to extract the username from an email address (the part before `@`)
      * 
      * @uxon-property username_replace_characters
-     * @uxon-type array
-     * @uxon-template ["string or regex": "replacement"]
+     * @uxon-type object
+     * @uxon-template {"string or regex": "replacement"}
      * 
      * @param UxonObject $value
      * @return AbstractAuthenticator
