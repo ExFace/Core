@@ -21,20 +21,23 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @param AuthorizationPolicyInterface $policy
      * @return PermissionInterface
      */
-    public static function createIndeterminate(\Throwable $error = null, $wouldBeEffect = null, AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createIndeterminate(\Throwable $error = null, $wouldBeEffect = null, AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
+        if ($error !== null && $explanation === null) {
+            $explanation = $error->getMessage();
+        }
         if ($wouldBeEffect !== null) {
             $wouldBe = $wouldBeEffect instanceof PolicyEffectDataType ? $wouldBeEffect->__toString() : $wouldBeEffect;
             switch ($wouldBe) {
                 case PolicyEffectDataType::PERMIT:
-                    return new Permission(null, true, true, null, $policy, $error);
+                    return new Permission(null, true, true, null, $policy, $error, $explanation);
                 case PolicyEffectDataType::DENY:
-                    return new Permission(true, null, true, null, $policy, $error);
+                    return new Permission(true, null, true, null, $policy, $error, $explanation);
                 default:
                     throw new InvalidArgumentException('Invalid would-be-effect "' . $wouldBeEffect . '" for indeterminate permission!');
             }
         }
-        return new Permission(null, null, true, null, $policy, $error);
+        return new Permission(null, null, true, null, $policy, $error, $explanation);
     }
     
     /**
@@ -42,9 +45,9 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @param AuthorizationPolicyInterface $policy
      * @return PermissionInterface
      */
-    public static function createNotApplicable(AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createNotApplicable(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
-        return new Permission(null, null, null, true, $policy);
+        return new Permission(null, null, null, true, $policy, null, $explanation);
     }
     
     /**
@@ -52,9 +55,9 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @param AuthorizationPolicyInterface $policy
      * @return PermissionInterface
      */
-    public static function createDenied(AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createDenied(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
-        return new Permission(true, null, null, null, $policy);
+        return new Permission(true, null, null, null, $policy, null, $explanation);
     }
     
     /**
@@ -62,9 +65,9 @@ abstract class PermissionFactory extends AbstractStaticFactory
      * @param AuthorizationPolicyInterface $policy
      * @return PermissionInterface
      */
-    public static function createPermitted(AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createPermitted(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
-        return new Permission(null, true, null, null, $policy);
+        return new Permission(null, true, null, null, $policy, null, $explanation);
     }
     
     /**

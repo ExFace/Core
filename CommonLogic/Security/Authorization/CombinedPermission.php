@@ -150,10 +150,10 @@ class CombinedPermission implements PermissionInterface
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isPermitted()) {
-                return $permission;
+                return PermissionFactory::createPermitted(null, 'At least one `Permit`');
             }
         }
-        return PermissionFactory::createDenied();
+        return PermissionFactory::createDenied(null, 'No `Permit`');
     }
     
     /**
@@ -174,10 +174,10 @@ class CombinedPermission implements PermissionInterface
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isDenied()) {
-                return $permission;
+                return PermissionFactory::createDenied(null, 'At least one `Deny`');
             }
         }
-        return PermissionFactory::createPermitted();
+        return PermissionFactory::createPermitted(null, 'No `Deny`');
     }
     
     /**
@@ -204,7 +204,7 @@ class CombinedPermission implements PermissionInterface
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isPermitted()) {
-                return $permission;
+                return PermissionFactory::createPermitted(null, 'At least one `Permit`');
             }
             if ($permission->isDenied()) {
                 $atLeastOneDeny = true;
@@ -224,21 +224,21 @@ class CombinedPermission implements PermissionInterface
             }
         }
         if ($atLeastOneIndeterminate) {
-            return PermissionFactory::createIndeterminate();
+            return PermissionFactory::createIndeterminate(null, null, null, 'At least one `Indeterminate`');
         }
         if ($atLeastOneIndeterminateP && ($atLeastOneIndeterminateD || $atLeastOneDeny)) {
-            return PermissionFactory::createIndeterminate();
+            return PermissionFactory::createIndeterminate(null, null, null, 'At least one `Indeterminate{D}` or `Deny`');
         }
         if ($atLeastOneIndeterminateP === true) {
-            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT);
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT, null, 'At least one `Indeterminate{P}`');
         }
         if ($atLeastOneDeny) {
-            return PermissionFactory::createDenied();
+            return PermissionFactory::createDenied(null, 'At least one `Deny`');
         }
         if ($atLeastOneIndeterminateD === true) {
-            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY);
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY, null, 'At least one `Indeterminate{D}`');
         }
-        return PermissionFactory::createNotApplicable();
+        return PermissionFactory::createNotApplicable(null, 'None applicable');
     }
     
     /**
@@ -265,7 +265,7 @@ class CombinedPermission implements PermissionInterface
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isDenied()) {
-                return $permission;
+                return PermissionFactory::createDenied(null, 'At least one `Deny`');
             }
             if ($permission->isPermitted()) {
                 $atLeastOnePermit = true;
@@ -285,23 +285,28 @@ class CombinedPermission implements PermissionInterface
             }
         }
         if ($atLeastOneIndeterminate) {
-            return PermissionFactory::createIndeterminate();
+            return PermissionFactory::createIndeterminate(null, null, null, 'At least one `Indeterminate`');
         }
         if ($atLeastOneIndeterminateD && ($atLeastOneIndeterminateP || $atLeastOnePermit)) {
-            return PermissionFactory::createIndeterminate();
+            return PermissionFactory::createIndeterminate(null, null, null, 'At least one `Indeterminate{D}` or `Deny`');
         }        
         if ($atLeastOneIndeterminateD === true) {
-            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY);
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::DENY, null, 'At least one `Indeterminate{D}`');
         }
         if ($atLeastOnePermit) {
-            return PermissionFactory::createPermitted();
+            return PermissionFactory::createPermitted(null, 'At least one `Permit`');
         }
         if ($atLeastOneIndeterminateP === true) {
-            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT);
+            return PermissionFactory::createIndeterminate(null, PolicyEffectDataType::PERMIT, null, 'At least one `Indeterminate{P}`');
         }
-        return PermissionFactory::createNotApplicable();
+        return PermissionFactory::createNotApplicable(null, 'None applicable');
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::toXACMLDecision()
+     */
     public function toXACMLDecision() : string
     {
         return $this->result->toXACMLDecision();
@@ -310,5 +315,15 @@ class CombinedPermission implements PermissionInterface
     public function __toString()
     {
         return $this->toXACMLDecision();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::getExplanation()
+     */
+    public function getExplanation(): ?string
+    {
+        return $this->result->getExplanation();
     }
 }

@@ -105,26 +105,26 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
             
             if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'Page group does not match');
             } else {
                 $applied = true;
             }
             
             // Return unapplicable if page is not published and the policy cannot be applied to unpublished items
             if ($menuItem->isPublished() === false && $this->isApplicableToUnpublished() === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'Page not published, but policy applies to published only');
             } else {
                 $applied = true;
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
         } catch (\Throwable $e) {
             $menuItem->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));

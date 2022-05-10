@@ -1587,7 +1587,7 @@ SQL;
                                 $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
                                 $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
                             } catch (AccessDeniedError $e) {
-                                //$this->getWorkbench()->getLogger()->logException($e, \exface\Core\Interfaces\Log\LoggerInterface::ERROR);
+                                // $this->getWorkbench()->getLogger()->logException($e, \exface\Core\Interfaces\Log\LoggerInterface::ERROR);
                                 $parentNode = null;
                             }
                         }
@@ -1601,7 +1601,7 @@ SQL;
                 foreach ($rows as $row) {
                     if ($row['oid'] !== $nodeId) {
                         if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
-                            //if the child node was already loaded before and also it's child, take that node
+                            // if the child node was already loaded before and also it's child, take that node
                             $childNode = $this->nodes_loaded[$row['oid']];
                             if ($parentNode !== null) {
                                 $childNode->setParentNode($parentNode);
