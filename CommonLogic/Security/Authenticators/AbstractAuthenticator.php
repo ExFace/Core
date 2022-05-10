@@ -20,6 +20,7 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserDisabledError;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * Provides common base function for authenticators.
@@ -44,6 +45,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $lifetime = null;
     
     private $disabled = false;
+    
+    private $usernameReplaceChars = [];
     
     /**
      * 
@@ -246,11 +249,11 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $userDataSheet = $this->userData[$token->getUsername()];
         if ($userDataSheet === null) {           
-            $exface = $this->getWorkbench();        
+            $exface = $this->getWorkbench();
             $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
             $userDataSheet->getColumns()->addFromExpression('DISABLED_FLAG');
             $userFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_OR, $userDataSheet->getMetaObject());
-            $userFilterGroup->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
+            $userFilterGroup->addConditionFromString('USERNAME', $this->getUsernameInWorkbench($token), ComparatorDataType::EQUALS);
             
             //add filters to check if username already exists in USER_AUTHENTICATOR data
             $andFilterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $userDataSheet->getMetaObject());
@@ -264,11 +267,29 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
             }
             if (BooleanDataType::cast($userDataSheet->getRow(0)['DISABLED_FLAG']) === true) {
-                throw new UserDisabledError("User with the username '{$token->getUsername()}' is disabled!");
+                throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!");
             }
             $this->userData[$token->getUsername()] = $userDataSheet;
         }        
         return $userDataSheet;
+    }
+    
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return string
+     */
+    protected function getUsernameInWorkbench(AuthenticationTokenInterface $token) : string
+    {
+        $username = $token->getUsername();
+        foreach ($this->getUsernameReplaceCharacters() as $exp => $repl) {
+            if (RegularExpressionDataType::isRegex($exp)) {
+                $username = preg_replace($exp, $repl, $username);
+            } else {
+                $username = str_replace($exp, $repl, $username);
+            }
+        }
+        return $username;
     }
     
     /**
@@ -300,5 +321,34 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         $userDataSheet = $this->getUserData($token);
         $user = UserFactory::createFromUsernameOrUid($this->getWorkbench(), $userDataSheet->getRow(0)['UID']);
         return $user;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getUsernameReplaceCharacters() : array
+    {
+        return $this->usernameReplaceChars;
+    }
+    
+    /**
+     * Characters or regular expressions to replace in the username from the authentication provider
+     * 
+     * Examples:
+     * 
+     * - `["\/@.*\/": ""]` to extract the username from an email address (the part before `@`)
+     * 
+     * @uxon-property username_replace_characters
+     * @uxon-type array
+     * @uxon-template ["string or regex": "replacement"]
+     * 
+     * @param UxonObject $value
+     * @return AbstractAuthenticator
+     */
+    protected function setUsernameReplaceCharacters(UxonObject $value) : AbstractAuthenticator
+    {
+        $this->usernameReplaceChars = $value->toArray();
+        return $this;
     }
 }
