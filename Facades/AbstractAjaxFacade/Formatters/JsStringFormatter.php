@@ -35,7 +35,7 @@ class JsStringFormatter extends JsTransparentFormatter
         $nullStr = '" . EXF_LOGICAL_NULL . "';
         return <<<JS
 function(mVal) {
-                var bEmpty = mVal.toString() === '' || mVal.toString() === $nullStr;
+                var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;
