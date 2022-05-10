@@ -34,7 +34,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     private $allow_new_values = null;
 
-    private $autoselect_single_suggestion = true;
+    private $autoselect_single_suggestion = null;
 
     /**
      * Defines the alias of the action to be called by the autosuggest.
@@ -160,7 +160,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     public function getAutoselectSingleSuggestion() : bool
     {
-        return $this->autoselect_single_suggestion;
+        return $this->autoselect_single_suggestion ?? ($this->getAllowNewValues() ? false : true);
     }
 
     /**
