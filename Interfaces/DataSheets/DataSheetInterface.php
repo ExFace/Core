@@ -78,13 +78,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface data_sheet
-     * @param string left_key_column
-     * @param string right_key_column
-     * @param string column_prefix
+     * @param DataSheetInterface $otherSheet
+     * @param string $leftKeyColName
+     * @param string $rightKeyColName
+     * @param string $relationPath
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
      * Imports data from matching columns of the given sheet.
