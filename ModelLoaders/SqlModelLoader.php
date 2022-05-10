@@ -1560,6 +1560,7 @@ SQL;
     protected function loadPageTreeParentNodes(UiPageTree $tree) : array
     {
         $treeRootNodes = $tree->getStartRootNodes();
+        $orphanNodes = [];
         $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
         if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
             return $loadedtree->getRootNodes();
@@ -1586,7 +1587,7 @@ SQL;
                                 $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
                                 $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
                             } catch (AccessDeniedError $e) {
-                                //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                                //$this->getWorkbench()->getLogger()->logException($e, \exface\Core\Interfaces\Log\LoggerInterface::ERROR);
                                 $parentNode = null;
                             }
                         }
@@ -1596,13 +1597,15 @@ SQL;
                     }
                 }
             }
-            if ($parentNode !== null && $parentNode->getChildNodesLoaded() === false) {
+            if ($parentNode === null || $parentNode->getChildNodesLoaded() === false) {
                 foreach ($rows as $row) {
-                    if ($parentNode !== null && $row['oid'] !== $nodeId) {
+                    if ($row['oid'] !== $nodeId) {
                         if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
                             //if the child node was already loaded before and also it's child, take that node
                             $childNode = $this->nodes_loaded[$row['oid']];
-                            $childNode->setParentNode($parentNode);
+                            if ($parentNode !== null) {
+                                $childNode->setParentNode($parentNode);
+                            }
                         } else {
                             try {
                                 $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
@@ -1612,28 +1615,53 @@ SQL;
                             }
                         }
                         $this->nodes_loaded[$childNode->getUid()] = $childNode;
-                        $parentNode->addChildNode($childNode);                        
-                        $parentNode->setChildNodesLoaded(true);
+                        if ($parentNode !== null) {
+                            $parentNode->addChildNode($childNode);                        
+                            $parentNode->setChildNodesLoaded(true);
+                        } else {
+                            $orphanNodes[] = $childNode;
+                        }
                     }
                 }
-                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                $this->nodes_loaded[($parentNode !== null ? $parentNode->getUid() : $parentNodeId)] = $parentNode;
             }
-            if ($parentNode !== null && $tree->nodeInRootNodes($parentNode)) {
-                $nodeId = null;
-                for ($i = 0; $i < count($treeRootNodes); $i++) {
-                    if ($treeRootNodes[$i]->getUid() === $parentNode->getUid()) {
-                        $treeRootNodes[$i] = $parentNode;
-                        break;
+            
+            switch (true) {
+                // If the parent node (the one just loaded) is instantiated and it is one of the tree roots, replace 
+                // the node in the tree roots with this one - because it has children loaded
+                case $parentNode !== null && $tree->nodeInRootNodes($parentNode):
+                    $nodeId = null;
+                    for ($i = 0; $i < count($treeRootNodes); $i++) {
+                        if ($treeRootNodes[$i]->getUid() === $parentNode->getUid()) {
+                            $treeRootNodes[$i] = $parentNode;
+                            break;
+                        }
                     }
-                }
-            } elseif ($parentNode === null && $oldNode !== null) {
-                $treeRootNodes[] = $oldNode;
-                $nodeId = null;
-            } else {
-                $nodeId = $parentNodeId;
-                $oldNode = $parentNode;
+                    break;
+                // If the current parent is not instantiated, but the previous one is
+                // ... not sure, what exactly this does
+                case $parentNode === null && $oldNode !== null:
+                    $treeRootNodes[] = $oldNode;
+                    $nodeId = null;
+                    break;
+                // Otherwise proceed with the next level
+                default:
+                    $nodeId = $parentNodeId;
+                    $oldNode = $parentNode;
             }
         }
+        
+        // While we traverse up the tree, there may be nodes, that are accessible, but
+        // their parents are not. They will be shown on the root level of the tree
+        foreach ($orphanNodes as $orphan) {
+            foreach ($treeRootNodes as $node) {
+                if ($orphan->getUid() === $node->getUid()) {
+                    continue 2;
+                }
+            }
+            $treeRootNodes[] = $orphan;
+        }
+        
         $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
         return $treeRootNodes;
     }
