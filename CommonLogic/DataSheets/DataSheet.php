@@ -1313,10 +1313,10 @@ class DataSheet implements DataSheetInterface
             
             if (! $req_col = $this->getColumns()->getByAttribute($req)) {
                 // If there is no column for the required attribute, add one
-                $col = $this->getColumns()->addFromExpression($req->getAlias());
+                $req_col = $this->getColumns()->addFromExpression($req->getAlias());
                 // First see if there are default values for this column
                 if ($def = ($req->getDefaultValue() ? $req->getDefaultValue() : $req->getFixedValue())) {
-                    $col->setValuesByExpression($def);
+                    $req_col->setValuesByExpression($def);
                 } else {
                     // Try to get the value from the current filter contexts: if the missing attribute was used as a direct filter, we assume, that the data is saved
                     // in the same context, so we can set the attribute value to the filter value
@@ -1329,6 +1329,10 @@ class DataSheet implements DataSheetInterface
                 }
             } else {
                $req_col->setValuesFromDefaults();
+            }
+            
+            if ($req_col->hasEmptyValues()) {
+                throw new DataSheetMissingRequiredValueError($this, null, null, null, $req_col, $req_col->findEmptyRows());
             }
         }
         
