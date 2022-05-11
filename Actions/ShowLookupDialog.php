@@ -7,7 +7,6 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\DataLookupDialog;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\Widgets\InputCombo;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
