@@ -308,15 +308,25 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(UxonObject $columns) : iHaveColumns
+    public function setColumns(UxonObject $uxonArray) : iHaveColumns
     {
-        foreach ($columns as $c) {
-            if ($c->hasProperty('attribute_group_alias')) {
-                foreach ($this->getMetaObject()->getAttributeGroup($c->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
+        // If there are columns already, we need to replace them. However, since there could be system columns
+        // (typically hidden), we want to keep those - e.g. for columns automatically added by widgets like
+        // ImageGallery or FileList.
+        if ($this->hasColumns()) {
+            foreach ($this->getColumns() as $col) {
+                if (! $col->isHidden()) {
+                    $this->removeColumn($col);
+                }
+            }
+        }
+        foreach ($uxonArray as $colUxon) {
+            if ($colUxon->hasProperty('attribute_group_alias')) {
+                foreach ($this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
             } else {
-                $this->addColumn($this->createColumnFromUxon($c));
+                $this->addColumn($this->createColumnFromUxon($colUxon));
             }
         }
         return $this;
