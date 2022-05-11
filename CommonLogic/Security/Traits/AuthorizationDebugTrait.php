@@ -186,6 +186,7 @@ trait AuthorizationDebugTrait
             'paginate' => false,
             'hide_header' => true,
             'hide_footer' => true,
+            'nowrap' => false,
             'columns' => [
                 [
                     'attribute_alias' => 'EFFECT',
