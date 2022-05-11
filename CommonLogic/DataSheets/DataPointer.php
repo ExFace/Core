@@ -77,7 +77,7 @@ class DataPointer implements DataPointerInterface
         }
         
         
-        if ($splitLists === true && $val !== null && $val !== '' && ($splitDelimiter !== null || $this->dataColumn !== null && $this->dataColumn->isAttribute())) {
+        if ($splitLists === true && is_string($val) && ($splitDelimiter !== null || $this->dataColumn !== null && $this->dataColumn->isAttribute())) {
             $splitDelimiter = $splitDelimiter ?? $this->dataColumn->getAttribute()->getValueListDelimiter();
             if (stripos($val, $splitDelimiter) !== false) {
                 $val = explode($splitDelimiter, $val);
