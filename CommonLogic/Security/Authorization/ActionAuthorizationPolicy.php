@@ -30,6 +30,7 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 /**
  * Policy for access to actions.
@@ -230,7 +231,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             
             // Match meta object
             if ($this->metaObjectSelector !== null) {
-                $object = $action->getMetaObject();
+                try {
+                    $object = $action->getMetaObject();
+                } catch (ActionObjectNotSpecifiedError $e) {
+                    return PermissionFactory::createNotApplicable($this, 'Meta object required, but action has none');
+                }
                 if ($object === null || $object->is($this->metaObjectSelector) === false) {
                     return PermissionFactory::createNotApplicable($this, 'Meta object does not match');
                 } else {
