@@ -99,7 +99,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
@@ -121,7 +121,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
         } catch (\Throwable $e) {
             $facade->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
