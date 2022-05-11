@@ -18,7 +18,10 @@ abstract class PermissionFactory extends AbstractStaticFactory
     /**
      * 
      * @param \Throwable $error
+     * @param PolicyEffectDataType|string $wouldBeEffect
      * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
+     * @throws InvalidArgumentException
      * @return PermissionInterface
      */
     public static function createIndeterminate(\Throwable $error = null, $wouldBeEffect = null, AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
@@ -43,6 +46,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
     /**
      * 
      * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
      * @return PermissionInterface
      */
     public static function createNotApplicable(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
@@ -53,6 +57,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
     /**
      * 
      * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
      * @return PermissionInterface
      */
     public static function createDenied(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
@@ -63,6 +68,7 @@ abstract class PermissionFactory extends AbstractStaticFactory
     /**
      * 
      * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
      * @return PermissionInterface
      */
     public static function createPermitted(AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
@@ -73,34 +79,38 @@ abstract class PermissionFactory extends AbstractStaticFactory
     /**
      * 
      * @param PolicyEffectDataType $effect
+     * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
      * @throws InvalidArgumentException
      * @return PermissionInterface
      */
-    public static function createFromPolicyEffect(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createFromPolicyEffect(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
         switch ($effect->__toString()) {
             case PolicyEffectDataType::PERMIT:
-                return static::createPermitted($policy);
+                return static::createPermitted($policy, $explanation);
             case PolicyEffectDataType::DENY:
-                return static::createDenied($policy);
+                return static::createDenied($policy, $explanation);
             default:
                 throw new InvalidArgumentException('Cannot create permission from policy effect "' . $effect->__toString() . '"!');
         }
     }
     
     /**
-     *
+     * 
      * @param PolicyEffectDataType $effect
+     * @param AuthorizationPolicyInterface $policy
+     * @param string $explanation
      * @throws InvalidArgumentException
      * @return PermissionInterface
      */
-    public static function createFromPolicyEffectInverted(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null) : PermissionInterface
+    public static function createFromPolicyEffectInverted(PolicyEffectDataType $effect, AuthorizationPolicyInterface $policy = null, string $explanation = null) : PermissionInterface
     {
         switch ($effect->__toString()) {
             case PolicyEffectDataType::DENY:
-                return static::createPermitted($policy);
+                return static::createPermitted($policy, $explanation);
             case PolicyEffectDataType::PERMIT:
-                return static::createDenied($policy);
+                return static::createDenied($policy, $explanation);
             default:
                 throw new InvalidArgumentException('Cannot create permission from policy effect "' . $effect->__toString() . '"!');
         }

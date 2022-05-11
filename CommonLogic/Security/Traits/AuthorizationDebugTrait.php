@@ -188,14 +188,29 @@ trait AuthorizationDebugTrait
             'hide_footer' => true,
             'columns' => [
                 [
-                    'attribute_alias' => 'EFFECT'
+                    'attribute_alias' => 'EFFECT',
+                    'cell_widget' => [
+                        "widget_type" => "Display",
+                    ]
                 ],
                 [
                     'attribute_alias' => 'NAME'
                 ],
                 [
                     'data_column_name' => '_DECISION',
-                    'caption' => 'Decision'
+                    'caption' => 'Decision',
+                    'cell_widget' => [
+                        "widget_type" => "ColorIndicator",
+                        "fill" => true,
+                        "color_only" => false,
+                        "color_scale" => [
+                            "Permit" => "lightgreen",
+                            "Deny" => "orangered",
+                            "Indeterminate" => "lightgray",
+                            "Indeterminate{P}" => "lightgray",
+                            "Indeterminate{D}" => "lightgray"
+                        ]
+                    ]
                 ],
                 [
                     'data_column_name' => '_EXPLANATION',
