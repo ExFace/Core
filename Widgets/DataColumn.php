@@ -100,6 +100,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $nowrap = null;
     
     private $customHint = null;
+    
+    private $readOnly = false;
 
     public function getAttributeAlias()
     {
@@ -1009,5 +1011,30 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getHint()
     {
         return $this->customHint ?? $this->getCellWidget()->getHint();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isReadonly() : bool
+    {
+        return $this->readOnly;
+    }
+
+    /**
+     * Set to TRUE to exclude the data of this column from action input
+     * 
+     * @uxon-property readonly
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataColumn
+     */
+    public function setReadonly(bool $value) : DataColumn
+    {
+        $this->readOnly = $value;
+        return $this;
     }
 }
