@@ -602,7 +602,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $before_each_insert_sqls = [];
         $after_each_insert_sqls = [];
         $uid_qpart = null;
+        
         // add values
+        $rowPlaceholders = [];
+        foreach ($this->getValues() as $qpart) {
+            foreach ($qpart->getValues() as $row => $value) {
+                $rowPlaceholders[$row][$qpart->getAlias()] = $value;
+            }
+        }
         foreach ($this->getValues() as $qpart) {
             $attr = $qpart->getAttribute();
             if ($attr->getRelationPath()->toString()) {
@@ -634,6 +641,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
+                $phs = array_merge(['~alias' => $mainObj->getAlias(), '~value' => $value], $rowPlaceholders[$row]);
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     // NOTE: if you just write some kind of generator here, it
@@ -641,18 +649,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // via setValues() - they will always be replaced by the
                     // custom SQL. To allow explicitly set values too, the
                     // INSERT_SQL must include something like IF('[#~value#]'!=''...)
-                    $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                    $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, $phs, $mainObj->getAlias());
                 } else {
                     $insert_sql = $value;
                 }
                 $values[$row][$column] = $insert_sql;
                 
                 if ($before_each_insert_sql) {
-                    $before_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                    $before_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($before_each_insert_sql, null, $phs, $mainObj->getAlias());
                 }
                 
                 if ($after_each_insert_sql) {
-                    $after_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, ['~alias' => $mainObj->getAlias(), '~value' => $value], $mainObj->getAlias());
+                    $after_each_insert_sqls[$row] .= $this->replacePlaceholdersInSqlAddress($after_each_insert_sql, null, $phs, $mainObj->getAlias());
                 }
             }
         }
