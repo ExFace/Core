@@ -61,6 +61,8 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 trait JExcelTrait 
 {
+    use JsConditionalPropertyTrait;
+    
     /**
      * @return void
      */
@@ -206,7 +208,7 @@ JS;
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         
         /* @var $col \exface\Core\Widgets\DataColumn */
-        foreach ($widget->getColumns() as $col) {
+        foreach ($widget->getColumns() as $colIdx => $col) {
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
@@ -233,6 +235,32 @@ JS;
             $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
             
+            $conditionsJs = '';
+            if ($condProp = $col->getDisabledIf()) {
+                $conditionsJs .= $this->buildJsConditionalProperty(
+                    $condProp, 
+                    "aCells.forEach(function(domCell, iRowIdx){
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    });", 
+                    "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
+                );
+            }
+            if ($conditionsJs) {
+                $conditionsJs = <<<JS
+
+                        var iColIdx = {$colIdx};
+                        var oJExcel = oWidget.getJExcel();
+                        var aCells = [];
+                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            aCells.push(oJExcel.getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1)));
+                        });
+                        $conditionsJs
+JS;
+            }
+            
             $columnsJson .= <<<JS
                 "{$col->getDataColumnName()}": {
                     dataColumnName: "{$col->getDataColumnName()}",
@@ -243,6 +271,9 @@ JS;
                     validator: {$validatorJs},
                     hidden: {$hiddenFlagJs},
                     system: {$systemFlagJs},
+                    conditionize: function(oWidget){
+                        $conditionsJs
+                    }
                 }, 
 
 JS;           
@@ -368,10 +399,18 @@ JS;
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
+        restoreInitValue: function(iCol, iRow) {
+            var mInitVal = this.getInitValue(iCol, iRow);
+            if (mInitVal === undefined) {
+                mInitVal = '';
+            }
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal);            
+        },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
             var oCol = this.getColumnModel(iCol);
-
+            
+            mValue = mValue === undefined ? this.getJExcel().getValueFromCoords(iCol, iRow) : mValue;
             mValue = oCol.parser ? oCol.parser(mValue) : mValue;
             if (mValue === undefined || mValue === null) {
                 mValue = '';
@@ -443,6 +482,11 @@ JS;
                     oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue);
                 });
             });
+        },
+        refreshConditionalProperties: function() {
+            for (i in this._cols) {
+                this._cols[i].conditionize(this);
+            }
         },
         convertArrayToData: function(aDataArray) {
             var aData = [];
@@ -1249,6 +1293,7 @@ JS;
     }
     {$this->buildJsJqueryElement()}.jexcel('setData', aData);
     {$this->buildJsResetSelection($this->buildJsJqueryElement())};
+    {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties();
 }()
 
 JS;
@@ -1470,5 +1515,18 @@ JS;
         }
         
         return $valueJs;
+    }
+    
+    protected function registerConditionalPropertiesOfColumns() 
+    {
+        foreach ($this->getWidget()->getColumns() as $col) {
+            if ($condProp = $col->getDisabledIf()) {
+                $this->registerConditionalPropertyUpdaterOnLinkedElements(
+                    $condProp,
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()",
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()"
+                );
+            }
+        }
     }
 }
