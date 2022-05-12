@@ -26,7 +26,16 @@ class CliEnvAuthToken implements PreAuthenticatedTokenInterface
     public function __construct(FacadeInterface $facade = null)
     {
         $this->facade = $facade;
-        $this->username = $this->getUsernameFromEnv();
+        $this->username = $this->getUsernameFromEnv() ?? get_current_user();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    private function getUsernameFromPhp() : ?string
+    {
+        return get_current_user();
     }
     
     /**
@@ -35,7 +44,11 @@ class CliEnvAuthToken implements PreAuthenticatedTokenInterface
      */
     private function getUsernameFromEnv() : ?string
     {
-        return getenv('USER') ? getenv('USER') : getenv('USERNAME');
+        $username = trim(getenv('USER') ? getenv('USER') : getenv('USERNAME'));
+        if ($username === '') {
+            $username = null;
+        }
+        return $username;
     }
 
     /**
