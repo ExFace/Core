@@ -26,7 +26,7 @@ class CliEnvAuthToken implements PreAuthenticatedTokenInterface
     public function __construct(FacadeInterface $facade = null)
     {
         $this->facade = $facade;
-        $this->username = $this->getUsernameFromEnv() ?? get_current_user();
+        $this->username = $this->getUsernameFromEnv() ?? $this->getUsernameFromPhp();
     }
     
     /**
