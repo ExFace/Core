@@ -1207,7 +1207,7 @@ JS;
             // If we have an action, that is based on another object and does not have an input mapper for
             // the widgets's object, the data should become a subsheet.
             case $widget->isEditable() 
-            && ($action instanceof iModifyData) 
+            && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject()) 
             && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
