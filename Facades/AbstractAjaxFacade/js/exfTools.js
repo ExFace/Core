@@ -557,6 +557,16 @@
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
+				mLeft = mLeft !== undefined ? mLeft : null;
+				mRight = mRight !== undefined ? mRight : null;
+				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
+					if (parseFloat(mLeft) !== NaN) {
+						mLeft = parseFloat(mLeft);
+					}
+					if (parseFloat(mRight) !== NaN) {
+						mRight = parseFloat(mRight);
+					}
+				}
 				switch (sComparator) {
 	                case '==':
 	                case '!==':
@@ -565,17 +575,17 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '<': // <
-	                	bResult = (mLeft || null) < (mRight || null);
+	                case '<':
+	                	bResult = mLeft < mRight;
 	                	break;
-	                case '<=': // <=
-	                	bResult = (mLeft || null) <= (mRight || null);
+	                case '<=':
+	                	bResult = mLeft <= mRight;
 	                	break;
-	                case '>': // >
-	                	bResult = (mLeft || null) > (mRight || null);
+	                case '>':
+	                	bResult = mLeft > mRight;
 	                	break;
-	                case '>=': // >=
-	                	bResult = (mLeft || null) >= (mRight || null);
+	                case '>=':
+	                	bResult = mLeft >= mRight;
 	                	break;
 	                case '[':
 	                case '![':
