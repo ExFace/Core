@@ -58,11 +58,11 @@ use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Contexts\DebugContext;
-use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * 
@@ -120,7 +120,17 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
             }
         }
         
-        return parent::handle($request);
+        try {
+            $response = parent::handle($request);
+        } catch (\Throwable $e) {
+            try {
+                $response = $this->createResponseFromError($request, $e);
+            } catch (\Throwable $e2) {
+                $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError('Failed to render error response in facade: ' . $e2->getMessage(), null, $e2));
+                throw $e;
+            }
+        }
+        return $response;
     }
 
     /**

@@ -15,6 +15,8 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\SecurityException;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -111,6 +113,21 @@ class AuthenticationMiddleware implements MiddlewareInterface
                     // do nothing, try next authenticator
                     $this->workbench->getLogger()->logException($e, LoggerInterface::INFO);
                 }
+            }
+        }
+        
+        if (true || $authenticatedToken->isAnonymous()) {
+            $sessionCookieName = session_name();
+            $sessionIds = [];
+            foreach ($request->getHeader('Cookie') as $cookie) {
+                foreach (explode(';', $cookie) as $cookieVal) {
+                    if (StringDataType::startsWith(trim($cookieVal), $sessionCookieName . '=')) {
+                        $sessionIds[] = StringDataType::substringAfter($cookieVal, $sessionCookieName . '=');
+                    }
+                }
+            }
+            if (count($sessionIds) > 1) {
+                throw new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!');
             }
         }
         
