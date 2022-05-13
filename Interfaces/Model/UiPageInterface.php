@@ -109,13 +109,21 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iC
      *
      * @return string
      */
-    public function getWidgetIdSeparator();
-
+    public function getWidgetIdSpaceSeparator();
+    
     /**
+     * Generates an id for the given widget - optionally guaranteed to be unique on the page.
+     * 
+     * Calling this method with $makeUnique=false allows to apply custom modifications to
+     * the id - see the unique ids for contextual help buttons (iHaveContextualHelpTrait::getHelpButton())
+     * for an example.
      *
+     * @param WidgetInterface $widget     
+     * @param string $group    
+     * @param bool $makeUnique   
      * @return string
      */
-    public function getWidgetIdSpaceSeparator();
+    public function generateWidgetId(WidgetInterface $widget, string $group = null, bool $makeUnique = true) : string;
 
     /**
      * Returns TRUE if the page does not have widgets and FALSE if there is at least one widget.
