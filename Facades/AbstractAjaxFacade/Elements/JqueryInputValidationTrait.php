@@ -101,7 +101,7 @@ trait JqueryInputValidationTrait {
             return <<<JS
 
                     if ($valueJs !== undefined && $valueJs !== null && Array.isArray($valueJs) === false) {
-                        $valueJs.toString().split("{$widget->getMultiSelectValueDelimiter()}").forEach(function(part){
+                        $valueJs.toString().split("{$widget->getMultipleValuesDelimiter()}").forEach(function(part){
                             if ($partValidator !== true) {
                                 {$onFailJs}
                             }
