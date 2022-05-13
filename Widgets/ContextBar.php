@@ -157,8 +157,11 @@ class ContextBar extends Toolbar
     protected function createButtonForContext(ContextInterface $context)
     {   
         /* @var $btn \exface\Core\Widgets\Button */
-        $btn = $this->createButton()
-        ->setId($this->createButtonIdFromContext($context))
+        $btn = $this->createButton();
+        $btnId = $this->getPage()->generateWidgetId($btn, null, false) . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
+        
+        $btn
+        ->setId($btnId)
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())
         ->setIcon($context->getIcon())
@@ -170,15 +173,6 @@ class ContextBar extends Toolbar
         $this->context_widget_map[$btn->getId()] = $context;
         
         return $btn;
-    }
-    
-    /**
-     * 
-     * @param ContextInterface $context
-     * @return string
-     */
-    protected function createButtonIdFromContext(ContextInterface $context){
-        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
     }
     
     /**
