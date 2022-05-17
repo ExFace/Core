@@ -56,6 +56,8 @@ class StateMachineState implements iHaveIcon
     
     private $notifications = null;
     
+    private $description = null;
+    
     public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
         $this->stateMachine = $stateMachine;
@@ -537,5 +539,33 @@ class StateMachineState implements iHaveIcon
     public function getNotificationsUxon() : ?UxonObject
     {
         return $this->notifications;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getDescription() : ?string
+    {
+        return $this->description;
+    }
+    
+    /**
+     * Detailed description of the state - used in generated documentation and simply helps read the state machine config
+     * 
+     * Use this property to describe who does what in each particular state and what is the expected
+     * outcome. Focus on business, not technical details.  This helps understand the configuration once 
+     * it gets complexer with lots of technical stuff like transitions, notifications, etc.
+     * 
+     * @uxon-property description
+     * @uxon-type string
+     * 
+     * @param string $text
+     * @return StateMachineBehavior
+     */
+    public function setDescription(string $text) : StateMachineBehavior
+    {
+        $this->description = $text;
+        return $this;
     }
 }
