@@ -9,6 +9,8 @@ use exface\Core\Widgets\DataLookupDialog;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * Shows an advanced search dialog allowing the user to search and select data entries.
@@ -103,19 +105,45 @@ class ShowLookupDialog extends ShowDialog
                 $targetWidget = $this->getWidgetDefinedIn();
                 if ($targetWidget instanceof iUseInputWidget) {
                     $inputWidget = $targetWidget->getInputWidget();
-                    switch (true) {
-                        case ($inputWidget instanceof iHaveFilters): 
-                            foreach($inputWidget->getFilters() as $filter) {
-                                $data_table->addFilter($filter);
+                    if ($inputWidget->getMetaObject()->is($data_table->getMetaObject())) {
+                        // Inherit filters from calling widget
+                        switch (true) {
+                            case ($inputWidget instanceof iHaveFilters): 
+                                foreach($inputWidget->getFilters() as $filter) {
+                                    $data_table->addFilter($filter);
+                                }
+                                break;
+                            // In case of InputComboTable, it is very important to inherit all custom
+                            // filters as the lookup table should show the same as the dropdown table
+                            case ($inputWidget instanceof InputComboTable):
+                                foreach($inputWidget->getTable()->getFilters() as $filter) {
+                                    $data_table->addFilter($filter);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                        // Inherit columns from calling widget
+                        $cols = [];
+                        switch (true) {
+                            // If the input widget is an InputCombotTable, we MUST inherit columns of its
+                            // table because the lookup dialog should look the same as the dropdown table.
+                            // Additionally, hidden columns MUST be inherited too, because they may be
+                            // accessed by data- and value-getters and should be set in the InputComboTable
+                            // after an item was looked up.
+                            case ($inputWidget instanceof InputComboTable):
+                                $cols = $inputWidget->getTable()->getColumns();
+                                break;
+                            // TODO inherit columns from other types of input widgets? Is it a good idea to
+                            // inherit columns from tables? Could be a lot...
+                            default:
+                                break;
+                        }
+                        foreach ($cols as $col) {
+                            if (! $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
+                                $data_table->addColumn($data_table->createColumnFromUxon($col->exportUxonObject()));
                             }
-                            break;
-                        case ($inputWidget instanceof InputComboTable):
-                            foreach($inputWidget->getTable()->getFilters() as $filter) {
-                                $data_table->addFilter($filter);
-                            }
-                            break;
-                        default: //do nothing
-                            break;
+                        }
                     }
                 }
             }
