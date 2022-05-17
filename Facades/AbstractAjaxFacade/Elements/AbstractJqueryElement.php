@@ -591,7 +591,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     protected function getMetaObjectForDataGetter(ActionInterface $action = null) : MetaObjectInterface
     {
         switch (true) {
-            case $action !== null && ($action->getWidgetDefinedIn() instanceof iUseInputWidget):
+            case $action !== null && ($action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iUseInputWidget):
                 return $action->getWidgetDefinedIn()->getInputWidget()->getMetaObject();
             /*case $action !== null && $widget->hasParent():
                 return $this->getWidget()->getParent()->getMetaObject();*/
