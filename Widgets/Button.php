@@ -733,7 +733,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
                 "comparator" => $cond->getComparator(),
-                "value_right" => $cond->getValue()
+                "value_right" => $cond->getRightExpression()->__toString()
             ]));
         }
         
@@ -783,7 +783,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $w->getDataColumnName(),
                 "comparator" => $cond->getComparator(),
-                "value_right" => $cond->getValue()
+                "value_right" => $cond->getRightExpression()->__toString()
             ]));
         }
         
