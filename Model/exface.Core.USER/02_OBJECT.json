@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-10-05 18:38:06",
+            "MODIFIED_ON": "2022-05-07 23:47:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
@@ -336,12 +336,12 @@
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
                                                         "row_grouper": {
-                                                            "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                            "group_by_attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true
                                                         },
                                                         "filters": [
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE",
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE",
                                                                 "value": "=role_table!USER_ROLE",
                                                                 "apply_on_change": true,
                                                                 "comparator": "==",
@@ -360,25 +360,53 @@
                                                         ],
                                                         "columns": [
                                                             {
-                                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL"
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "EFFECT"
+                                                                "attribute_alias": "POLICY__EFFECT"
                                                             },
                                                             {
-                                                                "attribute_alias": "NAME"
+                                                                "attribute_alias": "POLICY__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "DESCRIPTION"
+                                                                "attribute_alias": "POLICY__APP__ALIAS"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__DESCRIPTION"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY",
+                                                                "hidden": true
+                                                            }
+                                                        ],
+                                                        "sorters": [
+                                                            {
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
+                                                                "direction": "asc"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__NAME",
+                                                                "direction": "asc"
                                                             }
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                                                                "bind_to_double_click": true
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectInfoDialog",
+                                                                    "object_alias": "exface.Core.AUTHORIZATION_POLICY",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "POLICY",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }

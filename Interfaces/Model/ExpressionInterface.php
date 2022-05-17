@@ -95,7 +95,11 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      */
     public function getType();
     
-    public function getRelationPath();
+    /**
+     * 
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function getRelationPath() : ?MetaRelationPathInterface;
     
     /**
      * Returns a copy of this expression with the relation path replaced by the given one.

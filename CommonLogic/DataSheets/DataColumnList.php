@@ -96,19 +96,23 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                     if ($relPathString !== '') {
                         $colCopy = $col->copy();
                         $colCopy->setName($col_name);
-                        // Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
-                        // it will also update the attribute alias, etc.
-                        // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
-                        // be in the wrong direction here
-                        $colCopy->setExpression($col->getExpressionObj()->withRelationPath($relationPath));
+                        // Copy the columns expression with the new relation path. Keep in mind, that
+                        // if the old expression already had a relation path, we need to combine both,
+                        // so that the behavior is the same for expressions with attribute alias
+                        // `RELATION__ATTRIBUTE` and those with attribute alias `ATTRIBUTE` and an
+                        // explicit relation path `RELATION`.
+                        
+                        // IDEA perhaps it would be nicer to use the expression::rebase() here, but the 
+                        // relation path seems to be in the wrong direction here
+                        $newRelPath = $relationPath;
+                        if ($oldRelPath = $col->getExpressionObj()->getRelationPath()) {
+                            $newRelPath = $newRelPath->copy()->appendRelationsFromStringPath($oldRelPath->toString());
+                        }
+                        $colCopy->setExpression($col->getExpressionObj()->withRelationPath($newRelPath));
                         // Add the column, but do not transfer values.
                         // This won't be possible anyway, as $colCopy currently still may belong to another sheet and we changed
                         // it's name, so even if the original $col had values, they won't be associated with the modified $colCopy!
                         $this->add($colCopy, $col_name, false);
-                        // Now take care of the values!
-                        /*if($col->isFresh()) {
-                            $this->getDataSheet()->setColumnValues($colCopy->getName(), $col->getValues());
-                        }*/
                     } else {
                         // If no relation path modification required, just add the column
                         $this->add($col);

@@ -29,6 +29,8 @@ use exface\Core\Actions\ReadPrefill;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 /**
  * Policy for access to actions.
@@ -133,6 +135,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, ActionInterface $action = null, TaskInterface $task = null): PermissionInterface
     {
         $applied = false;
+        
         try {
             if ($action === null) {
                 throw new InvalidArgumentException('Cannot evalute action access policy: no action provided!');
@@ -144,7 +147,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                     case $selector->isFilepath():
                         $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
                         $actionClassPath = FilePathDataType::normalize(get_class($action));
-                        $applied = $selectorClassPath === $actionClassPath;
+                        $applied = strcasecmp($selectorClassPath, $actionClassPath) === 0;
                         break;
                     case $selector->isClassname():
                         $applied = trim(get_class($action), "\\") === trim($selector->toString(), "\\");
@@ -154,7 +157,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         break;
                 }
                 if ($applied === false) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Action does not match');
                 }
             } else {
                 $applied = true;
@@ -166,7 +169,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 switch (true) {
                     case $expectCli === true && $isCli=== false:
                     case $expectCli === false && $isCli === true:
-                        return PermissionFactory::createNotApplicable($this);
+                        return PermissionFactory::createNotApplicable($this, 'CLI restriction (`command_line_task`)');
                     default:
                         $applied = true;
                 }
@@ -178,7 +181,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 switch (true) {
                     case $expectHttp === true && $isHttp === false:
                     case $expectHttp === false && $isHttp === true:
-                        return PermissionFactory::createNotApplicable($this);
+                        return PermissionFactory::createNotApplicable($this, 'HTTP restriction (`http_task`)');
                     default:
                         $applied = true;
                 }
@@ -190,7 +193,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 switch (true) {
                     case $expectScheduler === true && $isScheduler === false:
                     case $expectScheduler === false && $isScheduler === true:
-                        return PermissionFactory::createNotApplicable($this);
+                        return PermissionFactory::createNotApplicable($this, 'Scheduler restriction (`scheduler_task`)');
                     default:
                         $applied = true;
                 }
@@ -203,7 +206,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $user = $userOrToken;
             }
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
@@ -213,14 +216,14 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 // If the specific action does not require a trigger widget,
                 // don't apply the policy nevertheless
                 if ($action->isTriggerWidgetRequired() === false) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Widget match restriction (`action_trigger_widget_match`) set, but action does not require a trigger widget');
                 }
                 $triggerRequired = $this->getActionTriggerWidgetMatch();
                 $triggerValidated = $this->isActionTriggerWidgetValid($action, $task);
                 switch (true) {
                     case $triggerRequired === true && $triggerValidated === false:
                     case $triggerRequired === false && $triggerValidated === true:
-                        return PermissionFactory::createNotApplicable($this);
+                        return PermissionFactory::createNotApplicable($this, 'Widget match restriction (`action_trigger_widget_match`)');
                     default:
                         $applied = true;
                 }
@@ -228,9 +231,13 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             
             // Match meta object
             if ($this->metaObjectSelector !== null) {
-                $object = $action->getMetaObject();
+                try {
+                    $object = $action->getMetaObject();
+                } catch (ActionObjectNotSpecifiedError $e) {
+                    return PermissionFactory::createNotApplicable($this, 'Meta object required, but action has none');
+                }
                 if ($object === null || $object->is($this->metaObjectSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Meta object does not match');
                 } else {
                     $applied = true;
                 }
@@ -249,7 +256,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
                 
                 if ($page->isInGroup($this->pageGroupSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Page group does not match');
                 } else {
                     $applied = true;
                 }
@@ -259,15 +266,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             
             foreach ($this->getExcludeActions() as $selector) {
                 if ($action->isExactly($selector)) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Action excluded explicitly');
                 }
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
         } catch (\Throwable $e) {
-            $action->getWorkbench()->getLogger()->logException($e);
+            $action->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

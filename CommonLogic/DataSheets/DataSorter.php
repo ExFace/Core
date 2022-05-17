@@ -119,7 +119,7 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
      *
      * @return DataSorter
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -30,7 +31,7 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iCanBeCopied
 {
     /**
      * 
@@ -108,13 +109,21 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      *
      * @return string
      */
-    public function getWidgetIdSeparator();
-
+    public function getWidgetIdSpaceSeparator();
+    
     /**
+     * Generates an id for the given widget - optionally guaranteed to be unique on the page.
+     * 
+     * Calling this method with $makeUnique=false allows to apply custom modifications to
+     * the id - see the unique ids for contextual help buttons (iHaveContextualHelpTrait::getHelpButton())
+     * for an example.
      *
+     * @param WidgetInterface $widget     
+     * @param string $group    
+     * @param bool $makeUnique   
      * @return string
      */
-    public function getWidgetIdSpaceSeparator();
+    public function generateWidgetId(WidgetInterface $widget, string $group = null, bool $makeUnique = true) : string;
 
     /**
      * Returns TRUE if the page does not have widgets and FALSE if there is at least one widget.
@@ -299,7 +308,7 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface;
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : self;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns

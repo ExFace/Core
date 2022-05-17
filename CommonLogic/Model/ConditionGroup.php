@@ -275,22 +275,26 @@ class ConditionGroup implements ConditionGroupInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        
         $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
+        if ($uxon->hasProperty('base_object_alias')) {
+            $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
+        }
         if ($uxon->hasProperty('conditions')) {
-            foreach ($uxon->getProperty('conditions') as $group) {
-                if ($group->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
-                    $group->setProperty('object_alias', $this->getBaseObjectSelector());
+            foreach ($uxon->getProperty('conditions') as $prop) {
+                if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
+                    $prop->setProperty('object_alias', $this->getBaseObjectSelector());
                 }
-                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $group));
+                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $prop));
             }
         }
         if ($uxon->hasProperty('nested_groups')) {
-            foreach ($uxon->getProperty('nested_groups') as $group) {
-                if ($group->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
-                    $group->setProperty('base_object_alias', $this->getBaseObjectSelector());
+            foreach ($uxon->getProperty('nested_groups') as $prop) {
+                // Put the base object selector into the UXON instead of passing the object to the
+                // factory to avoid loading the object if it was not loaded yet.
+                if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
+                    $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
                 }
-                $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $group));
+                $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
             }
         }
     }
@@ -365,7 +369,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $exface = $this->getWorkbench();
         $copy = ConditionGroupFactory::createFromUxon($exface, $this->exportUxonObject());
@@ -611,6 +615,28 @@ class ConditionGroup implements ConditionGroupInterface
     public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface
     {
         $this->addConditionFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::replaceCondition()
+     */
+    public function replaceCondition(ConditionInterface $conditionToReplace, ConditionInterface $replaceWith, bool $recursive = true) : ConditionGroupInterface
+    {
+        foreach ($this->getConditions() as $cond) {
+            if ($cond === $conditionToReplace) {
+                $this->removeCondition($conditionToReplace);
+                $this->addCondition($replaceWith);
+                return $this;
+            }
+        }
+        if ($recursive === true) {
+            foreach ($this->getNestedGroups() as $grp) {
+                $grp->replaceCondition($conditionToReplace, $replaceWith);
+            }
+        }
         return $this;
     }
 }

@@ -62,6 +62,9 @@ trait CsvBuilderTrait
         
         // Initialize the CSV reader
         $csvReader = $this->initCsvReader($query);
+        if ($csvReader === null) {
+            return new DataQueryResultData([], 0, false);
+        }
         
         // Create a statement for advanced record selection
         $statement = Statement::create();
@@ -144,25 +147,26 @@ trait CsvBuilderTrait
     }
     
     /**
+     * Returns an instance of the PHP League CSV reader or NULL if the source is empty or does not exist
      * 
      * @param DataQueryInterface $query
      * @throws QueryBuilderException
-     * @return Reader
+     * @return Reader|NULL
      */
-    protected function initCsvReader(DataQueryInterface $query) : Reader
+    protected function initCsvReader(DataQueryInterface $query) : ?Reader
     {
         switch (true) {
             case $query instanceof FileContentsDataQuery:
                 $splFileInfo = $query->getFileInfo();
                 if ($splFileInfo === null) {
-                    return new DataQueryResultData([], 0, false);
+                    return null;
                 }
                 $csvReader = Reader::createFromPath($splFileInfo);
                 break;
             case is_a($query, 'exface\UrlDataConnector\Psr7DataQuery'):
                 $response = $query->getResponse() ? $query->getResponse()->getBody()->__toString() : null;
                 if ($response === null) {
-                    return new DataQueryResultData([], 0, false);
+                    return null;
                 }
                 $csvReader = Reader::createFromString($response);
                 break;

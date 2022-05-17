@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
@@ -592,7 +591,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     protected function getMetaObjectForDataGetter(ActionInterface $action = null) : MetaObjectInterface
     {
         switch (true) {
-            case $action !== null && ($action->getWidgetDefinedIn() instanceof iUseInputWidget):
+            case $action !== null && ($action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iUseInputWidget):
                 return $action->getWidgetDefinedIn()->getInputWidget()->getMetaObject();
             /*case $action !== null && $widget->hasParent():
                 return $this->getWidget()->getParent()->getMetaObject();*/

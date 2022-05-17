@@ -34,7 +34,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     private $allow_new_values = null;
 
-    private $autoselect_single_suggestion = true;
+    private $autoselect_single_suggestion = null;
 
     /**
      * Defines the alias of the action to be called by the autosuggest.
@@ -160,7 +160,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     public function getAutoselectSingleSuggestion() : bool
     {
-        return $this->autoselect_single_suggestion;
+        return $this->autoselect_single_suggestion ?? ($this->getAllowNewValues() ? false : true);
     }
 
     /**
@@ -194,14 +194,12 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
         if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
             $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-            $value = $valuePointer->getValue();
+            $value = $valuePointer->getValue(true, $this->getMultiSelectValueDelimiter(), true);
             
             // If it is a single-select but the prefill has multiple values (either explicitly or as a delimited list),
             // do not use the prefill data - we don't know which value to use!
-            if ($this->getMultiSelect() === false && $value) {
-                if ($data_sheet->countRows() > 1 || count(explode($this->getMultiSelectValueDelimiter(), $value)) > 1) {
-                    return;
-                }
+            if ($this->getMultiSelect() === false && is_array($value)) {
+                return;
             }
             
             $this->setValue($value, false);
@@ -244,20 +242,28 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
         // values directly
         $rowNr = $this->getMultiSelect() !== true ? 0 : null;
-        if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
-            $value = $pointer->getValue();
-            if ($this->getMultiSelect() && is_array($value)) {
-                $value = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+        if ($colVal = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
+            $pointer = DataPointerFactory::createFromColumn($colVal, $rowNr);
+            $value = $pointer->getValue(true, $this->getMultiSelectValueDelimiter(), true);
+            if (is_array($value)) {
+                if ($this->getMultiSelect()) {
+                    $value = $colVal->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+                } else {
+                    return;
+                }
             }
             $this->setValue($value, false);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
-        if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
-            $pointer = DataPointerFactory::createFromColumn($col, $rowNr);
-            $text = $pointer->getValue();
-            if ($this->getMultiSelect() && is_array($text)) {
-                $text = $col->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+        if ($colVal && $colText = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
+            $pointer = DataPointerFactory::createFromColumn($colText, $rowNr);
+            $text = $pointer->getValue(true, $this->getMultiSelectValueDelimiter(), true);
+            if (is_array($text)) {
+                if ($this->getMultiSelect()) {
+                    $text = $colText->aggregate(AggregatorFunctionsDataType::LIST_ALL);
+                } else {
+                    return;
+                }
             }
             $this->setValueText($text);
             $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $pointer));
@@ -315,9 +321,19 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         $column = $fitsRelation !== null ? $fitsRelation : $fitsRightObject;
         
         if ($column !== null) {
-            $this->setValuesFromArray($column->getValues(false), false);
-            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', DataPointerFactory::createFromColumn($column)));
-            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
+            $pointer = DataPointerFactory::createFromColumn($column);
+            $value = $pointer->getValue(true, $this->getMultipleValuesDelimiter());
+            if (is_array($value)) {
+                if ($this->getMultiSelect()) {
+                    $this->setValuesFromArray($column->getValues(false), false);
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', $pointer));
+                } else {
+                    return;
+                }
+            } else {
+                $this->setValue($value, false);
+            }
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         
         return;

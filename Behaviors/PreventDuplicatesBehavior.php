@@ -16,6 +16,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -377,7 +378,17 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 $value = $row[$col->getName()];
                 
                 if (($value === null || $value === '') && $col->getAttribute()->isRequired()) {
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!');
+                    // Throw a DataSheetMissingRequiredValueError here because it has a cool message
+                    // generator based on column/rows, which is very user friendly. The actual behavior
+                    // exception will still be visible in the logs.
+                    throw new DataSheetMissingRequiredValueError(
+                        $eventSheet, // $dataSheet
+                        null, // $message - empty to make exception autogenerate one
+                        null, // $alias
+                        (new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!')), // $previous
+                        $col, // $column
+                        $col->findEmptyRows() // $rowNumbers
+                    );
                 }
                 $rowFilterGrp->addConditionFromString($col->getAttributeAlias(), ($value === '' || $value === null ? EXF_LOGICAL_NULL : $value), ComparatorDataType::EQUALS);
             }

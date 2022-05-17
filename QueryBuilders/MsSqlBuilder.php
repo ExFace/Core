@@ -17,6 +17,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -602,5 +603,32 @@ class MsSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlSelectBinaryAsHEX(string $select_from) : string
     {
         return "LOWER(CONVERT(VARCHAR(34), {$select_from}, 1))";
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectSubselectJunctionWhere($qpart, $junctionAttribute, $select_from)
+     */
+    protected function buildSqlSelectSubselectJunctionWhere(QueryPart $qpart, MetaAttributeInterface $junctionAttribute, string $select_from) : string
+    {
+        // If aggregating, the UID is automatically MAXed (see buildSqlQuerySelect()), so we
+        // need to MAX it here too because MS SQL cannot compare to SELECT aliases in WHEREs.
+        // For example, in the following statement the WHERE of the subselect MUST be `MAX()`
+        // in MS SQL because simply `oid` cannot be resolved.
+        // ```
+        //  SELECT 
+        //      u.username, 
+        //      MAX(u.oid) as oid, 
+        //      (SELECT ... WHERE ... = MAX(u.oid)) AS subselect
+        //  FROM exf_user u 
+        //  GROUPY BY u.username
+        // ```
+        // TODO not sure, if something similar needs to be done if the junction attribute
+        // is included in the SELECT query, but is explicitly aggregated
+        if ($this->isAggregated() && $junctionAttribute->getObject()->hasUidAttribute() && $junctionAttribute->isExactly($junctionAttribute->getObject()->getUidAttribute()) && (! $this->getAttribute($junctionAttribute->getAliasWithRelationPath()) || ! $this->getAttribute($junctionAttribute->getAliasWithRelationPath())->getAggregator())) {
+            return '(MAX(' . $select_from . $this->getAliasDelim() . $this->buildSqlDataAddress($junctionAttribute) . '))';
+        } 
+        return parent::buildSqlSelectSubselectJunctionWhere($qpart, $junctionAttribute, $select_from);
     }
 }

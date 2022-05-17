@@ -16,8 +16,6 @@ use exface\Core\Actions\Traits\iPrefillWidgetTrait;
 use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iHaveValue;

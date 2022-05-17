@@ -195,190 +195,191 @@
 		     * - numbers (seconds)
 		     * - parsable string dates (ISO string, human-readable string)
 		     * - relative dates (+/-1d, etc.)
+		     * 
+		     * Returns NULL for invalid date values
 		     *
 		     * Examples:
 		     * - "31.12.2019" -> 2019-12-31
 		     * - "31.12" -> 2019-12-31
 		     * - "now" -> 2019-12-31
 		     * - "-2w" -> 2019-12-17
+		     * - "asdf" -> null
 		     * 
 			 * @param {string|NULL} [sDate]
-			 * @param {string} [dateFormat]
-			 * @param {Object} [ParseParams]
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
 			 * 
-			 * @returns {Date}
+			 * @returns {Date|NULL}
 			 */
-			parse: function(sDate, dateFormat, ParseParams) {
+			parse: function(sDate, sDateFormat, oParserParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
 				
 				// Variablen initialisieren
-				var match = null;
-				var dateParsed = false;
-				var dateValid = false;
-				var time = undefined;
-				var output = null;
+				var oMatches = null;
+				var bParsed = false;
+				var bValid = false;
+				var sTime = undefined;
+				var oMoment = null;
+				var iYYYY, iMM, iDD;
+				var sDiffKey, sDiffExp, iDiffNumber;
 				
 				if (sDate === '' || sDate === null) {
-					return output;
+					return null;
 				}
 				
-				if (dateFormat !== undefined) {
-					output = moment(sDate, _ICUFormatToMoment(dateFormat), true);
-					if (output.isValid()) {
-						return output.toDate();
+				if (sDateFormat !== undefined) {
+					oMoment = moment(sDate, _ICUFormatToMoment(sDateFormat), true);
+					if (oMoment.isValid()) {
+						return oMoment.toDate();
 					}
 				}
 
 				// hh:mm:ss , Thh:mm:ss
-				if (!dateParsed && (match = /[T ](\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
-					time = match[1];
-				} else if (!dateParsed && (match = / (\d{2}:\d{2})/.exec(sDate)) != null) {
+				if (!bParsed && (oMatches = /[T ](\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
+					sTime = oMatches[1];
+				} else if (!bParsed && (oMatches = / (\d{2}:\d{2})/.exec(sDate)) != null) {
 				// hh:mm
-					time = match[1];
+					sTime = oMatches[1];
 				}
 				
 				// dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
-					var yyyy = Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
+					iYYYY = Number(oMatches[3]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d
-				if (!dateParsed && (match = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = Number(match[1]);
-					var MM = Number(match[2]);
-					var dd = Number(match[3]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = Number(oMatches[1]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[3]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(oMatches[3]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d
-				if (!dateParsed && (match = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[1]);
-					var MM = Number(match[2]);
-					var dd = Number(match[3]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(oMatches[1]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[3]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = moment().year;
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = moment().year;
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyyyy
-				if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
-					var yyyy = Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
+					iYYYY = Number(oMatches[3]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyy
-				if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(oMatches[3]);
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMM
-				if (!dateParsed && (match = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					var yyyy = moment().year;
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (oMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = (new Date()).getFullYear();
+					iMM = Number(oMatches[2]);
+					iDD = Number(oMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				
 				// Ausgabe des geparsten Wertes
-				if (dateParsed && dateValid) {
-					
-					output = new Date(yyyy + '-' + MM + '-' + dd + (time !== undefined ? ' ' + time : ''));
-					return output;
+				if (bParsed && bValid) {
+					return new Date(iYYYY + '-' + iMM + '-' + iDD + (sTime !== undefined ? ' ' + sTime : ''));
 				}
 				// check for +/-?, digit?, expession in _mDateParseDefaultParams.lang?
-				var regexString = _buildRegexString(ParseParams);
-				var regExp = new RegExp("^([+\-]?\\d{0,3})(" + regexString + ")$", "i");
-				match = regExp.exec(sDate);
-				output = null;
-				if (!dateParsed && (match !== null)) {
-					output = moment();
-					var key = null;
-					var exp = match[2];
-					var number = Number(match[1]);
-					if (number !== 0 && exp === '') {
-						key ="day";
+				oMatches = (new RegExp("^([+\-]?\\d{0,3})(" + _buildRegexString(oParserParams) + ")$", "i")).exec(sDate);
+				oMoment = null;
+				if (!bParsed && (oMatches !== null)) {
+					oMoment = moment();
+					sDiffKey = null;
+					sDiffExp = oMatches[2];
+					iDiffNumber = Number(oMatches[1]);
+					if (iDiffNumber !== 0 && sDiffExp === '') {
+						sDiffKey ="day";
 					}
-					if (number === 0 && exp === '') {
-						key = "now";
+					if (iDiffNumber === 0 && sDiffExp === '') {
+						sDiffKey = "now";
 					}
-					if (number === 0 && exp !== '') {
-						number = 1;
+					if (iDiffNumber === 0 && sDiffExp !== '') {
+						iDiffNumber = 1;
 					}
-					if (key === null) {
-						key = _findKey(exp, ParseParams);
+					if (sDiffKey === null) {
+						sDiffKey = _findKey(sDiffExp, oParserParams);
 					}
-					switch (key) {
+					switch (sDiffKey) {
 						case "now": break;
 						case "yesterday":
-							output.subtract(1, 'days');
+							oMoment.subtract(1, 'days');
 							break;
 						case "tomorrow":
-							output.add(1, 'days');
+							oMoment.add(1, 'days');
 							break;
 						case "day":							
-							output.add(number, 'days');							
+							oMoment.add(iDiffNumber, 'days');							
 							break;
 						case "week":
-							output.add(number, 'weeks');
+							oMoment.add(iDiffNumber, 'weeks');
 							break;
 						case "month":
-							output.add(number, 'months');							
+							oMoment.add(iDiffNumber, 'months');							
 							break;
 						case "year":
-							output.add(number, 'years');
+							oMoment.add(iDiffNumber, 'years');
 							break;
-						default: output = null;
+						default: oMoment = null;
 					}
-					dateParsed = true;
+					bParsed = true;
 				}
 				
 				// (+/-)? ... (H/h/M/m/S/s)?
-		        if (!dateParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
-		            output = moment();
-		            switch (match[2].toUpperCase()) {
+		        if (! bParsed && (oMatches = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
+		            oMoment = moment();
+		            switch (oMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	output.add(Number(match[1]), 'hours');
+		                	oMoment.add(Number(oMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	output.add(Number(match[1]), 'minutes');
+		                	oMoment.add(Number(oMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	output.add(Number(match[1]), 'seconds');
+		                	oMoment.add(Number(oMatches[1]), 'seconds');
 		                    break;
 		            }
-		            dateParsed = true;
+		            bParsed = true;
 		        }
 				
 				// Ausgabe des geparsten Wertes
-				if (dateParsed && output !== null && output.isValid()) {
-					return output.toDate();
+				if (bParsed && oMoment !== null && oMoment.isValid()) {
+					return oMoment.toDate();
 				}
 			
-			return output;
+			return null;
 			},
 			
 			/**
@@ -401,7 +402,7 @@
 			},
 			
 			validate: function (sDate) {				
-				return true;						
+				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
 			}
 		},
 		
@@ -412,31 +413,50 @@
 		 * 
 		 */
 		time: {
+			
 			/**
+			 * Parses a string date into a JS Date object.
+			 * 
+			 * Accepts as input:
+		     * - empty values,
+		     * - parsable string tmes
+		     * - relative times (+/-1h, etc.)
+		     * 
+		     * Returns NULL for invalid time values
+		     *
+		     * Examples:
+		     * - "11:00" -> 11:00:00
+		     * - "1100" -> 11:00:00
+		     * - "+1" -> current time + 1 hour
+		     * - "asdf" -> null
+		     * 
+		     * @param {string|NULL} [sTime]
+			 * @param {string} [sTimeFormat]
 			 * 
 			 * @returns {string}
 			 */
-			parse: function(sTime, timeFormat) {
+			parse: function(sTime, sTimeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
-		        var match = null;
-		        var timeParsed = false;
-		        var timeValid = false;
-		        var output = null;
+		        var aMatches = null;
+		        var bTimeParsed = false;
+		        var bTimeValid = false;
+		        var oMoment = null;
 		        var iMsPos, iMs;
-		        
+		        var iHH, iMM, iSS, sAmPm;
+		            
 		        if (sTime === '' || sTime === null) {
-					return output;
+					return null;
 				}
 		        
-		        if (timeFormat !== undefined) {
-					output = moment(sTime, _ICUFormatToMoment(timeFormat), true);
-					if (output.isValid()) {
-						if (timeFormat.indexOf('a') !== '-1') {
-							return output.format('hh:mm:ss a');
+		        if (sTimeFormat !== undefined) {
+					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
+					if (oMoment.isValid()) {
+						if (sTimeFormat.indexOf('a') !== '-1') {
+							return oMoment.format('hh:mm:ss a');
 						} else {
-							return output.format('HH:mm:ss');
+							return oMoment.format('HH:mm:ss');
 						}
 					}
 				}
@@ -450,81 +470,77 @@
 				}
 		        
 		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
-		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
-		        	var hh, mm, ss, am_pm;
-		            hh = Number(match[1]);
-		            mm = Number(match[2]);
-		            ss = Number(match[3]);
-		            if (match[4]) {
-		            	am_pm = match[4].toUpperCase();
+		        if (!bTimeParsed && (aMatches = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
+		        	iHH = Number(aMatches[1]);
+		            iMM = Number(aMatches[2]);
+		            iSS = Number(aMatches[3]);
+		            if (aMatches[4]) {
+		            	sAmPm = aMatches[4].toUpperCase();
 		            }
-		            if (isNaN(ss)) {
-		            	ss = 0;
+		            if (isNaN(iSS)) {
+		            	iSS = 0;
 		            }
-		            timeParsed = true;
-		            timeValid = _validateTime (hh, mm, ss) ;
+		            bTimeParsed = true;
+		            bTimeValid = _validateTime(iHH, iMM, iSS) ;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	return hh + ':' + mm + ':' + ss + (am_pm !== undefined ? ' ' + am_pm : '');
+		        if (bTimeParsed && bTimeValid) {
+					// ().slice() padds the number with leading zeros
+		        	return ('00' + iHH).slice(-2) + ':' + ('00' + iMM).slice(-2) + ':' + ('00' + iSS).slice(-2) + (sAmPm !== undefined ? ' ' + sAmPm : '');
 		        }
 		        
 		        // (+/-)? ... (H/h/M/m/S/s)?
-		        if (!timeParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
-		            output = moment();
-		            switch (match[2].toUpperCase()) {
+		        if (!bTimeParsed && (aMatches = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
+		            oMoment = moment();
+		            switch (aMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	output.add(Number(match[1]), 'hours');
+		                	oMoment.add(Number(aMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	output.add(Number(match[1]), 'minutes');
+		                	oMoment.add(Number(aMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	output.add(Number(match[1]), 'seconds');
+		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
-		            timeParsed = true;
-		            timeValid = true;
+		            bTimeParsed = true;
+		            bTimeValid = true;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	var hh = output.hour();
-		        	var mm = output.minute();
-		        	var ss = output.second();
-		        	return output.format('HH:mm:ss');
-		        	//return  hh + ':' + mm + ':' + ss
+		        if (bTimeParsed && bTimeValid) {
+		        	return oMoment.format('HH:mm:ss');
 		        }
 		        
-		        return output;
+		        return null;
 			},
 			
 			format: function(sTime, sICUFormat) {
-				if (sTime !== null && sTime !== undefined && sTime !== '') {
-					if (sICUFormat === undefined) {
-						return moment(new Date('1970-01-01 ' + sTime)).format('LTS');
-					} else {
-						return moment(new Date('1970-01-01 ' + sTime)).formatICU(sICUFormat);
-					}
+				if (sTime === null || sTime === undefined || sTime === '') {
+					return sTime;	
 				}
-				return sTime;
+				if (sICUFormat === undefined) {
+					return moment(new Date('1970-01-01 ' + sTime)).format('LTS');
+				} else {
+					return moment(new Date('1970-01-01 ' + sTime)).formatICU(sICUFormat);
+				}
 			},
 			
-			formatObject: function(dateTime, sICUFormat) {
-				if (dateTime !== null && dateTime !== undefined && dateTime !== '') {
-					if (sICUFormat === undefined) {
-						return moment(dateTime).format('LTS');
-					} else {
-						return moment(dateTime).formatICU(sICUFormat);
-					}
+			formatObject: function(oDateTime, sICUFormat) {
+				if (oDateTime === null || oDateTime === undefined || oDateTime === '') {
+					return oDateTime;	
 				}
-				return '';
+				if (sICUFormat === undefined) {
+					return moment(oDateTime).format('LTS');
+				} else {
+					return moment(oDateTime).formatICU(sICUFormat);
+				}
 			},
 			
 			validate: function (sTime) {
-				return true;
+				return sTime === null || sTime === '' || sTime === undefined || this.parse(sTime) !== null;
 			}
 		},
 		
@@ -541,6 +557,16 @@
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
+				mLeft = mLeft !== undefined ? mLeft : null;
+				mRight = mRight !== undefined ? mRight : null;
+				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
+					if (parseFloat(mLeft) !== NaN) {
+						mLeft = parseFloat(mLeft);
+					}
+					if (parseFloat(mRight) !== NaN) {
+						mRight = parseFloat(mRight);
+					}
+				}
 				switch (sComparator) {
 	                case '==':
 	                case '!==':
@@ -549,20 +575,33 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                /*case ComparatorDataType::LESS_THAN: // <
-	                case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
-	                case ComparatorDataType::GREATER_THAN: // >
-	                case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
-	                    $jsConditions[] = "(mLeft || null) {sComparator} (mRight || null)";
-	                    break;*/
+	                case '<':
+	                	bResult = mLeft < mRight;
+	                	break;
+	                case '<=':
+	                	bResult = mLeft <= mRight;
+	                	break;
+	                case '>':
+	                	bResult = mLeft > mRight;
+	                	break;
+	                case '>=':
+	                	bResult = mLeft >= mRight;
+	                	break;
 	                case '[':
 	                case '![':
-	                    /*
-	                    $conditionJs = $this->buildJsConditionalPropertyComparatorIn(mLeft, mRight, $delim);
-	                    if (sComparator === ComparatorDataType::NOT_IN) {
-	                        $conditionJs = "!(" . $conditionJs . ")";
-	                    }
-	                    $jsConditions[] = $conditionJs;*/
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+			                var sLeftVal = (mLeft || '').toString().toLowerCase();
+			                for (var i = 0; i < rightValues.length; i++) {
+			                    if (sLeftVal === rightValues[i].trim().toLowerCase()) {
+			                        return true;
+			                    }
+			                }
+			                return false;
+			            }();
+						if (sComparator === '![') {
+							bResult = ! bResult;
+						}
 	                    break;
 	                case '=':
 	                case '!=':
@@ -582,7 +621,7 @@
 						}
 	                    break;
 	                default:
-	                  	throw new 'Unknown comparator ' + sComparator + '!';
+	                  	throw 'Unknown comparator "' + sComparator + '"!';
 	            }
 	            return bResult;
 			},
@@ -600,7 +639,7 @@
 				var aConditions = oConditionGroup.conditions || [];
 				var sOperator = oConditionGroup.operator;
 				var aRowsFiltered = [];
-				var exfTools = this;
+				var oSelf = this;
 				aRows.forEach(function(oRow){
 					var oCondition;
 					var bRowResult = null;
@@ -608,7 +647,7 @@
 					
 					for (var iC = 0; iC < aConditions.length; iC++) {
 						oCondition = aConditions[iC];
-				        bConditionResult = exfTools.compareValues(
+				        bConditionResult = oSelf.compareValues(
 							(oRow[oCondition.columnName] || null), 
 							oCondition.value,
 							oCondition.comparator
@@ -718,6 +757,29 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
+		},
+		
+		/**
+		 * String tools
+		 * 
+		 * 
+		 * 
+		 */
+		string: {
+			
+			/**
+			 * Replaces line breaks with the given HTML tag - like PHP nl2br()
+			 *
+			 * @param {string} [str]
+			 * @param {string} [breakTag] - default: '<br>'
+			 * 
+			 * @returns {string}
+			 */
+			nl2br: function(str, breakTag) {
+				breakTag = breakTag || '<br>';
+	  			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+			}
+			
 		}
 	}
 })));

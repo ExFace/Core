@@ -541,8 +541,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function isHidden()
     {
-        if ($this->hiddenIfAccessDenied === false || $this->hasAction() === false) {
-            return parent::isHidden();
+        $hiddenExplicitly = parent::isHidden();
+        if ($hiddenExplicitly === true || $this->hiddenIfAccessDenied === false || $this->hasAction() === false) {
+            return $hiddenExplicitly;
         }        
         return $this->getAction()->isAuthorized() === false;
                    
@@ -640,7 +641,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return null;
         }
         
-        if ($this->isDisabledIfInputInvalid() === true && null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
+        if ($this->isDisabledIfInputInvalid() === true && null !== $uxon = $this->getConditionalPropertyFromAction($this->getAction())) {
             $this->setDisabledIf($uxon);
         }
         
@@ -664,7 +665,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             return null;
         }
         
-        if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getDisabledIfFromAction($this->getAction())) {
+        if ($this->isHiddenIfInputInvalid() === true && null !== $uxon = $this->getConditionalPropertyFromAction($this->getAction())) {
             $this->setHiddenIf($uxon);
         }
         
@@ -676,7 +677,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * @param ActionInterface $action
      * @return UxonObject|NULL
      */
-    protected function getDisabledIfFromAction(ActionInterface $action) : ?UxonObject
+    protected function getConditionalPropertyFromAction(ActionInterface $action) : ?UxonObject
     {
         // Currently this will only work if there is exactly one input check
         // applicable to the input object
@@ -701,25 +702,23 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // be able to supply enough data.
         /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
         $condGrp = $check->getConditionGroup($this->getMetaObject());
-        if (! empty($condGrp->getNestedGroups())) {
-            return null;
-        }
         switch (true) {
             case $inputWidget instanceof iShowData:
-                return $this->getDisabledIfForData($inputWidget, $condGrp);
+                return $this->getConditionalPropertyForData($inputWidget, $condGrp);
             case $inputWidget instanceof iUseData:
-                return $this->getDisabledIfForData($inputWidget->getData(), $condGrp);
+                return $this->getConditionalPropertyForData($inputWidget->getData(), $condGrp);
             case $inputWidget instanceof iContainOtherWidgets:
-                return $this->getDisabledIfForContainer($inputWidget, $condGrp);
+                return $this->getConditionalPropertyForContainer($inputWidget, $condGrp);
         }
         return null;
     }
     
-    protected function getDisabledIfForData(Data $dataWidget, ConditionGroupInterface $condGrp) : ?UxonObject
+    protected function getConditionalPropertyForData(Data $dataWidget, ConditionGroupInterface $condGrp) : ?UxonObject
     {
         $uxon = new UxonObject([
             'operator' => $condGrp->getOperator()
         ]);
+        
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
@@ -737,14 +736,28 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 "value_right" => $cond->getValue()
             ]));
         }
+        
+        foreach ($condGrp->getNestedGroups() as $nestedGrp) {
+            $nestedUxon = $this->getConditionalPropertyForData($dataWidget, $nestedGrp);
+            if ($nestedUxon === null) {
+                if ($condGrp->getOperator() === EXF_LOGICAL_OR) {
+                    continue;
+                } else {
+                    return null;
+                }
+            }
+            $uxon->appendToProperty('condition_groups', $nestedUxon);
+        }
+        
         return $uxon;
     }
     
-    protected function getDisabledIfForContainer(iContainOtherWidgets $containerWidget, ConditionGroupInterface $condGrp) : ?UxonObject
+    protected function getConditionalPropertyForContainer(iContainOtherWidgets $containerWidget, ConditionGroupInterface $condGrp) : ?UxonObject
     {
         $uxon = new UxonObject([
             'operator' => $condGrp->getOperator()
         ]);
+        
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
@@ -773,6 +786,19 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 "value_right" => $cond->getValue()
             ]));
         }
+        
+        foreach ($condGrp->getNestedGroups() as $nestedGrp) {
+            $nestedUxon = $this->getConditionalPropertyForContainer($containerWidget, $nestedGrp);
+            if ($nestedUxon === null) {
+                if ($condGrp->getOperator() === EXF_LOGICAL_OR) {
+                    continue;
+                } else {
+                    return null;
+                }
+            }
+            $uxon->appendToProperty('condition_groups', $nestedUxon);
+        }
+        
         return $uxon;
     }
     

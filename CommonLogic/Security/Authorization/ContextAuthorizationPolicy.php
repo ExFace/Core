@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy to restrict access to workbench contexts.
@@ -78,14 +79,14 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
             $applied = false;
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true; 
             }
             
             if ($this->getContextSelectorString() !== null) {
                 if ($context->getAliasWithNamespace() !== $this->getContextSelectorString()) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Context does not match');
                 } else {
                     $applied = true;
                 }
@@ -94,10 +95,10 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
         } catch (\Throwable $e) {
-            $context->getWorkbench()->getLogger()->logException($e);
+            $context->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

@@ -1156,7 +1156,9 @@ CSS;
                 false,
                 "jsoneditor-modal jsoneditor-modal-maximized",
                 function(modal) {
-                    var editor = ace.edit('{$funcPrefix}_value_editor');
+                    var editor = ace.edit('{$funcPrefix}_value_editor', {
+                        wrap: true
+                    });
                     editor.focus();
 
                     modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {

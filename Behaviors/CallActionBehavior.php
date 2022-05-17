@@ -85,6 +85,8 @@ class CallActionBehavior extends AbstractBehavior
     
     private $ignoreDataSheets = [];
     
+    private $onFailError = true;
+    
     /**
      *
      * {@inheritDoc}
@@ -234,29 +236,36 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        if ($this->hasRestrictionConditions()) {
-            $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions());
-            if ($data_sheet->isEmpty()) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_data_matches_conditions`', [], $data_sheet);
-                return;
+        try {
+            if ($this->hasRestrictionConditions()) {
+                $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                if ($data_sheet->isEmpty()) {
+                    $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_data_matches_conditions`', [], $data_sheet);
+                    return;
+                }
             }
-        }
-        
-        if ($action = $this->getAction()) {
-            if ($event instanceof TaskEventInterface) {
-                $task = $event->getTask();
-                $task->setInputData($data_sheet);
-            } else {
-                // We never have an input widget here, so tell the action it won't get one
-                // and let it deal with it.
-                $action->setInputTriggerWidgetRequired(false);
-                $task = TaskFactory::createFromDataSheet($data_sheet);
+            
+            if ($action = $this->getAction()) {
+                if ($event instanceof TaskEventInterface) {
+                    $task = $event->getTask();
+                    $task->setInputData($data_sheet);
+                } else {
+                    // We never have an input widget here, so tell the action it won't get one
+                    // and let it deal with it.
+                    $action->setInputTriggerWidgetRequired(false);
+                    $task = TaskFactory::createFromDataSheet($data_sheet);
+                }
+                if ($event instanceof DataTransactionEventInterface) {
+                    $action->handle($task, $event->getTransaction());
+                } else {
+                    $action->handle($task);
+                }
             }
-            if ($event instanceof DataTransactionEventInterface) {
-                $action->handle($task, $event->getTransaction());
-            } else {
-                $action->handle($task);
-            }
+        } catch (\Throwable $e) {
+            if ($this->isErrorIfActionFails()) {
+                throw $e;
+            } 
+            $this->getWorkbench()->getLogger()->logException($e);
         }
     }
     
@@ -378,6 +387,31 @@ class CallActionBehavior extends AbstractBehavior
     protected function setOnlyIfDataMatchesConditions(UxonObject $uxon) : CallActionBehavior
     {
         $this->onlyIfDataMatchesConditionGroupUxon = $uxon;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isErrorIfActionFails() : bool
+    {
+        return $this->onFailError;
+    }
+    
+    /**
+     * Set to FALSE to silence errors if the called action fails
+     * 
+     * @uxon-property error_if_action_fails
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return CallActionBehavior
+     */
+    public function setErrorIfActionFails(bool $value) : CallActionBehavior
+    {
+        $this->onFailError = $value;
         return $this;
     }
 }

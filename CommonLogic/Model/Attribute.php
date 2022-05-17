@@ -771,7 +771,7 @@ class Attribute implements MetaAttributeInterface
      * 
      * @return MetaAttributeInterface
      */
-    public function copy(bool $ignoreRelationPath = false)
+    public function copy(bool $ignoreRelationPath = false) : self
     {
         $copy = clone $this;
         

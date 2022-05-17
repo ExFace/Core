@@ -20,6 +20,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataConnectors\FileFinderConnector;
+use exface\Core\DataTypes\MimeTypeDataType;
 
 /**
  * Lists files and folders using Symfony Finder Component.
@@ -572,6 +573,13 @@ class FileFinderBuilder extends AbstractQueryBuilder
         return $writtenFileNr;
     }
 
+    /**
+     * 
+     * @param SplFileInfo $file
+     * @param FileFinderDataQuery $query
+     * @throws QueryBuilderException
+     * @return string[]|mixed[]
+     */
     protected function buildResultRow(SplFileInfo $file, FileFinderDataQuery $query)
     {
         $row = array();
@@ -579,13 +587,14 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $file_data = $this->getDataFromFile($file, $query);
         
         foreach ($this->getAttributes() as $qpart) {
-            if ($field = strtolower($qpart->getAttribute()->getDataAddress())) {
+            if ($field = $qpart->getAttribute()->getDataAddress()) {
+                $fieldLC = mb_strtolower($field);
                 switch (true) {
-                    case array_key_exists($field, $file_data):
-                        $value = $file_data[$field];
+                    case array_key_exists($fieldLC, $file_data):
+                        $value = $file_data[$fieldLC];
                         break;
-                    case substr($field, 0, 4) === 'line':
-                        $line_nr = intval(trim(substr($field, 4), '()'));
+                    case substr($fieldLC, 0, 4) === 'line':
+                        $line_nr = intval(trim(substr($fieldLC, 4), '()'));
                         if ($line_nr === 1) {
                             $value = $file->openFile()->fgets();
                         } else {
@@ -594,8 +603,8 @@ class FileFinderBuilder extends AbstractQueryBuilder
                             $value = $fileObject->current();
                         }
                         break;
-                    case substr($field, 0, 7) === 'subpath':
-                        list($start, $length) = explode(',', trim(substr($field, 7), '()'));
+                    case substr($fieldLC, 0, 7) === 'subpath':
+                        list($start, $length) = explode(',', trim(substr($fieldLC, 7), '()'));
                         $start = trim($start);
                         $length = trim($length);
                         if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
@@ -605,16 +614,9 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         $subParts = array_slice($pathParts, $start, $length);
                         $value = implode('/', $subParts);
                         break;
-                    /*case 'contents':
-                        $value = $file->getContents();
-                        if ($qpart->getDataType() instanceof BinaryDataType) {
-                            switch ($qpart->getDataType()->getEncoding()) {
-                                case BinaryDataType::ENCODING_BASE64:
-                                    $value = base64_encode($value);
-                                    break;
-                            }
-                        }
-                        break;*/
+                    case $fieldLC === 'mimetype':
+                        $value = MimeTypeDataType::findMimeTypeOfFile($file->getPathname());
+                        break;
                     default: 
                         $method_name = 'get' . ucfirst($field);
                         if (method_exists($file, $method_name)) {
@@ -670,14 +672,25 @@ class FileFinderBuilder extends AbstractQueryBuilder
     }
     
     /**
-     * The FileFinderBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * The FileFinderBuilder can only handle attributes FILE objects, so no relations to
+     * other objects than those based on exface.Core.FILE can be read directly.
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
      */
     public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
-        return $attribute->getRelationPath()->isEmpty();
+        if ($attribute->getRelationPath()->isEmpty()) {
+            return true;
+        }
+        
+        foreach ($attribute->getRelationPath()->getRelations() as $rel) {
+            if (! $rel->getRightObject()->is('exface.Core.FILE')) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 ?>

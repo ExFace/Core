@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets\Parts;
 
-use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -10,6 +9,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 
 
 /**
@@ -19,8 +19,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * the value is calculated live by evaluating the condition every time it's left or right
  * side changes.
  * 
- * Both sides of the condition can be either scalar values (i.e. numbers or strings) or 
- * widget links (starting with `=`).
+ * Both sides of the condition can be either static values (i.e. numbers, strings or static
+ * formulas) or widget links (starting with `=`).
+ * 
+ * @see ConditionalProperty
  * 
  * @author Andrej Kabachnik
  * 
@@ -69,9 +71,12 @@ class ConditionalPropertyCondition implements WidgetPartInterface
      * 
      * @param ConditionalProperty $conditionGroup
      */
-    public function __construct(ConditionalProperty $conditionGroup)
+    public function __construct(ConditionalProperty $conditionGroup, UxonObject $uxon = null)
     {
         $this->conditionGroup = $conditionGroup;
+        if ($uxon !== null) {
+            $this->importUxonObject($uxon);
+        }
     }
     
     /**
@@ -107,7 +112,7 @@ class ConditionalPropertyCondition implements WidgetPartInterface
      */
     public function getWorkbench()
     {
-        return $this->getWidget()->getWorkbench();
+        return $this->conditionGroup->getWorkbench();
     }
     
     /**

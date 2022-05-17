@@ -16,6 +16,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Policy for access to data.
@@ -96,6 +97,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     public function authorize(UserImpersonationInterface $userOrToken = null, DataSheetInterface $dataSheet = null, array $operations = []) : PermissionInterface
     {
         $applied = false;
+        $explanation = '';
         try {
             if ($dataSheet === null) {
                 throw new InvalidArgumentException('Cannot evalute data access policy: no data sheet provided!');
@@ -105,21 +107,12 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($this->metaObjectSelector !== null) {
                 $object = $dataSheet->getMetaObject();
                 if ($object === null || $object->is($this->metaObjectSelector) === false) {
-                    return PermissionFactory::createNotApplicable($this);
+                    return PermissionFactory::createNotApplicable($this, 'Meta object does not match');
                 } else {
                     $applied = true;
                 }
             } else {
                 $applied = true;
-            }
-            
-            // Match operation
-            if ($this->hasOperationsRestrictions() === true) {
-                if (empty(array_intersect($operations, $this->getOperations()))) {
-                    return PermissionFactory::createNotApplicable($this);
-                } else {
-                    $applied = true;
-                }
             }
             
             // Match user
@@ -129,15 +122,23 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 $user = $userOrToken;
             }
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
             
+            // Match operation
+            if ($applied === true && $this->hasOperationsRestrictions() === true) {
+                if (empty(array_intersect($operations, $this->getOperations()))) {
+                    return PermissionFactory::createNotApplicable($this, 'Operation does not match');
+                } 
+            } 
+            
             // Add filters if required
-            if (null !== $filtersUxon = $this->getFiltersUxon()) {
+            if ($applied === true && null !== $filtersUxon = $this->getFiltersUxon()) {
                 $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
                 $dataFilters = $dataSheet->getFilters();
+                $explanation .= ($explanation ? ' ' : '') . 'Added filter `' . $condGrp->toString() . '`.';
                 switch (true) {
                     case $condGrp->getOperator() === $dataFilters->getOperator():
                         foreach ($condGrp->getConditions() as $cond) {
@@ -147,7 +148,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                             $dataFilters->addNestedGroup($nestedGrp);   
                         }
                         break;
-                    case $dataSheet->getOperator() === EXF_LOGICAL_AND:
+                    case $dataFilters->getOperator() === EXF_LOGICAL_AND:
                         $dataSheet->getFilters()->addNestedGroup($condGrp);
                         break;
                     default:
@@ -161,15 +162,15 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
         } catch (\Throwable $e) {
-            $dataSheet->getWorkbench()->getLogger()->logException($e);
+            $dataSheet->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this);
+        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $explanation);
     }
     
     /**

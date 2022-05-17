@@ -587,9 +587,18 @@ class FileList extends DataTable
     public function getDeleteButton() : Button
     {
         if ($this->deleteButton === null) {
-            $this->deleteButton = WidgetFactory::createFromUxonInParent($this, new UxonObject([
+            // TODO make the delete action customizable via UXON
+            $uxon = new UxonObject([
                 'action_alias' => DeleteObject::class
-            ]), $this->getButtonWidgetType());
+            ]);
+            // Make sure, the id of the button does not interfere with regularly defined button ids
+            if (! $uxon->hasProperty('id')) {
+                $uxon->setProperty('id', $this->getPage()->generateWidgetId($this, 'Delete'));
+                // Remove the id-space since it is a path-like id
+                $uxon->setProperty('id_space', '');
+            }
+            $this->deleteButton = WidgetFactory::createFromUxonInParent($this, $uxon, $this->getButtonWidgetType());
+            
         }
         return $this->deleteButton;
     }

@@ -219,7 +219,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      * 
      * @return QueryPartFilterGroup
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = new QueryPartFilterGroup($this->getAlias(), $this->getQuery());
         $copy->setOperator($this->getOperator());

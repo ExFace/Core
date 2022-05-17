@@ -8,9 +8,12 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
 
 /**
  * This trait includes JS-generator methods support implementation of conditional widget properties.
+ * 
+ * NOTE: This trait only works if the exfTools JS library is available in the browser!
  * 
  * How to use:
  * 
@@ -31,95 +34,53 @@ trait JsConditionalPropertyTrait {
     /**
      * Generates the contents of the JS if-operator (i.e. the code between the brackets).
      * 
-     * @param ConditionalProperty $conditionalProperty
+     * @param ConditionalProperty $conditionGroup
      * @throws FacadeRuntimeError
      * @return string
      */
-    private function buildJsConditionalPropertyIf(ConditionalProperty $conditionalProperty) : string
+    private function buildJsConditionalPropertyIf(ConditionalPropertyConditionGroup $conditionGroup) : string
     {
         $jsConditions = [];
-        foreach ($conditionalProperty->getConditions() as $condition) {
-            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionalProperty);
-            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionalProperty);
+        
+        // First evaluate the conditions
+        foreach ($conditionGroup->getConditions() as $condition) {
+            $leftJs = $this->buildJsConditionalPropertyValue($condition->getValueLeftExpression(), $conditionGroup->getConditionalProperty());
+            $rightJs = $this->buildJsConditionalPropertyValue($condition->getValueRightExpression(), $conditionGroup->getConditionalProperty());
             
-            switch ($condition->getComparator()) {
-                case ComparatorDataType::EQUALS: // ==
-                case ComparatorDataType::EQUALS_NOT: // !==
-                    $jsConditions[] = "($leftJs || '').toString() {$condition->getComparator()} ($rightJs || '').toString()";
-                    break;
-                case ComparatorDataType::LESS_THAN: // <
-                case ComparatorDataType::LESS_THAN_OR_EQUALS: // <=
-                case ComparatorDataType::GREATER_THAN: // >
-                case ComparatorDataType::GREATER_THAN_OR_EQUALS: // >=
-                    $jsConditions[] = "($leftJs || null) {$condition->getComparator()} ($rightJs || null)";
-                    break;
-                case ComparatorDataType::IN: // [
-                case ComparatorDataType::NOT_IN: // ![
-                    $rightExpr = $condition->getValueRightExpression();
-                    $delim = EXF_LIST_SEPARATOR;
-                    if ($rightExpr->isReference() === true) {
-                        $targetWidget = $rightExpr->getWidgetLink()->getTargetWidget();
-                        if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
-                            $delim = $targetWidget->getAttribute()->getValueListDelimiter();
-                        } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink()->getTargetColumnId()) {
-                            $targetCol = $targetWidget->getColumnByDataColumnName($colName);
-                            if ($targetCol->isBoundToAttribute() === true) {
-                                $delim = $targetCol->getAttribute()->getValueListDelimiter();
-                            }
+            $delim = EXF_LIST_SEPARATOR;
+            // Try to get the possibly customized delimiter from the right side of the
+            // condition if it is an IN-condition
+            if ($condition->getComparator() === ComparatorDataType::IN || $condition->getComparator() === ComparatorDataType::NOT_IN) {
+                $rightExpr = $condition->getValueRightExpression();
+                if ($rightExpr->isReference() === true) {
+                    $targetWidget = $rightExpr->getWidgetLink()->getTargetWidget();
+                    if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
+                        $delim = $targetWidget->getAttribute()->getValueListDelimiter();
+                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink()->getTargetColumnId()) {
+                        $targetCol = $targetWidget->getColumnByDataColumnName($colName);
+                        if ($targetCol->isBoundToAttribute() === true) {
+                            $delim = $targetCol->getAttribute()->getValueListDelimiter();
                         }
                     }
-                    $conditionJs = $this->buildJsConditionalPropertyComparatorIn($leftJs, $rightJs, $delim);
-                    if ($condition->getComparator() === ComparatorDataType::NOT_IN) {
-                        $conditionJs = "!(" . $conditionJs . ")";
-                    }
-                    $jsConditions[] = $conditionJs;
-                    break;
-                case ComparatorDataType::IS: // =
-                case ComparatorDataType::IS_NOT: // !=
-                    $conditionJs = $condition->getComparator() === ComparatorDataType::IS_NOT ? '!' : '';
-                    $conditionJs .= "function(){var sR = ($rightJs || '').toString(); var sL = ($leftJs || '').toString(); return (sR === '' && sL !== '') || (sR !== '' && sL === '') ? false : (new RegExp(sR, 'i')).test(sL); }()";
-                    $jsConditions[] = $conditionJs;
-                    break;
-                default:
-                    // TODO fuer diese Comparatoren muss noch der JavaScript generiert werden
+                }
             }
+            $jsConditions[] = "exfTools.data.compareValues($leftJs, $rightJs, '{$condition->getComparator()}', '$delim')";
         }
         
-        switch ($conditionalProperty->getOperator()) {
+        // Then just append condition groups evaluated by a recursive call to this method
+        foreach ($conditionGroup->getConditionGroups() as $nestedGrp) {
+            $jsConditions[] = '(' . $this->buildJsConditionalPropertyIf($nestedGrp) . ')';
+        }
+        
+        // Now glue everything together using the logical operator
+        switch ($conditionGroup->getOperator()) {
             case EXF_LOGICAL_AND: $op = ' && '; break;
             case EXF_LOGICAL_OR: $op = ' || '; break;
             default:
-                throw new FacadeRuntimeError('Unsupported logical operator for conditional property "' . $conditionalProperty->getPropertyName() . '" in widget "' . $this->getWidget()->getWidgetType() . ' with id "' . $this->getWidget()->getId() . '"');
+                throw new FacadeRuntimeError('Unsupported logical operator for conditional property "' . $conditionGroup->getPropertyName() . '" in widget "' . $this->getWidget()->getWidgetType() . ' with id "' . $this->getWidget()->getId() . '"');
         }
         
         return implode($op, $jsConditions);
-    }
-    
-    /**
-     * Build the javascript function for the EXF_COMPARATOR_IN comparator.
-     * 
-     * @param string $leftJs
-     * @param string $rightJs
-     * @return string
-     */
-    private function buildJsConditionalPropertyComparatorIn (string $leftJs, string $rightJs, string $listDelimiter = EXF_LIST_SEPARATOR) : string
-    {
-        $comparator = ComparatorDataType::EQUALS;
-        return <<<JS
-
-            function() {
-                var rightValues = (({$rightJs} || '').toString()).split('{$listDelimiter}');
-                var sLeftVal = ($leftJs || '').toString();
-                for (var i = 0; i < rightValues.length; i++) {
-                    if (sLeftVal {$comparator} rightValues[i].trim()) {
-                        return true;
-                    }
-                }
-                return false;
-            }()
-
-JS;
-        
     }
     
     /**
@@ -142,8 +103,11 @@ JS;
             case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
                 $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
                 break;
+            case $expr->isStatic():
+                $valueJs = "'" . str_replace('"', '\"', $expr->evaluate()) . "'";
+                break;
             default:
-                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values and widget links supported!');
+                throw new WidgetConfigurationError($conditionalProperty->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the conditional widget property "' . $conditionalProperty->getPropertyName() . '": only scalar values, static formulas and widget links supported!');
         }
         
         return $valueJs;
@@ -208,7 +172,7 @@ JS;
     {
         return <<<JS
         
-						if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+						if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
 							{$ifJs};
 						} else {
 							{$elseJs};

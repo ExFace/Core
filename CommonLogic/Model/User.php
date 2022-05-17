@@ -519,10 +519,10 @@ class User implements UserInterface
         }
         $userObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
         $ds = DataSheetFactory::createFromObject($userObj);
-        $ds->getColumns()->addFromExpression($alias, $alias);
+        $col = $ds->getColumns()->addFromExpression($alias);
         $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $this->getUid(), ComparatorDataType::EQUALS);
         $ds->dataRead();
-        return $ds->getCellValue($alias, 0);
+        return $col->getValue(0);
     }
     
     /**

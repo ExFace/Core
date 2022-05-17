@@ -203,7 +203,7 @@ class NotifyingBehavior extends AbstractBehavior
             }
             
             if ($this->hasRestrictionConditions()) {
-                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions());
+                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
                 if ($dataSheet->isEmpty()) {
                     $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
                     return;
@@ -348,12 +348,12 @@ class NotifyingBehavior extends AbstractBehavior
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
      * @uxon-template [{"channel": ""}]
      * 
-     * @param UxonObject $arrayOfEnvelopes
+     * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
      */
-    protected function setNotifications(UxonObject $arrayOfEnvelopes) : NotifyingBehavior
+    protected function setNotifications(UxonObject $arrayOfMessages) : NotifyingBehavior
     {
-        $this->messageUxons = $arrayOfEnvelopes;
+        $this->messageUxons = $arrayOfMessages;
         return $this;
     }
     

@@ -22,15 +22,15 @@ interface DataPointerInterface extends WorkbenchDependantInterface
     
     /**
      * 
-     * @return DataColumnInterface
+     * @return DataColumnInterface|NULL
      */
-    public function getColumn() : DataColumnInterface;
+    public function getColumn() : ?DataColumnInterface;
     
     /**
      * 
-     * @return int
+     * @return int|NULL
      */
-    public function getRowNumber() : int;
+    public function getRowNumber() : ?int;
     
     /**
      * 
@@ -57,7 +57,32 @@ interface DataPointerInterface extends WorkbenchDependantInterface
     public function isColumn() : bool;
     
     /**
-     * @return mixed
+     * Returns the values pointed to: cell value, array of values of a column or an entire row as an associative array
+     * 
+     * The optional arguments allow some handy normalization:
+     * 
+     * - `$splitLists` and `$splitDelimiter` will look for values, that are delimited 
+     * lists and split them into arrays
+     * - `$onlyUnique` will remove duplicates from any array values. Additionally, if
+     * an array will end up with only a single value, that value will be returned as
+     * scalar (not as array)
+     * 
+     * @param bool $splitLists
+     * @param string $splitDelimiter
+     * @param bool $onlyUnique
+     * @return mixed|NULL
      */
-    public function getValue();
+    public function getValue(bool $splitLists = false, string $splitDelimiter = null, bool $onlyUnique = false);
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasValue() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasMultipleValues() : bool;
 }

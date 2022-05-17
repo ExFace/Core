@@ -34,26 +34,38 @@ interface ResultUriInterface extends ResultInterface
      * 
      * @return bool
      */
-    public function getAutoRedirect() : bool;
+    public function isAutoRedirect() : bool;
     
     /**
      * 
      * @param bool $trueOrFalse
      * @return ResultUriInterface
      */
-    public function setAutoRedirect($trueOrFalse) : ResultUriInterface;
+    public function setAutoRedirect(bool $trueOrFalse) : ResultUriInterface;
     
     /**
      * 
      * @return bool
      */
-    public function getOpenInNewWindow() : bool;
+    public function isOpenInNewWindow() : bool;
     
     /**
      * 
-     * @param unknown $trueOrFalse
+     * @param bool $trueOrFalse
      * @return ResultUriInterface
      */
-    public function setOpenInNewWindow($trueOrFalse) : ResultUriInterface;
+    public function setOpenInNewWindow(bool $trueOrFalse) : ResultUriInterface;
     
+    /**
+     * 
+     * @return bool
+     */
+    public function isDownload() : bool;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return ResultUriInterface
+     */
+    public function setDownload(bool $value) : ResultUriInterface;
 }
