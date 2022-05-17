@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  *
@@ -169,7 +170,14 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function disable() : BehaviorInterface
     {
-        $this->unregisterEventListeners();
+        if ($this->disabled === true) {
+            return $this;
+        }
+        try {
+            $this->unregisterEventListeners();
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this->getObject(), 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
+        }
         $this->disabled = true;
         return $this;
     }
@@ -182,6 +190,10 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function enable() : BehaviorInterface
     {
+        if ($this->disabled === false) {
+            return $this;
+        }
+        
         if (! $this->isRegistered()) {
             $this->register();
         } else {
@@ -223,7 +235,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return BehaviorInterface
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

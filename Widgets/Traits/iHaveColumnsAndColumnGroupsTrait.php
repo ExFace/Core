@@ -287,39 +287,33 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
     
     /**
-     * Defines the columns of data: each element of the array can be a DataColumn or a DataColumnGroup widget.
+     * Defines the columns to display: each element of the array can be a `DataColumn` or a `DataColumnGroup` widget.
      *
      * To create a column showing an attribute of the Data's meta object, it is sufficient to only set
-     * the attribute_alias for each column object. Other properties like caption, align, editor, etc.
+     * the `attribute_alias` for each column object. Other properties like caption, align, editor, etc.
      * are optional. If not set, they will be determined from the properties of the attribute.
      *
-     * The widget type (DataColumn or DataColumnGroup) can be omitted: it can be determined automatically:
-     * E.g. adding {"attribute_group_alias": "~VISIBLE"} as a column is enough to generate a column group
+     * The widget type (`DataColumn` or `DataColumnGroup`) can be omitted: it can be determined automatically:
+     * E.g. adding `{"attribute_group_alias": "~VISIBLE"}` as a column is enough to generate a column group
      * with all visible attributes of the object.
      *
      * Column groups with captions will produce grouped columns with mutual headings (s. example below).
      *
      * Example:
-     * "columns": [
+     * 
+     * ```
      *  {
-     *      "attribute_alias": "PRODUCT__LABEL",
-     *      "caption": "Product"
-     *  },
-     *  {
-     *      "attribute_alias": "PRODUCT__BRAND__LABEL"
-     *  },
-     *  {
-     *      "caption": "Sales",
      *      "columns": [
-     *  {
-     *      "attribute_alias": "QUANTITY:SUM",
-     *      "caption": "Qty."
-     *  },
-     *  {
-     *      "attribute_alias": "VALUE:SUM",
-     *      "caption": "Sum"
+     *          {"attribute_alias": "PRODUCT__LABEL", "caption": "Product"}, 
+     *          {"attribute_alias": "PRODUCT__BRAND__LABEL"},
+     *          {"caption": "Sales", "columns": [
+     *              {"attribute_alias": "QUANTITY:SUM", "caption": "Qty."},
+     *              {"attribute_alias": "VALUE:SUM", "caption": "Sum"}
+     *          ]}
+     *      }
      *  }
-     * ]
+     *  
+     * ```    
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]

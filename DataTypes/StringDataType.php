@@ -241,7 +241,7 @@ class StringDataType extends AbstractDataType
      * @uxon-property length_min
      * @uxon-type integer
      * 
-     * @param int|float $number
+     * @param int $number
      * @return StringDataType
      */
     public function setLengthMin($number) : StringDataType
@@ -262,9 +262,9 @@ class StringDataType extends AbstractDataType
      * Maximum legnth of the string in characters.
      * 
      * @uxon-property length_max
-     * @uxon-type int|float
+     * @uxon-type integer
      * 
-     * @param integer $number
+     * @param int|NULL $number
      * @return StringDataType
      */
     public function setLengthMax($number) : StringDataType

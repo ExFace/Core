@@ -14,7 +14,6 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\DateTimeDataType;
-use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Actions\DownloadFile;
@@ -122,7 +121,7 @@ HTML;
     {
         if ($this->getWidget()->isZoomable()) {
             if ($this->getWidget()->hasImageTitleColumn()) {
-                $lightboxCaption = "caption: function(element, info){var oData = $('#{$this->getIdOfSlick()}').data('_exfData'); if (oData) {return (oData.rows || [])[info.index]['{$this->getWidget()->getImageTitleColumn()->getDataColumnName()}'] } else {return '';} },";
+                $lightboxCaption = "caption: function(element, info){ return $('<p></p>').html(exfTools.string.nl2br(element.title)).prop('outerHTML'); },";
             }
             
             $zoomOnClickJs = $this->getWidget()->isZoomOnClick() ? 'true' : 'false';
@@ -303,7 +302,14 @@ JS
                     'script' => <<<JS
                         var aRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), DownloadFile::class, $widget))}.rows || [];
                         aRows.forEach(function(oRow) {
-                            var a = $("<a>").attr("href", oRow['{$widget->getImageUrlColumn()->getDataColumnName()}']).attr("download", {$filenameJs}).appendTo("body");
+                            var sUrl = oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                            var a;
+
+                            if (! sUrl) {
+                                {$this->buildJsShowMessageError($this->escapeString($this->translate('WIDGET.IMAGEGALLERY.CANNOT_DOWNLOAD_WITHOUT_URL')))}
+                            }
+
+                            a = $("<a>").attr("href", sUrl).attr("download", {$filenameJs}).appendTo("body");
                             a[0].click();
                             a.remove();
                         });
@@ -401,7 +407,7 @@ JS;
                 // widget: filters, sorters, etc.
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
             case $widget->isUploadEnabled() && $widget->getUploader()->isInstantUpload() === false
-            && ($action instanceof iModifyData)
+            && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject())
             && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
@@ -476,6 +482,22 @@ JS;
             $mimeTypeJs = 'null';
         }
         
+        $tooltipJs = '';
+        foreach ($widget->getColumns() as $col) {
+            if ($col->isHidden()) {
+                continue;
+            }
+            $colFormatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $tooltipJs .= ($tooltipJs !== '' ? 'sTooltip += "\\n";' : '') . "sTooltip += " . ($col->getCaption() ? '"' . $this->escapeString($col->getCaption(), false) . ': " ' : '""') . " + " . $colFormatter->buildJsFormatter("oRow['{$col->getDataColumnName()}']") . ";\n";
+        }
+        $titleJs = '';
+        if ($widget->hasImageTitleColumn()) {
+            $col = $widget->getImageTitleColumn();
+            $titleJs = 'sTitle = ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter("oRow['{$col->getDataColumnName()}']") . ';';
+            $tooltipJs = "sTooltip += sTitle;\n" . ($tooltipJs !== '' ? 'sTooltip += "\\n\\n";' . $tooltipJs : '');
+        }
+        
+        
         return <<<JS
 
                 (function(){
@@ -487,17 +509,22 @@ JS;
     				aRows.forEach(function(oRow, i) {
                         var sSrc = {$thumbJs};
                         var sSrcLarge = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
-                        var sTitle = oRow['{$widget->getImageTitleColumn()->getDataColumnName()}'];
+                        var sTitle = '';
+                        var sTooltip = '';
                         var sMimeType = {$mimeTypeJs};
                         var sIcon = '';
+
+                        {$titleJs}
+                        {$tooltipJs}
+
                         if (sMimeType === null || sMimeType.startsWith('image')) {
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTitle + '\" alt=\"' + sTitle + '\" />'")});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTooltip + '\" alt=\"' + sTitle + '\" />'")});
                         } else {
                             switch (sMimeType.toLowerCase()) {
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                 default: sIcon = 'fa fa-file-o';
                             }
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType')});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType', '', 'sTooltip')});
                         }
                     });
 
@@ -512,20 +539,34 @@ JS;
 JS;
     }
     
+    /**
+     * 
+     * @param string $imgJs
+     * @param string $cssClass
+     * @return string
+     */
     protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '') : string
     {
         return "'<div class=\"imagecarousel-item {$cssClass}\">' + {$imgJs} + '</div>'";
     }
     
-    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '') : string
+    /**
+     * 
+     * @param string $sFileNameJs
+     * @param string $sMimeTypeJs
+     * @param string $cssClass
+     * @return string
+     */
+    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null) : string
     {
+        $sTooltipJs = $sTooltipJs ?? $sFileNameJs;
         return <<<JS
                             (function(){
                                 switch ($sMimeTypeJs.toLowerCase()) {
                                     case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                     default: sIcon = 'fa fa-file-o';
                                 }
-                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sFileNameJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
+                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sTooltipJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
                             })()
 
 JS;

@@ -7,7 +7,6 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\StateMachineTransitionError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -72,6 +71,10 @@ class StateMachineBehavior extends AbstractBehavior
     
     private $hasNumericIds = true;
     
+    private $behaviors = null;
+    
+    private $displayWidgetWidth = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -95,6 +98,12 @@ class StateMachineBehavior extends AbstractBehavior
             $this->overrideAttributeDisplayWidget();
         }
         
+        $this->registerNotifications();
+        foreach ($this->behaviors as $behavior) {
+            if ($behavior->is)
+                $behavior->enable();
+        }
+        
         $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
@@ -110,6 +119,10 @@ class StateMachineBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->removeListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        
+        foreach ($this->behaviors as $behavior) {
+            $behavior->disable();
+        }
         
         $this->getWorkbench()->eventManager()->removeListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
@@ -246,6 +259,9 @@ class StateMachineBehavior extends AbstractBehavior
                 'text_scale' => new UxonObject($texts),
                 'color_scale' => new UxonObject($colorMap)
             ]);
+            if ($this->getDisplayWidgetWidth()) {
+                $uxon->setProperty('width', $this->getDisplayWidgetWidth()->getValue());
+            }
             $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         }
         
@@ -774,6 +790,35 @@ class StateMachineBehavior extends AbstractBehavior
     }
     
     /**
+     * Sets the width of the widget.
+     * Set to `1` for default widget width in a facade or `max` for maximum width possible.
+     *
+     * The width can be specified either in
+     * - facade-specific relative units (e.g. `width: 2` makes the widget twice as wide
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `width: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `width: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property display_widget_width
+     * @uxon-type string
+     **/ 
+    public function setDisplayWidgetWidth($value)
+    {
+        $exface = $this->getWorkbench();
+        $this->displayWidgetWidth = WidgetDimensionFactory::createFromAnything($exface, $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return WidgetDimension|NULL
+     */
+    protected function getDisplayWidgetWidth() : ?WidgetDimension
+    {
+        return $this->displayWidgetWidth;
+    }
+    
+    /**
      *
      * @return bool
      */
@@ -941,6 +986,40 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         return false;
+    }
+    
+    protected function registerNotifications() : StateMachineBehavior
+    {
+        // Only register behaviors once!
+        if ($this->behaviors !== null) {
+            return $this;
+        } else {
+            $this->behaviors = [];
+        }
+        
+        foreach ($this->getStates() as $state) {
+            if (null !== $notifications = $state->getNotificationsUxon()) {
+                $uxon = new UxonObject([
+                    "notify_on_event" => OnUpdateDataEvent::getEventName(),
+                    "notify_if_attributes_change" => [$this->getStateAttributeAlias()],
+                    "notify_if_data_matches_conditions" => [
+                        "operator" => EXF_LOGICAL_AND,
+                        "conditions" => [
+                            [
+                                "expression" => $this->getStateAttributeAlias(),
+                                "comparator" => ComparatorDataType::EQUALS,
+                                "value" => $state->getStateId()
+                            ]
+                        ]
+                    ],
+                    'notifications' => $notifications
+                ]);
+                $behavior = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                $this->getObject()->getBehaviors()->add($behavior);
+                $this->behaviors[] = $behavior;
+            }
+        }
+        return $this;
     }
     
     public function onModelValidatedAddDiagram(OnBehaviorModelValidatedEvent $event)

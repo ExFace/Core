@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
+use exface\Core\CommonLogic\Log\Logger;
 
 /**
  * Exception thrown if a check is violated by data sheet contents.
@@ -47,5 +48,25 @@ class DataCheckFailedError extends UnexpectedValueException implements DataCheck
     {
         $this->check = $check;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7L98V2P';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\UnexpectedValueException::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return Logger::ERROR;
     }
 }

@@ -49,9 +49,10 @@ use exface\Core\Interfaces\WidgetInterface;
  *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/index.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
  *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
- *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
- *	"LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js"
+ *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css"
  * ```
+ * 
+ * NOTE: This trait requires the exfTools JS library to be available!
  * 
  * @method Data getWidget()
  * 
@@ -60,6 +61,8 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 trait JExcelTrait 
 {
+    use JsConditionalPropertyTrait;
+    
     /**
      * @return void
      */
@@ -162,7 +165,6 @@ JS;
         return [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
@@ -200,12 +202,13 @@ JS;
         $widget = $this->getWidget();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
+        $allowDragRow = $this->getWidget()->getAllowToDragRows() ? 'true' : 'false';
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         
         /* @var $col \exface\Core\Widgets\DataColumn */
-        foreach ($widget->getColumns() as $col) {
+        foreach ($widget->getColumns() as $colIdx => $col) {
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
@@ -232,6 +235,32 @@ JS;
             $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
             
+            $conditionsJs = '';
+            if ($condProp = $col->getDisabledIf()) {
+                $conditionsJs .= $this->buildJsConditionalProperty(
+                    $condProp, 
+                    "aCells.forEach(function(domCell, iRowIdx){
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    });", 
+                    "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
+                );
+            }
+            if ($conditionsJs) {
+                $conditionsJs = <<<JS
+
+                        var iColIdx = {$colIdx};
+                        var oJExcel = oWidget.getJExcel();
+                        var aCells = [];
+                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            aCells.push(oJExcel.getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1)));
+                        });
+                        $conditionsJs
+JS;
+            }
+            
             $columnsJson .= <<<JS
                 "{$col->getDataColumnName()}": {
                     dataColumnName: "{$col->getDataColumnName()}",
@@ -242,11 +271,16 @@ JS;
                     validator: {$validatorJs},
                     hidden: {$hiddenFlagJs},
                     system: {$systemFlagJs},
+                    conditionize: function(oWidget){
+                        $conditionsJs
+                    }
                 }, 
 
 JS;           
         }
         $columnsJson = '{' . $columnsJson . '}';
+        
+        $rowNumberColName = $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
         
         return <<<JS
 
@@ -259,6 +293,7 @@ JS;
         allowInsertColumn: false,
         allowDeleteColumn: false,
         allowInsertRow: $allowInsertRow,
+        rowDrag: $allowDragRow,
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
@@ -286,16 +321,24 @@ JS;
         onbeforechange: function(instance, cell, x, y, value) {
             var fnParser = instance.exfWidget.getColumnModel(x).parser;
             var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
+            var mValueParsed, mValidated;
+
             if (value === undefined) {
                 return;
             }
-            if (fnParser) {
-                value = fnParser(value);
-                if (fnFormatter) {
-                    value = fnFormatter(value);
-                }
+
+            mValueParsed = fnParser ? fnParser(value) : value;
+            if ((mValueParsed === '' || mValueParsed === null) && mValueParsed !== value) {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, value);
+            } else {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, mValueParsed);
             }
-            return instance.exfWidget.validateCell(cell, x, y, value);
+            
+            if (mValueParsed === mValidated && fnFormatter) {
+                mValidated = fnFormatter(mValueParsed);
+            }
+
+            return mValidated;
         },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs
@@ -336,6 +379,7 @@ JS;
         _dom: {$this->buildJsJqueryElement()}[0],
         _colNames: {$colNamesJson},
         _cols: {$columnsJson},
+        _rowNumberColName: $rowNumberColName,
         _initData: [],
         getJExcel: function(){
             return this._dom.jexcel;
@@ -355,10 +399,18 @@ JS;
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
+        restoreInitValue: function(iCol, iRow) {
+            var mInitVal = this.getInitValue(iCol, iRow);
+            if (mInitVal === undefined) {
+                mInitVal = '';
+            }
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal);            
+        },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
             var oCol = this.getColumnModel(iCol);
-
+            
+            mValue = mValue === undefined ? this.getJExcel().getValueFromCoords(iCol, iRow) : mValue;
             mValue = oCol.parser ? oCol.parser(mValue) : mValue;
             if (mValue === undefined || mValue === null) {
                 mValue = '';
@@ -431,6 +483,11 @@ JS;
                 });
             });
         },
+        refreshConditionalProperties: function() {
+            for (i in this._cols) {
+                this._cols[i].conditionize(this);
+            }
+        },
         convertArrayToData: function(aDataArray) {
             var aData = [];
             var iDataCnt = aDataArray.length;
@@ -459,6 +516,9 @@ JS;
                 });
 
                 if (bEmptyRow === false || bAllowEmptyRows === true) {
+                    if (oWidget._rowNumberColName !== null) {
+                        oRow[oWidget._rowNumberColName] = (i+1);
+                    }
                     aData.push(oRow);
                 }
             });
@@ -907,12 +967,19 @@ JS;
         
         $width = $col->getWidth();
         $widthJs = '';
-        if ($width->isFacadeSpecific() === true) {
-            if (StringDataType::endsWith($width->getValue(), 'px') === true) {
+        switch (true) {
+            case $width->isFacadeSpecific() === true && StringDataType::endsWith($width->getValue(), 'px'):
                 $widthJs = str_replace('px', '', $width->getValue());
-            }
-        } else {
-            $widthJs = "'auto'";
+                break;
+            case $width->isFacadeSpecific():
+            case $width->isPercentual():
+                $widthJs = $this->escapeString($width->getValue());
+                break;
+            case $width->isRelative():
+                $widthJs = $this->getWidthRelativeUnit() * $width->getValue();
+                break;
+            default:
+                $widthJs = "'auto'";
         }
         
         if ($widthJs) {
@@ -979,7 +1046,7 @@ JS;
                         $conditionJs = <<<JS
 
             var aSourcenew = [];
-            var oConditionGroup = {'operator': "{$filters->getOperator()}"};
+            var oConditionGroup = {'operator': "{$filters->getConditionGroup()->getOperator()}"};
             var aConditions = [];
 JS;
                         foreach ($filters->getConditions() as $key => $cond) {
@@ -1126,7 +1193,7 @@ JS;
             // If there is no action or the action 
             case $action === null:
             case $widget->isEditable() 
-            && ($action instanceof iModifyData) 
+            && $action->implementsInterface('iModifyData')
             && $dataObj->is($widget->getMetaObject()):
                 $data = <<<JS
     {
@@ -1140,7 +1207,7 @@ JS;
             // If we have an action, that is based on another object and does not have an input mapper for
             // the widgets's object, the data should become a subsheet.
             case $widget->isEditable() 
-            && ($action instanceof iModifyData) 
+            && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject()) 
             && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
@@ -1226,6 +1293,7 @@ JS;
     }
     {$this->buildJsJqueryElement()}.jexcel('setData', aData);
     {$this->buildJsResetSelection($this->buildJsJqueryElement())};
+    {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties();
 }()
 
 JS;
@@ -1447,5 +1515,18 @@ JS;
         }
         
         return $valueJs;
+    }
+    
+    protected function registerConditionalPropertiesOfColumns() 
+    {
+        foreach ($this->getWidget()->getColumns() as $col) {
+            if ($condProp = $col->getDisabledIf()) {
+                $this->registerConditionalPropertyUpdaterOnLinkedElements(
+                    $condProp,
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()",
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()"
+                );
+            }
+        }
     }
 }

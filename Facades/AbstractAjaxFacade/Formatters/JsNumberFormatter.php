@@ -132,8 +132,34 @@ JS;
         $this->thousandsSeparator = $thousandsSeparator;
         return $this;
     }
-
-
-
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $type = $this->getDataType();
+        if ($type->getBase() !== 10) {
+            return 'true';
+        }
+        
+        $checksOk = [];
+        if ($type->getMin() !== null) {
+            $checksOk[] = "parseFloat(mVal) >= {$type->getMin()}";
+        }
+        if ($type->getMax() !== null) {
+            $checksOk[] = "parseFloat(mVal) <= {$type->getMax()}";
+        }
+        $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
+        
+        $nullStr = '" . EXF_LOGICAL_NULL . "';
+        return <<<JS
+function(mVal) {
+                var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
+                return (bEmpty || ($checksOkJs));
+            }($jsValue)
+JS;
+    }
 }

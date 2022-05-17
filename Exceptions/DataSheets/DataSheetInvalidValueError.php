@@ -62,14 +62,14 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
         if ($rowNumbers !== null) {
             $rowNoList = implode(', ', $rowNumbers);
             try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', ['%column%' => $colCaption, '%rows%' => $rowNoList]);
+                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES_ON_ROWS', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption, '%rows%' => $rowNoList]);
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
                 $message = 'Invalid values for "' . $colCaption . '" on row(s) ' . $rowNoList;
             }
         } else {
             try {
-                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES', ['%column%' => $colCaption, '%rows%' => $rowNoList]);
+                $message = $col->getWorkbench()->getCoreApp()->getTranslator()->translate('DATASHEET.ERROR.INVALID_VALUES', ['%object%'=> $col->getMetaObject()->getName(), '%column%' => $colCaption, '%rows%' => $rowNoList]);
             } catch (\Throwable $e) {
                 $col->getWorkbench()->getLogger()->logException($e);
                 $message = 'Invalid values for "' . $colCaption . '"';

@@ -33,14 +33,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * }
  * ```
  * 
- * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
- * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
- * to be added to the facade:
- * 
- * ```
- *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
- *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
- * ```
+ * NOTE: This formatter requires the exfTools JS library to be available!
  *
  * @method DateDataType getDataType()
  *        
@@ -149,6 +142,23 @@ function() {
         
 JS;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $formatQuoted = json_encode($this->getFormat());
+        return <<<JS
+function() {
+                var mVal = {$jsValue};
+                return mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+            }()
+            
+JS;
+    }
 
     /**
      *
@@ -167,38 +177,36 @@ JS;
      */
     public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
-        $momentLocaleJs = $this->buildJsMomentLocale($facade);
-        return [
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
-            $momentLocaleJs
-        ];
+        return [];
     }
     
     /**
      * Generates the moment locale include script based on the session locale
      *
-     * @return string
+     * @return string[]
      */
-    protected function buildJsMomentLocale(FacadeInterface $facade) : string
+    public static function buildHtmlHeadMomentIncludes(FacadeInterface $facade) : array
     {
-        $localesPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
+        $includes = [
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
+        ];
+        $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
         $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
-        $fullLocale = $this->getDataType()->getLocale();
+        $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         $locale = substr($fullLocale, 0, strpos($fullLocale, '_'));
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         
-        return '';
+        return $includes;
     }
 
 

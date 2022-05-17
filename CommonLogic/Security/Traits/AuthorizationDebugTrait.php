@@ -186,16 +186,36 @@ trait AuthorizationDebugTrait
             'paginate' => false,
             'hide_header' => true,
             'hide_footer' => true,
+            'nowrap' => false,
             'columns' => [
                 [
-                    'attribute_alias' => 'EFFECT'
+                    'attribute_alias' => 'EFFECT',
+                    'cell_widget' => [
+                        "widget_type" => "Display",
+                    ]
                 ],
                 [
                     'attribute_alias' => 'NAME'
                 ],
                 [
-                    'data_column_name' => 'DECISION',
-                    'caption' => 'Decision'
+                    'data_column_name' => '_DECISION',
+                    'caption' => 'Decision',
+                    'cell_widget' => [
+                        "widget_type" => "ColorIndicator",
+                        "fill" => true,
+                        "color_only" => false,
+                        "color_scale" => [
+                            "Permit" => "lightgreen",
+                            "Deny" => "orangered",
+                            "Indeterminate" => "lightgray",
+                            "Indeterminate{P}" => "lightgray",
+                            "Indeterminate{D}" => "lightgray"
+                        ]
+                    ]
+                ],
+                [
+                    'data_column_name' => '_EXPLANATION',
+                    'caption' => 'Explanation'
                 ]
             ]
         ]);
@@ -207,7 +227,8 @@ trait AuthorizationDebugTrait
             'EFFECT',
             'NAME'
         ]);
-        $dataSheet->getColumns()->addFromExpression('DECISION');
+        $dataSheet->getColumns()->addFromExpression('_DECISION');
+        $dataSheet->getColumns()->addFromExpression('_EXPLANATION');
         
         foreach ($permissions as $permission) {
             switch (true) {
@@ -223,7 +244,8 @@ trait AuthorizationDebugTrait
             $dataSheet->addRow([
                 'EFFECT' => $effect,
                 'NAME' => $name,
-                'DECISION' => $permission->toXACMLDecision()
+                '_DECISION' => $permission->toXACMLDecision(),
+                '_EXPLANATION' => $permission->getExplanation()
             ]);
         }
         

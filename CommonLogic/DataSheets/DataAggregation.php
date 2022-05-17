@@ -109,7 +109,7 @@ class DataAggregation implements iCanBeConvertedToUxon
      *
      * @return DataSorter
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

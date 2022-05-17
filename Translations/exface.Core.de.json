@@ -33,6 +33,7 @@
 	"ACTION.CLEARCACHE.RESULT": "Cache geleert!",
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
+	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
@@ -182,10 +183,10 @@
     "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
     "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
 	
-	"DATASHEET.ERROR.INVALID_VALUES": "Ungültige Werte für \"%column%\"!",
-	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" auf Zeile(n) %rows%!",
-	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\"!",
-	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.INVALID_VALUES": "Ungültige Werte für \"%column%\" von \"%object%\"!",
+	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\" von \"%object%\"!",
+	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
 	
 	"DATATYPE.VALIDATION.MUST": "Muss",
 	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
@@ -441,7 +442,8 @@
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	"WIDGET.INPUT.REQUIRED_HINT": "Diese Eingabe ist Pflicht!",
-	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
+	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein.",
+	"WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR": "Muss ein gültiger Wert sein.",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
 	
 	"WIDGET.IMAGEGALLERY.BUTTON_ZOOM": "Zoom",

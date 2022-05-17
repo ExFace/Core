@@ -66,7 +66,7 @@ trait JqueryDisableConditionTrait
         return <<<JS
         
                         setTimeout(function(){
-                            if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+                            if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
     							{$this->buildJsDisabler()};
     						}
                         }, 0);

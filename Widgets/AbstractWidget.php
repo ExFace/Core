@@ -1312,7 +1312,7 @@ abstract class AbstractWidget implements WidgetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject(), $this->getParent());
     }

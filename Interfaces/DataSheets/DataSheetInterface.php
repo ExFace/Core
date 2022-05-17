@@ -78,13 +78,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface data_sheet
-     * @param string left_key_column
-     * @param string right_key_column
-     * @param string column_prefix
+     * @param DataSheetInterface $otherSheet
+     * @param string $leftKeyColName
+     * @param string $rightKeyColName
+     * @param string $relationPath
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
      * Imports data from matching columns of the given sheet.
@@ -604,9 +604,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * The copy will point to the same meta object, but will
      * have separate columns, filters, aggregations, etc.
      *
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy();
+    public function copy() : self;
 
     /**
      *
@@ -656,11 +657,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasColumTotals();
     
     /**
+     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
      * 
      * @param ConditionalExpressionInterface $condition
+     * @param bool $readMissingData
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
+    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
     
     /**
      * Sorts the current rows using the sorters defined in the sheet or a given sorter list.

@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2021-10-05 18:45:45",
+            "MODIFIED_ON": "2022-05-09 09:49:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -228,9 +228,6 @@
                                                                 "attribute_alias": "PAGE_GROUP__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "PAGE_GROUP__DESCRIPTION"
-                                                            },
-                                                            {
                                                                 "attribute_alias": "PAGE_GROUP__PAGE_GROUP_PAGES__UID:COUNT",
                                                                 "caption": "Pages"
                                                             },
@@ -240,6 +237,9 @@
                                                             },
                                                             {
                                                                 "attribute_alias": "PAGE_GROUP__APP__LABEL"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "PAGE_GROUP__DESCRIPTION"
                                                             },
                                                             {
                                                                 "attribute_alias": "PAGE_GROUP",
@@ -315,12 +315,22 @@
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
                                                         "row_grouper": {
-                                                            "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                            "group_by_attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true
                                                         },
+                                                        "sorters": [
+                                                            {
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
+                                                                "direction": "asc"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__NAME",
+                                                                "direction": "asc"
+                                                            }
+                                                        ],
                                                         "filters": [
                                                             {
-                                                                "attribute_alias": "TARGET_PAGE_GROUP",
+                                                                "attribute_alias": "POLICY__TARGET_PAGE_GROUP",
                                                                 "value": "=page_group_table!PAGE_GROUP",
                                                                 "apply_on_change": true,
                                                                 "comparator": "==",
@@ -339,28 +349,43 @@
                                                         ],
                                                         "columns": [
                                                             {
-                                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL"
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "EFFECT"
+                                                                "attribute_alias": "POLICY__EFFECT"
                                                             },
                                                             {
-                                                                "attribute_alias": "NAME"
+                                                                "attribute_alias": "POLICY__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_PAGE_GROUP__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "DESCRIPTION"
+                                                                "attribute_alias": "POLICY__DESCRIPTION"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY",
+                                                                "hidden": true
                                                             }
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                                                                "bind_to_double_click": true
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectInfoDialog",
+                                                                    "object_alias": "exface.Core.AUTHORIZATION_POLICY",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "POLICY",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }
