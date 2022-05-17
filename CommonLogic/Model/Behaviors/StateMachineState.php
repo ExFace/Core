@@ -563,7 +563,7 @@ class StateMachineState implements iHaveIcon
      * @param string $text
      * @return StateMachineBehavior
      */
-    public function setDescription(string $text) : StateMachineBehavior
+    public function setDescription(string $text) : StateMachineState
     {
         $this->description = $text;
         return $this;
