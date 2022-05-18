@@ -19,6 +19,20 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
  * 
+ * A dialog MUST be opened via action (in most cases, pressing a button with `exface.Core.ShowDialog` 
+ * or a derivative). 
+ * 
+ * A dialog will mostly also contain buttons itself. These special `DialogButton`s can close their
+ * parent dialog automatically or leave it open (`close_dialog`). This way, stacks of open dialogs
+ * can be created.
+ * 
+ * ## Lazy loading
+ * 
+ * Most facades will send a server request when the open-button is pressed to lazy load the dialog, however 
+ * this behavior can be explicitly toggled by setting `lazy_loading:false` for a specific dialog. These
+ * dialogs will still need a button to open, but they will be definitely rendered together with the
+ * button itself - regardless of the default rendering approach of the facade.
+ * 
  * @author Andrej Kabachnik
  */
 class Dialog extends Form implements iAmClosable, iHaveHeader
@@ -181,6 +195,10 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         return $this;
     }
 
+    /**
+     * 
+     * @return mixed|NULL
+     */
     public function isMaximized()
     {
         return $this->maximized;
