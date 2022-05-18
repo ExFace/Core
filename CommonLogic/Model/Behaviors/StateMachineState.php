@@ -248,12 +248,16 @@ class StateMachineState implements iHaveIcon
      * 
      * @return string[]
      */
-    protected function getTransitions() : array
+    public function getTransitions(bool $autoGenerate = true) : array
     {
         $array = $this->transitions;
         if ($array === null) {
-            foreach($this->getStateMachine()->getStateIds() as $id) {
-                $array[$id] = '';
+            if ($autoGenerate === true) {
+                foreach($this->getStateMachine()->getStateIds() as $id) {
+                    $array[$id] = '';
+                }
+            } else {
+                $array = [];
             }
         } else {
             if ($this->getDisableEditing() !== true && ! array_key_exists($this->getStateId(), $array)) {

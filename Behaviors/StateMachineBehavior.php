@@ -22,6 +22,12 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\BehaviorFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -1031,13 +1037,19 @@ class StateMachineBehavior extends AbstractBehavior
         $widget = $event->getMessageList()->getParent();
         $widget->addButton($widget->createButton(new UxonObject([
             'caption' => 'Diagram',
+            'close_dialog' => false,
             'action' => [
                 'alias' => 'exface.Core.ShowDialog',
                 'dialog' => [
+                    'lazy_loading' => false,
+                    'maximized' => true,
                     'widgets' => [
                         [
                             'widget_type' => 'Markdown',
-                            'value' => $this->buildMermaidDiagram()
+                            'width' => '100%',
+                            'height' => '100%',
+                            'value' => $this->buildMermaidDiagram(),
+                            'renderMermaidDiagrams' => true
                         ]
                     ]
                 ]
@@ -1047,6 +1059,41 @@ class StateMachineBehavior extends AbstractBehavior
     
     protected function buildMermaidDiagram() : string
     {
+        $mm = '';
+        foreach ($this->getStates() as $state) {
+            $note = '';
+            if ($descr = $state->getDescription()) {
+                $note .= wordwrap($descr, 50, "\n");
+            }
+            $note = trim($note);
+            if ($note !== '') {
+                $note = "note left of {$state->getStateId()}\n" . $note . "\n end note";
+            }
+            $mm .= <<<MERMAID
+
+    {$state->getStateId()} : {$state->getName()}
+    {$note}
+MERMAID;
+            foreach ($state->getTransitions(false) as $targetStateId => $actionAlias) {
+                if ($targetStateId === $state->getStateId() && ! $actionAlias) {
+                    continue;
+                }
+                $mm .= <<<MERMAID
+               
+    {$state->getStateId()} --> {$targetStateId} : {$actionAlias}
+MERMAID;
+            }
+        }
+        $mm = trim($mm);
+        return <<<MD
+
+```mermaid
+stateDiagram-v2
+$mm
+```
+
+MD;
+        
         return <<<TXT
 
 ```mermaid
