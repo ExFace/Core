@@ -44,6 +44,13 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
     
     /**
      * 
+     * @param string $uid
+     * @return BehaviorInterface|NULL
+     */
+    public function getByUid(string $uid) : ?BehaviorInterface;
+    
+    /**
+     * 
      * @param string $className
      * @return BehaviorListInterface
      */

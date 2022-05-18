@@ -22,12 +22,12 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
      * @see \exface\Core\CommonLogic\EntityList::add()
      * @param BehaviorInterface $behavior            
      */
-    public function add($behavior, $key = null)
+    public function add($behavior, $uid = null)
     {
         if (! $behavior->getObject()->isExactly($this->getParent())) {
             $behavior->setObject($this->getParent());
         }
-        $result = parent::add($behavior, $key);
+        $result = parent::add($behavior, $uid);
         if (! $behavior->isDisabled()) {
             $behavior->register();
         }
@@ -51,12 +51,22 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
     public function getByAlias(string $qualified_alias) : BehaviorListInterface
     {
         $result = new self($this->getWorkbench(), $this->getObject());
-        foreach ($this->getAll() as $behavior) {
+        foreach ($this->getAll() as $key => $behavior) {
             if (strcasecmp($behavior->getAliasWithNamespace(), $qualified_alias) === 0) {
-                $result->add($behavior);
+                $result->add($behavior, $key);
             }
         }
         return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorListInterface::getByUid()
+     */
+    public function getByUid(string $uid) : ?BehaviorInterface
+    {
+        return $this->get($uid);
     }
     
     /**
@@ -67,9 +77,9 @@ class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
     public function getByPrototypeClass(string $className) : BehaviorListInterface
     {
         $result = new self($this->getWorkbench(), $this->getObject());
-        foreach ($this->getAll() as $behavior) {
+        foreach ($this->getAll() as $key => $behavior) {
             if ($behavior instanceof $className) {
-                $result->add($behavior);
+                $result->add($behavior, $key);
             }
         }
         return $result;

@@ -106,7 +106,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
      */
     public function getWidget()
     {
-        if (is_null($this->widget)) {
+        if ($this->widget === null) {
             switch (true) {
                 case $this->getWidgetUxon():
                     $this->widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
@@ -329,5 +329,14 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
             $this->setPrefillWithPrefillData(true);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isWidgetInstantiated() : bool
+    {
+        return $this->widget !== null;
     }
 }
