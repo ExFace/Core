@@ -386,4 +386,22 @@ class ShowDialog extends ShowWidget implements iShowDialog
         }
         return $uxon;
     }
+    
+    /**
+     * 
+     * @param bool $default
+     * @return bool
+     */
+    public function isDialogLazyLoading(bool $default = true) : bool
+    {
+        if ($this->isWidgetInstantiated()) {
+            return $this->getDialogWidget()->getLazyLoading($default);
+        }
+        if (null !== $uxon = $this->getWidgetUxon()) {
+            if ($uxon->hasProperty('lazy_loading')) {
+                return $uxon->getProperty('lazy_loading');
+            }
+        }
+        return $default;
+    }
 }

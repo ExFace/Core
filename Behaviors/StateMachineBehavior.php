@@ -21,11 +21,13 @@ use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
+use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\BehaviorFactory;
-use exface\Core\Factories\WidgetDimensionFactory;
-use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -105,8 +107,10 @@ class StateMachineBehavior extends AbstractBehavior
         $this->registerNotifications();
         foreach ($this->behaviors as $behavior) {
             if ($behavior->is)
-            $behavior->enable();
+                $behavior->enable();
         }
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
@@ -125,6 +129,8 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($this->behaviors as $behavior) {
             $behavior->disable();
         }
+        
+        $this->getWorkbench()->eventManager()->removeListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
@@ -1020,5 +1026,118 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         return $this;
+    }
+    
+    public function onModelValidatedAddDiagram(OnBehaviorModelValidatedEvent $event)
+    {
+        if ($event->getBehavior() !== $this) {
+            return;
+        }
+        
+        $widget = $event->getMessageList()->getParent();
+        $widget->addButton($widget->createButton(new UxonObject([
+            'caption' => 'Diagram',
+            'close_dialog' => false,
+            'action' => [
+                'alias' => 'exface.Core.ShowDialog',
+                'dialog' => [
+                    'lazy_loading' => false,
+                    'maximized' => true,
+                    'widgets' => [
+                        [
+                            'widget_type' => 'Markdown',
+                            'width' => '100%',
+                            'height' => '100%',
+                            'value' => $this->buildMermaidDiagram(),
+                            'renderMermaidDiagrams' => true
+                        ]
+                    ]
+                ]
+            ]
+        ])));
+    }
+    
+    protected function buildMermaidDiagram() : string
+    {
+        $mm = '';
+        foreach ($this->getStates() as $state) {
+            $note = '';
+            if ($descr = $state->getDescription()) {
+                $note .= wordwrap($descr, 50, "\n");
+            }
+            $note = trim($note);
+            if ($note !== '') {
+                $note = "note left of {$state->getStateId()}\n" . $note . "\n end note";
+            }
+            $mm .= <<<MERMAID
+
+    {$state->getStateId()} : {$state->getName()}
+    {$note}
+MERMAID;
+            foreach ($state->getTransitions(false) as $targetStateId => $actionAlias) {
+                if ($targetStateId === $state->getStateId() && ! $actionAlias) {
+                    continue;
+                }
+                $mm .= <<<MERMAID
+               
+    {$state->getStateId()} --> {$targetStateId} : {$actionAlias}
+MERMAID;
+            }
+        }
+        $mm = trim($mm);
+        return <<<MD
+
+```mermaid
+stateDiagram-v2
+$mm
+```
+
+MD;
+        
+        return <<<TXT
+
+```mermaid
+stateDiagram-v2
+    10 : Draft
+    30 : Abgewiesen
+    note left of 30
+        #9993; Notification: 
+        - suedlink.Baudoku.AN_Tiefbau
+    end note
+    50 : Zur Prüfung RPB
+    note left of 50
+        RPB prüft das Dokument und kann es entweder 
+        abweisen oder an VHT weitergeben.
+        #9993; Notification: 
+        - suedlink.Baudoku.RPB
+    end note
+    70 : Zur Prüfung VHT
+    note left of 70
+        #9993; Notification: 
+        - suedlink.Baudoku.VHT
+    end note
+    90 : Storniert
+    99 : Freigegeben
+    note left of 99
+        #9993; Notification: 
+        - [#AutorPerson__User#] 
+        #9993; Email: 
+        - [#AutorPerson__User__EMAIL#] 
+        - [#BautagesberichtHistorie__UserNeu__EMAIL:LIST#]
+    end note
+    [*] --> 10
+    10 --> 50 : Zur Prüfung RPB
+    10 --> 10 : Revision erstellen
+    30 --> 50 : Zur Prüfung RPB
+    50 --> 70 : Zur Prüfung VHT
+    50 --> 30 : Abweisen
+    70 --> 30 : Abweisen
+    70 --> 90 : Stornieren
+    70 --> 99 : Freigeben
+    90 --> [*]
+    99 --> [*]
+```
+
+TXT;
     }
 }
