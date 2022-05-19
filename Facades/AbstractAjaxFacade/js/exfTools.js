@@ -559,6 +559,10 @@
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
 				mLeft = mLeft !== undefined ? mLeft : null;
 				mRight = mRight !== undefined ? mRight : null;
+				// Make sure, numeric 0 is transformed to string as otherwise the latter || operators
+				// will transform it to an empty string because 0 is a falsly value.
+				mLeft = mLeft === 0 ? '0' : mLeft;
+				mRight = mRight === 0 ? '0' : mRight;
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
 					if (parseFloat(mLeft) !== NaN) {
 						mLeft = parseFloat(mLeft);
