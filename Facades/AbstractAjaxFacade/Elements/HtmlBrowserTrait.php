@@ -1,11 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
-use exface\Core\Widgets\Browser;
 
 /**
  * Renders an HTML IFrame for a Browser widget
  * 
- * @method Browser getWidget()
+ * @method \exface\Core\Widgets\Browser getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -18,7 +17,12 @@ trait HtmlBrowserTrait
      */
     protected function buildHtmlIFrame() : string
     {
-        $url = $this->getWidget()->getUrlBase() . $this->getWidget()->getUrl();
+        $url = $this->getWidget()->getUrl();
+        
+        if ($base = $this->getWidget()->getBaseUrl()) {
+            $url = rtrim($base, "/") . '/' . ltrim($url, "/");
+        }
+        
         return <<<HTML
 <iframe src="{$url}" style="{$this->buildCssElementStyle()}" id="{$this->getId()}" name="{$this->getId()}" seamless></iframe>
 HTML;

@@ -81,14 +81,14 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-04-28 18:17:29",
+            "MODIFIED_ON": "2022-05-19 14:58:30",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
             "COMMENTS": "",
-            "DOCS": "exface\/Core\/Docs\/understanding_the_metamodel\/objects.md",
+            "DOCS": "exface\/Core\/Docs\/understanding_the_metamodel\/Meta_objects.md",
             "NAME": "Meta Object",
             "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
@@ -141,7 +141,8 @@
                                                 "height": 3
                                             },
                                             {
-                                                "attribute_alias": "DOCS"
+                                                "attribute_alias": "DOCS",
+                                                "id": "object_docs_path"
                                             },
                                             {
                                                 "attribute_alias": "UID",
@@ -364,7 +365,7 @@
                                                 "attribute_alias": "APP__ALIAS"
                                             },
                                             {
-                                                "attribute_alias": "DESCRIPTION"
+                                                "calculation": "=Left(DESCRIPTION, 80)"
                                             }
                                         ],
                                         "sorters": [
@@ -597,10 +598,45 @@
                         "action_alias": "exface.Core.ShowModelBuilderDialog",
                         "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')",
                         "close_dialog": false,
-                        "disable_condition": {
-                            "widget_link": "object_uid",
-                            "comparator": "==",
-                            "value": ""
+                        "disabled_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=object_uid",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Docs",
+                        "hint": "Opens the documentation for this object (if available)",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowDialog",
+                            "dialog": {
+                                "caption": "Documentation browser",
+                                "height": "80%",
+                                "width": 2,
+                                "widgets": [
+                                    {
+                                        "widget_type": "Browser",
+                                        "base_url": "[#api#]\/docs\/",
+                                        "attribute_alias": "DOCS"
+                                    }
+                                ]
+                            }
+                        },
+                        "disabled_if": {
+                            "operator": "AND",
+                            "conditions": [
+                                {
+                                    "value_left": "=object_docs_path",
+                                    "comparator": "==",
+                                    "value_right": ""
+                                }
+                            ]
                         }
                     }
                 ]
