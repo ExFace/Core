@@ -338,4 +338,12 @@ interface AjaxFacadeElementInterface
      */
     public function buildJsResetter() : string;
     
+    /**
+     * Returns the JS code to call the specified widget function
+     * 
+     * @param string $functionName
+     * @return string
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string;
+    
 }
