@@ -16,6 +16,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Actions\iCallWidgetFunction;
 
 /**
  * 
@@ -253,6 +254,8 @@ JS;
                 return $this->buildJsClickSendToWidget($action, $input_element);
             case $action instanceof ResetWidget:
                 return $this->buildJsResetWidgets($widget);
+            case $action instanceof iCallWidgetFunction:
+                return $this->buildJsClickCallWidgetFunction($action);
             default: 
                 return $this->buildJsClickCallServerAction($action, $input_element);
         }
@@ -711,6 +714,17 @@ JS;
     }
     
     /**
+     * 
+     * @param iCallWidgetFunction $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
+    {
+        return $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()))->buildJsCallFunction($action->getFunctionName());
+    }
+    
+    /**
      * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
      * 
      * @param WidgetInterface $widget
@@ -718,5 +732,18 @@ JS;
      * @return string
      */
     abstract protected function buildJsCloseDialog($widget, $input_element);
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === null:
+            case $functionName === Button::FUNCTION_PRESS:
+                return $this->buildJsClickFunctionName() . '()';
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
+    }
 }
-?>
