@@ -30,5 +30,20 @@
 		</div>
 		
 		[#content#]
+		
+		
+		<script type="text/javascript" src="[#baseurl#]/bower-asset/mermaid/dist/mermaid.js"></script>
+		
+		<script type="text/javascript">
+		
+			(function(mermaid){
+				mermaid.initialize({
+			        startOnLoad:true,
+			        theme: 'default'
+			    });
+			    mermaid.init(undefined, '.language-mermaid');
+		    })(mermaid);
+		    
+		</script>
 	</body>
 </html>

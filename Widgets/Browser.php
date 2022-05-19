@@ -11,10 +11,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Browser extends AbstractWidget implements iFillEntireContainer
+class Browser extends Value implements iFillEntireContainer
 {
-    private $url = '';
-    
     private $urlBase = '';
     
     private $orphanContainer = null;
@@ -24,7 +22,7 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      */
     public function getUrl() : string
     {
-        return $this->url;
+        return $this->getValue() ?? '';
     }
     /**
      * The start URL
@@ -39,18 +37,26 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      */
     public function setUrl(string $url) : Browser
     {
-        $phs = [
-            'api' => $this->getWorkbench()->getUrl() . 'api'
-        ];
-        $this->url = StringDataType::replacePlaceholders($url, $phs);
+        $this->setValue($url);
         return $this;
+    }
+    
+    public function setValue($expressionOrString, bool $parseStringAsExpression = true)
+    {
+        if (is_string($expressionOrString)) {
+            $phs = [
+                'api' => $this->getWorkbench()->getUrl() . 'api'
+            ];
+            $expressionOrString = StringDataType::replacePlaceholders($expressionOrString, $phs);
+        }
+        parent::setValue($expressionOrString, $parseStringAsExpression);
     }
     
     /**
      * 
      * @return string
      */
-    public function getUrlBase() : string
+    public function getBaseUrl() : string
     {
         return $this->urlBase;
     }
@@ -60,19 +66,29 @@ class Browser extends AbstractWidget implements iFillEntireContainer
      * 
      * The placeholder `[#api#]` will be replaced by the API-URL of the current installation.
      * 
-     * @uxon-property url_base
+     * @uxon-property base_url
      * @uxon-type uri
      * 
      * @param string $url
      * @return Browser
      */
-    public function setUrlBase(string $url) : Browser
+    public function setBaseUrl(string $url) : Browser
     {
         $phs = [
             'api' => $this->getWorkbench()->getUrl() . 'api'
         ];
         $this->urlBase = StringDataType::replacePlaceholders($url, $phs);
         return $this;
+    }
+    
+    /**
+     * @deprecated use setBaseUrl()
+     * @param string $url
+     * @return Browser
+     */
+    protected function setUrlBase(string $url) : Browser
+    {
+        return $this->setBaseUrl($url);
     }
     
     /**
