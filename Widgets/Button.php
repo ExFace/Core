@@ -58,6 +58,15 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     const APPEARANCE_LINK = 'link';
     
+    /**
+     * Press the button (defauflt button function)
+     * 
+     * @uxon-property press
+     * 
+     * @var string
+     */
+    const FUNCTION_PRESS = 'press';
+    
     private $action_alias = null;
 
     private $action = null;
