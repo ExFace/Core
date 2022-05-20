@@ -58,6 +58,10 @@ class StateMachineState implements iHaveIcon
     
     private $description = null;
     
+    private $startState = null;
+    
+    private $endState = false;
+    
     public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
         $this->stateMachine = $stateMachine;
@@ -570,6 +574,55 @@ class StateMachineState implements iHaveIcon
     public function setDescription(string $text) : StateMachineState
     {
         $this->description = $text;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isStartState() : bool
+    {
+        return $this->startState ?? ($this->getStateMachine()->getDefaultState() === $this);
+    }
+    
+    /**
+     * Set to TRUE if this is one of the start states (in addition to the default_state of the state machine)
+     * 
+     * @uxon-property start_state
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return StateMachineState
+     */
+    public function setStartState(bool $value) : StateMachineState
+    {
+        $this->startState = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isEndState() : bool
+    {
+        return $this->endState;
+    }
+    
+    /**
+     * Set to TRUE if this is an end-state
+     * 
+     * @uxon-property end_state
+     * @uxon-type boolean 
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return StateMachineState
+     */
+    public function setEndState(bool $value) : StateMachineState
+    {
+        $this->endState = $value;
         return $this;
     }
 }

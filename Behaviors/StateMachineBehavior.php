@@ -1027,7 +1027,12 @@ class StateMachineBehavior extends AbstractBehavior
         }
         return $this;
     }
-    
+
+    /**
+     * 
+     * @param OnBehaviorModelValidatedEvent $event
+     * @return void
+     */
     public function onModelValidatedAddDiagram(OnBehaviorModelValidatedEvent $event)
     {
         if ($event->getBehavior() !== $this) {
@@ -1055,29 +1060,90 @@ class StateMachineBehavior extends AbstractBehavior
                 ]
             ]
         ])));
+        return;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildMermaidDiagram() : string
     {
         $mm = '';
         foreach ($this->getStates() as $state) {
-            $note = '';
-            if ($descr = $state->getDescription()) {
-                $note .= wordwrap($descr, 50, "\n");
+            $stateFlags = '';
+            if ($state->getDisableDelete() || $state->getDisableEditing()) {
+                $stateFlags .= ' #128274;';
             }
-            $note = trim($note);
-            if ($note !== '') {
-                $note = "note left of {$state->getStateId()}\n" . $note . "\n end note";
+            $stateProps = [
+                'State ID - ' . $state->getStateId(),
+                'State color - ' . $state->getColor(),
+                'State icon - ' . $state->getIcon(),
+                ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable delete',
+                ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable edit'
+            ];/*
+            if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
+                $stateFlags .= ' #9993;';
+                $stateProps[] = '';
+                foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
+                    $stateProps[] = "#9993; {$notificationUxon->getProperty('channel')}";
+                    foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
+                        $stateProps[] = "- $recipient";
+                    }
+                    foreach (($notificationUxon->getProperty('recipient_users')) ?? [] as $recipient) {
+                        $stateProps[] = "- $recipient";
+                    }
+                    foreach (($notificationUxon->getProperty('recipients')) ?? [] as $recipient) {
+                        $stateProps[] = "- $recipient";
+                    }
+                }
+            }*/
+            
+            $stateProps = implode('#013;', $stateProps);
+            $stateProps = str_replace(':', ' -', $stateProps);
+            
+            $stateDetails = '';
+            if ($state->getDescription() !== null) {
+                $stateDetails .= '<i>' . wordwrap($state->getDescription(), 50, '<br>') . '</i><br>';
             }
+            if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
+                foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
+                    $stateDetails .= "<br><b>#9993;</b> {$notificationUxon->getProperty('channel')}";
+                    foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- $recipient";
+                    }
+                    foreach (($notificationUxon->getProperty('recipient_users')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- $recipient";
+                    }
+                    foreach (($notificationUxon->getProperty('recipients')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- $recipient";
+                    }
+                }
+            }
+            $stateDetails = $stateDetails !== '' ? '<br>' . $stateDetails : '';
+            $stateDetails = str_replace(':', ' -', $stateDetails);
+            
             $mm .= <<<MERMAID
 
-    {$state->getStateId()} : {$state->getName()}
-    {$note}
+    {$state->getStateId()} : <span title="$stateProps">{$state->getName()} <small>{$stateFlags}</small><small>{$stateDetails}</small></span>
 MERMAID;
+            if ($state->isStartState()) {
+                $mm .= <<<MERMAID
+                
+    [*] --> {$state->getStateId()}
+MERMAID;
+            }
+            if ($state->isEndState()) {
+                $mm .= <<<MERMAID
+                
+    {$state->getStateId()} --> [*]
+MERMAID;
+            }
             foreach ($state->getTransitions(false) as $targetStateId => $actionAlias) {
                 if ($targetStateId === $state->getStateId() && ! $actionAlias) {
                     continue;
                 }
+                $actionAlias = '<span title="' . $actionAlias . '">' . StringDataType::substringAfter($actionAlias, '.', '', false, true) . '</span>';
                 $mm .= <<<MERMAID
                
     {$state->getStateId()} --> {$targetStateId} : {$actionAlias}
@@ -1085,59 +1151,14 @@ MERMAID;
             }
         }
         $mm = trim($mm);
+        
         return <<<MD
-
+## State diagram
 ```mermaid
 stateDiagram-v2
-$mm
+    $mm
 ```
 
 MD;
-        
-        return <<<TXT
-
-```mermaid
-stateDiagram-v2
-    10 : Draft
-    30 : Abgewiesen
-    note left of 30
-        #9993; Notification: 
-        - suedlink.Baudoku.AN_Tiefbau
-    end note
-    50 : Zur Prüfung RPB
-    note left of 50
-        RPB prüft das Dokument und kann es entweder 
-        abweisen oder an VHT weitergeben.
-        #9993; Notification: 
-        - suedlink.Baudoku.RPB
-    end note
-    70 : Zur Prüfung VHT
-    note left of 70
-        #9993; Notification: 
-        - suedlink.Baudoku.VHT
-    end note
-    90 : Storniert
-    99 : Freigegeben
-    note left of 99
-        #9993; Notification: 
-        - [#AutorPerson__User#] 
-        #9993; Email: 
-        - [#AutorPerson__User__EMAIL#] 
-        - [#BautagesberichtHistorie__UserNeu__EMAIL:LIST#]
-    end note
-    [*] --> 10
-    10 --> 50 : Zur Prüfung RPB
-    10 --> 10 : Revision erstellen
-    30 --> 50 : Zur Prüfung RPB
-    50 --> 70 : Zur Prüfung VHT
-    50 --> 30 : Abweisen
-    70 --> 30 : Abweisen
-    70 --> 90 : Stornieren
-    70 --> 99 : Freigeben
-    90 --> [*]
-    99 --> [*]
-```
-
-TXT;
     }
 }
