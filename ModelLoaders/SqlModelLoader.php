@@ -1356,7 +1356,7 @@ SQL;
         foreach (($this->auth_policies_loaded[$authPoint->getUid()] ?? []) as $row) {
             $action = null;
             if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                throw new RuntimeException('Policy cant have object action and action prototype values!');
+                throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
             }
             if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
                 $action = $row['target_action_class_path'];
