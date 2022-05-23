@@ -130,22 +130,20 @@ class Monitor extends Profiler
         }
         $workbench = $event->getWorkbench();
         
-        // Delete any actions that are older thant allowed unless associated with a pending error
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ACTION');
-        $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.ACTIONS.DAYS_TO_KEEP'), ComparatorDataType::LESS_THAN);
-        $ds->getFilters()->addNestedGroupFromString(EXF_LOGICAL_OR)
-            ->addConditionFromString('MONITOR_ERROR', 'NULL', ComparatorDataType::EQUALS)
-            ->addConditionFromString('MONITOR_ERROR__STATUS', 90, ComparatorDataType::LESS_THAN);
-        $cnt = $ds->dataDelete();
-        
         // Delete any errors that are older than allowed unless not in a final status yet.
         $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ERROR');
         $ds->getFilters()->addConditionFromString('DATE', (-1)*$workbench->getConfig()->getOption('MONITOR.ERRORS.DAYS_TO_KEEP'), ComparatorDataType::LESS_THAN);
         $ds->getFilters()->addConditionFromString('STATUS', 90, ComparatorDataType::LESS_THAN);
+        $errorsCnt = $ds->dataDelete();
         
-        $cnt += $ds->dataDelete();
+        // Delete any actions that are older thant allowed unless associated with a pending error
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.MONITOR_ACTION');
+        $ds->getFilters()->addConditionFromString('DATE', (-1)*max($workbench->getConfig()->getOption('MONITOR.ACTIONS.DAYS_TO_KEEP'), $workbench->getConfig()->getOption('MONITOR.ERRORS.DAYS_TO_KEEP')), ComparatorDataType::LESS_THAN);
+        // FIXME this condition leads to a very strange SQL. Need fix!
+        // $ds->getFilters()->addConditionFromString('MONITOR_ERROR__MONITOR_ACTION', EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);
+        $actionCnt = $ds->dataDelete();
         
-        $event->addResultMessage('Cleaned up Monitor removing ' . $cnt . ' expired entries.');
+        $event->addResultMessage('Cleaned up Monitor removing ' . $errorsCnt . ' expired errors and ' . $actionCnt . ' actions.');
     }
     
     /**
