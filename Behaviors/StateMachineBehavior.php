@@ -560,7 +560,7 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         }
         
-        if (! ($prefill_data = $widget->getPrefillData()) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
+        if (! ($prefill_data = $widget->getPrefillData()) || ! $prefill_data->getMetaObject()->isExactly($thisObj) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
             $current_state = $this->getDefaultStateId();
         }
         
