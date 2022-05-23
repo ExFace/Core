@@ -1606,6 +1606,22 @@ JS;
             $caption = '';
         }
         
+        if (! $axis->isHidden()) {
+            $axisPointer = <<<JS
+
+        axisPointer: {
+            label: {
+                formatter: function(params) {
+                    return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'params.value')}
+                },
+            },
+        },
+
+JS;
+        } else {
+            $axisPointer = '';
+        }
+        
         if ($axis->hasGrid() === false) {
             $grid = 'false';
         } else {
@@ -1703,13 +1719,7 @@ JS;
             {$rotate}
             {$interval}
         },
-        axisPointer: {
-            label: {
-                formatter: function(params) {
-                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'params.value')}
-                },
-            },
-        },
+        {$axisPointer}
         {$axisTick}
         {$onZero}
         {$min}
