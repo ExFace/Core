@@ -2,13 +2,23 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 /**
- * The string formatter does not really format, but it takes care of validation
+ * The string formatter displays NULL values as empty string and takes care of all sorts of validation
  * 
  * @author Andrej Kabachnik
  *
  */
 class JsStringFormatter extends JsTransparentFormatter
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsTransparentFormatter::buildJsFormatter()
+     */
+    public function buildJsFormatter($jsInput)
+    {
+        return "($jsInput == null ? '' : $jsInput)";
+    }
+    
     /**
      * 
      * {@inheritDoc}
