@@ -57,7 +57,7 @@ class Uploader implements WidgetPartInterface
     
     private $maxFilenameLength = 255;
     
-    private $maxFileSizeMb = 10;
+    private $maxFileSizeMb = null;
     
     private $maxFiles = null;
     
@@ -91,7 +91,7 @@ class Uploader implements WidgetPartInterface
             $this->importUxonObject($uxon);
             $this->uxon = $uxon;
         }
-        $this->guessColumns();
+        $this->guessAttributes();
     }
     
     public function getMetaObject() : MetaObjectInterface
@@ -236,7 +236,7 @@ class Uploader implements WidgetPartInterface
      *
      * @return int
      */
-    public function getMaxFileSizeMb() : float
+    public function getMaxFileSizeMb() : ?float
     {
         return $this->maxFileSizeMb;
     }
@@ -529,7 +529,7 @@ class Uploader implements WidgetPartInterface
     /**
      * @return void
      */
-    protected function guessColumns()
+    protected function guessAttributes()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
         if ($behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
