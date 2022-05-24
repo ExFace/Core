@@ -20,31 +20,41 @@ trait JsUploaderTrait
     protected abstract function getUploader() : Uploader;
     
     /**
+     * Returns the JS code to validate file size, mime type, extension, etc. and call $onErrorJs if validation fails
+     * 
+     * The argument $fileJs should be a standard Javascript [file object](https://developer.mozilla.org/en-US/docs/Web/API/File).
+     * 
+     * The argument $fnOnErrorJs must be a javascript callable with the following signature: `function(sError, oFileObj)`.
+     * When called, it will receive a string error text as well as the file object above.
      * 
      * @param string $fileJs
+     * @param string $fnOnErrorJs
      * @return string
      */
-    protected function buildJsFileValidator(string $fileJs) : string
+    protected function buildJsFileValidator(string $fileJs, string $fnOnErrorJs) : string
     {
         $extensions = $this->getWidget()->getUploader()->getAllowedFileExtensions();
         if (! empty($extensions)) {
-            $extensionsJs = mb_strtolower(json_encode(array_unique($extensions)));
+            $extensions = array_unique($extensions);
+            $extensionsJs = mb_strtolower(json_encode($extensions));
         } else {
             $extensionsJs = '[]';
         }
         
         $mimeTypes = $this->getWidget()->getUploader()->getAllowedMimeTypes();
         if (! empty($mimeTypes)) {
-            $mimeTypesJs = mb_strtolower(json_encode(array_unique($mimeTypes)));
+            $mimeTypes = array_unique($mimeTypes);
+            $mimeTypesJs = mb_strtolower(json_encode($mimeTypes));
+        } else {
+            $mimeTypesJs = '[]';
         }
         
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
         
         return <<<JS
-            (function(){
+            (function(oFileObj, fnOnError){
                 var sError;
-                var oFileObj = $fileJs;
                 var aExtensions = $extensionsJs;
                 var aMimeTypes = $mimeTypesJs;
                 var fMaxFileSize = {$maxFileSize};
@@ -53,32 +63,45 @@ trait JsUploaderTrait
                 if (aExtensions && aExtensions.length > 0) {
                     var fileExt = (/(?:\.([^.]+))?$/).exec((file.name || '').toLowerCase())[1];
                     if (! aExtensions.includes(fileExt)) {
-                        sError = "{$this->translate('WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED', ['%ext%' => ' +"\"" + fileExt  + "\"" + '])}";
+                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED', ['%extensions%' => implode(', ', $extensions)]))};
                     }
                 }
                 // Check mime type
-                var aMimeTypes = oUploadSet.getMediaTypes();
                 if (aMimeTypes && aMimeTypes.length > 0) {
                     if (! aMimeTypes.includes((file.type || '').toLowerCase())) {
-                        sError = "{$this->translate('WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED', ['%type%' => ' +"\"" + file.type  + "\"" + '])}";
+                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED', ['%mimetypes%' => implode(', ', $mimeTypes)]))};
                     }
                 }
                 // Check size
                 if (fMaxFileSize && fMaxFileSize > 0) {
                     if (fMaxFileSize * 1000000 < file.size) {
-                        sError = "{$this->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => '" + fMaxFileSize + "'])}";
+                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => $this->getUploader()->getMaxFileSizeMb()]))};
                     }
                 }
                 // Check filename length
                 if (iMaxNameLength && iMaxNameLength > 0) {
                     if (iMaxNameLength < file.name.length) {
-                        sError = "{$this->translate('WIDGET.UPLOADER.ERROR_FILE_NAME_TOO_LONG', ['%length%' => '" + iMaxNameLength + "'])}";
+                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_FILE_NAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
                     }
                 }
-            })()
+
+                if (sError !== undefined) {
+                    fnOnError(sError, oFileObj);
+                    return false;
+                }
+
+                return true;
+            })($fileJs, $fnOnErrorJs)
 JS;
     }
     
+    /**
+     * 
+     * @param DataTypeInterface $contentDataType
+     * @param string $fileContentJs
+     * @param string $mimeTypeJs
+     * @return string
+     */
     protected function buildJsFileContentEncoder(DataTypeInterface $contentDataType, string $fileContentJs, string $mimeTypeJs) : string
     {
         switch (true) {

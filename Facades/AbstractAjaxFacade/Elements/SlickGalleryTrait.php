@@ -80,6 +80,8 @@ use exface\Core\Actions\DownloadFile;
  */
 trait SlickGalleryTrait
 {
+    use JsUploaderTrait;
+    
     private $btnZoom = null;
     
     private $btnMinus = null;
@@ -473,7 +475,7 @@ JS;
         if ($widget->hasCustomThumbnails()) {
             $thumbJs = "oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
         } else {
-            $thumbJs = "'{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', oRow['{$widget->getUidColumn()->getDataColumnName()}'])";
+            $thumbJs = "'{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', encodeURIComponent(oRow['{$widget->getUidColumn()->getDataColumnName()}']))";
         }
         
         if ($widget->hasMimeTypeColumn()) {
@@ -639,8 +641,6 @@ JS;
         if ($uploader->hasFileMimeTypeAttribute()) {
             $mimeTypeColumnJs = DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath()) . ": file.type,";
         }
-        
-        $maxFileSizeInBytes = $uploader->getMaxFileSizeMb()*1024*1024;
             
         // TODO Use built-in file uploading instead of a custom $.ajax request to
         // be able to take advantage of callbacks like fileuploadfail, fileuploadprogressall
@@ -687,8 +687,6 @@ JS;
         url: '{$this->getAjaxUrl()}',
         dataType: 'json',
         autoUpload: true,
-        {$this->buildJsUploadAcceptedFileTypesFilter()}
-        maxFileSize: {$maxFileSizeInBytes},
         previewMaxHeight: ($('#{$this->getIdOfSlick()}').height() - 20),
         previewMaxWidth: $('#{$this->getIdOfSlick()}').width(),
         previewCrop: false,
@@ -705,15 +703,23 @@ JS;
         
         data.files.forEach(function(file){
             var fileReader = new FileReader();
+            var bFileValid = {$this->buildJsFileValidator('file', "function(sError, oFileObj) { {$this->buildJsShowError('sError')} }")}
+                
+            if (bFileValid === false) {
+                return;
+            }
+
             $('#{$this->getIdOfSlick()}-nodata').hide();
             if (file.type.startsWith('image')){
                 $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
             } else {
                 $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', '.imagecarousel-pending')}));
             }
-            fileReader.onload = function () {
+            fileReader.onload = function () { console.log('read');
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
+
                 {$this->buildJsBusyIconShow()};
+
                 oParams.data = {
                     oId: '{$this->getMetaObject()->getId()}',
                     rows: [{
@@ -742,28 +748,6 @@ JS;
     protected function getDateFormatter() : JsDateFormatter
     {
         return new JsDateFormatter(DataTypeFactory::createFromString($this->getWorkbench(), DateTimeDataType::class));
-    }
-    
-    /**
-     * Generates the acceptedFileTypes option with a corresponding regular expressions if allowed_extensions is set
-     * for the widget
-     *
-     * @return string
-     */
-    protected function buildJsUploadAcceptedFileTypesFilter()
-    {
-        $uploader = $this->getWidget()->getUploader();
-        if ($uploader->getAllowedFileExtensions()) {
-            return 'acceptFileTypes: /(\.|\/)(' . str_replace(array(
-                ',',
-                ' '
-            ), array(
-                '|',
-                ''
-            ), $uploader->getAllowedFileExtensions()) . ')$/i,';
-        } else {
-            return '';
-        }
     }
     
     /**
