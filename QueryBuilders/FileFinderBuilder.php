@@ -519,7 +519,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
         
         // Do the updating
         if (empty($fileNames) === false) {
-            $contentArray = $this->getValue('CONTENTS')->getValues();
+            $contentArray = $this->buildFilesContentsFromValues();
             $updatedFileNr = $this->write($fileNames, $contentArray);
         }
         
