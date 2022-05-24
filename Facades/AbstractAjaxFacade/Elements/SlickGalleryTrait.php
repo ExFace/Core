@@ -695,7 +695,7 @@ JS;
         .addClass('pastearea')
     	.pastableNonInputable()
     	.on('pasteImage', function(ev, data){
-            $('#{$this->getIdOfSlick()}').parent().find('.dropzone').fileupload('add', {files: [data.blob]});
+            $('#{$this->getIdOfSlick()}').fileupload('add', {files: [data.blob]});
         });
 
     $('#{$this->getIdOfSlick()}').append('<input id="{$this->getIdOfSlick()}-uploader" style="display:none" type="file" name="files[]" multiple="">');
@@ -720,7 +720,13 @@ JS;
         
         data.files.forEach(function(file){
             var fileReader = new FileReader();
-            var bFileValid = {$this->buildJsFileValidator('file', "function(sError, oFileObj) { {$this->buildJsShowError('sError')} }")}
+            var bFileValid = false; 
+
+            if (file.name === undefined || file.name === '') {
+                file.name = 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png';
+            }
+
+            bFileValid = {$this->buildJsFileValidator('file', "function(sError, oFileObj) { {$this->buildJsShowError('sError')} }")}
                 
             if (bFileValid === false) {
                 return;
@@ -732,7 +738,7 @@ JS;
             } else {
                 $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', '.imagecarousel-pending')}));
             }
-            fileReader.onload = function () { console.log('read');
+            fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
 
                 {$this->buildJsBusyIconShow()};
