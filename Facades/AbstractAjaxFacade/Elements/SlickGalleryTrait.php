@@ -475,7 +475,24 @@ JS;
         if ($widget->hasCustomThumbnails()) {
             $thumbJs = "oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
         } else {
-            $thumbJs = "'{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', encodeURIComponent(oRow['{$widget->getUidColumn()->getDataColumnName()}']))";
+            // If there is no explicit thumbnail URL column, use the uid to generate a URL to the
+            // HttpFileServerFacade. 
+            // IMPORTANT: the UID must not contain slashes - even if they are URL encoded (%2F) as
+            // many servers (like Apache) will disallow this for security reasons. So if the UID
+            // contains a slash, encode it as Base64 first and prefix it by `base64,` - similarly
+            // to a DataURI.
+            $thumbJs = <<<JS
+                        function(){
+                            var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
+                            if (sUid == null) {
+                                sUid = '';
+                            }
+                            if (sUid.includes('/')){
+                                sUid = 'base64,' + btoa(sUid);
+                            }
+                            return '{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', encodeURIComponent(sUid));
+                        }()
+JS;
         }
         
         if ($widget->hasMimeTypeColumn()) {
