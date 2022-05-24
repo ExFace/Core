@@ -934,7 +934,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 if (! $action_uxon->hasProperty('name')) {
                     $action_uxon->setProperty('name', $row['name']);
                 }
-                if (! $action_uxon->hasProperty('hint')) {
+                if (! $action_uxon->hasProperty('hint') && $row['short_description'] !== null) {
                     $action_uxon->setProperty('hint', $row['short_description']);
                 }
                 
