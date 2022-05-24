@@ -34,6 +34,14 @@ use exface\Core\Behaviors\FileBehavior;
  * 
  * You can resize images by adding the URL parameter `&resize=WIDTHxHEIGHT`.
  * 
+ * ### Encoding of UIDs
+ * 
+ * UID values MUST be properly encoded:
+ * 
+ * - URL encoded - unless they contain slashes (as many servers incl. Apache do not allow URL encoded slashes for security reasons)
+ * - Base64 encoded with prefix `base64,` AND URL encoded on top - this is the most secure way to pass the UID value, but is
+ * not readable at all.
+ * 
  * ## Upload
  * 
  * Not available yet
@@ -118,6 +126,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $pathParts = explode('/', $path);
         $objSel = urldecode($pathParts[0]);
         $uid = urldecode($pathParts[1]);
+        if (StringDataType::startsWith($uid, 'base64,')) {
+            $uid = base64_decode(substr($uid, 7));
+        }
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objSel);
         if (! $ds->getMetaObject()->hasUidAttribute()) {
             $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!'));
