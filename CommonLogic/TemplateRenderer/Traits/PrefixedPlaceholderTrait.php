@@ -32,6 +32,9 @@ trait PrefixedPlaceholderTrait
      */
     protected function stripPrefix(string $placeholder, string $prefix) : string
     {
+        if ($prefix === '') {
+            return $placeholder;
+        }
         return StringDataType::substringAfter($placeholder, $prefix);
     }
 }
