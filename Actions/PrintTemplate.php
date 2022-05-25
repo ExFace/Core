@@ -169,26 +169,27 @@ class PrintTemplate extends AbstractAction
             $inputRowRenderer->addPlaceholder(new DataRowPlaceholders($inputData, $rowNo, '~input:'));
             $inputRowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo));
             
-            // Prepare a renderer for the data_placeholders config
-            $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-            $dataTplRenderer->addPlaceholder(
-                (new DataRowPlaceholders($inputData, $rowNo, '~input:'))
-                ->setFormatValues(false)
-                ->setSanitizeAsUxon(true)
-            );
-            $dataTplRenderer->addPlaceholder(
-                (new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo))
-                ->setSanitizeAsUxon(true)
-            );
-            
-            // Create group-resolver with resolvers for every data_placeholder and use
-            // it as the default resolver for the input row renderer
-            $phResolver = new PlaceholderGroup();
-            foreach ($mainPhUxon->getPropertiesAll() as $ph => $phConfig) {
-                $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $inputRowRenderer));
+            if ($mainPhUxon) {
+                // Prepare a renderer for the data_placeholders config
+                $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+                $dataTplRenderer->addPlaceholder(
+                    (new DataRowPlaceholders($inputData, $rowNo, '~input:'))
+                    ->setFormatValues(false)
+                    ->setSanitizeAsUxon(true)
+                );
+                $dataTplRenderer->addPlaceholder(
+                    (new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo))
+                    ->setSanitizeAsUxon(true)
+                );
+                
+                // Create group-resolver with resolvers for every data_placeholder and use
+                // it as the default resolver for the input row renderer
+                $phResolver = new PlaceholderGroup();
+                foreach ($mainPhUxon->getPropertiesAll() as $ph => $phConfig) {
+                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $inputRowRenderer));
+                }
+                $inputRowRenderer->setDefaultPlaceholderResolver($phResolver);
             }
-            $inputRowRenderer->setDefaultPlaceholderResolver($phResolver);
-            
             // placeholders for the resulting file
             $filePath = $this->getFilePathAbsolute($inputRowRenderer);
             $inputRowRenderer->addPlaceholder(new ArrayPlaceholders([
@@ -337,7 +338,7 @@ class PrintTemplate extends AbstractAction
         return $this;
     }
     
-    protected function getDataPlaceholdersUxon() : UxonObject
+    protected function getDataPlaceholdersUxon() : ?UxonObject
     {
         return $this->placeholders;
     }
