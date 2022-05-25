@@ -75,7 +75,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 {
     private $queries = [];
 
-    private $queryAttributeAlias = '';
+    private $queryAttributeAlias = null;
 
     private $data_connection = null;
 
@@ -104,7 +104,10 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     public function getQueries(TaskInterface $task): array
     {
         $data = $task->getInputData();
-        $queryAttributeScripts = $data->getColumnValues($this->getQueryAttributeAlias());
+        $queryAttributeScripts = [];
+        if ($this->getQueryAttributeAlias()) {
+            $queryAttributeScripts = $data->getColumnValues($this->getQueryAttributeAlias());
+        }
         return array_merge($this->queries, $queryAttributeScripts);
     }
 
@@ -125,9 +128,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     }
 
     /**
-     * @return string
+     * @return null|string
      */
-    public function getQueryAttributeAlias(): string
+    public function getQueryAttributeAlias(): ?string
     {
         return $this->queryAttributeAlias;
     }
