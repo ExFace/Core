@@ -17,6 +17,7 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * Policy for access to data.
@@ -28,8 +29,10 @@ use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
  * 
  * Additional conditions:
  * 
+ * - `apply_to_related_objects` - defines rules to apply this policy to other objects too
  * - `operations` - restricts this policy to specific CRUD operations
- * - `add_filters` - a condition group to add to the filters of each data sheet
+ * - `add_filters` - a condition group to add to the filters of each data sheet this policy allows
+ * (for the target object AND related objects if defined)
  * 
  * @author Andrej Kabachnik
  *
@@ -53,6 +56,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     private $operations = null;
     
     private $filtersUxon = null;
+    
+    private $applyToRelations = [];
     
     /**
      * 
@@ -104,9 +109,23 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // Match meta object
+            $relationPathToDataObj = null;
             if ($this->metaObjectSelector !== null) {
                 $object = $dataSheet->getMetaObject();
-                if ($object === null || $object->is($this->metaObjectSelector) === false) {
+                $objectMatch = false;
+                if ($object->is($this->metaObjectSelector) === true) {
+                    $objectMatch = true;
+                } elseif ($this->isApplicableToRelations()) {
+                    foreach ($this->getApplyToRelations() as $relCfg) {
+                        if ($object->isExactly($relCfg->getRelatedObjectSelector()) === true) {
+                            $objectMatch = true;
+                            $relationPathToDataObj = $relCfg->getRelationPathFromPolicyObject();
+                            break;
+                        }
+                    }
+                }
+                
+                if ($objectMatch === false) {
                     return PermissionFactory::createNotApplicable($this, 'Meta object does not match');
                 } else {
                     $applied = true;
@@ -136,7 +155,12 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             
             // Add filters if required
             if ($applied === true && null !== $filtersUxon = $this->getFiltersUxon()) {
-                $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
+                if ($relationPathToDataObj !== null) {
+                    $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, MetaObjectFactory::create($this->metaObjectSelector));
+                    $condGrp = $condGrp->rebase($relationPathToDataObj);
+                } else {
+                    $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
+                }
                 $dataFilters = $dataSheet->getFilters();
                 $explanation .= ($explanation ? ' ' : '') . 'Added filter `' . $condGrp->toString() . '`.';
                 switch (true) {
@@ -250,5 +274,50 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->filtersUxon = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return DataAuthorizationPolicyRelation[]
+     */
+    protected function getApplyToRelations() : array
+    {
+        return $this->applyToRelations;
+    }
+    
+    /**
+     * Apply this policy (including possible filters) to related objects too.
+     * 
+     * @uxon-property apply_to_related_objects
+     * @uxon-type \exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPolicyRelation[]
+     * @uxon-template [{"related_object": "", "relation_path_from_policy_object": ""}]
+     * 
+     * @param UxonObject $arrayOfRelationPaths
+     * @return DataAuthorizationPolicy
+     */
+    protected function setApplyToRelatedObjects(UxonObject $arrayOfRelationPaths) : DataAuthorizationPolicy
+    {
+        foreach ($arrayOfRelationPaths->getPropertiesAll() as $uxon) {
+            $this->applyToRelations[] = new DataAuthorizationPolicyRelation($this, $uxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isApplicableToRelations() : bool
+    {
+        return ! empty($this->applyToRelations);
+    }
+    
+    /**
+     * 
+     * @return WorkbenchInterface
+     */
+    public function getWorkbench() : WorkbenchInterface
+    {
+        return $this->workbench;
     }
 }
