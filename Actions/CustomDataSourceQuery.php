@@ -4,14 +4,11 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
@@ -19,6 +16,12 @@ use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Interfaces\DataSources\TextualQueryConnectorInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\TranslationPlaceholders;
+use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
 /**
  * Runs explicitly specified data source queries with placeholders filled from input data.
@@ -256,25 +259,23 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 
         foreach ($this->getQueries($task) as $query) {
             $queryRuns = [];
-
-            // See if the query has any placeholders
-            foreach (StringDataType::findPlaceholders($query) as $ph) {
-                /* @var $col \exface\Core\CommonLogic\DataSheets\DataColumn */
-                if (!$col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
-                    throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
-                }
-                // Replace the placeholder for each row and save each resulting query into
-                // an array.
-                foreach ($col->getValues(false) as $rowNr => $val) {
-                    $queryRuns[$rowNr] = StringDataType::replacePlaceholder($queryRuns[$rowNr] ?? $query, $ph, $val);
-                }
-            }
             
-            // If $queryRuns is empty (= no placeholders found), add the entire query
-            if (empty($queryRuns) === true) {
-                $queryRuns[] = $query;
+            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+            $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
+            foreach (array_keys($data_sheet->getRows()) as $rowNo) {
+                $rowRenderer = clone $renderer;
+                $rowRenderer->setDefaultPlaceholderResolver(
+                    (new DataRowPlaceholders($data_sheet, $rowNo, ''))
+                    ->setFormatValues(false)
+                );
+                $rowRenderer->addPlaceholder(
+                    (new FormulaPlaceholders($this->getWorkbench(), $data_sheet, $rowNo))
+                    //->setSanitizeAsUxon(true)
+                );
+                $queryRuns[] = $rowRenderer->render($query);
             }
-            
             // Perform the queries and save the total affected rows of the last query in $counter
             $counter = 0;
             foreach ($queryRuns as $queryRun){
