@@ -1715,12 +1715,9 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
     {
-        switch (true) {
-            case $arrayOfDataChecks instanceof UxonObject:
-                foreach($arrayOfDataChecks as $uxon) {
-                    $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
-                }
-                //TODO
+        $this->getInputChecks()->removeAll();
+        foreach($arrayOfDataChecks as $uxon) {
+            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
         }
         return $this;
     }
