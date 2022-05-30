@@ -19,4 +19,14 @@ class DataSelectionMarkerLayer extends DataMarkersLayer
     {
         throw new WidgetConfigurationError($this->getMap(), 'Cannot use custom `data` with a "' . $this->getType() . '" layer - use `data_widget_link` instead!');
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\DataMarkersLayer::isClusteringMarkers()
+     */
+    public function isClusteringMarkers() : ?bool
+    {
+        return parent::isClusteringMarkers() ?? false;
+    }
 }
