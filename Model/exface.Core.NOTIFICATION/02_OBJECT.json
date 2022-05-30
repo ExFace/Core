@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-03-15 11:39:41",
-            "MODIFIED_ON": "2021-03-15 11:41:10",
+            "MODIFIED_ON": "2022-05-30 16:20:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebaf7bbfb71838af7b025041000001",
@@ -96,7 +96,41 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "widgets": [
+                    {
+                        "widget_type": "WidgetGroup",
+                        "width": "max",
+                        "widgets": [
+                            {
+                                "attribute_alias": "TITLE",
+                                "width": "max"
+                            },
+                            {
+                                "attribute_alias": "USER"
+                            },
+                            {
+                                "attribute_alias": "ICON"
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Widget",
+                        "width": "max",
+                        "height": "max",
+                        "widgets": [
+                            {
+                                "attribute_alias": "WIDGET_UXON",
+                                "hide_caption": true,
+                                "height": "100%",
+                                "width": "max"
+                            }
+                        ]
+                    }
+                ]
+            },
             "ALIAS": "NOTIFICATION",
             "DATA_ADDRESS": "exf_notification"
         }
