@@ -599,6 +599,7 @@ JS;
                                 {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
                                 jqIcon.addClass('selected');
                             }
+                            {$this->getOnChangeScript()}
                         });
                     
                     }
