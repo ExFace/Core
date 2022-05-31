@@ -84,6 +84,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
         if ($sender !== null) {
             $context['sender'] = $sender;
         }
+        $message = str_replace('\\', '\\\\', $message);
         $this->getMonolog()->log($level, $message, $context);
     }
     
