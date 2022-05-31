@@ -17,6 +17,7 @@ use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Factories\MessageFactory;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\CommonLogic\WidgetDimension;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -96,35 +97,44 @@ trait ExceptionTrait {
             $error_tab = $debug_widget->createTab();
             $error_tab->setId('error_tab');
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
-            $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
                 try {
                     $msgModel = $this->getMessageModel($page->getWorkbench());
                     $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
                         ->setHeadingLevel(2)
+                        ->setWidth(WidgetDimension::MAX)
                         ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $msgModel->getTitle());
                     $error_tab->addWidget($error_heading);
                     $error_text = WidgetFactory::create($page, 'Text', $error_tab)
+                        ->setWidth(WidgetDimension::MAX)
                         ->setValue($this->getMessage());
                     $error_tab->addWidget($error_text);
                     if ($hint = $msgModel->getHint()) {
                         $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
                         ->setText($hint)
+                        ->setWidth(WidgetDimension::MAX)
                         ->setType(MessageTypeDataType::HINT);
                         $error_tab->addWidget($error_hint);
                     }
                     $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setAttributeAlias('DESCRIPTION')
+                        ->setWidth(WidgetDimension::MAX)
                         ->setHideCaption(true)
                         ->setValue($msgModel->getDescription());
                     $error_tab->addWidget($error_descr);
                 } catch (\Throwable $e) {
                     $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
-                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
+                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+                        ->setHeadingLevel(2)
+                        ->setWidth(WidgetDimension::MAX)
+                        ->setValue($this->getMessage());
                     $error_tab->addWidget($error_heading);
                 }
             } else {
-                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
+                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+                    ->setHeadingLevel(2)
+                    ->setWidth(WidgetDimension::MAX)
+                    ->setValue($this->getMessage());
                 $error_tab->addWidget($error_heading);
             }
             
@@ -202,7 +212,8 @@ trait ExceptionTrait {
         }
         /** @var Message $hintWidget */
         $hintWidget = WidgetFactory::createFromUxonInParent($parentWidget, new UxonObject([
-            'text' => $hintMessage
+            'text' => $hintMessage,
+            'width' => WidgetDimension::MAX
         ]), 'Message');
         
         return $hintWidget;
