@@ -451,5 +451,11 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return MetaRelationPathInterface|NULL
      */
     public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface;
+    
+    /**
+     * 
+     * @param string $functionName
+     * @return bool
+     */
+    public function hasFunction(string $functionName) : bool;
 }
-?>

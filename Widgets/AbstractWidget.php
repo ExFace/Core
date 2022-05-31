@@ -1437,4 +1437,10 @@ abstract class AbstractWidget implements WidgetInterface
         $this->extendedFrom = $stringOrUxonWidgetLink;
         return $this;
     }
+    
+    public function hasFunction(string $functionName) : bool
+    {
+        $constName = 'self::FUNCTION_' . strtoupper($functionName);
+        return defined($constName);
+    }
 }
