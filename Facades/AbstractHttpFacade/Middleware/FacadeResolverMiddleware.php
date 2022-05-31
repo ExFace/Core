@@ -73,10 +73,16 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 }
             } catch (FacadeRoutingError $ePage) {
                 $logLevel = null;
-                // Lower log level for JS-map URLs often happening in browser developer console.
-                if (StringDataType::endsWith($request->getUri()->__toString(), '.js.map', false)
-                    || StringDataType::endsWith($request->getUri()->__toString(), 'map.js', false)) {
-                    $logLevel = LoggerInterface::NOTICE;
+                $uri = $request->getUri()->__toString();
+                switch (true) {
+                    // Lower log level for JS-map URLs often happening in browser developer console.
+                    case StringDataType::endsWith($uri, '.js.map', false): 
+                    case StringDataType::endsWith($uri, 'map.js', false):
+                        $logLevel = LoggerInterface::NOTICE;
+                        break;
+                    case stripos($uri, '/api/') === false:
+                        $logLevel = LoggerInterface::ERROR;
+                        break;
                 }
                 $this->workbench->getLogger()
                     ->logException($eRouter, $logLevel)
