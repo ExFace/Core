@@ -187,4 +187,20 @@ class JsonDataType extends TextDataType
         
         return ArrayDataType::filterXPath($array, $path);
     }
+    
+    /**
+     * Returns a pretty printed string for the given JSON, array or stdClass object.
+     * 
+     * @param string|array|object $json
+     * @return string
+     */
+    public static function prettify($json) : string
+    {
+        if (is_string($json)) {
+            $obj = json_decode($json);
+        } else {
+            $obj = $json;
+        }
+        return json_encode($obj, JSON_PRETTY_PRINT);
+    }
 }

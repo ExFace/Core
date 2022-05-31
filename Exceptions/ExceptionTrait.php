@@ -16,6 +16,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Factories\MessageFactory;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -137,23 +138,13 @@ trait ExceptionTrait {
             $stacktrace_tab = $debug_widget->createTab();
             $stacktrace_tab->setId('stacktrace_tab');
             $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
-            $stacktrace_tab->setNumberOfColumns(1);
-            $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
+            $stacktrace_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
+                'width' => '100%',
+                'height' => '100%'
+            ]), 'Html');
             $stacktrace_tab->addWidget($stacktrace_widget);
             $stacktrace_widget->setHtml($page->getWorkbench()->getDebugger()->printException($this));
             $debug_widget->addTab($stacktrace_tab);
-        }
-        
-        // Add a tab with the request printout
-        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') && $debug_widget->findChildById('request_tab') === false) {
-            $request_tab = $debug_widget->createTab();
-            $request_tab->setId('request_tab');
-            $request_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.REQUEST_CAPTION'));
-            $request_tab->setNumberOfColumns(1);
-            $request_widget = WidgetFactory::create($page, 'Html', $request_tab);
-            $request_tab->addWidget($request_widget);
-            $request_widget->setHtml('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST, true, 5) . '</pre>');
-            $debug_widget->addTab($request_tab);
         }
         
         // Context tab
@@ -168,9 +159,11 @@ trait ExceptionTrait {
             $context_tab = $debug_widget->createTab();
             $context_tab->setId('context_tab');
             $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
-            $context_tab->setNumberOfColumns(1);
-            $context_widget = WidgetFactory::create($page, 'Html', $context_tab);
-            $context_widget->setHtml('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($context_dump, true, 2) . '</pre>');
+            $context_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
+                'width' => '100%',
+                'height' => '100%'
+            ]), 'Markdown');
+            $context_widget->setValue("```\n" . JsonDataType::prettify($context_dump) . "\n```");
             $context_tab->addWidget($context_widget);
             $debug_widget->addTab($context_tab);
         }
