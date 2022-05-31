@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Widgets\Input;
+
 trait JqueryInputTrait
 {
     /**
@@ -30,5 +32,19 @@ trait JqueryInputTrait
         }
         
         return '<input type="' . $type . '" ' . $props . ' />';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === Input::FUNCTION_FOCUS:
+                return "$('#{$this->getId()}').focus()";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
     }
 }

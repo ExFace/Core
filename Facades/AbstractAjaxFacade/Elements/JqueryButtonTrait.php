@@ -743,6 +743,8 @@ JS;
             case $functionName === null:
             case $functionName === Button::FUNCTION_PRESS:
                 return $this->buildJsClickFunctionName() . '()';
+            case $functionName === Button::FUNCTION_FOCUS:
+                return "$('#{$this->getId()}').focus()";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
     }
