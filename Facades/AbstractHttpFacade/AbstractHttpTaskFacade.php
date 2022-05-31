@@ -11,6 +11,7 @@ use exface\Core\Exceptions\InternalError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
 
 /**
  * Common base structure for HTTP facades designed to handle tasks.
@@ -46,6 +47,9 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
         if ($request->getAttribute($this->getRequestAttributeForTask()) === null) {
+            if ($this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
+                $this->getWorkbench()->getLogger()->debug('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
+            }
             $handler = new HttpRequestHandler($this);
             foreach ($this->getMiddleware() as $middleware) {
                 $handler->add($middleware);
