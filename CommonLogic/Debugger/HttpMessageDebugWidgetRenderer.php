@@ -48,19 +48,29 @@ class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
             $url = 'Unavailable: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
         }
         $request_widget = WidgetFactory::create($page, 'Markdown', $request_tab);
+        
+        $serverParams = '';
         if ($this->request instanceof ServerRequestInterface) {
             $serverParams = <<<MD
 
 ## Server parameters
 {$this->buildMarkdownServerParams($this->request)}
 MD;
-        } else {
-            $serverParams = '';
+        }
+        
+        $urlParams = '';
+        if ($query = $this->request->getUri()->getQuery()) {
+            $urlParams = <<<MD
+            
+```
+?{$this->prettifyUrlParams($query)}
+```
+MD;
         }
         $request_widget->setValue(<<<MD
 ## Request URL
             
-[{$url}]({$url})
+[{$url}]({$url}){$urlParams}
 
 ## Request headers
 
@@ -192,15 +202,10 @@ return $debug_widget;
                     
                     switch (true) {
                         case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
-                            $params = explode('&', $message->getBody()->__toString());
-                            $prettified = '';
-                            foreach ($params as $param) {
-                                $prettified .= ($prettified ? "\n&" : '') . urldecode($param);
-                            }
                             $messageBody = <<<MD
                             
 ```
-{$prettified}
+{$this->prettifyUrlParams($message->getBody()->__toString())}
 ```
 MD;
                             break;
@@ -252,6 +257,16 @@ break;
         }
         
         return $messageBody;
+    }
+    
+    protected function prettifyUrlParams(string $urlencoded) : string
+    {
+        $params = explode('&', $urlencoded);
+        $prettified = '';
+        foreach ($params as $param) {
+            $prettified .= ($prettified ? "\n&" : '') . urldecode($param);
+        }
+        return $prettified;
     }
     
     /**
