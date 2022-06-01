@@ -1440,7 +1440,7 @@ abstract class AbstractWidget implements WidgetInterface
     
     public function hasFunction(string $functionName) : bool
     {
-        $constName = 'self::FUNCTION_' . strtoupper($functionName);
+        $constName = 'static::FUNCTION_' . strtoupper($functionName);
         return defined($constName);
     }
 }
