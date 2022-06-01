@@ -21,6 +21,13 @@ In general running PHP with FastCGI is the preferable way, it performs faster an
 
 These built-in extensions must be uncommented in the `php.ini`!
 
+## Other extensions, that might be neede for optional functions
+
+- `bz2`
+- `ftp`
+- `exif` and `gd2` for any image processing (e.g. thumbnails)
+- `odbc`
+
 ## php.ini recommendations
 
 The following setting are recommended in the `php.ini` file in your PHP directory. 

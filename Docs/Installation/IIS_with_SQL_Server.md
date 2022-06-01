@@ -70,16 +70,18 @@ Use the following configuration in addition to the server-independent [recommend
 	- `extension = sqlsrv_74_nts`
 3. WinCache settings:
 	- `extension = wincache`
-	- `wincache.fcenabled=1` (optional)
-	- `wincache.ocenabled=1` (optional)
+	- `wincache.fcenabled = 1` (optional)
+	- `wincache.ocenabled = 1` (optional)
 4. OPCache settings:
-	- `zend_extension = C:\Program Files\PHP\bin\ext\php_opcache.dll`
+	- `zend_extension = "C:\Program Files\PHP\bin\ext\php_opcache.dll"`
 	- `opcache.enable = 1` and other settings as described in the general [PHP recommendations](Recommended_PHP_settings.md)
 5. Recommended security-related settings
 	- `fastcgi.logging = 0` (for dev-environment `1`) 
 	- `display_errors = Off` (for dev-environment `On`) 
 	- `log_errors = On`
-	- `error_log = c:\Program Files\PHP\logs\error.log` - don't forget to crate the directory used here!
+	- `error_log = "C:\Program Files\PHP\logs\error.log"` - don't forget to crate the directory used here!
+	
+Check you PHP configuration by creating a file in `C:\inetpub\wwwroot` (e.g. `phpinfo.php`) and calling it in your browser via http://localhost/phpinfo.php. Search for `sqlsrv` in the output - if it is there, you are probably good to go. If not, loading extensions did not work yet - check your `extension_dir`, restart IIS, etc.
 	
 ## Installing the workbench
 
