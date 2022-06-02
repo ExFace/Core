@@ -43,4 +43,8 @@ interface iCallOtherActions extends ActionInterface
      * @return iCallOtherActions
      */
     public function setUseSingleTransaction(bool $value) : iCallOtherActions;
+    
+    public function containsActionClass(string $classOrInterface, bool $onlyThisClass = false) : bool;
+    
+    public function containsAction($actionOrSelectorOrString) : bool;
 }
