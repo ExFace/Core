@@ -81,11 +81,11 @@ class HexadecimalNumberDataType extends NumberDataType
      * {@inheritDoc}
      * @see NumberDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, string $format = null, $ifNull = '') : string
     {
         $val = $value !== null ? $this->parse($value) : $this->getValue();
-        if ($val === null || $val === EXF_LOGICAL_NULL) {
-            return '';
+        if ($val === null || $value === '' || $val === EXF_LOGICAL_NULL) {
+            return $ifNull;
         }
         return $val;
     }
