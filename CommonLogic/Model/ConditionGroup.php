@@ -299,6 +299,9 @@ class ConditionGroup implements ConditionGroupInterface
         if ($this->hasBaseObject() === true) {
             $uxon->setProperty('base_object_alias', $this->getBaseObjectSelector());
         }
+        if ($this->ignoreEmptyValues === true) {
+            $uxon->setProperty('ignore_empty_values', true);
+        }
         foreach ($this->getConditions() as $cond) {
             $uxon->appendToProperty('conditions', $cond->exportUxonObject());
         }
@@ -327,6 +330,9 @@ class ConditionGroup implements ConditionGroupInterface
                 if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
                     $prop->setProperty('object_alias', $this->getBaseObjectSelector());
                 }
+                if ($prop->hasProperty('ignore_empty_values') === false) {
+                    $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
+                }
                 $this->addCondition(ConditionFactory::createFromUxon($this->exface, $prop));
             }
         }
@@ -336,6 +342,9 @@ class ConditionGroup implements ConditionGroupInterface
                 // factory to avoid loading the object if it was not loaded yet.
                 if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
                     $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
+                }
+                if ($prop->hasProperty('ignore_empty_values') === false) {
+                    $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
                 }
                 $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
             }
