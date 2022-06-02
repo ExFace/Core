@@ -17,6 +17,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Actions\iCallWidgetFunction;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Interfaces\Actions\iShowUrl;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * 
@@ -38,11 +43,13 @@ trait JqueryButtonTrait {
      * @param Button $widget
      * @return string
      */
-    protected function buildJsRefreshWidgets(Button $widget) : string
+    protected function buildJsRefreshWidgets() : string
     {
         $js = '';
+        $widget = $this->getWidget();
+        $page = $widget->getPage();
         foreach ($widget->getRefreshWidgetIds() as $widgetId) {
-            $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $widget->getPage());
+            $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
             $js .=  $refreshEl->buildJsRefresh(true) . "\n";
         }
         return $js;
@@ -55,11 +62,12 @@ trait JqueryButtonTrait {
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsResetWidgets(Button $widget) : string
+    protected function buildJsResetWidgets() : string
     {
         $js = '';
-        foreach ($widget->getResetWidgetIds() as $id) {
-            $resetElem = $this->getFacade()->getElementByWidgetId($id, $widget->getPage());
+        $page = $this->getWidget()->getPage();
+        foreach ($this->getWidget()->getResetWidgetIds() as $id) {
+            $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
             $js .= $resetElem->buildJsResetter() . "\n";
         }
         return $js;
@@ -100,13 +108,13 @@ trait JqueryButtonTrait {
     }
 
     /**
-     * Produces the JS variable `requestData` containing the input data for the action
+     * Produces the JS variable named by $jsVariable parameter containing the input data for the action
      * 
      * @param ActionInterface $action
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element, string $jsVariable = 'requestData') : string
     {
         $min = $action->getInputRowsMin();
         $max = $action->getInputRowsMax();
@@ -120,24 +128,24 @@ trait JqueryButtonTrait {
         if ($min !== null || $max !== null) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             if ($min === $max) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $min . " || requestData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
                     '%number%' => $max
                 ), $max) . '"') . " return false;}";
             } elseif (is_null($max)) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $min . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
                     '%number%' => $min
                 ), $min) . '"') . " return false;}";
             } elseif (is_null($min)) {
-                $js_check_input_rows = "if (requestData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
+                $js_check_input_rows = "if ({$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
                     '%number%' => $max
                 ), $max) . '"') . " return false;}";
             } else {
-                $js_check_input_rows = "if (requestData.rows.length < " . $min . " || requestData.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
                     '%min%' => $min,
                     '%max%' => $max
                 )) . '"') . " return false;}";
             }
-            $js_check_input_rows = 'if (requestData.rows){' . $js_check_input_rows . '}';
+            $js_check_input_rows = "if ({$jsVariable}.rows){ {$js_check_input_rows} }";
         } else {
             $js_check_input_rows = '';
         }
@@ -197,7 +205,7 @@ JS;
         return <<<JS
 
                     $js_check_button_state
-					var requestData = {$js_get_data};
+					{$jsVariable} = {$js_get_data};
 					$js_check_input_rows
 
 JS;
@@ -229,50 +237,127 @@ JS;
      * 
      * @return string
      */
-    public function buildJsClickFunction()
+    public function buildJsClickFunction(ActionInterface $action = null, string $jsRequestData = null)
     {
         $widget = $this->getWidget();
         $input_element = $this->getInputElement();
-        $action = $widget->getAction();
+        $action = $action ?? $widget->getAction();
+        
+        if ($action && $jsRequestData === null) {
+            $jsRequestData = 'requestData';
+            $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $input_element, $jsRequestData);
+        }
         
         switch (true) {
             case ! $action:
-                return $this->buildJsClickNoAction($widget, $input_element);
+                return $this->buildJsClickNoAction();
+            case $action instanceof iCallOtherActions:
+                return $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData);
             case $action instanceof RefreshWidget:
-                return $this->buildJsClickRefreshWidget($action, $input_element);
-            case $action->implementsInterface('iRunFacadeScript'):
-                return $this->buildJsClickRunFacadeScript($action, $input_element);
-            case $action->implementsInterface('iShowDialog'):
-                return $this->buildJsClickShowDialog($action, $input_element);
-            case $action->implementsInterface('iShowUrl'):
-                return $this->buildJsClickShowUrl($action, $input_element);
-            case $action->implementsInterface('iShowWidget'):
-                return $this->buildJsClickShowWidget($action, $input_element);
+                return $this->buildJsClickRefreshWidget($action);
+            case $action instanceof iRunFacadeScript:
+                return $this->buildJsClickRunFacadeScript($action);
+            case $action instanceof iShowDialog:
+                return $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData);
+            case $action instanceof iShowUrl:
+                return $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData);
+            case $action instanceof iShowWidget:
+                return $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData);
             case $action instanceof GoBack:
-                return $this->buildJsClickGoBack($action, $input_element);
+                return $this->buildJsClickGoBack($action);
             case $action instanceof SendToWidget:
-                return $this->buildJsClickSendToWidget($action, $input_element);
+                return $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData);
             case $action instanceof ResetWidget:
-                return $this->buildJsResetWidgets($widget);
+                return $this->buildJsResetWidgets();
             case $action instanceof iCallWidgetFunction:
                 return $this->buildJsClickCallWidgetFunction($action);
             default: 
-                return $this->buildJsClickCallServerAction($action, $input_element);
+                return $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData);
         }
+    }
+    
+    /**
+     *
+     * @param ActionInterface $action
+     * @return bool
+     */
+    protected function isActionFrontendOnly(ActionInterface $action) : bool
+    {
+        switch (true) {
+            case $action instanceof RefreshWidget:
+            case $action instanceof iRunFacadeScript:
+            case $action instanceof iShowUrl:
+            case $action instanceof GoBack:
+            case $action instanceof SendToWidget:
+            case $action instanceof ResetWidget:
+            case $action instanceof iCallWidgetFunction:
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @param iCallOtherActions $action
+     * @param AjaxFacadeElementInterface $input_element
+     * @throws FacadeRuntimeError
+     * @return string
+     */
+    protected function buildJsClickActionChain(iCallOtherActions $action, string $jsRequestData) : string
+    {
+        $firstServerActionIdx = null;
+        $lastServerActionIdx = null;
+        $steps = $action->getActions();
+        $lastActionIdx = count($steps) - 1;
+        foreach ($steps as $i => $step) {
+            if (! $this->isActionFrontendOnly($step)) {
+                if ($firstServerActionIdx !== null && $lastServerActionIdx !== $i-1) {
+                    throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): cannot mix front- and back-end actions!');
+                }
+                if ($firstServerActionIdx === null) {
+                    $firstServerActionIdx = $i;
+                }
+                $lastServerActionIdx = $i;
+            }
+        }
+        
+        if ($firstServerActionIdx === 0 && $lastServerActionIdx === $lastActionIdx) {
+            return $this->buildJsClickCallServerAction($action, $jsRequestData);
+        }
+        
+        $js = '';
+        for ($i = 0; $i < $firstServerActionIdx; $i++) {
+            $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+        }
+        $onSuccess = '';
+        for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
+            $onSuccess .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+        }
+        
+        if ($firstServerActionIdx !== $lastServerActionIdx) {
+            throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): action chains with mixed front- and back-end actions can only contain a single back-end action!');
+        }
+        
+        $serverAction = $steps[$firstServerActionIdx];
+        if ($serverAction instanceof iShowWidget) {
+            throw new FacadeRuntimeError('Cannot use actions that render widgets in mixed action chains!');
+        }
+        
+        $js .= $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess);
+        
+        return $js;
     }
     
     /**
      * Returns the JS code triggered by a button without an action.
      * 
-     * @param WidgetInterface $trigger
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickNoAction(WidgetInterface $trigger, AbstractJqueryElement $input_element) : string
+    protected function buildJsClickNoAction() : string
     {
-        return $this->buildJsCloseDialog($trigger, $input_element)
-        . $this->buildJsRefreshWidgets($trigger)
-        . $this->buildJsResetWidgets($trigger);
+        return $this->buildJsCloseDialog()
+        . $this->buildJsRefreshWidgets()
+        . $this->buildJsResetWidgets();
     }
     
     /**
@@ -326,7 +411,7 @@ JS;
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
         return <<<JS
 
-                {$this->buildJsResetWidgets($this->getWidget())}
+                {$this->buildJsResetWidgets()}
                 
                 $(document).trigger("$actionperformed", [{
                     trigger_widget_id: "{$this->getId()}",
@@ -371,15 +456,14 @@ JS;
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickCallServerAction(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '') : string
     {
         $widget = $this->getWidget();
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
-        $output = $this->buildJsRequestDataCollector($action, $input_element);
         $output .= "
-						if (" . $input_element->buildJsValidator() . ") {
+						if (" . $this->getInputElement()->buildJsValidator() . ") {
 							" . $this->buildJsBusyIconShow() . "
 							$.ajax({
 								type: 'POST',
@@ -387,7 +471,7 @@ JS;
                                 {$headers} 
 								data: {	
 									{$this->buildJsRequestCommonParams($widget, $action)}
-									data: requestData
+									data: {$jsRequestData}
 								},
 								success: function(data, textStatus, jqXHR) {
                                     if (typeof data === 'object') {
@@ -401,11 +485,11 @@ JS;
     									}
                                     }
 				                   	if (response.success !== undefined){
-										{$this->buildJsCloseDialog($widget, $input_element)}
+										{$this->buildJsCloseDialog()}
 				                       	{$this->buildJsBusyIconHide()}
 				                       	{$this->buildJsTriggerActionEffects($action)}
 										if (response.success !== undefined || response.undoURL){
-				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
+				                       		{$this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')")}
 											if(response.redirect !== undefined){
                                                 switch (true) {
 												    case response.redirect.indexOf('target=_blank') !== -1:
@@ -429,6 +513,7 @@ JS;
                                                 a.click();
                                                 document.body.removeChild(a);
 	                       					}
+                                            {$jsOnSuccess}
 										}
 				                    } else {
 										" . $this->buildJsBusyIconHide() . "
@@ -441,14 +526,14 @@ JS;
 								}
 							});
 						} else {
-							" . $input_element->buildJsValidationError() . "
+							" . $this->getInputElement()->buildJsValidationError() . "
 						}
 					";
         
         return $output;
     }
 
-    protected function buildJsClickShowWidget(iShowWidget $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickShowWidget(iShowWidget $action, string $jsRequestData) : string
     {
         $widget = $this->getWidget();
         $output = '';
@@ -463,11 +548,6 @@ JS;
                 throw new ActionConfigurationError($action, 'Input mappers not supported in navigating actions as "' . $action->getAliasWithNamespace() . '"!');
             }
             
-            $output = <<<JS
-
-            {$this->buildJsRequestDataCollector($action, $input_element)}	
-
-JS;
             if ($action->getPrefillWithPrefillData()) {
                 if ($prefillPreset = $action->getPrefillDataPreset()) {
                     $prefill_param = '&prefill=\' + JSON.stringify(' . $this->buildJsPrefillDataFromPreset($prefillPreset) . ') + \'';
@@ -475,8 +555,8 @@ JS;
                     $output .= <<<JS
 
 			var prefillRows = [];
-			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
-				prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
+			if ($jsRequestData.rows && $jsRequestData.rows.length > 0 && $jsRequestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+				prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: $jsRequestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
 			}
 
 JS;
@@ -497,8 +577,8 @@ JS;
             
             $output .= <<<JS
 
-            {$input_element->buildJsBusyIconShow()}
-			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element, $newWindow)}
+            {$this->getInputElement()->buildJsBusyIconShow()}
+			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $this->getInputElement(), $newWindow)}
 
 JS;
         }
@@ -561,24 +641,25 @@ JS;
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickGoBack(ActionInterface $action) : string
     {
-        return $input_element->buildJsBusyIconShow() . 'parent.history.back(); return false;';
+        return $this->getInputElement()->buildJsBusyIconShow() . 'parent.history.back(); return false;';
     }
 
     /**
      * Returns the JS code to navigate to the actions URL - eventually opening a new browser tab.
      * 
      * @param ActionInterface $action
-     * @param AbstractJqueryElement $input_element
+     * @param string $jsRequestData
      * @return string
      */
-    protected function buildJsClickShowUrl(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickShowUrl(ActionInterface $action, string $jsRequestData) : string
     {
+        $input_element = $this->getInputElement();
         /* @var $action \exface\Core\Interfaces\Actions\iShowUrl */
         $output = $this->buildJsRequestDataCollector($action, $input_element) . "
 					var " . $action->getAlias() . "Url='" . $action->getUrl() . "';
-					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "requestData.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
+					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "{$jsRequestData}.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
         if ($action->getOpenInNewWindow()) {
             $output .= $input_element->buildJsBusyIconShow() . "window.open(" . $action->getAlias() . "Url);" . $input_element->buildJsBusyIconHide();
         } else {
@@ -591,18 +672,16 @@ JS;
      * Returns the JS code to run the javascript stored inside the action
      * 
      * @param ActionInterface $action
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickRunFacadeScript(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickRunFacadeScript(ActionInterface $action) : string
     {
-        $widget = $this->getWidget();
-        
+        $inputEl = $this->getInputElement();
         return <<<JS
         
-                {$action->buildScript($input_element->getId(), $input_element)};
+                {$action->buildScript($inputEl->getId())};
                 {$this->buildJsTriggerActionEffects($action)};
-                {$this->buildJsCloseDialog($widget, $input_element)};
+                {$this->buildJsCloseDialog()};
 
 JS;
 
@@ -612,23 +691,23 @@ JS;
      * Returns the JS code to refresh the input widget of the action
      * 
      * @param ActionInterface $action
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsClickRefreshWidget(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickRefreshWidget(ActionInterface $action) : string
     {
         return <<<JS
 
-                {$input_element->buildJsRefresh()};
+                {$this->getInputElement()->buildJsRefresh()};
                 {$this->buildJsTriggerActionEffects($action)};
-                {$this->buildJsCloseDialog($this->getWidget(), $input_element)};
+                {$this->buildJsCloseDialog()};
         
 JS;
     }
 
-    protected function buildJsUndoUrl(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsUndoUrl(ActionInterface $action) : string
     {
         $widget = $this->getWidget();
+        $undo_url = '';
         if ($action->isUndoable()) {
             $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . $widget->getId();
         }
@@ -693,20 +772,19 @@ JS;
      * Passes the result of the data-getter of the input widget to the data-setter of the target widget
      * 
      * @param SendToWidget $action
-     * @param AbstractJqueryElement $input_element
+     * @param string $jsRequestData
+     * 
      * @return string
      */
-    protected function buildJsClickSendToWidget(SendToWidget $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickSendToWidget(SendToWidget $action, string $jsRequestData) : string
     {
-        $widget = $this->getWidget();
         $targetElement = $this->getFacade()->getElementByWidgetId($action->getTargetWidgetId(), $this->getWidget()->getPage());
         
         return <<<JS
 
-                        {$this->buildJsRequestDataCollector($action, $input_element)}
-						if ({$input_element->buildJsValidator()}) {
-                            {$targetElement->buildJsDataSetter('requestData')}
-                            {$this->buildJsCloseDialog($widget, $input_element)}
+                        if ({$this->getInputElement()->buildJsValidator()}) {
+                            {$targetElement->buildJsDataSetter($jsRequestData)}
+                            {$this->buildJsCloseDialog()}
                             {$this->buildJsTriggerActionEffects($action)}
                         }
 
@@ -727,11 +805,9 @@ JS;
     /**
      * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
      * 
-     * @param WidgetInterface $widget
-     * @param AbstractJqueryElement $input_element
      * @return string
      */
-    abstract protected function buildJsCloseDialog($widget, $input_element);
+    abstract protected function buildJsCloseDialog() : string;
     
     /**
      * 
