@@ -8,8 +8,8 @@ use exface\Core\Factories\DataTypeFactory;
  * Parses (almost) any value into a date and time in the internal format or a given ICU format.
  *
  * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format. Additionall the source format can be defined in the third parameter
- * if it cannot be parsed automatically.
+ * the ICU date format or `locale` for the default format of the current language. Additionall 
+ * the source format can be defined in the third parameter if it cannot be parsed automatically.
  *
  * Examples:
  *
@@ -32,9 +32,15 @@ class DateTime extends Date
      */
     public function run($date = null, $returnFormat = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL, $inputFormat = null)
     {
-        if ($returnFormat === null) {
-            $returnFormat = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL;
+        switch (true) {
+            case $returnFormat === null:
+                $returnFormat = DateTimeDataType::DATE_ICU_FORMAT_INTERNAL;
+                break;
+            case $returnFormat === 'locale':
+                $returnFormat = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+                break;
         }
+        
         return parent::run($date, $returnFormat, $inputFormat);
     }
     

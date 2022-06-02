@@ -387,22 +387,35 @@ class NumberDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, string $format = null, $ifNull = '') : string
     {
         $num = $this->parse($value);
         
-        if ($num === null || $num === EXF_LOGICAL_NULL) {
-            return '';
+        if ($num === null || $value === '' || $num === EXF_LOGICAL_NULL) {
+            return $ifNull;
         }
         
         $pMin = $this->getPrecisionMin();
         $pMax = $this->getPrecisionMax();
         
-        if ($pMax === 0 || $pMax <= $pMin) {
+        if ($pMax === 0 || ($pMax !== null && $pMin !== null && $pMax <= $pMin)) {
             $decimals = $pMax;
         } else {
             $decPart = explode('.', strval($num))[1] ?? '';
-            $decimals = min([$pMax, strlen($decPart)]);
+            $pReal = strlen(rtrim($decPart, '0'));
+            switch (true) {
+                case $pMax === null && $pMin !== null:
+                    $decimals = min([$pMin, $pReal]);
+                    break;
+                case $pMax !== null && $pMin !== null:
+                    $decimals = min([$pMin, $pMax]);
+                    break;
+                case $pMin !== null:
+                    $decimals = min([$pMax, $pReal]);
+                    break;
+                default:
+                    $decimals = $pReal;
+            }
         }
         
         return number_format(floatval($num), $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
