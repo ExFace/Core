@@ -116,7 +116,7 @@
         },
         {
             "CREATED_ON": "2020-03-31 12:54:59",
-            "MODIFIED_ON": "2020-04-03 08:33:42",
+            "MODIFIED_ON": "2022-06-02 10:24:48",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea733e1117fd49b3cb025041000001",
@@ -126,6 +126,22 @@
             "NAME": "Change My Password",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
+                "input_object_alias": "exface.Core.USER",
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_invalid_if": [
+                    {
+                        "error_text": "Cannot change password for a user logged in via single-sign-on",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "PASSWORD",
+                                "comparator": "==",
+                                "value": ""
+                            }
+                        ]
+                    }
+                ],
                 "widget": {
                     "widget_type": "Dialog",
                     "width": 1,
