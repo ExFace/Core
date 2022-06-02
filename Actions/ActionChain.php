@@ -15,6 +15,12 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\CommonLogic\Tasks\ResultEmpty;
+use exface\Core\CommonLogic\Tasks\ResultMessage;
+use exface\Core\Factories\MessageFactory;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -221,9 +227,17 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         }
         
         $chainResult = $chainResult ?? $result;
+        $message = $this->getResultMessageText() ?? $message;
+        
+        if ($message) {
+            if ($chainResult instanceof ResultEmpty) {
+                $chainResult = ResultFactory::createMessageResult($chainResult->getTask(), $message);
+            } else {
+                $chainResult->setMessage();
+            }
+        }
         
         $chainResult->setDataModified($data_modified);
-        $chainResult->setMessage($this->getResultMessageText() ?? $message);
         
         return $chainResult;
     }
@@ -499,5 +513,50 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             }
         }
         return $effects;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::containsAction()
+     */
+    public function containsAction($actionOrSelectorOrString): bool
+    {
+        if (is_string($actionOrSelectorOrString)) {
+            $actionOrSelectorOrString = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
+        }
+        
+        foreach ($this->getActions() as $action) {
+            if ($action->is($actionOrSelectorOrString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::containsActionClass()
+     */
+    public function containsActionClass(string $classOrInterface, bool $onlyThisClass = false): bool
+    {
+        $classOrInterface = '\\' . ltrim(trim($classOrInterface), '\\');
+        $contains = false;
+        foreach ($this->getActions() as $action) {
+            if (is_a($action, $classOrInterface, true) === true) {
+                $contains = true;
+            } else {
+                $contains = false;
+            }
+            if($onlyThisClass === false && $contains === true) {
+                return true;
+            }
+            
+            if($onlyThisClass === true && $contains === false) {
+                return false;
+            }
+        }
+        return $contains;
     }
 }
