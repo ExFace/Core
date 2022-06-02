@@ -4,8 +4,10 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 /**
- * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
- * e.g. OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
+ * A condition group contains one or more conditions and/or other (nested) condition groups combined by 
+ * one logical operator, e.g. `OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 )`.
+ * 
+ * @see ConditionInterface
  * 
  * @author Andrej Kabachnik
  *
@@ -26,9 +28,10 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @param ExpressionInterface $expression
      * @param mixed $value
      * @param string $comparator
+     * @param bool|NULL $ignoreEmptyValue
      * @return ConditionGroupInterface
      */
-    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS) : ConditionGroupInterface;
+    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
      * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
@@ -36,18 +39,20 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @param string $expression_string
      * @param mixed $value
      * @param string $comparator
+     * @param bool|NULL $ignoreEmptyValue
      * @return ConditionGroupInterface
      */
-    public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface;
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
      * 
      * @param MetaAttributeInterface $attribute
      * @param mixed $value
      * @param string $comparator
+     * @param bool|NULL $ignoreEmptyValue
      * @return ConditionGroupInterface
      */
-    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null) : ConditionGroupInterface;
+    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
      * Adds an filter based on a list of values: the column value must equal one of the values in the list.
@@ -56,16 +61,18 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      *
      * @param string|ExpressionInterface $expressionString
      * @param string|array $values
+     * @param bool|NULL $ignoreEmptyValue
      * @return ConditionGroupInterface
      */
-    public function addConditionFromValueArray($expressionOrString, $value_list) : ConditionGroupInterface;
+    public function addConditionFromValueArray($expressionOrString, $value_list, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
      *
      * @param DataColumnInterface $column
+     * @param bool|NULL $ignoreEmptyValue
      * @return ConditionGroupInterface
      */
-    public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface;
+    public function addConditionFromColumnValues(DataColumnInterface $column, bool $ignoreEmptyValue = null) : ConditionGroupInterface;
     
     /**
      * Adds a subgroup to this condition group.
@@ -79,9 +86,10 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * Adds a subgroup with a given logical operator and returns it for chaining.
      * 
      * @param string $operator
+     * @param bool|NULL $ignoreEmptyValues
      * @return ConditionGroupInterface
      */
-    public function addNestedGroupFromString(string $operator) : ConditionGroupInterface;
+    public function addNestedGroupFromString(string $operator, bool $ignoreEmptyValues = null) : ConditionGroupInterface;
     
     /**
      * Returns an array of conditions directly contained in this group (not in the subgroups!).

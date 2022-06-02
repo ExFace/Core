@@ -686,7 +686,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
             // Register the filters in the application context scope
             foreach ($filter_context as $filter) {
-                $condition = ConditionFactory::createFromUxonOrArray($exface, $filter);
+                $condition = ConditionFactory::createFromUxon($exface, $filter);
                 $data_source->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
             }
         }

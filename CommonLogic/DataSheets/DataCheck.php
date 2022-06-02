@@ -80,7 +80,7 @@ class DataCheck implements DataCheckInterface
         if (! $this->isApplicable($data)) {
             throw new DataCheckNotApplicableError($data, 'Data check not applicable to given data!', null, null, $this);
         }
-        $filter = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->getConditionGroupUxon(), $data->getMetaObject());
+        $filter = $this->getConditionGroup($data->getMetaObject());
         
         try {
             return $data->extract($filter, true);

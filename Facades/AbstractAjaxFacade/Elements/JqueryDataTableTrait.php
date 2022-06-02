@@ -29,7 +29,7 @@ trait JqueryDataTableTrait {
     {
         $widget = $this->getWidget();
         $detail_filters_js = '
-				var filters = {operator: "AND", conditions: []}
+				var filters = {operator: "AND", ignore_empty_values: true, conditions: []}
 			';
         foreach ($widget->getFilters() as $filter) {
             if ($filter->isDisplayOnly()) {

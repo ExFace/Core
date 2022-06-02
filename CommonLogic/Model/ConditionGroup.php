@@ -18,7 +18,25 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
- * Default implementation of the ConditionGroupInterface
+ * Groups multiple conditions and/or condition groups using a logical operator like AND, OR, etc.
+ * 
+ * Condition groups can be expressed in UXON:
+ * 
+ * ```
+ *  {
+ *      "operator": "AND",
+ *      "conditions": [
+ *          {"expression": "...", "comparator": "==", "value": "..."}
+ *      ],
+ *      "nested_groups": [
+ *          {"operator": "OR", "conditions": []}
+ *      ]
+ *  }
+ *  
+ * ```
+ * 
+ * You can give the condition group a `base_object_alias` or `ignore_empty_values` as default values
+ * for the respective properties of its conditions.
  * 
  * @see ConditionGroupInterface
  *
@@ -41,15 +59,18 @@ class ConditionGroup implements ConditionGroupInterface
     private $baseObject = null;
     
     private $baseObjectSelector = null;
+    
+    private $ignoreEmptyValues = null;
 
     /**
-     * 
+     * @deprecated use ConditionGroupFactory instead!
      * @param \exface\Core\CommonLogic\Workbench $exface
      * @param string $operator
      */
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND, MetaObjectInterface $baseObject = null)
+    public function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND, MetaObjectInterface $baseObject = null, bool $ignoreEmptyValues = false)
     {
         $this->exface = $exface;
+        $this->ignoreEmptyValues = $ignoreEmptyValues;
         $this->setOperator($operator);
         if ($baseObject !== null) {
             $this->setBaseObject($baseObject);
@@ -73,10 +94,10 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionGroupInterface::addConditionFromExpression()
      */
-    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS) : ConditionGroupInterface
+    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS, bool $ignoreEmptyValue = null) : ConditionGroupInterface
     {
         if (! is_null($value) && $value !== '') {
-            $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator);
+            $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
             $this->addCondition($condition);
         }
         return $this;
@@ -98,15 +119,20 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addNestedGroupFromString()
      */
-    public function addNestedGroupFromString(string $operator) : ConditionGroupInterface
+    public function addNestedGroupFromString(string $operator, bool $ignoreEmptyValues = null) : ConditionGroupInterface
     {
-        $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, $this->getBaseObject());
+        $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, $this->getBaseObject(), $ignoreEmptyValues ?? $this->ignoreEmptyValues);
         $this->addNestedGroup($grp);
         return $grp;
     }
 
     /**
-     *
+     * Conditions in this group
+     * 
+     * @uxon-property conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * @uxon-template [{"expression": "", "comparator": "==", "value": ""}]
+     * 
      * {@inheritdoc}
      * @see ConditionGroupInterface::getConditions()
      */
@@ -133,6 +159,11 @@ class ConditionGroup implements ConditionGroupInterface
     }
 
     /**
+     * Further (nested) condition groups inside this group
+     * 
+     * @uxon-property conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * @uxon-template [{"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}]
      * 
      * {@inheritdoc}
      * @see ConditionGroupInterface::getNestedGroups()
@@ -185,9 +216,9 @@ class ConditionGroup implements ConditionGroupInterface
         }
         
         if ($this->hasBaseObject() === true) {
-            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relation_path_to_new_base_object));
+            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relation_path_to_new_base_object), $this->ignoreEmptyValues);
         } else {
-            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator());
+            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), null, $this->ignoreEmptyValues);
         }
         foreach ($this->getConditions() as $condition) {
             // Remove conditions not matching the filter
@@ -209,7 +240,7 @@ class ConditionGroup implements ConditionGroupInterface
                 // Silently omit conditions, that cannot be rebased
                 continue;
             }
-            $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $condition->getValue(), $condition->getComparator());
+            $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $condition->getValue(), $condition->getComparator(), $condition->willIgnoreEmptyValues());
             $result->addCondition($new_condition);
         }
         
@@ -231,11 +262,20 @@ class ConditionGroup implements ConditionGroupInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionalExpressionInterface::toString()
+     * @deprecated use __toString()
+     * @return string
      */
     public function toString() : string
+    {
+        return $this->__toString();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionalExpressionInterface::__toString()
+     */
+    public function __toString() : string
     {
         $result = '';
         foreach ($this->getConditions() as $cond) {
@@ -276,6 +316,9 @@ class ConditionGroup implements ConditionGroupInterface
     public function importUxonObject(UxonObject $uxon)
     {
         $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
+        if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+            $this->setIgnoreEmptyValues($ignoreEmpty);
+        }
         if ($uxon->hasProperty('base_object_alias')) {
             $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
         }
@@ -544,7 +587,7 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromString()
      */
-    public function addConditionFromString(string $expression_string, $value, string $comparator = null) : ConditionGroupInterface
+    public function addConditionFromString(string $expression_string, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface
     {
         $base_object = $this->getBaseObject();
         if ($base_object === null) {
@@ -558,13 +601,13 @@ class ConditionGroup implements ConditionGroupInterface
         // IDEA move this logic to the condition, so it can be used generally
         $expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
         if (count($expression_strings) > 1) {
-            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
+            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
             foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator));
+                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
             }
             $this->addNestedGroup($group);
         } elseif (! is_null($value) && $value !== '') {
-            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator));
+            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
         }
         
         return $this;
@@ -575,9 +618,9 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromAttribute()
      */
-    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null) : ConditionGroupInterface
+    public function addConditionFromAttribute(MetaAttributeInterface $attribute, $value, string $comparator = null, bool $ignoreEmptyValue = null) : ConditionGroupInterface
     {
-        $this->addCondition(ConditionFactory::createFromAttribute($attribute, $value, $comparator));
+        $this->addCondition(ConditionFactory::createFromAttribute($attribute, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
         return $this;
     }
     
@@ -586,7 +629,7 @@ class ConditionGroup implements ConditionGroupInterface
     * {@inheritDoc}
     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromValueArray()
     */
-    public function addConditionFromValueArray($expressionOrString, $value_list) : ConditionGroupInterface
+    public function addConditionFromValueArray($expressionOrString, $value_list, bool $ignoreEmptyValue = null) : ConditionGroupInterface
     {
         if ($expressionOrString instanceof ExpressionInterface) {
             $expr = $expressionOrString;
@@ -603,7 +646,7 @@ class ConditionGroup implements ConditionGroupInterface
         } else {
             $value = $value_list;
         }
-        $this->addConditionFromExpression($expr, $value, EXF_COMPARATOR_IN);
+        $this->addConditionFromExpression($expr, $value, EXF_COMPARATOR_IN, $ignoreEmptyValue);
         return $this;
     }
     
@@ -612,9 +655,10 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addConditionFromColumnValues()
      */
-    public function addConditionFromColumnValues(DataColumnInterface $column) : ConditionGroupInterface
+    public function addConditionFromColumnValues(DataColumnInterface $column, bool $ignoreEmptyValue = null) : ConditionGroupInterface
     {
-        $this->addConditionFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+        $values = implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false)));
+        $this->addConditionFromString($column->getExpressionObj()->toString(), $values, EXF_COMPARATOR_IN, $ignoreEmptyValue);
         return $this;
     }
     
@@ -637,6 +681,22 @@ class ConditionGroup implements ConditionGroupInterface
                 $grp->replaceCondition($conditionToReplace, $replaceWith);
             }
         }
+        return $this;
+    }
+    
+    /**
+     * Set to TRUE to treat the condition as empty (having no value) if an empty value is set.
+     * 
+     * @uxon-property ignore_empty_values
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return ConditionGroupInterface
+     */
+    protected function setIgnoreEmptyValues(bool $trueOrFalse) : ConditionGroupInterface
+    {
+        $this->ignoreEmptyValues = $trueOrFalse;
         return $this;
     }
 }
