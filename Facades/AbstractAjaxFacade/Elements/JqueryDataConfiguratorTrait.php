@@ -92,7 +92,7 @@ trait JqueryDataConfiguratorTrait
         $filters = array_filter($filters);
         
         if (empty($filters) === false  || empty($nestedGroups) === false) {
-            $filter_group = '{operator: "AND", conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
             $filter_group = '';
         }
