@@ -233,7 +233,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             if ($chainResult instanceof ResultEmpty) {
                 $chainResult = ResultFactory::createMessageResult($chainResult->getTask(), $message);
             } else {
-                $chainResult->setMessage();
+                $chainResult->setMessage($message);
             }
         }
         
