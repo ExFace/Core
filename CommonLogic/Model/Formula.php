@@ -153,10 +153,11 @@ abstract class Formula implements FormulaInterface
         }
         if ($withRelationPath && $this->hasRelationPath()) {
             $attrs = $this->required_attributes;
+            $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
-                $attrs[$i] = RelationPath::relationPathAdd($this->getRelationPathString(), $attr);
-                return $attrs;
+                $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
             }
+            return $attrs;
         }
         return $this->required_attributes;
     }
