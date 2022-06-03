@@ -48,9 +48,10 @@ interface FormulaInterface extends WorkbenchDependantInterface
     /**
      * Returns attribute aliases of required attributes
      * 
+     * @param bool $withRelationPath
      * @return array
      */
-    public function getRequiredAttributes() : array;
+    public function getRequiredAttributes(bool $withRelationPath = true) : array;
     
     /**
      * Get the formula name. If no name can be found, throw exception.
