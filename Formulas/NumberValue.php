@@ -28,10 +28,10 @@ class NumberValue extends \exface\Core\CommonLogic\Model\Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run($string = null, $returnFormat = null, $ifNull = '')
+    public function run($string = null, $returnFormat = null, $ifEmpty = '')
     {
         if ($string === null || $string === '' || $string === EXF_LOGICAL_NULL) {
-            return $ifNull;
+            return $ifEmpty;
         }
         try {
             $number = NumberDataType::cast($string);
@@ -44,7 +44,7 @@ class NumberValue extends \exface\Core\CommonLogic\Model\Formula
             case null:
                 break;
             case 'locale':
-                $number = $this->getDataType()->format($number, null, $ifNull);
+                $number = NumberDataType::formatNumberLocalized($number, $this->getWorkbench(), $ifEmpty);
                 break;
         }
         

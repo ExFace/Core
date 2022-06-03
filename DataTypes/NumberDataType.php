@@ -4,6 +4,8 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Basic data type for numeric values.
@@ -31,6 +33,8 @@ class NumberDataType extends AbstractDataType
     private $groupLength = 3;
     
     private $groupSeparator = null;
+    
+    private $emptyFormat = '';
 
     /**
      *
@@ -88,6 +92,10 @@ class NumberDataType extends AbstractDataType
             $number = parent::parse($string);
         } catch (\Throwable $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        if ($string === $this->getEmptyFormat()) {
+            return null;
         }
         
         if (! $this->isValueEmpty($number)) {
@@ -384,15 +392,39 @@ class NumberDataType extends AbstractDataType
     
     /**
      * 
+     * @return string
+     */
+    public function getEmptyFormat() : string
+    {
+        return $this->emptyFormat;
+    }
+    
+    /**
+     * What to display when formatting empty values - e.g. `?` or `N/A` - empty string by default.
+     * 
+     * @uxon-property empty_format
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setEmptyFormat(string $value) : NumberDataType
+    {
+        $this->emptyFormat = $value;
+        return $this;
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($value = null, string $format = null, $ifNull = '') : string
+    public function format($value = null) : string
     {
         $num = $this->parse($value);
         
-        if ($num === null || $value === '' || $num === EXF_LOGICAL_NULL) {
-            return $ifNull;
+        if ($num === null || $num === '' || $num === EXF_LOGICAL_NULL) {
+            return $this->getEmptyFormat();
         }
         
         $pMin = $this->getPrecisionMin();
@@ -419,5 +451,49 @@ class NumberDataType extends AbstractDataType
         }
         
         return number_format(floatval($num), $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+    }
+    
+    /**
+     * 
+     * @param int|float|NULL|string $value
+     * @param WorkbenchInterface $workbench
+     * @param string $emptyFormat
+     * @param int $precisionMin
+     * @param int $precisionMax
+     * @param string $groupSeparator
+     * @param int $groupLength
+     * @param string $decimalSeparator
+     * @return string
+     */
+    public static function formatNumberLocalized($value = null, WorkbenchInterface $workbench, $emptyFormat = '', int $precisionMin = null, int $precisionMax = null, string $groupSeparator = null, int $groupLength = null, string $decimalSeparator = null) : string
+    {
+        if ($value === null || $value === '' || $value === EXF_LOGICAL_NULL) {
+            return $emptyFormat;
+        }
+        
+        /* @var $type \exface\Core\DataTypes\NumberDataType */
+        $type = DataTypeFactory::createFromString($workbench, NumberDataType::class);
+        
+        if ($emptyFormat !== '') {
+            $type->setEmptyFormat($emptyFormat);
+        }
+        if ($precisionMin !== null) {
+            $type->setPrecisionMin($precisionMin);
+        }
+        if ($precisionMax !== null) {
+            $type->setPrecisionMax($precisionMax);
+        }
+        /* TODO why can't we set a custom decimal separator for a numeric type???
+        if ($decimalSeparator !== null) {
+            $type->setDecimalSeparator($decimalSeparator);
+        }*/
+        if ($groupSeparator !== null) {
+            $type->setGroupSeparator($groupSeparator);
+        }
+        if ($groupLength !== null) {
+            $type->setGroupLength($groupLength);
+        }
+        
+        return $type->format($value);
     }
 }

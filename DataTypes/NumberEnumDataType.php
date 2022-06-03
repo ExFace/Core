@@ -12,21 +12,5 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  */
 class NumberEnumDataType extends NumberDataType implements EnumDataTypeInterface
 {
-    use EnumDynamicDataTypeTrait {
-        format as formatEnum;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\DataTypes\NumberDataType::format()
-     */
-    public function format($value = null, string $format = null, $ifNull = '') : string
-    {
-        if ($value === null || $value === '' || $value === EXF_LOGICAL_NULL) {
-            return $ifNull;
-        }
-        
-        return $this->formatEnum($value);
-    }
+    use EnumDynamicDataTypeTrait;
 }
