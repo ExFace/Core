@@ -38,6 +38,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -917,14 +918,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             
-            // Execute the main query
+            // Execute UPDATE statements
+            // First the rows, that can be updated filtering over UID
             foreach ($updates_by_uid as $uid => $row) {
-                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()) . '=' . $uid);
+                $type = $this->getUidAttribute() ? $this->getUidAttribute()->getDataType() : ($this->getMainObject()->hasUidAttribute() ? $this->getMainObject()->getUidAttribute()->getDataType() : null);
+                if ($type === null) {
+                    throw new QueryBuilderException('Cannot perform SQL update by UID: no UID attribtue or query part found!');
+                }
+                $where = $this->buildSqlWhereComparator($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), ComparatorDataType::IN, $uid, $type);
+                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $where);
                 $query = $data_connection->runSql($sql);
                 $affected_rows += $query->countAffectedRows();
                 $query->freeResult();
             }
-            
+            // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
             if (count($updates_by_filter) > 0) {
                 $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
                 $query = $data_connection->runSql($sql);
