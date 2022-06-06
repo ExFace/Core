@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2020-08-25 10:33:57",
-            "MODIFIED_ON": "2020-08-27 14:54:18",
+            "MODIFIED_ON": "2022-06-06 16:33:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea8e2d7b9151a68e2d0205857feb80",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -99,7 +99,7 @@
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
                 "columns_in_grid": 2,
-                "maximized": true,
+                "maximized": false,
                 "widgets": [
                     {
                         "attribute_alias": "PATHNAME_RELATIVE",
