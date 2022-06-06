@@ -711,7 +711,6 @@ class TranslatableBehavior extends AbstractBehavior
             return;
         }
         
-        $defLang = $behavior->getObject()->getApp()->getLanguageDefault();
         $coreTranslator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $keyStatus = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS');
         $keyStatusNew = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW');
@@ -757,7 +756,7 @@ class TranslatableBehavior extends AbstractBehavior
         if ($contentWidget instanceof InputKeysValues) {
             $contentWidget->setReferenceValues([
                 $keyStatus => $statuses,
-                (LocaleDataType::getLocaleName($defLang, $coreTranslator->getLocale()) . ' - ' . $defLang) => $translatables
+                $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.METAMODEL_TEXT') => $translatables
             ]);
             $contentWidget->setCaptionForKeys($coreTranslator->translate('BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY'));
             $contentWidget->setCaptionForValues(LocaleDataType::getLocaleName($lang, $coreTranslator->getLocale()) . ' - ' . $lang);
