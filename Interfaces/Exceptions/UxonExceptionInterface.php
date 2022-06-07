@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\UxonObject;
 
 Interface UxonExceptionInterface
 {
-
     /**
      *
      * @param UxonInterface $uxon            
@@ -20,12 +19,4 @@ Interface UxonExceptionInterface
      * @return UxonObject
      */
     public function getUxon();
-
-    /**
-     *
-     * @param UxonInterface $uxon            
-     * @return UxonExceptionInterface
-     */
-    public function setUxon(UxonObject $uxon);
 }
-?>
