@@ -96,6 +96,9 @@ class ExportXLSX extends ExportJSON
         $output = [];
         $indexes = [];
         foreach ($this->getExportColumnWidgets($exportedWidget) as $widget) {
+            if ($widget instanceof iShowDataColumn  && $widget->isExportable(true) === false) {
+                continue;
+            }
             $colOptions = [];
             // Name der Spalte
             if ($this->getUseAttributeAliasAsHeader() === true && ($widget instanceof iShowDataColumn) && $widget->isBoundToDataColumn()) {
@@ -138,7 +141,8 @@ class ExportXLSX extends ExportJSON
             }
             
             // Visibility
-            if ($widget->isHidden() === true) {
+            // if the column is hidden and wasn't explicitly set to be exportable it will be hidden in the xlsx
+            if ($widget->isHidden() === true && ($widget instanceof DataColumn && $widget->isExportable(false) === false)) {
                 $colOptions['hidden'] = true;
             }
             
