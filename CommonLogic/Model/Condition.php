@@ -407,7 +407,7 @@ class Condition implements ConditionInterface
     public function importUxonObject(UxonObject $uxon)
     {
         if (! $this->isEmpty()) {
-            throw new LogicException('Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
+            throw new UxonParserError($uxon, 'Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
         }
         if ($uxon->hasProperty('expression')) {
             $expression = $uxon->getProperty('expression');
@@ -417,38 +417,42 @@ class Condition implements ConditionInterface
         if (! $objAlias = $uxon->getProperty('object_alias')) {
             throw new UxonParserError($uxon, 'Invalid UXON condition syntax: Missing object alias!');
         }
-        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
-        if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
-            $this->setComparator($comp);
-        }
-        if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-            $this->setIgnoreEmptyValues($ignoreEmpty);
-        }
-        if ($uxon->hasProperty('value')){
-            $value = $uxon->getProperty('value');
-            // Apply th evalue only if it is not empty or ignore_empty_values is off
-            if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
-                if ($value instanceof UxonObject) {
-                    if (! $comp || $comp === EXF_COMPARATOR_IS) {
-                        $comp = EXF_COMPARATOR_IN;
-                    }
-                    
-                    if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
-                        $comp = EXF_COMPARATOR_NOT_IN;
-                    }
-                    if ($this->getExpression()->isMetaAttribute()) {
-                        $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
-                    } else {
-                        $glue = EXF_LIST_SEPARATOR;
-                    }
-                    $value = implode($glue, $value->toArray());
-                    
-                    if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
-                        throw new UxonParserError($uxon, 'Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
-                    }
-                }
-                $this->setValue($value);
+        try {
+            $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
+            if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
+                $this->setComparator($comp);
             }
+            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+                $this->setIgnoreEmptyValues($ignoreEmpty);
+            }
+            if ($uxon->hasProperty('value')){
+                $value = $uxon->getProperty('value');
+                // Apply th evalue only if it is not empty or ignore_empty_values is off
+                if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
+                    if ($value instanceof UxonObject) {
+                        if (! $comp || $comp === EXF_COMPARATOR_IS) {
+                            $comp = EXF_COMPARATOR_IN;
+                        }
+                        
+                        if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
+                            $comp = EXF_COMPARATOR_NOT_IN;
+                        }
+                        if ($this->getExpression()->isMetaAttribute()) {
+                            $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
+                        } else {
+                            $glue = EXF_LIST_SEPARATOR;
+                        }
+                        $value = implode($glue, $value->toArray());
+                        
+                        if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
+                            throw new UnexpectedValueException('Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
+                        }
+                    }
+                    $this->setValue($value);
+                }
+            }
+        } catch (\Throwable $e) {
+            throw new UxonParserError($uxon, 'Cannot create condition from UXON: ' . $e->getMessage(), null, $e);
         }
     }
     

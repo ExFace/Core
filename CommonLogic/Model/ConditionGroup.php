@@ -16,6 +16,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Exceptions\UxonParserError;
 
 /**
  * Groups multiple conditions and/or condition groups using a logical operator like AND, OR, etc.
@@ -318,36 +319,42 @@ class ConditionGroup implements ConditionGroupInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
-        if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-            $this->setIgnoreEmptyValues($ignoreEmpty);
-        }
-        if ($uxon->hasProperty('base_object_alias')) {
-            $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
-        }
-        if ($uxon->hasProperty('conditions')) {
-            foreach ($uxon->getProperty('conditions') as $prop) {
-                if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
-                    $prop->setProperty('object_alias', $this->getBaseObjectSelector());
-                }
-                if ($prop->hasProperty('ignore_empty_values') === false) {
-                    $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
-                }
-                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $prop));
+        try {
+            $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
+            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+                $this->setIgnoreEmptyValues($ignoreEmpty);
             }
-        }
-        if ($uxon->hasProperty('nested_groups')) {
-            foreach ($uxon->getProperty('nested_groups') as $prop) {
-                // Put the base object selector into the UXON instead of passing the object to the
-                // factory to avoid loading the object if it was not loaded yet.
-                if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
-                    $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
-                }
-                if ($prop->hasProperty('ignore_empty_values') === false) {
-                    $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
-                }
-                $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
+            if ($uxon->hasProperty('base_object_alias')) {
+                $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
             }
+            if ($uxon->hasProperty('conditions')) {
+                foreach ($uxon->getProperty('conditions') as $prop) {
+                    if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
+                        $prop->setProperty('object_alias', $this->getBaseObjectSelector());
+                    }
+                    if ($prop->hasProperty('ignore_empty_values') === false) {
+                        $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
+                    }
+                    $this->addCondition(ConditionFactory::createFromUxon($this->exface, $prop));
+                }
+            }
+            if ($uxon->hasProperty('nested_groups')) {
+                foreach ($uxon->getProperty('nested_groups') as $prop) {
+                    // Put the base object selector into the UXON instead of passing the object to the
+                    // factory to avoid loading the object if it was not loaded yet.
+                    if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
+                        $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
+                    }
+                    if ($prop->hasProperty('ignore_empty_values') === false) {
+                        $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
+                    }
+                    $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
+                }
+            }
+        } catch (UxonParserError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new UxonParserError($uxon, 'Cannot create condition group from UXON: ' . $e->getMessage(), null, $e);   
         }
     }
     
