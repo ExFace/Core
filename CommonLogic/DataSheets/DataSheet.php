@@ -1412,9 +1412,10 @@ class DataSheet implements DataSheetInterface
         if ($update_if_uid_found === true && $this->hasUidColumn(true) === true && $this->getUidColumn()->getAttribute()->isReadable() === true) {
             $checkUidsSheet = DataSheetFactory::createFromObject($thisObj);
             $checkUidsSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
+            $checkUidsCol = $checkUidsSheet->getColumns()->addFromUidAttribute();
             $checkUidsSheet->dataRead();
             if ($checkUidsSheet->isEmpty() === false) {
-                throw new DataSheetWriteError($this, 'Update on duplicate UIDs not supported yet in data sheets!');
+                throw new DataSheetWriteError($this, 'Cannot create data with UIDs "' . implode($checkUidsCol->getAttribute()->getValueListDelimiter(), $checkUidsCol->getValues()) . '": these UIDs alread exist! Update on duplicate UIDs not supported yet in data sheets!');
             }
         }
         
