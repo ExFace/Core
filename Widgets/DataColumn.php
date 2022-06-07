@@ -69,6 +69,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $filterable = null;
     
+    private $exportable = null;
+    
     private $footer = null;
     
     private $widthMax = null;
@@ -417,6 +419,34 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($this->editable === true) {
             $this->getDataColumnGroup()->setEditable(true);
         }
+        return $this;
+    }
+    
+    /**
+     * Return if a data coloumn is exportable or not. If it wasn't set explicitly for
+     * the column the default value will be returned.
+     *
+     * @return bool
+     */
+    public function isExportable(bool $default = true) : bool
+    {
+        return $this->exportable ?? $default;
+    }
+    
+    /**
+     * Makes this column exportable if set to TRUE.
+     *
+     * By default all visible columns get exported.
+     *
+     * @uxon-property exportable
+     * @uxon-type boolean
+     *
+     * @param boolean $true_or_false
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function setExportable(bool $true_or_false) : DataColumn
+    {
+        $this->exportable = $true_or_false;
         return $this;
     }
 
