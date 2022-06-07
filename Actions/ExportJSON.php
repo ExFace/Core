@@ -21,6 +21,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\DataColumn;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -271,7 +272,10 @@ class ExportJSON extends ReadData implements iExportData
         $header = [];
         $columnWidgets = $this->getExportColumnWidgets($exportedWidget);
         foreach ($columnWidgets as $widget) {
-            if (! $widget->isHidden() && $widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
+            if ($widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
+                if ($widget instanceof DataColumn && $widget->isExportable(! $widget->isHidden())=== false) {
+                    continue;
+                }
                 if ($this->getUseAttributeAliasAsHeader() && ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute()) {
                     $headerName = $widget->getAttributeAlias();
                 } else {
