@@ -164,7 +164,7 @@ class Condition implements ConditionInterface
      * 
      * @see ConditionInterface::setValue()
      */
-    public function setValue(string $value) : ConditionInterface
+    public function setValue(?string $value) : ConditionInterface
     {
         $this->unsetValue();
         if (Expression::detectFormula($value)) {
