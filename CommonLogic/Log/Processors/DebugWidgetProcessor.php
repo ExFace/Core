@@ -50,9 +50,8 @@ class DebugWidgetProcessor
                 // If errors occur when creating debug widgets, log these errors separately
                 if ($sender instanceof ExceptionInterface){
                     $debugWidgetData = $this->createHtmlFallback($this->workbench->getDebugger()->printException($sender, true));
-                } else {
-                    $this->workbench->getLogger()->logException($e);
                 }
+                $this->workbench->getLogger()->logException($e);
             }
         }
         
