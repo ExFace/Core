@@ -50,10 +50,10 @@ interface ConditionInterface extends ConditionalExpressionInterface
     /**
      * Changes right side of the condition.
      *
-     * @param string $value
+     * @param string|NULL $value
      * @return ConditionInterface
      */
-    public function setValue(string $value) : ConditionInterface;
+    public function setValue(?string $value) : ConditionInterface;
     
     /**
      * Removes the right side of the condition (as if it was never set).
