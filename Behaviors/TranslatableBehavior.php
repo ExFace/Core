@@ -290,12 +290,18 @@ class TranslatableBehavior extends AbstractBehavior
                         [
                             "attribute_alias" => "PATHNAME_RELATIVE",
                             "caption" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE')"
+                        ],
+                        [
+                            "attribute_alias" => "APP"
                         ]
                     ],
                     "buttons" => [
                         [
                             "action_alias" => "exface.Core.ShowObjectEditDialog",
                             "bind_to_double_click" => true
+                        ],
+                        [
+                            "action_alias" => "exface.Core.TranslationAddLangDialog"
                         ]
                     ]
                 ],
