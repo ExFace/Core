@@ -15,6 +15,9 @@ use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -55,6 +58,20 @@ use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
  * - `inherit_column_only_for_system_attributes`
  * - `inherit_filters`
  * - `inherit_sorters`
+ * 
+ * ## Reading missing from-values
+ * 
+ * In most cases, you can define any readable values in `from` properties of mappers and they will
+ * be read from the data source automatically. This is very convenient, but is sometimes also a source
+ * of confusion. This is why there are certain situation, when this does not work automatically or can
+ * be disabled explicitly:
+ * 
+ * - `read_missing_from_data` - can be set to `true` or `false` to control reading missing values explicitly
+ * - If `read_missing_from_data` is not set, missing values will be read automatically if
+ *      - The from-sheet is empty
+ *      - The from-sheet has a non-empty UID column AND is fresh (= its data was not altered). This makes
+ *      sure, that additional data is only loaded if we know exactly where to take it from and we can assume,
+ *      that it is still consistent with the current state of the data sheet. 
  * 
  * @see DataSheetMapperInterface
  * 
@@ -152,14 +169,12 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     protected function prepareFromSheet(DataSheetInterface $data_sheet, bool $readMissingColumns = null) : DataSheetInterface
     {
-        // If reading missing column not requested explicitly, add them automatically 
-        // if the sheet has a UID column and is fresh (no values changed)
-        $readMissingColumns = $readMissingColumns ?? ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh());
-        
-        if ($readMissingColumns !== true) {
+        // If we must not read any data, simply skip this method
+        if ($readMissingColumns === false) {
             return $data_sheet;
         }
         
+        // If the sheet is empty, just fill it with columns and read everything (no UID values to filter in this case)
         if ($data_sheet->isEmpty()) {
             // Only use mappings that use a from-column
             // TODO give mappings a prepare() method and put the logic in there. But how to make sure the
@@ -174,45 +189,117 @@ class DataSheetMapper implements DataSheetMapperInterface
             return $data_sheet;
         }
         
-        $additionSheet = null;
-        // See if any mapped columns are missing in the original data sheet. If so, add empty
-        // columns and also create a separate sheet for reading missing data.
-        foreach ($this->getMappings() as $map){
-            // Only use mappings that use a from-column
-            // TODO give mappings a prepare() method and put the logic in there - see other comment few lines above.
-            if (! ($map instanceof DataColumnMappingInterface) || ($map instanceof DataFilterToColumnMappingInterface)) {
-                continue;
-            }
-            $from_expression = $map->getFromExpression();
-            if (! $data_sheet->getColumns()->getByExpression($from_expression)){
-                if ($additionSheet === null) {
-                    $additionSheet = $data_sheet->copy();
-                    foreach ($additionSheet->getColumns() as $col) {
-                        if ($col !== $additionSheet->getUidColumn()) {
-                            $additionSheet->getColumns()->remove($col);
+        // Now we know, reading missing data is not forbidden, but the sheet already has some data
+        // Add missing columns automatically here if:
+        // - the sheet has a UID column AND is fresh (no values changed) - this means it is more or 
+        // less safe to read extra data from the data source.
+        // - the missing data is related to the sheets data AND the required relation keys are present 
+        // in the current data AND the relation path to the missing data only consists of forward (n-to-1)
+        // relations: E.g. we can load `OBJECT__NAME` for attribute data having `OBJECT` columns even if
+        // we do not have UIDs at hand, because we know for sure, which OBJECTs are referenced.
+        if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()) {
+            $additionSheet = null;
+            // See if any mapped columns are missing in the original data sheet. If so, add empty
+            // columns and also create a separate sheet for reading missing data.
+            foreach ($this->getMappings() as $map){
+                // Only use mappings that use a from-column
+                // TODO give mappings a prepare() method and put the logic in there - see other comment few lines above.
+                if (! ($map instanceof DataColumnMappingInterface) || ($map instanceof DataFilterToColumnMappingInterface)) {
+                    continue;
+                }
+                $from_expression = $map->getFromExpression();
+                if (! $data_sheet->getColumns()->getByExpression($from_expression)){
+                    if ($additionSheet === null) {
+                        $additionSheet = $data_sheet->copy();
+                        foreach ($additionSheet->getColumns() as $col) {
+                            if ($col !== $additionSheet->getUidColumn()) {
+                                $additionSheet->getColumns()->remove($col);
+                            }
                         }
                     }
+                    $data_sheet->getColumns()->addFromExpression($from_expression);
+                    $additionSheet->getColumns()->addFromExpression($from_expression);
                 }
-                $data_sheet->getColumns()->addFromExpression($from_expression);
-                $additionSheet->getColumns()->addFromExpression($from_expression);
             }
-        }
-        // If columns were added to the original sheet, that need data to be loaded,
-        // use the additional data sheet to load the data. This makes sure, the values
-        // in the original sheet (= the input values) are not overwrittten by the read
-        // operation.
-        if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
-            $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-            $additionSheet->dataRead();
-            $uidCol = $data_sheet->getUidColumn();
-            foreach ($additionSheet->getColumns() as $addedCol) {
-                foreach ($additionSheet->getRows() as $row) {
-                    $uid = $row[$uidCol->getName()];
-                    $rowNo = $uidCol->findRowByValue($uid);
-                    if ($uid === null || $rowNo === false) {
-                        throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+            // If columns were added to the original sheet, that need data to be loaded,
+            // use the additional data sheet to load the data. This makes sure, the values
+            // in the original sheet (= the input values) are not overwrittten by the read
+            // operation.
+            if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
+                $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+                $additionSheet->dataRead();
+                $uidCol = $data_sheet->getUidColumn();
+                foreach ($additionSheet->getColumns() as $addedCol) {
+                    foreach ($additionSheet->getRows() as $row) {
+                        $uid = $row[$uidCol->getName()];
+                        $rowNo = $uidCol->findRowByValue($uid);
+                        if ($uid === null || $rowNo === false) {
+                            throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+                        }
+                        $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                     }
-                    $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                }
+            }
+        } else {
+            // See if any attributes required for the missing columns are related in the way described above
+            // the if(). If so, load the data separately and put it into the from-sheet. This is mainly usefull
+            // for formulas.
+            $fromObj = $this->getFromMetaObject();
+            foreach ($this->getMappings() as $map){
+                // Only use mappings that use a from-column
+                // TODO give mappings a prepare() method and put the logic in there - see other comment few lines above.
+                if (! ($map instanceof DataColumnMappingInterface) || ($map instanceof DataFilterToColumnMappingInterface)) {
+                    continue;
+                }
+                $from_expression = $map->getFromExpression();
+                if ($data_sheet->getColumns()->getByExpression($from_expression)) {
+                    continue;
+                }
+                foreach ($from_expression->getRequiredAttributes() as $reqAlias) {
+                    // Only process requried attribute aliases, that are not present as columns yet and
+                    // have a non-empty relation path consisting only of forward relations
+                    if ($data_sheet->getColumns()->getByExpression($reqAlias)) {
+                        continue;
+                    }
+                    $reqAttr = $fromObj->getAttribute($reqAlias);
+                    $reqRelPath = $reqAttr->getRelationPath();
+                    if ($reqRelPath->isEmpty()) {
+                        continue;
+                    }
+                    // Find the last relation in the path, where there is a key column with values
+                    // in the current data.
+                    $reqRelKeyCol = null;
+                    $reqRelKeyColPath = null;
+                    $reqRelColPath = RelationPathFactory::createForObject($fromObj);
+                    $reqRelForwardOnly = true;
+                    foreach ($reqRelPath->getRelations() as $reqRel) {
+                        if ($reqRel->isForwardRelation()) {
+                            $reqRelColPath = $reqRelColPath->appendRelation($reqRel);
+                            if (($keyCol = $data_sheet->getColumns()->getByExpression($reqRelColPath->toString())) && $keyCol->isEmpty(true) === false) {
+                                $reqRelKeyCol = $keyCol;
+                                $reqRelKeyColPath = $reqRelColPath;
+                            }
+                        } else {
+                            // If there are backwards-relations in the path, jus skip the whole thing,
+                            // maybe some other parts of the code will deal with it.
+                            $reqRelForwardOnly = false;
+                            break;
+                        }
+                    }
+                    // If we have found a target, read data for it
+                    // IDEA collect all missing data based on the same object and read it at once instead of
+                    // reading data for each missing column separately.
+                    if ($reqRelForwardOnly === true && $reqRelKeyCol !== null) {
+                        $targetCol = $data_sheet->getColumns()->addFromExpression($reqAlias);
+                        $reqRelSheet = DataSheetFactory::createFromObject($reqRelKeyColPath->getEndObject());
+                        $valCol = $reqRelSheet->getColumns()->addFromExpression(ExpressionFactory::createForObject($fromObj, $reqAlias)->rebase($reqRelKeyColPath->toString()));
+                        $keyCol = $reqRelSheet->getColumns()->addFromAttribute($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute());
+                        $reqRelSheet->getFilters()->addConditionFromValueArray($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute()->getAliasWithRelationPath(), $reqRelKeyCol->getValues(), ComparatorDataType::IN);
+                        $reqRelSheet->dataRead();
+                        foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
+                            $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
+                        }
+                    }
                 }
             }
         }
