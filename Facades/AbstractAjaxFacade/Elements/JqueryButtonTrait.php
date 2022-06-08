@@ -37,6 +37,8 @@ trait JqueryButtonTrait {
     
     private $onSuccessJs = [];
     
+    private $onErrorJs = [];
+    
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
@@ -516,13 +518,15 @@ JS;
                                             {$jsOnSuccess}
 										}
 				                    } else {
-										" . $this->buildJsBusyIconHide() . "
-										" . $this->buildJsShowMessageError('response.error', '"Server error"') . "
+										{$this->buildJsBusyIconHide()}
+                                        {$this->buildJsOnErrorScript()}
+										{$this->buildJsShowMessageError('response.error', '"Server error"')}
 				                    }
 								},
 								error: function(jqXHR, textStatus, errorThrown){ 
-									" . $this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText') . " 
-									" . $this->buildJsBusyIconHide() . "
+									{$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')} 
+									{$this->buildJsBusyIconHide()}
+                                    {$this->buildJsOnErrorScript()}
 								}
 							});
 						} else {
@@ -737,9 +741,29 @@ JS;
      * 
      * @return string
      */
-    public function buildJsOnSuccessScript() : string
+    protected function buildJsOnSuccessScript() : string
     {
         return implode("\n\n", array_unique($this->onSuccessJs));
+    }
+    
+    /**
+     *
+     * @param string $js
+     * @return AbstractJqueryElement
+     */
+    public function addOnErrorScript(string $js) : AbstractJqueryElement
+    {
+        $this->onErrorJs[] = $js;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function buildJsOnErrorScript() : string
+    {
+        return implode("\n\n", array_unique($this->onErrorJs));
     }
     
     /**

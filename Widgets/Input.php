@@ -32,6 +32,24 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
+    /**
+     * Focus the input
+     *
+     * @uxon-property focus
+     *
+     * @var string
+     */
+    const FUNCTION_FOCUS = 'focus';
+    
+    /**
+     * Empty the input
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
+    
     private $required = null;
     
     private $requiredIf = null;
@@ -43,15 +61,6 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     private $allowMultipleValues = false;
     
     private $multiValueDelimiter = null;
-    
-    /**
-     * Focus the input
-     *
-     * @uxon-property focus
-     *
-     * @var string
-     */
-    const FUNCTION_FOCUS = 'focus';
 
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,

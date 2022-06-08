@@ -98,6 +98,8 @@ class InputButton extends Input
     
     private $buttonPressOnStart = false;
     
+    private $emptyAfterActionFails = false;
+    
     /**
      * The button next to the input: it's action, icon, etc.
      * 
@@ -163,6 +165,31 @@ class InputButton extends Input
     public function setButtonPressOnStart(bool $trueOrFalse) : InputButton
     {
         $this->buttonPressOnStart = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getEmptyAfterActionFails() : bool
+    {
+        return $this->emptyAfterActionFails;
+    }
+    
+    /**
+     * Set to TRUE to empty the input if the action results in an error (handy for scan actions)
+     * 
+     * @uxon-property empty_after_action_fails
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return InputButton
+     */
+    public function setEmptyAfterActionFails(bool $value) : InputButton
+    {
+        $this->emptyAfterActionFails = $value;
         return $this;
     }
 }
