@@ -169,12 +169,13 @@ trait ExceptionTrait {
             $context_tab = $debug_widget->createTab();
             $context_tab->setId('context_tab');
             $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
-            $context_widget = WidgetFactory::createFromUxonInParent($stacktrace_tab, new UxonObject([
+            $context_tab->addWidget(WidgetFactory::createFromUxonInParent($context_tab,  new UxonObject([
+                'widget_type' => 'InputUxon',
+                'disabled' => true,
                 'width' => '100%',
-                'height' => '100%'
-            ]), 'Markdown');
-            $context_widget->setValue("```\n" . JsonDataType::prettify($context_dump) . "\n```");
-            $context_tab->addWidget($context_widget);
+                'height' => '100%',
+                'value' => JsonDataType::encodeJson($context_dump)
+            ])));
             $debug_widget->addTab($context_tab);
         }
         
