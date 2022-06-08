@@ -38,7 +38,6 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
-use exface\Core\Factories\DataTypeFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1940,6 +1939,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
                         case empty($values) === true && ! empty($valueNullChecks):
                             $value = EXF_LOGICAL_NULL;
+                            $comparator = $comparator === EXF_COMPARATOR_IN ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
                             break;
                         // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
                         default:
