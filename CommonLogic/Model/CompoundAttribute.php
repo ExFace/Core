@@ -150,7 +150,7 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
             case ComparatorDataType::EQUALS_NOT:
             case ComparatorDataType::IS:
             case ComparatorDataType::IS_NOT:
-                $group = ConditionGroupFactory::createAND($this->getObject());
+                $group = ConditionGroupFactory::createAND($this->getObject(), $condition->willIgnoreEmptyValues());
                 if ($condition->isEmpty() === false) {
                     $valueParts = $this->splitValue($condition->getValue());
                 } else {
@@ -167,13 +167,13 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
                 // If it's an IN with only a single value, simply transform it to an EQUALS
                 // compound IN (5-1) -> (comp1 = 5 AND comp2 = 1)
                 if (count($values) === 1) {
-                    $group = $this->splitCondition(ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $condition->getValue(), $newComparator));
+                    $group = $this->splitCondition(ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $condition->getValue(), $newComparator, $condition->willIgnoreEmptyValues()));
                 } else {
                     // If the IN has multiple values, split each value as if it was an EQUALS and put them all
                     // into an OR-group: compound IN (5-1, 5-2) -> (comp1 = 5 AND comp2 = 1) OR (comp1 = 5 AND comp2 = 2)
-                    $group = ConditionGroupFactory::createOR($this->getObject());
+                    $group = ConditionGroupFactory::createOR($this->getObject(), $condition->willIgnoreEmptyValues());
                     foreach ($values as $value) {
-                        $valueCond = ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $value, $newComparator);
+                        $valueCond = ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $value, $newComparator, $condition->willIgnoreEmptyValues());
                         $valueCondGrp = $this->splitCondition($valueCond);
                         $group->addNestedGroup($valueCondGrp);
                     }
