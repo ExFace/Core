@@ -162,9 +162,12 @@
     
     "CONTEXT.DATA.NAME": "Data",
     
-    "CONTEXT.DEBUG.NAME": "Debugger",
+    "CONTEXT.DEBUG.NAME": "Developer tools",
     "CONTEXT.DEBUG.START": "Start tracing",
     "CONTEXT.DEBUG.STOP": "Stop tracing",
+    "CONTEXT.DEBUG.TRACES_LIST_CAPTION": "Trace logs",
+    "CONTEXT.DEBUG.TRACES_LIST_BUTTON": "View traces",
+    "CONTEXT.DEBUG.TRACE_NAME": "Trace",
     
     "CONTEXT.FAVORITES.NAME": "Favorites",
     

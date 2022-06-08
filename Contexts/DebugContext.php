@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\Tracer;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -33,6 +34,10 @@ use exface\Core\Interfaces\AppInterface;
  */
 class DebugContext extends AbstractContext
 {
+    const OPERATION_START_DEBUGGING = 'startDebugging';
+    
+    const OPERATION_STOP_DEBUGGING = 'stopDebugging';
+    
     private $is_debugging = false;
     
     private $tracer = null;
@@ -211,55 +216,89 @@ class DebugContext extends AbstractContext
      */
     public function getContextBarPopup(Container $container)
     {
-        /* @var $data_list \exface\Core\Widgets\DataList */
-        $data_list = WidgetFactory::create($container->getPage(), 'DataList', $container)
-        ->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.TRACE_LOG'))
-        ->setCaption($this->getName())
-        ->setLazyLoading(false)
-        ->setPaginate(false)
-        ->setPaginatePageSize(10)
-        ->addSorter('NAME', 'DESC');
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $menu = WidgetFactory::createFromUxonInParent($container, new UxonObject([
+            'widget_type' => 'Menu',
+            'caption' => $this->getName(),
+            'buttons' => [
+                [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.START'),
+                    'action' => [
+                        'alias' => 'exface.Core.ContextApi',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => static::OPERATION_START_DEBUGGING,
+                        'icon' => Icons::BUG
+                    ]
+                ], [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.STOP'),
+                    'action' => [
+                        'alias' => 'exface.Core.ContextApi',
+                        'context_scope' => $this->getScope()->getName(),
+                        'context_alias' => $this->getAliasWithNamespace(),
+                        'operation' => static::OPERATION_STOP_DEBUGGING,
+                        'icon' => Icons::PAUSE
+                    ]
+                ], [
+                    'caption' => $translator->translate('CONTEXT.DEBUG.TRACES_LIST_BUTTON'),
+                    'action' => [
+                        'alias' => 'exface.Core.ShowDialog',
+                        'dialog' => [
+                            'maximized' => false,
+                            'widgets' => [
+                                [
+                                    'widget_type' => 'DataTableResponsive',
+                                    'object_alias' => 'exface.Core.TRACE_LOG',
+                                    'caption' => $translator->translate('CONTEXT.DEBUG.TRACES_LIST_CAPTION'),
+                                    'multi_select' => true,
+                                    'filters' => [
+                                        [
+                                            'attribute_alias' => 'NAME'
+                                        ]
+                                    ],
+                                    'columns' => [
+                                        [
+                                            'attribute_alias' => 'NAME',
+                                            'caption' => $translator->translate('CONTEXT.DEBUG.TRACE_NAME')
+                                        ],
+                                        [
+                                            'attribute_alias' => 'URL'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'ACTION'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'PAGE'
+                                        ]
+                                    ],
+                                    'sorters' => [
+                                        [
+                                            'attribute_alias' => 'NAME',
+                                            'direction' => SortingDirectionsDataType::DESC
+                                        ]
+                                    ],
+                                    'buttons' => [
+                                        [
+                                            'action' => [
+                                                'alias' => 'exface.Core.ShowObjectInfoDialog',
+                                                'disable_buttons' => false
+                                            ],
+                                            'bind_to_double_click' => true
+                                        ], [
+                                            'action_alias' => 'exface.Core.DeleteObject'
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ], [
+                    'action_alias' => 'exface.Core.ClearCache'
+                ]
+            ]
+        ]));
         
-        // Disable global actions and basket action as we know exactly, what we
-        // want to do here
-        $data_list->getToolbarMain()->setIncludeGlobalActions(false);
-        
-        // Add the filename column (the UID column is always there)
-        $data_list->addColumn($data_list->createColumnFromAttribute($data_list->getMetaObject()->getAttribute('NAME')));
-        
-        // Add the START button
-        /* @var $button \exface\Core\Widgets\Button */
-        $button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ContextApi')
-            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.START'));
-        $button->getAction()
-            ->setContextScope($this->getScope()->getName())
-            ->setContextAlias($this->getAliasWithNamespace())
-            ->setOperation('startDebugging')
-            ->setIcon(Icons::BUG);
-        $data_list->addButton($button);
-        
-        /* @var $button \exface\Core\Widgets\Button */
-        $button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ContextApi')
-            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.STOP'))
-            ->setIcon(Icons::PAUSE);
-        $button->getAction()
-            ->setContextScope($this->getScope()->getName())
-            ->setContextAlias($this->getAliasWithNamespace())
-            ->setOperation('stopDebugging');
-        $data_list->addButton($button);
-        
-        // Add the detail button an bind it to the left click
-        /* @var $details_button \exface\Core\Widgets\DataButton */
-        $details_button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ShowObjectInfoDialog')
-            ->setBindToLeftClick(true)
-            ->setHidden(true);
-        $details_button->getAction()->setDisableButtons(false);
-        $data_list->addButton($details_button);
-        
-        $container->addWidget($data_list);
+        $container->addWidget($menu);
         return $container;
     }
     
