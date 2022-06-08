@@ -154,64 +154,6 @@
             "DOCS": ""
         },
         {
-            "CREATED_ON": "2022-02-01 16:11:02",
-            "MODIFIED_ON": "2022-02-02 16:02:10",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ec842d2b72c708842d747827435ce5",
-            "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/DeleteObject.php",
-            "ALIAS": "CommunicationChannelUnmute",
-            "NAME": "Unmute",
-            "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": {
-                "object_alias": "exface.Core.CUSTOMIZING",
-                "input_object_alias": "exface.Core.CUSTOMIZING",
-                "icon": "toggle-on",
-                "result_message_text": "Channel now active",
-                "input_rows_min": 1,
-                "input_mappers": [
-                    {
-                        "from_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
-                        "column_to_filter_mappings": [
-                            {
-                                "from": "UID",
-                                "to": "ROW_UID",
-                                "comparator": "=="
-                            },
-                            {
-                                "from": "'exf_communication_channel'",
-                                "to": "TABLE_NAME",
-                                "comparator": "=="
-                            },
-                            {
-                                "from": "'mute_flag'",
-                                "to": "COLUMN_NAME",
-                                "comparator": "=="
-                            }
-                        ],
-                        "column_to_column_mappings": [
-                            {
-                                "from": "UID",
-                                "to": "ROW_UID"
-                            },
-                            {
-                                "from": "'exf_exf_communication_channel'",
-                                "to": "TABLE_NAME"
-                            },
-                            {
-                                "from": "'mute_flag'",
-                                "to": "COLUMN_NAME"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": 0,
-            "DOCS": ""
-        },
-        {
             "CREATED_ON": "2022-02-01 16:13:03",
             "MODIFIED_ON": "2022-02-02 16:01:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -247,6 +189,100 @@
                             {
                                 "from": 1,
                                 "to": "VALUE"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2022-06-08 12:53:32",
+            "MODIFIED_ON": "2022-06-08 12:53:51",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eca6403d974394a640747827435ce5",
+            "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
+            "ALIAS": "CommunicationChannelUnmute",
+            "NAME": "Unmute",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "object_alias": "exface.Core.CUSTOMIZING",
+                "input_object_alias": "exface.Core.CUSTOMIZING",
+                "icon": "toggle-on",
+                "result_message_text": "Channel now active",
+                "input_rows_min": 1,
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID"
+                            },
+                            {
+                                "from": "'exf_communication_channel'",
+                                "to": "TABLE_NAME"
+                            },
+                            {
+                                "from": "'mute_flag'",
+                                "to": "COLUMN_NAME"
+                            },
+                            {
+                                "from": 0,
+                                "to": "VALUE"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2022-06-08 12:57:18",
+            "MODIFIED_ON": "2022-06-08 12:57:18",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ec8c7dc37df8e08c7d747827435ce5",
+            "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/DeleteObject.php",
+            "ALIAS": "CommunicationChannelRestoreDefaults",
+            "NAME": "Restore defaults",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "object_alias": "exface.Core.CUSTOMIZING",
+                "input_object_alias": "exface.Core.CUSTOMIZING",
+                "icon": "undo",
+                "result_message_text": "Defaults restored",
+                "input_rows_min": 1,
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+                        "column_to_filter_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID",
+                                "comparator": "=="
+                            },
+                            {
+                                "from": "'exf_communication_channel'",
+                                "to": "TABLE_NAME",
+                                "comparator": "=="
+                            }
+                        ],
+                        "column_to_column_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "ROW_UID"
+                            },
+                            {
+                                "from": "'exf_communication_channel'",
+                                "to": "TABLE_NAME"
                             }
                         ]
                     }
