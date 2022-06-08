@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * Clears the entire cache of the workbench.
@@ -18,6 +19,16 @@ use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
  */
 class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
+     */
+    public function getIcon()
+    {
+        return parent::getIcon() ?? Icons::RECYCLE;
+    }
+    
     /**
      * 
      * {@inheritDoc}
