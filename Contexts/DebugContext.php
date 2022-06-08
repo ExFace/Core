@@ -17,6 +17,7 @@ use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -232,6 +233,7 @@ class DebugContext extends AbstractContext
                     ]
                 ], [
                     'caption' => $translator->translate('CONTEXT.DEBUG.STOP'),
+                    'visibility' => ($this->isDebugging() ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL),
                     'action' => [
                         'alias' => 'exface.Core.ContextApi',
                         'context_scope' => $this->getScope()->getName(),
