@@ -44,6 +44,8 @@ trait JqueryInputTrait
         switch (true) {
             case $functionName === Input::FUNCTION_FOCUS:
                 return "setTimeout(function(){ $('#{$this->getId()}').focus(); }, 0);";
+            case $functionName === Input::FUNCTION_EMPTY:
+                return "setTimeout(function(){ {$this->buildJsResetter()} }, 0);";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
     }

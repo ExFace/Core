@@ -1002,6 +1002,6 @@ JS;
      */
     public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
     {
-        throw new WidgetPropertyUnknownError($this->getWidget(), 'Invalid widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
+        throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }
 }
