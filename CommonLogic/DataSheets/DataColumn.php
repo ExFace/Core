@@ -456,7 +456,7 @@ class DataColumn implements DataColumnInterface
      */
     public function isFormula() : bool
     {
-        return is_null($this->formula) || $this->formula === '' ? false : true; 
+        return $this->formula !== null || $this->getExpressionObj()->isFormula(); 
     }
     
     /**
@@ -601,7 +601,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getFormula()
     {
-        return $this->formula;
+        return $this->formula ?? ($this->getExpressionObj()->isFormula() ? $this->getExpressionObj() : null);
     }
 
     /**
