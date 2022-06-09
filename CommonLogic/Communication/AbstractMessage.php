@@ -23,6 +23,9 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Widgets\DebugMessage;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -30,7 +33,7 @@ use exface\Core\DataTypes\ComparatorDataType;
  * @author andrej.kabachnik
  *
  */
-abstract class AbstractMessage implements CommunicationMessageInterface
+abstract class AbstractMessage implements CommunicationMessageInterface, iCanGenerateDebugWidgets
 {
     use ImportUxonObjectTrait;
     
@@ -332,5 +335,28 @@ abstract class AbstractMessage implements CommunicationMessageInterface
     public static function getUxonSchemaClass(): ?string
     {
         return CommunicationMessageSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        if ($debug_widget->findChildById('communication_message_tab') === false) {
+            $uxon_tab = $debug_widget->createTab();
+            $uxon_tab->setId('communication_message_tab');
+            $uxon_tab->setCaption('Communication message');
+            $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+                'widget_type' => 'InputUxon',
+                'disabled' => true,
+                'width' => '100%',
+                'height' => '100%',
+                'value' => $this->exportUxonObject()->toJson()
+            ])));
+            $debug_widget->addTab($uxon_tab);
+        }
+        return $debug_widget;
     }
 }

@@ -21,6 +21,7 @@ use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Communication\CommunicationChannelConfigError;
+use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 
 class CommunicationChannel implements CommunicationChannelInterface
 {
@@ -200,8 +201,10 @@ class CommunicationChannel implements CommunicationChannelInterface
                 $message = $this->createMessageFromEnvelope($message);
             }
             return $this->getConnection()->communicate($message);
+        } catch (CommunicationExceptionInterface $e) {
+            throw $e;
         } catch (\Throwable $e) {
-            throw new CommunicationNotSentError($message, 'Failed to send message over channel "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
+            throw new CommunicationNotSentError($message, 'Failed to send message over channel "' . $this->getName() . '": ' . $e->getMessage(), null, $e, $this->getConnection());
         }
     }
     

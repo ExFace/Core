@@ -5,6 +5,16 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\StringDataType;
 
+/**
+ * A special type of message that allows any properties - used as generic message container.
+ * 
+ * For example, the NotifyingBehavior instantiates enevelopes for its messages and passes them to the Communicator
+ * without bothering about the exact message type. Each CommunicationChannel then takes care of transforming
+ * the envelope to its proper message type.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Envelope extends TextMessage
 {    
     private $payloadUxon = null;
