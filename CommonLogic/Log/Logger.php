@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\LogLevelDataType;
 
 /**
  * Default implementation of the LoggerInterface
@@ -20,6 +21,8 @@ class Logger implements LoggerInterface
     private $handlers = array();
     
     private $isLogging = false;
+    
+    private $queue = [];
 
     /**
      * System is unusable.
@@ -156,11 +159,28 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        // If the current log message occurred while another was was logged, don't process it immediately
+        // as this might cause recursion. Instead, skip it if it is not an error or enqueue if it is one
         if ($this->isLogging()) {
+            if (LogLevelDataType::compareLogLevels($level, self::ERROR) < 0) {
+                return;
+            }
+            // Make sure not to enqueue duplicates in case of recursion
+            foreach ($this->queue as $queued) {
+                if ($queued['level'] === $level && $queued['message' === $message] && $queued['sender'] === $sender) {
+                    return;
+                }
+            }
+            $this->queue[] = [
+                'level' => $level,
+                'message' => $message,
+                'context' => $context,
+                'sender' => $sender
+            ];
             return;
         }
 
-        // mark as "in logging process"
+        // mark as "logging" now to enque any intermediate errors in the above queue
         $this->setLogging(true);
 
         try {
@@ -203,6 +223,20 @@ class Logger implements LoggerInterface
         } finally {
             // clear "in logging process" mark
             $this->setLogging(false);
+        }
+        
+        // See if logging the current recored produced any errors in the queue and try to
+        // process this queue now
+        if (! empty($this->queue)) {
+            if (count($this->queue) > 30) {
+                $this->queue = [];
+                $this->alert('Logger queue for errors while logging overfilled! Recurrence in error processing suspected: dumping error queue to avoid inifinite loop!');
+            } else {
+                foreach ($this->queue as $i => $queued) {
+                    unset($this->queue[$i]);
+                    $this->log($queued['level'], $queued['message'], $queued['context'], $queued['sender']);
+                }
+            }
         }
     }
     
