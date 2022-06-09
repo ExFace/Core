@@ -24,6 +24,7 @@ use exface\Core\Communication\Messages\TextMessage;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 /**
  * Sends emails via SMTP
@@ -189,15 +190,28 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         if ($from = $this->getFrom()) {
             $email->from($from);
         }
-        foreach ($this->getEmailAddresses($message->getRecipients()) as $address) {
-            $email->addTo($address);
-        }
+        $addresses = $this->getEmailAddresses($message->getRecipients());
+        $email->addTo(...$addresses);
         
         // Email specific stuff
         if ($message instanceof EmailMessage) {
-            //->cc('cc@example.com')
-            //->bcc('bcc@example.com')
-            //->replyTo('fabien@example.com')
+            foreach ($this->getEmailAddresses($message->getRecipientsCC()) as $addr) {
+                if (in_array($addr, $addresses)) {
+                    continue;
+                }
+                $addresses[] = $addr;
+                $email->addCc($addr);
+            }
+            foreach ($this->getEmailAddresses($message->getRecipientsBCC()) as $addr) {
+                if (in_array($addr, $addresses)) {
+                    continue;
+                }
+                $addresses[] = $addr;
+                $email->addCc($addr);
+            }
+            if (null !== $replyTo = $message->getReplyTo()) {
+                $email->replyTo($replyTo->getEmail());
+            }
             
             // Priority
             if ($priority = $message->getPriority()) {
@@ -218,11 +232,18 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         try {
             $sentMessage = $this->getTransport()->send($email);
         } catch (\Throwable $e) {
-            $debug = '';
+            $debug = <<<MD
+
+## Email message
+
+```
+{$email->toString()}
+```
+MD;
             if ($e instanceof TransportExceptionInterface) {
                 $debug .= <<<MD
                 
-## Transport debug output
+## SMTP log
 
 ```
 {$e->getDebug()}
@@ -247,8 +268,8 @@ MD;
     
     /**
      * 
-     * @param array $recipients
-     * @return array
+     * @param RecipientInterface[] $recipients
+     * @return string[]
      */
     protected function getEmailAddresses(array $recipients) : array
     {
@@ -270,7 +291,7 @@ MD;
                     break;
             }
         }
-        return $addrs;
+        return array_unique($addrs);
     }
     
     /**

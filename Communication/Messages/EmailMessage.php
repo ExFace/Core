@@ -1,14 +1,12 @@
 <?php
 namespace exface\Core\Communication\Messages;
 
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\DataTypes\EmailDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\EmailPriorityDataType;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
+use exface\Core\Interfaces\Communication\EmailRecipientInterface;
+use exface\Core\Communication\Recipients\EmailRecipient;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Email message to be sent to one or multiple email addresses, users or user groups
@@ -27,6 +25,12 @@ class EmailMessage extends TextMessage
     private $subject = null;
     
     private $priority = null;
+    
+    private $cc = [];
+    
+    private $bcc = [];
+    
+    private $replyTo = null;
     
     /**
      * 
@@ -72,8 +76,27 @@ class EmailMessage extends TextMessage
      */
     public function setText(string $value) : CommunicationMessageInterface
     {
-        $this->text = $value;
-        return $this;
+        return parent::setText($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Communication\AbstractMessage::getRecipientAddresses()
+     */
+    public function getRecipientAddresses() : array
+    {
+        $emails = [];
+        foreach (parent::getRecipientAddresses() as $addr) {
+            if (is_string($addr)) {
+                foreach (explode(';', $addr) as $email) {
+                    if ($email !== '') {
+                        $emails[] = $email;
+                    }
+                }
+            }
+        }
+        return $emails;
     }
     
     /**
@@ -98,6 +121,129 @@ class EmailMessage extends TextMessage
     public function setPriority($value) : EmailMessage
     {
         $this->priority = EmailPriorityDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     * One or more email addresses to send this message to. Each item of the list may also contain multiple emails separated by `;`.
+     * 
+     * This is the same as the `recipients` property. Use only one of them - otherwise the latter will override.
+     * 
+     * @uxon-property to
+     * @uxon-type string
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxonArray
+     * @return EmailMessage
+     */
+    public function setTo(UxonObject $uxonArray) : EmailMessage
+    {
+        return $this->setRecipients($uxonArray);
+    }
+    
+    /**
+     * 
+     * @return EmailRecipientInterface[]
+     */
+    public function getRecipientsCC() : array
+    {
+        return $this->cc;
+    }
+    
+    /**
+     * One or more copy-to email addresses. Each item of the list may also contain multiple emails separated by `;`.
+     * 
+     * @uxon-property cc
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param string $uxonArray
+     * @return EmailMessage
+     */
+    public function setCc(UxonObject $uxonArray) : EmailMessage
+    {
+        $this->cc = [];
+        foreach ($uxonArray as $line) {
+            foreach (explode(';', $line) as $addr) {
+                $this->addCC($addr);
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param EmailRecipientInterface|string $emailOrRecipient
+     * @return EmailMessage
+     */
+    public function addCC($emailOrRecipient) : EmailMessage
+    {
+        $this->cc[] = $emailOrRecipient instanceof EmailRecipientInterface ? $emailOrRecipient : new EmailRecipient($emailOrRecipient);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return EmailRecipientInterface[]
+     */
+    public function getRecipientsBCC() : array
+    {
+        return $this->bcc;
+    }
+    
+    /**
+     * One or more background-copy email addresses. Each item of the list may also contain multiple emails separated by `;`
+     *
+     * @uxon-property bcc
+     * @uxon-type array
+     * @uxon-template [""]
+     *
+     * @param string $uxonArray
+     * @return EmailMessage
+     */
+    public function setBcc(UxonObject $uxonArray) : EmailMessage
+    {
+        $this->cc = [];
+        foreach ($uxonArray as $line) {
+            foreach (explode(';', $line) as $addr) {
+                $this->addBCC($addr);
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     *
+     * @param EmailRecipientInterface|string $emailOrRecipient
+     * @return EmailMessage
+     */
+    public function addBCC($emailOrRecipient) : EmailMessage
+    {
+        $this->bcc[] = $emailOrRecipient instanceof EmailRecipientInterface ? $emailOrRecipient : new EmailRecipient($emailOrRecipient);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getReplyTo() : ?EmailRecipientInterface
+    {
+        return $this->replyTo;
+    }
+    
+    /**
+     * The email address to reply to for this specific message
+     * 
+     * @uxon-property reply_to
+     * @uxon-type string
+     * 
+     * @param EmailRecipientInterface|string $emailOrRecipient
+     * @return EmailMessage
+     */
+    public function setReplyTo($emailOrRecipient) : EmailMessage
+    {
+        $this->replyTo = $emailOrRecipient instanceof EmailRecipientInterface ? $emailOrRecipient : new EmailRecipient($emailOrRecipient);
         return $this;
     }
 }
