@@ -2731,7 +2731,7 @@ class DataSheet implements DataSheetInterface
             }
             
             foreach ($this->getColumns() as $col) {
-                if ($col->hasAggregator() === false) {
+                if ($col->hasAggregator() === false && ! $col->isCalculated()) {
                     return false;
                 }
             }

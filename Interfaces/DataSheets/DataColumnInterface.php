@@ -371,7 +371,9 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function isFormula() : bool;
     
     /**
-     * Returns TRUE if this is a calculated column - that is, it's data does not (only) come from a data source.
+     * Returns TRUE if the values of this column are calculated instead of being loaded from a data source.
+     * 
+     * In other words, a calculated columns values are formulas or constants.
      * 
      * @return boolean
      */
