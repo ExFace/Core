@@ -8,8 +8,6 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
 use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
 use exface\Core\CommonLogic\Communication\CommunicationReceipt;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransportFactory;
 use Symfony\Component\Mailer\Transport\Dsn;
@@ -24,6 +22,8 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Communication\Messages\TextMessage;
 use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Exceptions\RuntimeException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Sends emails via SMTP
@@ -111,7 +111,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
      */
     protected function performQuery(DataQueryInterface $query)
     {
-        if (! $query instanceof SymfonyNotifierMessageDataQuery) {
+        if (! is_a($query, '\\axenox\\UrlDataxenox\\Notifier\\DataSources\\SymfonyNotifierMessageDataQuery')) {
             throw new DataConnectionQueryTypeError($this, 'Invalid query type for connector "' . $this->getAliasWithNamespace() . '": expecting "SymfonyNotifierMessageDataQuery", received "' . get_class($query) . '"!');
         }
         $this->getTransport()->send($query->getMessage());
@@ -169,16 +169,6 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
     
     /**
      * 
-     * @return MailerInterface
-     */
-    protected function getMailer() : MailerInterface
-    {
-        $mailer = new Mailer($this->getTransport());
-        return $mailer;
-    }
-    
-    /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationConnectionInterface::communicate()
      */
@@ -187,7 +177,6 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         if (! ($message instanceof TextMessage)) {
             throw new CommunicationNotSentError($message, 'Cannot send email: invalid message type!');
         }
-        $mailer = $this->getMailer();
         
         $email = (new Email());
         
@@ -200,7 +189,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         if ($from = $this->getFrom()) {
             $email->from($from);
         }
-        foreach ($this->getEmails($message->getRecipients()) as $address) {
+        foreach ($this->getEmailAddresses($message->getRecipients()) as $address) {
             $email->addTo($address);
         }
         
@@ -226,7 +215,32 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
             $email->text($body . ($footer !== null ? "\n\n" . $footer : ''));
         }
         
-        $mailer->send($email);
+        try {
+            $sentMessage = $this->getTransport()->send($email);
+        } catch (\Throwable $e) {
+            $debug = '';
+            if ($e instanceof TransportExceptionInterface) {
+                $debug .= <<<MD
+                
+## Transport debug output
+
+```
+{$e->getDebug()}
+```
+MD;
+            }
+            if ($sentMessage !== null) {
+                $debug .= <<<MD
+
+## Message debug output
+
+```
+{$sentMessage->getDebug()}
+```
+MD;
+            }
+            throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e, $this, $debug);
+        }
         
         return new CommunicationReceipt($message, $this);
     }
@@ -236,24 +250,27 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
      * @param array $recipients
      * @return array
      */
-    protected function getEmails(array $recipients) : array
+    protected function getEmailAddresses(array $recipients) : array
     {
-        $emails = [];
+        $addrs = [];
         foreach ($recipients as $recipient) {
             switch (true) {
                 case $recipient instanceof RecipientGroupInterface:
-                    $emails = array_merge($emails, $this->getEmails($recipient->getRecipients()));
+                    $addrs = array_merge($addrs, $this->getEmailAddresses($recipient->getRecipients()));
                     break;
                 case $recipient instanceof EmailRecipientInterface:
                     if ($email = $recipient->getEmail()) {
-                        $emails[] = $email;
+                        foreach (explode(';', $email) as $addr) {
+                            $addrs[] = $addr;
+                        }
                     }
                     break;
                 default:
-                    // TODO
+                    $this->getWorkbench()->getLogger()->logException(new RuntimeException('Failed to send email to recipient "' . $recipient->__toString() . '": cannot determin email address!'));
+                    break;
             }
         }
-        return $emails;
+        return $addrs;
     }
     
     /**
