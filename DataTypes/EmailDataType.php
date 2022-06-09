@@ -14,6 +14,7 @@ class EmailDataType extends StringDataType
     /**
      * 
      * @param mixed $string
+     * @throws DataTypeCastingError
      * @return string
      */
     public static function cast($string)
@@ -27,5 +28,18 @@ class EmailDataType extends StringDataType
         }
         
         return $filtered;
+    }
+    
+    /**
+     * 
+     * @param mixed $string
+     * @return bool
+     */
+    public static function isValueEmail($string) : bool
+    {
+        if ($string === '' || $string === null) {
+            return false;
+        }
+        return false !== filter_var($string, FILTER_VALIDATE_EMAIL);
     }
 }

@@ -14,7 +14,7 @@ class EmailRecipient implements EmailRecipientInterface
      */
     public function __construct(string $emailAddress)
     {
-        $this->email = $emailAddress;
+        $this->email = trim($emailAddress);
     }
 
     /**
