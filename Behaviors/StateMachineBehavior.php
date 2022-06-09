@@ -28,6 +28,7 @@ use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -1006,7 +1007,7 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($this->getStates() as $state) {
             if (null !== $notifications = $state->getNotificationsUxon()) {
                 $uxon = new UxonObject([
-                    "notify_on_event" => OnUpdateDataEvent::getEventName(),
+                    "notify_on_event" => $state->isStartState() ? OnCreateDataEvent::getEventName() : OnUpdateDataEvent::getEventName(),
                     "notify_if_attributes_change" => [$this->getStateAttributeAlias()],
                     "notify_if_data_matches_conditions" => [
                         "operator" => EXF_LOGICAL_AND,
@@ -1081,47 +1082,31 @@ class StateMachineBehavior extends AbstractBehavior
                 'State icon - ' . $state->getIcon(),
                 ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable delete',
                 ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable edit'
-            ];/*
-            if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
-                $stateFlags .= ' #9993;';
-                $stateProps[] = '';
-                foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
-                    $stateProps[] = "#9993; {$notificationUxon->getProperty('channel')}";
-                    foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
-                        $stateProps[] = "- $recipient";
-                    }
-                    foreach (($notificationUxon->getProperty('recipient_users')) ?? [] as $recipient) {
-                        $stateProps[] = "- $recipient";
-                    }
-                    foreach (($notificationUxon->getProperty('recipients')) ?? [] as $recipient) {
-                        $stateProps[] = "- $recipient";
-                    }
-                }
-            }*/
+            ];
             
             $stateProps = implode('#013;', $stateProps);
-            $stateProps = str_replace(':', ' -', $stateProps);
+            $stateProps = str_replace(':', '#58;', $stateProps);
             
             $stateDetails = '';
             if ($state->getDescription() !== null) {
-                $stateDetails .= '<i>' . wordwrap($state->getDescription(), 50, '<br>') . '</i><br>';
+                $stateDetails .= '<i>' . str_replace(';', '#59;', wordwrap($state->getDescription(), 50, '<br>')) . '</i><br>';
             }
             if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
                 foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
                     $stateDetails .= "<br><b>#9993;</b> {$notificationUxon->getProperty('channel')}";
                     foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
-                        $stateDetails .= "<br>- $recipient";
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
                     }
                     foreach (($notificationUxon->getProperty('recipient_users')) ?? [] as $recipient) {
-                        $stateDetails .= "<br>- $recipient";
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
                     }
                     foreach (($notificationUxon->getProperty('recipients')) ?? [] as $recipient) {
-                        $stateDetails .= "<br>- $recipient";
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
                     }
                 }
             }
             $stateDetails = $stateDetails !== '' ? '<br>' . $stateDetails : '';
-            $stateDetails = str_replace(':', ' -', $stateDetails);
+            $stateDetails = str_replace(':', '#58;', $stateDetails);
             
             $mm .= <<<MERMAID
 
