@@ -465,7 +465,7 @@ class NumberDataType extends AbstractDataType
      * @param string $decimalSeparator
      * @return string
      */
-    public static function formatNumberLocalized($value = null, WorkbenchInterface $workbench, $emptyFormat = '', int $precisionMin = null, int $precisionMax = null, string $groupSeparator = null, int $groupLength = null, string $decimalSeparator = null) : string
+    public static function formatNumberLocalized($value, WorkbenchInterface $workbench, $emptyFormat = '', int $precisionMin = null, int $precisionMax = null, string $groupSeparator = null, int $groupLength = null, string $decimalSeparator = null) : string
     {
         if ($value === null || $value === '' || $value === EXF_LOGICAL_NULL) {
             return $emptyFormat;
