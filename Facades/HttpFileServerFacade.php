@@ -5,9 +5,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
-use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
@@ -115,11 +112,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $handler = new HttpRequestHandler(new NotFoundHandler());
-        
-        // Authenticate users
-        $handler->add(new AuthenticationMiddleware($this));
-        
         $uri = $request->getUri();
         $path = ltrim(StringDataType::substringAfter($uri->getPath(), $this->getUrlRouteDefault()), "/");
         
@@ -200,8 +192,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         $response = new Response(200, $headers, stream_for($binary ?? $plain));
         return $response;
-        
-        return $handler->handle($request);
     }
     
     /**
