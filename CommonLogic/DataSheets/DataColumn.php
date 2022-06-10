@@ -387,8 +387,8 @@ class DataColumn implements DataColumnInterface
         if ($expr = $this->getExpressionObj()) {
             $copy->setExpression($expr->copy());
         }
-        if ($expr = $this->getFormula()) {
-            $copy->setFormula($expr->copy());
+        if ($this->formula !== null) {
+            $copy->setFormula($this->formula->copy());
         }
         return $copy;
     }
@@ -423,16 +423,16 @@ class DataColumn implements DataColumnInterface
                 $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
             }
             
-            if ($this->getAttribute()->getFormula() !== $this->getFormula()) {
-                $arr['formula'] = $this->getFormula()->toString();
+            if ($this->formula !== null && $this->getAttribute()->getFormula() !== $this->formula) {
+                $arr['formula'] = $this->formula->toString();
             }
         } else {
             // If it's not an attribute, export everything
             $arr['expression'] = $this->getExpressionObj()->toString();
             $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
         
-            if ($this->formula) {
-                $arr['formula'] = $this->getFormula()->toString();
+            if ($this->formula !== null) {
+                $arr['formula'] = $this->formula->toString();
             }
         }
         
@@ -605,7 +605,13 @@ class DataColumn implements DataColumnInterface
     }
 
     /**
-     * Make column values be calculated via formula: e.g. `=NOW()`
+     * Make column values be calculated via formula: e.g. `=NOW()` - even if the expression of the column points to an attribute!
+     * 
+     * This will make the column a calculated column - similarly to a column with a formula in its expression.
+     * However, this separate property allows to use an attribute alias as expression and still use a formula
+     * to calculate values, so these calculated values will be saved to the attribute when the data is written
+     * to the data source. In a sence, this is an alternative to data mappers, that could map a formula-column
+     * to an attribute column.
      * 
      * @uxon-property formula
      * @uxon-type metamodel:formula
@@ -613,7 +619,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormula()
      */
-    public function setFormula($expression_or_string)
+    public function setFormula($expression_or_string) : DataColumn
     {
         if ($expression_or_string) {
             if ($expression_or_string instanceof ExpressionInterface) {
