@@ -256,7 +256,7 @@ class DataSheet implements DataSheetInterface
         
         $columns_with_formulas = array();
         foreach ($this->getColumns() as $this_col) {
-            if ($this_col->getFormula()) {
+            if ($this_col->isFormula()) {
                 $columns_with_formulas[] = $this_col->getName();
                 continue;
             }

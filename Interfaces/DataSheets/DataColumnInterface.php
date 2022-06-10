@@ -13,6 +13,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -240,10 +241,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function getFormula();
 
     /**
-     *
-     * @param string|ExpressionInterface $expression_or_string            
+     * Make column values be calculated via formula: e.g. `=NOW()` - even if the expression of the column points to an attribute!
+     * 
+     * This will make the column a calculated column - similarly to a column with a formula in its expression.
+     * However, this separate property allows to use an attribute alias as expression and still use a formula
+     * to calculate values, so these calculated values will be saved to the attribute when the data is written
+     * to the data source. In a sence, this is an alternative to data mappers, that could map a formula-column
+     * to an attribute column.
+     * 
+     * @param string|ExpressionInterface $expression_or_string          
+     * @return DataColumn  
      */
-    public function setFormula($expression_or_string);
+    public function setFormula($expression_or_string) : DataColumn;
 
     public function getAttributeAlias();
 
