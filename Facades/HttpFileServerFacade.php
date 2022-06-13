@@ -43,6 +43,10 @@ use exface\Core\Behaviors\FileBehavior;
  * 
  * Not available yet
  * 
+ * ## Access restriction
+ * 
+ * This facade can be accessed by any authenticated (logged in) user by default. Please modify authorization policies if required!
+ * 
  * @author Andrej Kabachnik
  *
  */
