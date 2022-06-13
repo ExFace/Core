@@ -11,7 +11,6 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Uxon\FacadeSchema;
 use exface\Core\Exceptions\NotImplementedError;
-use exface\Core\Events\Facades\OnFacadeInitEvent;
 
 abstract class AbstractFacade implements FacadeInterface
 {
@@ -25,17 +24,11 @@ abstract class AbstractFacade implements FacadeInterface
 
     private $selector = null;
 
-    public final function __construct(FacadeSelectorInterface $selector)
+    public function __construct(FacadeSelectorInterface $selector)
     {
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
-        $this->init();
-        
-        $selector->getWorkbench()->eventManager()->dispatch(new OnFacadeInitEvent($this));
     }
-
-    protected function init()
-    {}
 
     /**
      * 

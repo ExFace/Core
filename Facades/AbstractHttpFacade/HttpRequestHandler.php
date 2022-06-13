@@ -7,6 +7,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface;
 
 /**
  * This is a simple PSR-15 compilant request handler, that is used in the defualt API
@@ -17,7 +18,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * @author Andrej Kabachnik
  */
-class HttpRequestHandler implements RequestHandlerInterface
+class HttpRequestHandler implements HttpMiddlewareBusInterface
 {
     private $middleware = [];
     private $fallbackHandler = null;
@@ -36,7 +37,8 @@ class HttpRequestHandler implements RequestHandlerInterface
     
     /**
      * 
-     * @param MiddlewareInterface $middleware
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface::add()
      */
     public function add(MiddlewareInterface $middleware) : HttpRequestHandler
     {

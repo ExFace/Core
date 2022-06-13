@@ -49,53 +49,6 @@ use exface\Core\Behaviors\FileBehavior;
 class HttpFileServerFacade extends AbstractHttpFacade
 {    
     /**
-     * 
-     * @deprecated use buildUrlToDownloadFile()
-     */
-    public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
-    {
-        return static::buildUrlToDownloadFile($workbench, $absolutePath, $relativeToSiteRoot);
-    }
-    
-    /**
-     * 
-     * @param WorkbenchInterface $workbench
-     * @param string $absolutePath
-     * @param bool $relativeToSiteRoot
-     * @throws FacadeRuntimeError
-     * @return string
-     */
-    public static function buildUrlToDownloadFile(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
-    {
-        // TODO route downloads over api/files and add an authorization point - see handle() method
-        $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
-        $absolutePath = FilePathDataType::normalize($absolutePath);
-        if (StringDataType::startsWith($absolutePath, $installationPath) === false) {
-            throw new FacadeRuntimeError('Cannot provide download link for file "' . $absolutePath . '"');
-        }
-        $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
-        if ($relativeToSiteRoot) {
-            return ltrim($relativePath, "/");
-        } else {
-            return $workbench->getUrl() . ltrim($relativePath, "/");
-        }
-    }
-    
-    /**
-     * 
-     * @param MetaObjectInterface $object
-     * @param string $uid
-     * @param bool $relativeToSiteRoot
-     * @return string
-     */
-    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true) : string
-    {
-        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
-        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
-        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
-    }
-
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
@@ -108,9 +61,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
     /**
      * 
      * {@inheritDoc}
-     * @see \Psr\Http\Server\RequestHandlerInterface::handle()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponse()
      */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
         $uri = $request->getUri();
         $path = ltrim(StringDataType::substringAfter($uri->getPath(), $this->getUrlRouteDefault()), "/");
@@ -190,8 +143,54 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
         }
         
-        $response = new Response(200, $headers, stream_for($binary ?? $plain));
-        return $response;
+        return new Response(200, $headers, stream_for($binary ?? $plain));
+    }
+    
+    /**
+     *
+     * @deprecated use buildUrlToDownloadFile()
+     */
+    public static function buildUrlForDownload(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
+    {
+        return static::buildUrlToDownloadFile($workbench, $absolutePath, $relativeToSiteRoot);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string $absolutePath
+     * @param bool $relativeToSiteRoot
+     * @throws FacadeRuntimeError
+     * @return string
+     */
+    public static function buildUrlToDownloadFile(WorkbenchInterface $workbench, string $absolutePath, bool $relativeToSiteRoot = true)
+    {
+        // TODO route downloads over api/files and add an authorization point - see handle() method
+        $installationPath = FilePathDataType::normalize($workbench->getInstallationPath());
+        $absolutePath = FilePathDataType::normalize($absolutePath);
+        if (StringDataType::startsWith($absolutePath, $installationPath) === false) {
+            throw new FacadeRuntimeError('Cannot provide download link for file "' . $absolutePath . '"');
+        }
+        $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
+        if ($relativeToSiteRoot) {
+            return ltrim($relativePath, "/");
+        } else {
+            return $workbench->getUrl() . ltrim($relativePath, "/");
+        }
+    }
+    
+    /**
+     *
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true) : string
+    {
+        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
     
     /**

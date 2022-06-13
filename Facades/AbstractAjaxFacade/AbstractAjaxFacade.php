@@ -33,7 +33,6 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\PrefixedFilterUrlParamsReader;
-use exface\Core\Factories\ResultFactory;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
@@ -62,7 +61,7 @@ use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
-use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 
 /**
  * 
@@ -72,8 +71,6 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements HtmlPageFacadeInterface
 {
     private $elements = [];
-    
-    private $requestIdCache = [];
     
     /**
      * [ widget_type => qualified class name]
@@ -88,49 +85,13 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     private $data_type_formatters = [];
     
     private $pageTemplateFilePath = null;
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Facades\AbstractFacade\AbstractFacade::init()
-     */
-    protected function init()
+    
+    public function __construct(FacadeSelectorInterface $selector)
     {
-        parent::init();
+        parent::__construct($selector);
         $this->getWorkbench()->eventManager()->addListener(OnRemoveEvent::getEventName(), function (OnRemoveEvent $event) {
             $this->removeElement($event->getWidget());
         });
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::handle()
-     */
-    public function handle(ServerRequestInterface $request, $useCacheKey = null) : ResponseInterface
-    {
-        if (! is_null($useCacheKey)) {
-            $request = $request->withAttribute('result_cache_key', $useCacheKey);
-        }
-        
-        if ($cache = $this->requestIdCache[$request->getAttribute('result_cache_key')]) {
-            if ($cache instanceof ResultInterface) {
-                return $this->createResponseFromTaskResult($request, $cache);
-            }
-        }
-        
-        try {
-            $response = parent::handle($request);
-        } catch (\Throwable $e) {
-            try {
-                $response = $this->createResponseFromError($request, $e);
-            } catch (\Throwable $e2) {
-                $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError('Failed to render error response in facade: ' . $e2->getMessage(), null, $e2));
-                throw $e;
-            }
-        }
-        return $response;
     }
 
     /**
@@ -456,10 +417,6 @@ HTML;
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
-        if ($cacheKey = $request->getAttribute('result_cache_key')) {
-            $this->requestIdCache[$cacheKey] = $result;
-        }
-        
         /* @var $headers array [header_name => array_of_values] */
         $headers = $this->buildHeadersCommon();
         if ($this->isRequestAjax($request)) {
@@ -731,12 +688,6 @@ HTML;
             throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
-        // If using the cache, we can store the error widget in that cache to make sure it is shown.
-        // Otherwise if the error only occurs in certain modes, it might never get really shown!
-        if ($cacheKey = $request->getAttribute('result_cache_key')) {
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
-            $this->requestIdCache[$cacheKey] = ResultFactory::createWidgetResult($task, $debug_widget);
-        }
         return $body;
     }
     

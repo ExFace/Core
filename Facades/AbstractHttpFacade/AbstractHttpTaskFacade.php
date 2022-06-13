@@ -6,20 +6,10 @@ use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Exceptions\InternalError;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
-use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
 
 /**
- * Common base structure for HTTP facades designed to handle tasks.
- *
- * Uses a middleware bus internally to transform incoming HTTP requests into tasks.
- * To standardise the middleware somehat, this facade getter methods for names
- * of most important request attributes needed for tasks, page and action selectors,
- * etc.
+ * Common base structure for HTTP facades designed to handle workbench tasks.
  *
  * @author Andrej Kabachnik
  *
@@ -30,35 +20,6 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
     const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
     const REQUEST_ATTRIBUTE_NAME_WIDGET = 'element';
-    
-    protected function init()
-    {
-        parent::init();
-        if (! $this->getWorkbench()->isStarted()){
-            $this->getWorkbench()->start();
-        }
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \Psr\Http\Server\RequestHandlerInterface::handle()
-     */
-    public function handle(ServerRequestInterface $request) : ResponseInterface
-    {
-        if ($request->getAttribute($this->getRequestAttributeForTask()) === null) {
-            if ($this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
-                $this->getWorkbench()->getLogger()->debug('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
-            }
-            $handler = new HttpRequestHandler($this);
-            foreach ($this->getMiddleware() as $middleware) {
-                $handler->add($middleware);
-            }
-            // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
-            return $handler->handle($request);
-        }
-        return $this->createResponse($request);
-    }
     
     /**
      * Makes the facade create an HTTP response for the given request - after all middlewares were run.
@@ -90,23 +51,6 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
     }
     
     /**
-     * Returns the middleware stack to use in the request handler.
-     *
-     * Override this method to add/change middleware. For example, facade can add their own
-     * middleware to read specific URL parameters built-in the used UI frameworks.
-     *
-     * @return MiddlewareInterface[]
-     */
-    protected function getMiddleware() : array
-    {
-        return [
-            new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
-            new RequestContextReader($this->getWorkbench()->getContext()), // Pass request data to the request context
-            new AuthenticationMiddleware($this)
-        ];
-    }
-    
-    /**
      * Creates and returns an HTTP response from the given task result.
      * 
      * @param ServerRequestInterface $request
@@ -114,16 +58,6 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
      * @return ResponseInterface
      */
     protected abstract function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
-    
-    /**
-     * Creates and returns an HTTP response from the given exception.
-     * 
-     * @param ServerRequestInterface $request
-     * @param \Throwable $exception
-     * @param UiPageInterface $page
-     * @return ResponseInterface
-     */
-    protected abstract function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
     
     /**
      * 
