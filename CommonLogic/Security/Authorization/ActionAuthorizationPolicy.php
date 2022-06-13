@@ -31,6 +31,8 @@ use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
+use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Policy for access to actions.
@@ -273,6 +275,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $action->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
             $action->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);

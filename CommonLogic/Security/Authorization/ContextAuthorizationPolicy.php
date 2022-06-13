@@ -14,6 +14,8 @@ use exface\Core\Factories\PermissionFactory;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 /**
  * Policy to restrict access to workbench contexts.
@@ -97,6 +99,9 @@ class ContextAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $context->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
             $context->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
