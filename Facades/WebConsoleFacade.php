@@ -17,11 +17,13 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
-use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
-use exface\Core\Facades\AbstractHttpFacade\OKHandler;
+use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Actions\ReadData;
 
-/***
+/**
  * This is the Facade for Console Widgets
  * It streams the cmd outputs to the Console while the commands are executed
  * 
@@ -31,32 +33,17 @@ use exface\Core\Facades\AbstractHttpFacade\OKHandler;
 class WebConsoleFacade extends AbstractHttpFacade
 {
     
-    /***
+    /**
      * 
      * {@inheritDoc}
-     * @see \Psr\Http\Server\RequestHandlerInterface::handle()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponse()
      */
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
         try {
-            if ($this->getWorkbench()->isStarted() === false) {
-                $this->getWorkbench()->start();
-            }
-            
-            $handler = new HttpRequestHandler(new OKHandler());
-            $handler->add(new AuthenticationMiddleware($this));
-            $responseTpl = $handler->handle($request);
-            if ($responseTpl->getStatusCode() >= 400) {
-                return $responseTpl;
-            }
             $response = $this->performCommand($request);
         } catch (\Throwable $e) {
-            if ($e instanceof ExceptionInterface) {
-                $statusCode = $e->getStatusCode();
-            } else {
-                $statusCode = 500;
-            }
-            $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
+            $response = $this->createResponseFromError($request, $e);
         }  
         
         // Don't stop the workbench here!!! The response might include a generator, that
@@ -75,14 +62,28 @@ class WebConsoleFacade extends AbstractHttpFacade
      */
     protected function performCommand(RequestInterface $request) : ResponseInterface
     {
-        // tests/psr7_console/server.php?cmd=cd
-        $cmd = $request->getParsedBody()['cmd'];
+        $cmd = $request->getParsedBody()['cmd'] ?? $request->getQueryParams()['cmd'];
         $cmd = trim($cmd);
         $command = $this->getCommand($cmd);
         $widget = $this->getWidgetFromRequest($request);
         
+        // Make sure the the current user is allowed to read data for the console widget
+        // This is important to ensure AJAX requests of a console are not intercepted and 
+        // modified by other users!
+        // Note, that merely access permissions to the web console facade itself would not
+        // be enough as there could be multiple different consoles with different access
+        // rights in the menu, etc.
+        $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class)->authorize(
+            ActionFactory::createFromString($this->getWorkbench(), ReadData::class),
+            (new HttpTask($this->getWorkbench(), $this, $request))
+                ->setActionSelector(ReadData::class)
+                ->setPageSelector($widget->getPage()->getSelector())
+                ->setWidgetIdTriggeredBy($widget->getId()),
+            $this->getWorkbench()->getSecurity()->getAuthenticatedToken()
+        );
+        
         // Current directory
-        $cwd = $request->getParsedBody()['cwd'];
+        $cwd = $request->getParsedBody()['cwd'] ?? $request->getQueryParams()['cwd'];
         if ($cwd) {
             if (Filemanager::pathIsAbsolute($cwd)) {
                 throw new RuntimeException('Absolute Path syntax not allowed!');
@@ -260,11 +261,11 @@ class WebConsoleFacade extends AbstractHttpFacade
      * @param RequestInterface $request
      * @return Console
      */
-    protected function getWidgetFromRequest(RequestInterface $request) : Console
+    protected function getWidgetFromRequest(ServerRequestInterface $request) : Console
     {
-        $pageSelector = $request->getParsedBody()['page'];
+        $pageSelector = $request->getParsedBody()['page'] ?? $request->getQueryParams()['page'];
         $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
-        $widgetId = $request->getParsedBody()['widget'];
+        $widgetId = $request->getParsedBody()['widget'] ?? $request->getQueryParams()['widget'];
         return $page->getWidget($widgetId);
     }
     

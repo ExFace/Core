@@ -26,8 +26,8 @@ use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use exface\Core\CommonLogic\Security\Authorization\FacadeAuthorizationPoint;
-use exface\Core\Events\Facades\OnFacadeInitEvent;
+use Symfony\Component\Console\Input\InputInterface;
+use exface\Core\Events\Facades\OnCliCommandReceivedEvent;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -71,6 +71,8 @@ use exface\Core\Events\Facades\OnFacadeInitEvent;
  * 
  * ```
  * 
+ * @triggers \exface\Core\Events\Facades\OnCliCommandReceivedEvent
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -100,14 +102,20 @@ class ConsoleFacade extends Application implements FacadeInterface
             } catch (AuthenticationExceptionInterface $e) {
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
                 // Do nothing - the console can still be run in anonymous mode
-            }     
-            
-            // Only trigger the facade-init event if this facade is actually run in CLI. Otherwise
-            // it is triggered by another facade (e.g. the WebConsoleFacade) and does not need
-            // authorization and other stuff - in other words it is not a facade then, but
-            // merely an internal interface.
-            $selector->getWorkbench()->eventManager()->dispatch(new OnFacadeInitEvent($this));
+            } 
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Symfony\Component\Console\Application::doRun()
+     */
+    public function doRun(InputInterface $input, OutputInterface $output)
+    {
+        // Trigger the command-received event. This will also lead to facade authorization
+        $this->getWorkbench()->eventManager()->dispatch(new OnCliCommandReceivedEvent($this, (string) $input));
+        return parent::doRun($input, $output);
     }
     
     /**

@@ -17,6 +17,7 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
+use exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -50,9 +51,10 @@ use exface\Core\Exceptions\SecurityException;
  * ```
  * 
  * **NOTE:** this middleware only handles authentication! It does not check, if the user
- * is allowed to access its facade - this is the task of the facade itself! Facades based
- * on the `AbstractFacade` even do not need to bother as the check is performed automatically
- * with the `OnFacadeInitEvent`.
+ * is allowed to access its facade - this is the task of the facade itself! 
+ * 
+ * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
+ * @triggers \exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent
  * 
  * @author Andrej Kabachnik
  *
@@ -85,6 +87,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
     
     /**
      * 
+     * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
+     * @triggers \exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent
+     * 
      * {@inheritDoc}
      * @see \Psr\Http\Server\MiddlewareInterface::process()
      */
@@ -116,25 +121,25 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
         }
         
-        if (true || $authenticatedToken->isAnonymous()) {
-            $sessionCookieName = session_name();
-            $sessionIds = [];
-            foreach ($request->getHeader('Cookie') as $cookie) {
-                foreach (explode(';', $cookie) as $cookieVal) {
-                    if (StringDataType::startsWith(trim($cookieVal), $sessionCookieName . '=')) {
-                        $sessionIds[] = StringDataType::substringAfter($cookieVal, $sessionCookieName . '=');
-                    }
+        $sessionCookieName = session_name();
+        $sessionIds = [];
+        foreach ($request->getHeader('Cookie') as $cookie) {
+            foreach (explode(';', $cookie) as $cookieVal) {
+                if (StringDataType::startsWith(trim($cookieVal), $sessionCookieName . '=')) {
+                    $sessionIds[] = StringDataType::substringAfter($cookieVal, $sessionCookieName . '=');
                 }
             }
-            if (count($sessionIds) > 1) {
-                throw new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!');
-            }
+        }
+        if (count($sessionIds) > 1) {
+            throw new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!');
         }
         
         // If the token is still anonymous, check if that is allowed in the configuration!
         if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
             return $this->createResponseAccessDenied($request);
         }
+        
+        $this->workbench->eventManager()->dispatch(new OnHttpRequestAuthenticatedEvent($this->facade, $request, $authenticatedToken));
         
         return $handler->handle($request);
     }
@@ -196,6 +201,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
      *          [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
      *      ]
      *  )
+     *  
      * ```
      * 
      * @param ServerRequestInterface $request
