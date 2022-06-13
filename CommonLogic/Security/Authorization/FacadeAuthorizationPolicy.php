@@ -17,9 +17,10 @@ use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 /**
  * Policy for access to facades.
@@ -123,6 +124,9 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $facade->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
             $facade->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);

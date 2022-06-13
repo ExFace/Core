@@ -18,6 +18,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 /**
  * Policy for access to data.
@@ -188,6 +190,9 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $dataSheet->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
             $dataSheet->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);

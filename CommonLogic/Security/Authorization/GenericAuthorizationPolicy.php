@@ -21,6 +21,8 @@ use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * 
@@ -144,6 +146,9 @@ class GenericAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this);
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $this->workbench->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
             $this->workbench->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
