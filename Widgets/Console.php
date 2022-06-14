@@ -51,7 +51,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  * 			"caption": "Commit/Push all",
  * 			"hint": "Commits all local changes and pushes them to the current remote",
  * 			"commands": [
- * 				"git commit -a -m \"<Commit-Message>\" --author\"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\"",
+ * 				"git commit -a -m \"<Commit-Message>\" --author \"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\"",
  * 				"git push"
  * 			]
  * 		},
@@ -280,7 +280,7 @@ class Console extends AbstractWidget
      *      "visibility": "promoted",
      *      "commands": [
      *          "git add --all",
-     *          "git commit -a -m \"<Commit-Message>\" --author\"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\""
+     *          "git commit -a -m \"<Commit-Message>\" --author \"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\""
      *      ]
      *  },
      *  {
