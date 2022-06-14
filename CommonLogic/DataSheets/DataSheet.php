@@ -54,6 +54,7 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2746,12 +2747,13 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDecrypted()
      */
-    public function getRowsDecrypted($how_many = 0, $offset = 0) : array
+    public function getRowsDecrypted($how_many = 0, $offset = 0, string $secret = null) : array
     {
         $encryptedRows = $this->getRows($how_many, $offset);
         if (empty($encryptedRows)) {
             return $encryptedRows;
         }
+        $secret = $secret ?? EncryptedDataType::getSecret($this->getWorkbench());
         $rows = array_slice($encryptedRows, 0);
         $columns = $this->getColumns();
         foreach ($rows as $idx => $row) {                       
@@ -2761,7 +2763,7 @@ class DataSheet implements DataSheetInterface
                     $colName = $col->getName();
                     $encrypted = $row[$colName];
                     if ($datatype->isValueEncrypted($encrypted)) {
-                        $decrypted = EncryptedDataType::decrypt(EncryptedDataType::getSecret($this->getWorkbench()), $encrypted, $datatype->getEncryptionPrefix());
+                        $decrypted = EncryptedDataType::decrypt($secret, $encrypted, $datatype->getEncryptionPrefix());
                         $row[$colName] = $decrypted;
                     }
                 }
@@ -2820,5 +2822,49 @@ class DataSheet implements DataSheetInterface
             }
         }
         return $dataSheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDiff()
+     */
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array
+    {
+        $diffRows = [];
+        $diffIdxs = [];
+        
+        $excludeColumns = [];
+        foreach ($exclude as $excl) {
+            switch (true) {
+                case $excl instanceof MetaAttributeInterface:
+                    if ($col = $this->getColumns()->getByAttribute($excl)) {
+                        $excludeColumns[] = $col;
+                    }
+                    break;
+                case $excl instanceof DataColumnInterface:
+                    $excludeColumns[] = $excl;
+                    break;
+                default:
+                    if ($col = $this->getColumns()->getByExpression($excl)) {
+                        $excludeColumns[] = $col;
+                    }
+                    break;                
+            }
+        }
+        
+        foreach ($this->getColumns() as $thisCol) {
+            if (in_array($thisCol, $excludeColumns)) {
+                continue;
+            }
+            $otherCol = $otherSheet->getColumns()->get($thisCol->getName());
+            $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
+        }
+        $diffIdxs = array_unique($diffIdxs);
+        sort($diffIdxs);
+        foreach ($diffIdxs as $i) {
+            $diffRows[$i] = $this->getRow($i);
+        }
+        return $diffRows;
     }
 }

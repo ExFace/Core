@@ -560,7 +560,8 @@ class DataColumn implements DataColumnInterface
     {
         $result = array();
         foreach ($this->getValues(false) as $row_nr => $val) {
-            if ($another_column->getCellValue($row_nr) !== $val) {
+            // Compare with `!=` to ignore the differences between `1` and `"1"` and similar.
+            if ($another_column->getCellValue($row_nr) != $val) {
                 $result[$row_nr] = $val;
             }
         }

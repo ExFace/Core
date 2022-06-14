@@ -253,7 +253,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * 
      * @return bool
      */
-    protected function hasCreatedOnAttribute() : bool
+    public function hasCreatedOnAttribute() : bool
     {
         return $this->createdOnAttributeAlias !== null;
     }
@@ -263,7 +263,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * @throws BehaviorConfigurationError
      * @return MetaAttributeInterface
      */
-    protected function getCreatedOnAttribute() : MetaAttributeInterface
+    public function getCreatedOnAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedOnAttribute()) {
             throw new BehaviorConfigurationError($this->getObject(), 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
@@ -275,7 +275,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * 
      * @return bool
      */
-    protected function hasUpdatedOnAttribute() : bool
+    public function hasUpdatedOnAttribute() : bool
     {
         return $this->updatedOnAttributeAlias !== null;
     }
@@ -285,7 +285,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * @throws BehaviorConfigurationError
      * @return MetaAttributeInterface|NULL
      */
-    protected function getUpdatedOnAttribute() : ?MetaAttributeInterface
+    public function getUpdatedOnAttribute() : ?MetaAttributeInterface
     {
         if (! $this->hasUpdatedOnAttribute()) {
             throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
@@ -661,7 +661,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * 
      * @return bool
      */
-    protected function hasCreatedByAttribute() : bool
+    public function hasCreatedByAttribute() : bool
     {
         return $this->createdByAttributeAlias !== null;
     }
@@ -671,7 +671,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * @throws BehaviorConfigurationError
      * @return MetaAttributeInterface
      */
-    protected function getCreatedByAttribute() : MetaAttributeInterface
+    public function getCreatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedByAttribute()) {
             throw new BehaviorConfigurationError($this->getObject(), 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
@@ -710,7 +710,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * 
      * @return bool
      */
-    protected function hasUpdatedByAttribute() : bool
+    public function hasUpdatedByAttribute() : bool
     {
         return $this->updatedByAttributeAlias !== null;
     }
@@ -720,7 +720,7 @@ class TimeStampingBehavior extends AbstractBehavior
      * @throws BehaviorConfigurationError
      * @return MetaAttributeInterface
      */
-    protected function getUpdatedByAttribute() : MetaAttributeInterface
+    public function getUpdatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasUpdatedByAttribute()) {
             throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
