@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2019-05-13 09:02:35",
-            "MODIFIED_ON": "2019-11-10 10:44:27",
+            "MODIFIED_ON": "2022-06-14 17:38:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9755dcd59222586490205857feb80",
@@ -81,9 +81,7 @@
                             "working_directory_attribute_alias": "PACKAGE",
                             "working_directory_subfolder": "vendor",
                             "environment_vars": {
-                                "GIT_SSL_NO_VERIFY": true,
-                                "GIT_COMMITTER_NAME": "=User('full_name')",
-                                "GIT_COMMITTER_EMAIL": "=User('email')"
+                                "GIT_SSL_NO_VERIFY": true
                             },
                             "allowed_commands": [
                                 "\/dir\/",
@@ -101,7 +99,7 @@
                                     "visibility": "promoted",
                                     "commands": [
                                         "git add --all",
-                                        "git commit -a -m \"<Commit-Message>\"",
+                                        "git commit -a -m \"<Commit-Message>\" --author\"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\"",
                                         "git push"
                                     ]
                                 },
