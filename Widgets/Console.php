@@ -14,7 +14,24 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 /**
  * Shows a command line terminal.
  * 
- * Example:
+ * ## Examples
+ * 
+ * ### Console to run a single CLI action with an input-placeholder
+ * 
+ * ```
+ *  {
+ *      "widget_type": "Console",
+ *      "disabled": true,
+ *      "command_placeholder_value_list_delimiter": ",",
+ *      "start_commands": [
+ *          "action axenox.PackageManager:InstallApp [#ALIAS#]"
+ *      ],
+ *      "working_directory_path": "vendor/bin"
+ *  }
+ * 
+ * ```
+ * 
+ * ### Interactive Git console with command presets
  * 
  * ```
  * {
@@ -263,7 +280,7 @@ class Console extends AbstractWidget
      *      "visibility": "promoted",
      *      "commands": [
      *          "git add --all",
-     *          "git commit -m <message>"
+     *          "git commit -a -m \"<Commit-Message>\" --author\"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\""
      *      ]
      *  },
      *  {
