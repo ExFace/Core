@@ -11,6 +11,8 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
@@ -368,6 +370,21 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array
      */
     public function getRows($how_many = 0, $offset = 0);
+    
+    /**
+     * Returns only those rows from the current sheet, that are not present in the other sheet provided.
+     *
+     * This method is mainly usefull to compare data sheets deemed to be identical - it compares
+     * rows with the same row numbers.
+     * 
+     * Columns, attributes or expressions can be excluded from the comparison via `$exclude` argument.
+     * Differences in the corresponding columns will be ignored!
+     *
+     * @param DataSheetInterface $otherSheet
+     * @param DataColumnInterface[]|MetaAttributeInterface[]|ExpressionInterface[]|string[] $exclude
+     * @return array
+     */
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array;
 
     /**
      * Returns the specified row as an associative array (e.g.

@@ -22,6 +22,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Exceptions\EncryptionError;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -210,23 +211,24 @@ class MetaModelInstaller extends AbstractAppInstaller
         $app = $this->getApp();
         $dir = $destinationAbsolutePath . DIRECTORY_SEPARATOR . self::FOLDER_NAME_MODEL;
         
+        // Remove any old files AFTER the data sheets were read successfully
+        // in order to keep old data on errors.
+        $dirOld = null;
+        if (is_dir($dir)) {
+            $dirOld = $dir . '.tmp';
+            rename($dir, $dirOld);
+        }
+        
         // Make sure, the destination folder is there and empty (to remove 
         // files, that are not neccessary anymore)
         $app->getWorkbench()->filemanager()->pathConstruct($dir);
-        // Remove any old files AFTER the data sheets were read successfully
-        // in order to keep old data on errors.
-        Filemanager::emptyDir($dir);
         
         // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
         // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
         // and used in the installation process of the package
-        $last_modification_time = '0000-00-00 00:00:00';
-        $model_string = '';
         foreach ($this->getCoreModelSheets() as $nr => $ds) {
             $ds->dataRead();
-            $model_string .= $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_');
-            $time = $ds->getColumns()->getByAttribute($ds->getMetaObject()->getAttribute('MODIFIED_ON'))->aggregate(new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-            $last_modification_time = $time > $last_modification_time ? $time : $last_modification_time;
+            $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
         }
         // Save additions
         $additionCnt = [];
@@ -237,12 +239,10 @@ class MetaModelInstaller extends AbstractAppInstaller
             
             $ds->dataRead();
             $nr = $additionCnt[$subdir] = ($additionCnt[$subdir] ?? 0) + 1;
-            $model_string .= $this->exportModelFile($dir . DIRECTORY_SEPARATOR . $subdir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', false);
+            $this->exportModelFile($dir . DIRECTORY_SEPARATOR . $subdir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', false, $dirOld);
             if (! $lastUpdAlias && $ds->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
                 $lastUpdAlias = 'MODIFIED_ON';
             }
-            $time = $ds->getColumns()->getByAttribute($ds->getMetaObject()->getAttribute($lastUpdAlias))->aggregate(new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-            $last_modification_time = $time > $last_modification_time ? $time : $last_modification_time;
         }
         
         // Save some information about the package in the extras of composer.json
@@ -266,24 +266,29 @@ class MetaModelInstaller extends AbstractAppInstaller
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
+        
+        // Remove remaining old files
+        if ($dirOld !== null) {
+            Filemanager::deleteDir($dirOld);
+        }
     }
 
     /**
      * Writes JSON File of a $data_sheet to a specific location
      *
-     * @param string $backupDir            
+     * @param string $modelDir            
      * @param DataSheetInterface $data_sheet
      * @param string $filename_prefix            
-     * @return string
+     * @return string[]
      */
-    protected function exportModelFile($backupDir, DataSheetInterface $data_sheet, $filename_prefix = null, $split_by_object = true) : string
+    protected function exportModelFile(string $modelDir, DataSheetInterface $data_sheet, $filename_prefix = null, $split_by_object = true, string $prevExportDir = null) : array
     {
         if ($data_sheet->isEmpty()) {
-            return '';
+            return [];
         }
         
-        if (! file_exists($backupDir)) {
-            Filemanager::pathConstruct($backupDir);
+        if (! file_exists($modelDir)) {
+            Filemanager::pathConstruct($modelDir);
         }
         
         if ($split_by_object === true) {
@@ -310,9 +315,19 @@ class MetaModelInstaller extends AbstractAppInstaller
                     }
             }
         }
-        
+        $result = [];
         $fileManager = $this->getWorkbench()->filemanager();
         $fileName = $filename_prefix . $data_sheet->getMetaObject()->getAlias() . '.json';
+        /* @var $tsBehavior \exface\Core\Behaviors\TimeStampingBehavior */
+        $excludeAttrs = [];
+        foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $tsBehavior) {
+            if ($tsBehavior->hasUpdatedByAttribute()) {
+                $excludeAttrs[] = $tsBehavior->getUpdatedByAttribute();
+            }
+            if ($tsBehavior->hasUpdatedOnAttribute()) {
+                $excludeAttrs[] = $tsBehavior->getUpdatedOnAttribute();
+            }
+        }
         if ($split_by_object && ! empty($objectUids)) {
             $rows = $data_sheet->getRows();
             if ($removeObjectCol === true) {
@@ -328,18 +343,47 @@ class MetaModelInstaller extends AbstractAppInstaller
                     }
                 }
                 $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet, $filteredRows));
-                $subfolder = $backupDir . DIRECTORY_SEPARATOR . $this->getObjectSubfolder($objectUid);
-                $fileManager->dumpFile($subfolder . DIRECTORY_SEPARATOR . $fileName, $uxon->toJson(true));
+                $subfolder = $this->getObjectSubfolder($objectUid);
+                $path = $modelDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
+                $result[] = $path;
+                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
+                if (file_exists($prevPath)) {
+                    $splitSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon)->copy();
+                    $decryptedSheet = $splitSheet->copy()->removeRows()->addRows($splitSheet->getRowsDecrypted());
+                    foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
+                        $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                    }
+                    if (empty($diff)) {
+                        if (! is_dir($modelDir . DIRECTORY_SEPARATOR . $subfolder));
+                        mkdir($modelDir . DIRECTORY_SEPARATOR . $subfolder);
+                        rename($prevPath, $path);
+                        continue;
+                    }
+                }
+                $fileManager->dumpFile($path, $uxon->toJson(true));
             }
         } else {
+            $path = $modelDir . DIRECTORY_SEPARATOR . $fileName;
+            $result[] = $path;
+            $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $fileName;
+            if (file_exists($prevPath)) {
+                $decryptedSheet = $data_sheet->copy()->removeRows()->addRows($data_sheet->getRowsDecrypted());
+                foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
+                    $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                }
+                if (empty($diff)) {
+                    rename($prevPath, $path);
+                    return $result;
+                }
+            }
             $uxon = $data_sheet->exportUxonObject();
             $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
             $contents = $uxon->toJson(true);
-            $fileManager->dumpFile($backupDir . DIRECTORY_SEPARATOR . $fileName, $contents);
+            $fileManager->dumpFile($path, $contents);
             return $contents;
         }
         
-        return '';
+        return $result;
     }
     
     protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array
@@ -721,6 +765,11 @@ class MetaModelInstaller extends AbstractAppInstaller
     {
         $folderUxons = [];
         
+        if (is_file($absolutePath)) {
+            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $this->readDataSheetUxonFromFile($absolutePath);
+            return $folderUxons;
+        }
+        
         foreach (scandir($absolutePath) as $file) {
             if ($file == '.' || $file == '..') {
                 continue;
@@ -749,7 +798,6 @@ class MetaModelInstaller extends AbstractAppInstaller
     {
         $contents = file_get_contents($path);
         $contents = $this->applyCompatibilityFixesToFileContent($path, $contents);
-        
         return UxonObject::fromJson($contents);
     }
     

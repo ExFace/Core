@@ -226,6 +226,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns an array with with all values of this column, which are not present in the same row of another one.
+     * 
      * NOTE: The keys of the returned array are the row numbers of this column
      * In contrast to diff_values(), this method compares the column per row.
      *
