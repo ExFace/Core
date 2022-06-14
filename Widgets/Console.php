@@ -27,16 +27,14 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  *      "git status"
  *  ],
  *  "environment_vars": {
- *    "GIT_SSL_NO_VERIFY": true,
- *    "GIT_COMMITTER_NAME": "=User('full_name')",
- *    "GIT_COMMITTER_EMAIL": "=User('email')"
+ *    "GIT_SSL_NO_VERIFY": true
  *  },
  * 	"command_prsets": [
  * 		{
  * 			"caption": "Commit/Push all",
  * 			"hint": "Commits all local changes and pushes them to the current remote",
  * 			"commands": [
- * 				"git commit -a -m <message>",
+ * 				"git commit -a -m \"<Commit-Message>\" --author\"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\"",
  * 				"git push"
  * 			]
  * 		},
