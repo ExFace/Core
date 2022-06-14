@@ -380,7 +380,6 @@ class MetaModelInstaller extends AbstractAppInstaller
             $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
             $contents = $uxon->toJson(true);
             $fileManager->dumpFile($path, $contents);
-            return $contents;
         }
         
         return $result;
