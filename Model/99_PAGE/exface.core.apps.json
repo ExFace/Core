@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-01-22 15:54:41",
+    "modified_on": "2022-06-16 11:44:43",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -155,7 +155,7 @@
                 "action_alias": "axenox.PackageManager.ShowAppUninstallConsole"
             },
             {
-                "action_alias": "exface.Core.ShowAppGitConsoleDialog"
+                "action_alias": "axenox.PackageManager.ShowAppGitConsoleDialog"
             },
             {
                 "action_alias": "axenox.PackageManager.ShowPackageManagerConsole"
