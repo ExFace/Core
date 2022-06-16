@@ -6,36 +6,30 @@ use exface\Core\Interfaces\Events\FacadeEventInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Events\HttpRequestEventInterface;
-use exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
- * Event triggered after the owner (user) of an HTTP request was determined
+ * Event triggered right before the handler of an HTTP request in a facade - after all middleware processing is done.
  * 
- * @event exface.Core.Facades.OnHttpRequestAuthenticated
+ * @event exface.Core.Facades.OnHttpRequestHandling
  * 
  * @author Andrej Kabachnik
  *
  */
-class OnHttpRequestAuthenticatedEvent extends AbstractEvent implements FacadeEventInterface, HttpRequestEventInterface
+class OnHttpRequestHandlingEvent extends AbstractEvent implements FacadeEventInterface, HttpRequestEventInterface
 {
     private $facade = null;
     
     private $request = null;
     
-    private $token = null;
-    
     /**
      * 
      * @param FacadeInterface $facade
      * @param ServerRequestInterface $request
-     * @param HttpMiddlewareBusInterface $middlewareBus
      */
-    public function __construct(FacadeInterface $facade, ServerRequestInterface $request, AuthenticationTokenInterface $authenticatedToken)
+    public function __construct(FacadeInterface $facade, ServerRequestInterface $request)
     {
         $this->facade = $facade;
         $this->request = $request;
-        $this->token = $authenticatedToken;
     }
     
     /**
@@ -65,14 +59,5 @@ class OnHttpRequestAuthenticatedEvent extends AbstractEvent implements FacadeEve
     public function getRequest() : ServerRequestInterface
     {
         return $this->request;
-    }
-    
-    /**
-     * 
-     * @return AuthenticationTokenInterface
-     */
-    public function getAuthenticatedToken() : AuthenticationTokenInterface
-    {
-        return $this->token;
     }
 }

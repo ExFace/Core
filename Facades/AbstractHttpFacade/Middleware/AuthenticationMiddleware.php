@@ -17,7 +17,6 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
-use exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -51,10 +50,9 @@ use exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent;
  * ```
  * 
  * **NOTE:** this middleware only handles authentication! It does not check, if the user
- * is allowed to access its facade - this is the task of the facade itself! 
+ * is allowed to access its facade - this is the task of the facade itself or another middleware! 
  * 
  * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
- * @triggers \exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent
  * 
  * @author Andrej Kabachnik
  *
@@ -88,7 +86,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
     /**
      * 
      * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
-     * @triggers \exface\Core\Events\Facades\OnHttpRequestAuthenticatedEvent
      * 
      * {@inheritDoc}
      * @see \Psr\Http\Server\MiddlewareInterface::process()
@@ -138,8 +135,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
         if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
             return $this->createResponseAccessDenied($request);
         }
-        
-        $this->workbench->eventManager()->dispatch(new OnHttpRequestAuthenticatedEvent($this->facade, $request, $authenticatedToken));
         
         return $handler->handle($request);
     }
