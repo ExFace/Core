@@ -14,6 +14,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
+use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
 
 /**
  * Common base structure for HTTP facades.
@@ -38,8 +39,16 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     private $urlAbsolute = null;
     
     /**
+     * Handles an HTTP request transforming it into a PSR-7 response.
      * 
-     * {@inheritDoc}
+     * The AbstractHttpFacade will do this by instantiating a bus of PSR-15 middleware a passing
+     * the request through it. At the end, the `createResponse()` will be called. Right before
+     * that method, an `OnHttpRequestHandlingEvent` is triggered to allow external listeners
+     * to do further processing of the request - e.g. an authorization point to check the current
+     * users permissions.
+     * 
+     * @triggers \exface\Core\Events\Facades\OnHttpRequestHandlingEvent
+     * 
      * @see \Psr\Http\Server\RequestHandlerInterface::handle()
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
@@ -76,6 +85,8 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
                 return $handler->handle($request);
             }
             
+            $this->getWorkbench()->eventManager()->dispatch(new OnHttpRequestHandlingEvent($this, $request));
+            
             return $this->createResponse($request);
         } catch (\Throwable $e) {
             return $this->createResponseFromError($request, $e);
@@ -95,7 +106,24 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
      * Returns the middleware stack to use in the request handler.
      *
      * Override this method to add/change middleware. For example, facade can add their own
-     * middleware to read specific URL parameters built-in the used UI frameworks.
+     * middleware for custom authentication tokens or to read specific URL parameters built-in 
+     * the used UI frameworks.
+     * 
+     * Here is how to add HTTP basic auth:
+     * 
+     * ```
+     *  protected function getMiddleware() : array
+     *  {
+     *      return array_merge(parent::getMiddleware(), [
+     *          new AuthenticationMiddleware($this, [
+     *              [
+     *                 AuthenticationMiddleware::class, 'extractBasicHttpAuthToken'
+     *              ]
+     *          ])
+     *      ]);
+     *  }
+     *  
+     * ```
      *
      * @return MiddlewareInterface[]
      */

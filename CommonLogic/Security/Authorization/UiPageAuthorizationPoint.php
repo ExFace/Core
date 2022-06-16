@@ -10,6 +10,10 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Events\Security\OnAuthorizedEvent;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\PermissionFactory;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 /**
  * Authorizes access to UI pages and menu tree items.
@@ -39,6 +43,7 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
     }
     
     /**
+     * Checks the permission to access the given page or menu node for the specified user (or the current user).
      * 
      * @see \exface\Core\Interfaces\Security\AuthorizationPointInterface::authorize()
      */
@@ -55,6 +60,25 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         $permissionsGenerator = $this->evaluatePolicies($pageOrMenuNode, $userOrToken);
         $this->combinePermissions($permissionsGenerator, $userOrToken, $pageOrMenuNode);
         return $pageOrMenuNode;
+    }
+    
+    /**
+     * Checks the permission to access the given widget or menu node for the specified user (or the current user).
+     * 
+     * @param WidgetInterface $widget
+     * @param UserImpersonationInterface $userOrToken
+     * @return WidgetInterface
+     */
+    public function authorizeWidget(WidgetInterface $widget, UserImpersonationInterface $userOrToken = null) : WidgetInterface
+    {
+        /* @var $page \exface\Core\CommonLogic\Model\UiPage */
+        $page = $this->authorize($widget->getPage(), $userOrToken);
+        try {
+            $widget = $page->getWidget($widget->getId());
+        } catch (WidgetNotFoundError $e) {
+            throw new AccessPermissionDeniedError($this, PermissionFactory::createDenied(null, $e->getMessage()), $userOrToken, $widget, 'Access denied to widget "' . ($widget->getCaption() ?? $widget->getWidgetType()) . '" on page "' . $page->getName() . '": widget not found!', null, $e);
+        }
+        return $widget;
     }
     
     /**

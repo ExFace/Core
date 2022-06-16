@@ -12,16 +12,15 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Factories\UiPageFactory;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Widgets\Console;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Actions\ReadData;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
 /**
  * This is the Facade for Console Widgets
@@ -67,20 +66,13 @@ class WebConsoleFacade extends AbstractHttpFacade
         $command = $this->getCommand($cmd);
         $widget = $this->getWidgetFromRequest($request);
         
-        // Make sure the the current user is allowed to read data for the console widget
+        // Make sure the the current user is allowed to interact with the console widget
         // This is important to ensure AJAX requests of a console are not intercepted and 
         // modified by other users!
         // Note, that merely access permissions to the web console facade itself would not
         // be enough as there could be multiple different consoles with different access
         // rights in the menu, etc.
-        $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class)->authorize(
-            ActionFactory::createFromString($this->getWorkbench(), ReadData::class),
-            (new HttpTask($this->getWorkbench(), $this, $request))
-                ->setActionSelector(ReadData::class)
-                ->setPageSelector($widget->getPage()->getSelector())
-                ->setWidgetIdTriggeredBy($widget->getId()),
-            $this->getWorkbench()->getSecurity()->getAuthenticatedToken()
-        );
+        $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class)->authorizeWidget($widget);
         
         // Current directory
         $cwd = $request->getParsedBody()['cwd'] ?? $request->getQueryParams()['cwd'];
