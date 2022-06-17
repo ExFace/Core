@@ -50,6 +50,11 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
+     * Initial zoom level: hour, day, week or month
+     * 
+     * @uxon-property granularity
+     * @uxon-type [hour,day,week,month]
+     * @uxon-default hour
      * 
      * @param string $value
      * @return DataTimeline
@@ -76,6 +81,10 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
+     * Start of business hours - e.g. `8:00`.
+     * 
+     * @uxon-property workday_start_time
+     * @uxon-type time
      * 
      * @param string $value
      * @return DataTimeline
@@ -102,7 +111,11 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
-     *
+     * End of business hours - e.g. `18:00`.
+     * 
+     * @uxon-property workday_end_time
+     * @uxon-type time
+     * 
      * @param string $value
      * @return DataTimeline
      */
