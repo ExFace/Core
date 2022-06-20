@@ -20,6 +20,8 @@ class Scheduler extends Data
     
     private $schedulerResourcePart = null;
     
+    private $startDate = null;
+    
     /**
      *
      * @return DataTimeline
@@ -121,5 +123,27 @@ class Scheduler extends Data
     public function hasResources() : bool
     {
         return $this->schedulerResourcePart !== null;
+    }
+    
+    public function getStartDate() : ?string
+    {
+        return $this->startDate;
+    }
+    
+    /**
+     * The left-most date in the scheduler: can be a real date or a relative date - e.g. `-2w`.
+     * 
+     * If not set, the date of the first item will be used.
+     * 
+     * @uxon-property start_date
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return Scheduler
+     */
+    public function setStartDate(string $value) : Scheduler
+    {
+        $this->startDate = $value;
+        return $this;
     }
 }
