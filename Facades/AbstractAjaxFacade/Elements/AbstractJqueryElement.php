@@ -976,7 +976,7 @@ JS;
     public function escapeString($string, bool $encloseInQuotes = true, bool $forUseInHtml = false) : ?string
     {
         if ($string === null) {
-            return 'null';
+            return $encloseInQuotes ? '""' : '';
         }
         
         if ($string === '') {
