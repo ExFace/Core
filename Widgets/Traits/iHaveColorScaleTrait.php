@@ -21,7 +21,7 @@ trait iHaveColorScaleTrait
      */
     public function getColorScale() : array
     {
-        return $this->colorScale ?? static::getColorScaleDefault($this->getMin(), $this->getMax());
+        return $this->colorScale ?? [];
     }
     
     /**

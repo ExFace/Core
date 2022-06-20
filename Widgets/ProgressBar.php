@@ -161,6 +161,17 @@ class ProgressBar extends Display implements iCanBeAligned
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::getColorScale()
+     */
+    public function getColorScale() : array
+    {
+        $scale = parent::getColorScale();
+        return empty($scale) ? static::getColorScaleDefault($this->getMin(), $this->getMax()) : $scale;
+    }
+    
+    /**
      * Returns the default color map
      * 
      * @param float $min
