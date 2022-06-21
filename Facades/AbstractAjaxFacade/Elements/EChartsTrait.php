@@ -1370,7 +1370,11 @@ JS;
             }
             var oOptions = {$this->buildJsEChartsVar()}.getOption();
             var aColors = oOptions.color;
+            var iColorsCount = aColors.length;
             var iIndex = params.dataIndex;
+            while (iIndex >= iColorsCount) {
+                iIndex = iIndex - iColorsCounts;
+            }
             return aColors[iIndex];
         }
     },
