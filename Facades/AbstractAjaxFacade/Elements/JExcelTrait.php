@@ -22,7 +22,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
-use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Widgets\Input;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -202,7 +201,7 @@ JS;
         $widget = $this->getWidget();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
-        $allowDragRow = $this->getWidget()->getAllowToDragRows() ? 'true' : 'false';
+        $allowDragRow = $this->getAllowToDragRows() ? 'true' : 'false';
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
@@ -280,7 +279,7 @@ JS;
         }
         $columnsJson = '{' . $columnsJson . '}';
         
-        $rowNumberColName = $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
+        $rowNumberColName = ($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
         
         return <<<JS
 
@@ -1157,6 +1156,16 @@ JS;
     {
         $widget = $this->getWidget();
         return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows());
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function getAllowToDragRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowToDeleteRows();
     }
     
     /**
