@@ -30,6 +30,7 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\SankeyChartSeries;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library.
@@ -103,6 +104,8 @@ use exface\Core\Widgets\Parts\Charts\SankeyChartSeries;
  */
 trait EChartsTrait
 {
+    use JsValueScaleTrait;
+    
     private $chartTypeButtonGroup = null;
     
     //this should be constants but traits do not support constants
@@ -1199,17 +1202,18 @@ JS;
             $color = '';
         }
         //TODO option to show label, define position of it, maybe rotation etc.
-        /*$label = <<<JS
-         label: {
-         show: true,
-         formatter: function(params) {
-         return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
-         }
-         },
+        $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: function(params) {
+            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+        }
+    },
          
-         JS;
-         */
-        $label = '';
+JS;
+         
+        //$label = '';
         
         return <<<JS
         
@@ -1351,7 +1355,28 @@ JS;
         } elseif ($position == 'right') {
             $centerX = '30%';
         }
-        
+        $itemStyleJs = '';
+        if ($series->getTextDataColumn()->getCellWidget() instanceof iHaveColorScale) {
+            $itemStyleJs = <<<JS
+
+    itemStyle: {
+        color: function(params) {
+            var sValue = params.data._key;
+            var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
+            if (sColor != undefined && sColor.startsWith('~')) {
+                console.error('semantic colors not supported in chart series yet!');
+            } else if (sColor) {
+                return sColor;
+            }
+            var oOptions = {$this->buildJsEChartsVar()}.getOption();
+            var aColors = oOptions.color;
+            var iIndex = params.dataIndex;
+            return aColors[iIndex];
+        }
+    },
+            
+JS;        
+        }
         $radius = $series->getInnerRadius();
         
         return <<<JS
@@ -1362,6 +1387,7 @@ JS;
     center: ['$centerX', '50%'],
     data: [],
     label: {$label},
+    {$itemStyleJs}
     //selectedMode: 'single',
     animationType: 'scale',
     animationEasing: 'backOut',
@@ -2434,11 +2460,34 @@ JS;
         if ($series->getSplitWithColorGradients() === false) {
             $useGradients = 'false';
         }
+        
+        $nameFormatter = 'newNames[i];';
+        $customCol = 'false';
+        if ($series->isSplitByAttribute()) {
+            $col = $series->getSplitByDataColumn();
+            $nameFormatterJs = <<<JS
+
+        function(value) {
+                    return {$this->buildJsLabelFormatter($col, 'value')}
+                }(newNames[i]);
+
+JS;
+            if ($col->getCellWidget() instanceof iHaveColorScale) {
+                $customCol = 'true';
+                $colJs = <<<JS
+
+col = {$this->buildJsScaleResolver('value', $col->getCellWidget()->getColorScale(), $col->getCellWidget()->isColorScaleRangeBased())};
+JS;
+                
+            }
+        
+        }
         return <<<JS
         
     var baseColor = '{$baseColor}';
     var splitDatasetObject = {};
     var useGradients = {$useGradients};
+    var customCol = {$customCol};
     for (var i=0; i < {$dataJs}.length; i++) {
         var p = {$dataJs}[i][{$splitJs}];
         if (!splitDatasetObject[p]) {
@@ -2448,17 +2497,24 @@ JS;
     }
     var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i]);
     var newNames = Object.keys(splitDatasetObject);
+    var formatNames = [];
+    for (var i = 0; i < newNames.length; i++) {
+        var formatted = {$nameFormatterJs}
+        formatNames.push(formatted);
+    }
+    //newNames = formatNames;
     if (baseColor == 'undefined') {
         var options = {$this->buildJsEChartsVar()}.getOption();
         baseColor = options['color'][{$series->getIndex()}]
     }
     var baseSeries = {$this->buildJsChartSeriesConfig($series)}
     var currentSeries = JSON.parse(JSON.stringify(baseSeries));
-    currentSeries.name = newNames[0];
+    currentSeries.name = formatNames[0];
     currentSeries.datasetIndex = 0;
     var gradient;
     var colorsRgb;
     var col;
+    var value;
     if (useGradients == true) {
         gradient = tinygradient([baseColor, 'white']);
         colorsRgb = gradient.rgb(newNames.length+1);
@@ -2466,31 +2522,59 @@ JS;
         currentSeries.itemStyle = {
             color: col
         }
+    } else if (customCol == true) {
+        value = newNames[0];
+        $colJs
+        if (col != undefined && col.startsWith('~')) {
+            console.error('semantic colors not supported in chart series yet!');
+        } else if (col) {
+            currentSeries.itemStyle = {
+                color: col
+            }
+        }
     }
     var formatter = undefined;
     if (baseSeries.label !== undefined && baseSeries.label.formatter !== undefined) {
         formatter = baseSeries.label.formatter
         currentSeries.label.formatter = formatter;
     }
+    var markLineFormatter = undefined;
+    if (baseSeries.markLine !== undefined && baseSeries.markLine.label !== undefined && baseSeries.markLine.label.formatter !== undefined) {
+        markLineFormatter = baseSeries.markLine.label.formatter
+        currentSeries.markLine.label.formatter = markLineFormatter;
+    }
     var newSeriesArray = [currentSeries];
     
-    for (var i = 1; i < newNames.length; i++) {
+    for (var i = 1; i < formatNames.length; i++) {
         currentSeries = JSON.parse(JSON.stringify(baseSeries));
-        currentSeries.name = newNames[i];
+        currentSeries.name = formatNames[i];
         currentSeries.datasetIndex = i;
         if (useGradients == true) {        
             col = '#' + colorsRgb[i].toHex();
             currentSeries.itemStyle = {
                 color: col
             }
+        } else if (customCol == true) {
+        value = newNames[i];
+        $colJs
+        if (col != undefined && col.startsWith('~')) {
+            console.error('semantic colors not supported in chart series yet!');
+        } else if (col) {
+            currentSeries.itemStyle = {
+                color: col
+            }
         }
+    }
         if (formatter !== undefined) {
             currentSeries.label.formatter = formatter;
+        }
+        if (markLineFormatter !== undefined) {
+            currentSeries.markLine.label.formatter = markLineFormatter;
         }
         newSeriesArray.push(currentSeries);
     }
     var dataset = [{source: splitDatasetArray[0]}]
-    for (var i = 1; i < newNames.length; i++) {
+    for (var i = 1; i < formatNames.length; i++) {
         var set = {};
         set.source = splitDatasetArray[i];
         dataset.push(set);
