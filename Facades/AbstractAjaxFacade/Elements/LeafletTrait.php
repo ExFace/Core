@@ -17,6 +17,10 @@ use exface\Core\Actions\SaveData;
 use exface\Core\Widgets\Map;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\DataPointsLayer;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -88,7 +92,7 @@ trait LeafletTrait
      */
     protected function registerDefaultLayerRenderers()
     {
-        $this->addLeafletLayerRenderer([$this, 'buildJsDataMarkerLayer']);
+        $this->addLeafletLayerRenderer([$this, 'buildJsMarkerLayer']);
         return;
     }
     
@@ -386,23 +390,19 @@ JS;
     
     /**
      * 
-     * @param DataMarkersLayer $layer
+     * @param MapLayerInterface $layer
      * @return string
      */
-    protected function buildJsDataMarkerLayer(MapLayerInterface $layer) : ?string
+    protected function buildJsMarkerLayer(MapLayerInterface $layer) : ?string
     {
-        if (! ($layer instanceof DataMarkersLayer)) {
+        if (! ($layer instanceof LatLngDataColumnMapLayerInterface)) {
             return null;
         }
         
         /* @var $dataWidget \exface\Core\Widgets\Data */
         $dataWidget = $layer->getDataWidget();
         
-        $markerProps = '';
-        if ($layer->hasTooltip()) {
-            $markerProps .= 'title: oRow.' . $layer->getTooltipColumn()->getDataColumnName() . ',';
-        }
-        
+        // Render popup (speech bubble) with a list of data row values
         $popupTableRowsJs = '';
         $popupCaptionJs = json_encode($layer->getCaption());
         foreach ($dataWidget->getColumns() as $col) {
@@ -420,12 +420,14 @@ JS;
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
-                     
+          
+        // Add auto-zoom
         if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
             $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
         }
         
-        if ($layer->isClusteringMarkers() !== false) {
+        // Add clustering
+        if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
             $clusterInitJs = <<<JS
 L.markerClusterGroup({
                     iconCreateFunction: {$this->buildJsClusterIcon($layer, 'cluster')},
@@ -435,8 +437,9 @@ JS;
             $clusterInitJs = 'null';
         }
         
+        // Generate JS to run on map refresh
         switch (true) {
-            case ($latLink = $layer->getLatitudeWidgetLink()) && ($lngLink = $layer->getLongitudeWidgetLink()):
+            case ($layer instanceof LatLngWidgetLinkMapLayerInterface) && ($latLink = $layer->getLatitudeWidgetLink()) && ($lngLink = $layer->getLongitudeWidgetLink()):
                 $latEl = $this->getFacade()->getElement($latLink->getTargetWidget());
                 $lngEl = $this->getFacade()->getElement($lngLink->getTargetWidget());
                 $exfRefreshJs = <<<JS
@@ -522,14 +525,15 @@ function() {
 JS;
         }
         
+        // Set up editable layers
         $initEditingJs = '';
         $updateMarker = '';
-        if ($layer->isEditable()) {
-            if ($layer->hasAllowToAddMarkers()) {
+        if (($layer instanceof EditableMapLayerInterface) && $layer->isEditable()) {
+            if ($layer->hasEditByAddingItems()) {
                 if ($latEl && $lngEl) {
                     $updateMarker = $latEl->buildJsValueSetter('fLat') . ';' . $lngEl->buildJsValueSetter('fLng') . ';';
                 }
-                $maxMarkers = $layer->hasAllowToAddMarkersMax() ?? 'null';
+                $maxMarkers = $layer->hasEditByAddingItemsMax() ?? 'null';
                 $initEditingJs = <<<JS
 
                 oLeaflet.on('click', function(e){
@@ -562,16 +566,20 @@ JS;
             }
         }
         
+        $markerProps = '';
+        if ($layer !== null && $layer->hasTooltip()) {
+            $markerProps .= 'title: oRow.' . $layer->getTooltipColumn()->getDataColumnName() . ',';
+        }
+        
         return <<<JS
             (function(){
                 var oLeaflet = {$this->buildJsLeafletVar()};
                 var oClusterLayer = {$clusterInitJs};
                 var oLayer = L.geoJSON(null, {
                     pointToLayer: function(feature, latlng) {
-                        var oRow = feature.properties.data;
                         var bDraggable = feature.properties.draggable || false;
                         var oMarker = L.marker(latlng, { 
-                            icon: {$this->buildJsMarkerIcon($layer, 'oRow')},
+                            icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
                             draggable: bDraggable,
                             autoPan: bDraggable,
                             $markerProps 
@@ -627,17 +635,17 @@ JS;
      */
     protected function buildJsConvertDataRowsToGeoJSON(iUseData $layer, string $aRowsJs, string $aGeoJsonJs, string $aRowsSkippedJs) : string
     {
-        if ($link = $layer->getLatitudeWidgetLink()) {
+        if (($layer instanceof LatLngWidgetLinkMapLayerInterface) && $link = $layer->getLatitudeWidgetLink()) {
             $latColName = $link->getTargetWidget()->getDataColumnName();
         } else {
             $latColName = $layer->getLatitudeColumn()->getDataColumnName();
         }
-        if ($link = $layer->getLongitudeWidgetLink()) {
+        if (($layer instanceof LatLngWidgetLinkMapLayerInterface) && $link = $layer->getLongitudeWidgetLink()) {
             $lngColName = $link->getTargetWidget()->getDataColumnName();
         } else {
             $lngColName = $layer->getLongitudeColumn()->getDataColumnName();
         }
-        $bDraggableJs = ($layer instanceof DataMarkersLayer) && $layer->hasAllowToMoveMarkers() ? 'true' : 'false';
+        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
@@ -695,14 +703,23 @@ JS;
 JS;
     }
     
-    protected function buildJsMarkerIcon(DataMarkersLayer $layer, string $oRowJs) : string
+    protected function buildJsMarkerIcon(LatLngDataColumnMapLayerInterface $layer, string $oRowJs) : string
     {
-        $icon = $layer->getIcon() ?? 'fa-map-marker';
-        $prefix = $layer->getIconSet() ?? 'fa';
         $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
         
-        if ($layer->hasValue()) {
-            return <<<JS
+        switch (true) {
+            case ($layer instanceof DataPointsLayer):
+                $js= <<<JS
+L.divIcon({
+                            className: 'exf-map-point',
+                            iconSize: [{$layer->getPointSize()}, {$layer->getPointSize()}],
+                            shadowSize: null,
+                            html: '<div style="height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: {$color}; border-radius: 50%;"></div>'
+                        })
+JS;
+                            break;
+            case ($layer instanceof DataMarkersLayer) && $layer->hasValue():
+                $js = <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
                             number: {$oRowJs}.{$layer->getValueColumn()->getDataColumnName()},
@@ -712,8 +729,11 @@ new L.ExtraMarkers.icon({
                         })
 
 JS;
-        } else {
-            return <<<JS
+                break;
+            case ($layer instanceof DataMarkersLayer):
+                $icon = $layer->getIcon() ?? 'fa-map-marker';
+                $prefix = $layer->getIconSet() ?? 'fa';
+                $js = <<<JS
 new L.ExtraMarkers.icon({
                             icon: '$icon',
                             extraClasses: 'fa-5x',
@@ -724,6 +744,7 @@ new L.ExtraMarkers.icon({
                         
 JS;
         }
+        return $js;
     }
     
     protected function buildJsClusterIcon(DataMarkersLayer $layer, string $oClusterJs) : string
