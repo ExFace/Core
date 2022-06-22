@@ -13,144 +13,38 @@ use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
-use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
-use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
+use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterface, iHaveIcon, iHaveColorScale
+class DataMarkersLayer extends AbstractDataLayer 
+    implements 
+    MarkerMapLayerInterface, 
+    LatLngDataColumnMapLayerInterface, 
+    LatLngWidgetLinkMapLayerInterface, 
+    EditableMapLayerInterface,
+    iHaveIcon, 
+    iHaveColorScale
 {
+    use DataPointLayerTrait {
+        initDataWidget as initDataWidgetForPoints;
+    }
+    
     use iHaveIconTrait;
     
     use iHaveColorTrait;
     
     use iHaveColorScaleTrait;
     
-    private $latitudeAttributeAlias = null;
-    
-    private $latitudeColumn = null;
-    
-    private $latitudeLink = null;
-    
-    private $longitudeAttributeAlias = null;
-    
-    private $longitudeColumn = null;
-    
-    private $longitudeLink = null;
-    
     private $valueAttributeAlias = null;
     
     private $valueColumn = null;
-    
-    private $tooltipAttribtueAlias = null;
-    
-    private $tooltipColumn = null;
-    
-    private $clustering = null;
-    
-    private $addMarkers = false;
-    
-    private $addMarkerMax = null;
-    
-    private $draggable = false;
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getLatitudeAttributeAlias() : string
-    {
-        return $this->latitudeAttributeAlias;
-    }
-    
-    /**
-     * Alias of the attribtue that will contain the latitude of a marker
-     * 
-     * @uxon-property latitude_attribute_alias
-     * @uxon-type metamodel:attribute
-     * @uxon-required true
-     * 
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    public function setLatitudeAttributeAlias(string $value) : DataMarkersLayer
-    {
-        $this->latitudeAttributeAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return DataColumn
-     */
-    public function getLatitudeColumn() : DataColumn
-    {
-        return $this->latitudeColumn;
-    }
-    
-    /**
-     * 
-     * @return WidgetLinkInterface|NULL
-     */
-    public function getLatitudeWidgetLink() : ?WidgetLinkInterface
-    {
-        return $this->latitudeLink;
-    }
-    
-    /**
-     * The id of the widget to sync the latitude to (e.g. InputHidden)
-     * 
-     * Only works in conjuction with longitude_widget_link!
-     *
-     * @uxon-property latitude_widget_link
-     * @uxon-type uxon:$..id
-     *
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    protected function setLatitudeWidgetLink(string $value) : DataMarkersLayer
-    {
-        $this->latitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    public function getLongitudeAttributeAlias() : string
-    {
-        return $this->longitudeAttributeAlias;
-    }
-    
-    /**
-     * Alias of the attribtue that will contain the longitude of a marker
-     *
-     * @uxon-property longitude_attribute_alias
-     * @uxon-type metamodel:attribute
-     * @uxon-required true
-     *
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    public function setLongitudeAttributeAlias(string $value) : DataMarkersLayer
-    {
-        $this->longitudeAttributeAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return DataColumn
-     */
-    public function getLongitudeColumn() : DataColumn
-    {
-        return $this->longitudeColumn;
-    }
     
     /**
      * 
@@ -175,32 +69,6 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
         $this->valueAttributeAlias = $value;
         return $this;
     }
-
-    /**
-     * 
-     * @return WidgetLinkInterface|NULL
-     */
-    public function getLongitudeWidgetLink() : ?WidgetLinkInterface
-    {
-        return $this->longitudeLink;
-    }
-    
-    /**
-     * The id of the widget to sync the longitude to (e.g. InputHidden)
-     * 
-     * Only works in conjuction with longitude_widget_link!
-     * 
-     * @uxon-property longitude_widget_link
-     * @uxon-type uxon:$..id
-     * 
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    protected function setLongitudeWidgetLink(string $value) : DataMarkersLayer
-    {
-        $this->longitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
-        return $this;
-    }
     
     /**
      * 
@@ -222,69 +90,13 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     
     /**
      * 
-     * @return string|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
      */
-    public function getTooltipAttributeAlias() : ?string
-    {
-        return $this->tooltipAttribtueAlias;
-    }
-    
-    /**
-     * Alias of the attribtue containing the data to show in the tooltip of a marker
-     *
-     * @uxon-property tooltip_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    public function setTooltipAttributeAlias(string $value) : DataMarkersLayer
-    {
-        $this->tooltipAttribtueAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasTooltip() : bool
-    {
-        return $this->getTooltipAttributeAlias() !== null;
-    }
-    
-    /**
-     * 
-     * @return DataColumn|NULL
-     */
-    public function getTooltipColumn() : ?DataColumn
-    {
-        return $this->tooltipColumn;
-    }
-    
     protected function initDataWidget(iShowData $widget) : iShowData
     {
-        $widget = parent::initDataWidget($widget);
-        if ($this->getLatitudeAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getLatitudeAttributeAlias())) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getLatitudeAttributeAlias(),
-                    'hidden' => true
-                ]));
-                $widget->addColumn($col);
-            }
-            $this->latitudeColumn = $col;
-        }
-        if ($this->getLongitudeAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getLongitudeAttributeAlias())) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getLongitudeAttributeAlias(),
-                    'hidden' => true
-                ]));
-                $widget->addColumn($col);
-            }
-            $this->longitudeColumn = $col;
-        }
+        $widget = $this->initDataWidgetForPoints($widget);
+        
         if ($this->getValueAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
@@ -295,50 +107,8 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
             }
             $this->valueColumn = $col;
         }
-        if ($this->getTooltipAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getTooltipAttributeAlias())) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getTooltipAttributeAlias(),
-                    'hidden' => true
-                ]));
-                $widget->addColumn($col);
-            }
-            $this->tooltipColumn = $col;
-        }
         
         return $widget;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Maps\AbstractDataLayer::initDataWidget()
-     */
-    protected function createDataWidget(UxonObject $uxon) : iShowData
-    {
-        $widget = parent::createDataWidget($uxon);
-        
-        if ($uxon->hasProperty('columns')) {
-            $widget->setColumnsAutoAddDefaultDisplayAttributes(false);
-        }
-        
-        return $widget;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
-     */
-    public function getCaption() : ?string
-    {
-        $caption = parent::getCaption();
-        if (! $this->getHideCaption()) {
-            if ($caption === null) {
-                $caption = $this->getDataWidget()->getMetaObject()->getName();
-            }
-        }
-        return $caption;
     }
     
     /**
@@ -389,81 +159,22 @@ class DataMarkersLayer extends AbstractDataLayer implements MarkerMapLayerInterf
     }
     
     /**
-     * 
-     * @return bool
-     */
-    public function isEditable() : bool
-    {
-        return $this->hasAllowToAddMarkers() || $this->hasAllowToMoveMarkers();
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasAllowToAddMarkers() : bool
-    {
-        return $this->addMarkers;
-    }
-    
-    /**
-     * Set to TRUE to allow adding markers
-     * 
-     * @uxon-property allow_to_add_markers
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
+     * @deprecated use the generic setEditByAddingItems()
      * @param bool $value
      * @return DataMarkersLayer
      */
-    public function setAllowToAddMarkers(bool $value) : DataMarkersLayer
+    protected function setAllowToAddMarkers(bool $value) : DataMarkersLayer
     {
-        $this->addMarkers = $value;
-        return $this;
+        return $this->setEditByAddingItems($value);
     }
     
     /**
-     * 
-     * @return int|NULL
-     */
-    public function hasAllowToAddMarkersMax() : ?int
-    {
-        if ($this->hasAllowToAddMarkers() === false) {
-            return 0;
-        }
-        if ($link = $this->getLatitudeWidgetLink()) {
-            $w = $link->getTargetWidget();
-            if (($w instanceof iSupportMultiSelect) && $w->getMultiSelect() === true) {
-                return null;
-            } else {
-                return 1;
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasAllowToMoveMarkers() : bool
-    {
-        return $this->draggable;
-    }
-    
-    /**
-     * Set to TRUE to allow moving markers
-     * 
-     * @uxon-property allow_to_move_markers
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
+     * @deprecated use the generic setEditByMovingItems()
      * @param bool $value
      * @return DataMarkersLayer
      */
-    public function setAllowToMoveMarkers(bool $value) : DataMarkersLayer
+    protected function setAllowToMoveMarkers(bool $value) : DataMarkersLayer
     {
-        $this->draggable = $value;
-        return $this;
+        return $this->setEditByMovingItems($value);
     }
 }
