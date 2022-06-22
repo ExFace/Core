@@ -89,9 +89,9 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
      * @uxon-template {"":""}
      * 
      * @param UxonObject $uxon
-     * @return DataMarkersLayer
+     * @return iUseData
      */
-    public function setData(UxonObject $uxon) : DataMarkersLayer
+    public function setData(UxonObject $uxon) : iUseData
     {
         $this->dataUxon = $uxon;
         return $this;
@@ -173,5 +173,21 @@ abstract class AbstractDataLayer extends AbstractMapLayer implements iUseData
         });
         
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveCaption::getCaption()
+     */
+    public function getCaption() : ?string
+    {
+        $caption = parent::getCaption();
+        if (! $this->getHideCaption()) {
+            if ($caption === null) {
+                $caption = $this->getDataWidget()->getMetaObject()->getName();
+            }
+        }
+        return $caption;
     }
 }
