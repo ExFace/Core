@@ -1358,15 +1358,19 @@ JS;
         }
         $itemStyleJs = '';
         if ($series->getTextDataColumn()->getCellWidget() instanceof iHaveColorScale) {
+            $semanticColors = $this->getFacade()->getSemanticColors();
+            $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
             $itemStyleJs = <<<JS
 
     itemStyle: {
         color: function(params) {
+            var oSemanticColors = $semanticColorsJs;
             var sValue = params.data._key;
             var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
-            if (sColor != undefined && sColor.startsWith('~')) {
-                console.warn('semantic colors not supported in chart series yet!');
-            } else if (sColor) {
+            if (sColor.startsWith('~')) {
+                sColor = oSemanticColors[sColor] || '';
+            } 
+            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
                 return sColor;
             }
             var oOptions = {$this->buildJsEChartsVar()}.getOption();
@@ -2478,10 +2482,12 @@ JS;
 
 JS;
             if ($col->getCellWidget() instanceof iHaveColorScale) {
+                $semanticColors = $this->getFacade()->getSemanticColors();
+                $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
                 $customCol = 'true';
                 $colJs = <<<JS
 
-col = {$this->buildJsScaleResolver('value', $col->getCellWidget()->getColorScale(), $col->getCellWidget()->isColorScaleRangeBased())};
+sColor = {$this->buildJsScaleResolver('value', $col->getCellWidget()->getColorScale(), $col->getCellWidget()->isColorScaleRangeBased())};
 JS;
                 
             }
@@ -2518,23 +2524,25 @@ JS;
     currentSeries.datasetIndex = 0;
     var gradient;
     var colorsRgb;
-    var col;
+    var sColor;
     var value;
     if (useGradients == true) {
         gradient = tinygradient([baseColor, 'white']);
         colorsRgb = gradient.rgb(newNames.length+1);
-        col = '#' + colorsRgb[0].toHex()
+        sColor = '#' + colorsRgb[0].toHex()
         currentSeries.itemStyle = {
-            color: col
+            color: sColor
         }
     } else if (customCol == true) {
+        var oSemanticColors = $semanticColorsJs;
         value = newNames[0];
         $colJs
-        if (col != undefined && col.startsWith('~')) {
-            console.warn('semantic colors not supported in chart series yet!');
-        } else if (col) {
+        if (sColor.startsWith('~')) {
+            sColor = oSemanticColors[sColor] || '';
+        }
+        if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
             currentSeries.itemStyle = {
-                color: col
+                color: sColor
             }
         }
     }
@@ -2555,21 +2563,23 @@ JS;
         currentSeries.name = formatNames[i];
         currentSeries.datasetIndex = i;
         if (useGradients == true) {        
-            col = '#' + colorsRgb[i].toHex();
+            sColor = '#' + colorsRgb[i].toHex();
             currentSeries.itemStyle = {
-                color: col
+                color: sColor
             }
         } else if (customCol == true) {
-        value = newNames[i];
-        $colJs
-        if (col != undefined && col.startsWith('~')) {
-            console.warn('semantic colors not supported in chart series yet!');
-        } else if (col) {
-            currentSeries.itemStyle = {
-                color: col
+            var oSemanticColors = $semanticColorsJs;
+            value = newNames[i];
+            $colJs
+            if (sColor.startsWith('~')) {
+                sColor = oSemanticColors[sColor] || '';
+            }
+            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
+                currentSeries.itemStyle = {
+                    color: sColor
+                }
             }
         }
-    }
         if (formatter !== undefined) {
             currentSeries.label.formatter = formatter;
         }
