@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\EmailRecipientInterface;
 use exface\Core\Communication\Recipients\EmailRecipient;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Communication\UserRecipientInterface;
+use exface\Core\Interfaces\Communication\RecipientGroupInterface;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 /**
  * Email message to be sent to one or multiple email addresses, users or user groups
@@ -31,6 +34,8 @@ class EmailMessage extends TextMessage
     private $bcc = [];
     
     private $replyTo = null;
+    
+    private $userEmailAttributeAlias = null;
     
     /**
      * 
@@ -77,6 +82,43 @@ class EmailMessage extends TextMessage
     public function setText(string $value) : CommunicationMessageInterface
     {
         return parent::setText($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Communication\AbstractMessage::getRecipients()
+     */
+    public function getRecipients() : array
+    {
+        $recipients = parent::getRecipients();
+        if ($emailAttrAlias = $this->getRecipientUserEmailAttribute()) {
+            foreach ($recipients as $recipient) {
+                $recipients = $this->applyRecipientUserEmailAttribute($recipient, $emailAttrAlias);
+            }
+        }
+        return $recipients;
+    }
+    
+    /**
+     * 
+     * @param RecipientInterface $recipient
+     * @param string $emailAttributeAlias
+     * @return array
+     */
+    protected function applyRecipientUserEmailAttribute(RecipientInterface $recipient, string $emailAttributeAlias) : array
+    {
+        switch (true) {
+            case $recipient instanceof UserRecipientInterface:
+                $recipient->setEmailAttributeAlias($emailAttributeAlias);
+                break;
+            case $recipient instanceof RecipientGroupInterface:
+                foreach ($recipient->getRecipients() as $r) {
+                    $this->applyRecipientUserEmailAttribute($r, $emailAttributeAlias);
+                }
+                break;
+        }
+        return $recipient;
     }
     
     /**
@@ -244,6 +286,26 @@ class EmailMessage extends TextMessage
     public function setReplyTo($emailOrRecipient) : EmailMessage
     {
         $this->replyTo = $emailOrRecipient instanceof EmailRecipientInterface ? $emailOrRecipient : new EmailRecipient($emailOrRecipient);
+        return $this;
+    }
+    
+    protected function getRecipientUserEmailAttribute() : ?string
+    {
+        return $this->userEmailAttributeAlias;
+    }
+    
+    /**
+     * Use a custom attribute alias to fetch the email address of a workbench user
+     * 
+     * @uxon-property recipient_user_email_attribute
+     * @uxon-type email
+     * 
+     * @param string $attributeAliasWithRelationPath
+     * @return EmailMessage
+     */
+    public function setRecipientUserEmailAttribute(string $attributeAliasWithRelationPath) : EmailMessage
+    {
+        $this->userEmailAttributeAlias = $attributeAliasWithRelationPath;
         return $this;
     }
 }

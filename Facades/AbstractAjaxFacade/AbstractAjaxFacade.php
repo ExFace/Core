@@ -62,6 +62,7 @@ use exface\Core\DataTypes\UrlDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Exceptions\Facades\FacadeLogicError;
 
 /**
  * 
@@ -85,6 +86,8 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     private $data_type_formatters = [];
     
     private $pageTemplateFilePath = null;
+    
+    private $sematic_colors = [];
     
     public function __construct(FacadeSelectorInterface $selector)
     {
@@ -994,5 +997,37 @@ HTML;
         } catch (ConfigOptionNotFoundError $e) {
             return ['fa' => 'Font Awesome'];
         }
+    }
+    
+    public function getSemanticColors() : array
+    {
+        return $this->sematic_colors;
+    }
+    
+    /**
+     * CSS color values for each semantic color
+     * 
+     * @uxon-property semantic_colors
+     * @uxon-type object
+     * @uxon-template {"~OK": "", "~WARNING": "", "~ERROR"}
+     * 
+     * @param UxonObject|array $keyToHtmlColorArray
+     * @throws FacadeLogicError
+     * @return AbstractAjaxFacade
+     */
+    protected function setSemanticColors($keyToHtmlColorArray) : AbstractAjaxFacade
+    {
+        switch (true) {
+            case $keyToHtmlColorArray instanceof UxonObject:
+                $array = $keyToHtmlColorArray->toArray();
+                break;
+            case is_array($keyToHtmlColorArray):
+                $array = $keyToHtmlColorArray;
+                break;
+            default:
+                throw new FacadeLogicError('Invalid value for `semantic_colors` in configuration of facade "' . $this->getAliasWithNamespace() . '": expecting an array!');
+        }
+        $this->sematic_colors = $array;
+        return $this;
     }
 }
