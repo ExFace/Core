@@ -215,7 +215,7 @@ class CommunicationChannel implements CommunicationChannelInterface
      */
     protected function createMessageFromEnvelope(Envelope $envelope) : CommunicationMessageInterface
     {
-        return CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $this->getMessagePrototype(), $envelope->exportUxonObject());
+        return CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $this->getMessagePrototype(), $this->getMessageDefaults()->extend($envelope->exportUxonObject()));
     }
     
     /**
