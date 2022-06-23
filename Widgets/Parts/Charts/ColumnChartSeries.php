@@ -39,4 +39,31 @@ class ColumnChartSeries extends ChartSeries implements StackableChartSeriesInter
     use XYChartSeriesTrait;
     use StackableChartSeriesTrait;
     use SplittableChartSeriesTrait;
+    
+    private $showValues = null;
+    
+    
+    /**
+     * Set to TRUE to show the values inside a bar/column.
+     *
+     * @uxon-property show_values
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setShowValues(bool $trueOrFalse) : ColumnChartSeries
+    {
+        $this->showValues = $trueOrFalse;
+        return $this;
+    }
+    
+    public function getShowValues() : bool
+    {
+        if (! $this->showValues) {
+            return false;
+        }
+        return $this->showValues;
+    }
 }
