@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
  *
@@ -83,12 +84,16 @@ HTML;
     public function buildJsValueDecorator($value_js)
     {
         $tpl = json_encode($this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-color'));
+        $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
+        $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        
         return <<<JS
 function() {
     var mValue = {$value_js};
     var sHtml = {$tpl};
     var sColor = 'transparent';
     var sText = {$this->buildJsValueFormatter('mValue')};
+    var oSemanticColors = $semanticColorsJs;
 
     if (mValue === undefined || mValue === null) {
         return '';
@@ -99,6 +104,9 @@ function() {
     }
  
     sColor = {$this->buildJsColorResolver('mValue')};
+    if (oSemanticColors[sColor] !== undefined) {
+       sColor = oSemanticColors[sColor];
+    }
 
     return sHtml
         .replace(/exfph-mValue/g, mValue)

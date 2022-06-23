@@ -39,20 +39,21 @@ trait JsValueScaleTrait
         
         return <<<JS
 
-(function(val) {
-    if (val === undefined || val === '' || val === null) return '';
-
-    var scale = [ {$scaleValsJs} ];
+(function(mVal) {
+    var aScale = [ {$scaleValsJs} ];
     var numVal;
-    if (isNaN(val)) {
-        var numVal = parseFloat(val.replace(' ', ''));
+
+    if (mVal === undefined || mVal === '' || mVal === null) return '';
+
+    if (isNaN(mVal)) {
+        var numVal = parseFloat(mVal.replace(' ', ''));
     } else {
-        numVal = val;
+        numVal = mVal;
     }
 
     var sv = [];
-    for (var i in scale) {
-        sv = scale[i];
+    for (var i in aScale) {
+        sv = aScale[i];
         if (numVal <= sv[0]) {
             return sv[1];
         }
@@ -67,26 +68,27 @@ JS;
      *
      * @param string $valueJs
      * @param array $scale
+     * @param string[] $resultMap
      * @return string
      */
-    protected function buildJsScaleResolverForValues(string $valueJs, array $scale) : string
+    protected function buildJsScaleResolverForValues(string $valueJs, array $scale, array $resultMap = []) : string
     {
         $scaleValsJs = json_encode($scale);
         
         return <<<JS
         
-(function(val) {
-    if (val === undefined || val === '' || val === null) return '';
+(function(mVal) {
+    var oScale = {$scaleValsJs};
+
+    if (mVal === undefined || mVal === '' || mVal === null) return '';
     
-    val = val.toString().toLowerCase();
-    var scale = {$scaleValsJs};
-    
-    for (var i in scale) {
-        if (val == i.toLowerCase()) {
-            return scale[i];
+    mVal = mVal.toString().toLowerCase();
+    for (var i in oScale) {
+        if (mVal == i.toLowerCase()) {
+            return oScale[i];
         }
     }
-    return scale[''] || '';
+    return oScale[''] || '';
 })({$valueJs})
 
 JS;
