@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
  * 
@@ -92,6 +93,9 @@ HTML;
         
         $textMapJs = json_encode($widget->getTextScale());
         $tpl = json_encode($this->buildHtmlProgressBar('exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color'));
+        $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
+        $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        
         return <<<JS
 function() {
     var val = {$value_js};
@@ -103,6 +107,7 @@ function() {
     var html = {$tpl};
     var numVal = parseFloat(val);    
     var color = colorMap[colorMap.length-1][1] || 'transparent';
+    var oSemanticColors = $semanticColorsJs;
 
     var c = [];
     for (var i in colorMap) {
@@ -111,6 +116,10 @@ function() {
             color = c[1];
             break;
         }
+    }
+
+    if (oSemanticColors[color] !== undefined) {
+        color = oSemanticColors[color];
     }
     
     html = html
