@@ -5,6 +5,8 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Chart;
 /**
  * A bar chart shows horizontal bars for every value on the X axis.
+ * 
+ * A bar chart y-Axis always has the 'category' axis type as others are not supported right now!
  *
  * This the amount of objects for every app:
  *

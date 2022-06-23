@@ -1202,7 +1202,9 @@ JS;
             $color = '';
         }
         //TODO option to show label, define position of it, maybe rotation etc.
-        $label = <<<JS
+        $label = '';
+        if ($series->getShowValues() === true) {
+            $label = <<<JS
 
     label: {
         show: true,
@@ -1212,8 +1214,7 @@ JS;
     },
          
 JS;
-         
-        //$label = '';
+        }
         
         return <<<JS
         
@@ -1364,7 +1365,7 @@ JS;
             var sValue = params.data._key;
             var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
             if (sColor != undefined && sColor.startsWith('~')) {
-                console.error('semantic colors not supported in chart series yet!');
+                console.warn('semantic colors not supported in chart series yet!');
             } else if (sColor) {
                 return sColor;
             }
@@ -2530,7 +2531,7 @@ JS;
         value = newNames[0];
         $colJs
         if (col != undefined && col.startsWith('~')) {
-            console.error('semantic colors not supported in chart series yet!');
+            console.warn('semantic colors not supported in chart series yet!');
         } else if (col) {
             currentSeries.itemStyle = {
                 color: col
@@ -2562,7 +2563,7 @@ JS;
         value = newNames[i];
         $colJs
         if (col != undefined && col.startsWith('~')) {
-            console.error('semantic colors not supported in chart series yet!');
+            console.warn('semantic colors not supported in chart series yet!');
         } else if (col) {
             currentSeries.itemStyle = {
                 color: col
