@@ -38,6 +38,21 @@ class EmailMessage extends TextMessage
     private $userEmailAttributeAlias = null;
     
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if (null !== $this->userEmailAttributeAlias) {
+            $uxon->setProperty('recipient_user_email_attribute', new UxonObject($this->userEmailAttributeAlias));
+        }
+        return $uxon;
+    }
+    
+    
+    /**
      * 
      * @return string|NULL
      */
@@ -94,7 +109,7 @@ class EmailMessage extends TextMessage
         $recipients = parent::getRecipients();
         if ($emailAttrAlias = $this->getRecipientUserEmailAttribute()) {
             foreach ($recipients as $recipient) {
-                $recipients = $this->applyRecipientUserEmailAttribute($recipient, $emailAttrAlias);
+                $this->applyRecipientUserEmailAttribute($recipient, $emailAttrAlias);
             }
         }
         return $recipients;
@@ -106,7 +121,7 @@ class EmailMessage extends TextMessage
      * @param string $emailAttributeAlias
      * @return array
      */
-    protected function applyRecipientUserEmailAttribute(RecipientInterface $recipient, string $emailAttributeAlias) : array
+    protected function applyRecipientUserEmailAttribute(RecipientInterface $recipient, string $emailAttributeAlias) : RecipientInterface
     {
         switch (true) {
             case $recipient instanceof UserRecipientInterface:
