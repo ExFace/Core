@@ -9,6 +9,8 @@ class UserRecipient implements UserRecipientInterface, EmailRecipientInterface
 {
     private $user = null;
     
+    private $emailAttributeAlias = null;
+    
     /**
      * 
      * @param UserInterface $user
@@ -45,6 +47,9 @@ class UserRecipient implements UserRecipientInterface, EmailRecipientInterface
      */
     public function getEmail(): ?string
     {
+        if (null !== $emailAttr = $this->getEmailAttributeAlias()) {
+            return $this->getUser()->getAttribute($emailAttr);
+        }
         return $this->getUser()->getEmail();
     }
     
@@ -56,5 +61,25 @@ class UserRecipient implements UserRecipientInterface, EmailRecipientInterface
     public function __toString(): string
     {
         return $this->user->getUsername();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getEmailAttributeAlias() : ?string
+    {
+        return $this->emailAttributeAlias;
+    }
+
+    /**
+     * 
+     * @param string $value
+     * @return UserRecipient
+     */
+    public function setEmailAttributeAlias(string $value) : UserRecipient
+    {
+        $this->emailAttributeAlias = $value;
+        return $this;
     }
 }
