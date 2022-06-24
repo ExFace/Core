@@ -77,10 +77,10 @@ class SecurityManager implements SecurityManagerInterface
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
         $errors = [];
+        
+        // Try all authenticators. If any of the work, stop and return the authenticated token
         foreach ($this->getAuthenticators() as $authenticator) {
-            $debug = 'Authentication via "' . $authenticator->getName() . '"';
             if ($authenticator->isDisabled()) {
-                $this->getWorkbench()->getLogger()->debug($debug . ' disabled');
                 continue;
             }
             if ($authenticator->isSupported($token) === false) {
@@ -88,24 +88,20 @@ class SecurityManager implements SecurityManagerInterface
             }
             try {
                 $authenticated = $authenticator->authenticate($token);
-                $this->getWorkbench()->getLogger()->debug($debug . ' successfull: ' . $authenticated->getUsername());
                 $this->storeAuthenticatedToken($authenticated);
                 $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 return $authenticated;
             } catch (AuthenticationExceptionInterface $e) {
-                $this->getWorkbench()->getLogger()->debug($debug . ' failed: ' . $e->getMessage());
                 $errors[] = $e;
             }
         }
         
-        if ($token->isAnonymous() === true && $authenticated) {
+        // If no authenticators worked, the user is a guest
+        if ($token->isAnonymous() === true) {
             $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
             $this->getWorkbench()->eventManager()->dispatch($event);
             $this->storeAuthenticatedToken($token);
-            foreach ($errors as $e) {
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
             return $token;
         }
         
