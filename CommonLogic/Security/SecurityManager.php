@@ -78,24 +78,34 @@ class SecurityManager implements SecurityManagerInterface
     {      
         $errors = [];
         foreach ($this->getAuthenticators() as $authenticator) {
-            if ($authenticator->isDisabled() || $authenticator->isSupported($token) === false) {
+            $debug = 'Authentication via "' . $authenticator->getName() . '"';
+            if ($authenticator->isDisabled()) {
+                $this->getWorkbench()->getLogger()->debug($debug . ' disabled');
+                continue;
+            }
+            if ($authenticator->isSupported($token) === false) {
                 continue;
             }
             try {
                 $authenticated = $authenticator->authenticate($token);
+                $this->getWorkbench()->getLogger()->debug($debug . ' successfull: ' . $authenticated->getUsername());
                 $this->storeAuthenticatedToken($authenticated);
                 $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 return $authenticated;
             } catch (AuthenticationExceptionInterface $e) {
+                $this->getWorkbench()->getLogger()->debug($debug . ' failed: ' . $e->getMessage());
                 $errors[] = $e;
             }
         }
         
-        if ($token->isAnonymous() === true) {
+        if ($token->isAnonymous() === true && $authenticated) {
             $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
             $this->getWorkbench()->eventManager()->dispatch($event);
             $this->storeAuthenticatedToken($token);
+            foreach ($errors as $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
             return $token;
         }
         
