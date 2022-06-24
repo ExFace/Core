@@ -54,11 +54,13 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             return;
         }
         
+        $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: detected authentication of "' . $event->getToken()->getUsername() . '"');
+        
         // There are no sessions in CLI, so also no remmeber-me
         if (ConsoleFacade::isPhpScriptRunInCli()) {
+            $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: disabled in CLI mode');
             return;
         }
-        
         $this->saveSessionData($event->getToken(), $event->getAuthenticationProvider());
         return;
     }
