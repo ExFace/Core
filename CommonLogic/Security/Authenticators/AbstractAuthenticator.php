@@ -144,7 +144,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * lifetime can be set for every authenticator individually. If it is not, the token
      * lifetime of the `RememberMeAuthenticator` will be used. 
      *
-     * @uxon-property token_liftetime_seconds
+     * @uxon-property token_lifetime_seconds
      * @uxon-type integer
      *
      * @param int $seconds
