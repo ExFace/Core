@@ -42,7 +42,7 @@ class DebugWidgetProcessor
     {
         $sender = $record['context'][$this->sourceContextKey];
         $debugWidgetData = null;
-        if ($sender && $sender instanceof iCanGenerateDebugWidgets) {
+        if ($sender && ($sender instanceof iCanGenerateDebugWidgets)) {
             try {
                 $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
                 $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
@@ -84,9 +84,11 @@ class DebugWidgetProcessor
      * @return string
      */
     protected function createHtmlFallback($html){
-        $uxon = new UxonObject();
-        $uxon->setProperty('widget_type', 'Html');
-        $uxon->setProperty('html', $html);
+        $uxon = new UxonObject([
+            'widget_type' => 'Html',
+            'width' => '100%',
+            'html' => $html
+        ]);
         return $uxon->toJson(true);
     }
     
