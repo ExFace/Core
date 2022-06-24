@@ -8,7 +8,6 @@ use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
-use exface\Core\Events\Facades\OnFacadeReceivedHttpRequestEvent;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
