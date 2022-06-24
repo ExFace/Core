@@ -2470,8 +2470,10 @@ JS;
             $useGradients = 'false';
         }
         
-        $nameFormatter = 'newNames[i];';
+        $nameFormatterJs = 'newNames[i];';
         $customCol = 'false';
+        $semanticColors = $this->getFacade()->getSemanticColors();
+        $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
         if ($series->isSplitByAttribute()) {
             $col = $series->getSplitByDataColumn();
             $nameFormatterJs = <<<JS
@@ -2482,8 +2484,6 @@ JS;
 
 JS;
             if ($col->getCellWidget() instanceof iHaveColorScale) {
-                $semanticColors = $this->getFacade()->getSemanticColors();
-                $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
                 $customCol = 'true';
                 $colJs = <<<JS
 
