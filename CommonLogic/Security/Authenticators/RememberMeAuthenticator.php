@@ -208,10 +208,12 @@ class RememberMeAuthenticator extends AbstractAuthenticator
             
             // If the lifetime is 0, we should not store any information at all!
             if ($lifetime === 0) {
+                $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: will not remember "' . $token->getUsername() . '" because authenticator "' . get_class($provider) . '" has a token lifetime of 0!');
                 return '';
             }
             
             $expires = time() + $lifetime;
+            $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: remembering "' . $token->getUsername() . '" for ' . $lifetime . ' seconds!');
         }
         $user = $this->getWorkbench()->getSecurity()->getUser($token);
         $data['username'] = $user->getUsername();
