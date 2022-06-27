@@ -25,6 +25,7 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\Widgets\Input;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -211,10 +212,16 @@ JS;
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
-                $parserJs = 'function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatParser('value') . '}';
+                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+                $cellWidget = $col->getCellWidget();
+                if (($cellWidget instanceof InputNumber) && ($formatter instanceof JsNumberFormatter)) {
+                    $formatter->setDecimalSeparator($cellWidget->getDecimalSeparator());
+                    $formatter->setThousandsSeparator($cellWidget->getThousandsSeparator());
+                }
+                $parserJs = 'function(value){ return ' . $formatter->buildJsFormatParser('value') . '}';
                 // For those cells, that do not have a specific editor, use the data type formatter
                 // to format the values before showing them and parse them back in buildJsConvertArrayToData()
-                $formatterJs = 'function(value){ return ' . $this->getFacade()->getDataTypeFormatter($col->getDataType())->buildJsFormatter('value') . '}';
+                $formatterJs = 'function(value){ return ' . $formatter->buildJsFormatter('value') . '}';
             } else {
                 $parserJs = 'function(value){ return value; }';
                 $formatterJs = 'function(value){ return value; }';
@@ -908,13 +915,14 @@ JS;
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
                 $numberType = $cellWidget->getValueDataType();
                 if ($numberType->getBase() === 10) {
-                    $options .= 'allowEmpty: true,';
-                    $decimal = $numberType->getDecimalSeparator();
+                    $decSep = ($cellWidget instanceof InputNumber) ? $cellWidget->getDecimalSeparator() : $numberType->getDecimalSeparator();
+                    $tsdSep = ($cellWidget instanceof InputNumber) ? $cellWidget->getThousandsSeparator() : $numberType->getGroupSeparator();
+                    $options .= "allowEmpty: true, decimal:'{$decSep}',";
                     // FIXME what to do with the thousands/group-separator???
                     $type = "numeric";
                     // Add a mask for DataSpreadSheet but not for the DataImporter (it needs to accept any number format!)
                     if ($this->getWidget() instanceof DataSpreadSheet) {
-                        $options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
+                        $options .= "mask: '{$this->buildMaskNumeric($numberType, $decSep, $tsdSep)}',";
                     }
                     //$type = "numeral";
                     //$options .= "mask: '0', decimal:'{$decimal}', thousands:'{$thousands}',";
@@ -1378,26 +1386,32 @@ JS;
      * @param string $decimalSeparator
      * @return string
      */
-    protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null) : string
+    protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null, string $groupSeparator = null, int $groupLenght = 3) : string
     {
+        $groupSeparator = $groupSeparator ?? $dataType->getGroupSeparator();
+        $decimalSeparator = $decimalSeparator ?? $dataType->getDecimalSeparator();
+        
+        /*
         if ($dataType->getPrecisionMax() === 0) {
             return '0';
         }
         
         if ($dataType->getPrecisionMin() === null && $dataType->getPrecisionMax() === null) {
             return '';
-        }
+        }*/
         
-        if ($decimalSeparator === null) {
-            $decimalSeparator = $dataType->getDecimalSeparator();
+        $format = '';
+        if ($groupSeparator) {
+            $format = '#' . $groupSeparator . '##';
         }
+        $format .= '0' . $decimalSeparator;
         
-        $format = '#.##' . $decimalSeparator;
         $minPrecision = $dataType->getPrecisionMin();
-        $maxPrecision = $dataType->getPrecisionMax();
-        for ($i = 1; $i <= $maxPrecision; $i++) {
-            $ph = $minPrecision !== null && $i <= $minPrecision ? '0' : '#';
-            $format .= $ph;
+        if ($minPrecision > 0) {
+            $format .= $decimalSeparator;
+            for ($i = 1; $i <= $minPrecision; $i++) {
+                $format .= '0';
+            }
         }
         
         return $format;
