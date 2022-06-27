@@ -1404,7 +1404,7 @@ JS;
         if ($groupSeparator) {
             $format = '#' . $groupSeparator . '##';
         }
-        $format .= '0' . $decimalSeparator;
+        $format .= '0';
         
         $minPrecision = $dataType->getPrecisionMin();
         if ($minPrecision > 0) {
