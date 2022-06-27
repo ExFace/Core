@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 
 /**
  * 
@@ -14,23 +15,15 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  */
 class JsNumberFormatter extends AbstractJsDataTypeFormatter
 {
-    private $decimalSeparator = '.';
-    private $thousandsSeparator = '';
-    
-    protected function setDataType(DataTypeInterface $dataType)
-    {
-        if (! $dataType instanceof NumberDataType) {
-            // TODO
-        }
-        return parent::setDataType($dataType);
-    }
+    private $decimalSeparator = null;
+    private $thousandsSeparator = null;
     
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
-    public function buildJsFormatter($jsInput)
+    public function buildJsFormatter($jsInput, string $decimalSeparator = null, string $thousandSeparator = null)
     {
         $dataType = $this->getDataType();
         
@@ -42,26 +35,39 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         $precision_min = $dataType->getPrecisionMin() === null ? 'undefined' : $dataType->getPrecisionMin();
         $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
-        $use_grouping = $dataType->getGroupDigits() && $this->getThousandsSeparator() ? 'true' : 'false';
+        if ($dataType->getGroupDigits() && $this->getThousandsSeparator()) {
+            $use_grouping =  'true';
+            $setGroupSeparatorJs = <<<JS
+
+            sTsdSep = (1000).toLocaleString({$locale}, {useGrouping: true}).charAt(1);
+            sNum = sNum.replace(sTsdSep, '{$this->getThousandsSeparator()}');
+JS;
+        } else {
+            $use_grouping =  'false';
+            $setGroupSeparatorJs = '';
+        }
         
         return <<<JS
-        function() {
-            var input = {$jsInput};
-            if (input !== null && input !== undefined && input !== ''){
-    			var number = parseFloat({$this->buildJsFormatParser('input')});
-                if (! isNaN(number)) {
-                    return number.toLocaleString(
-                        {$locale}, // use a string like 'en-US' to override browser locale
-                        {
-                            minimumFractionDigits: {$precision_min},
-                            maximumFractionDigits: {$precision_max},
-                            useGrouping: {$use_grouping}
-                        }
-                    );
-                }
+        function(mNumber) {
+            var fNum, sNum, sTsdSep;
+            if (mNumber === null || mNumber === undefined || mNumber === '') {
+                return mNumber;
             }
-            return input;
-        }()
+			fNum = parseFloat({$this->buildJsFormatParser('mNumber')});
+            if (isNaN(fNum)) {
+                return mNumber;
+            }
+            sNum = fNum.toLocaleString(
+                {$locale}, // use a string like 'en-US' to override browser locale
+                {
+                    minimumFractionDigits: {$precision_min},
+                    maximumFractionDigits: {$precision_max},
+                    useGrouping: {$use_grouping}
+                }
+            );
+            {$setGroupSeparatorJs}
+            return sNum;
+        }({$jsInput})
 JS;
     }
     
@@ -72,8 +78,19 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
-        $separator_regex = preg_quote($this->getDecimalSeparator());
-        return "{$jsInput}.toString().replace(/{$separator_regex}/g, '.').replace(/ /g, '')";
+        $decimalRegex = preg_quote($this->getDecimalSeparator());
+        $thousandsRegex = preg_quote($this->getThousandsSeparator());
+        
+        return <<<JS
+        function(mNumber) {
+            if (mNumber === undefined || mNumber === null) return mNumber;
+            if (mNumber === '') return null;
+            if (typeof mNumber === 'number' && isFinite(mNumber)) {
+                return mNumber;
+            }
+            return mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+        }({$jsInput})
+JS;
     }
 
     /**
@@ -102,6 +119,12 @@ JS;
      */
     public function getDecimalSeparator()
     {
+        if ($this->decimalSeparator === null) {
+            $this->decimalSeparator = $this->getDataType()->getDecimalSeparator();
+        }
+        if ($this->decimalSeparator === $this->thousandsSeparator) {
+            throw new DataTypeConfigurationError($this->getDataType(), 'Cannot use the same separator "' . $this->decimalSeparator . '" for decimals an thousands in a number data type!');
+        }
         return $this->decimalSeparator;
     }
 
@@ -120,6 +143,12 @@ JS;
      */
     public function getThousandsSeparator()
     {
+        if ($this->thousandsSeparator === null) {
+            $this->thousandsSeparator = $this->getDataType()->getGroupSeparator();
+        }
+        if ($this->decimalSeparator === $this->thousandsSeparator) {
+            throw new DataTypeConfigurationError($this->getDataType(), 'Cannot use the same separator "' . $this->decimalSeparator . '" for decimals an thousands in a number data type!');
+        }
         return $this->thousandsSeparator;
     }
 
