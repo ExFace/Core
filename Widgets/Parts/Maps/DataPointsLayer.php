@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -14,7 +13,7 @@ use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
-use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 
 /**
  *
@@ -22,11 +21,10 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  *
  */
 class DataPointsLayer extends AbstractDataLayer 
-    implements 
-    iHaveColor, 
-    iHaveColorScale,
+    implements
     LatLngDataColumnMapLayerInterface,
     LatLngWidgetLinkMapLayerInterface,
+    ColoredDataMapLayerInterface,
     EditableMapLayerInterface
 {
     use DataPointLayerTrait {
@@ -59,9 +57,9 @@ class DataPointsLayer extends AbstractDataLayer
      * @uxon-type metamodel:attribute
      *
      * @param string $value
-     * @return DataMarkersLayer
+     * @return DataPointsLayer
      */
-    public function setColorAttributeAlias(string $value) : DataMarkersLayer
+    public function setColorAttributeAlias(string $value) : DataPointsLayer
     {
         $this->colorAttributeAlias = $value;
         return $this;
@@ -77,7 +75,7 @@ class DataPointsLayer extends AbstractDataLayer
     }
     
     /**
-     *
+     * 
      * @return DataColumn|NULL
      */
     public function getColorColumn() : ?DataColumn
