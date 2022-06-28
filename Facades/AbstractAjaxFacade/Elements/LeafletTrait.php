@@ -21,6 +21,9 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\DataPointsLayer;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
+use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -64,6 +67,8 @@ use exface\Core\Widgets\Parts\Maps\DataPointsLayer;
  */
 trait LeafletTrait
 {
+    use JsValueScaleTrait;
+    
     private $layerRenderers = [];
     
     private $headTags = [];
@@ -705,17 +710,45 @@ JS;
     
     protected function buildJsMarkerIcon(LatLngDataColumnMapLayerInterface $layer, string $oRowJs) : string
     {
-        $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        $colorJs = "''";
+        $colorCss = '';
+        switch (true) {
+            case ($layer instanceof ColoredDataMapLayerInterface) && $layer->hasColorScale():
+                $colorCol = $layer->getColorColumn();
+                $semanticColors = $this->getFacade()->getSemanticColors();
+                $semanticColorsJs = json_encode(! empty($semanticColors) ? $semanticColors : new \stdClass());
+                $colorJs = <<<JS
+function(){
+                                var sVal = {$oRowJs}['{$colorCol->getDataColumnName()}'];
+                                var sColor = {$this->buildJsScaleResolver('sVal', $layer->getColorScale(), $layer->isColorScaleRangeBased())};
+                                var oSemanticColors = $semanticColorsJs;
+                                if (oSemanticColors[sColor] !== undefined) {
+                                    sColor = oSemanticColors[sColor];
+                                }
+                                return sColor;
+                            }()
+JS;
+                break;
+            case ($layer instanceof iHaveColor) && null !== $colorCss = $layer->getColor():
+                $colorJs = "'{$colorCss}'";
+                break;
+            default: 
+                $colorCss = $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+                $colorJs = "'{$colorCss}'";
+        }
         
         switch (true) {
             case ($layer instanceof DataPointsLayer):
                 $js= <<<JS
-L.divIcon({
-                            className: 'exf-map-point',
-                            iconSize: [{$layer->getPointSize()}, {$layer->getPointSize()}],
-                            shadowSize: null,
-                            html: '<div style="height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: {$color}; border-radius: 50%;"></div>'
-                        })
+function(){
+                            var sColor = $colorJs;
+                            return L.divIcon({
+                                className: 'exf-map-point',
+                                iconSize: [{$layer->getPointSize()}, {$layer->getPointSize()}],
+                                shadowSize: null,
+                                html: '<div style="height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: ' + sColor + '; border-radius: 50%;"></div>'
+                            })
+                        }()
 JS;
                             break;
             case ($layer instanceof DataMarkersLayer) && $layer->hasValue():
@@ -723,7 +756,7 @@ JS;
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
                             number: {$oRowJs}.{$layer->getValueColumn()->getDataColumnName()},
-                            markerColor: '$color',
+                            markerColor: $colorJs,
                             shape: 'square',
                             svg: true,
                         })
@@ -737,7 +770,7 @@ JS;
 new L.ExtraMarkers.icon({
                             icon: '$icon',
                             extraClasses: 'fa-5x',
-                            markerColor: '$color',
+                            markerColor: $colorJs,
                             prefix: '$prefix',
                             svg: true,
                         })
