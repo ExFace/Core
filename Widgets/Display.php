@@ -83,11 +83,14 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
      */
     protected function setHideIfEmpty(bool $trueOrFalse) : Value
     {
-        $this->setHiddenIf(new UxonObject([
-            "value_left" => "=self",
-            "comparator" => "==",
-            "value_right" => ""
-        ]));
+        if ($trueOrFalse === true) {
+            $id = $this->getId(false);
+            $this->setHiddenIf(new UxonObject([
+                "value_left" => "={$id}",
+                "comparator" => "==",
+                "value_right" => ""
+            ]));
+        }
         return $this;
     }
     
