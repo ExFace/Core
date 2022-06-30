@@ -1378,7 +1378,7 @@ JS;
             var iColorsCount = aColors.length;
             var iIndex = params.dataIndex;
             while (iIndex >= iColorsCount) {
-                iIndex = iIndex - iColorsCounts;
+                iIndex = iIndex - iColorsCount;
             }
             return aColors[iIndex];
         }
