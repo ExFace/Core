@@ -17,6 +17,7 @@ use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 
 /**
  *
@@ -29,8 +30,7 @@ class DataMarkersLayer extends AbstractDataLayer
     LatLngDataColumnMapLayerInterface, 
     LatLngWidgetLinkMapLayerInterface, 
     EditableMapLayerInterface,
-    iHaveIcon, 
-    iHaveColorScale
+    ColoredDataMapLayerInterface
 {
     use DataPointLayerTrait {
         initDataWidget as initDataWidgetForPoints;
@@ -176,5 +176,15 @@ class DataMarkersLayer extends AbstractDataLayer
     protected function setAllowToMoveMarkers(bool $value) : DataMarkersLayer
     {
         return $this->setEditByMovingItems($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface::getColorColumn()
+     */
+    public function getColorColumn(): ?DataColumn
+    {
+        return $this->getValueAttributeAlias();
     }
 }
