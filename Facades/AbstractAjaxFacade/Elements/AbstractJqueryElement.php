@@ -44,9 +44,11 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
 
     private $hint_max_chars_in_line = null;
 
-    private $on_change_script = '';
+    private $on_change_scripts = [];
 
-    private $on_resize_script = '';
+    private $on_resize_scripts = [];
+    
+    private $on_refresh_scripts = [];
 
     private $ajax_url = null;
 
@@ -647,17 +649,14 @@ JS;
     }
 
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes.
      * 
-     * NOTE: the event object is available via the javascript variable "event".
-     *
-     * @param string $string            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnChangeScript()
      */
     public function addOnChangeScript($string)
     {
         // Add a semicolon in case the $string does not end with one.
-        $this->on_change_script .= trim($string) . ';';
+        $this->on_change_scripts[] = trim($string);
         return $this;
     }
 
@@ -668,17 +667,17 @@ JS;
      */
     public function getOnChangeScript()
     {
-        return $this->on_change_script;
+        return implode(";\n", array_unique($this->on_change_scripts));
     }
 
     /**
-     * Overwrites the JavaScript snippet, that will get executed every time the value of this element changes
-     *
-     * @param string $string            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnResizeScript()
      */
-    public function setOnChangeScript($string)
+    public function addOnResizeScript($js)
     {
-        $this->on_change_script = $string;
+        $this->on_resize_scripts[] = trim($js);
         return $this;
     }
 
@@ -689,31 +688,28 @@ JS;
      */
     public function getOnResizeScript()
     {
-        return $this->on_resize_script;
+        return implode(";\n", array_unique($this->on_resize_scripts));
     }
-
+    
     /**
-     * Overwrites the JavaScript snippet, that will get executed every time the size of this element changes
-     *
-     * @param string $value            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnRefreshScript()
      */
-    public function setOnResizeScript($value)
+    public function addOnRefreshScript(string $js) : AjaxFacadeElementInterface
     {
-        $this->on_resize_script = $value;
+        $this->on_refresh_scripts[] = trim($js);
         return $this;
     }
-
+    
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the size of this element changes
+     * Returns the JavaScript snippet, that should get executed every time the size of this element changes
      *
-     * @param string $js            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * @return string
      */
-    public function addOnResizeScript($js)
+    public function getOnRefreshScript() : string
     {
-        $this->on_resize_script .= $js;
-        return $this;
+        return implode(";\n", array_unique($this->on_refresh_scripts));
     }
 
     /**
