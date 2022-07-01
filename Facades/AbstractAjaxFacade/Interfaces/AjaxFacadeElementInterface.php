@@ -232,6 +232,14 @@ interface AjaxFacadeElementInterface
      * @return AjaxFacadeElementInterface
      */
     public function addOnResizeScript($js);
+    
+    /**
+     * Adds a JavaScript snippet to the script, that will get executed every time the data of this element refreshes.
+     *
+     * @param string $string
+     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     */
+    public function addOnRefreshScript(string $js) : AjaxFacadeElementInterface;
 
     /**
      * Returns an JS-snippet to show a busy symbol (e.g.
