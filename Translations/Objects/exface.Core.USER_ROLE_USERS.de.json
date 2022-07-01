@@ -1,0 +1,8 @@
+{
+    "NAME": "Rolleninhaber",
+    "SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.USER_ROLE.NAME": "Rolle",
+    "ATTRIBUTE.USER_ROLE.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.USER.NAME": "Benutzer",
+    "ATTRIBUTE.USER.SHORT_DESCRIPTION": null
+}

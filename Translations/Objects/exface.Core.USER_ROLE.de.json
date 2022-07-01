@@ -1,0 +1,19 @@
+{
+    "NAME": "Benutzerrolle",
+    "SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.NAME.NAME": "Rolle",
+    "ATTRIBUTE.NAME.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.DESCRIPTION.NAME": "Beschreibung",
+    "ATTRIBUTE.DESCRIPTION.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.APP.NAME": "App",
+    "ATTRIBUTE.APP.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.ALIAS.NAME": "Alias",
+    "ATTRIBUTE.ALIAS.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.SYNC_WITH_EXT_ROLE.NAME": "Mit ext. Rolle synchronisieren",
+    "ATTRIBUTE.SYNC_WITH_EXT_ROLE.SHORT_DESCRIPTION": null,
+    "ATTRIBUTE.START_PAGE.NAME": "Home-Screen",
+    "ATTRIBUTE.START_PAGE.SHORT_DESCRIPTION": "Die Maske, die angezeigt werden soll, wenn der Nutzer sich ohne Deep-Link anmeldet oder auf den Home-Button klickt. Es ist also ein Benutzer-spezifischer Ersatz für SERVER.INDEX_PAGE_SELECTOR aus der System-Konfiguration.",
+    "ATTRIBUTE.ALIAS_WITH_NS.NAME": "Alias mit Namespace",
+    "ATTRIBUTE.ALIAS_WITH_NS.SHORT_DESCRIPTION": "Voller Alias der Benuzterrolle inkl. des App-Namespace. Das ist der Alias, der in Konfigurationen und UXON-Modellen verwendet wird",
+    "DEFAULT_EDITOR_UXON.CAPTION.MEMBERS": "Inhaber"
+}
