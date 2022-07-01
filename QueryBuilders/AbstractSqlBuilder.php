@@ -455,14 +455,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildSqlQuerySelect();
-        $q = new SqlDataQuery();
-        $q->setSql($query);
-        // first do the main query
-        $qr = $data_connection->query($q);
-        $rows = $this->getReadResultRows($qr);
-        // If the query already includes a total row counter, use it!
-        $result_total_count = $qr->getResultRowCounter();
-        $qr->freeResult();
+        if (! empty($this->getAttributes())) {
+            $q = new SqlDataQuery();
+            $q->setSql($query);
+            // first do the main query
+            $qr = $data_connection->query($q);
+            $rows = $this->getReadResultRows($qr);
+            // If the query already includes a total row counter, use it!
+            $result_total_count = $qr->getResultRowCounter();
+            $qr->freeResult();
+        } else {
+            $rows = [];
+        }
         
         // then do the totals query if needed
         $result_totals = [];
