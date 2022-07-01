@@ -66,15 +66,15 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
 
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getTargetColumnId();
+    public function getTargetColumnId() : ?string;
 
     /**
      * 
-     * @return integer
+     * @return int|NULL
      */
-    public function getTargetRowNumber();
+    public function getTargetRowNumber() : ?int;
     
     /**
      * 

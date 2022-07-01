@@ -11,6 +11,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Exceptions\UxonParserError;
 
 /**
  * A reference to another widget or its data.
@@ -58,9 +59,9 @@ class WidgetLink implements WidgetLinkInterface
 
     private $widget_id_space = null;
 
-    private $targetColumnId;
+    private $targetColumnId = null;
 
-    private $targetRowNumber;
+    private $targetRowNumber = null;
 
     /**
      * 
@@ -325,8 +326,12 @@ class WidgetLink implements WidgetLinkInterface
         $uxon->setProperty('widget_id', $this->targetWidgetId);
         $uxon->setProperty('page_alias', $this->getTargetPage()->getAliasWithNamespace());
         $uxon->setProperty('widget_id_space', $this->widget_id_space);
+        if ($this->targetColumnId !== null) {
         $uxon->setProperty('column_id', $this->targetColumnId);
-        $uxon->setProperty('row_number', $this->targetRowNumber);
+        }
+        if ($this->targetRowNumber !== null) {
+            $uxon->setProperty('row_number', $this->targetRowNumber);
+        }
         return $uxon;
     }
     
@@ -345,7 +350,7 @@ class WidgetLink implements WidgetLinkInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetColumnId()
      */
-    public function getTargetColumnId()
+    public function getTargetColumnId() : ?string
     {
         return $this->targetColumnId;
     }
@@ -366,8 +371,11 @@ class WidgetLink implements WidgetLinkInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetRowNumber()
      */
-    public function getTargetRowNumber()
+    public function getTargetRowNumber() : ?int
     {
+        if ($this->targetRowNumber !== null && $this->targetColumnId === null) {
+            throw new UxonParserError($this->exportUxonObject(), 'Cannot user row numbers in widget links without a column reference!');
+        }
         return $this->targetRowNumber;
     }
 
