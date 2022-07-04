@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Widgets\Value;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\DataTypes\StringDataType;
@@ -23,7 +22,7 @@ use exface\Core\DataTypes\StringDataType;
  * though, because the init all elements when generating <head> tags, thus
  * triggering the reference registration before even starting the HTML rendering.
  * 
- * @method iHaveValue getWidget()
+ * @method \exface\Core\Interfaces\Widgets\iHaveValue getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -46,12 +45,13 @@ trait JqueryLiveReferenceTrait {
         
         $output = '';
         if ($linked_element = $this->getLinkedFacadeElement()) {
-            $col = $this->getWidget()->getValueWidgetLink()->getTargetColumnId();
+            $link = $this->getWidget()->getValueWidgetLink();
+            $col = $link->getTargetColumnId();
             if (! StringDataType::startsWith($col, '~')) {
                 $col = DataColumn::sanitizeColumnName($col);
             }
             $output = '
-					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col)) . ';';
+					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())) . ';';
         }
         return $output;
     }
@@ -76,7 +76,14 @@ trait JqueryLiveReferenceTrait {
     protected function registerLiveReferenceAtLinkedElement()
     {
         if ($linked_element = $this->getLinkedFacadeElement()) {
-            $linked_element->addOnChangeScript($this->buildJsLiveReference());
+            $getAndSetValueJs = $this->buildJsLiveReference();
+            // If the link targets a specific row, activate it with every refresh,
+            // otherwise it targets the current value, so only activate it if the value changes
+            if (null !== $this->getWidget()->getValueWidgetLink()->getTargetRowNumber()) {
+                $linked_element->addOnRefreshScript($getAndSetValueJs);
+            } else {
+                $linked_element->addOnChangeScript($getAndSetValueJs);
+            }
         }
         return $this;
     }
