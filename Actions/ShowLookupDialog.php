@@ -9,8 +9,6 @@ use exface\Core\Widgets\DataLookupDialog;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * Shows an advanced search dialog allowing the user to search and select data entries.
