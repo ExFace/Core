@@ -30,6 +30,6 @@ class TimestampDataType extends DateDataType
      */
     public function getFormat() : string
     {
-        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_WITH_SECONDS');
     }
 }

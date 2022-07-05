@@ -68,8 +68,6 @@ class InputTime extends Input
         }
         return $this->format;
     }
-
-    
     
     /**
      *
