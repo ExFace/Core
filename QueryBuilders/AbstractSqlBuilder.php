@@ -1051,6 +1051,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         // filters -> WHERE
         $where = $this->buildSqlWhere($this->getFilters(), false);
+        // add custom sql where from the object
+        if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
+            $where = $this->appendCustomWhere($where, $custom_where);
+        }
         $where = $where ? "\n WHERE " . $where : '';
         if (! $where) {
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
