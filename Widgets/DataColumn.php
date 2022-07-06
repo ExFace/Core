@@ -337,12 +337,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $cellWidget->setAttributeAlias($this->getAttributeAlias());
             }
             
-            if ($cellWidget->getWidth()->isUndefined()) {
-                // Set the cell widget width to '100%' if no width is defined for it.
-                // We do this so it fills the entire column respecting padding and borders.
-                // If instead we set teh width of the cell widget the same as the column (for example '200px')
-                // it can lead to values not being shown (for example integer values in UI5 DataTables) because
-                // the cell widget is too wide for the column.
+            // Set the cell widget width to '100%' if no dimensions are defined for it.
+            // We do this so it fills the entire column respecting padding and borders.
+            // If instead we set teh width of the cell widget the same as the column (for example '200px')
+            // it can lead to values not being shown (for example integer values in UI5 DataTables) because
+            // the cell widget is too wide for the column.
+            // This is NOT done if only the height is set to allow the widget to support a certain
+            // aspect ratio if needed (e.g. for images)
+            if ($cellWidget->getWidth()->isUndefined() && $cellWidget->getHeight()->isUndefined()) {
                 $cellWidget->setWidth('100%');
             }
             
