@@ -27,9 +27,9 @@ interface iRunFacadeScript extends ActionInterface
 
     /**
      * Returns java script, that executes the action.
-     * The parameter $facade contains the action is called from and $widget contains the input widget of the
-     * action).
-     * What exactly happens to the script (for example replacing replaceholders or not) is
+     * The parameter $facade contains the action is called from and $widget contains the
+     * input widget of the action.
+     * What exactly happens to the script (for example replacing placeholders or not) is
      * subject of the specific implementation.
      *
      * @param FacadeInterface $facade
