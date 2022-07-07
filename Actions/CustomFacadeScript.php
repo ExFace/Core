@@ -84,21 +84,5 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
     {
         return array();
     }
-
-    /**
-     * Replaces placeholders in the script, thus preparing it for use.
-     * Expects a placeholders array of the
-     * form [placeholder => value]. If the script is not passed directly, getScript() will be used to get it.
-     * This method can be overridden to easiliy extend or modify the script specified in UXON.
-     *
-     * @param array $placeholders
-     *            [placeholder => value]
-     * @param string $script            
-     * @return string valid java script
-     */
-    protected function prepareScript(array $placeholders, $script = null)
-    {
-        return str_replace(array_keys($placeholders), array_values($placeholders), ($script ? $script : $this->getScript()));
-    }
 }
 ?>
