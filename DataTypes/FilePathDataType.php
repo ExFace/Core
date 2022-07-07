@@ -33,12 +33,12 @@ class FilePathDataType extends StringDataType
      * but will tell widgets and other components to use this base automatically.
      *
      * @uxon-property base_path
-     * @uxon-type uri
+     * @uxon-type string
      *
      * @param string $value
-     * @return UrlDataType
+     * @return FilePathDataType
      */
-    public function setBasePath(string $value) : UrlDataType
+    public function setBasePath(string $value) : FilePathDataType
     {
         $this->basePath = $value;
         return $this;

@@ -12,6 +12,8 @@ use exface\Core\DataTypes\DateTimeDataType;
  */
 class InputDateTime extends InputDate
 {
+    private $showSeconds = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -20,5 +22,38 @@ class InputDateTime extends InputDate
     protected function getFormatDefault() : string
     {
         return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateTimeDataType::class)->getFormat();
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getShowSeconds() : bool
+    {
+        if ($this->showSeconds === null) {
+            $dataType = $this->getValueDataType();
+            if ($dataType instanceof DateTimeDataType) {
+                return $dataType->getShowSeconds();
+            } else {
+                return false;
+            }
+        }
+        return $this->showSeconds;
+    }
+    
+    /**
+     * Set to TRUE to show the seconds.
+     *
+     * @uxon-property show_seconds
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return InputDateTime
+     */
+    public function setShowSeconds(bool $value) : InputDateTime
+    {
+        $this->showSeconds = $value;
+        return $this;
     }
 }
