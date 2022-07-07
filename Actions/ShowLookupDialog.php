@@ -139,7 +139,10 @@ class ShowLookupDialog extends ShowDialog
                     }
                     foreach ($cols as $col) {
                         if (! $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
-                            $data_table->addColumn($data_table->createColumnFromUxon($col->exportUxonObject()));
+                            $widgetType = $data_table->getColumnDefaultWidgetType();
+                            $colUxon = $col->exportUxonObject();
+                            $colUxon->setProperty('widget_type', $widgetType);
+                            $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
                         }
                     }
                 }
