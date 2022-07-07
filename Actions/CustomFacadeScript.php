@@ -9,6 +9,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
 {
@@ -47,6 +48,10 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
     }
 
     /**
+     * Script to run when action is called.
+     * 
+     * @uxon-property script
+     * @uxon-type string
      * 
      * @param string $value
      */
@@ -60,11 +65,9 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
      *
      * @see \exface\Core\Interfaces\Actions\iRunFacadeScript::buildScript()
      */
-    public function buildScript($widget_id)
+    public function buildScript(FacadeInterface $facade, WidgetInterface $widget)
     {
-        return $this->prepareScript(array(
-            "[#widget_id#]" => $widget_id
-        ));
+        return $this->getScript();
     }
 
     /**
