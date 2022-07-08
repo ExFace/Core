@@ -11,6 +11,7 @@ use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
@@ -35,6 +36,14 @@ class WorkbenchCache implements WorkbenchCacheInterface
     {
         $this->workbench = $workbench;
         $this->mainPool = $mainPool;
+        $directories = glob($workbench->filemanager()->getPathToCacheFolder() . '/*' , GLOB_ONLYDIR);
+        foreach ($directories as $dirPath) {
+            $dirPath = $workbench->filemanager()->pathNormalize($dirPath);
+            $dirName = StringDataType::substringAfter($dirPath, $workbench->filemanager()->pathNormalize($workbench->filemanager()->getPathToCacheFolder()) . '/');
+            $this->pools[$dirName] = $this->createDefaultPool($workbench, $dirName, false);
+        }
+        
+        //$this->pools[$name] = static::createDefaultPool($this->workbench, $name);
     }
     
     /**

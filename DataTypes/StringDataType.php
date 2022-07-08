@@ -491,5 +491,11 @@ class StringDataType extends AbstractDataType
             return $string;
         }
     }
+    
+    public static function random(int $length) : string
+    {
+        for ($s = '', $i = 0, $z = strlen($a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')-1; $i != $length; $x = rand(0,$z), $s .= $a{$x}, $i++);
+        return $s;
+    }
 }
 ?>
