@@ -304,10 +304,6 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
         }
         
-        if ($action instanceof iRunFacadeScript){
-            throw new ActionConfigurationError($this, 'Actions running facade scripts cannot be used within action chains!');
-        }
-        
         $this->actions[] = $action;
         return $this;
     }
