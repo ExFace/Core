@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -75,6 +76,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $pathParts = explode('/', $path);
         $objSel = urldecode($pathParts[0]);
         $uid = urldecode($pathParts[1]);
+        // See if there are additional parameters
+        $params = [];
+        parse_str($uri->getQuery() ?? '', $params);
+        
+        return $this->createResponseFromValues($objSel, $uid, $params);        
+    }
+    
+    public function createResponseFromValues(string $objSel, string $uid, array $params) : ResponseInterface
+    {
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
         }
@@ -128,11 +138,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 break;
         }
         
-        
-        // See if there are additional parameters 
-        $params = [];
-        parse_str($uri->getQuery() ?? '', $params);
-        
         // Resize images
         if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
             list($width, $height) = explode('x', $resize);
@@ -147,7 +152,19 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
         }
         
-        return new Response(200, $headers, stream_for($binary ?? $plain));
+        return new Response(200, $headers, stream_for($binary ?? $plain));        
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getMiddleware()
+     */
+    protected function getMiddleware() : array
+    {
+        $middleware = parent::getMiddleware();
+        $middleware[] = new OneTimeLinkMiddleware($this);
+        return $middleware;
     }
     
     /**
