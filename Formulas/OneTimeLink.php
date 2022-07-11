@@ -1,20 +1,18 @@
 <?php
 namespace exface\Core\Formulas;
 
-
-use exface\Core\Factories\UiPageFactory;
-use exface\Core\Factories\SelectorFactory;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
+use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Exceptions\FormulaError;
 
 /**
  * Produces a OneTimeLink for a file fromn the given object and uid.
+ * Opening that link will load the file with the given properties from the server.
  * 
  * E.g. 
- * - `=WorkbenchURL('api/packagist')` => https://myserver.com/mypath/api/packagist
+ * - `=OneTimeLink('example.App.Image', '1', 'resize=300x180')` => https://myserver.com/mypath/api/files/otl/1234567890ACBDFE
  *
  * @author Ralf Mulansky
  *        
@@ -26,35 +24,17 @@ class OneTimeLink extends \exface\Core\CommonLogic\Model\Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run(string $objectAlias = '', string $id = '', string $properties = null)
+    public function run(string $objectAlias = '', string $uid = '', string $properties = null)
     {
-        $exface = $this->getWorkbench();
-        $cacheName = OneTimeLinkMiddleware::OTL_CACHE_NAME;
-        if ($exface->getCache()->hasPool($cacheName)) {
-            $cache = $exface->getCache()->getPool($cacheName, false);
-        } else {
-            $cache = $exface->getCache()->createDefaultPool($exface, $cacheName, false);
-            $exface->getCache()->addPool($cacheName, $cache);
+        if ($objectAlias === '') {
+            throw new FormulaError('Can not evaluate OneTimeLink formula. Object alias with namespace is needed!');
         }
-        
-        do {
-            $rand = StringDataType::random(16);
-        } while ($cache->hasItem($rand));
-        
-        $data = [];
-        $data['object_alias'] = $objectAlias;
-        $data['uid'] = $id;
-        $params = [];
-        if ($properties) {            
-            parse_str($properties, $params);
+        if ($uid === '') {
+            throw new FormulaError('Can not evaluate OneTimeLink formula. Uid is needed!');
         }
-        $data['params'] = $params;
+        $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
         
-        $cacheItem = $cache->getItem($rand);
-        $cacheItem->set($data);
-        $cache->save($cacheItem);
-        
-        return $this->getWorkbench()->getUrl() . 'api/files' . '/'. OneTimeLinkMiddleware::OTL_FLAG . '/' . $rand;
+        return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, $properties, false);
     }
     
     /**

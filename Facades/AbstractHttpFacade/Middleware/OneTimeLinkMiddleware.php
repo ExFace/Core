@@ -12,13 +12,12 @@ class OneTimeLinkMiddleware implements MiddlewareInterface
 {
     private $facade = null;
     
-    const OTL_FLAG = 'otl';
-    
-    const OTL_CACHE_NAME = '_onetimelink';
-    
-    public function __construct(HttpFileServerFacade $facade)
+    private $otlPathPart = null;
+        
+    public function __construct(HttpFileServerFacade $facade, string $otlPathPart)
     {
         $this->facade = $facade;
+        $this->otlPathPart = $otlPathPart;
     }
     
     /**
@@ -28,34 +27,21 @@ class OneTimeLinkMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $exface = $this->facade->getWorkbench();
+        if ($this->otlPathPart === null || $this->otlPathPart === '') {
+            return $handler->handle($request);
+        }
         $uri = $request->getUri();
         $path = ltrim(StringDataType::substringAfter($uri->getPath(), $this->facade->getUrlRouteDefault()), "/");
         
         $pathParts = explode('/', $path);
-        $otlFlag = urldecode($pathParts[0]);
-        if ($otlFlag !== self::OTL_FLAG) {
+        $otlFlag = urldecode($pathParts[0]);        
+        if ($otlFlag !== $this->otlPathPart) {
            return $handler->handle($request); 
         }
         if (! $ident = $pathParts[1]) {
            return $handler->handle($request);
         }
-        $cacheName = self::OTL_CACHE_NAME;
-        if ($exface->getCache()->hasPool($cacheName)) {
-            $cache = $exface->getCache()->getPool($cacheName, false);
-        } else {
-            return $handler->handle($request);
-        }
-        if ($cache->hasItem($ident) === false) {
-            return $handler->handle($request);
-        }
-        $data = $cache->getItem($ident)->get();
-        $cache->getItem($ident);
-        $objSel = $data['object_alias'];
-        $uid = $data['uid'];
-        $params = $data['params'];
         
-        
-        return $this->facade->createResponseFromValues($objSel, $uid, $params);        
+        return $this->facade->createResponseFromOneTimeLinkIdent($ident);        
     }
 }
