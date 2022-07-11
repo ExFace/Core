@@ -734,6 +734,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     {
         $uxon = parent::exportUxonObject();
         // TODO add properties specific to this widget here
+        if ($this->isBoundToAttribute()) {
+            $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+        }
         if ($this->isCalculated()) {
             $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
         }

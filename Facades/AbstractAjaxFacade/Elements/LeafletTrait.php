@@ -352,6 +352,9 @@ JS;
     
     public function buildJsLeafletPopup(string $titleJs, string $contentJs, string $bindToJs) : string
     {
+        //close button in the popup is hidden as it actually is a link to the root page url with '#close' attached to it
+        //this is not customizable in the options of the popup, so we hide it to prevent jumping out
+        //of the dialog with the actual leaflet
         return <<<JS
 
                         (function() {
@@ -359,14 +362,16 @@ JS;
                             var sContent = (sTitle ? '<h3>' + $titleJs + '</h3>' : '') + $contentJs;
                             if (Array.isArray($bindToJs)){
                                 L.popup({
-                                    className: "exf-map-popup"
+                                    className: "exf-map-popup",
+                                    closeButton: false
                                 })
                                     .setLatLng($bindToJs)
                                     .setContent(sContent)
                                     .openOn({$this->buildJsLeafletVar()});
                             } else {
                                 $bindToJs.bindPopup(sContent, {
-                                    className: "exf-map-popup"
+                                    className: "exf-map-popup",
+                                    closeButton: false
                                 });
                             }
                         })();

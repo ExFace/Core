@@ -37,7 +37,7 @@ class ResultTextContent extends ResultMessage implements ResultTextContentInterf
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\ResultStreamInterface::getMimeType()
      */
-    public function getMimeType($default = null): string
+    public function getMimeType($default = 'text/plain') : string
     {
         if (is_null($this->mimeType)) {
             return $default;

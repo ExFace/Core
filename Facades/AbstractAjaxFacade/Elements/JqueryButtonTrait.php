@@ -681,9 +681,25 @@ JS;
     protected function buildJsClickRunFacadeScript(ActionInterface $action) : string
     {
         $inputEl = $this->getInputElement();
+        $facade = $this->getFacade();
+        $script = $action->buildScript($facade, $inputEl->getWidget());
+        $phs = StringDataType::findPlaceholders($script);
+        $phVals = [];
+        foreach ($phs as $ph) {
+            switch (true) {
+                case $ph === 'widget_id': $phVals[$ph] = $inputEl->getId(); break;
+                case StringDataType::startsWith($ph, 'element_id:', false):
+                    $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
+                    $phVals[$ph] = $facade->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
+            }
+        }
+        if (! empty($phVals)) {
+            $script = StringDataType::replacePlaceholders($script, $phVals);
+        }
+        
         return <<<JS
         
-                {$action->buildScript($inputEl->getId())};
+                {$script};
                 {$this->buildJsTriggerActionEffects($action)};
                 {$this->buildJsCloseDialog()};
 

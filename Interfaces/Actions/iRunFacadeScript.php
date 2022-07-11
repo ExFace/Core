@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 interface iRunFacadeScript extends ActionInterface
 {
@@ -25,17 +26,16 @@ interface iRunFacadeScript extends ActionInterface
     public function getIncludes(FacadeInterface $facade) : array;
 
     /**
-     * Returns valid java script, that executes the action.
-     * The parameter $element_id contains the
-     * java script id of the element the script should be applied to (in general the input widget of the
-     * action).
-     * In the result of this method placeholders are already replaced! How exactly this is achieved
-     * and what else happens to the script is subject of the specific implementation.
+     * Returns java script, that executes the action.
+     * The parameter $facade contains the action is called from and $widget contains the
+     * input widget of the action.
+     * What exactly happens to the script (for example replacing placeholders or not) is
+     * subject of the specific implementation.
      *
-     * @param string $element_id            
-     * @return string valid java script
+     * @param FacadeInterface $facade
+     * @param WidgetInterface $widget
      */
-    public function buildScript($element_id);
+    public function buildScript(FacadeInterface $facade, WidgetInterface $widget);
 
     /**
      * Returns java script code, that needs to be placed outside the actions script.
