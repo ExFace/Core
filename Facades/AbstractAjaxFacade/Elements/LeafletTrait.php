@@ -24,6 +24,7 @@ use exface\Core\Widgets\Parts\Maps\DataPointsLayer;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -98,6 +99,7 @@ trait LeafletTrait
     protected function registerDefaultLayerRenderers()
     {
         $this->addLeafletLayerRenderer([$this, 'buildJsMarkerLayer']);
+        $this->addLeafletLayerRenderer([$this, 'buildJsPathLayer']);
         return;
     }
     
@@ -395,6 +397,166 @@ JS;
                                 return sHtml;
                             })()
 
+JS;
+    }
+    
+    protected function buildJsPathLayer(MapLayerInterface $layer) : ?string
+    {
+        if (! ($layer instanceof DataLinesLayer)) {
+            return null;
+        }
+        
+        /* @var $dataWidget \exface\Core\Widgets\Data */
+        $dataWidget = $layer->getDataWidget();
+        
+        // Render popup (speech bubble) with a list of data row values
+        $popupTableRowsJs = '';
+        $popupCaptionJs = json_encode($layer->getCaption());
+        foreach ($dataWidget->getColumns() as $col) {
+            if ($col->isHidden() === false) {
+                $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+                $hint = json_encode($col->getHint() ?? '');
+                $caption = json_encode($col->getCaption() ?? '');
+                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+                $popupTableRowsJs .= "{
+                    class: \"exf-{$visibility}\",
+                    tooltip: $hint,
+                    caption: $caption,
+                    value: {$formatter->buildJsFormatter("oLine.properties.data['{$col->getDataColumnName()}']")} },";
+            }
+        }
+        
+        $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'oLine');
+        
+        // Add auto-zoom
+        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
+            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
+        }
+        
+        // Generate JS to run on map refresh
+        switch (true) {
+            case $link = $layer->getDataWidgetLink():
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+                if ($layer instanceof DataSelectionMarkerLayer) {
+                    $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
+                } else {
+                    $asIfForAction = null;
+                }
+                $exfRefreshJs = <<<JS
+function() {
+                    var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
+                    var aRows = oData.rows || [];
+                    var aRowsSkipped = [];
+                    
+                    oLayer.clearLayers();
+                    aRows.forEach(function(oRow) {
+                        var fLatFrom = oRow['{$layer->getFromLatitudeColumn()->getDataColumnName()}'];
+                        var fLatTo = oRow['{$layer->getToLatitudeColumn()->getDataColumnName()}'];
+                        var fLngFrom = oRow['{$layer->getFromLongitudeColumn()->getDataColumnName()}'];
+                        var fLngTo = oRow['{$layer->getToLongitudeColumn()->getDataColumnName()}'];
+                        var oLine;
+
+                        switch (true) {
+                            case fLatFrom === null || fLatFrom === undefined:
+                            case fLatTo === null || fLatTo === undefined:
+                            case fLngFrom === null || fLngFrom === undefined:
+                            case fLngTo === null || fLngTo === undefined:
+                                aRowsSkipped.append(oRow);
+                                return;
+                        }
+
+                        oLine = L.polyline([
+                            [fLatFrom, fLngFrom],
+                            [fLatTo, fLngTo]
+                        ], {
+                            color: '{$this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)]}'
+                        });
+                        
+                        oLine.properties = {
+                            layer: {$this->getWidget()->getLayerIndex($layer)},
+                            object: '{$layer->getMetaObject()->getId()}',
+                            data: oRow,
+                        };
+
+                        $showPopupJs
+                        oLayer.addLayer(oLine);
+                    });
+                    
+                    {$autoZoomJs}
+                }
+                
+JS;
+                    break;
+            default:
+                $exfRefreshJs = <<<JS
+function() {
+                    var oParams = {
+                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
+                        element: "{$dataWidget->getId()}",
+                        object: "{$dataWidget->getMetaObject()->getId()}",
+                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
+                        data: {
+                            oId: "{$dataWidget->getMetaObject()->getId()}"
+                        }
+                    };
+                    
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
+                        
+                        var aRowsSkipped = [];
+                        
+                        oLayer.clearLayers();
+                        aRows.forEach(function(oRow) {
+                            var fLatFrom = oRow['{$layer->getFromLatitudeColumn()->getDataColumnName()}'];
+                            var fLatTo = oRow['{$layer->getToLatitudeColumn()->getDataColumnName()}'];
+                            var fLngFrom = oRow['{$layer->getFromLongitudeColumn()->getDataColumnName()}'];
+                            var fLngTo = oRow['{$layer->getToLongitudeColumn()->getDataColumnName()}'];
+                            var oLine;
+
+                            switch (true) {
+                                case fLatFrom === null || fLatFrom === undefined:
+                                case fLatTo === null || fLatTo === undefined:
+                                case fLngFrom === null || fLngFrom === undefined:
+                                case fLngTo === null || fLngTo === undefined:
+                                    aRowsSkipped.append(oRow);
+                                    return;
+                            }
+
+                            oLine = L.polyline([
+                                [fLatFrom, fLngFrom],
+                                [fLatTo, fLngTo]
+                            ], {
+                                color: '{$this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)]}'
+                            });
+
+                            oLine.properties = {
+                                layer: {$this->getWidget()->getLayerIndex($layer)},
+                                object: '{$layer->getMetaObject()->getId()}',
+                                data: oRow,
+                            };
+
+                            $showPopupJs
+                            oLayer.addLayer(oLine);
+                        });
+                        
+                        {$autoZoomJs}
+                        
+                    ")}
+                }
+JS;
+        }
+        
+        return <<<JS
+            (function(){
+                var oLeaflet = {$this->buildJsLeafletVar()};
+                var oLayer = L.featureGroup();
+                
+                oLayer._exfRefresh = $exfRefreshJs;
+                
+                oLeaflet.on('exfRefresh', oLayer._exfRefresh);
+                oLayer._exfRefresh();
+                
+                return oLayer;
+            })()
 JS;
     }
     
