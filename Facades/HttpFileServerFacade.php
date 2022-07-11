@@ -53,6 +53,10 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
  */
 class HttpFileServerFacade extends AbstractHttpFacade
 {    
+    private $otlUrlPathPart = 'otl';
+    
+    private $otlCacheName = '_onetimelink';
+
     /**
      *
      * {@inheritDoc}
@@ -80,10 +84,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $params = [];
         parse_str($uri->getQuery() ?? '', $params);
         
-        return $this->createResponseFromValues($objSel, $uid, $params);        
+        return $this->createResponseFromObjectUid($objSel, $uid, $params);        
     }
     
-    public function createResponseFromValues(string $objSel, string $uid, array $params) : ResponseInterface
+    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params) : ResponseInterface
     {
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
@@ -163,7 +167,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
-        $middleware[] = new OneTimeLinkMiddleware($this);
+        $middleware[] = new OneTimeLinkMiddleware($this, $this->getOtlUrlPathPart());
         return $middleware;
     }
     
@@ -198,7 +202,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         } else {
             return $workbench->getUrl() . ltrim($relativePath, "/");
         }
-    }
+    }    
     
     /**
      *
@@ -212,6 +216,67 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param string $properties
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $properties = null, bool $relativeToSiteRoot = true) : string
+    {
+        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        
+        $exface = $object->getWorkbench();
+        $cacheName = $facade->getOtlCacheName();
+        if ($exface->getCache()->hasPool($cacheName)) {
+            $cache = $exface->getCache()->getPool($cacheName, false);
+        } else {
+            $cache = $exface->getCache()->createDefaultPool($exface, $cacheName, true);
+            $exface->getCache()->addPool($cacheName, $cache);
+        }
+        
+        do {
+            $rand = StringDataType::random(16);
+        } while ($cache->get($rand));
+        
+        $data = [];
+        $data['object_alias'] = $object->getAliasWithNamespace();
+        $data['uid'] = $uid;
+        $params = [];
+        if ($properties) {
+            parse_str($properties, $params);
+        }
+        $data['params'] = $params;
+        
+        $cache->set($rand, $data);
+        
+        $url = $facade->getUrlRouteDefault() . '/' . $facade->getOtlUrlPathPart() . '/' . urlencode($rand);
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
+    {        
+        $exface = $this->getWorkbench();        
+        
+        $cache = $exface->getCache()->getPool($this->otlCacheName);
+        if ($cache->get($ident) === null) {
+            $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
+            return new Response(404);
+        }
+        $data = $cache->get($ident, null);
+        $objSel = $data['object_alias'];
+        $uid = $data['uid'];
+        $params = $data['params'];
+        
+        $response = $this->createResponseFromObjectUid($objSel, $uid, $params);
+        
+        $cache->delete($ident);
+        
+        return $response;
     }
     
     /**
@@ -276,5 +341,23 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $constraint->upsize();
         });
         return $img->encode();
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getOtlCacheName() : string
+    {
+        return $this->otlCacheName;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getOtlUrlPathPart() : string
+    {
+        return $this->otlUrlPathPart;
     }
 }
