@@ -20,6 +20,8 @@ use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
+use Psr\SimpleCache\CacheInterface;
+use exface\Core\DataTypes\UUIDDataType;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -142,12 +144,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 break;
         }
         
-        // Resize images
-        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
-            list($width, $height) = explode('x', $resize);
-            $binary = $this->resizeImage($binary, $width, $height);
-        }
-        
         // Create a response
         if ($colMime !== null) {
             $headers['Content-Type'] = $colMime->getValue(0);
@@ -156,6 +152,25 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
         }
         
+        // Resize images
+        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
+            list($width, $height) = explode('x', $resize);
+            try {
+                $newBinary = $this->resizeImage($binary, $width, $height);
+                $binary = $newBinary;
+            } catch (\Throwable $e) {
+                if ($colFilename !== null) {
+                    $text = $colFilename->getValue(0);
+                    $text = strtoupper(FilePathDataType::findExtension($text));
+                } else {
+                    $text = 'FILE';
+                }                
+                $headers['Content-Type'] = 'image/jpeg';
+                $headers['Content-Disposition'] = 'attachment; filename=placeholder.jpg';
+                $binary = $this->createPlaceholderImage($text, $width, $height);
+            }
+        }
+                        
         return new Response(200, $headers, stream_for($binary ?? $plain));        
     }
     
@@ -226,22 +241,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param bool $relativeToSiteRoot
      * @return string
      */
-    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $properties = null, bool $relativeToSiteRoot = true) : string
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         
         $exface = $object->getWorkbench();
-        $cacheName = $facade->getOtlCacheName();
-        if ($exface->getCache()->hasPool($cacheName)) {
-            $cache = $exface->getCache()->getPool($cacheName, false);
-        } else {
-            $cache = $exface->getCache()->createDefaultPool($exface, $cacheName, true);
-            $exface->getCache()->addPool($cacheName, $cache);
-        }
+        $cache = $facade->getOtlCachePool();
         
-        do {
-            $rand = StringDataType::random(16);
-        } while ($cache->get($rand));
+        $rand = UUIDDataType::generateUuidV4('');
         
         $data = [];
         $data['object_alias'] = $object->getAliasWithNamespace();
@@ -262,7 +269,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     {        
         $exface = $this->getWorkbench();        
         
-        $cache = $exface->getCache()->getPool($this->otlCacheName);
+        $cache = $this->getOtlCachePool();
         if ($cache->get($ident) === null) {
             $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
             return new Response(404);
@@ -343,11 +350,24 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $img->encode();
     }
     
+    protected function createPlaceholderImage (string $text, int $width, int $height)
+    {
+        $img = (new ImageManager())->canvas($width, $height);
+        $posY = $height/2;
+        $posX = $width/2;
+        $img->text($text, $posX, $posY, function($font) {
+            //set style of text
+            $font->file(5);
+            $font->align('center');
+        });
+        return $img->encode();
+    }
+    
     /**
      * 
      * @return string
      */
-    public function getOtlCacheName() : string
+    protected function getOtlCacheName() : string
     {
         return $this->otlCacheName;
     }
@@ -356,8 +376,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * 
      * @return string
      */
-    public function getOtlUrlPathPart() : string
+    protected function getOtlUrlPathPart() : string
     {
         return $this->otlUrlPathPart;
+    }
+    
+    protected function getOtlCachePool() : CacheInterface
+    {
+        return $this->getWorkbench()->getCache()->getPool($this->getOtlCacheName());
     }
 }
