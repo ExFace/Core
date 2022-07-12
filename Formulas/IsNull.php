@@ -5,7 +5,9 @@ namespace exface\Core\Formulas;
 use exface\Core\CommonLogic\Model\Formula;
 
 /**
- * Executes the not operator on the value and returns the result.
+ * Returns TRUE if the passed value is NULL or an empty string and FALSE otherwise.
+ * 
+ * @author Andrej Kabachnik
  */
 class IsNull extends Formula
 {
