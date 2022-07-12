@@ -34,7 +34,7 @@ class OneTimeLink extends \exface\Core\CommonLogic\Model\Formula
         }
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
         
-        return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, $properties, false);
+        return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, false, $properties);
     }
     
     /**
