@@ -226,10 +226,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param bool $relativeToSiteRoot
      * @return string
      */
-    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true) : string
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
+        if ($properties) {
+            $url .= '?'. $properties;
+        }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
     
@@ -244,12 +247,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
-        
-        $exface = $object->getWorkbench();
-        $cache = $facade->getOtlCachePool();
-        
-        $rand = UUIDDataType::generateUuidV4('');
-        
+        $cache = $facade->getOtlCachePool();        
+        $rand = UUIDDataType::generateUuidV4('');        
         $data = [];
         $data['object_alias'] = $object->getAliasWithNamespace();
         $data['uid'] = $uid;
@@ -257,18 +256,20 @@ class HttpFileServerFacade extends AbstractHttpFacade
         if ($properties) {
             parse_str($properties, $params);
         }
-        $data['params'] = $params;
-        
-        $cache->set($rand, $data);
-        
+        $data['params'] = $params;        
+        $cache->set($rand, $data);        
         $url = $facade->getUrlRouteDefault() . '/' . $facade->getOtlUrlPathPart() . '/' . urlencode($rand);
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
     
+    /**
+     * 
+     * @param string $ident
+     * @return ResponseInterface
+     */
     public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
     {        
-        $exface = $this->getWorkbench();        
-        
+        $exface = $this->getWorkbench();
         $cache = $this->getOtlCachePool();
         if ($cache->get($ident) === null) {
             $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
@@ -277,12 +278,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $data = $cache->get($ident, null);
         $objSel = $data['object_alias'];
         $uid = $data['uid'];
-        $params = $data['params'];
-        
+        $params = $data['params'];        
         $response = $this->createResponseFromObjectUid($objSel, $uid, $params);
-        
-        $cache->delete($ident);
-        
+        $cache->delete($ident);        
         return $response;
     }
     
