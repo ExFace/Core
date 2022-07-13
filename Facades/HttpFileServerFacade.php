@@ -220,10 +220,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }    
     
     /**
-     *
+     * 
      * @param MetaObjectInterface $object
      * @param string $uid
      * @param bool $relativeToSiteRoot
+     * @param string $properties
      * @return string
      */
     public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
@@ -240,8 +241,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * 
      * @param MetaObjectInterface $object
      * @param string $uid
-     * @param string $properties
      * @param bool $relativeToSiteRoot
+     * @param string $properties
      * @return string
      */
     public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
