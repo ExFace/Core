@@ -19,6 +19,9 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
+use Psr\SimpleCache\CacheInterface;
+use exface\Core\DataTypes\UUIDDataType;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -52,6 +55,10 @@ use exface\Core\Behaviors\FileBehavior;
  */
 class HttpFileServerFacade extends AbstractHttpFacade
 {    
+    private $otlUrlPathPart = 'otl';
+    
+    private $otlCacheName = '_onetimelink';
+
     /**
      *
      * {@inheritDoc}
@@ -75,6 +82,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $pathParts = explode('/', $path);
         $objSel = urldecode($pathParts[0]);
         $uid = urldecode($pathParts[1]);
+        // See if there are additional parameters
+        $params = [];
+        parse_str($uri->getQuery() ?? '', $params);
+        
+        return $this->createResponseFromObjectUid($objSel, $uid, $params);        
+    }
+    
+    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params) : ResponseInterface
+    {
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
         }
@@ -128,17 +144,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 break;
         }
         
-        
-        // See if there are additional parameters 
-        $params = [];
-        parse_str($uri->getQuery() ?? '', $params);
-        
-        // Resize images
-        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
-            list($width, $height) = explode('x', $resize);
-            $binary = $this->resizeImage($binary, $width, $height);
-        }
-        
         // Create a response
         if ($colMime !== null) {
             $headers['Content-Type'] = $colMime->getValue(0);
@@ -147,7 +152,38 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
         }
         
-        return new Response(200, $headers, stream_for($binary ?? $plain));
+        // Resize images
+        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
+            list($width, $height) = explode('x', $resize);
+            try {
+                $newBinary = $this->resizeImage($binary, $width, $height);
+                $binary = $newBinary;
+            } catch (\Throwable $e) {
+                if ($colFilename !== null) {
+                    $text = $colFilename->getValue(0);
+                    $text = strtoupper(FilePathDataType::findExtension($text));
+                } else {
+                    $text = 'FILE';
+                }                
+                $headers['Content-Type'] = 'image/jpeg';
+                $headers['Content-Disposition'] = 'attachment; filename=placeholder.jpg';
+                $binary = $this->createPlaceholderImage($text, $width, $height);
+            }
+        }
+                        
+        return new Response(200, $headers, stream_for($binary ?? $plain));        
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getMiddleware()
+     */
+    protected function getMiddleware() : array
+    {
+        $middleware = parent::getMiddleware();
+        $middleware[] = new OneTimeLinkMiddleware($this, $this->getOtlUrlPathPart());
+        return $middleware;
     }
     
     /**
@@ -181,20 +217,72 @@ class HttpFileServerFacade extends AbstractHttpFacade
         } else {
             return $workbench->getUrl() . ltrim($relativePath, "/");
         }
-    }
+    }    
     
     /**
-     *
+     * 
      * @param MetaObjectInterface $object
      * @param string $uid
      * @param bool $relativeToSiteRoot
+     * @param string $properties
      * @return string
      */
-    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true) : string
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
+        if ($properties) {
+            $url .= '?'. $properties;
+        }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param bool $relativeToSiteRoot
+     * @param string $properties
+     * @return string
+     */
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
+    {
+        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        $cache = $facade->getOtlCachePool();        
+        $rand = UUIDDataType::generateUuidV4('');        
+        $data = [];
+        $data['object_alias'] = $object->getAliasWithNamespace();
+        $data['uid'] = $uid;
+        $params = [];
+        if ($properties) {
+            parse_str($properties, $params);
+        }
+        $data['params'] = $params;        
+        $cache->set($rand, $data);        
+        $url = $facade->getUrlRouteDefault() . '/' . $facade->getOtlUrlPathPart() . '/' . urlencode($rand);
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    /**
+     * 
+     * @param string $ident
+     * @return ResponseInterface
+     */
+    public function createResponseFromOneTimeLinkIdent(string $ident) : ResponseInterface
+    {        
+        $exface = $this->getWorkbench();
+        $cache = $this->getOtlCachePool();
+        if ($cache->get($ident) === null) {
+            $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
+            return new Response(404);
+        }
+        $data = $cache->get($ident, null);
+        $objSel = $data['object_alias'];
+        $uid = $data['uid'];
+        $params = $data['params'];        
+        $response = $this->createResponseFromObjectUid($objSel, $uid, $params);
+        $cache->delete($ident);        
+        return $response;
     }
     
     /**
@@ -259,5 +347,41 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $constraint->upsize();
         });
         return $img->encode();
+    }
+    
+    protected function createPlaceholderImage (string $text, int $width, int $height)
+    {
+        $img = (new ImageManager())->canvas($width, $height);
+        $posY = $height/2;
+        $posX = $width/2;
+        $img->text($text, $posX, $posY, function($font) {
+            //set style of text
+            $font->file(5);
+            $font->align('center');
+        });
+        return $img->encode();
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getOtlCacheName() : string
+    {
+        return $this->otlCacheName;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getOtlUrlPathPart() : string
+    {
+        return $this->otlUrlPathPart;
+    }
+    
+    protected function getOtlCachePool() : CacheInterface
+    {
+        return $this->getWorkbench()->getCache()->getPool($this->getOtlCacheName());
     }
 }
