@@ -8,23 +8,24 @@ use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\FormulaError;
 
 /**
- * Produces a OneTimeLink for a file fromn the given object and uid.
+ * Produces a a link for a file fromn the given object and uid.
  * Opening that link will load the file with the given properties from the server.
+ * If the fourth parameter is set to `true` the link will only work one time but without authentification.
  * 
  * E.g. 
- * - `=OneTimeLink('example.App.Image', '1', 'resize=300x180')` => https://myserver.com/mypath/api/files/otl/1234567890ACBDFE
+ * - `=FileLink('example.App.Image', '1', 'resize=300x180', true)` => https://myserver.com/mypath/api/files/otl/1234567890ACBDFE
  *
  * @author Ralf Mulansky
  *        
  */
-class OneTimeLink extends \exface\Core\CommonLogic\Model\Formula
+class FileLink extends \exface\Core\CommonLogic\Model\Formula
 {
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run(string $objectAlias = '', string $uid = '', string $properties = null)
+    public function run(string $objectAlias = '', string $uid = '', string $properties = null, bool $makeOneTimeLink = false)
     {
         if ($objectAlias === '') {
             throw new FormulaError('Can not evaluate OneTimeLink formula. Object alias with namespace is needed!');
@@ -33,8 +34,11 @@ class OneTimeLink extends \exface\Core\CommonLogic\Model\Formula
             throw new FormulaError('Can not evaluate OneTimeLink formula. Uid is needed!');
         }
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
-        
-        return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, false, $properties);
+
+        if ($makeOneTimeLink) {
+            return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, false, $properties);
+        }
+        return HttpFileServerFacade::buildUrlToDownloadData($object, $uid, false, $properties);
     }
     
     /**
