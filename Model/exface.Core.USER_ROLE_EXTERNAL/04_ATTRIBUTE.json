@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-04-07 09:01:50",
-            "MODIFIED_ON": "2020-05-04 06:56:15",
+            "MODIFIED_ON": "2022-07-13 15:28:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea78ae6a4bbd72ac460205857feb80",
@@ -203,7 +203,7 @@
             "LABELFLAG": 1,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
-            "EDITABLEFLAG": 0,
+            "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
             "RELATED_OBJ": "",
             "SORTERPOS": null,
@@ -219,7 +219,7 @@
         },
         {
             "CREATED_ON": "2020-04-07 09:01:50",
-            "MODIFIED_ON": "2020-05-04 06:56:15",
+            "MODIFIED_ON": "2022-07-13 15:28:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea78ae6a4bf49fac460205857feb80",
@@ -249,7 +249,7 @@
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
-            "EDITABLEFLAG": 0,
+            "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
             "RELATED_OBJ": "",
             "SORTERPOS": null,
@@ -265,7 +265,7 @@
         },
         {
             "CREATED_ON": "2020-04-07 09:01:50",
-            "MODIFIED_ON": "2020-05-04 06:56:15",
+            "MODIFIED_ON": "2022-07-13 15:28:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea78ae6a4c1bd6ac460205857feb80",
@@ -309,7 +309,7 @@
         },
         {
             "CREATED_ON": "2020-05-04 06:54:28",
-            "MODIFIED_ON": "2020-05-04 06:56:15",
+            "MODIFIED_ON": "2022-07-13 15:28:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8dd3fb383a6997940205857feb80",
@@ -339,7 +339,7 @@
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
-            "EDITABLEFLAG": 0,
+            "EDITABLEFLAG": 1,
             "REQUIREDFLAG": 1,
             "RELATED_OBJ": "0x11ea860bd6c82fa497940205857feb80",
             "SORTERPOS": null,
