@@ -91,13 +91,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Imports data from matching columns of the given sheet.
      * If the given sheet has the same columns, as this one, their
-     * values will be copied to this sheet. If this sheet has columns with formulas, they will automatically get calculated
-     * for the imported rows.
+     * values will be copied to this sheet. If this sheet has columns with formulas, they will get calculated
+     * for the imported rows if `calculateFormulas` is `true`.
      *
      * @param DataSheetInterface $other_sheet            
      * @return DataSheetInterface
      */
-    public function importRows(DataSheetInterface $other_sheet);
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas);
 
     /**
      * Returns the values a column of the data sheet as an array
