@@ -233,7 +233,7 @@ class PrintTemplate extends AbstractAction
         if ($this->filename === null){
             return 'print_' . date('Y_m_d_his', time()) . $this->getFileExtensionDefault();
         }
-        return $tplRenderer->render($this->filename);
+        return FilePathDataType::sanitizeFilename($tplRenderer->render($this->filename));
     }
     
     /**

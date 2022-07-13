@@ -235,7 +235,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::importRows()
      */
-    public function importRows(DataSheetInterface $other_sheet)
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true)
     {
         if (! $this->getMetaObject()->isExactly($other_sheet->getMetaObject()->getAliasWithNamespace())) {
             throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for identical objects!', '6T5V1DR');
@@ -257,7 +257,7 @@ class DataSheet implements DataSheetInterface
         
         $columns_with_formulas = array();
         foreach ($this->getColumns() as $this_col) {
-            if ($this_col->isFormula()) {
+            if ($this_col->isFormula() && $calculateFormulas === true) {
                 $columns_with_formulas[] = $this_col->getName();
                 continue;
             }
