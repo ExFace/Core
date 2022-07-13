@@ -11,7 +11,6 @@ use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
