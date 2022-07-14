@@ -25,6 +25,7 @@ use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
+use exface\Core\Widgets\Image;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -413,17 +414,22 @@ JS;
         $popupTableRowsJs = '';
         $popupCaptionJs = json_encode($layer->getCaption());
         foreach ($dataWidget->getColumns() as $col) {
-            if ($col->isHidden() === false) {
-                $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-                $hint = json_encode($col->getHint() ?? '');
-                $caption = json_encode($col->getCaption() ?? '');
-                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-                $popupTableRowsJs .= "{
-                    class: \"exf-{$visibility}\",
-                    tooltip: $hint,
-                    caption: $caption,
-                    value: {$formatter->buildJsFormatter("oLine.properties.data['{$col->getDataColumnName()}']")} },";
+            if ($col->isHidden() === true) {
+                continue;
             }
+            if ($col->getCellWidget() instanceof Image) {
+                continue;
+            }
+            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $hint = json_encode($col->getHint() ?? '');
+            $caption = json_encode($col->getCaption() ?? '');
+            $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $popupTableRowsJs .= "{
+                class: \"exf-{$visibility}\",
+                tooltip: $hint,
+                caption: $caption,
+                value: {$formatter->buildJsFormatter("oLine.properties.data['{$col->getDataColumnName()}']")} },";
+            
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'oLine');
@@ -578,17 +584,21 @@ JS;
         $popupTableRowsJs = '';
         $popupCaptionJs = json_encode($layer->getCaption());
         foreach ($dataWidget->getColumns() as $col) {
-            if ($col->isHidden() === false) {
-                $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-                $hint = json_encode($col->getHint() ?? '');
-                $caption = json_encode($col->getCaption() ?? '');
-                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
-                $popupTableRowsJs .= "{
-                    class: \"exf-{$visibility}\", 
-                    tooltip: $hint, 
-                    caption: $caption, 
-                    value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+            if ($col->isHidden() === true) {
+                continue;
             }
+            if ($col->getCellWidget() instanceof Image) {
+                continue;
+            }
+            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $hint = json_encode($col->getHint() ?? '');
+            $caption = json_encode($col->getCaption() ?? '');
+            $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $popupTableRowsJs .= "{
+                class: \"exf-{$visibility}\", 
+                tooltip: $hint, 
+                caption: $caption, 
+                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
