@@ -208,6 +208,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @uxon-property SQL_JOIN_ON
      * @uxon-target attribute
      * @uxon-type string
+     * @uxon-template [#~left_alias#].col1 = [#~right_alias#].col3
      */
     const DAP_SQL_JOIN_ON = 'SQL_JOIN_ON';
     
