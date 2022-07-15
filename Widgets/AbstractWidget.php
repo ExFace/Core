@@ -48,6 +48,44 @@ abstract class AbstractWidget implements WidgetInterface
 	}
 	use iHaveCaptionTrait;
 	use iHaveVisibilityTrait;
+	
+	/**
+	 * Reset the widget to the initial state - i.e. removing any user changes
+	 * 
+	 * If the widget was prefilled, it will be resetted to the prefill data.
+	 *
+	 * @uxon-property reset
+	 *
+	 * @var string
+	 */
+	const FUNCTION_RESET = 'reset';
+	
+	/**
+	 * Refresh the widget - in particular reload data from the server or widget links
+	 *
+	 * @uxon-property refresh
+	 *
+	 * @var string
+	 */
+	const FUNCTION_REFRESH = 'refresh';
+	
+	/**
+	 * Enable the widget if disabled
+	 *
+	 * @uxon-property enable
+	 *
+	 * @var string
+	 */
+	const FUNCTION_ENABLE = 'enable';
+	
+	/**
+	 * Disable the widget if enabled
+	 *
+	 * @uxon-property disable
+	 *
+	 * @var string
+	 */
+	const FUNCTION_DISABLE = 'disable';
 
     private $id_specified = null;
 
