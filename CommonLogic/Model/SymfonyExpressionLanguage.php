@@ -73,6 +73,8 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         // from both values separately) used with the relation path `location`, than `lat` needs
         // to be replaced with `location__lat` and `lng` with `location__lng` to match the column
         // names in the provided data row.
+        
+        //TODO parse the values before evaluating the column?
         $attrsArgs = $formula->getRequiredAttributes(false);
         $attrsRequired = $formula->getRequiredAttributes(true);
         foreach ($attrsRequired as $i => $attrAlias) {

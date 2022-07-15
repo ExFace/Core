@@ -257,6 +257,7 @@ class DataSheet implements DataSheetInterface
         
         $columns_with_formulas = array();
         foreach ($this->getColumns() as $this_col) {
+            // calculate formulas again, not regarding if the sheet importing to already has values
             if ($this_col->isFormula() && $calculateFormulas === true) {
                 $columns_with_formulas[] = $this_col->getName();
                 continue;
@@ -267,6 +268,10 @@ class DataSheet implements DataSheetInterface
                     throw new DataSheetImportRowError($this, 'Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
                 }
                 $this_col->setValues($other_col->getValues(false));
+            }
+            // if the column is formula and still has empty values, add it to columns to be calculated again
+            if ($this_col->isFormula() && $this_col->hasEmptyValues()) {                
+                $columns_with_formulas[] = $this_col->getName();
             }
         }
         
