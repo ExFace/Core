@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -1000,6 +1001,16 @@ JS;
      */
     public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
     {
+        switch (true) {
+            case $functionName === AbstractWidget::FUNCTION_REFRESH:
+                return $this->buildJsRefresh();
+            case $functionName === AbstractWidget::FUNCTION_RESET:
+                return $this->buildJsResetter();
+            case $functionName === AbstractWidget::FUNCTION_ENABLE:
+                return $this->buildJsEnabler();
+            case $functionName === AbstractWidget::FUNCTION_DISABLE:
+                return $this->buildJsDisabler();
+        }
         throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }
 }
