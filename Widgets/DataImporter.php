@@ -451,4 +451,14 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     {
         throw new NotImplementedError('Cannot set values for ' . $this->getWidgetType() . ': not implemented!');
     }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'DataButton';
+    }
 }
