@@ -473,7 +473,7 @@ JS;
         }
         
         if ($widget->hasCustomThumbnails()) {
-            $thumbJs = "oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
+            $thumbJs = "'{$base}' + oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
         } else {
             // If there is no explicit thumbnail URL column, use the uid to generate a URL to the
             // HttpFileServerFacade. 
