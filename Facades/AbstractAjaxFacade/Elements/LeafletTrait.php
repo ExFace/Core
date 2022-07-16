@@ -467,7 +467,7 @@ function() {
                             case fLatTo === null || fLatTo === undefined:
                             case fLngFrom === null || fLngFrom === undefined:
                             case fLngTo === null || fLngTo === undefined:
-                                aRowsSkipped.append(oRow);
+                                aRowsSkipped.push(oRow);
                                 return;
                         }
 
@@ -523,7 +523,7 @@ function() {
                                 case fLatTo === null || fLatTo === undefined:
                                 case fLngFrom === null || fLngFrom === undefined:
                                 case fLngTo === null || fLngTo === undefined:
-                                    aRowsSkipped.append(oRow);
+                                    aRowsSkipped.push(oRow);
                                     return;
                             }
 
