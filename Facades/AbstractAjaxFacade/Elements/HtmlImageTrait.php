@@ -39,7 +39,7 @@ trait HtmlImageTrait
                 $style .= 'float: right';
         }
         
-        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" />';
+        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" alt="" title=' . $this->escapeString($this->getWidget()->getHint(), true, true) . '/>';
         return $output;
     }
     
@@ -80,5 +80,10 @@ JS;
             $value_js = "({$value_js} ? '{$base}' : '') + {$value_js}";
         }
         return "$('#{$this->getId()}').attr('src', {$value_js})";
+    }
+    
+    protected function buildJsImgSrcGetter() : string
+    {
+        return "$('#{$this->getId()}').attr('src')";
     }
 }
