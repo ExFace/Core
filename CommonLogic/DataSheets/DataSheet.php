@@ -2862,8 +2862,11 @@ class DataSheet implements DataSheetInterface
             if (in_array($thisCol, $excludeColumns)) {
                 continue;
             }
-            $otherCol = $otherSheet->getColumns()->get($thisCol->getName());
-            $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
+            if ($otherCol = $otherSheet->getColumns()->get($thisCol->getName())) {
+                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
+            } else {
+                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+            }
         }
         $diffIdxs = array_unique($diffIdxs);
         sort($diffIdxs);
