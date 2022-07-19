@@ -3,7 +3,7 @@ namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use Monolog\Logger;
+use exface\Core\CommonLogic\Log\Logger;
 
 /**
  * Exception thrown if a value required for some operation on the data sheet is missing 
