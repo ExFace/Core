@@ -23,6 +23,9 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
+use exface\Core\Interfaces\Events\TaskEventInterface;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Interfaces\Events\ActionEventInterface;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -113,13 +116,17 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $messageUxons = null;
     
-    private $notifyIfAttributesChange = [];
+    private $notifyIfAttributesChange = null;
     
     private $notifyIfDataMatchesConditionGroupUxon = null;
     
     private $ignoreDataSheets = [];
     
     private $errorIfNotSent = false;
+    
+    private $action_alias = null;
+    
+    private $useActionInputData = false;
     
     /**
      * 
@@ -189,33 +196,48 @@ class NotifyingBehavior extends AbstractBehavior
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        if ($event instanceof ActionEventInterface && ( ! $this->getActionAlias() || ! $event->getAction()->isExactly($this->getActionAlias()))) {
+            return;
+        }
         
         $dataSheet = null;
-        if ($event instanceof DataSheetEventInterface) {
-            $dataSheet = $event->getDataSheet();
-            if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
-                return;
-            }
-            
-            if (in_array($dataSheet, $this->ignoreDataSheets)) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
-                return;
-            }
-            
-            if ($this->hasRestrictionConditions()) {
-                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
-                if ($dataSheet->isEmpty()) {
-                    $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
-                    return;
+        switch (true) {
+            case $event instanceof DataSheetEventInterface:
+                $dataSheet = $event->getDataSheet();
+                break;
+            case $event instanceof ActionEventInterface && $this->getActionAlias() && $event->getAction()->isExactly($this->getActionAlias()):
+                if ($this->getUseInputData() && $event instanceof TaskEventInterface) {
+                    $action = $event->getAction();
+                    $dataSheet = $action->getInputDataSheet($event->getTask());
+                } elseif ($event instanceof ResultDataInterface) {
+                    $dataSheet = $event->getData();
                 }
-            }
-        } else {
-            // Don't send anything if the event has data restrictions, but no data!
-            if ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange()) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+                break;               
+        }
+        
+        // Don't send anything if the event has data restrictions, but no data!
+        if (! $dataSheet && ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange())) {
+            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+            return;
+        }
+        
+        if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
+        if (in_array($dataSheet, $this->ignoreDataSheets)) {
+            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
+            return;
+        }
+        
+        if ($this->hasRestrictionConditions()) {
+            $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
+            if ($dataSheet->isEmpty()) {
+                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
                 return;
             }
         }
+        
         
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
@@ -443,5 +465,54 @@ class NotifyingBehavior extends AbstractBehavior
     {
         $this->errorIfNotSent = $value;
         return $this;
+    }
+    
+    /**
+     * Specifies the action the beahvior should be performed for by it's fully qualified alias (with namespace!).
+     *
+     * @uxon-property action_alias
+     * @uxon-type metamodel:action
+     *
+     * @param string $value
+     * @return NotifyingBehavior
+     */
+    public function setActionAlias($value) : NotifyingBehavior
+    {
+        $this->action_alias = $value === '' ? null : $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getActionAlias() : ?string
+    {
+        return $this->action_alias;
+    }
+    
+    /**
+     * Set to TRUE to use the action input data to check against the data matches conditions
+     *
+     * @uxon-property use_action_input_data
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    protected function setUseActionInputData(bool $value) : NotifyingBehavior
+    {
+        $this->useActionInputData = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getUseInputData() : bool
+    {
+        return $this->useActionInputData;
     }
 }

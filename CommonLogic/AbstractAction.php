@@ -1059,7 +1059,7 @@ abstract class AbstractAction implements ActionInterface
      * @throws ActionInputMissingError if neither input data nor object-binding found in task or the action itself
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
+    public function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
         // Get the current input data
         if ($task->hasInputData()) {
