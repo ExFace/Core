@@ -205,10 +205,12 @@ class NotifyingBehavior extends AbstractBehavior
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
                 break;
-            case $event instanceof ActionEventInterface && $this->getActionAlias() && $event->getAction()->isExactly($this->getActionAlias()):
-                if ($this->getUseInputData() && $event instanceof TaskEventInterface) {
-                    $action = $event->getAction();
-                    $dataSheet = $action->getInputDataSheet($event->getTask());
+            case $event instanceof ActionEventInterface:
+                if ($this->getUseInputData()) {
+                    if ($event instanceof TaskEventInterface) {
+                        $action = $event->getAction();
+                        $dataSheet = $action->getInputDataSheet($event->getTask());
+                    }
                 } elseif ($event instanceof ResultDataInterface) {
                     $dataSheet = $event->getData();
                 }
