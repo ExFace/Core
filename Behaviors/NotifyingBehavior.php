@@ -223,16 +223,16 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
-        if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
+        if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
-        if (in_array($dataSheet, $this->ignoreDataSheets)) {
+        if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
             return;
         }
         
-        if ($this->hasRestrictionConditions()) {
+        if ($dataSheet && $this->hasRestrictionConditions()) {
             $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
             if ($dataSheet->isEmpty()) {
                 $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
