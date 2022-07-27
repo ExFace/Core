@@ -101,8 +101,6 @@ class PrintTemplate extends AbstractAction
     
     private $mimeType = null;
     
-    private $pathname = null;
-    
     private $templatePath = null;
     
     private $template = null;
@@ -304,14 +302,11 @@ class PrintTemplate extends AbstractAction
      */
     protected function getFilePathAbsolute(TemplateRendererInterface $tplRenderer) : string
     {
-        if (is_null($this->pathname)) {
-            $filemanager = $this->getWorkbench()->filemanager();
-            $this->pathname = Filemanager::pathJoin([
-                $filemanager->getPathToCacheFolder(),
-                $this->getFilename($tplRenderer)
-            ]);
-        }
-        return $this->pathname;
+        $filemanager = $this->getWorkbench()->filemanager();
+        return Filemanager::pathJoin([
+            $filemanager->getPathToCacheFolder(),
+            $this->getFilename($tplRenderer)
+        ]);
     }
     
     /**
