@@ -21,6 +21,8 @@ use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\CommonLogic\Tasks\ResultMessage;
 use exface\Core\Factories\MessageFactory;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -554,5 +556,17 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             }
         }
         return $contains;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon->setProperty('actions', UxonObject::fromArray($this->getActions()));
+        return $uxon;
     }
 }
