@@ -24,6 +24,8 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     
     private $title = null;
     
+    private $attachmentPath = null;
+    
     /**
      * 
      * @throws RuntimeException
@@ -116,6 +118,30 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     public function setTitle(string $value) : NotificationMessage
     {
         $this->title = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getAttachmentPath() : ?string
+    {
+        return $this->attachmentPath;
+    }
+    
+    /**
+     * The path to a file on the filesystem that should be appended to the message (works for e-mail messages so far)
+     *
+     * @uxon-property attachment_path
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return NotificationMessage
+     */
+    public function setAttachmentPath(string $value) : NotificationMessage
+    {
+        $this->attachmentPath = $value;
         return $this;
     }
 }
