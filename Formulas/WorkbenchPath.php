@@ -24,10 +24,14 @@ class WorkbenchPath extends \exface\Core\CommonLogic\Model\Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run(string $string = null)
+    public function run(string $string = null, $separator = null)
     {
         $string = str_replace('/', DIRECTORY_SEPARATOR, trim($string ?? ''));
-        return $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . $string;
+        $string = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . $string;
+        if ($separator) {
+            $string = str_replace(DIRECTORY_SEPARATOR, $separator, $string);
+        }
+        return $string;
     }
     
     /**
