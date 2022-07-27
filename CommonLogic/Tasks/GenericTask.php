@@ -237,6 +237,9 @@ class GenericTask implements TaskInterface
                 $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
             } elseif ($this->isTriggeredOnPage()) {
                 $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
+            } else if ($this->hasParameter('meta_object')) {
+                $this->objectSelector = new MetaObjectSelector($this->getWorkbench(), $this->getParameter('meta_object'));
+                $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
             }
         }
         return $this->object;
