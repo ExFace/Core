@@ -645,7 +645,7 @@ abstract class AbstractAction implements ActionInterface
         }
         $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
-        if (empty($this->getInputMappers())){
+        if (! empty($this->getInputMappers())){
             $inner_uxon = new UxonObject();
             foreach ($this->getInputMappers() as $nr => $check){
                 $inner_uxon->setProperty($nr, $check->exportUxonObject());
@@ -653,7 +653,7 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('input_mappers', $inner_uxon);
         }
         
-        if (empty($this->getOutputMappers())){
+        if (! empty($this->getOutputMappers())){
             $inner_uxon = new UxonObject();
             foreach ($this->getOutputMappers() as $nr => $check){
                 $inner_uxon->setProperty($nr, $check->exportUxonObject());
@@ -661,7 +661,7 @@ abstract class AbstractAction implements ActionInterface
             $uxon->setProperty('output_mappers', $inner_uxon);
         }
         
-        if (empty($this->getInputChecks())){
+        if (! empty($this->getInputChecks())){
             $inner_uxon = new UxonObject();
             foreach ($this->getInputChecks() as $nr => $check){
                 $inner_uxon->setProperty($nr, $check->exportUxonObject());
