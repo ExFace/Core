@@ -268,7 +268,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::getInputDataSheet()
      */
-    protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
+    public function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
         $sheet = parent::getInputDataSheet($task);
         

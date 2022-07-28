@@ -6,23 +6,20 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Communication\Messages\NotificationMessage;
-use exface\Core\Templates\BracketHashStringTemplateRenderer;
-use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\Templates\Placeholders\ConfigPlaceholders;
-use exface\Core\Templates\Placeholders\TranslationPlaceholders;
-use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
-use exface\Core\Templates\Placeholders\FormulaPlaceholders;
-use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
-use exface\Core\Communication\Messages\Envelope;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
+use exface\Core\Interfaces\Events\TaskEventInterface;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Interfaces\Events\ActionEventInterface;
+use exface\Core\CommonLogic\Traits\iSendNotificationsTrait;
+use exface\Core\Interfaces\iSendNotifications;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -107,19 +104,38 @@ use exface\Core\Exceptions\Communication\CommunicationNotSentError;
  * @author Andrej Kabachnik
  *
  */
-class NotifyingBehavior extends AbstractBehavior
+class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
 {
+    use iSendNotificationsTrait;
+    
     private $notifyOn = null;
-    
-    private $messageUxons = null;
-    
-    private $notifyIfAttributesChange = [];
+        
+    private $notifyIfAttributesChange = null;
     
     private $notifyIfDataMatchesConditionGroupUxon = null;
     
     private $ignoreDataSheets = [];
     
     private $errorIfNotSent = false;
+    
+    private $action_alias = null;
+    
+    private $useActionInputData = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        //skip import of `disabled` property because it depends on `notify_on_event` being set
+        //so we import it after all other properties got imported
+        parent::importUxonObject($uxon, ['disabled']);
+        if ($uxon->hasProperty('disabled')) {
+            $this->setDisabled($uxon->getProperty('disabled'));
+        }
+    }
     
     /**
      * 
@@ -189,37 +205,53 @@ class NotifyingBehavior extends AbstractBehavior
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        if ($event instanceof ActionEventInterface && ( ! $this->getActionAlias() || ! $event->getAction()->isExactly($this->getActionAlias()))) {
+            return;
+        }
         
         $dataSheet = null;
-        if ($event instanceof DataSheetEventInterface) {
-            $dataSheet = $event->getDataSheet();
-            if (! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
-                return;
-            }
-            
-            if (in_array($dataSheet, $this->ignoreDataSheets)) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
-                return;
-            }
-            
-            if ($this->hasRestrictionConditions()) {
-                $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
-                if ($dataSheet->isEmpty()) {
-                    $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
-                    return;
+        switch (true) {
+            case $event instanceof DataSheetEventInterface:
+                $dataSheet = $event->getDataSheet();
+                break;
+            case $event instanceof ActionEventInterface:
+                if ($this->getUseInputData()) {
+                    if ($event instanceof TaskEventInterface) {
+                        $action = $event->getAction();
+                        $dataSheet = $action->getInputDataSheet($event->getTask());
+                    }
+                } elseif ($event instanceof ResultDataInterface) {
+                    $dataSheet = $event->getData();
                 }
-            }
-        } else {
-            // Don't send anything if the event has data restrictions, but no data!
-            if ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange()) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+                break;               
+        }
+        
+        // Don't send anything if the event has data restrictions, but no data!
+        if (! $dataSheet && ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange())) {
+            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+            return;
+        }
+        
+        if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
+            return;
+        }
+        
+        if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
+            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
+            return;
+        }
+        
+        if ($dataSheet && $this->hasRestrictionConditions()) {
+            $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
+            if ($dataSheet->isEmpty()) {
+                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
                 return;
             }
-        }
+        }        
         
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
-            foreach ($this->getNotificationEnvelopes($event, $dataSheet) as $envelope)
+            foreach ($this->getNotificationEnvelopes($dataSheet) as $envelope)
             {
                 $communicator->send($envelope);
             }
@@ -289,73 +321,7 @@ class NotifyingBehavior extends AbstractBehavior
         return $this;
     }
 
-    /**
-     * 
-     * @return CommunicationMessageInterface[]
-     */
-    protected function getNotificationEnvelopes(EventInterface $event, DataSheetInterface $dataSheet = null) : array
-    {
-        $messages = [];
-        foreach ($this->messageUxons as $uxon) {
-            $json = $uxon->toJson();
-            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-            $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
-            $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
-            $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
-            switch (true) {
-                case $dataSheet !== null:
-                    foreach (array_keys($dataSheet->getRows()) as $rowNo) {
-                        $rowRenderer = clone $renderer;
-                        $rowRenderer->addPlaceholder(
-                            (new DataRowPlaceholders($dataSheet, $rowNo, '~data:'))
-                            ->setSanitizeAsUxon(true)
-                        );
-                        $rowRenderer->addPlaceholder(
-                            (new FormulaPlaceholders($this->getWorkbench(), $dataSheet, $rowNo))
-                            //->setSanitizeAsUxon(true)
-                        );
-                        $renderedJson = $rowRenderer->render($json);
-                        $renderedUxon = UxonObject::fromJson($renderedJson);
-                        $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
-                    }
-                    break;
-                default:
-                    $renderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
-                    $renderedUxon = UxonObject::fromJson($renderer->render($json));
-                    $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
-            }
-        }
-            
-        return $messages;
-    }
     
-    /**
-     * Array of messages to send - each with a separate message model: channel, recipients, etc.
-     * 
-     * You can use the following placeholders inside any message model - as recipient, 
-     * message subject - anywhere:
-     * 
-     * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
-     * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key` 
-     * from the given app
-     * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
-     * for which the notification was triggered - only works with notification on data sheet events!
-     * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
-     * This means, static formulas will always work, while data-driven formulas will only work on data sheet
-     * events!
-     * 
-     * @uxon-property notifications
-     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template [{"channel": ""}]
-     * 
-     * @param UxonObject $arrayOfMessages
-     * @return NotifyingBehavior
-     */
-    protected function setNotifications(UxonObject $arrayOfMessages) : NotifyingBehavior
-    {
-        $this->messageUxons = $arrayOfMessages;
-        return $this;
-    }
     
     protected function getNotifyIfAttributesChange() : array
     {
@@ -443,5 +409,54 @@ class NotifyingBehavior extends AbstractBehavior
     {
         $this->errorIfNotSent = $value;
         return $this;
+    }
+    
+    /**
+     * Specifies the action the beahvior should be performed for by it's fully qualified alias (with namespace!).
+     *
+     * @uxon-property action_alias
+     * @uxon-type metamodel:action
+     *
+     * @param string $value
+     * @return NotifyingBehavior
+     */
+    public function setActionAlias($value) : NotifyingBehavior
+    {
+        $this->action_alias = $value === '' ? null : $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getActionAlias() : ?string
+    {
+        return $this->action_alias;
+    }
+    
+    /**
+     * Set to TRUE to use the action input data to check against the data matches conditions
+     *
+     * @uxon-property use_action_input_data
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    protected function setUseActionInputData(bool $value) : NotifyingBehavior
+    {
+        $this->useActionInputData = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getUseInputData() : bool
+    {
+        return $this->useActionInputData;
     }
 }

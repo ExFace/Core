@@ -35,7 +35,9 @@ class EmailMessage extends TextMessage
     
     private $replyTo = null;
     
-    private $userEmailAttributeAlias = null;
+    private $userEmailAttributeAlias = null;    
+    
+    private $attachmentPath = null;
     
     /**
      *
@@ -321,6 +323,30 @@ class EmailMessage extends TextMessage
     public function setRecipientUserEmailAttribute(string $attributeAliasWithRelationPath) : EmailMessage
     {
         $this->userEmailAttributeAlias = $attributeAliasWithRelationPath;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getAttachmentPath() : ?string
+    {
+        return $this->attachmentPath;
+    }
+    
+    /**
+     * The path to a file on the filesystem that should be appended to the message (works for e-mail messages so far)
+     *
+     * @uxon-property attachment_path
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return EmailMessage
+     */
+    public function setAttachmentPath(string $value) : EmailMessage
+    {
+        $this->attachmentPath = $value;
         return $this;
     }
 }
