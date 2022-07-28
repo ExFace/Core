@@ -218,6 +218,10 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
                 $email->priority($priority);
             }
             
+            if ($attachmentPath = $message->getAttachmentPath()) {
+                $email->attachFromPath($attachmentPath);
+            }
+            
             $email->subject($message->getSubject() ?? '');
         }
         
