@@ -41,6 +41,8 @@ class DataLinesLayer extends AbstractDataLayer
     
     private $fromLngColumn = null;
     
+    private $width = 3;
+    
     /**
      *
      * @return string
@@ -236,6 +238,33 @@ class DataLinesLayer extends AbstractDataLayer
 
     public function isColorScaleRangeBased(): bool
     {
+        if ($this->getColorColumn() === null) {
+            return false;
+        }
         return $this->getColorColumn()->getDataType() instanceof NumberDataType;
     }
+    
+    
+    /**
+     * @return integer
+     */
+    public function getWidth() : int
+    {
+        return $this->width;
+    }
+
+    /**
+     * Set the line width in pixel. Default is 3.
+     * 
+     * @uxon-property width
+     * @uxon-type integer
+     * @uxon-default 3
+     * 
+     * @param integer $width
+     */
+    public function setWidth(int $width)
+    {
+        $this->width = $width;
+    }
+
 }

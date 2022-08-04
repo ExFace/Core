@@ -438,7 +438,7 @@ JS;
         if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
             $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
         }
-        
+        $color = $layer->getColor() ? $layer->getColor() : $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
         // Generate JS to run on map refresh
         switch (true) {
             case $link = $layer->getDataWidgetLink():
@@ -475,7 +475,8 @@ function() {
                             [fLatFrom, fLngFrom],
                             [fLatTo, fLngTo]
                         ], {
-                            color: '{$this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)]}'
+                            color: '{$color}',
+                            weight: {$layer->getWidth()}
                         });
                         
                         oLine.properties = {
@@ -531,7 +532,8 @@ function() {
                                 [fLatFrom, fLngFrom],
                                 [fLatTo, fLngTo]
                             ], {
-                                color: '{$this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)]}'
+                                color: '{$color}',
+                                weight: {$layer->getWidth()}
                             });
 
                             oLine.properties = {
