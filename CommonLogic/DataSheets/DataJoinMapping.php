@@ -4,6 +4,9 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 /**
  * Joins any data to the to-sheet of the mapping using left or right JOINs similar to SQL.
@@ -76,6 +79,8 @@ class DataJoinMapping extends AbstractDataSheetMapping
     
     private $inputSheetKey = null;
     
+    private $inputSheetKeyExpression = null;
+    
     private $joinSheetKey = null;
     
     /**
@@ -91,7 +96,7 @@ class DataJoinMapping extends AbstractDataSheetMapping
         }
         switch ($this->getJoinType()) {
             case self::JOIN_TYPE_LEFT:
-                return $toSheet->joinLeft($joinSheet, $this->getJoinInputDataOnAttributeAlias(), $this->getJoinDataSheetOnAttributeAlias());
+                return $toSheet->joinLeft($joinSheet, $this->getJoinInputDataKeyColumn($fromSheet)->getName(), $this->getJoinDataKeyColumn($toSheet));
             case self::JOIN_TYPE_RIGHT:
                 return $joinSheet->joinLeft($toSheet, $this->getJoinDataSheetOnAttributeAlias(), $this->getJoinInputDataOnAttributeAlias());
         }
@@ -159,6 +164,28 @@ class DataJoinMapping extends AbstractDataSheetMapping
     }
     
     /**
+     * 
+     * @return ExpressionInterface
+     */
+    protected function getJoinInputDataOnExpression() : ExpressionInterface
+    {
+        if ($this->inputSheetKeyExpression === null) {
+            $this->inputSheetKeyExpression = ExpressionFactory::createForObject($this->getMapper()->getFromMetaObject(), $this->inputSheetKey);
+        }
+        return $this->inputSheetKeyExpression;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $fromSheet
+     * @return DataColumnInterface
+     */
+    protected function getJoinInputDataKeyColumn(DataSheetInterface $fromSheet) : DataColumnInterface
+    {
+        return $fromSheet->getColumns()->getByExpression($this->getJoinInputDataOnExpression());
+    }
+    
+    /**
      * Alias of the attribute of the input-data object that is to be used to join the mapped data
      * 
      * @uxon-property join_input_data_on_attribute
@@ -171,6 +198,7 @@ class DataJoinMapping extends AbstractDataSheetMapping
     protected function setJoinInputDataOnAttribute(string $value) : DataJoinMapping
     {
         $this->inputSheetKey = $value;
+        $this->inputSheetKeyExpression = null;
         return $this;
     }
     
@@ -181,6 +209,16 @@ class DataJoinMapping extends AbstractDataSheetMapping
     protected function getJoinDataSheetOnAttributeAlias() : string
     {
         return $this->joinSheetKey;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $toSheet
+     * @return DataColumnInterface
+     */
+    protected function getJoinDataKeyColumn(DataSheetInterface $toSheet) : DataColumnInterface
+    {
+        return $toSheet->getColumns()->getByExpression($this->getJoinDataSheetOnAttributeAlias());
     }
     
     /**
@@ -197,5 +235,15 @@ class DataJoinMapping extends AbstractDataSheetMapping
     {
         $this->joinSheetKey = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getRequiredExpressions()
+     */
+    public function getRequiredExpressions(DataSheetInterface $dataSheet) : array
+    {
+        return [$this->getJoinInputDataOnExpression()];
     }
 }
