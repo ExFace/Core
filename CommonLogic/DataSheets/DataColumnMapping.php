@@ -178,4 +178,14 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         $this->createRowInEmptyData = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getRequiredExpressions()
+     */
+    public function getRequiredExpressions(DataSheetInterface $dataSheet) : array
+    {
+        return [$this->getFromExpression()];
+    }
 }

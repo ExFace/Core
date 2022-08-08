@@ -49,4 +49,3 @@ class RowDataArraySorter
         return count($this->getCriterias());
     }
 }
-?>
