@@ -181,4 +181,14 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
         $this->to = $columnInToSheet;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getRequiredExpressions()
+     */
+    public function getRequiredExpressions(DataSheetInterface $fromSheet) : array
+    {
+        return [];
+    }
 }
