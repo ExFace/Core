@@ -14,14 +14,14 @@ interface FormulaTokenStreamInterface
     /**
      * Returns the nested formula names as array.
      * 
-     * @return array
+     * @return string[]
      */
     public function getNestedFormulas() : array;
     
     /**
      * Returns the attribute aliases (with aggregators if given).
      *
-     * @return array
+     * @return string[]
      */
     public function getAttributes() : array;
     
