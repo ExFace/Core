@@ -1574,10 +1574,7 @@ class DataSheet implements DataSheetInterface
         
         // create new query for the main object
         $query = QueryBuilderFactory::createForObject($this->getMetaObject());
-        
-        // Give the query all filters, that exist in the data sheet
-        $query->setFiltersConditionGroup($this->getFilters());
-        
+                
         // Add a UID-filter if we know, which UIDs are to be deleted
         // Otherwise just use all filters of the data sheet
         $uidsToDelete = [];
@@ -1586,7 +1583,7 @@ class DataSheet implements DataSheetInterface
                 $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
         } else {
-            $query->addFilterConditionGroup($this->getFilters());
+            $query->setFiltersConditionGroup($this->getFilters());
         }
         
         if ($eventBefore->isPreventDeleteCascade() === false) {
