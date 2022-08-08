@@ -78,8 +78,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $buffer = null;
             for ($i = 0; $i < count($tokens); $i++) {
                 $token = $tokens[$i];
-                //if token is preceeded by a ':' its an aggregation not a formula
-                if ($token['name'] && $tokens[$i-1]['punctuation'] !== ':') {
+                //if token is preceeded by a ':' it might be an aggregation, so check that, else it's a formula
+                if ($token['name'] && $tokens[$i-1]['punctuation'] !== ':' && AggregatorFunctionsDataType::isValidStaticValue($token['name']) === false) {
                     //if the token is followd by a '.' ist a formula with namespace, therefor buffer the token
                     if ($tokens[$i+1]['punctuation'] === $delim) {
                         $buffer .= $token['name'] . $delim;
@@ -148,7 +148,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             for ($i = 0; $i < count($tokens); $i++) {
                 $token = $tokens[$i];
                 if ($token['name']) {
-                    //if the token is followed by a ':' its an attribute alias with an aggregation, therefor buffer the token
+                    //if the token is followed by a ':' and  the following token is an aggregation,
+                    //its an attribute alias with an aggregation, therefor buffer the token
                     if ($tokens[$i+1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($tokens[$i+2]['name'])) {
                         $buffer .= $token['name'] . ':';
                     } elseif ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
