@@ -479,17 +479,26 @@ class StringDataType extends AbstractDataType
      * @param bool $stickToWords
      * @return string
      */
-    public static function truncate(string $string, int $length, bool $stickToWords = false) : string
+    public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false) : string
     {
         if ($stickToWords === false) {
-            return mb_substr($string, 0, $length);
+            $string = mb_substr($string, 0, $length);
         } else {
             if (strlen($string) > $length) {
                 $string = wordwrap($string, $length);
                 $string = mb_substr($string, 0, mb_strpos($string, "\n"));
             }
-            return $string;
         }
+        
+        if ($removeLineBreaks === true) {
+            $string = static::stripLineBreaks($string);
+        }
+        
+        return $string;
+    }
+    
+    public static function stripLineBreaks(string $string) : string
+    {
+        return str_replace(["\r", "\n"], '', $string);
     }
 }
-?>
