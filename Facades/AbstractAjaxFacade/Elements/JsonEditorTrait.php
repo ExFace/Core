@@ -1823,38 +1823,50 @@ CSS;
 JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsRootPrototypeGetter() : string
     {
         $widget = $this->getWidget();
         if ($widget instanceof InputUxon) {
             $expr = $widget->getRootPrototype();
             if ($expr !== null) {
-                if ($expr->isString() === true) {
-                    return '"' . $expr->toString() . '"';
-                } elseif ($expr->isReference() === true) {
+                if ($expr->isReference() === true) {
                     $link = $expr->getWidgetLink($widget);
                     return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                } else {
+                    return json_encode(trim($expr->toString(), "'\""));
                 }
             }
         }
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsSchemaGetter() : string
     {
         $widget = $this->getWidget();
         if ($widget instanceof InputUxon) {
             $expr = $widget->getSchemaExpression();
-            if ($expr->isString() === true) {
-                return json_encode(trim($expr->toString(), "'\""));
-            } elseif ($expr->isReference() === true) {
+            if ($expr->isReference() === true) {
                 $link = $expr->getWidgetLink($widget);
                 return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+            } else {
+                return json_encode(trim($expr->toString(), "'\""));
             }
         }
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsRootObjectGetter() : string
     {
         $widget = $this->getWidget();
@@ -1872,6 +1884,10 @@ JS;
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsAutosuggestFunction() : string
     {
         $widget = $this->getWidget();
