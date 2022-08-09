@@ -274,13 +274,14 @@ class SessionContextScope extends AbstractContextScope
                     } else {
                         session_start();
                         $sessionId = session_id();
+                        $config = $this->getWorkbench()->getConfig();
                         setcookie(
                             $cookieName, // name
                             $sessionId, // value
-                            (time() + $this->getWorkbench()->getConfig()->getOption('SECURITY.SESSION_COOKIE_LIFETIME')), // expires
-                            '/', // path
+                            (time() + $config->getOption('SECURITY.SESSION_COOKIE_LIFETIME')), // expires
+                            $config->getOption('SECURITY.SESSION_COOKIE_PATH'), // path
                             null, // domain
-                            $this->getWorkbench()->getConfig()->getOption('SECURITY.FORCE_HTTPS'), // secure
+                            $config->getOption('SECURITY.FORCE_HTTPS'), // secure
                             true // httponly
                         );
                         session_write_close();
