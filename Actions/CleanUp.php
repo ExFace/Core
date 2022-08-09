@@ -103,4 +103,13 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
         $this->areas = $value->toArray();
         return $this;
     }
+    
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->getAreas()) {
+            $uxon->setProperty('areas', $this->getAreas());
+        }
+        return $uxon;        
+    }
 }
