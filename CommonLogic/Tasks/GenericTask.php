@@ -19,15 +19,20 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
- * Generic task implementation to create task programmatically.
+ * A generic task for objects, actions, pages, widgets and input/prefill data
  * 
  * @author Andrej Kabachnik
  *
  */
 class GenericTask implements TaskInterface
 {
+    use ImportUxonObjectTrait {
+        importUxonObject as importUxonObjectViaTrait;
+    }
+    
     private $facade = null;
     
     private $workbench = null;
@@ -116,18 +121,35 @@ class GenericTask implements TaskInterface
     }
     
     /**
-     * Adds the parameters of this task with those in the given array replacing duplicates.
+     * Parameters of this task defined as a generic list of key-value-pairs.
      * 
-     * @param array $array
+     * @uxon-property parameters
+     * @uxon-type object
+     * @uxon-template {"":""}
+     * 
+     * @param array|UxonObject $array
      */
-    protected function setParameters(array $array) : TaskInterface
+    protected function setParameters($array) : TaskInterface
     {
+        if ($array instanceof UxonObject) {
+            $array = $array->toArray();
+        }
         foreach ($array as $name => $value) {
             $this->setParameter($name, $value);
         }
         return $this;
     }
 
+    /**
+     * Data sheet to be used as input data
+     * 
+     * @uxon-property input_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "rows": [{"": "", "": ""}]}
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setInputData()
+     */
     public function setInputData(DataSheetInterface $dataSheet): TaskInterface
     {
         $this->inputData = $dataSheet;
@@ -148,6 +170,11 @@ class GenericTask implements TaskInterface
     }
 
     /**
+     * Data sheet to be used as prefill data
+     * 
+     * @uxon-property prefill_data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "rows": [{"": "", "": ""}]}
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPrefillData()
@@ -171,7 +198,7 @@ class GenericTask implements TaskInterface
     /**
      * UID or namespaced alias of the action to be performed
      * 
-     * @uxon-property action
+     * @uxon-property action_alias
      * @uxon-type metamodel:action
      * 
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setActionSelector()
@@ -237,15 +264,16 @@ class GenericTask implements TaskInterface
                 $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
             } elseif ($this->isTriggeredOnPage()) {
                 $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
-            } else if ($this->hasParameter('meta_object')) {
-                $this->objectSelector = new MetaObjectSelector($this->getWorkbench(), $this->getParameter('meta_object'));
-                $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
             }
         }
         return $this->object;
     }
 
     /**
+     * UID or namespaced alias of the base meta object of this task
+     * 
+     * @uxon-property object_alias
+     * @uxon-type metamodel:object
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setMetaObject()
@@ -383,9 +411,9 @@ class GenericTask implements TaskInterface
     }
 
     /**
-     * UID or namespaced alias of the UI page this task is meant for
+     * UID or namespaced alias of the UI page this task is referring to
      * 
-     * @uxon-property page
+     * @uxon-property page_alias
      * @uxon-type metamodel:page
      * 
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPageSelector()
@@ -431,14 +459,25 @@ class GenericTask implements TaskInterface
         return $this->originPage;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
         if ($this->isTriggeredOnPage()) {
-            $uxon->setProperty('page_selector', $this->getPageSelector()->toString());
+            $uxon->setProperty('page_alias', $this->getPageSelector()->toString());
+        }
+        if ($this->isTriggeredByWidget()) {
+            $uxon->setProperty('widget_id', $this->originWigetId ?? $this->getWidgetTriggeredBy()->getId());
         }
         if ($this->hasMetaObject()) {
-            $uxon->setProperty('meta_object', $this->getMetaObject()->getAliasWithNamespace());
+            $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
+        }
+        if ($this->hasAction()) {
+            $uxon->setProperty('action_alias', $this->getActionSelector()->toString());
         }
         if ($this->hasInputData()) {
             $uxon->setProperty('input_data', $this->getInputData()->exportUxonObject());
@@ -446,37 +485,59 @@ class GenericTask implements TaskInterface
         if ($this->hasPrefillData()) {
             $uxon->setProperty('prefill_data', $this->getPrefillData()->exportUxonObject());
         }
-        if ($this->hasAction()) {
-            $uxon->setProperty('action', $this->getActionSelector()->toString());
-        }
-        if (!empty($this->getParameters())) {
+        if (! empty($this->getParameters())) {
             $uxon->setProperty('parameters', $this->getParameters());
         }
         return $uxon;
     }
 
+    /**
+     * 
+     * @return string|NULL
+     */
     public static function getUxonSchemaClass(): ?string
     {
         return null;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
     public function importUxonObject(UxonObject $uxon)
     {
         foreach ($uxon->getPropertiesAll() as $prop => $val) {
             switch ($prop) {
-                case 'page': $this->setPageSelector($val); break;
-                case 'page_selector': $this->setPageSelector($val); break;
-                case 'meta_object': $this->setMetaObjectSelector($val); break;
                 case 'input_data': $this->setInputData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
                 case 'prefill_data': $this->setPrefillData(DataSheetFactory::createFromUxon($this->getWorkbench(), $val)); break;
-                case 'action': $this->setActionSelector($val); break;
-                case 'parameters': 
-                    foreach ($val->getPropertiesAll() as $prop => $value) {
-                        $this->setParameter($prop, $value); 
-                    }
+                case 'action': 
+                case 'action_alias':
+                    $this->setActionSelector($val); 
+                    break;
+                case 'page':
+                case 'page_selector': 
+                case 'page_alias':
+                    $this->setPageSelector($val); 
+                    break;
+                case 'meta_object': 
+                case 'object_alias': 
+                    $this->setMetaObjectSelector($val); 
+                    break;
+                case 'widget_id':
+                    $this->setWidgetIdTriggeredBy($val);
                     break;
             }
         }
+        // Fall back to the default importer for all other properties
+        $this->importUxonObjectViaTrait($uxon, [
+            'input_data',
+            'prefill_data',
+            'action', 'action_alias',
+            'page', 'page_selector', 'page_alias',
+            'meta_object', 'object_alias',
+            'widget_id'
+        ]);
         return;
     }
 }
