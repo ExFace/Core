@@ -690,7 +690,19 @@ JS;
                 case $ph === 'widget_id': $phVals[$ph] = $inputEl->getId(); break;
                 case StringDataType::startsWith($ph, 'element_id:', false):
                     $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
-                    $phVals[$ph] = $facade->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
+                    switch ($widgetId) {
+                        case '~input':
+                            $phVals[$ph] = $inputEl->getId();
+                            break;
+                        case '~self':
+                            $phVals[$ph] = $this->getId();
+                            break;
+                        case '~parent':
+                            $phVals[$ph] = $facade->getElement($this->getWidget()->getParent())->getId();
+                            break;
+                        default: 
+                            $phVals[$ph] = $facade->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
+                    }
             }
         }
         if (! empty($phVals)) {
