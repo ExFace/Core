@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
+use Symfony\Component\Config\Resource\ReflectionClassResource;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Task result containing a file.
@@ -88,12 +90,38 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getContents()
+     */
+    public function getContents() : string
+    {
+        $result = file_get_contents($this->getPathAbsolute());
+        if ($result === false) {
+            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getResourceHandle()
+     */
+    public function getResourceHandle(string $mode = "r")
+    {
+        $handle = fopen($this->getPathAbsolute(), $mode);
+        if ($handle === false) {
+            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
+        }
+        return $handle;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
      */
     public function isEmpty() : bool
     {
         return parent::isEmpty() && ! $this->getPathAbsolute();
     }
-
-
 }
