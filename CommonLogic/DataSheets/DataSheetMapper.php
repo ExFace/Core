@@ -6,8 +6,6 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Factories\DataColumnFactory;
@@ -16,6 +14,9 @@ use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\DataSheets\DataMapperInvalidInputError;
+use exface\Core\Exceptions\DataSheets\DataMapperRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -124,7 +125,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null) : DataSheetInterface
     {
         if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
-            throw new DataSheetMapperInvalidInputError($fromSheet, $this, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
+            throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
         }
         
         $fromSheetWasEmpty = $fromSheet->isEmpty();
@@ -244,7 +245,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                         $uid = $row[$uidCol->getName()];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
-                            throw new DataSheetMapperError($this, 'Cannot load additional data in preparation for mapping!');
+                            throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping!');
                         }
                         $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                     }
@@ -334,7 +335,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if (is_null($this->fromMetaObject)){
             // TODO add error code
-            throw new DataSheetMapperError($this, 'No from-object defined in data sheet mapper!');
+            throw new DataMapperConfigurationError($this, 'No from-object defined in data sheet mapper!');
         }
         
         return $this->fromMetaObject;
@@ -386,7 +387,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if (is_null($this->toMetaObject)){
             // TODO add error code
-            throw new DataSheetMapperError($this, 'No to-object defined in data sheet mapper!');
+            throw new DataMapperConfigurationError($this, 'No to-object defined in data sheet mapper!');
         }
         return $this->toMetaObject;
     }
@@ -426,7 +427,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * @uxon-template [{"class": "", "": ""}]
      * 
      * @param UxonObject $uxonArray
-     * @throws DataSheetMapperError
+     * @throws DataMapperConfigurationError
      * @return DataSheetMapperInterface
      */
     protected function setMappings(UxonObject $uxonArray) : DataSheetMapperInterface
@@ -434,7 +435,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         foreach ($uxonArray as $uxon) {
             $class = $uxon->getProperty('class');
             if (! $class || ! class_exists($class)) {
-                throw new DataSheetMapperError($this, 'Invalid data mapper class "' . $class . '"!');
+                throw new DataMapperConfigurationError($this, 'Invalid data mapper class "' . $class . '"!');
             }
             $mapping = new $class($this, $uxon);
             $this->addMapping($mapping);
@@ -635,7 +636,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if ($value){
             if (! $this->canInheritColumns()) {
-                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
+                throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
         }
         
@@ -665,7 +666,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if ($value) {
             if (! $this->canInheritColumns()) {
-                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
+                throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
             $this->setInheritColumns(true);
         }
@@ -704,7 +705,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if ($value){
             if (! $this->canInheritFilters()) {
-                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
+                throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
         }
         
@@ -741,7 +742,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         if ($value){
             if (! $this->canInheritSorters()) {
-                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit sorters from sheets of "' . $this->getFromMetaObject() . '"!');
+                throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit sorters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
         }
         

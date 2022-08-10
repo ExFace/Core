@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
+use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -25,7 +25,7 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     
     /**
      *
-     * @throws DataSheetMapperError if no from-object set
+     * @throws DataMapperConfigurationError if no from-object set
      * 
      * @return MetaObjectInterface
      */
@@ -76,7 +76,7 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     /**
      * 
      * @param bool $value
-     * @throws DataSheetMapperError
+     * @throws DataMapperConfigurationError
      * @return DataSheetMapperInterface
      */
     public function setInheritColumns(bool $value) : DataSheetMapperInterface;
@@ -91,7 +91,7 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     /**
      * 
      * @param bool $value
-     * @throws DataSheetMapperError
+     * @throws DataMapperConfigurationError
      * @return DataSheetMapperInterface
      */
     public function setInheritFilters(bool $value) : DataSheetMapperInterface;
@@ -99,7 +99,7 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     /**
      * 
      * @param bool $value
-     * @throws DataSheetMapperError
+     * @throws DataMapperConfigurationError
      * @return DataSheetMapperInterface
      */
     public function setInheritSorters(bool $value) : DataSheetMapperInterface;

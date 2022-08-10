@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 
 /**
  * Maps on data sheet column to a filter expression in another data sheet.
@@ -39,9 +39,9 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
                 break;
             default:
                 if ($fromExpr->isMetaAttribute()) {
-                    throw new DataSheetMapperError($this->getMapper(), 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-filter mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
+                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-filter mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
                 }
-                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-filter mapping: only data column names, constants and static formulas allowed!', '7H6M243');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-filter mapping: only data column names, constants and static formulas allowed!', '7H6M243');
         }
         
         return $toSheet;

@@ -5,11 +5,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 
 /**
  * Performs an action on the from-sheet an puts its results into the to-sheet
@@ -24,8 +25,15 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
  *  {
  *      "action_to_column_mappings": [
  *          {
- *              "from": "~file",
+ *              "from": "~file:contents",
  *              "to": "print_content_attribute",
+ *              "action": {
+ *                  "alias":"my.App.PrintSomething"
+ *              }
+ *          },
+ *          {
+ *              "from": "~file:mimetype",
+ *              "to": "print_filetype_attribute",
  *              "action": {
  *                  "alias":"my.App.PrintSomething"
  *              }
@@ -58,34 +66,42 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
         $action = $this->getAction();
         
         if ($action->isTriggerWidgetRequired()) {
-            throw new DataSheetMapperError($this, 'Cannot use actions that require a trigger widget in data mappers!');
+            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use actions that require a trigger widget in data mappers!');
         }
         // IDEA allow modifying actions too if we can get the transaction here somehow...
         if ($action instanceof iModifyData) {
-            throw new DataSheetMapperError($this, 'Cannot use modifying actions in data mappers!');
+            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use modifying actions in data mappers!');
         }
         
         $task = TaskFactory::createFromDataSheet($fromSheet);
         try {
             $result = $action->handle($task);
         } catch (\Throwable $e) {
-            throw new DataSheetMapperError($this, 'Error in data mapper: ' . $e->getMessage(), null, $e);
+            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Error in data mapper: ' . $e->getMessage(), null, $e);
         }
         
         $from = $this->getFrom();
         $fromValues = [];
         switch (true) {
-            case $from === '~file':
+            case StringDataType::startsWith($from, '~file', false):
                 if (! $result instanceof ResultFileInterface) {
-                    throw new DataSheetMapperError($this, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
+                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
                 }
-                $fromValues = [file_get_contents($result->getPathAbsolute())];
+                switch (strtolower($from)) {
+                    case '~file':
+                    case '~file:contents':
+                        $fromValues = [$result->getContents()];
+                        break;
+                    case '~file:mimetype':
+                        $fromValues = [$result->getMimeType()];
+                        break;
+                }
                 break;
             case ($result instanceof ResultDataInterface) && $fromCol = $result->getData()->getColumns()->get($from):
                 $fromValues = $fromCol->getValues();
                 break;
             default:
-                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $from . '" as from-expression in a action-to-column mapping: expeciton `~file` or a name of the actions result data column!');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $from . '" as from-expression in a action-to-column mapping: expeciton `~file` or a name of the actions result data column!');
         }
         
         $toCol = $toSheet->getColumns()->addFromExpression($this->getTo());

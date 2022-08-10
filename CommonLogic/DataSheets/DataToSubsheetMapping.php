@@ -5,11 +5,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetMapperFactory;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\RowArrayDataType;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 
 /**
  * Joins any data to the to-sheet of the mapping using left or right JOINs similar to SQL.
@@ -117,14 +118,14 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
         $fromKeyCols = $this->getFromSheetKeyColumnNames();
         $toKeyCols = $this->getToSheetKeyColumnNames(); 
         if (count($fromKeyCols) !== count($toKeyCols)) {
-            throw new DataSheetMapperError($this->getMapper(), 'Invalid configuration for subsheet-mapping: `from_sheet_key_columns` and `to_sheet_key_columns` have different number of entries!');
+            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Invalid configuration for subsheet-mapping: `from_sheet_key_columns` and `to_sheet_key_columns` have different number of entries!');
         }
         
         // If we don't need to split by keys, make a single to-row with a subsheet from all from-rows
         // Otherwise use the keys to split the from-rows into multiple to-rows and thus multiple subsheets
         if (empty($fromKeyCols)) {
             if (count($toRowsUnique) > 1) {
-                throw new DataSheetMapperError($this->getMapper(), 'Cannot map data to a single subsheet: multiple unique to-rows require `from_key_columns` to be defined!');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map data to a single subsheet: multiple unique to-rows require `from_key_columns` to be defined!');
             }
             $subsheet = $subsheetMapper->map($fromSheet);
             $toRowsUnique[0][$subsheetCol->getName()] = $subsheet->exportUxonObject();
@@ -208,7 +209,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
     {
         if ($this->subsheetMapper === null) {
             if ($this->subsheetMapperUxon === null) {
-                throw new DataSheetMapperError($this, 'Missing subsheet_mapper in to-subsheet-mapping configuration!');
+                throw new DataMappingConfigurationError($this, 'Missing subsheet_mapper in to-subsheet-mapping configuration!');
             }
             $this->subsheetMapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $this->subsheetMapperUxon, $this->getMapper()->getFromMetaObject(), $this->getSubsheetObject());
         }

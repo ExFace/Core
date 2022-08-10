@@ -726,4 +726,11 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function setAutoSort(bool $value) : DataSheetInterface;
+    
+    /**
+     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
+     *
+     * @return DataSheetInterface
+     */
+    public function getCensoredDataSheet() : DataSheetInterface;
 }
