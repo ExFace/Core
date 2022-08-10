@@ -30,6 +30,7 @@ use exface\Core\Factories\ExpressionFactory;
  * - `column_to_column_mappings` transfer values from columns of the from-sheet to columns
  * in the to-sheet. Their `from` expression can also be a calculation allowing to change
  * values within the mapping (e.g. `=(version + 1)` or even use static calculation like `=Now()`.
+ * - `data_to_subsheet_mappings` allow to create subsheets in the to-sheet from values of the from-sheet
  * - `column_to_filter_mappings` create filters in the to-sheet from values of from-heet columns.
  * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
  * - `joins` can join arbitrary data in a way similar to SQL JOINs
@@ -57,6 +58,14 @@ use exface\Core\Factories\ExpressionFactory;
  * - `inherit_filters`
  * - `inherit_sorters`
  * 
+ * ## Handling empty from-sheets
+ * 
+ * If the from-sheet is empty, all mappers are still applied and will often produce at least one new row
+ * in the to-sheet: for example, `column_to_column_mappings` with static formulas will add a new row filling 
+ * it with the calculated value.
+ * 
+ * Set `inherit_empty_data` to `true` to force the to-sheet to be empty if the from-sheet was.
+ * 
  * ## Reading missing from-values
  * 
  * In most cases, you can define any readable values in `from` properties of mappers and they will
@@ -66,8 +75,8 @@ use exface\Core\Factories\ExpressionFactory;
  * 
  * - `read_missing_from_data` - can be set to `true` or `false` to control reading missing values explicitly
  * - If `read_missing_from_data` is not set, missing values will be read automatically if
- *      - The from-sheet is empty
- *      - The from-sheet has a non-empty UID column AND is fresh (= its data was not altered). This makes
+ *      - the from-sheet is empty
+ *      - the from-sheet has a non-empty UID column AND is fresh (= its data was not altered). This makes
  *      sure, that additional data is only loaded if we know exactly where to take it from and we can assume,
  *      that it is still consistent with the current state of the data sheet. 
  * 
@@ -96,6 +105,8 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     private $inheritSorters = null;
     
+    private $inheritEmptyData = false;
+    
     private $refreshDataAfterMapping = false;
     
     private $readMissingData = true;
@@ -115,6 +126,8 @@ class DataSheetMapper implements DataSheetMapperInterface
         if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
             throw new DataSheetMapperInvalidInputError($fromSheet, $this, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
         }
+        
+        $fromSheetWasEmpty = $fromSheet->isEmpty();
         
         // Make sure, the from-sheet has everything needed
         $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns);
@@ -148,6 +161,11 @@ class DataSheetMapper implements DataSheetMapperInterface
         // Map columns to columns
         foreach ($this->getMappings() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
+        }
+        
+        // Make sure the to-sheet is empty if the from-sheet was empty and the empty state is to be inherited
+        if ($this->getInheritEmptyData() && $fromSheetWasEmpty) {
+            $toSheet->removeRows();
         }
         
         // Refresh data if needed
@@ -815,6 +833,39 @@ class DataSheetMapper implements DataSheetMapperInterface
     protected function setReadMissingFromData(bool $value) : DataSheetMapper
     {
         $this->readMissingData = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getInheritEmptyData() : bool
+    {
+        return $this->inheritEmptyData;
+    }
+    
+    /**
+     * Set to TRUE to force the to-sheet to be empty if the from-sheet is empty
+     * 
+     * By default the to-sheet might still get new rows: e.g. if there are column-to-column mappings with
+     * formulas. Setting `inherit_empty_data` to `true` will make sure, no new rows are created if the
+     * from-sheet is empty. In this case, all changes to the data sheet structure (added columns, filters, etc.)
+     * will still be applied - there will only be no rows if the from-sheet had none.
+     * 
+     * NOTE: you can still use `refresh_data_after_mapping` to read data into the to-sheet __after__
+     * all mappings were performed.
+     * 
+     * @uxon-property inherit_empty_data
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataSheetMapper
+     */
+    protected function setInheritEmptyData(bool $value) : DataSheetMapper
+    {
+        $this->inheritEmptyData = $value;
         return $this;
     }
 }
