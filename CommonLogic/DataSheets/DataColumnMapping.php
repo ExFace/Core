@@ -152,34 +152,6 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     }
     
     /**
-     *
-     * @return bool
-     */
-    public function getCreateRowInEmptyData() : bool
-    {
-        return $this->createRowInEmptyData;
-    }
-    
-    /**
-     * Set to TRUE to make this mapper add a row with it's column to empty input sheets.
-     * 
-     * By default, a column mapper will not have effect on empty data sheets. This property
-     * can be used to make it add a new row if a static value is used in the mapper. This
-     * allows to create update-by-filter actions with static values using input mappers.
-     * 
-     * @uxon-property create_row_in_empty_data
-     * @uxon-type bool
-     * 
-     * @param bool $value
-     * @return DataColumnMapping
-     */
-    public function setCreateRowInEmptyData(bool $value) : DataColumnMapping
-    {
-        $this->createRowInEmptyData = $value;
-        return $this;
-    }
-    
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getRequiredExpressions()
