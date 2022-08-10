@@ -3245,7 +3245,7 @@
         },
         {
             "CREATED_ON": "2020-12-09 18:58:50",
-            "MODIFIED_ON": "2020-12-11 14:20:50",
+            "MODIFIED_ON": "2022-08-10 10:18:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb10231b198a6b102025041000001",
@@ -3269,7 +3269,7 @@
                     "default_duration_hours": 1
                 },
                 "resources": {
-                    "title": "shipment_category__LABEL"
+                    "title": ""
                 },
                 "buttons": [
                     {
@@ -4390,13 +4390,13 @@
         },
         {
             "CREATED_ON": "2021-07-02 10:44:53",
-            "MODIFIED_ON": "2021-07-02 11:45:29",
+            "MODIFIED_ON": "2022-08-10 10:26:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba43cc5324188a43c025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Horizontal image gallery with upload",
-            "DESCRIPTION": "Scrollable horizontal image gallery with an uploader",
+            "NAME": "Horizontal image gallery with instant upload",
+            "DESCRIPTION": "Scrollable horizontal image gallery with an uploader, that would upload each file immediately as a separate action.\n\nNOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`.",
             "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
             "UXON": {
                 "widget_type": "ImageGallery",
@@ -4406,8 +4406,8 @@
                 "zoomable": true,
                 "hide_header": false,
                 "uploader": {
-                    "filename_attribute": "FILENAME",
-                    "file_content_attribute": "CONTENTS"
+                    "filename_attribute": "",
+                    "file_content_attribute": ""
                 },
                 "buttons": [
                     {
@@ -4977,17 +4977,19 @@
         },
         {
             "CREATED_ON": "2022-03-18 18:02:13",
-            "MODIFIED_ON": "2022-03-18 18:02:13",
+            "MODIFIED_ON": "2022-08-10 10:31:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca879286681a0a879025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Show large dialog",
-            "DESCRIPTION": "",
+            "NAME": "Show large dialog for selected data",
+            "DESCRIPTION": "Show a large dialog with details for a selected data row",
             "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
             "UXON": {
-                "input_rows_min": "",
-                "input_rows_max": "",
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
                 "dialog": {
                     "header": {
                         "title_attribute_alias": "",
@@ -5055,6 +5057,97 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:25:33",
+            "MODIFIED_ON": "2022-08-10 10:25:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda1a4014720f0a1a4025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery with upload",
+            "DESCRIPTION": "Horizontal image gallery with an uploader, that would add files to the form data. Thus, files will not be uploaded automatically, but only when a save-button is pressed. This type of upload is a good choice for galleries inside of larger editors. Uploads will then be saved or discarded together with all the other input in the editor.\n\nNOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "hide_header": true,
+                "mime_type_attribute_alias": "",
+                "uploader": {
+                    "filename_attribute": "",
+                    "file_content_attribute": "",
+                    "file_mime_type_attribute": "",
+                    "instant_upload": false
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:28:57",
+            "MODIFIED_ON": "2022-08-10 10:31:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed88f17abbef9288f1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Show small dialog for selected data",
+            "DESCRIPTION": "Show a small dialog with details for a selected data row",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
+                "dialog": {
+                    "width": 1,
+                    "height": "auto",
+                    "columns_in_grid": 1,
+                    "widgets": [
+                        {
+                            "": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:40:56",
+            "MODIFIED_ON": "2022-08-10 10:44:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8170279bbbe28170025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Save a file to data",
+            "DESCRIPTION": "Allows to place the contents of a file in the input data of an action. For example, the result of a PrintTemplate or PrintPDF action can be placed in a column before some data is created.\n\nA good example would be printing an order or a similar object to save its current state in a history-table. The input data would be the order-object in this case. You would need to map it to the history-object using regular `column_to_column_mappings` and fill one of the history-columns with the result of the print action.",
+            "PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
+            "UXON": {
+                "input_mapper": {
+                    "column_to_column_mappings": [
+                        {
+                            "from": "",
+                            "to": ""
+                        }
+                    ],
+                    "action_to_column_mappings": [
+                        {
+                            "from": "~file",
+                            "to": "\/\/ REPLACE with file-contents attribute",
+                            "action": {
+                                "alias": "\/\/ REPLACE with action producing file-result (e.g. PrintTemplate)"
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
         }
     ],
