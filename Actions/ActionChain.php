@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -15,14 +14,10 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
-use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Tasks\ResultEmpty;
-use exface\Core\CommonLogic\Tasks\ResultMessage;
-use exface\Core\Factories\MessageFactory;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -174,6 +169,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     private $use_result_from_action_index = null;
     
     private $freeze_input_data_at_action_index = null;
+    
+    private $skip_action_if_empty_input = false;
 
     /**
      * 
@@ -215,13 +212,15 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             // Every action gets the data resulting from the previous action as input data
             $t->setInputData($data);
             
-            $result = $action->handle($t, $tx);
-            $message .= $result->getMessage() . "\n";
-            if ($result->isDataModified()) {
-                $data_modified = true;
-            }
-            if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $result instanceof ResultData) {
-                $data = $result->getData();
+            if ($this->getSkipActionsIfInputEmpty() === false || ! $data->isEmpty() || $action->getInputRowsMin() === 0) {
+                $result = $action->handle($t, $tx);
+                $message .= $result->getMessage() . "\n";
+                if ($result->isDataModified()) {
+                    $data_modified = true;
+                }
+                if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $result instanceof ResultData) {
+                    $data = $result->getData();
+                }
             }
             if ($chainResultIdx === $idx) {
                 $chainResult = $result;
@@ -568,5 +567,26 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('actions', UxonObject::fromArray($this->getActions()));
         return $uxon;
+    }
+    
+    public function getSkipActionsIfInputEmpty() : bool
+    {
+        return $this->skip_action_if_empty_input;
+    }
+    
+    /**
+     * Skip any action if it requires input, but there is none - instead of throwing an error.
+     * 
+     * @uxon-property skip_actions_if_input_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ActionChain
+     */
+    public function setSkipActionsIfInputEmpty(bool $value) : ActionChain
+    {
+        $this->skip_action_if_empty_input = $value;
+        return $this;
     }
 }
