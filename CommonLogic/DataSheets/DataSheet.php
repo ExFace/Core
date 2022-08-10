@@ -2795,11 +2795,11 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
      */
-    public function createDebugWidget(DebugMessage $debug_widget)
+    public function createDebugWidget(DebugMessage $debug_widget, string $tabCaption = 'Data Sheet')
     {
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
-        $uxon_tab->setCaption('DataSheet');
+        $uxon_tab->setCaption($tabCaption);
         $uxon_tab->setNumberOfColumns(1);
         $uxon_widget = WidgetFactory::create($debug_widget->getPage(), 'Html', $uxon_tab);
         $uxon_tab->addWidget($uxon_widget);
@@ -2809,11 +2809,11 @@ class DataSheet implements DataSheetInterface
     }
     
     /**
-     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
-     *
-     * @return DataSheetInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getCensoredDataSheet()
      */
-    protected function getCensoredDataSheet() : DataSheetInterface
+    public function getCensoredDataSheet() : DataSheetInterface
     {
         $dataSheet = $this->copy();
         foreach ($dataSheet->getColumns() as $col) {

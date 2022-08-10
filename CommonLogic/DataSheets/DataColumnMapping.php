@@ -3,9 +3,10 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
+use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -41,7 +42,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     public function setFromExpression(ExpressionInterface $expression)
     {
         if ($expression->isReference()){
-            throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');
+            throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
         }
         $this->fromExpression = $expression;
         return $this;
@@ -82,7 +83,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     public function setToExpression(ExpressionInterface $expression)
     {
         if ($expression->isReference()){
-            throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');
+            throw new DataMappingConfigurationError($this, 'Cannot use widget links as expressions in data mappers!');
         }
         $this->toExpression = $expression;
         return $this;
@@ -143,9 +144,9 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 return $toSheet;
             default:
                 if ($fromExpr->isMetaAttribute()) {
-                    throw new DataSheetMapperError($this->getMapper(), 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
+                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
                 }
-                throw new DataSheetMapperError($this->getMapper(), 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
         }
         
         return $toSheet;
