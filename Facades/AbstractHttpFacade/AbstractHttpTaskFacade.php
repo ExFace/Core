@@ -4,7 +4,6 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 

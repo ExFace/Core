@@ -505,8 +505,6 @@ HTML;
                 }
         }
         
-        // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
-        // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         if (! empty($json)) {
             if ($result->isContextModified() && $result->getTask()->isTriggeredOnPage()) {
                 $context_bar = $result->getTask()->getPageTriggeredOn()->getContextBar();
@@ -530,12 +528,13 @@ HTML;
     /**
      *
      * @param array|\stdClass $serializable_data
-     * @param string $add_extras
      * @throws FacadeOutputError
      * @return string
      */
     public function encodeData($serializable_data)
     {        
+        // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
+        // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
         if (! $result) {
             throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
