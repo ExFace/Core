@@ -73,6 +73,6 @@ class ResultError extends ResultMessage
      */
     public function isContextModified(): bool
     {
-        return $this->isContextModified;
+        return $this->isContextModified ?? false;
     }
 }

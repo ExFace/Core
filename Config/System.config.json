@@ -129,6 +129,17 @@
     ],
     
     "FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
+    
+    "FACADES.HTTPTASKFACADE.HEADERS.COMMON": {
+		"Access-Control-Allow-Origin": "",
+		"Access-Control-Allow-Credentials": "true",
+		"Access-Control-Allow-Methods": "POST",
+		"Access-Control-Allow-Headers": "",
+		"Access-Control-Expose-Headers": "",
+		"Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": 0
+	},
 	
     "INSTALLER.SERVER_INSTALLER.CLASS": ""
 }

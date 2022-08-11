@@ -3,7 +3,6 @@ namespace exface\Core\Facades;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use exface\Core\Facades\AbstractHttpFacade\Throwable;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -16,27 +15,31 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Queue\TaskQueueBroker;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
 
 class HttpTaskFacade extends AbstractAjaxFacade
 {
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {        
-        $uri = $request->getUri();
-        $path = $uri->getPath();
-        $topics = explode('/',substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1));
-        $task = $request->getAttribute($this->getRequestAttributeForTask());
-        $router = new TaskQueueBroker($this->getWorkbench());
-        if ($request->hasHeader('X-Client-ID')) {
-            $producer = $request->getHeader('X-Client-ID')[0];
-        } else {
-            $producer = $this->getAliasWithNamespace();
-        }
-        if ($request->hasHeader('X-Request-ID')) {
-            $requestId = $request->getHeader('X-Request-ID')[0];
-        } else {
-            $requestId = null;
-        }
         try {
+            $uri = $request->getUri();
+            $path = $uri->getPath();
+            $topics = explode('/',substr(StringDataType::substringAfter($path, $this->getUrlRouteDefault()), 1));
+            $task = $request->getAttribute($this->getRequestAttributeForTask());
+            if ($task === null) {
+                throw new FacadeRequestParsingError('Cannot read task from request!');
+            }
+            $router = new TaskQueueBroker($this->getWorkbench());
+            if ($request->hasHeader('X-Client-ID')) {
+                $producer = $request->getHeader('X-Client-ID')[0];
+            } else {
+                $producer = $this->getAliasWithNamespace();
+            }
+            if ($request->hasHeader('X-Request-ID')) {
+                $requestId = $request->getHeader('X-Request-ID')[0];
+            } else {
+                $requestId = null;
+            }
             $result = $router->handle($task, $topics, $producer, $requestId, PhpClassDataType::findClassNameWithoutNamespace($this));
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
@@ -104,5 +107,25 @@ class HttpTaskFacade extends AbstractAjaxFacade
     protected function getPageTemplateFilePathDefault(): string
     {
         return '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::buildHeadersCommon()
+     */
+    protected function buildHeadersCommon() : array
+    {
+        return array_filter($this->getConfig()->getOption('FACADES.HTTPTASKFACADE.HEADERS.COMMON')->toArray());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::buildHeadersForAjax()
+     */
+    protected function buildHeadersForAjax() : array
+    {
+        return $this->buildHeadersCommon();
     }
 }
