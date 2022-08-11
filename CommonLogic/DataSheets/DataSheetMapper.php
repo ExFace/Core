@@ -215,6 +215,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             $additionSheet = null;
             // See if any required columns are missing in the original data sheet. If so, add empty
             // columns and also create a separate sheet for reading missing data.
+            $addedCols = [];
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
                     if ($data_sheet->getColumns()->getByExpression($expr)){
@@ -229,7 +230,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                         }
                     }
                     $data_sheet->getColumns()->addFromExpression($expr);
-                    $additionSheet->getColumns()->addFromExpression($expr);
+                    $addedCols[] = $additionSheet->getColumns()->addFromExpression($expr);
                 }
             }
             // If columns were added to the original sheet, that need data to be loaded,
@@ -240,7 +241,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
                 $uidCol = $data_sheet->getUidColumn();
-                foreach ($additionSheet->getColumns() as $addedCol) {
+                foreach ($addedCols as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
                         $uid = $row[$uidCol->getName()];
                         $rowNo = $uidCol->findRowByValue($uid);
