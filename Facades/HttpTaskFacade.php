@@ -140,7 +140,7 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
         
         switch (true) {
             case $result instanceof ResultDataInterface:
-                $json = $this->encodeData($result->getData()->exportUxonObject()->toArray());
+                $json = $result->getData()->exportUxonObject()->toArray();
                 $json["success"] = $result->getMessage();
                 break;
                 
