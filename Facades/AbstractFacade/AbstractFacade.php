@@ -11,6 +11,10 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Uxon\FacadeSchema;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 
 abstract class AbstractFacade implements FacadeInterface
 {
@@ -73,6 +77,27 @@ abstract class AbstractFacade implements FacadeInterface
         } else {
             return false;
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::isExactly()
+     */
+    public function isExactly($selectorOrString) : bool
+    {
+        $selector = $selectorOrString instanceof FacadeSelectorInterface ? $selectorOrString : new FacadeSelector($this->getWorkbench(), $selectorOrString);
+        switch(true) {
+            case $selector->isFilepath():
+                $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
+                $facadeClassPath = FilePathDataType::normalize(get_class($this));
+                return strcasecmp($selectorClassPath, $facadeClassPath) === 0;
+            case $selector->isClassname():
+                return strcasecmp(trim(get_class($this), "\\"), trim($selector->toString(), "\\")) === 0;
+            case $selector->isAlias():
+                return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
+        }
+        return false;
     }
 
     /**
