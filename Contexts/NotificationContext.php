@@ -252,7 +252,18 @@ class NotificationContext extends AbstractContext
         return $ds;
     }
     
-    public function send(NotificationMessage $notification, array $userUids) : NotificationMessage
+    /**
+     * Sends a communication message to one or more users
+     * 
+     * This method is static in order to allow sending notifications for unauthenticated or technical users,
+     * that will generally not have access to their own notification context, but may need to send notifications
+     * to others.
+     * 
+     * @param NotificationMessage $notification
+     * @param array $userUids
+     * @return NotificationMessage
+     */
+    public static function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
         $title = $notification->getTitle() ?? StringDataType::truncate($notification->getText(), 60, true);
         $buttonsArray = ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : []);
@@ -264,7 +275,7 @@ class NotificationContext extends AbstractContext
             'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
             'buttons' => array_merge($buttonsArray, [
                 [
-                    'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS'),
+                    'caption' => $notification->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS'),
                     'align' => EXF_ALIGN_OPPOSITE,
                     'visibility' => empty($buttonsArray) ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL,
                     'icon' => Icons::ERASER,
@@ -290,7 +301,7 @@ class NotificationContext extends AbstractContext
             ])
         ]);
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($notification->getWorkbench(), 'exface.Core.NOTIFICATION');
         foreach ($userUids as $userUid) {
             $ds->addRow([
                 'USER' => $userUid,

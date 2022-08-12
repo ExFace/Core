@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Communication\UserRecipientInterface;
 use exface\Core\CommonLogic\Communication\CommunicationReceipt;
 use exface\Core\Communication\Messages\NotificationMessage;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 
 /**
  * Reads and writes context of the workbench
@@ -59,15 +61,22 @@ class WorkbenchContextConnector extends TransparentConnector implements Communic
      */
     public function communicate(CommunicationMessageInterface $message): CommunicationReceiptInterface
     {
-        $context = $this->getWorkbench()->getContext()->getScopeUser()->getContext(NotificationContext::class);
-        
         if ($message instanceof NotificationMessage) {
             $notification = $message;
         } else {
             $notification = NotificationMessage::fromOtherMessageType($message);
         }
         
-        $context->send($notification, $this->getUserUids($message->getRecipients()));
+        $errors = [];
+        $userIds = $this->getUserUids($message->getRecipients(), $errors);
+        
+        if (! empty($userIds)) {
+            NotificationContext::send($notification, $userIds);
+        }
+        
+        foreach ($errors as $e) {
+            $this->getWorkbench()->getLogger()->logException(new CommunicationNotSentError($message, 'Cannot send in-app notification: ' . $e->getMessage(), null, $e));
+        }
         
         return new CommunicationReceipt($message, $this);
     }
@@ -77,21 +86,26 @@ class WorkbenchContextConnector extends TransparentConnector implements Communic
      * @param array $recipients
      * @return array
      */
-    protected function getUserUids(array $recipients) : array
+    protected function getUserUids(array $recipients, array &$errors) : array
     {
         $userUids = [];
         foreach ($recipients as $recipient) {
             switch (true) {
                 case $recipient instanceof RecipientGroupInterface:
-                    $userUids = array_merge($userUids, $this->getUserUids($recipient->getRecipients()));
+                    $userUids = array_merge($userUids, $this->getUserUids($recipient->getRecipients(), $errors));
                     break;
                 case $recipient instanceof UserRecipientInterface:
-                    $userUids[] = $recipient->getUserUid();
+                    try {
+                        $userUids[] = $recipient->getUserUid();
+                    } catch (UserNotFoundError $e) {
+                        $errors[] = $e;
+                    }
                     break;
                 default:
                     // TODO
             }
         }
+        
         return $userUids;
     }
 }
