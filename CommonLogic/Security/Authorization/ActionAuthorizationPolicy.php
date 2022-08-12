@@ -33,6 +33,7 @@ use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
 
 /**
  * Policy for access to actions.
@@ -74,6 +75,8 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $pageGroupSelector = null;
     
+    private $facadeSelector = null;
+    
     private $conditionUxon = null;
     
     private $effect = null;
@@ -112,6 +115,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         if ($str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
             $this->pageGroupSelector = new UiPageGroupSelector($this->workbench, $str);
         }
+        if ($str = $targets[PolicyTargetDataType::FACADE]) {
+            $this->facadeSelector =  new FacadeSelector($this->workbench, $str);
+        }
         
         $this->conditionUxon = $conditionUxon;
         $this->importUxonObject($conditionUxon);
@@ -144,7 +150,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // Match action
-            if (($selector = $this->actionSelector) !== null) {
+            if (null !== $selector = $this->actionSelector) {
                 switch(true) {
                     case $selector->isFilepath():
                         $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
@@ -163,6 +169,19 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             } else {
                 $applied = true;
+            }
+            
+            // Match facade
+            if (null !== $this->facadeSelector) {
+                if ($task !== null && null !== $facade = $task->getFacade()) {
+                    if ($facade->isExactly($this->facadeSelector) === true) {
+                        $applied = true;
+                    } else {
+                        return PermissionFactory::createNotApplicable($this, 'Facade does not match');
+                    }
+                } else {
+                    return PermissionFactory::createNotApplicable($this, 'Facade required, but cannot be determined');
+                }
             }
             
             // See if applicable only to cli/non-cli tasks
