@@ -125,7 +125,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     
     private $freeze_columns = 0;
     
-    private $select_single_result;
+    private $select_single_result = false;
 
     function hasRowDetails()
     {
