@@ -241,14 +241,19 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
                 $uidCol = $data_sheet->getUidColumn();
-                foreach ($addedCols as $addedCol) {
+                foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
                         $uid = $row[$uidCol->getName()];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
                             throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping!');
                         }
-                        $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                        // Only set cell values if the column is an added column
+                        // or the column does not exist yet in the original data sheet.
+                        // It is important to check both because formula might lead to more columns being added.
+                        if (in_array($addedCol, $addedCols) || $data_sheet->getColumns()->getByExpression($addedCol->getExpressionObj()) === FALSE) {
+                            $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                        }
                     }
                 }
             }

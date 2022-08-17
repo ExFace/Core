@@ -124,6 +124,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $multi_select_sync_attribute = null;
     
     private $freeze_columns = 0;
+    
+    private $select_single_result = false;
 
     function hasRowDetails()
     {
@@ -434,6 +436,29 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function setMultiSelect($value)
     {
         $this->multi_select = $value;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getSelectSingleResult() : bool
+    {
+        return $this->select_single_result;
+    }
+    
+    /**
+     * Set to TRUE to automatically select a row if it is the only row in the table.
+     *
+     * @uxon-property select_single_result
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
+     */
+    public function setSelectSingleResult(bool $value)
+    {
+        $this->select_single_result = $value;
     }
 
     /**
