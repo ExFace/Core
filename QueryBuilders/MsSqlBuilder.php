@@ -461,7 +461,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 if (! ($qpart->getAttribute()->getDataType() instanceof StringDataType)) {
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
                 }
-                $delim = $args[0] ?? ', ';
+                $delim = $args[0] ? $args[0] : ', ';
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = '{$this->escapeString($delim)}' + {$sql}";
             default:
@@ -486,7 +486,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Only do this special treatment if it is not a subquery - otherwise the buildSqlSelectSubselect()
                 // will add its own `FOR XML...` because that would not need an inner query since it is based on a 
                 // subquery already
-                $delim = $args[0] ?? ', ';
+                $delim = $args[0] ? $args[0] : ', ';
                 $delimLength = strlen($delim);
                 if (! $qpart->getQuery()->isSubquery()) {
                     // If the aggregating via GROUP BY (i.e. not in a subquery), we need to build a subquery here
@@ -546,7 +546,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 case AggregatorFunctionsDataType::LIST_DISTINCT:
                 case AggregatorFunctionsDataType::LIST_ALL:
                     $args = $aggregator->getArguments();
-                    $delim = $args[0] ?? ', ';
+                    $delim = $args[0] ? $args[0] : ', ';
                     $delimLength = strlen($delim);
                     $subselect = substr($subselect, 0, -1) . " FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, $delimLength, ''))";
                     break;
