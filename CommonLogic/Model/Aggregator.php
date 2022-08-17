@@ -108,8 +108,13 @@ class Aggregator implements AggregatorInterface {
     {
         if ($args_pos = strpos($aggregator_string, '(')) {
             $this->function = new AggregatorFunctionsDataType($this->getDataTypeSelector(), strtoupper(substr($aggregator_string, 0, $args_pos)));
-            $this->arguments = explode(',', substr($aggregator_string, ($args_pos + 1), - 1));
-            $this->arguments = array_map('trim', $this->arguments);
+            $argsString = substr($aggregator_string, ($args_pos + 1), - 1);
+            // Special treatment for single-argument aggregators with comma - e.g. `:LIST(,)` 
+            if ($argsString === ',') {
+                $this->arguments = [','];
+            } else {
+                $this->arguments = explode(',', $argsString);
+            }
         } else {
             $this->function = new AggregatorFunctionsDataType($this->getDataTypeSelector(), $aggregator_string);
         }
