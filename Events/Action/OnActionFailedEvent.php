@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Events\TaskEventInterface;
 use exface\Core\Interfaces\Events\ErrorEventInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Event fired after an action caused an exception.
@@ -26,13 +27,15 @@ class OnActionFailedEvent extends AbstractActionEvent implements TaskEventInterf
     
     private $transaction = null;
     
+    private $inputDataCallback = null;
+    
     /**
      * 
      * @param ActionInterface $action
      * @param ResultInterface $error
      * @param DataTransactionInterface $transaction
      */
-    public function __construct(ActionInterface $action, TaskInterface $task, \Throwable $exception, DataTransactionInterface $transaction)
+    public function __construct(ActionInterface $action, TaskInterface $task, \Throwable $exception, DataTransactionInterface $transaction, callable $inputDataResolver)
     {
         parent::__construct($action);
         $this->task = $task;
@@ -41,6 +44,7 @@ class OnActionFailedEvent extends AbstractActionEvent implements TaskEventInterf
         }
         $this->exception = $exception;
         $this->transaction = $transaction;
+        $this->inputDataCallback = $inputDataResolver;
     }
 
     /**
@@ -60,6 +64,17 @@ class OnActionFailedEvent extends AbstractActionEvent implements TaskEventInterf
     public function getTransaction() : DataTransactionInterface
     {
         return $this->transaction;
+    }
+    
+    /**
+     * Returns a data sheet with the fully resolved input data incl. all mappers, checks, etc.
+     * 
+     * @return DataSheetInterface
+     */
+    public function getActionInputData() : DataSheetInterface
+    {
+        $callback = $this->inputDataCallback;
+        return $callback();
     }
     
     /**
