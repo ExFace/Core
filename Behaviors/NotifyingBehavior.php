@@ -15,11 +15,11 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
-use exface\Core\Interfaces\Events\TaskEventInterface;
-use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
 use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Events\Action\OnActionPerformedEvent;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -77,6 +77,23 @@ use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
  * 
  * ```
  * 
+ * ### Send an in-app notification to a user every time an action is performed
+ * 
+ * ```
+ *  {
+ *      "notify_on_action": "exface.Core.CommunicationChannelMute",
+ *      "notifications": [
+ *          {
+ *              "channel": "exface.Core.NOTIFICATION",
+ *              "recipient_users": ["username"],
+ *              "title": "Channel [#~data:LABEL#] muted!",
+ *              "text": "User [#=User('username')#] just muted the communication channel [#~data:LABEL#]"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
  * ### Send an email to the ticket author once it reaches a certain status
  * 
  * ```
@@ -108,7 +125,7 @@ class NotifyingBehavior extends AbstractBehavior
 {
     use SendMessagesFromDataTrait;
     
-    private $notifyOn = null;
+    private $notifyOnEventName = null;
         
     private $notifyIfAttributesChange = null;
     
@@ -118,7 +135,7 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $errorIfNotSent = false;
     
-    private $action_alias = null;
+    private $notifyOnActionAlias = null;
     
     private $useActionInputData = false;
     
@@ -201,8 +218,7 @@ class NotifyingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()
             ->removeListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
-    }
-    
+    }  
 
     /**
      *
@@ -235,25 +251,31 @@ class NotifyingBehavior extends AbstractBehavior
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
-        if ($event instanceof ActionEventInterface && ( ! $this->getActionAlias() || ! $event->getAction()->isExactly($this->getActionAlias()))) {
+        
+        if ($event instanceof ActionEventInterface && ( ! $this->getNotifyOnActionAlias() || ! $event->getAction()->isExactly($this->getNotifyOnActionAlias()))) {
             return;
         }
         
+        $phResolvers = [
+            new ExcludedPlaceholders('~notification:', '[#', '#]')
+        ];
+        
         $dataSheet = null;
         switch (true) {
+            // For data-events, use their data obviously
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
                 break;
-            case $event instanceof ActionEventInterface:
-                if ($this->getUseInputData()) {
-                    if ($event instanceof TaskEventInterface) {
-                        $action = $event->getAction();
-                        $dataSheet = $action->getInputDataSheet($event->getTask());
-                    }
-                } elseif ($event instanceof ResultDataInterface) {
-                    $dataSheet = $event->getData();
-                }
-                break;               
+            // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
+            // e.g. notify_on_action on object XYZ obviously means "if action performed upon object XYZ", not "if action produces
+            // object XYZ"
+            case $event instanceof OnActionPerformedEvent:
+            case $event instanceof OnBeforeActionPerformedEvent:
+                // TODO getting data from action events is not straight-forward: we can either use input or result data (or both?)
+                // Maybe add additional placeholders to $phResolvers for `input_data:` and `result_data`? But the $phResolvers are
+                // currently applied to the entire config, not each data row... -> allow two additional arrays?
+                $dataSheet = $event->getActionInputData();
+                break;          
         }
         
         // Don't send anything if the event has data restrictions, but no data!
@@ -284,7 +306,7 @@ class NotifyingBehavior extends AbstractBehavior
             foreach ($this->getMessageEnvelopes(
                 ($this->messageUxons ?? new UxonObject()), 
                 $dataSheet, 
-                (new ExcludedPlaceholders('~notification:', '[#', '#]'))
+                $phResolvers
             ) as $envelope) {
                 $communicator->send($envelope);
             }
@@ -300,6 +322,7 @@ class NotifyingBehavior extends AbstractBehavior
                 throw $sendingError;
             }
         }
+        
         return;
     }
     
@@ -335,7 +358,7 @@ class NotifyingBehavior extends AbstractBehavior
     
     protected function getNotifyOnEventName() : string
     {
-        return $this->notifyOn;
+        return $this->notifyOnEventName;
     }
     
     /**
@@ -350,7 +373,7 @@ class NotifyingBehavior extends AbstractBehavior
      */
     public function setNotifyOnEvent(string $value) : NotifyingBehavior
     {
-        $this->notifyOn = $value;
+        $this->notifyOnEventName = $value;
         return $this;
     }
 
@@ -445,17 +468,27 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * Specifies the action the beahvior should be performed for by it's fully qualified alias (with namespace!).
+     * If set, only successfully performing this specific action will trigger the notifications.
+     * 
+     * In a sense this is an alternative to `notify_on_event`, which reacts to all sorts of events. Using
+     * `notify_on_action` you can send notification only when specific actions are performed successfully.
+     * 
+     * There is no need to set `notify_on_event` together with `notify_on_action`, however, you may want
+     * to combine the two options to send notification `OnBeforeActionPerformed` or in other very special
+     * cases.
      *
-     * @uxon-property action_alias
+     * @uxon-property notify_on_action
      * @uxon-type metamodel:action
      *
      * @param string $value
      * @return NotifyingBehavior
      */
-    public function setActionAlias($value) : NotifyingBehavior
+    public function setNotifyOnAction(string $value) : NotifyingBehavior
     {
-        $this->action_alias = $value === '' ? null : $value;
+        $this->notifyOnActionAlias = $value === '' ? null : $value;
+        if ($this->notifyOnEventName === null) {
+            $this->notifyOnEventName = OnActionPerformedEvent::getEventName();
+        }
         return $this;
     }
     
@@ -463,9 +496,9 @@ class NotifyingBehavior extends AbstractBehavior
      * 
      * @return string|NULL
      */
-    protected function getActionAlias() : ?string
+    protected function getNotifyOnActionAlias() : ?string
     {
-        return $this->action_alias;
+        return $this->notifyOnActionAlias;
     }
     
     /**
