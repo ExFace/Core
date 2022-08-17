@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Events\TaskEventInterface;
 use exface\Core\Interfaces\Events\ResultEventInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Event fired after an action is performed but before the transaction is autocommitted.
@@ -22,17 +23,20 @@ class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInt
     
     private $transaction = null;
     
+    private $inputDataCallback = null;
+    
     /**
      * 
      * @param ActionInterface $action
      * @param ResultInterface $result
      * @param DataTransactionInterface $transaction
      */
-    public function __construct(ActionInterface $action, ResultInterface $result, DataTransactionInterface $transaction)
+    public function __construct(ActionInterface $action, ResultInterface $result, DataTransactionInterface $transaction, callable $inputDataResolver)
     {
         parent::__construct($action);
         $this->result = $result;
         $this->transaction = $transaction;
+        $this->inputDataCallback = $inputDataResolver;
     }
 
     /**
@@ -62,6 +66,17 @@ class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInt
     public function getTransaction() : DataTransactionInterface
     {
         return $this->transaction;
+    }
+    
+    /**
+     * Returns a data sheet with the fully resolved input data incl. all mappers, checks, etc.
+     * 
+     * @return DataSheetInterface
+     */
+    public function getActionInputData() : DataSheetInterface
+    {
+        $callback = $this->inputDataCallback;
+        return $callback();
     }
 
     /**
