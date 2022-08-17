@@ -1413,7 +1413,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
-                $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
+                $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR '{$this->escapeString($delim)}')";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
             case AggregatorFunctionsDataType::COUNT_DISTINCT:
@@ -1421,7 +1422,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case AggregatorFunctionsDataType::COUNT_IF:
                 $cond = $args[0];
-                list($if_comp, $if_val) = explode(' ', $cond, 2);
+                list($if_comp, $if_val) = explode(' ', $cond ?? '', 2);
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
@@ -1432,6 +1433,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return $output;
+    }
+    
+    protected function buildSqlGroupByListDelimiter(QueryPartAttribute $qpart = null) {
+        return ($qpart === null ? EXF_LIST_SEPARATOR : rtrim($qpart->getAttribute()->getValueListDelimiter(), " ")) . ' ';
     }
     
     protected function buildSqlFrom(string $operation = self::OPERATION_READ)

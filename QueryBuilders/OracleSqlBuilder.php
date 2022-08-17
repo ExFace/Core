@@ -438,7 +438,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         
         switch ($aggregator->getFunction()->getValue()) {
             case AggregatorFunctionsDataType::LIST_ALL:
-                $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ? $function_arguments[0] : "', '") . ") WITHIN GROUP (order by " . $sql . ")";
+                $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ?? $this->buildSqlGroupByListDelimiter($qpart)) . ") WITHIN GROUP (order by " . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
