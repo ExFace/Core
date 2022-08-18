@@ -170,6 +170,21 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
+     * Same as `notifications` - just to allow similar syntax as in `SendMessage` action, etc.
+     * 
+     * @uxon-property messages
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template [{"channel": ""}]
+     * 
+     * @param UxonObject $arrayOfMessages
+     * @return NotifyingBehavior
+     */
+    protected function setMessages(UxonObject $arrayOfMessages) : NotifyingBehavior
+    {
+        return $this->setNotifications($arrayOfMessages);
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
@@ -244,21 +259,34 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
+        // Ignore object-events where the object does not match
         if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
+        // Ignore data-events if their data is based on another object
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
-        if ($event instanceof ActionEventInterface && ( ! $this->getNotifyOnActionAlias() || ! $event->getAction()->isExactly($this->getNotifyOnActionAlias()))) {
-            return;
+        // Ignore action-events if 
+        // - the behavior is targeting a specific action and that is NOT the event-action
+        // - or the behavior is targeting an action event regardless of the action, but the actions object does not match
+        if ($event instanceof ActionEventInterface) {
+            if ($this->getNotifyOnActionAlias() !== null){
+                if (! $event->getAction()->isExactly($this->getNotifyOnActionAlias())) {
+                    return;
+                }
+            } else {
+                if (! $event->getAction()->getMetaObject()->isExactly($this->getObject())) {
+                    return;
+                }
+            }
         }
         
-        $phResolvers = [
-            new ExcludedPlaceholders('~notification:', '[#', '#]')
-        ];
+        // Here is a possibility to add custom placeholder resolvers depending on the event type:
+        // just instantiate the resolver and add it to this array.
+        $phResolvers = [];
         
         $dataSheet = null;
         switch (true) {
@@ -284,15 +312,18 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
+        // Ignore the event if the data is based on another object
         if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
+        // Ignore the event if its data was already processed and set to be ignored (e.g. required change did not happen)
         if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
             return;
         }
         
+        // Ignore the event if its data does not match restrictions
         if ($dataSheet && $this->hasRestrictionConditions()) {
             $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
             if ($dataSheet->isEmpty()) {
@@ -301,6 +332,7 @@ class NotifyingBehavior extends AbstractBehavior
             }
         }        
         
+        // If everything is OK, generate UXON envelopes for the messages and send them
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
             foreach ($this->getMessageEnvelopes(
