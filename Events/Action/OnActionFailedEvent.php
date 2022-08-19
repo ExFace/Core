@@ -5,11 +5,11 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Events\TaskEventInterface;
 use exface\Core\Interfaces\Events\ErrorEventInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 
 /**
  * Event fired after an action caused an exception.
@@ -19,7 +19,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * @author Ralf Mulansky
  *        
  */
-class OnActionFailedEvent extends AbstractActionEvent implements TaskEventInterface, ErrorEventInterface
+class OnActionFailedEvent extends AbstractActionEvent implements ActionRuntimeEventInterface, ErrorEventInterface
 {
     private $exception = null;
     
@@ -67,9 +67,9 @@ class OnActionFailedEvent extends AbstractActionEvent implements TaskEventInterf
     }
     
     /**
-     * Returns a data sheet with the fully resolved input data incl. all mappers, checks, etc.
      * 
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\ActionRuntimeEventInterface::getActionInputData()
      */
     public function getActionInputData() : DataSheetInterface
     {
