@@ -17,9 +17,8 @@ use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
-use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
-use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -297,8 +296,7 @@ class NotifyingBehavior extends AbstractBehavior
             // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
             // e.g. notify_on_action on object XYZ obviously means "if action performed upon object XYZ", not "if action produces
             // object XYZ"
-            case $event instanceof OnActionPerformedEvent:
-            case $event instanceof OnBeforeActionPerformedEvent:
+            case $event instanceof ActionRuntimeEventInterface:
                 // TODO getting data from action events is not straight-forward: we can either use input or result data (or both?)
                 // Maybe add additional placeholders to $phResolvers for `input_data:` and `result_data`? But the $phResolvers are
                 // currently applied to the entire config, not each data row... -> allow two additional arrays?
