@@ -15,11 +15,10 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Exceptions\Communication\CommunicationNotSentError;
-use exface\Core\Interfaces\Events\TaskEventInterface;
-use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Events\ActionEventInterface;
-use exface\Core\CommonLogic\Traits\iSendNotificationsTrait;
-use exface\Core\Interfaces\iSendNotifications;
+use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
+use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -77,6 +76,23 @@ use exface\Core\Interfaces\iSendNotifications;
  * 
  * ```
  * 
+ * ### Send an in-app notification to a user every time an action is performed
+ * 
+ * ```
+ *  {
+ *      "notify_on_action": "exface.Core.CommunicationChannelMute",
+ *      "notifications": [
+ *          {
+ *              "channel": "exface.Core.NOTIFICATION",
+ *              "recipient_users": ["username"],
+ *              "title": "Channel [#~data:LABEL#] muted!",
+ *              "text": "User [#=User('username')#] just muted the communication channel [#~data:LABEL#]"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
  * ### Send an email to the ticket author once it reaches a certain status
  * 
  * ```
@@ -104,11 +120,11 @@ use exface\Core\Interfaces\iSendNotifications;
  * @author Andrej Kabachnik
  *
  */
-class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
+class NotifyingBehavior extends AbstractBehavior
 {
-    use iSendNotificationsTrait;
+    use SendMessagesFromDataTrait;
     
-    private $notifyOn = null;
+    private $notifyOnEventName = null;
         
     private $notifyIfAttributesChange = null;
     
@@ -118,9 +134,54 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
     
     private $errorIfNotSent = false;
     
-    private $action_alias = null;
+    private $notifyOnActionAlias = null;
     
     private $useActionInputData = false;
+    
+    private $messageUxons = null;
+    
+    /**
+     * Array of messages to send - each with a separate message model: channel, recipients, etc.
+     *
+     * You can use the following placeholders inside any message model - as recipient,
+     * message subject - anywhere:
+     *
+     * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+     * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+     * from the given app
+     * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+     * for which the notification was triggered - only works with notification that have data sheets present!
+     * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+     * This means, static formulas will always work, while data-driven formulas will only work on notifications
+     * that have data sheets present!
+     *
+     * @uxon-property notifications
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template [{"channel": ""}]
+     *
+     * @param UxonObject $arrayOfMessages
+     * @return NotifyingBehavior
+     */
+    public function setNotifications(UxonObject $arrayOfMessages) : NotifyingBehavior
+    {
+        $this->messageUxons = $arrayOfMessages;
+        return $this;
+    }
+    
+    /**
+     * Same as `notifications` - just to allow similar syntax as in `SendMessage` action, etc.
+     * 
+     * @uxon-property messages
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template [{"channel": ""}]
+     * 
+     * @param UxonObject $arrayOfMessages
+     * @return NotifyingBehavior
+     */
+    protected function setMessages(UxonObject $arrayOfMessages) : NotifyingBehavior
+    {
+        return $this->setNotifications($arrayOfMessages);
+    }
     
     /**
      * 
@@ -171,8 +232,7 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
         $this->getWorkbench()->eventManager()
             ->removeListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
         return $this;
-    }
-    
+    }  
 
     /**
      *
@@ -198,32 +258,50 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
             return;
         }
         
+        // Ignore object-events where the object does not match
         if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
+        // Ignore data-events if their data is based on another object
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
-        if ($event instanceof ActionEventInterface && ( ! $this->getActionAlias() || ! $event->getAction()->isExactly($this->getActionAlias()))) {
-            return;
+        
+        // Ignore action-events if 
+        // - the behavior is targeting a specific action and that is NOT the event-action
+        // - or the behavior is targeting an action event regardless of the action, but the actions object does not match
+        if ($event instanceof ActionEventInterface) {
+            if ($this->getNotifyOnActionAlias() !== null){
+                if (! $event->getAction()->isExactly($this->getNotifyOnActionAlias())) {
+                    return;
+                }
+            } else {
+                if (! $event->getAction()->getMetaObject()->isExactly($this->getObject())) {
+                    return;
+                }
+            }
         }
+        
+        // Here is a possibility to add custom placeholder resolvers depending on the event type:
+        // just instantiate the resolver and add it to this array.
+        $phResolvers = [];
         
         $dataSheet = null;
         switch (true) {
+            // For data-events, use their data obviously
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
                 break;
-            case $event instanceof ActionEventInterface:
-                if ($this->getUseInputData()) {
-                    if ($event instanceof TaskEventInterface) {
-                        $action = $event->getAction();
-                        $dataSheet = $action->getInputDataSheet($event->getTask());
-                    }
-                } elseif ($event instanceof ResultDataInterface) {
-                    $dataSheet = $event->getData();
-                }
-                break;               
+            // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
+            // e.g. notify_on_action on object XYZ obviously means "if action performed upon object XYZ", not "if action produces
+            // object XYZ"
+            case $event instanceof ActionRuntimeEventInterface:
+                // TODO getting data from action events is not straight-forward: we can either use input or result data (or both?)
+                // Maybe add additional placeholders to $phResolvers for `input_data:` and `result_data`? But the $phResolvers are
+                // currently applied to the entire config, not each data row... -> allow two additional arrays?
+                $dataSheet = $event->getActionInputData();
+                break;          
         }
         
         // Don't send anything if the event has data restrictions, but no data!
@@ -232,15 +310,18 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
             return;
         }
         
+        // Ignore the event if the data is based on another object
         if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
         
+        // Ignore the event if its data was already processed and set to be ignored (e.g. required change did not happen)
         if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
             return;
         }
         
+        // Ignore the event if its data does not match restrictions
         if ($dataSheet && $this->hasRestrictionConditions()) {
             $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
             if ($dataSheet->isEmpty()) {
@@ -249,10 +330,14 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
             }
         }        
         
+        // If everything is OK, generate UXON envelopes for the messages and send them
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
-            foreach ($this->getNotificationEnvelopes($dataSheet) as $envelope)
-            {
+            foreach ($this->getMessageEnvelopes(
+                ($this->messageUxons ?? new UxonObject()), 
+                $dataSheet, 
+                $phResolvers
+            ) as $envelope) {
                 $communicator->send($envelope);
             }
         } catch (\Throwable $e) {
@@ -267,6 +352,7 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
                 throw $sendingError;
             }
         }
+        
         return;
     }
     
@@ -302,7 +388,7 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
     
     protected function getNotifyOnEventName() : string
     {
-        return $this->notifyOn;
+        return $this->notifyOnEventName;
     }
     
     /**
@@ -317,7 +403,7 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
      */
     public function setNotifyOnEvent(string $value) : NotifyingBehavior
     {
-        $this->notifyOn = $value;
+        $this->notifyOnEventName = $value;
         return $this;
     }
 
@@ -412,17 +498,27 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
     }
     
     /**
-     * Specifies the action the beahvior should be performed for by it's fully qualified alias (with namespace!).
+     * If set, only successfully performing this specific action will trigger the notifications.
+     * 
+     * In a sense this is an alternative to `notify_on_event`, which reacts to all sorts of events. Using
+     * `notify_on_action` you can send notification only when specific actions are performed successfully.
+     * 
+     * There is no need to set `notify_on_event` together with `notify_on_action`, however, you may want
+     * to combine the two options to send notification `OnBeforeActionPerformed` or in other very special
+     * cases.
      *
-     * @uxon-property action_alias
+     * @uxon-property notify_on_action
      * @uxon-type metamodel:action
      *
      * @param string $value
      * @return NotifyingBehavior
      */
-    public function setActionAlias($value) : NotifyingBehavior
+    public function setNotifyOnAction(string $value) : NotifyingBehavior
     {
-        $this->action_alias = $value === '' ? null : $value;
+        $this->notifyOnActionAlias = $value === '' ? null : $value;
+        if ($this->notifyOnEventName === null) {
+            $this->notifyOnEventName = OnActionPerformedEvent::getEventName();
+        }
         return $this;
     }
     
@@ -430,9 +526,9 @@ class NotifyingBehavior extends AbstractBehavior implements iSendNotifications
      * 
      * @return string|NULL
      */
-    protected function getActionAlias() : ?string
+    protected function getNotifyOnActionAlias() : ?string
     {
-        return $this->action_alias;
+        return $this->notifyOnActionAlias;
     }
     
     /**
