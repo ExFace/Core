@@ -325,13 +325,17 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
+            return $this->getInputDataSheet($task);
+        }));
         
         // Call the action's logic
         try {
             $result = $this->perform($task, $transaction);
         } catch (\Throwable $e) {
-            $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction));
+            $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction, function() use ($task) {
+                return $this->getInputDataSheet($task);
+            }));
             throw $e;
         }
         
@@ -454,7 +458,9 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function performAfter(ResultInterface $result, DataTransactionInterface $transaction) : ActionInterface
     {
-        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction, function() use ($result) {
+            return $this->getInputDataSheet($result->getTask());
+        }));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -1059,7 +1065,7 @@ abstract class AbstractAction implements ActionInterface
      * @throws ActionInputMissingError if neither input data nor object-binding found in task or the action itself
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function getInputDataSheet(TaskInterface $task) : DataSheetInterface
+    protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
         // Get the current input data
         if ($task->hasInputData()) {
