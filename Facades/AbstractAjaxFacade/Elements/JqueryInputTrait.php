@@ -59,4 +59,18 @@ trait JqueryInputTrait
     {
         return "($('#{$this->getId()}').prop('required') || false)";
     }
+    
+    /**
+     * 
+     * @param bool $required
+     * @return string
+     */
+    protected function buildJsRequiredSetter(bool $required) : string
+    {
+        if ($required === true) {
+            return "$('#{$this->getId()}').prop('required', 'required');";
+        } else {
+            return "$('#{$this->getId()}').removeProp('required');";
+        }
+    }
 }
