@@ -1976,4 +1976,14 @@ JS;
     {
         return $funcPrefix . '_onBlur';
     }
+    
+    protected function buildJsRequiredSetter(bool $required) : string
+    {
+        return "";
+    }
+    
+    protected function buildJsRequiredGetter() : string
+    {
+        return $this->getWidget()->isRequired() ? "true" : "false";   
+    }
 }
