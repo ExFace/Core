@@ -34,6 +34,7 @@ use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Contexts\DebugContext;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * Basic ExFace widget
@@ -964,14 +965,14 @@ abstract class AbstractWidget implements WidgetInterface
      */
     public function isHidden()
     {
-        return $this->getVisibility() == EXF_WIDGET_VISIBILITY_HIDDEN ? true : false;
+        return $this->getVisibility() === WidgetVisibilityDataType::HIDDEN;
     }
 
     /**
-     * Set to TRUE to hide the widget.
-     * The same effect can be achieved by setting "visibility: hidden".
+     * Set to TRUE to hide the widget - the same effect can be achieved by setting `visibility: hidden`.
      *
-     * Setting "hidden: false" will revert visibility to normal - just like "visibility: normal".
+     * Setting `hidden: false` will revert visibility to its original value or `normal` if no original 
+     * value can be determined.
      *
      * @uxon-property hidden
      * @uxon-type boolean
@@ -984,10 +985,14 @@ abstract class AbstractWidget implements WidgetInterface
     public function setHidden($value)
     {
         $value = BooleanDataType::cast($value);
-        if ($value) {
-            $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
-        } else {
-            $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
+        if ($value === true) {
+            $this->setVisibility(WidgetVisibilityDataType::HIDDEN);
+        } elseif ($this->isHidden() === true) {
+            if ($this->uxon_original && $this->uxon_original->hasProperty('visibility')) {
+                $this->setVisibility($this->uxon_original->getProperty('visibility'));
+            } else {
+                $this->setVisibility(WidgetVisibilityDataType::NORMAL);
+            }
         }
         return $this;
     }
