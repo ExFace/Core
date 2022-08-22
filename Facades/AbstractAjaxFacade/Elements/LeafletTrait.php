@@ -21,7 +21,6 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\DataPointsLayer;
-use exface\Core\Interfaces\Widgets\iHaveColorScale;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
@@ -934,7 +933,7 @@ JS;
                 $js = <<<JS
 new L.ExtraMarkers.icon({
                             icon: 'fa-number',
-                            number: {$oRowJs}.{$layer->getValueColumn()->getDataColumnName()},
+                            number: {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'],
                             markerColor: $colorJs,
                             shape: 'square',
                             svg: true,
