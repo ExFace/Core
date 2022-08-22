@@ -462,7 +462,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $sql = 'CAST(' . $sql . ' AS nvarchar(max))';
                 }
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                if ($qpart->getQuery()->isSubquery()) {
+                    $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                }
                 return "STUFF(CAST(( SELECT " . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . "[text()] = '{$this->escapeString($delim)}' + {$sql}";
             default:
                 return parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
