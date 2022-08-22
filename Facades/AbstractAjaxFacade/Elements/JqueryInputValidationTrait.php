@@ -68,6 +68,7 @@ trait JqueryInputValidationTrait {
      */
     protected function buildJsValidatorCheckRequired(string $valueJs, string $onFailJs) : string
     {
+        // required_if check does not work for inTable widgets
         if ($this->getWidget()->isInTable()) {
             if ($this->getWidget()->isRequired() === true) {
                 return "if ($valueJs == null || $valueJs === '') { $onFailJs }";
