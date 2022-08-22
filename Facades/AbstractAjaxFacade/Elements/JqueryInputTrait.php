@@ -49,4 +49,14 @@ trait JqueryInputTrait
         }
         return parent::buildJsCallFunction($functionName, $parameters);
     }
+    
+    /**
+     * javascript to get if an input is required or not, must not end with a semicolon!
+     *
+     * @return string
+     */
+    protected function buildJsRequiredGetter() : string
+    {
+        return "($('#{$this->getId()}').prop('required') || false)";
+    }
 }

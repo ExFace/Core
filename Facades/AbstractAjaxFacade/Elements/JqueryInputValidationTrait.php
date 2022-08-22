@@ -68,8 +68,13 @@ trait JqueryInputValidationTrait {
      */
     protected function buildJsValidatorCheckRequired(string $valueJs, string $onFailJs) : string
     {
-        if ($this->getWidget()->isRequired() === true) {
-            return "if ($valueJs == null || $valueJs === '') { $onFailJs }";
+        if ($this->getWidget()->isInTable()) {
+            if ($this->getWidget()->isRequired() === true) {
+                return "if ($valueJs == null || $valueJs === '') { $onFailJs }";
+            }
+        }
+        if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
+            return "if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs == null || $valueJs === '') { $onFailJs } }";
         }
         return '';
     }
