@@ -33,6 +33,7 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         
         $precision_max = $dataType->getPrecisionMax() === null ? 'undefined' : $dataType->getPrecisionMax();
         $precision_min = $dataType->getPrecisionMin() === null ? 'undefined' : $dataType->getPrecisionMin();
+        $showPlusJs = $dataType->getShowPlusSign() ? 'true' : 'false';
         $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
         if ($dataType->getGroupDigits() && $this->getThousandsSeparator()) {
@@ -50,6 +51,7 @@ JS;
         return <<<JS
         function(mNumber) {
             var fNum, sNum, sTsdSep;
+            var bShowPlus = $showPlusJs;
             if (mNumber === null || mNumber === undefined || mNumber === '') {
                 return mNumber;
             }
@@ -66,7 +68,7 @@ JS;
                 }
             );
             {$setGroupSeparatorJs}
-            return sNum;
+            return (bShowPlus === true && fNum > 0 ? '+' : '') + sNum;
         }({$jsInput})
 JS;
     }

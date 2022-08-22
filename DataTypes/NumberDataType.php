@@ -35,6 +35,8 @@ class NumberDataType extends AbstractDataType
     private $groupSeparator = null;
     
     private $emptyFormat = '';
+    
+    private $showPlusSign = false;
 
     /**
      *
@@ -450,7 +452,10 @@ class NumberDataType extends AbstractDataType
             }
         }
         
-        return number_format(floatval($num), $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+        $float = floatval($num);
+        $sign = $this->getShowPlusSign() && $float > 0 ? '+' : '';
+        
+        return $sign . number_format($float, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
     }
     
     /**
@@ -495,5 +500,30 @@ class NumberDataType extends AbstractDataType
         }
         
         return $type->format($value);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowPlusSign() : bool
+    {
+        return $this->showPlusSign;
+    }
+    
+    /**
+     * Set to TRUE to show the plus-sign in front of positive numbers
+     * 
+     * @uxon-property show_plus_sign
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NumberDataType
+     */
+    public function setShowPlusSign(bool $value) : NumberDataType
+    {
+        $this->showPlusSign = $value;
+        return $this;
     }
 }
