@@ -5,12 +5,14 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\CommonLogic\Model\Formula;
 
 /**
- * Parses (almost) any value into a date and time in the internal format or a given ICU format.
+ * Extracts the time from (almost) any date-related value.
  *
  * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format.
+ * the ICU date format. Additionally you can specify a custom input-format in ICU syntax
+ * if the automatic parser does not work properly for your date.
  *
  * Examples:
  *
@@ -24,14 +26,14 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
  *
  * @link http://userguide.icu-project.org/formatparse/datetime
  */
-class Time extends Date
+class Time extends Formula
 {
     /**
      * 
      * @param string $date
      * @param string $format
      */
-    public function run($date = null, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL)
+    public function run($date = null, $formatTo = TimeDataType::TIME_ICU_FORMAT_INTERNAL, $inputFormat = null)
     {
         if ($date === null || $date === '') {
             return null;
@@ -40,8 +42,14 @@ class Time extends Date
         $dataType = DataTypeFactory::createFromString($this->getWorkbench(), DateTimeDataType::class);
         $dataType->setFormat($formatTo);
         
+        if ($inputFormat !== null) {
+            $phpDate = DateTimeDataType::castFromFormat($date, $inputFormat, $dataType->getLocale(), true);
+        } else {
+            $phpDate = $dataType::castToPhpDate($date);
+        }
+        
         try {
-            return $dataType->formatDate($dataType::castToPhpDate($date));
+            return $dataType->formatDate($phpDate);
         } catch (DataTypeCastingError $e) {
             return $date;
         }
