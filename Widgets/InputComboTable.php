@@ -385,8 +385,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function setTextColumnId($value)
     {
         $this->text_column_id = $value;
-        if ($this->getTextColumn()) {
-            $this->setTextAttributeAlias($this->getTextColumn()->getAttributeAlias());
+        if ($col = $this->getTextColumn()) {
+            $this->setTextAttributeAlias($col->getAttributeAlias());
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid text_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
         }
@@ -429,8 +429,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $this->value_column_id = $value;
         $this->getTable()->setUidColumnId($value);
         
-        if ($this->getValueColumn()) {
-            $this->setValueAttributeAlias($this->getValueColumn()->getAttributeAlias());
+        if ($col = $this->getValueColumn()) {
+            $this->setValueAttributeAlias($col->getAttributeAlias());
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
         }
@@ -445,10 +445,10 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      */
     public function getValueColumn()
     {
-        if (! $this->getTable()->getColumn($this->getValueColumnId())) {
+        if (! $col = $this->getTable()->getColumn($this->getValueColumnId())) {
             throw new WidgetLogicError($this, 'No value data column found for ' . $this->getWidgetType() . ' with attribute_alias "' . $this->getAttributeAlias() . '"!');
         }
-        return $this->getTable()->getColumn($this->getValueColumnId());
+        return $col;
     }
 
     /**
@@ -615,7 +615,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @see \exface\Core\Widgets\InputCombo::setFilters($uxon)
      */
-    public function setFilters(UxonObject $uxon)
+    public function setFilters(UxonObject $uxon) : InputSelect
     {
         // Handle legacy syntax `[{"attribute_alias": "", "value": "", "comparator": "="}]`
         if ($uxon->isArray()) {
