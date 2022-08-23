@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 
@@ -48,10 +46,18 @@ JS;
             $setGroupSeparatorJs = '';
         }
         
+        $prefix = $dataType->getPrefix();
+        $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
+        $suffix = $dataType->getSuffix();
+        $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        
         return <<<JS
         function(mNumber) {
             var fNum, sNum, sTsdSep;
             var bShowPlus = $showPlusJs;
+            var sPrefix = $prefixJs;
+            var sSuffix = $suffixJs;
+                    
             if (mNumber === null || mNumber === undefined || mNumber === '') {
                 return mNumber;
             }
@@ -68,7 +74,16 @@ JS;
                 }
             );
             {$setGroupSeparatorJs}
-            return (bShowPlus === true && fNum > 0 ? '+' : '') + sNum;
+
+            sNum = (bShowPlus === true && fNum > 0 ? '+' : '') + sNum;
+            if (sPrefix !== '') {
+                sNum = sPrefix + sNum;
+            }
+            if (sSuffix !== '') {
+                sNum = sNum + sSuffix;
+            }
+
+            return sNum;
         }({$jsInput})
 JS;
     }
@@ -83,14 +98,31 @@ JS;
         $decimalRegex = preg_quote($this->getDecimalSeparator());
         $thousandsRegex = preg_quote($this->getThousandsSeparator());
         
+        $prefix = $this->getDataType()->getPrefix();
+        $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
+        $suffix = $this->getDataType()->getSuffix();
+        $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        
         return <<<JS
         function(mNumber) {
+            var sPrefix = $prefixJs;
+            var sSuffix = $suffixJs;
             if (mNumber === undefined || mNumber === null) return mNumber;
-            if (mNumber === '') return null;
             if (typeof mNumber === 'number' && isFinite(mNumber)) {
                 return mNumber;
             }
-            return mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+            if ((sPrefix !== '' || sSuffix !== '') && (typeof mNumber === 'string' || mNumber instanceof String)) {
+                mNumber = mNumber.trim();
+                if (sPrefix !== '' && mNumber.startsWith(sPrefix)) {
+                    mNumber = mNumber.substring(sPrefix.length).trim();
+                }
+                if (sSuffix !== '' && mNumber.endsWith(sSuffix)) {
+                    mNumber = mNumber.substring(sSuffix.length).trim();
+                }
+            }
+            if (mNumber === '') return null;
+            mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+            return mNumber;
         }({$jsInput})
 JS;
     }
