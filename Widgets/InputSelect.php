@@ -20,6 +20,7 @@ use exface\Core\Interfaces\Widgets\iHaveValues;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * A dropdown menu to select from: each dropdown item has a value and a text. 
@@ -153,9 +154,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @param string $value            
      */
-    public function setValueText($value)
+    public function setValueText($value) : InputSelect
     {
         $this->value_text = $value;
+        return $this;
     }
 
     /**
@@ -201,7 +203,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return array
      */
-    public function getSelectableOptions()
+    public function getSelectableOptions() : array
     {
         // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
         if (empty($this->selectable_options) && $this->isBoundToAttribute()) {
@@ -234,7 +236,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * 
      * @return string[]
      */
-    protected function getSelectableGenericOptions()
+    protected function getSelectableGenericOptions() : array
     {
         $generic_options =  [];
         // Unselect option if the input is not required and not disabled with a fixed value
@@ -253,12 +255,9 @@ class InputSelect extends Input implements iSupportMultiSelect
      * 
      * @return boolean
      */
-    public function hasOptions()
+    public function hasOptions() : bool
     {
-        if (! empty($this->selectable_options)){
-            return true;
-        }
-        return false;
+        return ! empty($this->selectable_options);
     }
 
     /**
@@ -276,7 +275,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @throws WidgetPropertyInvalidValueError
      * @return InputSelect
      */
-    public function setSelectableOptions($array_or_object, array $options_texts_array = NULL)
+    public function setSelectableOptions($array_or_object, array $options_texts_array = NULL) : InputSelect
     {
         $options = array();
         
@@ -347,7 +346,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return integer
      */
-    public function countSelectableOptions($include_generic_options = false)
+    public function countSelectableOptions($include_generic_options = false) : int
     {
         return count($this->getSelectableOptions()) - ($include_generic_options ? 0 : count($this->getSelectableGenericOptions()));
     }
@@ -537,7 +536,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param DataColumnInterface $text_column
      * @return \exface\Core\Widgets\InputSelect
      */
-    protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null)
+    protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null) : InputSelect
     {
         $values = $value_column->getValues(false);
         
@@ -560,7 +559,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param DataSheetInterface $data_sheet
      * @return \exface\Core\Widgets\InputSelect
      */
-    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = true)
+    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = true) : InputSelect
     {
         $data_sheet->getColumns()->addFromAttribute($this->getValueAttribute());
         $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
@@ -693,7 +692,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return \exface\Core\Widgets\InputCombo
      */
-    public function setTextAttributeAlias($value)
+    public function setTextAttributeAlias($value) : InputSelect
     {
         $this->text_attribute_alias = $value;
         return $this;
@@ -706,7 +705,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return string
      */
-    public function getTextAttributeAlias()
+    public function getTextAttributeAlias() : string
     {
         if (is_null($this->text_attribute_alias)) {
             // If options are taken from the same object, than they are probably values of the referenced attribute,
@@ -731,17 +730,18 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return boolean
      */
-    public function isOptionsObjectSpecified()
+    public function isOptionsObjectSpecified() : bool
     {
-        if (is_null($this->options_object) && is_null($this->options_object_alias)){
-            return false;
-        }
-        return true;
+        return $this->options_object !== null || $this->options_object_alias !== null;
     }
 
-    public function getOptionsObject()
+    /**
+     * 
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     */
+    public function getOptionsObject() : MetaObjectInterface
     {
-        if (is_null($this->options_object)) {
+        if (null === $this->options_object) {
             if (! $this->getMetaObject()->isExactly($this->getOptionsObjectAlias())) {
                 $this->options_object = $this->getWorkbench()->model()->getObject($this->getOptionsObjectAlias());
             } else {
@@ -751,13 +751,22 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this->options_object;
     }
 
-    public function setOptionsObject(MetaObjectInterface $value)
+    /**
+     * 
+     * @param MetaObjectInterface $value
+     * @return \exface\Core\Widgets\InputSelect
+     */
+    public function setOptionsObject(MetaObjectInterface $value) : InputSelect
     {
         $this->options_object = $value;
         return $this;
     }
 
-    public function getOptionsObjectAlias()
+    /**
+     * 
+     * @return string
+     */
+    public function getOptionsObjectAlias() : string
     {
         if (is_null($this->options_object_alias)) {
             $this->options_object_alias = $this->getMetaObject()->getAliasWithNamespace();
@@ -779,24 +788,40 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setOptionsObjectAlias($value)
+    public function setOptionsObjectAlias($value) : InputSelect
     {
         $this->options_object_alias = $value;
         return $this;
     }
 
-    public function getValueAttributeAlias()
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return string
+     */
+    public function getValueAttributeAlias() : string
     {
         // If the not set explicitly, try to determine the value attribute automatically
-        if (is_null($this->value_attribute_alias)) {
-            // If options are taken from the same object, than they are probably values of the referenced attribute,
-            // unless it is a self-reference-relation, which should be treated just like a relation to other objects
-            if ($this->getOptionsObject()->isExactly($this->getMetaObject()) && ! ($this->getAttribute() && $this->getAttribute()->isRelation())) {
-                $this->value_attribute_alias = $this->getAttributeAlias();
-            } elseif ($this->getOptionsObject()->getUidAttributeAlias()) {
-                $this->value_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
-            } else {
-                throw new WidgetConfigurationError($this, 'Cannot create ' . $this->getWidgetType() . ': there is no value attribute defined and the options object "' . $this->getOptionsObject()->getAliasWithNamespace() . '" has no UID attribute!', '6V5FGYF');
+        if ($this->value_attribute_alias === null) {
+            $isRel = $this->isRelation();
+            $optObj = $this->getOptionsObject();
+            switch (true) {
+                // If options are taken from the same object, than they are probably values of the referenced attribute,
+                // unless it is a self-reference-relation, which should be treated just like a relation to other objects
+                case $optObj->isExactly($this->getMetaObject()) && $isRel === false:
+                    $this->value_attribute_alias = $this->getAttributeAlias();
+                    break;
+                // For a relation, use the key attribute in the options-object as value
+                case $isRel === true:
+                    $this->value_attribute_alias = $this->getRelation()->getRightKeyAttribute()->getAlias();
+                    break;
+                // If the options-object is NOT the same, as the widget-object AND it is NOT a relation, use the options-objects
+                // UID attribute if available.
+                case $optObj->getUidAttributeAlias():
+                    $this->value_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
+                    break;
+                default:
+                    throw new WidgetConfigurationError($this, 'Cannot create ' . $this->getWidgetType() . ': there is no value attribute defined and the options object "' . $this->getOptionsObject()->getAliasWithNamespace() . '" has no UID attribute!', '6V5FGYF');
             }
         }
         return $this->value_attribute_alias;
@@ -806,7 +831,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * 
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function getValueAttribute()
+    public function getValueAttribute() : MetaAttributeInterface
     {
         return $this->getOptionsObject()->getAttribute($this->getValueAttributeAlias());
     }
@@ -824,7 +849,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return InputSelect
      */
-    public function setValueAttributeAlias($value)
+    public function setValueAttributeAlias($value) : InputSelect
     {
         $this->value_attribute_alias = $value;
         return $this;
@@ -849,7 +874,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param boolean $value            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setUsePrefillToFilterOptions($value)
+    public function setUsePrefillToFilterOptions($value) : InputSelect
     {
         $this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
@@ -874,7 +899,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param boolean $value            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setUsePrefillValuesAsOptions($value)
+    public function setUsePrefillValuesAsOptions($value) : InputSelect
     {
         $this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
@@ -934,7 +959,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @throws WidgetPropertyInvalidValueError
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setOptionsDataSheet(DataSheetInterface $data_sheet)
+    public function setOptionsDataSheet(DataSheetInterface $data_sheet) : InputSelect
     {
         if (! $this->getOptionsObject()->isExactly($data_sheet->getMetaObject())) {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set options data sheet for ' . $this->getWidgetType() . ': meta object "' . $this->getOptionsObject()->getAliasWithNamespace() . '", but "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '" given instead!');
@@ -977,7 +1002,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param UxonObject $uxon            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters(UxonObject $uxon)
+    public function setFilters(UxonObject $uxon) : InputSelect
     {
         $this->filters = null;
         $this->filtersUxon = $uxon;
@@ -1021,7 +1046,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param DataSorter[]|UxonObject $data_sorters_or_uxon_object            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setSorters(UxonObject $data_sorters_or_uxon_object)
+    public function setSorters(UxonObject $data_sorters_or_uxon_object) : InputSelect
     {
         foreach ($data_sorters_or_uxon_object as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
@@ -1040,7 +1065,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * 
      * @return string
      */
-    public function getMultiSelectValueDelimiter()
+    public function getMultiSelectValueDelimiter() : string
     {
         return $this->getMultipleValuesDelimiter();
     }
@@ -1058,7 +1083,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setMultiSelectValueDelimiter($value)
+    public function setMultiSelectValueDelimiter($value) : Input
     {
         return $this->setMultipleValuesDelimiter($value);
     }
@@ -1080,7 +1105,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * 
      * @return string
      */
-    public function getMultiSelectTextDelimiter()
+    public function getMultiSelectTextDelimiter() : string
     {
         if (is_null($this->multi_select_text_delimiter)){
             if ($this->getTextAttribute()){
@@ -1105,7 +1130,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setMultiSelectTextDelimiter($value)
+    public function setMultiSelectTextDelimiter($value) : InputSelect
     {
         $this->multi_select_text_delimiter = $value;
         return $this;
@@ -1117,7 +1142,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @param string $value            
      * @return boolean
      */
-    public function hasOption($value)
+    public function hasOption($value) : bool
     {
         foreach (array_keys($this->getSelectableOptions()) as $v) {
             if (strcasecmp($v, $value) === 0) {
@@ -1147,5 +1172,29 @@ class InputSelect extends Input implements iSupportMultiSelect
             }
         }
         return parent::setValue($value, $parseStringAsExpression);
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isRelation() : bool
+    {
+        return $this->isBoundToAttribute() === true && ($attr = $this->getAttribute()) && $attr->isRelation() === true;
+    }
+    
+    /**
+     * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
+     * This shortcut function is very handy because a InputCombo often stands for a relation.
+     *
+     * @return MetaRelationInterface|NULL
+     */
+    public function getRelation() : ?MetaRelationInterface
+    {
+        if ($this->isRelation()) {
+            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
+            return $this->getMetaObject()->getRelation($relAlias);
+        }
+        return null;
     }
 }

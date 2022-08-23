@@ -58,7 +58,7 @@ class StateInputSelect extends InputSelect
         return $this;
     }
 
-    public function getSelectableOptions()
+    public function getSelectableOptions() : array
     {
         // Check if the attribute is the state in the StateMachineBehavior of it's object
         /* @var $smb \exface\Core\Behaviors\StateMachineBehavior */

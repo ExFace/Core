@@ -14,6 +14,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading.
@@ -65,37 +66,13 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     }
     
     /**
-     * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
-     * This shortcut function is very handy because a InputCombo often stands for a relation.
-     *
-     * @return MetaRelationInterface|NULL
-     */
-    public function getRelation() : ?MetaRelationInterface
-    {
-        if ($this->isRelation()) {
-            $relAlias = DataAggregation::stripAggregator($this->getAttributeAlias());
-            return $this->getMetaObject()->getRelation($relAlias);
-        }
-        return null;
-    }
-    
-    /**
-     *
-     * @return bool
-     */
-    public function isRelation() : bool
-    {
-        return $this->isBoundToAttribute() === true && $this->getAttribute()->isRelation() === true;
-    }
-    
-    /**
      * If the widget is based on a relation attribute, the options object is automatically
      * the object that the relation points too. Otherwise the options object is determined
      * regularly: either being set directly or assumed to be the widgets object.
      * 
      * @see \exface\Core\Widgets\InputSelect::getOptionsObject()
      */
-    public function getOptionsObject()
+    public function getOptionsObject() : MetaObjectInterface
     {
         if (! $this->isOptionsObjectSpecified()) {
             if ($this->isRelation()) {
@@ -461,7 +438,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * {@inheritDoc}
      * @see \exface\Core\Widgets\InputSelect::setOptionsFromDataSheet()
      */
-    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = null)
+    protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet, bool $readIfNotFresh = null) : InputSelect
     {
         if ($readIfNotFresh === null) {
             $readIfNotFresh = ! $this->getLazyLoading();
