@@ -37,6 +37,10 @@ class NumberDataType extends AbstractDataType
     private $emptyFormat = '';
     
     private $showPlusSign = false;
+    
+    private $prefix = null;
+    
+    private $suffix = null;
 
     /**
      *
@@ -524,6 +528,54 @@ class NumberDataType extends AbstractDataType
     public function setShowPlusSign(bool $value) : NumberDataType
     {
         $this->showPlusSign = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getPrefix() : ?string
+    {
+        return $this->prefix;
+    }
+    
+    /**
+     * Adds a prefix in front of the number when formatting - e.g. a symbol
+     * 
+     * @uxon-property prefix
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setPrefix(string $value) : NumberDataType
+    {
+        $this->prefix = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getSuffix() : ?string
+    {
+        return $this->suffix;
+    }
+    
+    /**
+     * Adds a suffix after the number when formatting - e.g. a measurement unit
+     * 
+     * @uxon-property suffix
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setSuffix(string $value) : NumberDataType
+    {
+        $this->suffix = $value;
         return $this;
     }
 }
