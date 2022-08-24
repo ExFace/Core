@@ -50,6 +50,7 @@ JS;
         $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
         $suffix = $dataType->getSuffix();
         $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
         
         return <<<JS
         function(mNumber) {
@@ -57,9 +58,10 @@ JS;
             var bShowPlus = $showPlusJs;
             var sPrefix = $prefixJs;
             var sSuffix = $suffixJs;
+            var sEmpty = $emptyFormatJs;
                     
-            if (mNumber === null || mNumber === undefined || mNumber === '') {
-                return mNumber;
+            if ((mNumber === null || mNumber === undefined || mNumber === '') && sEmpty !== '') {
+                return sEmpty;
             }
 			fNum = parseFloat({$this->buildJsFormatParser('mNumber')});
             if (isNaN(fNum)) {
@@ -102,6 +104,7 @@ JS;
         $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
         $suffix = $this->getDataType()->getSuffix();
         $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
         
         return <<<JS
         function(mNumber) {
@@ -120,7 +123,7 @@ JS;
                     mNumber = mNumber.substring(sSuffix.length).trim();
                 }
             }
-            if (mNumber === '') return null;
+            if (mNumber === '' || mNumber === $emptyFormatJs) return null;
             mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
             return mNumber;
         }({$jsInput})
