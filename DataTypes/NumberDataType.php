@@ -545,6 +545,7 @@ class NumberDataType extends AbstractDataType
      * 
      * @uxon-property prefix
      * @uxon-type string
+     * @uxon-translatable true
      * 
      * @param string $value
      * @return NumberDataType
@@ -569,6 +570,7 @@ class NumberDataType extends AbstractDataType
      * 
      * @uxon-property suffix
      * @uxon-type string
+     * @uxon-translatable true
      * 
      * @param string $value
      * @return NumberDataType
