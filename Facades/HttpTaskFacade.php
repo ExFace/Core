@@ -23,6 +23,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\JsonBodyParser;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 
 /**
  * This facade allows to perform actions via HTTP requests (JSON or urlencoded like AbstractAjaxFacade).
@@ -221,6 +222,17 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
         // Make sure pure JSON requests are treated the same as mixed ones used by AbstractAjaxFacade, where
         // action, page, object, etc. are send urlencoded and data as JSON
         $middleware[] = new JsonBodyParser();
+        
+        $allowAnonymous = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPTASKFACADE.ALLOW_ANONYMOUS_ACCESS');
+        $allowBasicAuth = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH');
+        if ($allowAnonymous === false || $allowBasicAuth === true) {
+            $extractors = $allowBasicAuth ? [ [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken'] ] : [];
+            $middleware[] = new AuthenticationMiddleware(
+                $this, 
+                $extractors,
+                ! $allowAnonymous
+            );
+        }
         
         // Read common task properties like the AbstractAjaxFacade does
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
