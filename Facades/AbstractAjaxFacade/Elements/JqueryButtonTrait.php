@@ -22,6 +22,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 use exface\Core\Interfaces\Actions\iShowUrl;
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * 
@@ -50,7 +51,12 @@ trait JqueryButtonTrait {
         $js = '';
         $widget = $this->getWidget();
         $page = $widget->getPage();
+        $idSpace = $widget->getIdSpace();
         foreach ($widget->getRefreshWidgetIds() as $widgetId) {
+            $idSpaceProvided = StringDataType::substringBefore($widgetId, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+            if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
+                $widgetId = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $widgetId;
+            }
             $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
             $js .=  $refreshEl->buildJsRefresh(true) . "\n";
         }
@@ -67,8 +73,14 @@ trait JqueryButtonTrait {
     protected function buildJsResetWidgets() : string
     {
         $js = '';
-        $page = $this->getWidget()->getPage();
-        foreach ($this->getWidget()->getResetWidgetIds() as $id) {
+        $btn = $this->getWidget();
+        $page = $btn->getPage();
+        $idSpace = $btn->getIdSpace();
+        foreach ($btn->getResetWidgetIds() as $id) {
+            $idSpaceProvided = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+            if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
+                $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+            }
             $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
             $js .= $resetElem->buildJsResetter() . "\n";
         }
