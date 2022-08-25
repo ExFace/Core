@@ -58,7 +58,7 @@ trait JqueryButtonTrait {
                 $widgetId = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $widgetId;
             }
             $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
-            $js .=  $refreshEl->buildJsRefresh(true) . "\n";
+            $js .=  $refreshEl->buildJsRefresh(true) . ";\n";
         }
         return $js;
     }
@@ -82,7 +82,7 @@ trait JqueryButtonTrait {
                 $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
             }
             $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
-            $js .= $resetElem->buildJsResetter() . "\n";
+            $js .= $resetElem->buildJsResetter() . ";\n";
         }
         return $js;
     }
@@ -369,6 +369,8 @@ JS;
      */
     protected function buildJsClickNoAction() : string
     {
+        // Can't use buildJsActionEffects() here sind we don't have an action, so we need to call
+        // all required code generator manually.
         return $this->buildJsCloseDialog()
         . $this->buildJsRefreshWidgets()
         . $this->buildJsResetWidgets();
@@ -848,8 +850,8 @@ JS;
 
                         if ({$this->getInputElement()->buildJsValidator()}) {
                             {$targetElement->buildJsDataSetter($jsRequestData)}
-                            {$this->buildJsCloseDialog()}
                             {$this->buildJsTriggerActionEffects($action)}
+                            {$this->buildJsCloseDialog()}
                         }
 
 JS;
@@ -863,7 +865,13 @@ JS;
      */
     protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
     {
-        return $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()))->buildJsCallFunction($action->getFunctionName());
+        $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
+        return <<<JS
+
+            {$targetEl->buildJsCallFunction($action->getFunctionName())}
+            {$this->buildJsTriggerActionEffects($action)}
+            {$this->buildJsCloseDialog()}
+JS;
     }
     
     /**
