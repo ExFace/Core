@@ -54,9 +54,8 @@ class SecurityManager implements SecurityManagerInterface
     {
         $this->workbench = $workbench;
         
-        // Initialize all authenticators to give them the option to register
-        // event listeners (e.g. for the exface.Core.Security.OnBeforeAuthentication 
-        // event).
+        // Initialize all authenticators to give them the option to register listeners 
+        // (e.g. for the exface.Core.Security.OnAuthenticated event).
         $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
         
         // Initialize authorization points if the workbench is already installed.

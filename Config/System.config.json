@@ -130,6 +130,8 @@
     
     "FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
     
+    "FACADES.HTTPTASKFACADE.ALLOW_ANONYMOUS_ACCESS": false,
+    "FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH": true,
     "FACADES.HTTPTASKFACADE.HEADERS.COMMON": {
 		"Access-Control-Allow-Origin": "",
 		"Access-Control-Allow-Credentials": "true",

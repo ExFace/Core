@@ -7,7 +7,6 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Events\Security\OnBeforeAuthenticationEvent;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
@@ -21,12 +20,21 @@ use exface\Core\Exceptions\SecurityException;
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
  * 
- * This middleware will fire an `exface.Core.Security.OnBeforeAuthentication` event
- * to allow custom authenticators listening to the event to authenticate the user.
+ * This middleware simplifies authenticating a user in an HTTP facade. It also provides tools 
+ * to customize authentication: e.g. to extract token data (= credentials) from different
+ * parts of the request, etc.
  * 
- * Additionally, you can provide an array of callables to extract different types
- * of tokens from the request via the constructor argument `$tokenExtractors`.
- * Each token extractor must have the following signature:
+ * Technically, the middleware will:
+ * 
+ * 1) Check if a user is already authenticatd (e.g. via remember-me some other authenticators etc.)
+ * 2) Attemt to extract an authentciation token from the request using configurable token extractors
+ * 3) Authenticate the extracted token(s) in the workbench
+ * 4) Optionally the middleware can return a 401-response if the resulting authentication token
+ * is still anonymous, thus requiring authentication for every request.
+ * 
+ * You can provide an array of callables to extract different types of authentication tokens
+ * from the request via the constructor argument `$tokenExtractors`. Each token extractor must have 
+ * the following signature:
  * 
  * ```
  *  function(
@@ -51,8 +59,6 @@ use exface\Core\Exceptions\SecurityException;
  * 
  * **NOTE:** this middleware only handles authentication! It does not check, if the user
  * is allowed to access its facade - this is the task of the facade itself or another middleware! 
- * 
- * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
  * 
  * @author Andrej Kabachnik
  *
@@ -85,8 +91,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
     
     /**
      * 
-     * @triggers \exface\Core\Events\Security\OnBeforeAuthenticationEvent
-     * 
      * {@inheritDoc}
      * @see \Psr\Http\Server\MiddlewareInterface::process()
      */
@@ -98,8 +102,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
                 return $handler->handle($request);
             }
         }
-        // Fire OnBeforeAuthenticationEvent for custom authenticators listening to it
-        $this->workbench->eventManager()->dispatch(new OnBeforeAuthenticationEvent($this->facade));
+
         // If any of the custom authenticators were successfull, we would get a non-anonymous token here
         $authenticatedToken = $this->workbench->getSecurity()->getAuthenticatedToken();
         
@@ -118,6 +121,23 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
         }
         
+        $this->checkSessionCookies($request);
+        
+        // If the token is still anonymous, check if that is allowed in the configuration!
+        if (false === $this->isAnonymousAllowed() && true === $authenticatedToken->isAnonymous()) {
+            return $this->createResponseAccessDenied($request);
+        }
+        
+        return $handler->handle($request);
+    }
+    
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @return void
+     */
+    protected function checkSessionCookies(ServerRequestInterface $request)
+    {
         $sessionCookieName = session_name();
         $sessionIds = [];
         foreach ($request->getHeader('Cookie') as $cookie) {
@@ -128,17 +148,16 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
         }
         if (count($sessionIds) > 1) {
-            throw new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!');
+            $this->workbench->getLogger()->logException(new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!'));
         }
         
-        // If the token is still anonymous, check if that is allowed in the configuration!
-        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
-            return $this->createResponseAccessDenied($request);
-        }
-        
-        return $handler->handle($request);
+        return;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function isAnonymousAllowed() : bool
     {
         return $this->denyAnonymous !== null ? $this->denyAnonymous === false : $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
@@ -215,6 +234,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
         return null;
     }
     
+    /**
+     * 
+     * @param string $regex
+     * @return AuthenticationMiddleware
+     */
     public function addExcludePath(string $regex) : AuthenticationMiddleware
     {
         $this->excludePaths[] = $regex;
