@@ -5149,6 +5149,86 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-17 17:41:02",
+            "MODIFIED_ON": "2022-08-17 17:41:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edad2a005f3ee4ad2a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Send notification to a user role on status change",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
+            "UXON": {
+                "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
+                "notify_if_attributes_change": [
+                    ""
+                ],
+                "notify_if_data_matches_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "Status",
+                            "comparator": "==",
+                            "value": ""
+                        }
+                    ]
+                },
+                "notifications": [
+                    {
+                        "channel": "exface.Core.NOTIFICATIONS",
+                        "recipient_roles": [
+                            ""
+                        ],
+                        "title": "",
+                        "text": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-17 17:43:41",
+            "MODIFIED_ON": "2022-08-17 17:43:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edbb0e5f6b4b76bb0e025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Send email to users on status change",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
+            "UXON": {
+                "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
+                "notify_if_attributes_change": [
+                    ""
+                ],
+                "notify_if_data_matches_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "\/\/ REPLACE with the alias of the status attribute",
+                            "comparator": "==",
+                            "value": "\/\/ REPLACE with the status value, that should trigger the communication"
+                        }
+                    ]
+                },
+                "notifications": [
+                    {
+                        "channel": "exface.Core.EMAIL",
+                        "recipient_roles": [
+                            ""
+                        ],
+                        "subject": "",
+                        "text": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
