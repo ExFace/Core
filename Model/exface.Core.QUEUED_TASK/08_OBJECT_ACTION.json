@@ -466,7 +466,7 @@
         },
         {
             "CREATED_ON": "2021-01-12 15:26:35",
-            "MODIFIED_ON": "2021-08-03 18:59:38",
+            "MODIFIED_ON": "2022-08-26 14:16:51",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8b4a2cd5462a8b4a025041000001",
@@ -486,6 +486,10 @@
                                     "caption": "Info",
                                     "readonly": true,
                                     "widgets": [
+                                        {
+                                            "attribute_alias": "UID",
+                                            "widget_type": "InputHidden"
+                                        },
                                         {
                                             "widget_type": "WidgetGroup",
                                             "caption": "Message",
@@ -538,7 +542,8 @@
                                                     "attribute_alias": "RESULT_CODE"
                                                 },
                                                 {
-                                                    "attribute_alias": "ERROR_LOGID"
+                                                    "attribute_alias": "ERROR_LOGID",
+                                                    "id": "LogIdField"
                                                 },
                                                 {
                                                     "attribute_alias": "ERROR_MESSAGE"
@@ -636,6 +641,34 @@
                                     ]
                                 }
                             ]
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "Error details",
+                            "icon": "bug",
+                            "close_dialog": false,
+                            "action": {
+                                "alias": "exface.Core.ShowMonitorErrorDialog",
+                                "input_mapper": {
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "MONITOR_ERROR__UID",
+                                            "to": "UID"
+                                        }
+                                    ]
+                                }
+                            },
+                            "disabled_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=LogIdField",
+                                        "comparator": "==",
+                                        "value_right": ""
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }

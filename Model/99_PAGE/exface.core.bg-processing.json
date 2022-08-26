@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-08-10 10:13:42",
+    "modified_on": "2022-08-26 14:20:49",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.QUEUED_TASK",
@@ -360,6 +360,31 @@
                                             "value_right": ""
                                         }
                                     ]
+                                }
+                            },
+                            {
+                                "caption": "Error details",
+                                "icon": "bug",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=~input!ERROR_LOGID",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                },
+                                "action": {
+                                    "alias": "exface.Core.ShowMonitorErrorDialog",
+                                    "input_mapper": {
+                                        "column_to_column_mappings": [
+                                            {
+                                                "from": "MONITOR_ERROR__UID",
+                                                "to": "UID"
+                                            }
+                                        ]
+                                    }
                                 }
                             },
                             {
