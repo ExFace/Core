@@ -16,7 +16,7 @@ use exface\Core\Factories\WidgetLinkFactory;
  * 
  * ## Zooming
  * 
- * Concider the following example:
+ * Consider the following example:
  * 
  * ```
  *  {
@@ -34,6 +34,8 @@ use exface\Core\Factories\WidgetLinkFactory;
  * We want to be able to zoom over 4 levels (1 to 4). Zoom level 3 is going to be the actual size 
  * (1 to 1) of the image. That means zoom level 4 will be twice as big, zoom level 2 will half as 
  * big, and zoom level 1 a quarter of the original size.
+ * 
+ * A good explanation for these settings for leaflet.js is available here: https://kempe.net/blog/2014/06/14/leaflet-pan-zoom-image.html
  * 
  * @author Andrej Kabachnik
  *
