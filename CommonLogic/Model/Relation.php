@@ -287,8 +287,14 @@ class Relation implements MetaRelationInterface
         if ($this->isForwardRelation()) {
             // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
             // alias of the object it leads to (in our case, the current object)
-            // TODO #1-to-1-relations
-            $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $this->getAlias());
+            if ($this->getCardinality()->__toString() === RelationCardinalityDataType::ONE_TO_ONE
+            && $this->getRightKeyAttribute()->isRelation() 
+            && $this->getRightKeyAttribute()->getRelation()->getAlias() === $this->getAliasModifier()
+            ) {
+                $reverse = $this->getRightKeyAttribute()->getRelation();
+            } else {
+                $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $this->getAliasModifier());
+            }
         } elseif ($this->isReverseRelation()) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. 
             // That is identified by its alias.
