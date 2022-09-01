@@ -103,7 +103,7 @@ trait iHaveColorScaleTrait
             }
         }
         
-        return $color;
+        return $color ?? '';
     }
     
     /**
