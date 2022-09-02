@@ -1122,6 +1122,16 @@ class DataSheet implements DataSheetInterface
             );
             
             $nestedSheet->getFilters()->addConditionFromString($relPathFromNestedSheet->toString(), $relThisKeyVal, ComparatorDataType::EQUALS);
+            
+            // If the nested data is empty (or even has rows, but no values), simply delete any nested data
+            // Don't process this subesheet any further as the next step would add a relation column, which would
+            // make the sheet not empty anymore. Continue with the next subsheet.
+            if ($nestedSheet->isEmpty(true)) {
+                $counter += $nestedSheet->dataDelete($transaction); 
+                continue;
+            }
+            
+            // Add a column with the relation to the parent sheet
             if (! $relNestedSheetCol = $nestedSheet->getColumns()->getByExpression($relPathFromNestedSheet->toString())) {
                 $relNestedSheetCol = $nestedSheet->getColumns()->addFromExpression($relPathFromNestedSheet->toString());
             }
@@ -1178,10 +1188,10 @@ class DataSheet implements DataSheetInterface
                         }
                     }
                 }
-            }
+            } // end if no UID column
             
             $counter += $nestedSheet->dataReplaceByFilters($transaction, true, false);
-        }
+        } // Continue with the next subsheet
         
         return $counter;
     }
@@ -1218,7 +1228,7 @@ class DataSheet implements DataSheetInterface
             
             // If thee sheet is empty, we simply need to delete everything matching the filter
             // - that's it, no need to do anything else.
-            if ($this->isEmpty() === true) {
+            if ($this->isEmpty(true) === true) {
                 return $this->dataDelete($transaction);
             } 
             
@@ -1502,9 +1512,33 @@ class DataSheet implements DataSheetInterface
             throw new InvalidArgumentException('Cannot create nested data for data sheet column "' . $column->getName() . '": invalid column data type "' . $column->getDataType()->getAliasWithNamespace() . '"! Expecting type "exface.Core.DataSheet" or a derivative!');
         }
         
-        $newUids = $this->getUidColumn()->getValues(false);
-        if (count($newUids) !== count($column->getValues(false))) {
-            throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newUids) . ' UID keys in the parent sheet.');
+        $nestedRel = $thisObj->getRelation($column->getAttributeAlias());
+        $thisSheetKeyAttr = $nestedRel->getLeftKeyAttribute();
+        
+        // Find foreign keys in the parent data sheet - the UIDs in most cases, but eventually also a custom key column
+        if ($thisSheetKeyAttr->isExactly($this->getUidColumn()->getAttribute())) {
+            $newKeys = $this->getUidColumn()->getValues(false);
+        } else {
+            // If the foreign key is not the UID, see if the corresponding column exists. If not, try to read it using
+            // the UIDs for filtering. Keep in mind, that additionally read rows may be in another order!
+            if ($thisSheetKeyCol = $this->getColumns()->getByAttribute($thisSheetKeyAttr)) {
+                $newKeys = $thisSheetKeyCol->getValues(false);
+            } elseif ($this->hasUidColumn(true) && $this->getMetaObject()->isReadable()) {
+                $keysReadSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $keysReadSheet->getFilters()->addConditionFromColumnValues($this->getUidColumn());
+                $keysReadSheet->getColumns()->addFromUidAttribute();
+                $keysReadCol = $keysReadSheet->getColumns()->addFromAttribute($thisSheetKeyAttr);
+                $keysReadSheet->dataRead();
+                foreach ($this->getUidColumn()->getValues() as $rowNo => $keyUid) {
+                    $newKeys[$rowNo] = $keysReadCol->getValueByUid($keyUid);
+                }
+            } else {
+                throw new DataSheetWriteError($this, 'Cannot create nested data: no columns for foreign key "' . $thisSheetKeyAttr->__toString() . '" found and no UID values exist to load the keys from the data source.');
+            }
+        }
+        
+        if (count($newKeys) !== count($column->getValues(false))) {
+            throw new DataSheetWriteError($this, 'Cannot create nested data: ' . count($column->getValues(false)) . ' nested data sheets found for ' . count($newKeys) . ' foreign keys in the parent sheet.');
         }
         
         foreach ($column->getValues(false) as $rowNr => $sheetArr) {
@@ -1514,19 +1548,17 @@ class DataSheet implements DataSheetInterface
             
             $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
             
-            if ($nestedSheet === null || $nestedSheet->isEmpty() === true) {
+            if ($nestedSheet === null || $nestedSheet->isEmpty(true) === true) {
                 continue;
             }
-            
-            $nestedRel = $thisObj->getRelation($column->getAttributeAlias());
             
             if ($nestedRel->getCardinality()->__toString() !== RelationCardinalityDataType::ONE_TO_N) {
                 throw new DataSheetWriteError($this, 'Cannot create nested data for "' . $thisObj->getName() . '" (' . $nestedRel->getRightObject()->getAliasWithNamespace() . ') within "' . $thisObj->getRightObject()->getName() . '": only one-to-many relations allowed!');
             }
             
-            $rowUid = $newUids[$rowNr];
+            $rowKey = $newKeys[$rowNr];
             
-            if ($rowUid === null || $rowUid === '') {
+            if ($rowKey === null || $rowKey === '') {
                 throw new DataSheetWriteError($this, 'Number of created head-rows does not match the number of children rows!', '75TPT5L');
             }
             
@@ -1536,7 +1568,7 @@ class DataSheet implements DataSheetInterface
             
             $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
             $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
-            $nestedFKeyCol->setValueOnAllRows($rowUid);
+            $nestedFKeyCol->setValueOnAllRows($rowKey);
             $counter += $nestedSheet->dataCreate(false, $transaction);
         }
         
@@ -2307,8 +2339,10 @@ class DataSheet implements DataSheetInterface
      */
     public function isEmpty(bool $checkValues = false) : bool
     {
-        if ($checkValues === false) {
-            return empty($this->rows) === true;
+        if (empty($this->rows)) {
+            return true;
+        } elseif ($checkValues === false) {
+            return false;
         }
         
         foreach ($this->getColumns() as $col) {
@@ -2339,6 +2373,11 @@ class DataSheet implements DataSheetInterface
         return $this->getSorters()->isEmpty() ? true : false;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isPaged()
+     */
     public function isPaged() : bool
     {
         return $this->getRowsLimit() > 0 && $this->dataSourceHasMoreRows === true;

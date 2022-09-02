@@ -545,10 +545,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Returns TRUE if the sheet currently does not have data (= no rows) and FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * @param bool $checkValues
+     * 
+     * @return bool
      */
-    public function isEmpty() : bool;
+    public function isEmpty(bool $checkValues = false) : bool;
 
     /**
      * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)

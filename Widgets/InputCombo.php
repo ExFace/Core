@@ -300,12 +300,20 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         if ($column !== null) {
             $pointer = DataPointerFactory::createFromColumn($column);
             $value = $pointer->getValue(true, $this->getMultipleValuesDelimiter());
+            // See if there are multiple prefill values and, if so, if this is applicable to the config of the widget
             if (is_array($value)) {
-                if ($this->getMultiSelect()) {
-                    $this->setValuesFromArray($column->getValues(false), false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', $pointer));
-                } else {
-                    return;
+                switch (true) {
+                    // Multiple values are only possible if multi-select is on.
+                    case $this->getMultiSelect():
+                        $this->setValuesFromArray($column->getValues(false), false);
+                        $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', $pointer));
+                        break;
+                    // An array with a single value is OK for single-select widget too.
+                    case count($value) === 1:
+                        $this->setValue(reset($value), false);
+                        break;
+                    default:
+                        return;
                 }
             } else {
                 $this->setValue($value, false);
