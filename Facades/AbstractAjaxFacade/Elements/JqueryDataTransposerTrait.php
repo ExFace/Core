@@ -1,13 +1,49 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-
 use exface\Core\Widgets\DataColumnTransposed;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
+/**
+ * Provides methods to generate JS code to transpose data columns in DataMatrix widgets
+ * 
+ * The logic was initially developed for the jEasyUI facade. The code is far from being
+ * elegant, but has been tested in many constellations.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 trait JqueryDataTransposerTrait {
     
+    /**
+     * Returns the JS code to generate an object of column models
+     * 
+     * ```
+     *   data_column_name: {
+     *      sWidgetId: ...,
+     *      sDataColumnName: ...,
+     *      sAttributeAlias: ...,
+     *      sCaption: ...,
+     *      sHint: ...,
+     *      bHidden: ...,
+     *      sAlign: null,
+     *      sFooterAggregator: ...,
+     *      fnFormatter: ...,
+     *      bTransposeData: ..., // true if this column contains data to be transposed
+     *      sTransposeWithLabelsColumnKey: ..., // name of column to use as labels when transposing
+     *      iTransposedToSubrow: ..., // will contain the subrow index after transposing if multiple columns are transposed
+     *      bTransposedColumn: false, // true if this column was generated while transposing (set automatically)
+     *      sTransposedColumnRole: null, // data, subRowIndex, subRowTitle, subRowTotal (set automatically)
+     *      aTransposedDataKeys: [],
+     *      sTransposedLabelKey: '', // name of the original label column for generated data columns
+     *      aReplacedWithColumnKeys: [], // names of columns that replace this (label) column after transposing
+     *   }
+     *   
+     * ```
+     * 
+     * @return string
+     */
     protected function buildJsTransposerColumnModels() : string
     {
         $colModelsJs = '';
@@ -22,24 +58,41 @@ trait JqueryDataTransposerTrait {
             sCaption: {$this->escapeString($col->getCaption())},
             sHint: {$this->escapeString($col->getHint())},
             bHidden: " . ($col->isHidden() ? 'true' : 'false') . ",
-            bSortable: " . ($col->isSortable() ? 'true' : 'false') . ",
             sAlign: null,
             sFooterAggregator: {$this->escapeString($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true ? $col->getFooter()->getAggregator()->exportString() : '')},
             fnFormatter: function(value){return {$this->getFacade()->getDataTypeFormatter($col->getCellWidget()->getValueDataType())->buildJsFormatter('value')} },
             bTransposeData: " . ($col instanceof DataColumnTransposed ? 'true' : 'false') . ",
             sTransposeWithLabelsColumnKey: {$this->escapeString($col instanceof DataColumnTransposed ? $widget->getColumnByAttributeAlias($col->getLabelAttributeAlias())->getDataColumnName() : '')},
             bTransposedColumn: false,
+            sTransposedColumnRole: null,
             aTransposedDataKeys: [],
             sTransposedLabelKey: '',
-            bGeneratedColumn: false,
-            aReplaceWithColumnKeys: [],
+            aReplacedWithColumnKeys: [],
         },";
         };
         $colModelsJs = '{' . $colModelsJs . '}';
         return $colModelsJs;
     }
     
-    protected function buildJsTranspose($dataJs, $colModelsJs) : string
+    /**
+     * Returns the JS code to transposed provided data into a result object with the following structure:
+     * 
+     * ```
+     *  {
+     *      bTransposed: ,
+     *      oDataOriginal: ...,
+     *      oDataTransposed: ...,
+     *      oColModelsOriginal: ...,
+     *      oColModelsTransposed: ...
+     *  }
+     * 
+     * ```
+     * 
+     * @param string $dataJs
+     * @param string $colModelsJs
+     * @return string
+     */
+    protected function buildJsTranspose(string $dataJs, string $colModelsJs) : string
     {
         $visible_cols = array();
         $data_cols = array();
@@ -91,32 +144,32 @@ trait JqueryDataTransposerTrait {
         switch (true) {
             // If this column is to be transposed
     		case oCol.bTransposeData === true:
-    			oData.transposed = 0;
+    			oData.transposed = false;
                 break;
             // If it is one of the label columns
     		case oLabelCols[fld] !== undefined:
-                oCol.aReplaceWithColumnKeys = [];
+                oCol.aReplacedWithColumnKeys = [];
     			// Add a subtitle column to show a caption for each subrow if there are multiple
     			if (aDataCols.length > 1){                    
                     oResult.oColModelsTransposed['_subRowIndex'] = {
-                        bGeneratedColumn: true,
+                        bTransposedColumn: true,
+                        sTransposedColumnRole: 'subRowIndex',
         				sDataColumnName: '_subRowIndex',
                         sCaption: '',
         				sAlign: 'right',
-        				bSortable: false,
         				bHidden: true
                     };
-                    oCol.aReplaceWithColumnKeys.push('_subRowIndex');
+                    oCol.aReplacedWithColumnKeys.push('_subRowIndex');
 
                     oResult.oColModelsTransposed[fld+'_subtitle'] = $.extend(true, {}, oCol, {
-                        bGeneratedColumn: true,
+                        bTransposedColumn: true,
+                        sTransposedColumnRole: 'subRowTitle',
         				sDataColumnName: fld+'_subtitle',
                         sCaption: '',
         				sAlign: 'right',
-        				bSortable: false,
                         fnFormatter: null
                     });
-                    oCol.aReplaceWithColumnKeys.push(fld+'_subtitle');
+                    oCol.aReplacedWithColumnKeys.push(fld+'_subtitle');
     			}
     			// Create a column for each value if it is the label column
     			var labels = [];
@@ -132,17 +185,16 @@ trait JqueryDataTransposerTrait {
 					}
 					label = label.replaceAll('-', '_').replaceAll(':', '_');
     			    oResult.oColModelsTransposed[label] = $.extend(true, {}, oCol, {
-                        bGeneratedColumn: true,
-        				sDataColumnName: label,
+                        sDataColumnName: label,
                         sCaption: (oCol.fnFormatter ? oCol.fnFormatter(labels[l]) : labels[l]),
                         sHint: oCol.sCaption + ' ' + (oCol.fnFormatter ? oCol.fnFormatter(labels[l]) : labels[l]),
         				bTransposedColumn: true,
+                        sTransposedColumnRole: 'data',
                         aTransposedDataKeys: oLabelCols[fld],
                         sTransposedLabelKey: fld,
-        				bSortable: false, // No header sorting (not clear, what to sort!)
                         fnFormatter: null
                     });
-                    oCol.aReplaceWithColumnKeys.push(label);
+                    oCol.aReplacedWithColumnKeys.push(label);
     			}
     			// Create a totals column if there are totals
                 // The footer of the totals column will contain the overall total provided by the server
@@ -155,13 +207,13 @@ trait JqueryDataTransposerTrait {
                             oData.footer[0][oCol.sDataColumnName] = oData.footer[0][tfld];
 
                             oResult.oColModelsTransposed[fld+'_'+tfunc] = $.extend(true, {}, oCol, {
-                                bGeneratedColumn: true,
+                                bTransposedColumn: true,
+                                sTransposedColumnRole: 'subRowTotal',
         				        sDataColumnName: fld+'_'+tfunc,
         						sCaption: oAggrLabels[tfunc],
         						sAlign: 'right',
-        						bSortable: false,
                             });
-                            oCol.aReplaceWithColumnKeys.push(fld+'_'+tfunc);
+                            oCol.aReplacedWithColumnKeys.push(fld+'_'+tfunc);
     					}
     				}
     			}
@@ -173,7 +225,7 @@ trait JqueryDataTransposerTrait {
 		}
     } // for (fld in oColModels)
     
-    if (oData.transposed === 0){
+    if (oData.transposed === false){
     	for (var i=0; i<aRows.length; i++){
     		var newRowId = '';
     		var newRow = {};
@@ -207,17 +259,12 @@ trait JqueryDataTransposerTrait {
     		var subRowCounter = 0;
     		for (var fld in newColVals){
                 var oColOrig = oResult.oColModelsOriginal[fld];
+                oColOrig.iTransposedToSubrow = subRowCounter++;
     			if (oRowKeys[newRowId+fld] == undefined){
     				oRowKeys[newRowId+fld] = $.extend(true, {}, newRow);
-    				oRowKeys[newRowId+fld]['_subRowIndex'] = subRowCounter++;
+    				oRowKeys[newRowId+fld]['_subRowIndex'] = oColOrig.iTransposedToSubrow;
     			}
     			oRowKeys[newRowId+fld][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
-                /* FIXME remove jEasyUI specific code
-                if (oStylers[fld]) {
-                    oRowKeys[newRowId+fld][newColId] = '<span style="' + oStylers[fld](newColVals[fld]) + '">' + oRowKeys[newRowId+fld][newColId] + '</span>';
-                }
-                oRowKeys[newRowId+fld][newColGroup+'_subtitle'] = '<i style="' + (oStylers[fld] ? oStylers[fld]() : '') + '">'+oResult.oColModelsOriginal[fld].sCaption+'</i>';
-    			*/
                 oRowKeys[newRowId+fld][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){
     				var newVal = parseFloat(newColVals[fld]);
@@ -259,8 +306,8 @@ trait JqueryDataTransposerTrait {
     	}
     	
     	oData.rows = aRowsNew;
-    	oData.transposed = 1;
-        oResult.bTransposed = 1;
+    	oData.transposed = true;
+        oResult.bTransposed = true;
     
         oResult.oDataTransposed = oData;
     }
