@@ -618,7 +618,7 @@ class TimeStampingBehavior extends AbstractBehavior
             // FIXME what about the other columns? Read them too? With default aggregators?!
             if ($originalSheet->countRows() === 1 && $updCol = $originalSheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
                 $maxSheet = DataSheetFactory::createFromObject($check_sheet->getMetaObject());
-                $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX)));
+                $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), AggregatorFunctionsDataType::MAX));
                 $maxSheet->setFilters($check_sheet->getFilters()->copy());
                 $maxSheet->dataRead();
                 $updCol->setValue(0, $maxCol->getValue(0));

@@ -398,7 +398,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     $filterQuery = new self($this->getSelector());
                     $filterQuery->setMainObject($this->getMainObject());
                     $leftKeyAlias = $qpart->getFirstRelation()->getLeftKeyAttribute()->getAlias();
-                    $leftKeyQpart = $filterQuery->addAttribute(DataAggregation::addAggregatorToAlias($leftKeyAlias, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_DISTINCT)));
+                    $leftKeyQpart = $filterQuery->addAttribute(DataAggregation::addAggregatorToAlias($leftKeyAlias, AggregatorFunctionsDataType::LIST_DISTINCT));
                     $filterQuery->addFilter($qpart);
                     $result = $filterQuery->read($data_connection);
                     $leftKeyValues = $result->getResultRows()[0][$leftKeyQpart->getColumnKey()];
