@@ -4,6 +4,8 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Widgets\DataColumnTransposed;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * Provides methods to generate JS code to transpose data columns in DataMatrix widgets
@@ -117,7 +119,12 @@ trait JqueryDataTransposerTrait {
         $aggr_function_type = DataTypeFactory::createFromPrototype($this->getWorkbench(), AggregatorFunctionsDataType::class);
         $aggr_names = json_encode($aggr_function_type->getLabels());
 
-        $uidColumnName = $widget->hasUidColumn() ? $widget->getUidColumn()->getDataColumnName() : '';
+        $systemColNames = [];
+        foreach ($widget->getMetaObject()->getAttributes()->getSystem() as $attr) {
+            $systemColNames[] = DataColumn::sanitizeColumnName($attr->getAlias());
+            $systemColNames[] = DataColumn::sanitizeColumnName(DataAggregation::addAggregatorToAlias($attr->getAlias(), $attr->getDefaultAggregateFunction()));
+        }
+        $systemColNames = json_encode($systemColNames);
         
         return <<<JS
 (function(oData, oColModels) {
@@ -133,6 +140,7 @@ trait JqueryDataTransposerTrait {
     var oDataColsTotals = {$data_cols_totals}; // {transpColName2: SUM, ...}
     var oAggrLabels = $aggr_names; // {SUM: 'Sum', ...}
     var oLabelCols = {$label_cols}; // {labelAttrAlias1: [transpColName1, transpColName2], labelAttrAlias2: [...], ...}
+    var aSystemCols = $systemColNames;
     var aRows = oData.rows;
     
 	var aRowsNew = [];
@@ -247,7 +255,7 @@ trait JqueryDataTransposerTrait {
     				    newColVals[fld] = val;
                         break;
     			    case aVisibleCols.indexOf(fld) > -1:
-                    case oColModels[fld] === undefined && fld !== '{$uidColumnName}':
+                    case oColModels[fld] === undefined && aSystemCols.includes(fld) === false:
         				newRowId += val;
         				newRow[fld] = val;
                         break;
