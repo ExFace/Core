@@ -122,7 +122,9 @@ trait JqueryDataTransposerTrait {
         $systemColNames = [];
         foreach ($widget->getMetaObject()->getAttributes()->getSystem() as $attr) {
             $systemColNames[] = DataColumn::sanitizeColumnName($attr->getAlias());
-            $systemColNames[] = DataColumn::sanitizeColumnName(DataAggregation::addAggregatorToAlias($attr->getAlias(), $attr->getDefaultAggregateFunction()));
+            if ($attr->getDefaultAggregateFunction()) {
+                $systemColNames[] = DataColumn::sanitizeColumnName(DataAggregation::addAggregatorToAlias($attr->getAlias(), $attr->getDefaultAggregateFunction()));
+            }
         }
         $systemColNames = json_encode($systemColNames);
         
