@@ -256,6 +256,30 @@ class MetaObject implements MetaObjectInterface
     {
         return $this->attributes;
     }
+    
+    public function getAttribute(string $alias) : MetaAttributeInterface
+    {
+        // First of all check, the cache:
+        // - if it's a HIT (key exists) and the key points to an attribute, return it
+        // - if it's a MISS, search for the attribute
+        // - if it's a HIT, but the value is FALSE skip the searching an head to the exception trowing
+        $attr = $this->getAttributeCache($alias);
+        if ($attr instanceof MetaAttributeInterface){
+            return $attr;
+        } elseif ($attr !== false){
+            $attr = $this->findAttribute($alias);
+        }
+        
+        if ($attr !== false && $attr !== null) {
+            return $attr;
+        }
+        
+        if (substr($alias, 0, 1) == '=') {
+            throw new MetaAttributeNotFoundError($this, 'Attribute aliases cannot start with "=" ("' . $alias . '")! The "=" is reserved for formulas!');
+        }
+        
+        throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+    }
 
     /**        
      * 
@@ -268,86 +292,83 @@ class MetaObject implements MetaObjectInterface
      * To change this, we should replace all $attribute->getRelationPath() with
      * $object->getRelationPath($attribute) and just use references to attributes
      * in the cache. 
+     * 
+     * @param string $alias
+     * @return MetaAttributeInterface|NULL
      */
-    public function getAttribute(string $alias) : MetaAttributeInterface
+    private function findAttribute(string $alias) : ?MetaAttributeInterface
     {
-        // First of all check, the cache: 
-        // - if it's a HIT (key exists) and the key points to an attribute, return it
-        // - if it's a MISS, search for the attribute
-        // - if it's a HIT, but the value is FALSE skip the searching an head to the exception trowing
-        $attr = $this->getAttributeCache($alias);
-        if ($attr instanceof MetaAttributeInterface){
+        // Now check, if it is a direct attribute. This is the simplest case and the fastets one too
+        if ($attr = $this->getAttributes()->get($alias)) {
+            $this->setAttributeCache($alias, $attr);
             return $attr;
-        } elseif ($attr !== false){
-            // Now check, if it is a direct attribute. This is the simplest case and the fastets one too
+        }
+        
+        // Check if the $alias starts with = and thus is a formula and not an alias!
+        if (substr($alias, 0, 1) == '=') {
+            $this->setAttributeCache($alias, false);
+            return null;
+        }
+        
+        // check for aggregate functions and remove them
+        if (($alias_without_aggregator = DataAggregation::stripAggregator($alias)) !== $alias) {
+            $alias = $alias_without_aggregator;
+            // check if it is a direct attribute again (now, as the aggregator was removed)
             if ($attr = $this->getAttributes()->get($alias)) {
                 $this->setAttributeCache($alias, $attr);
                 return $attr;
             }
-            
-            // Check if the $alias starts with = and thus is a formula and not an alias!
-            if (substr($alias, 0, 1) == '=') {
-                $this->setAttributeCache($alias, false);
-                throw new MetaAttributeNotFoundError($this, 'Attribute aliases cannot start with "=" ("' . $alias . '")! The "=" is reserved for formulas!');
-            }
-            
-            // check for aggregate functions and remove them
-            if (($alias_without_aggregator = DataAggregation::stripAggregator($alias)) !== $alias) {
-                $alias = $alias_without_aggregator;
-                // check if it is a direct attribute again (now, as the aggregator was removed)
-                if ($attr = $this->getAttributes()->get($alias)) {
-                    $this->setAttributeCache($alias, $attr);
-                    return $attr;
-                }
-            }
-            
-            // If the attribute has a relation path, delegate to the next related object and so on for every relation in the
-            // path. The last object in the relation path must deal with the actual attribute then.
-            if ($rel_parts = RelationPath::relationPathParse($alias, 1)) {
-                try {
-                    $rel_attr = $this->getRelatedObject($rel_parts[0])->getAttribute($rel_parts[1]);
-                    $attr = $rel_attr->copy();
-                    $rel = $this->getRelation($rel_parts[0]);
-                    // TODO replace with #Attribute::withRelationPath()
-                    $attr->getRelationPath()->prependRelation($rel);
-                    $this->setAttributeCache($alias, $attr);
-                    return $attr;
-                } catch (MetaRelationNotFoundError $e) {
-                    // Catch relation error and wrap it into an attribute error. 
-                    // Otherwise it's not clear to the user, at what point the 
-                    // relation was required.
-                    $this->setAttributeCache($alias, false);
-                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '": invalid relation path "' . $rel_parts[0] . '"!', null, $e);
-                } catch (MetaAttributeNotFoundError $e) {
-                    // Catch attribute-not-found errors from other objects and
-                    // wrap them into an error for this object. Otherwise it's
-                    // not clear to the user, at what point the attribute was
-                    // required.
-                    $this->setAttributeCache($alias, false);
-                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
-                }
-            }
-            
-            // At this point only two possibilities are left: it's either a reverse relation or an error
-            if ($this->hasRelation($alias)) {
-                $rev_rel = $this->getRelation($alias);
-                if ($rev_rel->isReverseRelation() || ($rev_rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE)) {
-                    try {
-                        $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
-                        $attr = $rel_attr->copy();
-                        // TODO replace with #Attribute::withRelationPath()
-                        $attr->getRelationPath()->prependRelation($rev_rel);
-                        $this->setAttributeCache($alias, $attr);
-                        return $attr;
-                    } catch (MetaAttributeNotFoundError $e) {
-                        $this->setAttributeCache($alias, false);
-                        throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
-                    }
-                }
-            }
-            $this->setAttributeCache($alias, false);
         }
-        throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+        
+        // If the attribute has a relation path, delegate to the next related object and so on for every relation in the
+        // path. The last object in the relation path must deal with the actual attribute then.
+        if ($rel_parts = RelationPath::relationPathParse($alias, 1)) {
+            try {
+                $rel_attr = $this->getRelatedObject($rel_parts[0])->getAttribute($rel_parts[1]);
+                $attr = $rel_attr->copy();
+                $rel = $this->getRelation($rel_parts[0]);
+                // TODO replace with #Attribute::withRelationPath()
+                $attr->getRelationPath()->prependRelation($rel);
+                $this->setAttributeCache($alias, $attr);
+                return $attr;
+            } catch (MetaRelationNotFoundError $e) {
+                // Catch relation error and wrap it into an attribute error. 
+                // Otherwise it's not clear to the user, at what point the 
+                // relation was required.
+                $this->setAttributeCache($alias, false);
+                // throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '": invalid relation path "' . $rel_parts[0] . '"!', null, $e);
+                return null;
+            } catch (MetaAttributeNotFoundError $e) {
+                // Catch attribute-not-found errors from other objects and
+                // wrap them into an error for this object. Otherwise it's
+                // not clear to the user, at what point the attribute was
+                // required.
+                $this->setAttributeCache($alias, false);
+                return null;
+                // throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+            }
+        }
+        
+        // At this point only two possibilities are left: it's either a reverse relation or an error
+        if ($this->hasRelation($alias)) {
+            $rev_rel = $this->getRelation($alias);
+            if ($rev_rel->isReverseRelation() || ($rev_rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE)) {
+                try {
+                    $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
+                    $attr = $rel_attr->copy();
+                    // TODO replace with #Attribute::withRelationPath()
+                    $attr->getRelationPath()->prependRelation($rev_rel);
+                    $this->setAttributeCache($alias, $attr);
+                    return $attr;
+                } catch (MetaAttributeNotFoundError $e) {
+                    $this->setAttributeCache($alias, false);
+                    return null;
+                    // throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+                }
+            }
+        }
+        $this->setAttributeCache($alias, false);
+        return null;
     }
     
     /**
