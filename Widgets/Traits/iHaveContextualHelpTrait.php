@@ -41,7 +41,7 @@ trait iHaveContextualHelpTrait {
             // Let the page generate the id and append 'Help' to it - this way we still have
             // the path-like id for search performance + it does not interfere with other buttons
             if (! $uxon->hasProperty('id')) {
-                $uxon->setProperty('id', $this->getPage()->generateWidgetId($this, StringDataType::substringAfter($this->getId(), UiPage::WIDGET_ID_SEPARATOR, '', false, true) . 'Help'));
+                $uxon->setProperty('id', $this->getPage()->generateWidgetId($this, 'Help'));
                 // Remove the id-space since it is a path-like id
                 $uxon->setProperty('id_space', '');
             }
