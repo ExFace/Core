@@ -524,7 +524,7 @@ abstract class AbstractWidget implements WidgetInterface
 
     /**
      * 
-     * @param unknown $value
+     * @param string $value
      * @throws WidgetIdConflictError
      * @return AbstractWidget
      */
