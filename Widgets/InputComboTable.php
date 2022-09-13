@@ -231,10 +231,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             } elseif ($this->isBoundToAttribute()) {
                 $table->addColumn($table->createColumnFromAttribute($this->getAttribute()));
                 $table->addColumn($table->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => DataAggregation::addAggregatorToAlias(
-                        $this->getAttributeAlias(), 
-                        new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::COUNT)
-                    ),
+                    'attribute_alias' => DataAggregation::addAggregatorToAlias($this->getAttributeAlias(), AggregatorFunctionsDataType::COUNT),
                     'caption' => '=TRANSLATE("exface.Core", "WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES")'
                 ])));
             }

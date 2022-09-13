@@ -7,6 +7,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\DataTable;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * This trait contains common methods to implement the iHaveContextualHelp interface.

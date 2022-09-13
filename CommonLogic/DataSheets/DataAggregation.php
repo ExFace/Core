@@ -96,12 +96,12 @@ class DataAggregation implements iCanBeConvertedToUxon
      * Returns the passed alias expression with the given aggregator appended to it.
      * 
      * @param string $attribute_alias
-     * @param AggregatorInterface $aggregator
+     * @param AggregatorInterface|string $aggregator
      * @return string
      */
-    public static function addAggregatorToAlias(string $attribute_alias, AggregatorInterface $aggregator) : string
+    public static function addAggregatorToAlias(string $attribute_alias, $aggregatorOrString) : string
     {
-        return $attribute_alias . self::AGGREGATION_SEPARATOR . $aggregator->__toString();
+        return $attribute_alias . self::AGGREGATION_SEPARATOR . ($aggregatorOrString instanceof AggregatorInterface ? $aggregatorOrString->__toString() : $aggregatorOrString);
     }
 
     /**
