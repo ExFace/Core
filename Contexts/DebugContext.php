@@ -255,7 +255,17 @@ class DebugContext extends AbstractContext
                                     'multi_select' => true,
                                     'filters' => [
                                         [
-                                            'attribute_alias' => 'NAME'
+                                            'attribute_alias' => 'NAME',
+                                            'caption' => $translator->translate('CONTEXT.DEBUG.TRACE_NAME')
+                                        ],
+                                        [
+                                            'attribute_alias' => 'ACTION'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'PAGE'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'URL'
                                         ]
                                     ],
                                     'columns' => [
@@ -264,13 +274,13 @@ class DebugContext extends AbstractContext
                                             'caption' => $translator->translate('CONTEXT.DEBUG.TRACE_NAME')
                                         ],
                                         [
-                                            'attribute_alias' => 'URL'
-                                        ],
-                                        [
                                             'attribute_alias' => 'ACTION'
                                         ],
                                         [
                                             'attribute_alias' => 'PAGE'
+                                        ],
+                                        [
+                                            'attribute_alias' => 'URL'
                                         ]
                                     ],
                                     'sorters' => [

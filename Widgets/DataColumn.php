@@ -650,8 +650,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Specifies a facade-specific script to style the column: e.g.
-     * JavaScript for HTML-facades.
+     * Specifies a facade-specific script to style the column: e.g. JavaScript for HTML-facades.
+     * 
+     * You can use the following placeholders:
+     * 
+     * - `[#table_id#]` - id of the facade element of the table containing this column
      *
      * The exact effect of the cell_styler_script depends solemly on the implementation of the widget
      * in the specific facade.

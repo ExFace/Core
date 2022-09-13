@@ -57,7 +57,7 @@ trait JqueryInputTrait
      */
     protected function buildJsRequiredGetter() : string
     {
-        return "($('#{$this->getId()}').prop('required') || false)";
+        return "($('#{$this->getId()}').prop('required') != undefined)";
     }
     
     /**

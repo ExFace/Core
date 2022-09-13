@@ -21,6 +21,7 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataConnectors\FileFinderConnector;
 use exface\Core\DataTypes\MimeTypeDataType;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 
 /**
  * Lists files and folders using Symfony Finder Component.
@@ -326,14 +327,36 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         $patterns = [];
-        if ($oper === EXF_LOGICAL_OR) {
-            $patterns = array_unique(array_merge($pathPatterns, $uidPatterns));
-        } elseif (! empty($pathPatterns) && ! empty($uidPatterns)) {
-            throw new QueryBuilderException('Can not add multiple different paths from different "' . EXF_LOGICAL_AND .'" combined filters!');
-        } elseif (! empty($pathPatterns)) {
-            $patterns = $pathPatterns;
-        } else {
-            $patterns = $uidPatterns;
+        switch (true) {
+            case $oper === EXF_LOGICAL_OR:
+                $patterns = array_unique(array_merge($pathPatterns, $uidPatterns));
+                break;
+            case ! empty($pathPatterns) && ! empty($uidPatterns):
+                foreach ($pathPatterns as $pathIdx => $pathPattern) {
+                    $pathMatchesAllUids  = true;
+                    foreach ($uidPatterns as $uidPattern) {
+                        if ($uidPattern !== '' && $uidPattern !== null && ! FilePathDataType::matchesPattern($uidPattern, $pathPattern)) {
+                            $pathMatchesAllUids = false;
+                            break;
+                        }
+                    }
+                    if ($pathMatchesAllUids === true) {
+                        unset($pathPatterns[$pathIdx]);
+                    } else {
+                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time!');
+                    }
+                }
+                if (empty($pathPatterns)) {
+                    $patterns = $uidPatterns;
+                } else {
+                    throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time!');
+                }
+                break;
+            case ! empty($pathPatterns):
+                $patterns = $pathPatterns;
+                break;
+            default:
+                $patterns = $uidPatterns;
         }
         
         return empty($patterns) ? [$addr] : $patterns;
@@ -359,35 +382,71 @@ class FileFinderBuilder extends AbstractQueryBuilder
                 Filemanager::pathConstruct($folder);
             }
         }
-        $contentArray = $this->buildFilesContentsFromValues();
-        $touchedFilesCnt = $this->write($fileArray, $contentArray);
+        $contentQparts = $this->getValuesForFileContent();
+        switch (true) {
+            case count($contentQparts) === 1:
+                $contentArray = $this->buildFilesContentsFromValues(reset($contentQparts));
+                $touchedFilesCnt = $this->write($fileArray, $contentArray);
+                break;
+            case count($contentQparts) > 1:
+                $contentAliases = [];
+                foreach ($contentQparts as $qpart) {
+                    $contentAliases[$qpart->getAlias()];
+                }
+                throw new QueryBuilderException('Cannot update files with multiple content-related attributes at the same time: ' . implode(', ', $contentAliases));
+            default:
+                throw new QueryBuilderException('Cannot create files without contents! Please add a data column for file contents.');
+        }
         return new DataQueryResultData([], $touchedFilesCnt);
     }
     
     /**
      * 
+     * @param QueryPartValue $qpart
      * @return string[]
      */
-    protected function buildFilesContentsFromValues() : array
+    protected function buildFilesContentsFromValues(QueryPartValue $qpart) : array
     {
-        $array = [];
-        foreach ($this->getValues() as $qpart) {
-            if ($qpart->getDataAddress() === 'contents') {
-                $array = $qpart->getValues();
-                switch (true) {
-                    case $qpart->getDataType() instanceof BinaryDataType && $qpart->getDataType()->getEncoding() === BinaryDataType::ENCODING_BASE64:
-                        array_walk($array, 'base64_decode');
-                        break;
-                    default:
-                        foreach ($array as $i => $val) {
-                            if (StringDataType::startsWith($val, 'data:', false) && stripos($val, 'base64,') !== false) {
-                                $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
-                            }
-                        }
+        $array = $qpart->getValues();
+        switch (true) {
+            case $qpart->getDataType() instanceof BinaryDataType && $qpart->getDataType()->getEncoding() === BinaryDataType::ENCODING_BASE64:
+                array_walk($array, 'base64_decode');
+                break;
+            default:
+                foreach ($array as $i => $val) {
+                    if (StringDataType::startsWith($val, 'data:', false) && stripos($val, 'base64,') !== false) {
+                        $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
+                    }
                 }
-            }
         }
         return $array;
+    }
+    
+    /**
+     * Returns all value query parts referencing file contents (i.e. those to save inside files)
+     * 
+     * @return QueryPartValue[]
+     */
+    protected function getValuesForFileContent() : array
+    {
+        $qparts = [];
+        foreach ($this->getValues() as $i => $qpart) {
+            if ($this->isFileContent($qpart)) {
+                $qparts[$i] = $qpart;
+            }
+        }
+        return $qparts;
+    }
+    
+    /**
+     * Returns TRUE if give query part references the contents of a file and FALSE otherwise
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
+    protected function isFileContent(QueryPartAttribute $qpart) : bool
+    {
+        return $qpart->getDataAddress() === 'contents';
     }
     
     /**
@@ -495,12 +554,12 @@ class FileFinderBuilder extends AbstractQueryBuilder
      */
     public function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $updatedFileNr = 0;
+        $touchedFilesCnt = 0;
         // Update by path (in one of the values)
-        $fileNames = $this->buildPathsFromValues($data_connection);
+        $filePaths = $this->buildPathsFromValues($data_connection);
         
         // Update by filters
-        if (empty($fileNames) && ! $this->getFilters()->isEmpty()) {
+        if (empty($filePaths) && ! $this->getFilters()->isEmpty()) {
             $fileQuery = new self($this->getSelector());
             $fileQuery->setMainObject($this->getMainObject());
             $fileQuery->setFilters($this->getFilters());
@@ -510,20 +569,33 @@ class FileFinderBuilder extends AbstractQueryBuilder
             $fileQuery->addAttribute('PATHNAME_RELATIVE');
             $fileReadResult = $fileQuery->read($data_connection);
             foreach ($fileReadResult->getResultRows() as $row) {
-                $fileNames[] = $row['PATHNAME_ABSOLUTE'];
-                if (count($fileNames) > 1) {
+                $filePaths[] = $row['PATHNAME_ABSOLUTE'];
+                if (count($filePaths) > 1) {
                     throw new QueryBuilderException('Cannot update more than 1 file at a time by filters!');   
                 }
             }
         }
         
         // Do the updating
-        if (empty($fileNames) === false) {
-            $contentArray = $this->buildFilesContentsFromValues();
-            $updatedFileNr = $this->write($fileNames, $contentArray);
+        if (empty($filePaths) === false) {
+            $contentQparts = $this->getValuesForFileContent();
+            switch (true) {
+                case count($contentQparts) === 1:
+                    $contentArray = $this->buildFilesContentsFromValues(reset($contentQparts));
+                    $touchedFilesCnt = $this->write($filePaths, $contentArray);
+                    break;
+                case count($contentQparts) > 1:
+                    $contentAliases = [];
+                    foreach ($contentQparts as $qpart) {
+                        $contentAliases[$qpart->getAlias()];
+                    }
+                    throw new QueryBuilderException('Cannot update files with multiple content-related attributes at the same time: ' . implode(', ', $contentAliases));
+                default:
+                    // TODO how to update other file attributes?
+            }
         }
         
-        return new DataQueryResultData([], $updatedFileNr);
+        return new DataQueryResultData([], $touchedFilesCnt);
     }
 
     /**
@@ -562,10 +634,13 @@ class FileFinderBuilder extends AbstractQueryBuilder
     {
         $writtenFileNr = 0;
         if (count($fileArray) !== count($contentArray)) {
-            throw new QueryBuilderException('The number of passed files doen\'t match the number of passed file contents.');
+            throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($fileArray) . ' files exist!');
         }
         
         for ($i = 0; $i < count($fileArray); $i ++) {
+            if ($contentArray[$i] === null) {
+                continue;
+            }
             file_put_contents($fileArray[$i], $this->getValue('CONTENTS')->getDataType()->parse($contentArray[$i]));
             $writtenFileNr ++;
         }
