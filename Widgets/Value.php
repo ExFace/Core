@@ -447,7 +447,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 $this->data_column_name = DataColumn::sanitizeColumnName($this->getAttributeAlias());
             } elseif ($this->hasValue()) {
                 $expr = $this->getValueExpression();
-                if (! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
+                if ($expr && ! $expr->isEmpty() && ! $expr->isReference() && ! ($expr->isString() && $expr->__toString() === '')) {
                     $this->data_column_name = DataColumn::sanitizeColumnName($expr->toString());
                 }
             }
