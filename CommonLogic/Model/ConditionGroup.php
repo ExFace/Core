@@ -164,7 +164,7 @@ class ConditionGroup implements ConditionGroupInterface
      * 
      * @uxon-property nested_groups
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup[]
-     * @uxon-template {"operator": "","conditions": [{"expression": "", "comparator": "==", "value": ""}]}
+     * @uxon-template [{"operator": "","conditions": [{"expression": "", "comparator": "==", "value": ""}]}]
      * 
      * {@inheritdoc}
      * @see ConditionGroupInterface::getNestedGroups()
