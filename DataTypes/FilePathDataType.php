@@ -121,7 +121,7 @@ class FilePathDataType extends StringDataType
      * @param string|null $path
      * @return boolean
      */
-    public function isRelative($path) : bool
+    public static function isRelative($path) : bool
     {
         return self::isAbsolute($path) === false;
     }
