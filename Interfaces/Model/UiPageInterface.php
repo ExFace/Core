@@ -146,6 +146,14 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iC
      * @return boolean
      */
     public function isUpdateable();
+    
+    /**
+     *  Returns TRUE if a template(facade) is explicitly set in the page configuration
+     *  and FALSE otherwise.
+     *  
+     *  @return boolean
+     */
+    public function isFacadeSet();
 
     /**
      * If FALSE is passed, the page will not be updated with its app anymore.
