@@ -69,7 +69,10 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
     public function getCliArguments(): array
     {
         return [
-            (new ServiceParameter($this))->setName('areas')->setDescription('Comma-separated list of things to clean: "monitor", "queues" or "logs"')
+            (new ServiceParameter($this))
+            ->setName('areas')
+            ->setDescription('Comma-separated list of things to clean: "monitor", "queues" or "logs"')
+            ->setGroup(iCanBeCalledFromCLI::PARAMETER_GROUP_ARGUMENTS)
         ];
     }
 
