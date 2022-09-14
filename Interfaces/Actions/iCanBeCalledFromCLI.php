@@ -9,6 +9,10 @@ namespace exface\Core\Interfaces\Actions;
  */
 interface iCanBeCalledFromCLI extends ActionInterface
 {
+    const PARAMETER_GROUP_ARGUMENTS = 'arguments';
+    
+    const PARAMETER_GROUP_OPTIONS = 'options';
+    
     /**
      * 
      * @return ServiceParameterInterface[]

@@ -162,9 +162,9 @@ class ConditionGroup implements ConditionGroupInterface
     /**
      * Further (nested) condition groups inside this group
      * 
-     * @uxon-property conditions
-     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-template [{"operator": "AND", "conditions": [{"expression": "", "comparator": "==", "value": ""}]}]
+     * @uxon-property nested_groups
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup[]
+     * @uxon-template [{"operator": "","conditions": [{"expression": "", "comparator": "==", "value": ""}]}]
      * 
      * {@inheritdoc}
      * @see ConditionGroupInterface::getNestedGroups()
@@ -480,9 +480,6 @@ class ConditionGroup implements ConditionGroupInterface
     /**
      * An array of conditions (comparison predicates) for this group.
      * 
-     * @uxon-property conditions
-     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * 
      * @param array $conditions
      * @return ConditionGroupInterface
      */
@@ -496,9 +493,6 @@ class ConditionGroup implements ConditionGroupInterface
     
     /**
      * An array of further condition groups to be included in addition to regular conditions.
-     * 
-     * @uxon-property nested_groups
-     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup[]
      * 
      * @param array $conditionGroups
      * @return ConditionGroupInterface
