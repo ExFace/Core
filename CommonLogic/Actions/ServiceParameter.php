@@ -16,6 +16,8 @@ class ServiceParameter implements ServiceParameterInterface
     
     private $name = null;
     
+    private $group = null;
+    
     private $description = '';
     
     private $required = false;
@@ -284,6 +286,30 @@ class ServiceParameter implements ServiceParameterInterface
     public function setDescription(string $value) : ServiceParameterInterface
     {
         $this->description = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::getGroup()
+     */
+    public function getGroup() : ?string
+    {
+        return $this->group;
+    }
+    
+    /**
+     * The group of the perameter in case tha action takes different parameter groups (e.g. CLI arguments and options)
+     * 
+     * @uxon-property group
+     * @uxon-type string
+     * 
+     * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::setGroup()
+     */
+    public function setGroup(string $value) : ServiceParameterInterface
+    {
+        $this->group = $value;
         return $this;
     }
 }
