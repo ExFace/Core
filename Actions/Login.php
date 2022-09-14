@@ -100,6 +100,15 @@ class Login extends AbstractAction implements iModifyContext
         return $result;
     }
     
+    /**
+     * Instantites an authentication token from input data.
+     * 
+     * TODO Move this to AbstractAuthenticator or so - there it would be closer to createLoginWidget(), which provides
+     * the data
+     * 
+     * @param TaskInterface $task
+     * @return AuthenticationTokenInterface
+     */
     protected function getAuthToken(TaskInterface $task) : AuthenticationTokenInterface
     {
         $inputData = $this->getInputDataSheet($task);
@@ -121,11 +130,16 @@ class Login extends AbstractAction implements iModifyContext
                     // All other constructor parameters should be found in the 
                     // input data
                     default:
+                        $foundInput = false;
                         foreach ($inputRow as $key => $val) {
                             if (strcasecmp($key, $param->getName()) === 0) {
                                 $constructorArgs[] = $val;
+                                $foundInput = true;
                                 break;
                             }
+                        }
+                        if ($foundInput === false) {
+                            $constructorArgs[] = null;
                         }
                 }
             }
