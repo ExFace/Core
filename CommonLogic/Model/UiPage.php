@@ -1208,6 +1208,16 @@ class UiPage implements UiPageInterface
         $this->facade = null;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isFacadeSet()
+     */
+    public function isFacadeSet() : bool
+    {
+        return $this->facadeSelector !== NULL;
+    }
 
     /**
      * 
