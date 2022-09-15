@@ -50,7 +50,7 @@ class UxonObject implements \IteratorAggregate
     /**
      * Creates a UXON object from a JSON string.
      * 
-     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
      * @param string $uxon      
      * @param int $normalizeKeyCase      
@@ -72,10 +72,7 @@ class UxonObject implements \IteratorAggregate
     /**
      * Creates a UXON object from an array.
      * 
-     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
-     * 
-     * The resulting UXON will be an array itself, but alle elements will get transformed
-     * to UXON objects.
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
      * @param array $array   
      * @param int $normalizeKeyCase         
@@ -271,8 +268,19 @@ class UxonObject implements \IteratorAggregate
         return $this;
     }
 
-    public function toArray()
+    /**
+     * Converts the UXON object ot an array optionally normalizing key case
+     * 
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
+     * 
+     * @param int $normalizeKeyCase
+     * @return array
+     */
+    public function toArray(int $normalizeKeyCase = null)
     {
+        if ($normalizeKeyCase !== null) {
+            return array_change_key_case($this->array, $normalizeKeyCase);
+        }
         return $this->array;
     }
 
