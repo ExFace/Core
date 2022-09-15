@@ -101,16 +101,18 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
     public function setDescription(string $value) : ServiceParameterInterface; 
     
     /**
+     * Returns the group the parameter belongs to - if the action includes multiple parameter groups (e.g. CLI arguments and options)
      * 
+     * @param string $default
      * @return string|NULL
      */
-    public function getGroup() : ?string;
+    public function getGroup(string $default = null) : ?string;
     
     /**
      * The group of the perameter in case tha action takes different parameter groups (e.g. CLI arguments and options)
      *
      * @param string $value
-     * @return ServiceParameter
+     * @return ServiceParameterInterface
      */
     public function setGroup(string $value) : ServiceParameterInterface;
 }

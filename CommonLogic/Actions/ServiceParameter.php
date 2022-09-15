@@ -294,9 +294,9 @@ class ServiceParameter implements ServiceParameterInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ServiceParameterInterface::getGroup()
      */
-    public function getGroup() : ?string
+    public function getGroup(string $default = null) : ?string
     {
-        return $this->group;
+        return $this->group ?? $default;
     }
     
     /**
