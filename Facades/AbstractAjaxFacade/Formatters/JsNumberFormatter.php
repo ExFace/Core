@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\DataTypes\PercentDataType;
 
 /**
  * 
