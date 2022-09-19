@@ -14,7 +14,6 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
-use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -124,8 +123,8 @@ class Condition implements ConditionInterface
     /**
      * The left side of the condition.
      * 
-     * @uxon-property attribute_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-property expression
+     * @uxon-type metamodel:expression
      * 
      * @param ExpressionInterface $expression
      * @return ConditionInterface

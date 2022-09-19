@@ -135,10 +135,10 @@ abstract class WidgetFactory extends AbstractStaticFactory
         }
         try {
             $widget = static::create($page, $widget_type, $parent_widget);
-            if ($id_space = $uxon_object->getProperty('id_space')) {
+            if (null !== $id_space = $uxon_object->getProperty('id_space')) {
                 $widget->setIdSpace($id_space);
             }
-            if ($id = $uxon_object->getProperty('id')) {
+            if (null !== $id = $uxon_object->getProperty('id')) {
                 $widget->setId($id);
             }
         } catch (\Throwable $e) {
