@@ -17,7 +17,7 @@ class PercentDataType extends NumberDataType
     }
     
     /**
-     * Set to TRUE to append a percent sign to every value
+     * Set to TRUE to append a percent sign to every value, unless another suffix is explicitly set.
      * 
      * @uxon-property show_percent_sign
      * @uxon-type boolean
@@ -57,7 +57,19 @@ class PercentDataType extends NumberDataType
      */
     public function format($value = null) : string
     {
-        $test = '';
         return parent::format($value) . $this->getShowPercentSign() ? ' %' : '';   
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\NumberDataType::getSuffix()
+     */
+    public function getSuffix() : ?string
+    {
+        if (parent::getSuffix() === null && $this->getShowPercentSign()) {
+            return ' %';
+        }
+        return parent::getSuffix();
     }
 }
