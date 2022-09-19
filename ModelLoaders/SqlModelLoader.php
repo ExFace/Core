@@ -91,6 +91,9 @@ use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
+use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
+use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1942,7 +1945,7 @@ SQL;
             if ($selector->hasNamespace()) {
                 $selectorWhere = "cc.alias = '{$selector::stripNamespace($selector->toString())}' AND a.app_alias = '{$selector->getAppAlias()}'";
             } else {
-                $selectorWhere = "cc.alias = '{$selector->toString()}'";
+                $selectorWhere = "cc.alias = '{$selector->toString()}' AND cc.app_oid IS NULL";
             }
         } else {
             throw new CommunicationChannelNotFoundError('Cannot load communication channel "' . $selector->toString() . '" from model: this is not a valid alias!');
@@ -1980,7 +1983,6 @@ SQL;
             throw new CommunicationChannelNotFoundError('No communication channel found in model matching "' . $selector->toString() . '"!');
         }
         
-        $selector = new CommunicationChannelSelector($this->getWorkbench(), ($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS']);
         $channel = CommunicationFactory::createChannelEmpty($selector);
         $channel->setName($row['NAME']);
         $channel->setMuted(BooleanDataType::cast($row['MUTE_FLAG_CUSTOMIZED'] ?? $row['MUTE_FLAG_DEFAULT']));
@@ -1993,5 +1995,68 @@ SQL;
         }
         
         return $channel;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadCommunicationTemplates()
+     */
+    public function loadCommunicationTemplates(array $selectors) : array
+    {
+        $ors = [];
+        $selectorStrings = [];
+        foreach ($selectors as $selector) {
+            $selectorStrings[$selector->toString()] = $selector;
+            if ($selector->isAlias()) {
+                if ($selector->hasNamespace()) {
+                    $ors[] = "(ct.alias = '{$selector::stripNamespace($selector->toString())}' AND a.app_alias = '{$selector->getAppAlias()}')";
+                } else {
+                    $ors[] = "(ct.alias = '{$selector->toString()}' AND ct.app_oid IS NULL)";
+                }
+            } else {
+                throw new CommunicationTemplateNotFoundError('Cannot load communication template "' . $selector->toString() . '" from model: this is not a valid alias!');
+            }
+        }
+        $selectorWhere = implode(' OR ', $ors);
+        
+        $sql = <<<SQL
+-- Load communication templates
+SELECT
+    {$this->buildSqlUuidSelector('ct.oid')} AS UID,
+    ct.name AS NAME,
+    ct.alias AS ALIAS,
+    a.app_alias AS APP_ALIAS,
+    ct.message_uxon AS MESSAGE_UXON,
+    CONCAT(cca.app_alias, '.', cc.alias) AS CHANNEL_ALIAS
+FROM
+    exf_communication_template ct
+    INNER JOIN exf_communication_channel cc ON cc.oid = ct.communication_channel_oid 
+    LEFT JOIN exf_app a ON ct.app_oid = a.oid
+    LEFT JOIN exf_app cca ON cca.oid = cc.app_oid
+WHERE {$selectorWhere}
+SQL;
+    
+        $result = $this->getDataConnection()->runSql($sql);
+        $rows = $result->getResultArray();
+        
+        $tpls = [];
+        foreach ($rows as $row) {
+            $alias = ($row['APP_ALIAS'] ? $row['APP_ALIAS'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $row['ALIAS'];
+            unset($selectorStrings[$row['UID']]);
+            unset($selectorStrings[$alias]);
+            $msgUxon = UxonObject::fromJson($row['MESSAGE_UXON']);
+            $msgUxon->setProperty('channel', ltrim($row['CHANNEL_ALIAS'], "."));
+            $tpls[] = CommunicationFactory::createTemplateFromUxon(new CommunicationTemplateSelector($this->getWorkbench(), $alias), new UxonObject([
+                'uid' => $row['UID'],
+                'name' => $row['NAME'],
+                'message' => $msgUxon
+            ]));
+        }
+        foreach ($selectorStrings as $sel) {
+            throw new CommunicationTemplateNotFoundError('Cannot find communication template "' . $sel->toString() . '" in model!');
+        }
+        
+        return $tpls;
     }
 }

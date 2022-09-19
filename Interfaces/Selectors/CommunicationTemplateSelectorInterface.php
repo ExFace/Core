@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Selectors;
 
 /**
- * Interface for selectors for communication channels.
+ * Interface for selectors for communication message templates.
  * 
  * A channel can be identified by
  * - fully qualified alias (with app namespace if part of an app)
@@ -13,5 +13,5 @@ namespace exface\Core\Interfaces\Selectors;
  * @author Andrej Kabachnik
  *
  */
-interface CommunicationChannelSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface
+interface CommunicationTemplateSelectorInterface extends AliasSelectorWithOptionalNamespaceInterface, UidSelectorInterface
 {}
