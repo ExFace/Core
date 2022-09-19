@@ -538,18 +538,16 @@ abstract class AbstractWidget implements WidgetInterface
         }
         
         // Remember current id to remove it from the page afterwards
-        $old_id = $this->getId(true);
         $old_id_specified = $this->id_specified;
-        
         // Set the new id
         $this->id_specified = $value;
         
+        // Try to add the widget with the new id to the page (again). If it fails, restore the old id
+        // NOTE: the widget will be now added to the page twice - with the old and the new id. This
+        // is neccessary as other code may have already used the old id and will rely on it. On the
+        // other hand the old id was unique and the new one is too, so there should not be any problems!
         try {
             $this->getPage()->addWidget($this);
-            // If we had an id previously, remove it from the page
-            if ($old_id !== null) {
-                $this->getPage()->removeWidgetById($old_id);
-            } 
         } catch (WidgetIdConflictError $e) {
             $this->id_specified = $old_id_specified;
             throw $e;
