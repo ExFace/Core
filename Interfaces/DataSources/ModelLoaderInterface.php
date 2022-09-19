@@ -36,6 +36,9 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
+use exface\Core\Interfaces\Communication\CommunicationTemplateInterface;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -261,4 +264,12 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return CommunicationChannelInterface
      */
     public function loadCommunicationChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface;
+    
+    /**
+     *
+     * @param CommunicationTemplateSelectorInterface[] $selectors
+     * @throws CommunicationTemplateNotFoundError::
+     * @return CommunicationTemplateInterface[]
+     */
+    public function loadCommunicationTemplates(array $selectors) : array;
 }

@@ -140,6 +140,8 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $messageUxons = null;
     
+    private $messageTemplateSelectors = [];
+    
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
      *
@@ -181,6 +183,27 @@ class NotifyingBehavior extends AbstractBehavior
     protected function setMessages(UxonObject $arrayOfMessages) : NotifyingBehavior
     {
         return $this->setNotifications($arrayOfMessages);
+    }
+    
+    protected function getMessageTemplates() : array
+    {
+        return $this->messageTemplateSelectors;
+    }
+    
+    /**
+     * The channel to send the message through
+     *
+     * @uxon-property message_templates
+     * @uxon-type metamodel:exface.Core.COMMUNICATION_TEMPLATE:ALIAS_WITH_NS[]
+     * @uxon-template [""]
+     *
+     * @param UxonObject $value
+     * @return NotifyingBehavior
+     */
+    public function setMessageTemplates(UxonObject $value) : NotifyingBehavior
+    {
+        $this->messageTemplateSelectors = $value->toArray();
+        return $this;
     }
     
     /**
@@ -333,9 +356,18 @@ class NotifyingBehavior extends AbstractBehavior
         // If everything is OK, generate UXON envelopes for the messages and send them
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
-            foreach ($this->getMessageEnvelopes(
-                ($this->messageUxons ?? new UxonObject()), 
-                $dataSheet, 
+            if ($this->messageUxons !== null) {
+                foreach ($this->getMessageEnvelopes(
+                    $this->messageUxons, 
+                    $dataSheet, 
+                    $phResolvers
+                ) as $envelope) {
+                    $communicator->send($envelope);
+                }
+            }
+            foreach ($this->getMessageEnvelopesFromTempaltes(
+                $this->messageTemplateSelectors,
+                $dataSheet,
                 $phResolvers
             ) as $envelope) {
                 $communicator->send($envelope);

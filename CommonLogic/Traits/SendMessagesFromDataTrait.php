@@ -10,6 +10,8 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Communication\Messages\Envelope;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
+use exface\Core\Factories\CommunicationFactory;
 
 /**
  * This trait allows to send communication messages configured in a UXON array.
@@ -62,5 +64,21 @@ trait SendMessagesFromDataTrait
         }
         
         return $messages;
+    }
+    
+    /**
+     * 
+     * @param CommunicationTemplateSelectorInterface[] $templateSelectors
+     * @param DataSheetInterface $dataSheet
+     * @param array $additionalPlaceholders
+     * @return array
+     */
+    protected function getMessageEnvelopesFromTempaltes(array $templateSelectors, DataSheetInterface $dataSheet = null, array $additionalPlaceholders = []) : array
+    {
+        $messagesConfig = new UxonObject();
+        foreach (CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), $templateSelectors) as $tpl) {
+            $messagesConfig->append($tpl->getMessageUxon());
+        }
+        return $this->getMessageEnvelopes($messagesConfig, $dataSheet, $additionalPlaceholders);
     }
 }
