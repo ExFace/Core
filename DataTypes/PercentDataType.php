@@ -49,4 +49,15 @@ class PercentDataType extends NumberDataType
         
         return parent::cast($string);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\NumberDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $test = '';
+        return parent::format($value) . $this->getShowPercentSign() ? ' %' : '';   
+    }
 }

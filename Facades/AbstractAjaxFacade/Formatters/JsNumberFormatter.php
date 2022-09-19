@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\DataTypes\PercentDataType;
 
 /**
  * 
@@ -32,6 +33,10 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         $precision_max = $dataType->getPrecisionMax() === null ? 'undefined' : $dataType->getPrecisionMax();
         $precision_min = $dataType->getPrecisionMin() === null ? 'undefined' : $dataType->getPrecisionMin();
         $showPlusJs = $dataType->getShowPlusSign() ? 'true' : 'false';
+        $showPercentJs = 'false';
+        if ($dataType instanceof PercentDataType) {
+            $showPercentJs = $dataType->getShowPercentSign() ? 'true' : 'false';
+        }
         $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
         if ($dataType->getGroupDigits() && $this->getThousandsSeparator()) {
@@ -56,6 +61,7 @@ JS;
         function(mNumber) {
             var fNum, sNum, sTsdSep;
             var bShowPlus = $showPlusJs;
+            var bShowPercent = $showPercentJs;
             var sPrefix = $prefixJs;
             var sSuffix = $suffixJs;
             var sEmpty = $emptyFormatJs;
@@ -78,6 +84,9 @@ JS;
             {$setGroupSeparatorJs}
 
             sNum = (bShowPlus === true && fNum > 0 ? '+' : '') + sNum;
+            if (bShowPercent === true) {
+                sNum = sNum + ' %';
+            }
             if (sPrefix !== '') {
                 sNum = sPrefix + sNum;
             }
