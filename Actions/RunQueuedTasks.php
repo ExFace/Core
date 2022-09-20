@@ -12,13 +12,14 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Queue\OnQueueRunEvent;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Performs a task that is saved in a task queue.
@@ -28,6 +29,8 @@ use exface\Core\Interfaces\Actions\iModifyData;
  */
 class RunQueuedTasks extends AbstractAction implements iModifyData
 {    
+    const TASK_PARAM_QUEUE = 'queue';
+    
     /**
      * 
      * {@inheritDoc}
@@ -47,27 +50,19 @@ class RunQueuedTasks extends AbstractAction implements iModifyData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $inputData = $this->getInputDataSheet($task);
-        
-        if ($inputData->hasUidColumn(true) === false) {
-            throw new DataSheetColumnNotFoundError($inputData, "UID column not present in data sheet with meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}'");
-        }
-        
-        $tasksDs = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
-        $tasksDs->getColumns()->addFromExpression('QUEUE');
-        $tasksDs->getColumns()->addFromExpression('TASK_UXON');
-        $tasksDs->getFilters()->addConditionFromValueArray('STATUS', [QueuedTaskStateDataType::STATUS_RECEIVED, QueuedTaskStateDataType::STATUS_QUEUED]);
-        if ($inputData->getMetaObject()->is('exface.Core.QUEUED_TASK')) {
-            $tasksDs->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());            
-        } elseif ($inputData->getMetaObject()->is('exface.Core.QUEUE')) {
-            $tasksDs->getFilters()->addConditionFromValueArray('QUEUE', $inputData->getUidColumn()->getValues());
+        $inputData = $task->hasInputData() ? $this->getInputDataSheet($task) : null;
+        $requiredTaskAttributes = ['UID', 'QUEUE', 'TASK_UXON'];
+        if ($inputData === null || $inputData->isEmpty(true)) {
+            if ($task->hasParameter(self::TASK_PARAM_QUEUE)) {
+                $tasksSheet = $this->getTasksDataFromQueue($task->getParameter(self::TASK_PARAM_QUEUE), $requiredTaskAttributes);
+            } else {
+                throw new ActionInputMissingError($this, 'Cannot run queued tasks: neither a queue nor task data are provided!');
+            }
         } else {
-            throw new ActionInputInvalidObjectError($this, "Meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}' is not suitable for action '{$this->getAliasWithNamespace()}'");
-        }
-        $tasksDs->dataRead();
-        
-        $queues = $this->getQueues($tasksDs);
-        $tasks = $this->getTasksToRun($tasksDs);
+            $tasksSheet = $this->getTasksDataFromInput($inputData, $requiredTaskAttributes);   
+        }     
+        $queues = $this->getQueues($tasksSheet);
+        $tasks = $this->getTasksToRun($tasksSheet);
         
         if (count($queues) !== count($tasks)) {
             throw new ActionRuntimeError('Cannot find queues for all pending tasks!');
@@ -99,6 +94,52 @@ class RunQueuedTasks extends AbstractAction implements iModifyData
             $message .= "{$failedCount} Task(s) failed. ";
         }
         return ResultFactory::createMessageResult($task, $message);
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $inputData
+     * @param string[] $attributes
+     * @throws ActionInputMissingError
+     * @throws ActionInputInvalidObjectError
+     * @return DataSheetInterface
+     */
+    protected function getTasksDataFromInput(DataSheetInterface $inputData, array $attributes) : DataSheetInterface
+    {
+        if ($inputData->hasUidColumn(true) === false) {
+            throw new ActionInputMissingError($this, "Cannot run selected tasks: UID not found in input data!");
+        }
+        
+        $tasksSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+        $tasksSheet->getColumns()->addMultiple($attributes);
+        $tasksSheet->getFilters()->addConditionFromValueArray('STATUS', [QueuedTaskStateDataType::STATUS_RECEIVED, QueuedTaskStateDataType::STATUS_QUEUED]);
+        if ($inputData->getMetaObject()->is('exface.Core.QUEUED_TASK')) {
+            $tasksSheet->getFilters()->addConditionFromValueArray($inputData->getUidColumn()->getAttributeAlias(), $inputData->getUidColumn()->getValues());
+        } elseif ($inputData->getMetaObject()->is('exface.Core.QUEUE')) {
+            $tasksSheet->getFilters()->addConditionFromValueArray('QUEUE', $inputData->getUidColumn()->getValues());
+        } else {
+            throw new ActionInputInvalidObjectError($this, "Meta object '{$inputData->getMetaObject()->getAliasWithNamespace()}' is not suitable for action '{$this->getAliasWithNamespace()}'");
+        }
+        $tasksSheet->dataRead();
+        
+        return $tasksSheet;
+    }
+    
+    /**
+     * 
+     * @param string $queueSelector
+     * @param string[] $attributes
+     * @return DataSheetInterface
+     */
+    protected function getTasksDataFromQueue(string $queueSelector, array $attributes) : DataSheetInterface
+    {
+        $tasksSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+        $tasksSheet->getColumns()->addMultiple($attributes);
+        $tasksSheet->getFilters()->addConditionFromValueArray('STATUS', [QueuedTaskStateDataType::STATUS_RECEIVED, QueuedTaskStateDataType::STATUS_QUEUED]);
+        $tasksSheet->getFilters()->addConditionFromString('QUEUE__ALIAS_WITH_NS', $queueSelector, ComparatorDataType::EQUALS);
+        $tasksSheet->dataRead();
+        
+        return $tasksSheet;
     }
     
     /**

@@ -16,6 +16,11 @@ use exface\Core\Exceptions\Queues\QueueMessageDuplicateError;
 use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\Interfaces\TaskQueueInterface;
 use exface\Core\DataTypes\LogLevelDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use exface\Core\Events\Queue\OnQueueRunEvent;
 
 /**
  * Base class for queue prototypes saving queues in the model DB.
@@ -27,8 +32,19 @@ use exface\Core\DataTypes\LogLevelDataType;
  * - `verify()`
  * - `saveResult()`
  * - `saveError()`
+ * - `onRunPerformTask()`
  * 
- * It also includes default `cleanUp()` logic to purge messages older than defined
+ * The idea is, that tasks are stored in the model and can be easily processed by
+ * letting the workbench handle them. Concrete implementations need to take care
+ * of passing the task to the workbench.
+ * 
+ * In the simplest case, this should be done every time the `OnQueueRunEvent` is
+ * fired for this queue. This is what the action `RunQueuedTasks` does. This class
+ * even provides a default handler for this event - `onRunPerfomTask()`. The
+ * subclasses `AsnycTaskQueue` and `SyncTaskQueue` register the default handler
+ * as event listener and `SyncTaskQueue` even fires the event immediately.
+ * 
+ * This class also includes default `cleanUp()` logic to purge messages older than defined
  * in the queue config property `days_to_keep_tasks`.
  * 
  * @author Andrej Kabachnik
@@ -317,5 +333,59 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     {
         $this->errorLogLevel = LogLevelDataType::cast($psr3Level);
         return $this;
+    }
+    
+    /**
+     *
+     * @param OnQueueRunEvent $event
+     */
+    public function onRunPerformTask(OnQueueRunEvent $event)
+    {
+        if ($event->getQueue() !== $this) {
+            return;
+        }
+        
+        try {
+            $start = microtime(true);
+            $ds = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
+            
+            $messageId = $ds->getCellValue('MESSAGE_ID', 0);
+            $producer = $ds->getCellValue('PRODUCER', 0);
+            
+            try {
+                $this->verify($event->getTask(), $event->getQueueItemUid(), $messageId, $producer);
+            } catch (QueueMessageDuplicateError $e) {
+                $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_DUPLICATE);
+                $event->setResult(ResultFactory::createMessageResult($event->getTask(), 'Message id "' . $messageId . '" from producer "' . $producer . '" already enqueued - ignoring!'));
+                return;
+            }
+            
+            $task = $event->getTask();
+            $result = $this->getWorkbench()->handle($task);
+            
+            // If the task is a stream, read it completely here to make sure all generators
+            // are run. If they produce errors, they should be handled as task/action errors
+            // and not result-save errors.
+            if ($result instanceof ResultMessageStreamInterface) {
+                $result->getMessage();
+            }
+            
+            // Save he result if no errors up-to now
+            $this->saveResult($ds, $result, (microtime(true) - $start));
+            $event->setResult($result);
+        } catch (\Throwable $e) {
+            if (! $e instanceof QueueRuntimeError) {
+                $e = new QueueRuntimeError($this, 'Error in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
+            }
+            
+            $this->getWorkbench()->getLogger()->logException($e, $this->getErrorLogLevel($e->getLogLevel()));
+            
+            $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (microtime(true) - $start));
+            
+            $result = ResultFactory::createErrorResult($task, $e);
+            $result->setDataModified(true);
+            $event->setResult($result);
+        }
+        return;
     }
 }

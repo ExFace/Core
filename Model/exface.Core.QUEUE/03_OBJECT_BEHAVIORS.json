@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-09-30 09:17:58",
-            "MODIFIED_ON": "2021-11-04 11:14:18",
+            "MODIFIED_ON": "2022-09-20 15:42:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb874fd50d795c874f847beb4a5184",
@@ -57,7 +57,7 @@
             "CONFIG_UXON": {
                 "source_attribute_alias": "NAME",
                 "target_attribute_alias": "ALIAS",
-                "case": "upper",
+                "case": "lower",
                 "replace_characters": {
                     "\/[^a-zA-Z0-9_]\/": ""
                 }
