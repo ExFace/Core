@@ -94,6 +94,15 @@ class NumberDataType extends AbstractDataType
      */
     public function parse($string)
     {
+        if (is_string($string)) {
+            if (null !== ($pfx = $this->getPrefix()) && StringDataType::startsWith($string, $pfx, false)) {
+                $string = trim(mb_substr($string, strlen($pfx)));
+            }
+            if (null !== ($sfx = $this->getSuffix()) && StringDataType::endsWith($string, $sfx, false)) {
+                $string = trim(mb_substr($string, 0, (-1) * strlen($sfx)));
+            }
+        }
+        
         try {
             $number = parent::parse($string);
         } catch (\Throwable $e) {
@@ -459,7 +468,17 @@ class NumberDataType extends AbstractDataType
         $float = floatval($num);
         $sign = $this->getShowPlusSign() && $float > 0 ? '+' : '';
         
-        return $sign . number_format($float, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+        $formatted = $sign . number_format($float, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+        
+        if (null !== $pfx = $this->getPrefix()) {
+            $formatted = $pfx . $formatted;
+        }
+        
+        if (null !== $sfx = $this->getSuffix()) {
+            $formatted .= $sfx;
+        }
+        
+        return $formatted;
     }
     
     /**
