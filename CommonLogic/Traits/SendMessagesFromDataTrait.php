@@ -75,6 +75,9 @@ trait SendMessagesFromDataTrait
      */
     protected function getMessageEnvelopesFromTempaltes(array $templateSelectors, DataSheetInterface $dataSheet = null, array $additionalPlaceholders = []) : array
     {
+        if (empty($templateSelectors)) {
+            return [];
+        }
         $messagesConfig = new UxonObject();
         foreach (CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), $templateSelectors) as $tpl) {
             $messagesConfig->append($tpl->getMessageUxon());

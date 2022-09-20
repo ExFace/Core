@@ -87,13 +87,12 @@ use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
-use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -2004,9 +2003,15 @@ SQL;
      */
     public function loadCommunicationTemplates(array $selectors) : array
     {
+        if (empty($selectors)) {
+            return [];
+        }
         $ors = [];
         $selectorStrings = [];
         foreach ($selectors as $selector) {
+            if (! ($selector instanceof CommunicationTemplateSelectorInterface)) {
+                throw new CommunicationTemplateNotFoundError('Cannot load communication template "' . $selector . '" - it is not a valid template selector!');
+            }
             $selectorStrings[$selector->toString()] = $selector;
             if ($selector->isAlias()) {
                 if ($selector->hasNamespace()) {
