@@ -85,6 +85,14 @@ class TaskQueueBroker implements TaskQueueBrokerInterface, WorkbenchDependantInt
         return $result;
     }
     
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param array $topics
+     * @param string $producer
+     * @throws RuntimeException
+     * @return TaskQueueInterface[]
+     */
     protected function findQueues(TaskInterface $task, array $topics, string $producer = null) : array
     {
         $handlers = [];
