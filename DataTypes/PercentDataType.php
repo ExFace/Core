@@ -43,21 +43,11 @@ class PercentDataType extends NumberDataType
         if (is_string($string)) {
             $string = trim($string);
             if (StringDataType::endsWith($string, '%')) {
-                $string = substr($string, 0, -1);
+                $string = trim(substr($string, 0, -1));
             }
         }
         
         return parent::cast($string);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\DataTypes\NumberDataType::format()
-     */
-    public function format($value = null) : string
-    {
-        return parent::format($value) . $this->getShowPercentSign() ? ' %' : '';   
     }
     
     /**
