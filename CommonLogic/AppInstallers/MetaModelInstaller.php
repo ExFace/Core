@@ -473,6 +473,7 @@ class MetaModelInstaller extends AbstractAppInstaller
             'LAST_RUN'
         ]);
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.COMMUNICATION_CHANNEL'), 'APP');
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.COMMUNICATION_TEMPLATE'), 'APP');
         
         return $sheets;
     }
