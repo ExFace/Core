@@ -240,7 +240,8 @@ class MySqlConnector extends AbstractSqlConnector
         }
         
         try {
-            return mysqli_commit($this->getCurrentConnection());
+            mysqli_commit($this->getCurrentConnection());
+            $this->setTransactionStarted(false);
         } catch (\mysqli_sql_exception $e) {
             throw new DataConnectionCommitFailedError($this, "Commit failed: " . $e->getMessage(), '6T2T2O9', $e);
         }
@@ -255,7 +256,8 @@ class MySqlConnector extends AbstractSqlConnector
         }
         
         try {
-            return mysqli_rollback($this->getCurrentConnection());
+            mysqli_rollback($this->getCurrentConnection());
+            $this->setTransactionStarted(false);
         } catch (\Throwable $e) {
             throw new DataConnectionRollbackFailedError($this, "Rollback failed: " . $e->getMessage(), '6T2T2S1', $e);
         }

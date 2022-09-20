@@ -304,18 +304,25 @@ class MsSqlConnector extends AbstractSqlConnector
             return $this;
         }
         
-        // Make sure, the connection is established
-        if (! $this->isConnected()) {
-            $this->connect();
-        }
-        if (! sqlsrv_begin_transaction($this->getCurrentConnection())) {
-            throw new DataConnectionTransactionStartError($this, 'Cannot start transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastErrorMessage(), '6T2T2JM');
-        } else {
-            $this->setTransactionStarted(true);
+        if (! $this->transactionIsStarted()) {
+            // Make sure, the connection is established
+            if (! $this->isConnected()) {
+                $this->connect();
+            }
+            if (! sqlsrv_begin_transaction($this->getCurrentConnection())) {
+                throw new DataConnectionTransactionStartError($this, 'Cannot start transaction in "' . $this->getAliasWithNamespace() . '": ' . $this->getLastErrorMessage(), '6T2T2JM');
+            } else {
+                $this->setTransactionStarted(true);
+            }
         }
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionCommit()
+     */
     public function transactionCommit()
     {
         // Do nothing if the autocommit option is set for this connection
@@ -336,6 +343,11 @@ class MsSqlConnector extends AbstractSqlConnector
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionRollback()
+     */
     public function transactionRollback()
     {
         // Throw error if trying to rollback a transaction with autocommit enabled
@@ -356,6 +368,11 @@ class MsSqlConnector extends AbstractSqlConnector
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::freeResult()
+     */
     public function freeResult(SqlDataQuery $query)
     {
         if (is_resource($query->getResultResource())) {
