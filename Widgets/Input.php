@@ -127,11 +127,13 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * E.g. make an `Input` required if a checkbox is checked:
      *
      * ```json
-     *  "widget_type": "Input"
-     *  "required_if": {
-     *      "value_left": "id_of_checkbox",
-     *      "comparator": "==",
-     *      "value_right": "1"
+     *  {
+     *      "widget_type": "Input",
+     *      "required_if": {
+     *          "value_left": "id_of_checkbox",
+     *          "comparator": "==",
+     *          "value_right": "1"
+     *      }
      *  }
      *
      * ```
