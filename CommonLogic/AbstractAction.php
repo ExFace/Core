@@ -94,6 +94,8 @@ abstract class AbstractAction implements ActionInterface
      */
     private $input_data_preset = null;
     
+    private $input_data_uxon = null;
+    
     private $input_mappers = [];
     
     private $input_mappers_used = [];
@@ -245,17 +247,17 @@ abstract class AbstractAction implements ActionInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
+        // Set the object first as other properties might rely on it (e.g. the input_mappers)
+        if ($uxon->hasProperty('object_alias')) {
+            $this->setObjectAlias($uxon->getProperty('object_alias'));
+        }
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault($uxon, array(
-            'alias'
-        ));
-    }
-
-    public function hasProperty($name)
-    {
-        return method_exists($this, 'set' . StringDataType::convertCaseUnderscoreToPascal($name));
+        return $this->importUxonObjectDefault($uxon, [
+            'alias',
+            'object_alias'
+        ]);
     }
 
     /**
@@ -387,6 +389,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputDataPreset(DataSheetInterface $data_sheet) : ActionInterface
     {
+        $this->input_data_uxon = null;
         $this->input_data_preset = $data_sheet;
         return $this;
     }
@@ -398,6 +401,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getInputDataPreset() : DataSheetInterface
     {        
+        if ($this->input_data_preset === null && $this->input_data_uxon !== null) {
+            $this->input_data_preset = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->input_data_uxon, $this->getMetaObject());
+        }
         return $this->input_data_preset;
     }
     
@@ -408,7 +414,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function hasInputDataPreset() : bool
     {
-        return is_null($this->input_data_preset) ? false : true;
+        return $this->input_data_uxon !== null || $this->input_data_preset !== null;
     }
     
     /**
@@ -425,7 +431,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputDataSheet(UxonObject $uxon) : ActionInterface
     {
-        return $this->setInputDataPreset(DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject()));
+        $this->input_data_preset = null;
+        $this->input_data_uxon = $uxon;
+        return $this;
     }
 
     /**
@@ -1009,6 +1017,9 @@ abstract class AbstractAction implements ActionInterface
         if ($uxon->hasProperty('from_object_alias')) {
             $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
         } else {
+            // The short notation for mappers allows to omit the from-object. In this case, the best-guess
+            // will be assumed. If the action is defined in a widget, we will probably map from that
+            // widgets object. Otherwise we can simply assume, that we map from the actions object.
             if ($this->isDefinedInWidget() && $calling_widget = $this->getWidgetDefinedIn()) {
                 if ($calling_widget instanceof iUseInputWidget) {
                     $from_object = $calling_widget->getInputWidget()->getMetaObject();
@@ -1016,8 +1027,7 @@ abstract class AbstractAction implements ActionInterface
                     $from_object = $calling_widget->getMetaObject();
                 }
             } else {
-                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', []);
-                return $this;
+                $from_object = $this->getMetaObject();
             }
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());

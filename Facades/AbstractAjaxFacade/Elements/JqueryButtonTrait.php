@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Actions\iShowUrl;
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Actions\CallAction;
 
 /**
  * 
@@ -33,6 +34,8 @@ use exface\Core\CommonLogic\Model\UiPage;
  *
  */
 trait JqueryButtonTrait {
+    
+    use JsConditionalPropertyTrait;
     
     use JqueryDisableConditionTrait;
     
@@ -87,6 +90,10 @@ trait JqueryButtonTrait {
         return $js;
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function buildJsClickFunctionName()
     {
         return $this->buildJsFunctionPrefix() . 'click';
@@ -266,7 +273,11 @@ JS;
             case ! $action:
                 return $this->buildJsClickNoAction();
             case $action instanceof iCallOtherActions:
-                return $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData);
+                if ($action instanceof CallAction) {
+                    return $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData);
+                } else {
+                    return $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData);
+                }
             case $action instanceof RefreshWidget:
                 return $this->buildJsClickRefreshWidget($action);
             case $action instanceof iRunFacadeScript:
@@ -288,6 +299,26 @@ JS;
             default: 
                 return $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData);
         }
+    }
+    
+    /**
+     * 
+     * @param CallAction $action
+     * @param string $jsRequestData
+     * @return string
+     */
+    protected function buildJsClickDynamicAction(CallAction $action, string $jsRequestData) : string
+    {
+        $js = '';
+        if ($action->hasActionsConditions()) {
+            foreach ($action->getActions() as $i => $potentialAction) {
+                $conditionalProp = $action->getActionsConditions()[$i];
+                $js .= $this->buildJsConditionalProperty($conditionalProp, $this->buildJsClickFunction($potentialAction, $jsRequestData), '');
+            }
+        } else {
+            $js = $this->buildJsClickCallServerAction($action, $jsRequestData);
+        }
+        return $js;
     }
     
     /**

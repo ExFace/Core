@@ -47,6 +47,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -523,29 +525,42 @@ class App implements AppInterface
                     // At this point, we know, that both, task and widget, have actions - so we
                     // need to compare them.
                     if ($task->getActionSelector()->isAlias() && strcasecmp($task->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
-                        //In most cases, the task action will be defined via
+                        // In most cases, the task action will be defined via
                         // alias, so we can simply compare the alias without instantiating the action.
                         $action = $widget->getAction();
                     } else {
                         // Otherwise we need to instantiate it first to get the alias.
                         $task_action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
                         $widget_action = $widget->getAction();
-                        if ($task_action->isExactly($widget_action)) {
+                        switch (true) {
                             // If the task tells us to perform the action of the widget, use the description in the
                             // widget, because it is more detailed.
-                            $action = $widget->getAction();
-                        } else {
+                            case $task_action->isExactly($widget_action):
+                                $action = $widget->getAction();
+                                break;
+                                
+                            // If the widget triggers an action containing multiple sub-actions, see if one of them
+                            // matches the task action
+                            case $widget_action instanceof iCallOtherActions:
+                                $action = $widget_action->getActionToStart($task);
+                                if ($action !== null) {
+                                    break;
+                                }
+                                // If none match, continue with the default.
+                                
                             // If the task is about another action (e.g. ReadPrefill on a button, that does ShowDialog),
                             // Take the task action and inherit action settings related to the input data from the widget.
-                            $action = $task_action;
-                            if ($widget_action->hasInputDataPreset() === true) {
-                                $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
-                            }
-                            if ($widget_action->hasInputMappers() === true) {
-                                foreach ($widget_action->getInputMappers() as $mapper) {
-                                    $action->addInputMapper($mapper);
+                            default:
+                                $action = $task_action;
+                                if ($widget_action->hasInputDataPreset() === true) {
+                                    $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
                                 }
-                            }
+                                if ($widget_action->hasInputMappers() === true) {
+                                    foreach ($widget_action->getInputMappers() as $mapper) {
+                                        $action->addInputMapper($mapper);
+                                    }
+                                }
+                                break;
                         }
                     }
                     

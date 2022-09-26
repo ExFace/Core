@@ -8,6 +8,9 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
 
 /**
  * Instantiates condition groups
@@ -114,6 +117,50 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
         */
         
         throw new RuntimeException('Cannot parse conditional expression "' . $string . '": parsing non-UXON conditions not implemented yet!');
+    }
+    
+    /**
+     * 
+     * @param ConditionalPropertyConditionGroup $prop
+     * @param MetaObjectInterface $baseObject
+     * @param string $dataRef
+     * @throws RuntimeException
+     * @return ConditionGroupInterface
+     */
+    public static function createFromConditionalProperty(ConditionalPropertyConditionGroup $prop, MetaObjectInterface $baseObject, string $dataRef = '=~input!') : ConditionGroupInterface
+    {
+        $uxon = new UxonObject([
+            'base_object_alias' => $baseObject->getAliasWithNamespace()
+        ]);
+        foreach ($prop->getConditions() as $cond) {
+            /* @var $left \exface\Core\Interfaces\Model\ExpressionInterface */
+            $left = $cond->getValueLeftExpression();
+            if ($left->isReference()) {
+                if (! StringDataType::startsWith($left->__toString(), $dataRef)) {
+                    throw new RuntimeException('Cannot convert conditional property value "' . $left->__toString() . '" to a model condition: only references to "' . $dataRef . '" allowed!');
+                }
+                $exprStr = StringDataType::substringAfter($left->__toString(), $dataRef);
+            } else {
+                $exprStr = $left->__toString();
+            }
+            
+            /* @var $right \exface\Core\Interfaces\Model\ExpressionInterface */
+            $right = $cond->getValueRightExpression();
+            if ($right->isReference()) {
+                throw new RuntimeException('Cannot convert conditional property value "' . $right->__toString() . '" to a model condition: the right value of each condition must not be a reference!');
+            } else {
+                $valueStr = $right->__toString();
+            }
+            $uxon->appendToProperty('conditions', new UxonObject([
+                'expression' => $exprStr,
+                'comparator' => $cond->getComparator(),
+                'value' => $valueStr
+            ]));
+        }
+        foreach ($prop->getConditionGroups() as $condGrp) {
+            $uxon->appendToProperty('nested_groups', static::createFromConditionalProperty($condGrp, $baseObject, $dataRef));
+        }
+        return static::createFromUxon($prop->getWorkbench(), $uxon, $baseObject);
     }
     
     /**
