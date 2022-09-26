@@ -69,6 +69,11 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::performQuery()
+     */
     final protected function performQuery(DataQueryInterface $query)
     {
         if (is_null($this->getCurrentConnection())) {
@@ -78,27 +83,50 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         return $this->performQuerySql($query);
     }
 
+    /**
+     * 
+     * @param SqlDataQuery $query
+     */
     abstract protected function performQuerySql(SqlDataQuery $query);
 
+    /**
+     * 
+     * @return resource
+     */
     public function getCurrentConnection()
     {
         return $this->current_connection;
     }
 
-    protected function setCurrentConnection($value)
+    /**
+     * 
+     * @param resource $value
+     * @return \exface\Core\DataConnectors\AbstractSqlConnector
+     */
+    protected function setCurrentConnection($value) : AbstractSqlConnector
     {
         $this->current_connection = $value;
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionIsStarted()
+     */
     public function transactionIsStarted()
     {
         return $this->transaction_started;
     }
 
-    protected function setTransactionStarted($value)
+    /**
+     * 
+     * @param bool $value
+     * @return AbstractSqlConnector
+     */
+    protected function setTransactionStarted(bool $value) : AbstractSqlConnector
     {
-        $this->transaction_started = BooleanDataType::cast($value);
+        $this->transaction_started = $value;
         return $this;
     }
 
@@ -127,7 +155,11 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         return $this->runSql($string, true);
     }
 
-    public function getUser()
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getUser() : ?string
     {
         return $this->user;
     }
@@ -141,13 +173,17 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * @param string $value            
      * @return AbstractSqlConnector
      */
-    public function setUser($value)
+    protected function setUser(string $value) : AbstractSqlConnector
     {
         $this->user = $value;
         return $this;
     }
 
-    public function getPassword()
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getPassword() : ?string
     {
         return $this->password;
     }
@@ -161,13 +197,17 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * @param string $value            
      * @return AbstractSqlConnector
      */
-    public function setPassword($value)
+    protected function setPassword(string $value) : AbstractSqlConnector
     {
         $this->password = $value;
         return $this;
     }
 
-    public function getHost()
+    /**
+     * 
+     * @return string
+     */
+    public function getHost() : string
     {
         return $this->host;
     }
@@ -177,17 +217,22 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      *
      * @uxon-property host
      * @uxon-type string
+     * @uxon-required true
      *
      * @param string $value            
      * @return AbstractSqlConnector
      */
-    public function setHost($value)
+    public function setHost(string $value) : AbstractSqlConnector
     {
         $this->host = $value;
         return $this;
     }
 
-    public function getPort()
+    /**
+     * 
+     * @return int|NULL
+     */
+    protected function getPort() : ?int
     {
         return $this->port;
     }
@@ -200,16 +245,20 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * @uxon-property port
      * @uxon-type number
      *
-     * @param integer $value            
+     * @param int $value            
      * @return AbstractSqlConnector
      */
-    public function setPort($value)
+    public function setPort(int $value) : AbstractSqlConnector
     {
         $this->port = $value;
         return $this;
     }
 
-    public function getCharacterSet()
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getCharacterSet() : ?string
     {
         return $this->character_set;
     }
@@ -226,7 +275,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      * @param string $value            
      * @return AbstractSqlConnector
      */
-    public function setCharacterSet($value)
+    public function setCharacterSet(string $value) : AbstractSqlConnector
     {
         $this->character_set = $value;
         return $this;

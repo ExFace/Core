@@ -559,7 +559,7 @@ class MsSqlConnector extends AbstractSqlConnector
      * {@inheritDoc}
      * @see \exface\Core\DataConnectors\AbstractSqlConnector::getCharacterSet()
      */
-    public function getCharacterSet()
+    public function getCharacterSet() : ?string
     {
         return parent::getCharacterSet() ?? $this->getConnectionOptions()['CharacterSet'];
     }
