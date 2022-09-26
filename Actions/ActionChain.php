@@ -14,10 +14,10 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
-use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -161,7 +161,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  */
 class ActionChain extends AbstractAction implements iCallOtherActions
 {
-
+    use iCallOtherActionsTrait;
+    
     private $actions = [];
 
     private $use_single_transaction = true;
@@ -255,6 +256,16 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::getActionToStart()
+     */
+    public function getActionToStart(TaskInterface $task) : ?ActionInterface
+    {
+        return $this->getActionFirst();
+    }
+    
+    /**
+     * 
      * @return ActionInterface
      */
     public function getActionFirst() : ActionInterface
@@ -269,21 +280,34 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      * @uxon-type \exface\Core\CommonLogic\AbstractAction[]
      * @uxon-template [{"alias": ""}]
      * 
-     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::setActions()
+     * @param UxonObject|ActionInterface[] $uxon_array_or_action_list
+     * 
+     * @throws ActionConfigurationError
+     * @throws WidgetPropertyInvalidValueError
+     * 
+     * @return iCallOtherActions
      */
     public function setActions($uxon_array_or_action_list) : iCallOtherActions
     {
         if ($uxon_array_or_action_list instanceof ActionListInterface) {
             $this->actions = $uxon_array_or_action_list;
         } elseif ($uxon_array_or_action_list instanceof UxonObject) {
-            foreach ($uxon_array_or_action_list as $nr => $action_or_uxon) {
-                if ($action_or_uxon instanceof UxonObject) {
+            foreach ($uxon_array_or_action_list as $nr => $uxon) {
+                if ($uxon instanceof UxonObject) {
+                    // Make child-actions inherit the trigger widget
                     $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
-                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon, $triggerWidget);
-                } elseif ($action_or_uxon instanceof ActionInterface) {
-                    $action = $action_or_uxon;
+                    // If there is not trigger widget, make them inherit the meta object by
+                    // explicitly specifying it in the UXON. This "workaround" is neccessary
+                    // because the child-actions do not actually know, that they are part of
+                    // a chain and would not have a fall-back when looking for their object.
+                    if ($triggerWidget === null && ! $uxon->hasProperty('object_alias')) {
+                        $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
+                    }
+                    $action = ActionFactory::createFromUxon($this->getWorkbench(), $uxon, $triggerWidget);
+                } elseif ($uxon instanceof ActionInterface) {
+                    $action = $uxon;
                 } else {
-                    throw new ActionConfigurationError($this, 'Invalid chain link of type "' . gettype($action_or_uxon) . '" in action chain on position ' . $nr . ': only actions or corresponding UXON objects can be used as!', '6U5TRGK');
+                    throw new ActionConfigurationError($this, 'Invalid chain link of type "' . gettype($uxon) . '" in action chain on position ' . $nr . ': only actions or corresponding UXON objects can be used as!', '6U5TRGK');
                 }
                 $this->addAction($action);
             }
@@ -296,10 +320,11 @@ class ActionChain extends AbstractAction implements iCallOtherActions
 
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::addAction()
+     * @param ActionInterface $action
+     * @throws ActionConfigurationError
+     * @return iCallOtherActions
      */
-    public function addAction(ActionInterface $action) : iCallOtherActions
+    protected function addAction(ActionInterface $action) : iCallOtherActions
     {
         if ($action instanceof iShowWidget){
             throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
@@ -333,7 +358,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      * @uxon-type boolean
      * @uxon-default true
      * 
-     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::setUseSingleTransaction()
+     * @param bool $value
+     * @return iCallOtherActions
      */
     public function setUseSingleTransaction(bool $value) : iCallOtherActions
     {
@@ -510,51 +536,6 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             }
         }
         return $effects;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::containsAction()
-     */
-    public function containsAction($actionOrSelectorOrString): bool
-    {
-        if (is_string($actionOrSelectorOrString)) {
-            $actionOrSelectorOrString = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
-        }
-        
-        foreach ($this->getActions() as $action) {
-            if ($action->is($actionOrSelectorOrString)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::containsActionClass()
-     */
-    public function containsActionClass(string $classOrInterface, bool $onlyThisClass = false): bool
-    {
-        $classOrInterface = '\\' . ltrim(trim($classOrInterface), '\\');
-        $contains = false;
-        foreach ($this->getActions() as $action) {
-            if (is_a($action, $classOrInterface, true) === true) {
-                $contains = true;
-            } else {
-                $contains = false;
-            }
-            if($onlyThisClass === false && $contains === true) {
-                return true;
-            }
-            
-            if($onlyThisClass === true && $contains === false) {
-                return false;
-            }
-        }
-        return $contains;
     }
     
     /**

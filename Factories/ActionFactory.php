@@ -29,7 +29,12 @@ abstract class ActionFactory extends AbstractStaticFactory
      * If the app determined from the selector can supply a prototype, it will be used. If not,
      * a search over object actions in the metamodel will be performed.
      *
-     * @param ActionSelectorInterface $selector            
+     * @param ActionSelectorInterface $selector
+     * @param WidgetInterface $trigger_widget
+     * @param UxonObject $uxon
+     * 
+     * @throws ActionNotFoundError
+     * 
      * @return ActionInterface
      */
     public static function create(ActionSelectorInterface $selector, WidgetInterface $trigger_widget = null, UxonObject $uxon = null) : ActionInterface
