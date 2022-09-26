@@ -57,7 +57,7 @@ class DateDataType extends AbstractDataType
         $string = trim($string);
         
         // Return NULL for casting empty values as an empty string '' actually is not a date!
-        if (static::isValueEmpty($string) === true) {
+        if (static::isValueEmpty($string) === true || static::isValueLogicalNull($string)) {
             return null;
         }
         
