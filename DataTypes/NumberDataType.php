@@ -49,42 +49,44 @@ class NumberDataType extends AbstractDataType
      */
     public static function cast($string)
     {
-        if (is_numeric($string) === true) {
+        switch (true) {
             // Decimal numbers
-            return $string;
-        } elseif (static::isValueEmpty($string) === true) {
+            case is_numeric($string) === true:
+                return $string;
             // Return NULL for casting empty values as an empty string '' actually is not a number!
-            return null;
-        } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
+            case static::isValueEmpty($string) === true:
+            case static::isValueLogicalNull($string) === true:
+                return null;
             // Hexadecimal numbers in '0x....'-Notation
-            return $string;
-        } elseif (is_bool($string)) {
-            return $string === true ? 1 : 0;
-        } elseif (strcasecmp($string, 'true') === 0) {
-            return 1;
-        } elseif (strcasecmp($string, 'false') === 0) {
-            return 0;
-        } elseif (static::isValueLogicalNull($string) === true) {
-            return null;
-        } else {
-            $trimmed = str_replace(' ', '', trim($string));
-            $matches = array();
-            preg_match_all('!^(-?\d+([,\.])?)+$!', $trimmed, $matches);
-            if (empty($matches[0]) === false) {
-                $decimalSep = $matches[2][0];
-                if ($decimalSep === ',') {
-                    $number = str_replace('.', '', $trimmed);
-                    $number = str_replace($decimalSep, '.', $number);
-                } else {
-                    $number = str_replace(',', '', $trimmed);
-                }
-                if (is_numeric($number)) {
-                    return $number;
-                }
-            }            
-            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a number!');
-            return '';
+            case mb_strtoupper(substr($string, 0, 2)) === '0X':
+                return $string;
+            case is_bool($string):
+                return $string === true ? 1 : 0;
+            case strcasecmp($string, 'true') === 0:
+                return 1;
+            case strcasecmp($string, 'false') === 0:
+                return 0;
+            case static::isValueLogicalNull($string) === true:
+                return null;
+            default:
+                $trimmed = str_replace(' ', '', trim($string));
+                $matches = array();
+                preg_match_all('!^(-?\d+([,\.])?)+$!', $trimmed, $matches);
+                if (empty($matches[0]) === false) {
+                    $decimalSep = $matches[2][0];
+                    if ($decimalSep === ',') {
+                        $number = str_replace('.', '', $trimmed);
+                        $number = str_replace($decimalSep, '.', $number);
+                    } else {
+                        $number = str_replace(',', '', $trimmed);
+                    }
+                    if (is_numeric($number)) {
+                        return $number;
+                    }
+                }            
+                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a number!');
         }
+        return null;
     }
 
     /**
