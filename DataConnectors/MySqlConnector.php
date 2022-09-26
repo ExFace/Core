@@ -27,6 +27,8 @@ class MySqlConnector extends AbstractSqlConnector
     private $use_persistant_connection = false;
     
     private $affectedRows = null;
+    
+    private $socket = null;
 
     /**
      *
@@ -43,11 +45,8 @@ class MySqlConnector extends AbstractSqlConnector
         $e = null;
         while (! $conn && $safe_count < 3) {
             try {
-                if ($this->getUsePersistantConnection()) {
-                    $conn = mysqli_pconnect($this->getHost(), $this->getUser(), $this->getPassword(), $this->getDbase());
-                } else {
-                    $conn = mysqli_connect($this->getHost(), $this->getUser(), $this->getPassword(), $this->getDbase());
-                }
+                $host = ($this->getUsePersistantConnection() ? 'p:' : '') . $this->getHost();
+                $conn = mysqli_connect($host, $this->getUser(), $this->getPassword(), $this->getDbase(), $this->getPort(), $this->getSocket());
             } catch (\mysqli_sql_exception $e) {
                 // Do nothing, try again later
             }
@@ -391,6 +390,30 @@ class MySqlConnector extends AbstractSqlConnector
         $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getSocket() : ?string
+    {
+        return $this->socket;
+    }
+    
+    /**
+     * Specifies the socket or named pipe that should be used.
+     * 
+     * @uxon-property socket
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return MySqlConnector
+     */
+    public function setSocket(string $value) : MySqlConnector
+    {
+        $this->socket = $value;
+        return $this;
+    }
 
     /**
      *
@@ -403,6 +426,9 @@ class MySqlConnector extends AbstractSqlConnector
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('dbase', $this->getDbase());
         $uxon->setProperty('use_persistant_connection', $this->getUsePersistantConnection());
+        if ($this->socket !== null) {
+            $uxon->setProperty('socket', $this->socket);
+        }
         return $uxon;
     }
 
@@ -418,12 +444,12 @@ class MySqlConnector extends AbstractSqlConnector
      *
      * @see \exface\Core\DataConnectors\AbstractSqlConnector::setCurrentConnection()
      */
-    protected function setCurrentConnection($mysqli_connection_instance)
+    protected function setCurrentConnection($mysqli_connection_instance) : AbstractSqlConnector
     {
         if (! ($mysqli_connection_instance instanceof \mysqli)) {
             throw new DataConnectionFailedError($this, 'Connection to MySQL failed: instance of \mysqli expected, "' . gettype($mysqli_connection_instance) . '" given instead!');
         }
-        parent::setCurrentConnection($mysqli_connection_instance);
+        return parent::setCurrentConnection($mysqli_connection_instance);
     }
 
     /**
