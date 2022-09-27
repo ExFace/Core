@@ -158,7 +158,7 @@
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
     "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
-    "CONTEXT.DEBUG.INTERCEPT_STARTED": "Intercepting ON: re-routing messages to: %recipients%",
+    "CONTEXT.DEBUG.INTERCEPT_STARTED": "Intercepting ON: re-routing messages to %recipients%",
     "CONTEXT.DEBUG.INTERCEPT_STOPPED": "Intercepting OFF: all messages will be delivered normally",
     
     "CONTEXT.FAVORITES.NAME": "Favorites",
