@@ -2,32 +2,26 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iModifyContext;
-use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
- * This action provides a RESTful API to work with contexts. 
- * 
- * Using this action, you can call any context method using request parameters
- * or the regular action API.
+ * This action passes tasks to contexts thus providing an API to interact with them. 
  *
  * @author Andrej Kabachnik
  *        
  */
-class ContextApi extends AbstractAction implements iModifyContext
+class CallContext extends AbstractAction implements iModifyContext
 {
-    const TASK_PARAMETER_CONTEXT_TYPE = 'ctype';
-    const TASK_PARAMETER_CONTEXT_SCOPE = 'cscope';
-    const TASK_PARAMETER_OPERATION = 'cop';
+    const TASK_PARAMETER_CONTEXT_TYPE = 'context';
+    const TASK_PARAMETER_CONTEXT_SCOPE = 'scope';
+    const TASK_PARAMETER_OPERATION = 'operation';
 
     use ContextActionTrait {
         getContextAlias as getContextAliasViaTrait;
@@ -36,6 +30,12 @@ class ContextApi extends AbstractAction implements iModifyContext
     
     private $operation = null;
 
+    /**
+     * 
+     * @param TaskInterface $task
+     * @throws ActionInputMissingError
+     * @return string
+     */
     public function getContextAlias(TaskInterface $task = null) : string
     {
         if (is_null($this->getContextAliasViaTrait())){
@@ -48,9 +48,15 @@ class ContextApi extends AbstractAction implements iModifyContext
         return $this->getContextAliasViaTrait();
     }
     
+    /**
+     * 
+     * @param TaskInterface $task
+     * @throws ActionInputMissingError
+     * @return ContextScopeInterface
+     */
     public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
-        try{
+        try {
             $this->getContextScopeViaTrait();
         } catch (ContextScopeNotFoundError $e){
             if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_SCOPE)) {
@@ -70,21 +76,7 @@ class ContextApi extends AbstractAction implements iModifyContext
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $operation = $this->getOperation($task);
-        if (!method_exists($this->getContext($task), $operation)){
-            throw new ActionConfigurationError($this, 'Invalid operation "' . $operation . '" for context "' . $this->getContext($task)->getAlias() . '": method not found!');
-        }
-        $return_value = call_user_func(array($this->getContext($task), $operation));
-        if (is_string($return_value)){
-            $result = ResultFactory::createMessageResult($task, $return_value);
-        } elseif ($return_value instanceof ContextInterface) { 
-            $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $operation)));
-            $result = ResultFactory::createMessageResult($task, $this->translate('RESULT', ['%operation_name%' => $operation_name]));
-        } else {
-            $result = ResultFactory::createTextContentResult($task, $return_value);
-        }
-        $result->setContextModified(true);
-        return $result;
+        return $this->getContext($task)->handle($task, $this->getOperation($task));
     }
     
     /**
@@ -110,9 +102,9 @@ class ContextApi extends AbstractAction implements iModifyContext
      * Use the URL parameter "cop=" to specify the operation in a RESTful URL.
      * 
      * @param string $operation
-     * @return \exface\Core\Actions\ContextApi
+     * @return \exface\Core\Actions\CallContext
      */
-    public function setOperation(string $method_name) : ContextApi
+    public function setOperation(string $method_name) : CallContext
     {
         $this->operation = $method_name;
         return $this;

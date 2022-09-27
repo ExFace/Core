@@ -60,7 +60,7 @@ class Tracer extends Profiler
         $this->registerEventHandlers();
         $this->getWorkbench()->eventManager()->addListener(OnContextInitEvent::getEventName(), function(OnContextInitEvent $event){
             if ($event->getContext() instanceof DebugContext) {
-                $event->getContext()->setTracer($this);
+                $event->getContext()->startTracing($this);
             }
         });
     }
@@ -281,7 +281,7 @@ class Tracer extends Profiler
             $ms = $this->stop($event->getAction());
         } catch (\Throwable $e) {
             // FIXME event-not-started exceptions are thrown here when perforimng
-            // ContextApi actions. Need to find out why, than reenable the following
+            // CallContext actions. Need to find out why, than reenable the following
             // line. Currently it produces extra trace files with a single error line
             // - this is very confusing!
             // $this->getWorkbench()->getLogger()->logException($e);

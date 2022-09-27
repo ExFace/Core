@@ -26,6 +26,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -47,7 +48,7 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     
     private $recipientAddresses = [];
     
-    private $recipients = [];
+    private $recipients = null;
     
     private $recipientUserFilter = null;
     
@@ -267,6 +268,36 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     protected function getRecipientAddresses() : array
     {
         return $this->recipientAddresses;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::clearRecipients()
+     */
+    public function clearRecipients() : CommunicationMessageInterface
+    {
+        $this->recipients = null;
+        $this->recipientAddresses = [];
+        $this->recipientRoleSelectors = [];
+        $this->recipientUserSelectors = [];
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::addRecipient()
+     */
+    public function addRecipient(RecipientInterface $recipient) : CommunicationMessageInterface
+    {
+        // If the recipient cache is empty, make sure to initialize it before addin the new
+        // recipient!
+        if ($this->recipients === null) {
+            $this->getRecipients();
+        }
+        $this->recipients[] = $recipient;
+        return $this;
     }
     
     /**

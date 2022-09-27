@@ -12,8 +12,6 @@
 	"ACTION.COPYDATA.RESULT": "%number% Objekt kopiert|%number% Objekte kopiert",
 	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " inkl. %number% abhängiges Objekt| inkl. %number% Abhängigkeiten",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Neu",
-    
-    "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% Zeile gespeichert.|%number% Zeilen gespeichert.",
 
@@ -143,18 +141,22 @@
 	"BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND": "App hat nur eine sprache. Bitte fügen Sie mind. eine Übersetzungsdatei zu der App des objektes hinzu!",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "Neu!",
-	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",	
+    
+    "CONTEXT.ACTIONTEST.NAME": "ActionTest",
 	
-	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+    "CONTEXT.API.RESULT": "'%operation_name%' erfolgreich!",
 	
-    "CONTEXT.DATA.NAME": "Daten",
+	"CONTEXT.DATA.NAME": "Daten",
     
     "CONTEXT.DEBUG.NAME": "Developer tools",
-    "CONTEXT.DEBUG.START": "Trace starten",
-    "CONTEXT.DEBUG.STOP": "Trace beenden",
+    "CONTEXT.DEBUG.TRACE_STARTED": "Tracer an: Alle Server-Requests werden jetzt detailliert gelogt.",
+    "CONTEXT.DEBUG.TRACE_STOPPED": "Tracer aus: Server-Requests werden nicht mehr gelogt.",
+    "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace server requests",
     "CONTEXT.DEBUG.TRACES_LIST_CAPTION": "Trace logs",
     "CONTEXT.DEBUG.TRACES_LIST_BUTTON": "Traces anzeigen",
     "CONTEXT.DEBUG.TRACE_NAME": "Trace",
+    "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
     
     "CONTEXT.FAVORITES.NAME": "Favoriten",
     

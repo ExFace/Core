@@ -8,6 +8,11 @@ use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Communicator implements CommunicatorInterface
 {
     private $workbench = null;

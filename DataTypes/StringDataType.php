@@ -497,6 +497,21 @@ class StringDataType extends AbstractDataType
         return $string;
     }
     
+    /**
+     * 
+     * @param string $string
+     * @return string[]
+     */
+    public static function splitLines(string $string) : array
+    {
+        return preg_split("/\r\n|\n|\r/", $string);
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @return string
+     */
     public static function stripLineBreaks(string $string) : string
     {
         return str_replace(["\r", "\n"], '', $string);
