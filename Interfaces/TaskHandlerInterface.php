@@ -8,8 +8,8 @@ interface TaskHandlerInterface
 {
     /**
      * 
-     * @param TaskInterface $taks
+     * @param TaskInterface $task
      * @return ResultInterface
      */
-    public function handle(TaskInterface $taks) : ResultInterface;
+    public function handle(TaskInterface $task) : ResultInterface;
 }

@@ -6,6 +6,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
+use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 
 /**
  *
@@ -92,10 +93,10 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
      * @uxon-property text
      * @uxon-type string
      * 
-     * @param string $value
-     * @return NotificationMessage
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::setText()
      */
-    protected function setText(string $value) : NotificationMessage
+    public function setText(string $value) : CommunicationMessageInterface
     {
         $this->text = $value;
         return $this;

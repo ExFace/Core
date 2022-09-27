@@ -22,6 +22,7 @@ use exface\Core\Exceptions\Communication\CommunicationNotSentError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Communication\CommunicationChannelConfigError;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
+use exface\Core\Events\Communication\OnMessageRoutedEvent;
 
 class CommunicationChannel implements CommunicationChannelInterface
 {
@@ -200,6 +201,9 @@ class CommunicationChannel implements CommunicationChannelInterface
             if ($message instanceof Envelope) {
                 $message = $this->createMessageFromEnvelope($message);
             }
+            
+            $this->getWorkbench()->eventManager()->dispatch(new OnMessageRoutedEvent($message, $this));
+            
             return $this->getConnection()->communicate($message);
         } catch (CommunicationExceptionInterface $e) {
             throw $e;

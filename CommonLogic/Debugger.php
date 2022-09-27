@@ -10,6 +10,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Debugger\ExceptionRenderer;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\CommonLogic\Debugger\CommunicationInterceptor;
 
 class Debugger implements DebuggerInterface
 {
@@ -21,6 +22,8 @@ class Debugger implements DebuggerInterface
     private $logger = null;
     
     private $tracer = null;
+    
+    private $communicationInterceptor = null;
 
     /**
      * 
@@ -49,6 +52,9 @@ class Debugger implements DebuggerInterface
         $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
         if ($config->getOption('DEBUG.TRACE') === true) {
             $this->tracer = new Tracer($config->getWorkbench(), $workbenchStartTime);
+        }
+        if ($config->getOption('DEBUG.INTERCEPT_COMMUNICATION') === true) {
+            $this->communicationInterceptor = new CommunicationInterceptor($config->getWorkbench());
         }
     }
 

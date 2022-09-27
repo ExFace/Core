@@ -42,8 +42,8 @@ class ObjectBasketShowDialog extends ShowDialog
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if ($task->hasParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE)) {
-            $this->setContextScope($task->getParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE));
+        if ($task->hasParameter(CallContext::TASK_PARAMETER_CONTEXT_SCOPE)) {
+            $this->setContextScope($task->getParameter(CallContext::TASK_PARAMETER_CONTEXT_SCOPE));
         }
         return parent::perform($task, $transaction);
     }

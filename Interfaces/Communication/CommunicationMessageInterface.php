@@ -28,9 +28,28 @@ interface CommunicationMessageInterface extends iCanBeConvertedToUxon, Workbench
     
     /**
      * 
+     * @return CommunicationMessageInterface
+     */
+    public function setText(string $value) : CommunicationMessageInterface;
+    
+    /**
+     * 
      * @return RecipientInterface[]
      */
     public function getRecipients() : array;
+    
+    /**
+     * 
+     * @return CommunicationMessageInterface
+     */
+    public function clearRecipients() : CommunicationMessageInterface;
+    
+    /**
+     * 
+     * @param RecipientInterface $recipient
+     * @return CommunicationMessageInterface
+     */
+    public function addRecipient(RecipientInterface $recipient) : CommunicationMessageInterface;
     
     /**
      * 
