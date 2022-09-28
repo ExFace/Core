@@ -16,6 +16,7 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action performs another action selecting it dynamically based on the input.
@@ -119,7 +120,12 @@ class CallAction extends AbstractAction implements iCallOtherActions
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        return $this->getActionToStart($task)->handle($task, $transaction);
+        $action = $this->getActionToStart($task);
+        if ($action !== null) {
+            return $action->handle($task, $transaction);
+        } else {
+            return ResultFactory::createMessageResult($task, 'No action to be performed!');
+        }
     }
 
     /**
@@ -138,9 +144,13 @@ class CallAction extends AbstractAction implements iCallOtherActions
         if (null !== ($colName = $this->getActionInputColumnName()) && $task->hasInputData()) {
             $col = $inputSheet->getColumns()->get($colName);
             if ($col) {
+                if ($inputSheet->isEmpty(true)) {
+                    return null;
+                }
                 $matches = [];
                 foreach ($this->getActions() as $a) {
-                    if ($a->isExactly($col->getValue(0))) {
+                    $alias = $col->getValue(0);
+                    if ($alias !== null && $a->isExactly($alias)) {
                         $matches[] = $a;
                     }
                 }
