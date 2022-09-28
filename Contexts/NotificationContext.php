@@ -16,6 +16,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -174,6 +175,8 @@ class NotificationContext extends AbstractContext
         }
         
         $btn = null;
+        $btnGrp = null;
+        $grps = [];
         foreach ($data->getRows() as $rowNo => $row) {
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $renderer->addPlaceholder(
@@ -182,7 +185,22 @@ class NotificationContext extends AbstractContext
             );
             $widgetJson = $renderer->render($row['WIDGET_UXON']);
             
-            $btn = $menu->createButton(new UxonObject([
+            $dateDiff = (new \DateTime($row['CREATED_ON']))->diff(new \DateTime())->days;
+            switch (true) {
+                case $dateDiff === 0: $grpCaption = 'Today'; break;
+                case $dateDiff === 1: $grpCaption = 'Yesterday'; break;
+                default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench());
+            }
+            
+            if (null === $btnGrp = ($grps[$grpCaption] ?? null)) {
+                $btnGrp = $menu->createButtonGroup(new UxonObject([
+                    'caption' => $grpCaption
+                ]));
+                $menu->addButtonGroup($btnGrp);
+                $grps[$grpCaption] = $btnGrp;
+            }
+            
+            $btn = $btnGrp->createButton(new UxonObject([
                 'caption' => $row['TITLE'],
                 'action' => [
                     'alias' => 'exface.Core.ShowDialog',
@@ -190,17 +208,50 @@ class NotificationContext extends AbstractContext
                 ]
             ]));
             
+            /* @var $dialog \exface\Core\Widgets\Dialog */
+            $dialog = $btn->getAction()->getWidget();
+            $dialog->setHeader(new UxonObject([
+                'widgets' => [
+                    [
+                        'widget_type' => 'WidgetGroup',
+                        'widgets' => [
+                            [
+                                'attribute_alias' => 'UID',
+                                'widget_type' => 'InputHidden',
+                                'value' => $row['UID']
+                            ], [
+                                'attribute_alias' => 'CREATED_BY_USER__USERNAME',
+                                'widget_type' => 'Display',
+                                'caption' => 'From',
+                                'value' => $row['CREATED_BY_USER__USERNAME']
+                            ], [
+                                'attribute_alias' => 'CREATED_ON',
+                                'widget_type' => 'Display',
+                                'caption' => 'At',
+                                'value' => $row['CREATED_ON']
+                            ]
+                            
+                        ]
+                    ]
+                ]
+            ]));
+            $dialog->addButton($dialog->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.DeleteObject',
+                'align' => $dialog->countButtons() <= 1 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
+                'visibility' => $dialog->countButtons() <= 1 ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL
+            ])));
+            
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);
             } else {
                 $btn->setShowIcon(false);
             }
             
-            $menu->addButton($btn);
+            $btnGrp->addButton($btn);
         }
         
-        if ($btn) {
-            $menu->addButton($menu->createButton(new UxonObject([
+        if ($btnGrp) {
+            $btnGrp->addButton($btnGrp->createButton(new UxonObject([
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS_ALL'),
                 'icon' => 'eraser',
                 'action' => [
@@ -241,6 +292,8 @@ class NotificationContext extends AbstractContext
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.NOTIFICATION');
         $ds->getColumns()->addFromSystemAttributes();
         $ds->getColumns()->addMultiple([
+            'CREATED_ON',
+            'CREATED_BY_USER__USERNAME',
             'TITLE',
             'ICON',
             'WIDGET_UXON'
@@ -266,39 +319,14 @@ class NotificationContext extends AbstractContext
     public static function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
         $title = $notification->getTitle() ?? StringDataType::truncate($notification->getText(), 60, true);
-        $buttonsArray = ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : []);
         $widgetUxon = new UxonObject([
+            'widget_type' => 'Dialog',
             'object_alias' => 'exface.Core.NOTIFICATION',
             'width' => 1,
             'height' => 'auto',
             'caption' => $title,
             'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
-            'buttons' => array_merge($buttonsArray, [
-                [
-                    'caption' => $notification->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS'),
-                    'align' => EXF_ALIGN_OPPOSITE,
-                    'visibility' => empty($buttonsArray) ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL,
-                    'icon' => Icons::ERASER,
-                    'action' => [
-                        'alias' => 'exface.Core.DeleteObject',
-                        'object_alias' => 'exface.Core.NOTIFICATION',
-                        'input_rows_min' => 0,
-                        'input_data_sheet' => [
-                            'object_alias' => 'exface.Core.NOTIFICATION',
-                            'filters' => [
-                                'operator' => 'AND',
-                                'conditions' => [
-                                    [
-                                        'expression' => 'UID',
-                                        'comparator' => '==',
-                                        'value' => '[#~notification:UID#]'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ])
+            'buttons' => ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [])
         ]);
         
         $ds = DataSheetFactory::createFromObjectIdOrAlias($notification->getWorkbench(), 'exface.Core.NOTIFICATION');
