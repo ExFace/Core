@@ -17,6 +17,7 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -223,13 +224,13 @@ class NotificationContext extends AbstractContext
                             ], [
                                 'attribute_alias' => 'CREATED_BY_USER__USERNAME',
                                 'widget_type' => 'Display',
-                                'caption' => 'From',
+                                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
                                 'value' => $row['CREATED_BY_USER__USERNAME']
                             ], [
                                 'attribute_alias' => 'CREATED_ON',
                                 'widget_type' => 'Display',
-                                'caption' => 'At',
-                                'value' => $row['CREATED_ON']
+                                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_SENT_AT'),
+                                'value' => DateTimeDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench())
                             ]
                             
                         ]
@@ -253,7 +254,7 @@ class NotificationContext extends AbstractContext
         
         if ($btnGrp) {
             $btnGrp->addButton($btnGrp->createButton(new UxonObject([
-                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.NOTIFICATION.DISMISS_ALL'),
+                'caption' => $translator->translate('CONTEXT.NOTIFICATION.DELETE_ALL'),
                 'icon' => 'eraser',
                 'action' => [
                     'alias' => 'exface.Core.DeleteObject',
