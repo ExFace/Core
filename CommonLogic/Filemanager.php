@@ -405,9 +405,54 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         return TRUE;
     }
     
-    public function copyFile(string $source, string $destination)
+    /**
+     * An alias for copy() - for historical reasons
+     * 
+     * @param string $source
+     * @param string $destination
+     * @param bool $overwriteNewerFiles
+     * 
+     * @return void
+     */
+    public function copyFile(string $source, string $destination, bool $overwriteNewerFiles = false)
     {
-        copy($source, $destination);
-        return;
+        return $this->copy($source, $destination, $overwriteNewerFiles);
+    }
+    
+    /**
+     * Returns an array with all files and folders in the given directory and subdirectories
+     * 
+     * @param string $dir
+     * @param boolean $includeFolders
+     * @param bool $realtiveToDir
+     * @param string $directorySeparator
+     * 
+     * @return string[]
+     */
+    public static function getDirContentsRecursive(string $dir, $includeFolders = true, bool $realtiveToDir = true, string $directorySeparator = DIRECTORY_SEPARATOR) {
+        $files = [];
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+        /* @var $file \SplFileInfo */
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                if ($includeFolders === true && $file->getPath() !== $dir && $file->getFilename() === '.') {
+                    $files[] = $file->getPath();
+                }
+                continue;
+            }
+            $files[] = $file->getPathname();
+        }
+        if ($realtiveToDir === true) {
+            $dirLen = strlen($dir);
+            array_walk($files, function(&$file) use ($dirLen) {
+                $file = ltrim(substr($file, $dirLen), "/\\");
+            });
+        }
+        if ($directorySeparator !== DIRECTORY_SEPARATOR) {
+            array_walk($files, function(&$file) use ($directorySeparator) {
+                $file = FilePathDataType::normalize($file, $directorySeparator);
+            });
+        }
+        return $files;
     }
 }
