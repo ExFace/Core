@@ -85,7 +85,8 @@ class ShowDialogFromData extends ShowDialog
         }
         
         $dialog = $this->getDialogWidget();
-        $dialog->addWidget(WidgetFactory::createFromUxonInParent($dialog, $uxon));
+        $dialog->addWidget(WidgetFactory::createFromUxonInParent($dialog, $uxon, 'Dialog'));
+        $dialog->setCacheable(false);
         
         return parent::perform($task, $transaction);
     }

@@ -129,6 +129,8 @@ class ShowDialogFromFile extends ShowDialog
             $this->getWidget()->setCaption($completeFilename);
         }
         
+        $this->getWidget()->setCacheable(false);
+        
         return parent::perform($task, $transaction);
     }
 
