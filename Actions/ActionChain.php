@@ -374,7 +374,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getInputRowsMin()
     {
-        return $this->getActionFirst()->getInputRowsMin();
+        return max(parent::getInputRowsMin(), $this->getActionFirst()->getInputRowsMin());
     }
 
     /**
@@ -384,7 +384,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getInputRowsMax()
     {
-        return $this->getActionFirst()->getInputRowsMax();
+        return parent::getInputRowsMax() ?? $this->getActionFirst()->getInputRowsMax();
     }
 
     /**
