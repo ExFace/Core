@@ -31,6 +31,10 @@ trait iHaveCaptionTrait {
      */
     public function setCaption($caption, bool $forceCaptionVisible = true) : iHaveCaption
     {
+        if ($caption === null) {
+            $this->caption = null;
+            return $this;
+        }
         $this->caption = $this->evaluatePropertyExpression($caption);
         if ($this->hide_caption === null && $forceCaptionVisible === true) {
             $this->setHideCaption(false);
