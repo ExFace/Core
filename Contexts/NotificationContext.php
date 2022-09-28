@@ -177,6 +177,7 @@ class NotificationContext extends AbstractContext
         $btn = null;
         $btnGrp = null;
         $grps = [];
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         foreach ($data->getRows() as $rowNo => $row) {
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $renderer->addPlaceholder(
@@ -187,8 +188,8 @@ class NotificationContext extends AbstractContext
             
             $dateDiff = (new \DateTime($row['CREATED_ON']))->diff(new \DateTime())->days;
             switch (true) {
-                case $dateDiff === 0: $grpCaption = 'Today'; break;
-                case $dateDiff === 1: $grpCaption = 'Yesterday'; break;
+                case $dateDiff === 0: $grpCaption = $translator->translate('LOCALIZATION.DATE.TODAY'); break;
+                case $dateDiff === 1: $grpCaption = $translator->translate('LOCALIZATION.DATE.YESTERDAY'); break;
                 default: $grpCaption = DateDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench());
             }
             
