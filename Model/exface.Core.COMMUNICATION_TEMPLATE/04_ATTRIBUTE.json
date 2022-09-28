@@ -309,7 +309,7 @@
         },
         {
             "CREATED_ON": "2022-09-19 13:19:22",
-            "MODIFIED_ON": "2022-09-19 18:01:08",
+            "MODIFIED_ON": "2022-09-28 13:29:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eda65ce9b2fa9ea65c025041000001",
@@ -331,7 +331,7 @@
             "TYPE": "D",
             "COPYABLEFLAG": 1,
             "ALIAS": "OBJECT",
-            "DATATYPE": "0x11ea691e99c125eca3480205857feb80",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "object_oid",
             "OBJECT": "0x11ed830be97308e4830b025041000001",
             "FORMATTER": "",
