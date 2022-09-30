@@ -138,6 +138,7 @@ return $debug_widget;
                         if ($this->isHeaderSensitive($header)) {
                             $value = '***';
                         }
+                        $value = str_replace('|', '\|', $value);
                         $messageHeaders .= "| $header | $value |" . PHP_EOL;
                     }
                 }
