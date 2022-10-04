@@ -67,12 +67,12 @@ class CommunicationInterceptor
             $msg->clearRecipients();
             if ($sendToUsers) {
                 foreach (explode(',', $sendToUsers) as $userSelector) {
-                    $msg->addRecipient(new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, $userSelector)));
+                    $msg->addRecipient(new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, trim($userSelector))));
                 }
             }
             if ($sendToRoles) {
                 foreach (explode(',', $sendToRoles) as $roleSelector) {
-                    $msg->addRecipient(new UserRoleRecipient(new UserRoleSelector($this->workbench, $roleSelector)));
+                    $msg->addRecipient(new UserRoleRecipient(new UserRoleSelector($this->workbench, trim($roleSelector))));
                 }
             }
             $recipientsList = implode(', ', $recipients);
