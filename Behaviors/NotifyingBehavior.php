@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
+use exface\Core\Communication\Messages\Envelope;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -70,6 +71,21 @@ use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
  *              "title": "New ticket: [#ticket_title#]",
  *              "text": "A new ticket has been created!",
  *              "icon": "ticket"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
+ * Alternatively you can also save the message as a template in `Administration > Metamodel > Communication`
+ * and reference it here like this:
+ * 
+ * ```
+ *  {
+ *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
+ *      "notifications": [
+ *          {
+ *              "template": "my.App.template_alias"
  *          }
  *      ]
  *  }
@@ -140,13 +156,16 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $messageUxons = null;
     
-    private $messageTemplateSelectors = [];
-    
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
      *
-     * You can use the following placeholders inside any message model - as recipient,
-     * message subject - anywhere:
+     * You can either define a message here explicitly by setting the `channel`, etc., or
+     * select a `template` and customize it if needed by overriding certain properties. Note, that
+     * when using templates, proper autosuggest is only available if you set the channel explicitly
+     * too. 
+     *
+     * The following placeholders can be used anywhere inside each message configuration: in `text`,
+     * `recipients` - anywhere:
      *
      * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
      * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
@@ -156,10 +175,41 @@ class NotifyingBehavior extends AbstractBehavior
      * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
      * This means, static formulas will always work, while data-driven formulas will only work on notifications
      * that have data sheets present!
+     * 
+     * ## Examples
+     * 
+     * ### Send message using a template
+     * 
+     * ```
+     *  {
+     *      "notifications": [
+     *          {
+     *              "template": "my.App.template_alias"
+     *          }
+     *      ]
+     *  }
+     * 
+     * ```
+     * 
+     * ### Send custom message without a template
+     * 
+     * ```
+     *  {
+     *      "notifications": [
+     *          {
+     *              "channel": "exface.Core.NOTIFICATION",
+     *              "recipient_roles": ["exface.Core.ADMINISTRATOR"],
+     *              "title": "New ticket: [#ticket_title#]",
+     *              "text": "A new ticket has been created!"
+     *          }
+     *      ]
+     *  }
+     * 
+     * ```
      *
      * @uxon-property notifications
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template [{"channel": ""}]
+     * @uxon-template [{"": ""}]
      *
      * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
@@ -175,7 +225,7 @@ class NotifyingBehavior extends AbstractBehavior
      * 
      * @uxon-property messages
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template [{"channel": ""}]
+     * @uxon-template [{"": ""}]
      * 
      * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
@@ -183,27 +233,6 @@ class NotifyingBehavior extends AbstractBehavior
     protected function setMessages(UxonObject $arrayOfMessages) : NotifyingBehavior
     {
         return $this->setNotifications($arrayOfMessages);
-    }
-    
-    protected function getMessageTemplates() : array
-    {
-        return $this->messageTemplateSelectors;
-    }
-    
-    /**
-     * The channel to send the message through
-     *
-     * @uxon-property message_templates
-     * @uxon-type metamodel:exface.Core.COMMUNICATION_TEMPLATE:ALIAS_WITH_NS[]
-     * @uxon-template [""]
-     *
-     * @param UxonObject $value
-     * @return NotifyingBehavior
-     */
-    public function setMessageTemplates(UxonObject $value) : NotifyingBehavior
-    {
-        $this->messageTemplateSelectors = $value->toArray();
-        return $this;
     }
     
     /**
@@ -354,37 +383,45 @@ class NotifyingBehavior extends AbstractBehavior
         }        
         
         // If everything is OK, generate UXON envelopes for the messages and send them
-        try {
-            $communicator = $this->getWorkbench()->getCommunicator();
-            if ($this->messageUxons !== null) {
-                foreach ($this->getMessageEnvelopes(
-                    $this->messageUxons, 
-                    $dataSheet, 
-                    $phResolvers
-                ) as $envelope) {
+        $communicator = $this->getWorkbench()->getCommunicator();
+        if ($this->messageUxons !== null) {
+            try {
+                $envelopes = $this->getMessageEnvelopes($this->messageUxons, $dataSheet, $phResolvers);
+            } catch (\Throwable $e) {
+                $this->handleError($e);
+            }
+            foreach ($envelopes as $envelope) {
+                try {
                     $communicator->send($envelope);
+                } catch (\Throwable $e) {
+                    $this->handleError($e, $envelope);
                 }
             }
-            foreach ($this->getMessageEnvelopesFromTempaltes(
-                $this->messageTemplateSelectors,
-                $dataSheet,
-                $phResolvers
-            ) as $envelope) {
-                $communicator->send($envelope);
-            }
-        } catch (\Throwable $e) {
-            if (($e instanceof CommunicationExceptionInterface) || $envelope === null) {
-                $sendingError = $e;
-            } else {
-                $sendingError = new CommunicationNotSentError($envelope, 'Cannot send notification: ' . $e->getMessage(), null, $e);
-            }
-            if ($this->isErrorIfNotSent() === false) {
-                $this->getWorkbench()->getLogger()->logException($sendingError);
-            } else {
-                throw $sendingError;
-            }
         }
-        
+        return;
+    }
+    
+    /**
+     * 
+     * @param \Throwable $e
+     * @param Envelope $envelope
+     * 
+     * @throws \exface\Core\Exceptions\Communication\CommunicationNotSentError
+     * 
+     * @return void
+     */
+    protected function handleError(\Throwable $e, Envelope $envelope = null)
+    {
+        if (($e instanceof CommunicationExceptionInterface) || $envelope === null) {
+            $sendingError = $e;
+        } else {
+            $sendingError = new CommunicationNotSentError($envelope, 'Cannot send notification: ' . $e->getMessage(), null, $e);
+        }
+        if ($this->isErrorIfNotSent() === false) {
+            $this->getWorkbench()->getLogger()->logException($sendingError);
+        } else {
+            throw $sendingError;
+        }
         return;
     }
     

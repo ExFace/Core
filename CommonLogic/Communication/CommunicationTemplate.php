@@ -52,6 +52,16 @@ class CommunicationTemplate implements CommunicationTemplateInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationTemplateInterface::getSelector()
+     */
+    public function getSelector() : CommunicationTemplateSelectorInterface
+    {
+        return $this->selector;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::getMessage()
      */
     public function getMessageUxon(): UxonObject

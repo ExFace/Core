@@ -55,9 +55,14 @@ class SendMessage extends AbstractAction
     
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
+     * 
+     * You can either define a message here explicitly by setting the `channel`, etc., or
+     * select a `template` and customize it if needed by overriding certain properties. Note, that
+     * when using templates, proper autosuggest is only available if you set the channel explicitly
+     * too. 
      *
-     * You can use the following placeholders inside any message model - as recipient,
-     * message subject - anywhere:
+     * The following placeholders can be used anywhere inside each message configuration: in `text`,
+     * `recipients` - anywhere:
      *
      * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
      * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
@@ -67,10 +72,41 @@ class SendMessage extends AbstractAction
      * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
      * This means, static formulas will always work, while data-driven formulas will only work on notifications
      * that have data sheets present!
+     * 
+     * ## Examples
+     * 
+     * ### Send message using a template
+     * 
+     * ```
+     *  {
+     *      "messages": [
+     *          {
+     *              "template": "my.App.template_alias"
+     *          }
+     *      ]
+     *  }
+     * 
+     * ```
+     * 
+     * ### Send custom message without a template
+     * 
+     * ```
+     *  {
+     *      "messages": [
+     *          {
+     *              "channel": "exface.Core.NOTIFICATION",
+     *              "recipient_roles": ["exface.Core.ADMINISTRATOR"],
+     *              "title": "New ticket: [#ticket_title#]",
+     *              "text": "A new ticket has been created!"
+     *          }
+     *      ]
+     *  }
+     * 
+     * ```
      *
      * @uxon-property messages
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
-     * @uxon-template [{"channel": ""}]
+     * @uxon-template [{"": ""}]
      *
      * @param UxonObject $arrayOfMessages
      * @return SendMessage
