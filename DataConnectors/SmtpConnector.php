@@ -95,6 +95,10 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
     
     private $footer = null;
     
+    private $errorIfEmptyTo = false;
+    
+    private $errorIfEmptyBody = false;
+    
     /**
      * 
      * {@inheritDoc}
@@ -191,6 +195,14 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
             $email->from($from);
         }
         $addresses = $this->getEmailAddresses($message->getRecipients());
+        // Ignore/error if no to-addresses defined
+        if (empty($addresses)) {
+            if ($this->isErrorIfEmptyTo()) {
+                throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": no to-addresses defined!');
+            } else {
+                return new CommunicationReceipt($message, $this, null, true);
+            }
+        }
         $email->addTo(...$addresses);
         
         // Email specific stuff
@@ -226,6 +238,14 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         }
         
         $body = $message->getText();
+        // Ignore/error if body empty
+        if ($body === '' || $body === null) {
+            if ($this->isErrorIfEmptyBody()) {
+                throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": no message body defined!');
+            } else {
+                return new CommunicationReceipt($message, $this, null, true);
+            }
+        }
         $footer = $this->getFooter();
         if (HtmlDataType::isValueHtml($body)) {
             $email->html($body . ($footer !== null ? '<footer>' . $footer . '</footer>': ''));
@@ -556,6 +576,56 @@ MD;
     public function setFooter(string $value) : SmtpConnector
     {
         $this->footer = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isErrorIfEmptyTo() : bool
+    {
+        return $this->errorIfEmptyTo;
+    }
+    
+    /**
+     * Set to TRUE to raise an error if a message has an empty to-field instead of silently ignoring such messages
+     * 
+     * @uxon-property error_if_empty_to
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return SmtpConnector
+     */
+    protected function setErrorIfEmptyTo(bool $value) : SmtpConnector
+    {
+        $this->errorIfEmptyTo = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isErrorIfEmptyBody() : bool
+    {
+        return $this->errorIfEmptyBody;
+    }
+    
+    /**
+     * Set to TRUE to raise an error if a message has an empty body instead of silently ignoring such messages
+     * 
+     * @uxon-property error_if_empty_body
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return SmtpConnector
+     */
+    protected function setErrorIfEmptyBody(bool $value) : SmtpConnector
+    {
+        $this->errorIfEmptyBody = $value;
         return $this;
     }
 }

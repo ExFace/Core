@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Communication;
 
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\CommunicationReceiptInterface;
-use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
 use exface\Core\Interfaces\Communication\CommunicationConnectionInterface;
 
 class CommunicationReceipt implements CommunicationReceiptInterface
@@ -14,11 +13,14 @@ class CommunicationReceipt implements CommunicationReceiptInterface
     
     private $connection = null;
     
-    public function __construct(CommunicationMessageInterface $message, CommunicationConnectionInterface $connection, \DateTimeInterface $time = null)
+    private $ignored = false;
+    
+    public function __construct(CommunicationMessageInterface $message, CommunicationConnectionInterface $connection, \DateTimeInterface $time = null, bool $messageIgnored = false)
     {
         $this->message = $message;
         $this->connection = $connection;
         $this->time = $time ?? new \DateTimeImmutable();
+        $this->ignored = $messageIgnored;
     }
     
     /**
@@ -49,5 +51,15 @@ class CommunicationReceipt implements CommunicationReceiptInterface
     public function getConnection() : CommunicationConnectionInterface
     {
         return $this->connection;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationReceiptInterface::isSent()
+     */
+    public function isSent() : bool
+    {
+        return $this->ignored === false;
     }
 }
