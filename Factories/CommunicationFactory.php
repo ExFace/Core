@@ -112,7 +112,7 @@ abstract class CommunicationFactory extends AbstractSelectableComponentFactory
      * 
      * @param WorkbenchInterface $workbench
      * @param CommunicationTemplateSelectorInterface|string $selectorStrings
-     * @return array
+     * @return CommunicationTemplateInterface[]
      */
     public static function createTemplatesFromModel(WorkbenchInterface $workbench, array $selectorStrings) : array
     {

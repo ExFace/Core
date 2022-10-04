@@ -10,7 +10,6 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Communication\Messages\Envelope;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\Factories\CommunicationFactory;
 
 /**
@@ -31,7 +30,27 @@ trait SendMessagesFromDataTrait
     protected function getMessageEnvelopes(UxonObject $messagesConfig, DataSheetInterface $dataSheet = null, array $additionalPlaceholders = []) : array
     {
         $messages = [];
+        
+        $tplSelectors = [];
         foreach ($messagesConfig as $uxon) {
+            if (null !== $tplSel = $uxon->getProperty('template')) {
+                $tplSelectors[] = $tplSel;
+            }
+        }
+        /* @var $templates \exface\Core\Interfaces\Communication\CommunicationTemplateInterface[] */
+        if (! empty($tplSelectors)) {
+            $templates = CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), $tplSelectors);
+        }
+        
+        foreach ($messagesConfig as $uxon) {
+            if (null !== $tplSel = $uxon->getProperty('template')) {
+                foreach ($templates as $tpl) {
+                    if ($tpl->getSelector()->toString() === $tplSel) {
+                        $uxon = $tpl->getMessageUxon()->extend($uxon);
+                        break;
+                    }
+                }
+            }
             $json = $uxon->toJson();
             $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
             $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
@@ -64,24 +83,5 @@ trait SendMessagesFromDataTrait
         }
         
         return $messages;
-    }
-    
-    /**
-     * 
-     * @param CommunicationTemplateSelectorInterface[] $templateSelectors
-     * @param DataSheetInterface $dataSheet
-     * @param array $additionalPlaceholders
-     * @return array
-     */
-    protected function getMessageEnvelopesFromTempaltes(array $templateSelectors, DataSheetInterface $dataSheet = null, array $additionalPlaceholders = []) : array
-    {
-        if (empty($templateSelectors)) {
-            return [];
-        }
-        $messagesConfig = new UxonObject();
-        foreach (CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), $templateSelectors) as $tpl) {
-            $messagesConfig->append($tpl->getMessageUxon());
-        }
-        return $this->getMessageEnvelopes($messagesConfig, $dataSheet, $additionalPlaceholders);
     }
 }

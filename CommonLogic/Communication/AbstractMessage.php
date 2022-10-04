@@ -27,6 +27,8 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Communication\RecipientInterface;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
+use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -51,6 +53,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     private $recipients = null;
     
     private $recipientUserFilter = null;
+    
+    private $templateSelector = null;
     
     /**
      * 
@@ -389,5 +393,32 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;
+    }
+    
+    /**
+     * 
+     * @return CommunicationTemplateSelectorInterface|NULL
+     */
+    protected function getTemplateSelector() : ?CommunicationTemplateSelectorInterface
+    {
+        if (is_string($this->templateSelector)) {
+            $this->templateSelector = new CommunicationTemplateSelector($this->getWorkbench(), $this->templateSelector);
+        }
+        return $this->templateSelector;
+    }
+    
+    /**
+     * Template to use for this message - any additional configuration will be applied on-top of the templates, eventually overriding it.
+     * 
+     * @uxon-property template
+     * @uxon-type metamodel:exface.Core.COMMUNICATION_TEMPLATE:ALIAS_WITH_NS
+     * 
+     * @param string $value
+     * @return CommunicationMessageInterface
+     */
+    protected function setTemplate(string $value) : CommunicationMessageInterface
+    {
+        $this->templateSelector = $value;
+        return $this;
     }
 }
