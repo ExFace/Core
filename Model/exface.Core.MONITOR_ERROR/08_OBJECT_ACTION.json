@@ -60,174 +60,136 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "2021-04-21 09:41:05",
-            "MODIFIED_ON": "2022-08-26 14:21:54",
+            "CREATED_ON": "2022-10-01 10:19:02",
+            "MODIFIED_ON": "2022-10-01 10:23:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ebbeb2ee0e0c3ebeb2025041000001",
+            "UID": "0x11edbc8ab536bc48bc8a025041000001",
             "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "ALIAS": "ShowMonitorErrorDialog",
-            "NAME": "Details",
+            "ALIAS": "ShowMonitorSimilarErrorsDialog",
+            "NAME": "Find similar errors",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
                 "input_rows_min": 1,
                 "input_rows_max": 1,
-                "icon": "info",
-                "object_alias": "exface.Core.MONITOR_ERROR",
-                "widget": {
-                    "widget_type": "Dialog",
-                    "object_alias": "exface.Core.MONITOR_ERROR",
+                "icon": "search",
+                "input_object_alias": "exface.Core.MONITOR_ERROR",
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.MONITOR_ERROR",
+                        "column_to_filter_mappings": [
+                            {
+                                "from": "MESSAGE",
+                                "to": "MESSAGE",
+                                "comparator": "=="
+                            },
+                            {
+                                "from": "UID",
+                                "to": "UID",
+                                "comparator": "!=="
+                            }
+                        ]
+                    }
+                ],
+                "dialog": {
                     "widgets": [
                         {
-                            "widget_type": "WidgetGroup",
-                            "caption": "Current State",
-                            "width": 2,
-                            "widgets": [
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.MONITOR_ERROR",
+                            "multi_select": true,
+                            "filters": [
                                 {
-                                    "widget_type": "InputHidden",
-                                    "attribute_alias": "UID"
+                                    "attribute_alias": "STATUS",
+                                    "input_widget": {
+                                        "widget_type": "InputSelect",
+                                        "multi_select": true,
+                                        "values": [
+                                            10,
+                                            20,
+                                            40
+                                        ]
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE",
+                                    "input_widget": {
+                                        "widget_type": "Input"
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "ERROR_LEVEL",
+                                    "input_widget": {
+                                        "widget_type": "InputSelect",
+                                        "multi_select": true
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "USER"
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE",
+                                    "comparator": "==",
+                                    "hidden": true
+                                },
+                                {
+                                    "attribute_alias": "UID",
+                                    "comparator": "!==",
+                                    "hidden": true
+                                }
+                            ],
+                            "sorters": [
+                                {
+                                    "attribute_alias": "CREATED_ON",
+                                    "direction": "desc"
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "caption": "Occurred at",
+                                    "attribute_alias": "CREATED_ON"
                                 },
                                 {
                                     "attribute_alias": "STATUS"
                                 },
                                 {
-                                    "attribute_alias": "TICKET_NO"
+                                    "calculation": "=Left(MESSAGE,100)"
                                 },
-                                {
-                                    "attribute_alias": "COMMENT",
-                                    "width": "max",
-                                    "height": 3
-                                }
-                            ]
-                        },
-                        {
-                            "caption": "Error",
-                            "widget_type": "WidgetGroup",
-                            "width": 2,
-                            "readonly": true,
-                            "widgets": [
                                 {
                                     "attribute_alias": "LOG_ID"
                                 },
                                 {
-                                    "attribute_alias": "CREATED_ON",
-                                    "caption": "Occurred at"
-                                },
-                                {
                                     "attribute_alias": "USER__LABEL"
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                    "bind_to_double_click": true
                                 },
                                 {
-                                    "attribute_alias": "ERROR_LEVEL"
+                                    "caption": "Show Error Widget",
+                                    "action": {
+                                        "alias": "exface.core.ShowDialogFromData",
+                                        "uxon_attribute": "ERROR_WIDGET"
+                                    }
                                 },
                                 {
-                                    "attribute_alias": "MESSAGE",
-                                    "width": "max",
-                                    "widget_type": "Text"
+                                    "widget_type": "StateMenuButton"
                                 },
                                 {
-                                    "attribute_alias": "LOG_FILE",
-                                    "id": "field_logfile",
-                                    "widget_type": "InputHidden"
-                                },
-                                {
-                                    "attribute_alias": "REQUEST_ID",
-                                    "id": "field_request_id",
-                                    "widget_type": "InputHidden"
+                                    "action": {
+                                        "alias": "exface.Core.ShowMassEditDialog",
+                                        "dialog": {
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "STATUS"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
                             ]
-                        },
-                        {
-                            "widget_type": "WidgetGroup",
-                            "caption": "Action Monitor",
-                            "width": 2,
-                            "readonly": true,
-                            "widgets": [
-                                {
-                                    "attribute_alias": "MONITOR_ACTION__PAGE__LABEL"
-                                },
-                                {
-                                    "attribute_alias": "MONITOR_ACTION__WIDGET_NAME"
-                                },
-                                {
-                                    "attribute_alias": "MONITOR_ACTION__ACTION_NAME"
-                                },
-                                {
-                                    "attribute_alias": "MONITOR_ACTION__ACTION_ALIAS"
-                                }
-                            ]
-                        },
-                        {
-                            "widget_type": "WidgetGroup",
-                            "caption": "Request log",
-                            "width": "max",
-                            "height": "max",
-                            "widgets": [
-                                {
-                                    "widget_type": "DataTable",
-                                    "object_alias": "exface.Core.LOG_ENTRY",
-                                    "height": "100%",
-                                    "empty_text": "No data found! Please note, that log entries are only provided as long as the corresponding log file is not old enough to be deleted. Older monitor messages will not have log entries.",
-                                    "filters": [
-                                        {
-                                            "attribute_alias": "levelname"
-                                        },
-                                        {
-                                            "attribute_alias": "message"
-                                        },
-                                        {
-                                            "attribute_alias": "logfile",
-                                            "value": "=field_logfile",
-                                            "required": true,
-                                            "hidden": true,
-                                            "comparator": "=="
-                                        },
-                                        {
-                                            "attribute_alias": "requestId",
-                                            "value": "=field_request_id",
-                                            "comparator": "==",
-                                            "required": false,
-                                            "hidden": true
-                                        }
-                                    ],
-                                    "columns": [
-                                        {
-                                            "attribute_alias": "levelname"
-                                        },
-                                        {
-                                            "attribute_alias": "message"
-                                        }
-                                    ],
-                                    "buttons": [
-                                        {
-                                            "bind_to_double_click": true,
-                                            "caption": "Details",
-                                            "action": {
-                                                "alias": "exface.Core.ShowDialogFromFile",
-                                                "file_path_attribute_alias": "id",
-                                                "file_extension": "json",
-                                                "folder_path": "logs\/details",
-                                                "do_not_prefill": true
-                                            }
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ],
-                    "buttons": [
-                        {
-                            "caption": "Show Error Widget",
-                            "close_dialog": false,
-                            "action": {
-                                "alias": "exface.core.ShowDialogFromData",
-                                "uxon_attribute": "ERROR_WIDGET"
-                            }
-                        },
-                        {
-                            "action_alias": "exface.Core.UpdateData",
-                            "visibility": "promoted",
-                            "align": "opposite"
                         }
                     ]
                 }

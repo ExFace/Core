@@ -489,7 +489,7 @@
         },
         {
             "CREATED_ON": "2021-04-14 12:53:54",
-            "MODIFIED_ON": "2022-05-09 09:50:17",
+            "MODIFIED_ON": "2022-10-02 10:33:19",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb67ab497a790b67a8c04ba002958",
@@ -533,11 +533,11 @@
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
                 "values": {
-                    "10": "10 New",
-                    "20": "20 ToDo",
-                    "40": "40 Ticket",
-                    "90": "90 Obsolete\/Duplicate",
-                    "99": "99 Resolved"
+                    "10": "New",
+                    "20": "ToDo",
+                    "40": "Ticket",
+                    "90": "Obsolete\/Duplicate",
+                    "99": "Resolved"
                 },
                 "show_values": false
             }
