@@ -49,13 +49,14 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-15 16:34:40",
-            "MODIFIED_ON": "2021-12-10 18:05:19",
+            "MODIFIED_ON": "2022-10-02 10:32:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb87dcb685391287dc025041000001",
             "BEHAVIOR": "exface\/Core\/Behaviors\/StateMachineBehavior.php",
             "CONFIG_UXON": {
                 "state_attribute_alias": "STATUS",
+                "hide_state_ids": true,
                 "states": {
                     "10": {
                         "name": "New",

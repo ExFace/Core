@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-06 13:43:23",
-            "MODIFIED_ON": "2021-05-19 19:10:30",
+            "MODIFIED_ON": "2022-10-02 10:55:06",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb90f04b00a9be90f08c04ba002958",
@@ -98,9 +98,10 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
+                "object_alias": "exface.Core.MONITOR_ERROR",
                 "widgets": [
                     {
-                        "caption": "Error",
+                        "caption": "Current State",
                         "widget_type": "WidgetGroup",
                         "width": 2,
                         "widgets": [
@@ -108,6 +109,24 @@
                                 "widget_type": "InputHidden",
                                 "attribute_alias": "UID"
                             },
+                            {
+                                "attribute_alias": "STATUS"
+                            },
+                            {
+                                "attribute_alias": "TICKET_NO"
+                            },
+                            {
+                                "attribute_alias": "COMMENT",
+                                "width": "max",
+                                "height": 3
+                            }
+                        ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Error",
+                        "width": 2,
+                        "widgets": [
                             {
                                 "attribute_alias": "LOG_ID"
                             },
@@ -123,23 +142,27 @@
                             },
                             {
                                 "attribute_alias": "MESSAGE",
-                                "width": "max"
+                                "width": "max",
+                                "widget_type": "Text"
                             },
                             {
-                                "attribute_alias": "STATUS"
+                                "attribute_alias": "LOG_FILE",
+                                "id": "field_logfile",
+                                "widget_type": "InputHidden"
                             },
                             {
-                                "attribute_alias": "TICKET_NO"
-                            },
-                            {
-                                "attribute_alias": "COMMENT"
+                                "attribute_alias": "REQUEST_ID",
+                                "id": "field_request_id",
+                                "widget_type": "InputHidden"
                             }
-                        ]
+                        ],
+                        "readonly": true
                     },
                     {
                         "widget_type": "WidgetGroup",
                         "caption": "Action Monitor",
                         "width": 2,
+                        "readonly": true,
                         "widgets": [
                             {
                                 "attribute_alias": "MONITOR_ACTION__PAGE__LABEL"
@@ -154,6 +177,63 @@
                                 "attribute_alias": "MONITOR_ACTION__ACTION_ALIAS"
                             }
                         ]
+                    },
+                    {
+                        "widget_type": "WidgetGroup",
+                        "caption": "Request log",
+                        "width": "max",
+                        "height": "max",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "object_alias": "exface.Core.LOG_ENTRY",
+                                "height": "100%",
+                                "empty_text": "No data found! Please note, that log entries are only provided as long as the corresponding log file is not old enough to be deleted. Older monitor messages will not have log entries.",
+                                "filters": [
+                                    {
+                                        "attribute_alias": "levelname"
+                                    },
+                                    {
+                                        "attribute_alias": "message"
+                                    },
+                                    {
+                                        "attribute_alias": "logfile",
+                                        "value": "=field_logfile",
+                                        "required": true,
+                                        "hidden": true,
+                                        "comparator": "=="
+                                    },
+                                    {
+                                        "attribute_alias": "requestId",
+                                        "value": "=field_request_id",
+                                        "comparator": "==",
+                                        "required": false,
+                                        "hidden": true
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": "levelname"
+                                    },
+                                    {
+                                        "attribute_alias": "message"
+                                    }
+                                ],
+                                "buttons": [
+                                    {
+                                        "bind_to_double_click": true,
+                                        "caption": "Details",
+                                        "action": {
+                                            "alias": "exface.Core.ShowDialogFromFile",
+                                            "file_path_attribute_alias": "id",
+                                            "file_extension": "json",
+                                            "folder_path": "logs\/details",
+                                            "do_not_prefill": true
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ],
                 "buttons": [
@@ -164,6 +244,10 @@
                             "alias": "exface.core.ShowDialogFromData",
                             "uxon_attribute": "ERROR_WIDGET"
                         }
+                    },
+                    {
+                        "action_alias": "exface.Core.ShowMonitorSimilarErrorsDialog",
+                        "close_dialog": false
                     }
                 ]
             },

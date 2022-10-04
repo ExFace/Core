@@ -466,7 +466,7 @@
         },
         {
             "CREATED_ON": "2021-01-12 15:26:35",
-            "MODIFIED_ON": "2022-08-26 14:16:51",
+            "MODIFIED_ON": "2022-10-04 14:10:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb8b4a2cd5462a8b4a025041000001",
@@ -621,7 +621,8 @@
                                                     ],
                                                     "buttons": [
                                                         {
-                                                            "action_alias": "exface.Core.QueueTaskInfoDialog"
+                                                            "action_alias": "exface.Core.QueueTaskInfoDialog",
+                                                            "bind_to_double_click": true
                                                         }
                                                     ]
                                                 }
@@ -649,7 +650,8 @@
                             "icon": "bug",
                             "close_dialog": false,
                             "action": {
-                                "alias": "exface.Core.ShowMonitorErrorDialog",
+                                "alias": "exface.Core.ShowObjectEditDialog",
+                                "object_alias": "exface.Core.MONITOR_ERROR",
                                 "input_mapper": {
                                     "column_to_column_mappings": [
                                         {
