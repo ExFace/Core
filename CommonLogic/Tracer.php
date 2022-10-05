@@ -232,7 +232,7 @@ class Tracer extends Profiler
                 $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
                 break;
             case $event instanceof CommunicationMessageEventInterface:
-                $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` send';
+                $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
