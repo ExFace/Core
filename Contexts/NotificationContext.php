@@ -327,7 +327,7 @@ class NotificationContext extends AbstractContext
             'width' => 1,
             'height' => 'auto',
             'caption' => $title,
-            'widgets' => $notification->getContentWidgetUxon() ? [$notification->getContentWidgetUxon()->toArray()] : [],
+            'widgets' => $notification->getBodyWidgetUxon() ? [$notification->getBoyWidgetUxon()->toArray()] : [],
             'buttons' => ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [])
         ]);
         

@@ -23,6 +23,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Communication\CommunicationChannelConfigError;
 use exface\Core\Interfaces\Exceptions\CommunicationExceptionInterface;
 use exface\Core\Events\Communication\OnMessageRoutedEvent;
+use exface\Core\Events\Communication\OnMessageSentEvent;
 
 class CommunicationChannel implements CommunicationChannelInterface
 {
@@ -194,7 +195,7 @@ class CommunicationChannel implements CommunicationChannelInterface
     public function send(CommunicationMessageInterface $message) : ?CommunicationReceiptInterface
     {
         if ($this->isMuted()) {
-            $this->getWorkbench()->getLogger()->debug('Ignoring message "' . StringDataType::truncate($message->getText(), 20) . '" as channel "' . $this->getName() . '" is muted!');
+            $this->getWorkbench()->getLogger()->debug('Message `' . StringDataType::truncate($message->getText(), 50, false, true, true) . '` ignored as channel "' . $this->getName() . '" is muted!');
             return null;
         }
         try {
@@ -204,12 +205,16 @@ class CommunicationChannel implements CommunicationChannelInterface
             
             $this->getWorkbench()->eventManager()->dispatch(new OnMessageRoutedEvent($message, $this));
             
-            return $this->getConnection()->communicate($message);
+            $receipt = $this->getConnection()->communicate($message);
+            
+            $this->getWorkbench()->eventManager()->dispatch(new OnMessageSentEvent($receipt, $this));
         } catch (CommunicationExceptionInterface $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw new CommunicationNotSentError($message, 'Failed to send message over channel "' . $this->getName() . '": ' . $e->getMessage(), null, $e, $this->getConnection());
         }
+        
+        return $receipt;
     }
     
     /**

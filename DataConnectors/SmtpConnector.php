@@ -25,6 +25,8 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use exface\Core\Interfaces\Communication\RecipientInterface;
+use exface\Core\Widgets\DebugMessage;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Sends emails via SMTP
@@ -200,7 +202,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
             if ($this->isErrorIfEmptyTo()) {
                 throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": no to-addresses defined!');
             } else {
-                return new CommunicationReceipt($message, $this, null, true);
+                return new CommunicationReceipt($message, $this, null, null, true);
             }
         }
         $email->addTo(...$addresses);
@@ -243,7 +245,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
             if ($this->isErrorIfEmptyBody()) {
                 throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": no message body defined!');
             } else {
-                return new CommunicationReceipt($message, $this, null, true);
+                return new CommunicationReceipt($message, $this, null, null, true);
             }
         }
         $footer = $this->getFooter();
@@ -287,7 +289,38 @@ MD;
             throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e, $this, $debug);
         }
         
-        return new CommunicationReceipt($message, $this);
+        $debugCallback = function(DebugMessage $debugWidget) use ($email, $sentMessage) {
+            $debug = <<<MD
+            
+## Email message
+
+```
+{$email->toString()}
+```
+
+## SMTP log
+
+```
+{$sentMessage->getDebug()}
+```
+MD;
+
+            $debugWidget->addTab(WidgetFactory::createFromUxonInParent($debugWidget, new UxonObject([
+                'widget_type' => 'Tab',
+                'caption' => 'SMTP debug',
+                'widgets' => [
+                    [
+                        'widget_type' => 'Markdown',
+                        'width' => '100%',
+                        'height' => '100%',
+                        'value' => $debug
+                    ]
+                ]
+            ])));
+            return $debugWidget;
+        };
+        
+        return new CommunicationReceipt($message, $this, $debugCallback);
     }
     
     /**

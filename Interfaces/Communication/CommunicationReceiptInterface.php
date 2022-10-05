@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Communication;
 
-interface CommunicationReceiptInterface
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+
+interface CommunicationReceiptInterface extends iCanGenerateDebugWidgets
 {
     /**
      * 

@@ -23,6 +23,9 @@ use exface\Core\Interfaces\Events\DataQueryEventInterface;
 use exface\Core\Events\Contexts\OnContextInitEvent;
 use exface\Core\Interfaces\Events\ContextEventInterface;
 use exface\Core\Contexts\DebugContext;
+use exface\Core\Events\Communication\OnMessageRoutedEvent;
+use exface\Core\Events\Communication\OnMessageSentEvent;
+use exface\Core\Interfaces\Events\CommunicationMessageEventInterface;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -172,6 +175,16 @@ class Tracer extends Profiler
             'stopDataQuery'
         ]);
         
+        // Communication
+        $event_manager->addListener(OnMessageRoutedEvent::getEventName(), [
+            $this,
+            'startCommunication'
+        ]);
+        $event_manager->addListener(OnMessageSentEvent::getEventName(), [
+            $this,
+            'stopCommunication'
+        ]);
+        
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
             $this,
@@ -213,15 +226,13 @@ class Tracer extends Profiler
         switch (true) {
             case $event instanceof DataQueryEventInterface:
                 $name = 'Query "' . ($event->getConnection()->hasModel() ? $event->getConnection()->getAlias() : get_class($event->getConnection())) . '"';
-                $queryString = str_replace(
-                    ["\r", "\n", "\t", "  "],
-                    [' ', ' ', '', ''],
-                    $event->getQuery()->toString(false)
-                    );
-                $name .= ': ' . mb_substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '');
+                $name .= ': ' . $this->sanitizeLapName($event->getQuery()->toString(false));
                 break;
             case $event instanceof ActionEventInterface:
                 $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
+                break;
+            case $event instanceof CommunicationMessageEventInterface:
+                $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` send';
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
@@ -242,6 +253,16 @@ class Tracer extends Profiler
         }
         
         return $name;
+    }
+    
+    protected function sanitizeLapName(string $name, int $maxLength = 50) : string
+    {
+        $str = str_replace(
+            ["\r", "\n", "\t", "  "],
+            [' ', ' ', '', ''],
+            $name
+        );
+        return mb_substr($str, 0, 50) . (strlen($str) > 50 ? '...' : '');
     }
     
     /**
@@ -291,6 +312,37 @@ class Tracer extends Profiler
             $duration = $ms !== null ? ' in ' . $ms . ' ms' : '';
             $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' finished' . $duration . '.', array());
         } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+    }
+    
+    /**
+     * 
+     * @param OnMessageRoutedEvent $event
+     * @return void
+     */
+    public function startCommunication(OnMessageRoutedEvent $event)
+    {
+        $this->start($event->getMessage(), $this->getLapName($event), 'communication');
+    }
+    
+    /**
+     * 
+     * @param OnMessageSentEvent $event
+     * @reuturn void
+     */
+    public function stopCommunication(OnMessageSentEvent $event)
+    {
+        try {
+            $ms = $this->stop($event);
+            $name = $this->getLapName($event);
+            if ($ms !== null) {
+                $duration = ' (' . $ms . ' ms)';
+            } else {
+                $duration = '';
+            }
+            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $event->getReceipt());
+        } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
     }
