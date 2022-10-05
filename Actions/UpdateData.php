@@ -47,7 +47,11 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         $undoable = false;
         
         $affectedRows = $data_sheet->dataUpdate(false, $transaction);
-        $message = $this->getResultMessageText() ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.UPDATEDATA.RESULT', ['%number%' => $affectedRows], $affectedRows);
+        if (null !== $message = $this->getResultMessageText()) {
+            $message =  str_replace('%number%', $affectedRows, $message);
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.UPDATEDATA.RESULT', ['%number%' => $affectedRows], $affectedRows);
+        }
         $result = ResultFactory::createDataResult($task, $data_sheet, $message);
         $result->setUndoable($undoable);
         if ($affectedRows > 0) {
