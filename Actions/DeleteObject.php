@@ -9,8 +9,6 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Deletes objects in the input data from their data sources.
@@ -61,7 +59,11 @@ class DeleteObject extends AbstractAction implements iDeleteData
         
         $deletedRows = $input_data->dataDelete($transaction);
         
-        $message = $this->getResultMessageText() ?? $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows);
+        if (null !== $message = $this->getResultMessageText()) {
+            $message =  str_replace('%number%', $deletedRows, $message);
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DELETEOBJECT.RESULT', ['%number%' => $deletedRows], $deletedRows);
+        }
         $result = ResultFactory::createMessageResult($task, $message);
         
         if ($deletedRows > 0) {

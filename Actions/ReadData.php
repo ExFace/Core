@@ -52,7 +52,12 @@ class ReadData extends AbstractAction implements iReadData
         }
         
         $result = ResultFactory::createDataResult($task, $data_sheet);
-        $result->setMessage($affected_rows . ' entries read');
+        if (null !== $message = $this->getResultMessageText()) {
+            $message =  str_replace('%number%', $affected_rows, $message);
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
+        }
+        $result->setMessage($message);
         
         return $result;
     }

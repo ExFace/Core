@@ -95,6 +95,7 @@
     
     "ACTION.READDATA.NAME": "Search",
     "ACTION.READDATA.SEARCH": "Search",
+    "ACTION.READDATA.RESULT": "%number% entries read",
     "ACTION.REFRESHWIDGET.NAME": "Refresh",
 	"ACTION.RESETWIDGET.NAME": "Reset",
 	
