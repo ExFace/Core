@@ -20,28 +20,37 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 
 /**
- * This action chains other actions together and performs them one after another.
+ * This action chains other actions and performs them one after another.
  *
- * All actions in the action-array will be performed one-after-another in the order of definition. 
+ * All actions in the `action` array will be performed one-after-another in the order of definition. 
  * Every action receives the result data of it's predecessor as input. The first action will get 
- * the input from the chain action. The result of the action chain is the result of the last action.
+ * the input from the chain action. The result of the action chain is the result of the last action
+ * unless `use_result_of_action` is set explicitly.
  * 
- * **NOTE:** actions showing widgets cannot be used in actions chains as the will not show anything!
+ * **NOTE:** actions showing widgets may cause problems or not work at all if placed in the middle of
+ * a chain - this will depend on the facade used!
  * 
- * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's 
- * name, trigger widget, input restrictions, etc. Thus, in the above example, the action chain would 
- * inherit the name "Order" and `input_rows_min`=`0`. 
+ * The action chain will inherit many properties from its first action: 
+ * - name 
+ * - icon 
+ * - trigger widget 
+ * - expected number of input rows
  * 
- * **Exceptions** from the above rule:
+ * ## Action effects
  * 
- * - the chain has modified data if at least one of the actions modified data
- * - the chain will have `effects` on all objects effected by its sub-actions. However, if multiple 
+ * The chain has modified data if at least one of the actions modified data.
+ * 
+ * The chain will have `effects` on all objects effected by its sub-actions. However, if multiple 
  * actions effect the same object, only the first effect will be inherited by the chain. In particular,
  * this makes sure manually defined `effects` of the chain itself prevail!
- *
+ * 
+ * ## Transaction handling
+ * 
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions 
  * will get rolled back if at least one failes. Set the property `use_single_transaction` to false 
  * to make every action in the chain run in it's own transaction.
+ * 
+ * ## Nested chains
  *
  * Action chains can be nested - an action in the chain can be another chain. This way, complex processes 
  * even with multiple transactions can be modeled (e.g. the root chain could have `use_single_transaction` 
@@ -172,6 +181,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     private $freeze_input_data_at_action_index = null;
     
     private $skip_action_if_empty_input = false;
+    
+    private $result_message_delimiter = "\n";
 
     /**
      * 
@@ -184,11 +195,13 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             throw new ActionConfigurationError($this, 'An action chain must contain at least one action!', '6U5TRGK');
         }
         
-        $data = $this->getInputDataSheet($task);
-        $chainResult = null;
-        $chainResultIdx = $this->getUseResultOfAction() ?? (count($this->getActions()) - 1);
+        $inputSheet = $this->getInputDataSheet($task);
         $freezeInputIdx = $this->getUseInputDataOfAction();
-        $data_modified = false;
+        $chainDataModified = false;
+        $chainMessage = null;
+        $chainResult = null;
+        $messages = [];
+        $results = [];
         $t = clone $task;
         foreach ($this->getActions() as $idx => $action) {
             // Prepare the action
@@ -211,35 +224,40 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             // Let the action handle a copy of the task
             
             // Every action gets the data resulting from the previous action as input data
-            $t->setInputData($data);
+            $t->setInputData($inputSheet);
             
-            if ($this->getSkipActionsIfInputEmpty() === false || ! $data->isEmpty() || $action->getInputRowsMin() === 0) {
-                $result = $action->handle($t, $tx);
-                $message .= $result->getMessage() . "\n";
-                if ($result->isDataModified()) {
-                    $data_modified = true;
+            // Perform the action if it should not be skipped
+            if ($this->getSkipActionsIfInputEmpty() === false || ! $inputSheet->isEmpty() || $action->getInputRowsMin() === 0) {
+                $lastResult = $action->handle($t, $tx);
+                $results[$idx] = $lastResult;
+                if (null !== $lastMessage = $lastResult->getMessage()) {
+                    $messages[$idx] = $lastMessage;
                 }
-                if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $result instanceof ResultData) {
-                    $data = $result->getData();
+                if ($lastResult->isDataModified()) {
+                    $chainDataModified = true;
                 }
-            }
-            if ($chainResultIdx === $idx) {
-                $chainResult = $result;
+                if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $lastResult instanceof ResultData) {
+                    $inputSheet = $lastResult->getData();
+                }
             }
         }
         
-        $chainResult = $chainResult ?? $result;
-        $message = $this->getResultMessageText() ?? $message;
-        
-        if ($message) {
-            if ($chainResult instanceof ResultEmpty) {
-                $chainResult = ResultFactory::createMessageResult($chainResult->getTask(), $message);
-            } else {
-                $chainResult->setMessage($message);
-            }
+        $chainResult = $this->getUseResultOfAction() !== null ? $results[$this->getUseResultOfAction()] : $lastResult;
+        $chainMessage = $this->getResultMessageText() ?? trim(implode($this->getResultMessageDelimiter(), $messages));
+        switch (true) {
+            case $chainResult === null:
+                $chainResult = ResultFactory::createEmptyResult($task);
+                break;
+            case $chainMessage !== null && $chainMessage !== '': 
+                if ($chainResult instanceof ResultEmpty) {
+                    $chainResult = ResultFactory::createMessageResult($chainResult->getTask(), $chainMessage);
+                } else {
+                    $chainResult->setMessage($chainMessage);
+                }
+                break;
         }
         
-        $chainResult->setDataModified($data_modified);
+        $chainResult->setDataModified($chainDataModified);
         
         return $chainResult;
     }
@@ -568,6 +586,31 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function setSkipActionsIfInputEmpty(bool $value) : ActionChain
     {
         $this->skip_action_if_empty_input = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getResultMessageDelimiter() : string
+    {
+        return $this->result_message_delimiter;
+    }
+    
+    /**
+     * Specifies how to concatenate result messages of all the actions
+     * 
+     * @uxon-property result_message_delimiter
+     * @uxon-type string
+     * @uxon-default \n
+     * 
+     * @param string $value
+     * @return ActionChain
+     */
+    public function setResultMessageDelimiter(string $value) : ActionChain
+    {
+        $this->result_message_delimiter = $value;
         return $this;
     }
 }
