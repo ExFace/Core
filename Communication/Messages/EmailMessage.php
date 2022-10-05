@@ -48,7 +48,7 @@ class EmailMessage extends TextMessage
     {
         $uxon = parent::exportUxonObject();
         if (null !== $this->userEmailAttributeAlias) {
-            $uxon->setProperty('recipient_user_email_attribute', new UxonObject($this->userEmailAttributeAlias));
+            $uxon->setProperty('recipient_user_email_attribute', $this->userEmailAttributeAlias);
         }
         return $uxon;
     }
