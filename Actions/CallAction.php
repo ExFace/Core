@@ -409,4 +409,17 @@ class CallAction extends AbstractAction implements iCallOtherActions
     {
         return parent::getIcon() ?? $this->getActions()[0]->getIcon();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getName()
+     */
+    public function getName()
+    {
+        if (! parent::hasName() && $firstAction = $this->getActions()[0]) {
+            return $firstAction->getName();
+        }
+        return parent::getName();
+    }
 }
