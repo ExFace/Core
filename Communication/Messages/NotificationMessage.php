@@ -25,14 +25,12 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     
     private $title = null;
     
-    private $attachmentPath = null;
-    
     /**
      * 
      * @throws RuntimeException
      * @return UxonObject|NULL
      */
-    public function getContentWidgetUxon() : ?UxonObject
+    public function getBodyWidgetUxon() : ?UxonObject
     {
         if ($this->widgetUxon === null) {
             $textUxon = new UxonObject([
@@ -48,14 +46,14 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     /**
      * The widget to show in the expanded view of the notification
      * 
-     * @uxon-property content_widget
+     * @uxon-property body_widget
      * @uxon-type \exface\Core\Widgets\AbstractWidget
      * @uxon-template {"widget_type":""}
      * 
      * @param UxonObject $uxon
      * @return NotificationMessage
      */
-    protected function setContentWidget(UxonObject $uxon) : NotificationMessage
+    protected function setBodyWidget(UxonObject $uxon) : NotificationMessage
     {
         $this->widgetUxon = $uxon;
         return $this;
@@ -124,25 +122,30 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     
     /**
      * 
-     * @return string|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Communication\AbstractMessage::exportUxonObject()
      */
-    public function getAttachmentPath() : ?string
+    public function exportUxonObject()
     {
-        return $this->attachmentPath;
-    }
-    
-    /**
-     * The path to a file on the filesystem that should be appended to the message (works for e-mail messages so far)
-     *
-     * @uxon-property attachment_path
-     * @uxon-type string
-     *
-     * @param string $value
-     * @return NotificationMessage
-     */
-    public function setAttachmentPath(string $value) : NotificationMessage
-    {
-        $this->attachmentPath = $value;
-        return $this;
+        $uxon = parent::exportUxonObject();
+        if ($this->title !== null) {
+            $uxon->setProperty('title', $this->title);
+        }
+        if ($this->getIcon() !== null) {
+            $uxon->setProperty('icon', $this->getIcon());
+        }
+        if ($this->getIconSet() !== null) {
+            $uxon->setProperty('icon_set', $this->getIconSet());
+        }
+        if ($this->text !== null) {
+            $uxon->setProperty('text', $this->text);
+        }
+        if ($this->widgetUxon !== null) {
+            $uxon->setProperty('body_widget', $this->widgetUxon);
+        }
+        if ($this->buttonsUxon !== null) {
+            $uxon->setProperty('buttons', $this->buttonsUxon);
+        }
+        return $uxon;
     }
 }
