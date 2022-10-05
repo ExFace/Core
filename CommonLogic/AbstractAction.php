@@ -402,7 +402,8 @@ abstract class AbstractAction implements ActionInterface
     public function getInputDataPreset() : DataSheetInterface
     {        
         if ($this->input_data_preset === null && $this->input_data_uxon !== null) {
-            $this->input_data_preset = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->input_data_uxon, $this->getMetaObject());
+            // Don't pass $this->getMetaObject() to the factory here as it may in-turn call getInputDataPreset()!
+            $this->input_data_preset = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->input_data_uxon);
         }
         return $this->input_data_preset;
     }
