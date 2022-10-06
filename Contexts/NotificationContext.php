@@ -187,7 +187,7 @@ class NotificationContext extends AbstractContext
             );
             $widgetJson = $renderer->render($row['WIDGET_UXON']);
             
-            $dateDiff = (new \DateTime($row['CREATED_ON']))->diff(new \DateTime())->days;
+            $dateDiff = DateDataType::diff($row['CREATED_ON'])->days;
             switch (true) {
                 case $dateDiff === 0: $grpCaption = $translator->translate('LOCALIZATION.DATE.TODAY'); break;
                 case $dateDiff === 1: $grpCaption = $translator->translate('LOCALIZATION.DATE.YESTERDAY'); break;
