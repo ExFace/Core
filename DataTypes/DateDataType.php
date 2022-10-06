@@ -87,7 +87,19 @@ class DateDataType extends AbstractDataType
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
         
-        return $returnPhpDate ? $date : static::formatDateNormalized($date);
+        return static::castFromPhpDate($date, $returnPhpDate);
+    }
+    
+    /**
+     * 
+     * @param \DateTimeInterface $dateTime
+     * @param bool $returnPhpDate
+     * @return \DateTimeInterface|string
+     */
+    public static function castFromPhpDate(\DateTimeInterface $dateTime, bool $returnPhpDate = false)
+    {
+        $normalized = static::formatDateNormalized($dateTime);
+        return $returnPhpDate ? new \DateTime($normalized) : $normalized;
     }
     
     /**
@@ -232,10 +244,10 @@ class DateDataType extends AbstractDataType
     /**
      * Returns the given date in the internal normalized format: e.g. `2021-12-31 23:59:59`
      * 
-     * @param \DateTime $date
+     * @param \DateTimeInterface $date
      * @return string
      */
-    public static function formatDateNormalized(\DateTime $date) : string
+    public static function formatDateNormalized(\DateTimeInterface $date) : string
     {
         return $date->format(self::DATE_FORMAT_INTERNAL);
     }
@@ -248,12 +260,12 @@ class DateDataType extends AbstractDataType
      * 
      * @see formatDate()
      * 
-     * @param \DateTime $date
+     * @param \DateTimeInterface $date
      * @param WorkbenchInterface $workbench
      * 
      * @return string
      */
-    public static function formatDateLocalized(\DateTime $date, WorkbenchInterface $workbench) : string
+    public static function formatDateLocalized(\DateTimeInterface $date, WorkbenchInterface $workbench) : string
     {
         $format = static::getFormatForCurrentTranslation($workbench);
         $locale = $workbench->getContext()->getScopeSession()->getSessionLocale();
@@ -273,10 +285,10 @@ class DateDataType extends AbstractDataType
     
     /**
      * 
-     * @param \DateTime $date
+     * @param \DateTimeInterface $date
      * @return string
      */
-    public function formatDate(\DateTime $date) : string
+    public function formatDate(\DateTimeInterface $date) : string
     {
         return $this->getIntlDateFormatter()->format($date);
     }
@@ -487,5 +499,18 @@ class DateDataType extends AbstractDataType
         }
         
         return $this->formatDate($date);
+    }
+    
+    /**
+     * 
+     * @param string $date1
+     * @param string $date2
+     * @return \DateInterval
+     */
+    public static function diff(string $date1, string $date2 = null) : \DateInterval
+    {
+        $dateTime1 = static::cast($date1, true);
+        $dateTime2 = $date2 === null ? new \DateTimeImmutable() : static::cast($date2, true);
+        return $dateTime1->diff($dateTime2);
     }
 }

@@ -21,9 +21,20 @@ class DateTimeDataType extends DateDataType
      * @param \DateTime $date
      * @return string
      */
-    public static function formatDateNormalized(\DateTime $date) : string
+    public static function formatDateNormalized(\DateTimeInterface $date) : string
     {
         return $date->format(self::DATETIME_FORMAT_INTERNAL);
+    }
+    
+    /**
+     * 
+     * @param \DateTimeInterface $dateTime
+     * @param bool $returnPhpDate
+     * @return \DateTimeInterface|string
+     */
+    public static function castFromPhpDate(\DateTimeInterface $dateTime, bool $returnPhpDate = false)
+    {
+        return $returnPhpDate ? $dateTime : static::formatDateNormalized($dateTime);
     }
     
     /**
