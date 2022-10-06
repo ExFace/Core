@@ -8,7 +8,7 @@ class TimestampDataType extends DateDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\DateDataType::formatDateNormalized()
      */
-    public static function formatDateNormalized(\DateTime $date) : string
+    public static function formatDateNormalized(\DateTimeInterface $date) : string
     {
         return $date->format(DateTimeDataType::DATETIME_FORMAT_INTERNAL);
     }
