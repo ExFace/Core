@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-01-22 15:38:56",
-            "MODIFIED_ON": "2022-09-12 14:02:55",
+            "MODIFIED_ON": "2022-10-06 17:44:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9b5e07d27cb89b5e025041000001",
@@ -118,6 +118,13 @@
                                     },
                                     {
                                         "attribute_alias": "MUTE_FLAG_DEFAULT"
+                                    },
+                                    {
+                                        "attribute_alias": "DATA_CONNECTION",
+                                        "id": "current_connection_selector"
+                                    },
+                                    {
+                                        "attribute_alias": "MUTE_FLAG"
                                     }
                                 ]
                             },
@@ -150,6 +157,32 @@
                                 "height": "max"
                             }
                         ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "caption": "Create connection",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectCreateDialog",
+                            "object_alias": "exface.Core.CONNECTION"
+                        }
+                    },
+                    {
+                        "caption": "Edit current connection",
+                        "close_dialog": false,
+                        "action": {
+                            "alias": "exface.Core.ShowObjectEditDialog",
+                            "object_alias": "exface.Core.CONNECTION",
+                            "input_mapper": {
+                                "column_to_column_mappings": [
+                                    {
+                                        "from": "DATA_CONNECTION",
+                                        "to": "UID"
+                                    }
+                                ]
+                            }
+                        }
                     }
                 ]
             },
