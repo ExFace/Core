@@ -29,6 +29,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Communication\RecipientInterface;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
+use exface\Core\Communication\Recipients\UserMultiRoleRecipient;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -139,7 +140,11 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
                     $userRecipients[] = new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, $str));
                 }
                 foreach ($this->getRecipientRoles() as $str) {
-                    $userRecipients[] = new UserRoleRecipient(new UserRoleSelector($this->workbench, $str));
+                    if (UserMultiRoleRecipient::isMultipleRoles($str)) {
+                        $userRecipients[] = new UserMultiRoleRecipient($str, $this->getWorkbench());
+                    } else {
+                        $userRecipients[] = new UserRoleRecipient(new UserRoleSelector($this->workbench, $str));
+                    }
                 }
             }
             
@@ -232,7 +237,12 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     }
     
     /**
-     * List of user role aliases or UIDs to notify or static formulas to calculate aliases/UIDs
+     * List of user role aliases or UIDs to notify or static formulas to calculate aliases/UIDs.
+     * 
+     * Each item of the list may either be a single user role or a set of roles concatenated by `+`:
+     * 
+     * - `exface.Core.SUPERUSER` - every user having the superuser role will receive the message
+     * - `my.App.role1+my.App.role2` - only users having both roles at the same time will receive the message 
      *
      * @uxon-property recipient_roles
      * @uxon-type metamodel:exface.Core.USER_ROLE:ALIAS_WITH_NS[]|metamodel:formula

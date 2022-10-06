@@ -339,7 +339,7 @@ MD;
                 case $recipient instanceof EmailRecipientInterface:
                     if ($email = $recipient->getEmail()) {
                         foreach (explode(';', $email) as $addr) {
-                            $addrs[] = $addr;
+                            $addrs[] = trim($addr);
                         }
                     }
                     break;
