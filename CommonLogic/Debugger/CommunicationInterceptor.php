@@ -63,18 +63,25 @@ class CommunicationInterceptor
         $sendToUsers = $this->workbench->getConfig()->getOption('DEBUG.INTERCEPT_AND_SEND_TO_USERS');
         $sendToRoles = $this->workbench->getConfig()->getOption('DEBUG.INTERCEPT_AND_SEND_TO_USER_ROLES');
         if ($sendToUsers || $sendToRoles) {
+            $interceptedTo = [];
             $recipients = $msg->getRecipients();
             $msg->clearRecipients();
             if ($sendToUsers) {
                 foreach (explode(',', $sendToUsers) as $userSelector) {
-                    $msg->addRecipient(new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, trim($userSelector))));
+                    if ($userSelector !== '' && $userSelector !== null) {
+                        $interceptedTo[] = $userSelector;
+                        $msg->addRecipient(new UserRecipient(UserFactory::createFromUsernameOrUid($this->workbench, trim($userSelector))));
+                    }
                 }
             }
             if ($sendToRoles) {
                 foreach (explode(',', $sendToRoles) as $roleSelector) {
-                    $msg->addRecipient(new UserRoleRecipient(new UserRoleSelector($this->workbench, trim($roleSelector))));
+                    if ($roleSelector !== '' && $roleSelector !== null) {
+                        $msg->addRecipient(new UserRoleRecipient(new UserRoleSelector($this->workbench, trim($roleSelector))));
+                    }
                 }
             }
+            $rerouteList = implode(', ', $interceptedTo);
             $recipientsList = implode(', ', $recipients);
             $msg->setText($msg->getText() . <<<TEXT
              
@@ -82,7 +89,7 @@ class CommunicationInterceptor
 -------------------
 DEBUG 
 
-This message was intercepted and re-routed by the debugger.
+This message was intercepted and re-routed to $rerouteList by the debugger.
 
 Original recipients: $recipientsList
 
