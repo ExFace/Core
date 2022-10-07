@@ -174,13 +174,19 @@ trait EnumStaticDataTypeTrait {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValues()
      */
-    public function getLabelOfValue($value = null) : string
+    public function getLabelOfValue($value = null) : ?string
     {
         $value = $value ?? $this->getValue();
-        if ($value === null) {
-            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        $labels = $this->getLabels();
+        $label = $labels[$value] ?? null;
+        if ($label === null) {
+            foreach ($labels as $key => $label) {
+                if (strcasecmp($value, $key) === 0) {
+                    return $label;
+                }
+            }
         }
-        return $this->getLabels()[$value];
+        return $label;
     }
     
     /**

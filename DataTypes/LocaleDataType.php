@@ -34,7 +34,7 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $inLocale
      * @return string
      */
-    public static function getLocaleName(string $locale, string $inLocale) : string
+    public static function getLocaleName(string $locale, string $inLocale) : ?string
     {
         return \Locale::getDisplayName($locale, $inLocale);
     }
