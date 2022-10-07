@@ -51,7 +51,9 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     
     private $recipientAddresses = [];
     
-    private $recipients = null;
+    private $recipientsAddedExplicitly = [];
+    
+    private $recipientsCached = null;
     
     private $recipientUserFilter = null;
     
@@ -103,13 +105,13 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     public function getRecipients() : array
     {
-        if ($this->recipients === null) {
-            $this->recipients = [];
+        if ($this->recipientsCached === null) {
+            $this->recipientsCached = $this->getRecipientsAddedExplicitly();
             
             foreach ($this->getRecipientAddresses() as $addr) {
                 // TODO move to factory
                 if (false !== $filtered = filter_var($addr, FILTER_VALIDATE_EMAIL)) {
-                    $this->recipients[] = new EmailRecipient($filtered);
+                    $this->recipientsCached[] = new EmailRecipient($filtered);
                 }
             }
             
@@ -148,9 +150,9 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
                 }
             }
             
-            $this->recipients = array_merge($this->recipients, $userRecipients);
+            $this->recipientsCached = array_merge($this->recipientsCached, $userRecipients);
         }
-        return $this->recipients;
+        return $this->recipientsCached;
     }
     
     /**
@@ -190,7 +192,7 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     public function setRecipientUsers(UxonObject $arrayOfStrings) : CommunicationMessageInterface
     {
-        $this->recipients = null;
+        $this->recipientsCached = null;
         $this->recipientUserSelectors = $arrayOfStrings->toArray();
         return $this;
     }
@@ -253,7 +255,7 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     public function setRecipientRoles(UxonObject $arrayOfStrings) : CommunicationMessageInterface
     {
-        $this->recipients = null;
+        $this->recipientsCached = null;
         $this->recipientRoleSelectors = $arrayOfStrings->toArray();
         return $this;
     }
@@ -270,7 +272,7 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     protected function setRecipients(UxonObject $arrayOfStrings) : CommunicationMessageInterface
     {
-        $this->recipients = null;
+        $this->recipientsCached = null;
         $this->recipientAddresses = $arrayOfStrings->toArray();
         return $this;
     }
@@ -286,15 +288,26 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     
     /**
      * 
+     * @return RecipientInterface[]
+     */
+    protected function getRecipientsAddedExplicitly() : array
+    {
+        return $this->recipientsAddedExplicitly;   
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::clearRecipients()
      */
     public function clearRecipients() : CommunicationMessageInterface
     {
-        $this->recipients = null;
+        $this->recipientsCached = null;
+        $this->recipientsAddedExplicitly = [];
         $this->recipientAddresses = [];
         $this->recipientRoleSelectors = [];
         $this->recipientUserSelectors = [];
+        $this->recipientUserFilter = null;
         return $this;
     }
     
@@ -305,12 +318,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     public function addRecipient(RecipientInterface $recipient) : CommunicationMessageInterface
     {
-        // If the recipient cache is empty, make sure to initialize it before addin the new
-        // recipient!
-        if ($this->recipients === null) {
-            $this->getRecipients();
-        }
-        $this->recipients[] = $recipient;
+        $this->recipientsCached = null;
+        $this->recipientsAddedExplicitly[] = $recipient;
         return $this;
     }
     
@@ -348,20 +357,11 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
         if (null !== $val = $anotherMsg->getChannelSelector()) {
             $uxon->setProperty('channel', $val->toString());
         }
+        $msg = new self($anotherMsg->getWorkbench(), $uxon);
         foreach ($anotherMsg->getRecipients() as $recipient) {
-            switch (true) {
-                case $recipient instanceof UserRoleSelectorInterface:
-                    $uxon->appendToProperty('recipient_roles', $recipient->__toString());
-                    break;
-                case $recipient instanceof UserRecipientInterface:
-                    $uxon->appendToProperty('recipient_users', $recipient->__toString());
-                    break;
-                default:
-                    $uxon->appendToProperty('recipients', $recipient->__toString());
-                    break;
-            }
+            $msg->addRecipient($recipient);
         }
-        return new self($anotherMsg->getWorkbench(), $uxon);
+        return $msg;
     }
     
     /**
