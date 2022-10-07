@@ -156,6 +156,10 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $messageUxons = null;
     
+    private $preventRecursion = false;
+    
+    private $isNotificationInProgress = false;
+    
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
      *
@@ -306,17 +310,24 @@ class NotifyingBehavior extends AbstractBehavior
      */
     public function onEventNotify(EventInterface $event)
     {
-        if ($this->isDisabled()) {
+        if ($this->isDisabled() || ($this->isNotificationInProgress === true && $this->getPreventRecursion() === true)) {
             return;
         }
         
+        // Track if this behavior is active already. This is important to prevent recursion.
+        // Recursion would occur for example when notifying about errors if the notification itself produces
+        // an error in-turn.
+        $this->isNotificationInProgress = true;
+        
         // Ignore object-events where the object does not match
         if (($event instanceof MetaObjectEventInterface) && ! $event->getMetaObject()->isExactly($this->getObject())) {
+            $this->isNotificationInProgress = false;
             return;
         }
         
         // Ignore data-events if their data is based on another object
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            $this->isNotificationInProgress = false;
             return;
         }
         
@@ -326,10 +337,12 @@ class NotifyingBehavior extends AbstractBehavior
         if ($event instanceof ActionEventInterface) {
             if ($this->getNotifyOnActionAlias() !== null){
                 if (! $event->getAction()->isExactly($this->getNotifyOnActionAlias())) {
+                    $this->isNotificationInProgress = false;
                     return;
                 }
             } else {
                 if (! $event->getAction()->getMetaObject()->isExactly($this->getObject())) {
+                    $this->isNotificationInProgress = false;
                     return;
                 }
             }
@@ -359,17 +372,20 @@ class NotifyingBehavior extends AbstractBehavior
         // Don't send anything if the event has data restrictions, but no data!
         if (! $dataSheet && ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange())) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
+            $this->isNotificationInProgress = false;
             return;
         }
         
         // Ignore the event if the data is based on another object
         if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
+            $this->isNotificationInProgress = false;
             return;
         }
         
         // Ignore the event if its data was already processed and set to be ignored (e.g. required change did not happen)
         if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
+            $this->isNotificationInProgress = false;
             return;
         }
         
@@ -378,12 +394,14 @@ class NotifyingBehavior extends AbstractBehavior
             $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
             if ($dataSheet->isEmpty()) {
                 $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
+                $this->isNotificationInProgress = false;
                 return;
             }
         }        
         
         // If everything is OK, generate UXON envelopes for the messages and send them
         $communicator = $this->getWorkbench()->getCommunicator();
+        $e = null;
         if ($this->messageUxons !== null) {
             try {
                 $envelopes = $this->getMessageEnvelopes($this->messageUxons, $dataSheet, $phResolvers);
@@ -397,6 +415,12 @@ class NotifyingBehavior extends AbstractBehavior
                     $this->handleError($e, $envelope);
                 }
             }
+        }
+        
+        // If need to prevent recursion, do not release the lock on errors as they might cause
+        // the next iteration asynchronously - e.g. if reacting to events inside the logger!
+        if ($e === null || $this->getPreventRecursion() === false) {
+            $this->isNotificationInProgress = false;
         }
         return;
     }
@@ -623,5 +647,34 @@ class NotifyingBehavior extends AbstractBehavior
     protected function getUseInputData() : bool
     {
         return $this->useActionInputData;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getPreventRecursion() : bool
+    {
+        return $this->preventRecursion;
+    }
+    
+    /**
+     * Set to TRUE to make sure no new notification are sent while the sending one.
+     * 
+     * For example, if notifying about errors, new errors might arise while the original notification
+     * is being sent. This option can forcibly prevent them from being sent, because otherwise they
+     * would probably cause recursion.
+     * 
+     * @uxon-property prevent_recursion
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    protected function setPreventRecursion(bool $value) : NotifyingBehavior
+    {
+        $this->preventRecursion = $value;
+        return $this;
     }
 }
