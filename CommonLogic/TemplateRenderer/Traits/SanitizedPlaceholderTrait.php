@@ -61,7 +61,11 @@ trait SanitizedPlaceholderTrait
     protected function getSanitizerForUxon() : callable
     {
         $fn = function($val) {
-            return str_replace(array("\r", "\n"), "\\n", $val);
+            $enc = json_encode($val);
+            if (mb_substr($enc, 0, 1) === '"' && mb_substr($enc, -1) === '"') {
+                $enc = substr($enc, 1, -1);
+            }
+            return $enc;
         };
         return $fn;
     }
