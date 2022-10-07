@@ -119,7 +119,7 @@ class JsonDataType extends TextDataType
         if (is_array($array)) {
             return $array;
         }
-        throw new DataTypeCastingError('Cannot parse string "' . substr($string, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+        throw new DataTypeCastingError('Cannot parse string "' . substr($string, 0, 50) . '" as JSON: ' . json_last_error_msg() . ' in JSON decoder!');
     }
 
     /**
