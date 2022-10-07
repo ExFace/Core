@@ -63,7 +63,7 @@ class UxonObject implements \IteratorAggregate
             return static::fromArray($array, $normalizeKeyCase);
         } else {
             if ($uxon !== '' && $uxon !== null) {
-                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!', null, null, $uxon);
             }
             return new self();
         }
