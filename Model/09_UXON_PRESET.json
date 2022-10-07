@@ -4651,7 +4651,7 @@
         },
         {
             "CREATED_ON": "2021-07-14 12:11:12",
-            "MODIFIED_ON": "2022-04-01 09:30:44",
+            "MODIFIED_ON": "2022-10-07 10:55:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb495d15bde82b495025041000001",
@@ -4664,9 +4664,6 @@
                 "caption": "",
                 "icon": "",
                 "buttons": [
-                    {
-                        "action_alias": ""
-                    },
                     {
                         "action_alias": ""
                     },
@@ -5223,6 +5220,56 @@
                         ],
                         "subject": "",
                         "text": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-10-07 10:53:27",
+            "MODIFIED_ON": "2022-10-07 10:53:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed972a829f8aba972a747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Info-button for timestamping attributes",
+            "DESCRIPTION": "Intended to be used on base objects of data sources. This behavior will add an optional button to all inheriting objects, that will show a dialog with attributes of the base object: typically the UID and various system attributes like those used by the TimestampingBehavior",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/GlobalActionsBehavior.php",
+            "UXON": {
+                "buttons": [
+                    {
+                        "icon": "info",
+                        "caption": "Object info",
+                        "action": {
+                            "alias": "exface.Core.ShowDialog",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1,
+                            "dialog": {
+                                "maximized": false,
+                                "width": 1,
+                                "height": "auto",
+                                "readonly": true,
+                                "widgets": [
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    }
+                                ]
+                            }
+                        }
                     }
                 ]
             },
