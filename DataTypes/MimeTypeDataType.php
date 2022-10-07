@@ -22,7 +22,7 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValue()
      */
-    public function getLabelOfValue($value = null): string
+    public function getLabelOfValue($value = null): ?string
     {
         return $value;
     }

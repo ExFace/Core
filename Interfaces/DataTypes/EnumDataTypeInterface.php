@@ -2,8 +2,6 @@
 namespace exface\Core\Interfaces\DataTypes;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\LogicException;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 interface EnumDataTypeInterface extends DataTypeInterface
 {
@@ -31,14 +29,14 @@ interface EnumDataTypeInterface extends DataTypeInterface
     /**
      * Returns the text label for the current internal value or the given value.
      * 
+     * Returns NULL if the value does not fit the enumeration. If you need to check if
+     * the value is valid, use the explicit `isValidValue()`, `cast()` or `parse()` instead!
+     * 
      * @param mixed $value
      * 
-     * @throws LogicException if there is neither an internal nor a given value
-     * @throws DataTypeValidationError if a value is given, but does not match the enum
-     * 
-     * @return string
+     * @return string|NULL
      */
-    public function getLabelOfValue($value = null) : string;
+    public function getLabelOfValue($value = null) : ?string;
     
     /**
      * Returns an array [ value => label ].
