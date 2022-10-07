@@ -95,7 +95,9 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
     
     private $suppressAutoResponse = true;
     
-    private $footer = null;
+    private $bodyFooter = null;
+    
+    private $bodyHeader = null;
     
     private $errorIfEmptyTo = false;
     
@@ -249,10 +251,15 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
             }
         }
         $footer = $this->getFooter();
+        $header = $this->getHeader();
         if (HtmlDataType::isValueHtml($body)) {
-            $email->html($body . ($footer !== null ? '<footer>' . $footer . '</footer>': ''));
+            $footer = ($footer !== null ? '<footer>' . $footer . '</footer>': '');
+            $footer = ($header !== null ? '<header>' . $header . '</header>': '');
+            $email->html($header . $body . $footer);
         } else {
-            $email->text($body . ($footer !== null ? "\n\n" . $footer : ''));
+            $footer = ($footer !== null ? "\n\n" . $footer : '');
+            $header = ($footer !== null ? "\n\n" . $header : '');
+            $email->text($header . $body . $footer);
         }
         
         try {
@@ -592,9 +599,9 @@ MD;
      * 
      * @return string|NULL
      */
-    public function getFooter() : ?string
+    protected function getFooter() : ?string
     {
-        return $this->footer;
+        return $this->bodyFooter;
     }
     
     /**
@@ -606,9 +613,33 @@ MD;
      * @param string $value
      * @return SmtpConnector
      */
-    public function setFooter(string $value) : SmtpConnector
+    protected function setFooter(string $value) : SmtpConnector
     {
-        $this->footer = $value;
+        $this->bodyFooter = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    protected function getHeader() : ?string
+    {
+        return $this->bodyHeader;
+    }
+    
+    /**
+     * A header to be placed on top of all messages sent through this connection (plain text or HTML)
+     *
+     * @uxon-property header
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return SmtpConnector
+     */
+    protected function setHeader(string $value) : SmtpConnector
+    {
+        $this->bodyHeader = $value;
         return $this;
     }
     
