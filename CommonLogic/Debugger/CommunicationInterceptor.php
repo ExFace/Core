@@ -77,6 +77,7 @@ class CommunicationInterceptor
             if ($sendToRoles) {
                 foreach (explode(',', $sendToRoles) as $roleSelector) {
                     if ($roleSelector !== '' && $roleSelector !== null) {
+                        $interceptedTo[] = $roleSelector;
                         $msg->addRecipient(new UserRoleRecipient(new UserRoleSelector($this->workbench, trim($roleSelector))));
                     }
                 }
