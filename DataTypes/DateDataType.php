@@ -44,6 +44,14 @@ class DateDataType extends AbstractDataType
     const DATE_FORMAT_INTERNAL = 'Y-m-d';
     
     const DATE_ICU_FORMAT_INTERNAL = 'yyyy-MM-dd';
+
+    const PERIOD_YEAR = 'Y';
+    
+    const PERIOD_MONTH = 'M';
+    
+    const PERIOD_WEEK = 'W';
+    
+    const PERIOD_DAY = 'D';
     
     private $format = null;
     
@@ -512,5 +520,64 @@ class DateDataType extends AbstractDataType
         $dateTime1 = static::cast($date1, true);
         $dateTime2 = $date2 === null ? new \DateTimeImmutable() : static::cast($date2, true);
         return $dateTime1->diff($dateTime2);
+    }
+    
+    /**
+     * Adds a positive or negative interval to a date/time value.
+     * 
+     * Supported intervals:
+     * 
+     * - `Y` - years, 
+     * - `M` - months
+     * - `W` - weeks
+     * - `D` - days (default)
+     * - `h` - hours
+     * - `m` - minutes 
+     * - `s` - seconds
+     * 
+     * @param string|\DateTimeInterface $date
+     * @param int $number
+     * @param string $period
+     * @param bool $returnPhpDate
+     * @return string|\DateTimeInterface
+     */
+    public static function addInterval($dateOrString, int $number, string $period = self::PERIOD_DAY, bool $returnPhpDate = false)
+    {
+        if ($dateOrString === null || $dateOrString === '') {
+            return $dateOrString;
+        }
+        if ($number === 0) {
+            switch (true) {
+                case $returnPhpDate && is_string($dateOrString):
+                    return static::cast($dateOrString, true);
+                case ! $returnPhpDate && $dateOrString instanceof \DateTimeInterface:
+                    return static::formatDateNormalized($dateOrString);
+                default: return $dateOrString;
+            }
+        }
+        
+        $dateTime = $dateOrString instanceof \DateTimeInterface ? $dateOrString : static::cast($dateOrString, true);
+        $intervalNumber = abs($number);
+        switch ($period) {
+            case TimeDataType::PERIOD_HOUR:
+            case 'H':
+            case TimeDataType::PERIOD_MINUTE:
+            case TimeDataType::PERIOD_SECOND:
+            case 'S':
+                $interval = 'PT' . $intervalNumber . strtoupper($period);
+                break;
+            case static::PERIOD_YEAR:
+            case static::PERIOD_MONTH:
+            case static::PERIOD_WEEK:
+            case static::PERIOD_DAY:
+                $interval = 'P' . $intervalNumber . $period;
+                break;
+            default:
+                throw new UnexpectedValueException('Invalid date/time interval "' . $period . '" provided!');
+        }
+        $dateInterval = new \DateInterval($interval);
+        $result = $number > 0 ? $dateTime->add($dateInterval) : $dateTime->sub($dateInterval);
+        
+        return $returnPhpDate ? $result : static::formatDateNormalized($result);
     }
 }
