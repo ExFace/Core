@@ -16,10 +16,10 @@ use exface\Core\Factories\DataTypeFactory;
  * - `=TODAY('yyyy-MM-dd')` = 2020-03-25
  * - `=TODAY('dd.MM.yyyy')` = 25.03.2020
  *
- * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
+ * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
  *
- * @link http://userguide.icu-project.org/formatparse/datetime
+ * @link https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
  */
 class Today extends Now
 {

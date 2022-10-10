@@ -23,10 +23,10 @@ use exface\Core\CommonLogic\Model\Formula;
  * - `=Date('2021-07-08', 'locale')` = 08.07.2021 - depending on the date format set for the current language
  * - `=Date('25.03.20', null, 'dd.MM.yy')` = 2020-03-25
  * 
- * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
+ * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
  *
- * @link http://userguide.icu-project.org/formatparse/datetime
+ * @link https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
  */
 class Date extends Formula
 {
