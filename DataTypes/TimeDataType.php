@@ -206,7 +206,7 @@ class TimeDataType extends AbstractDataType
     }
     
     /**
-     * Display format for the time - see ICU formatting: http://userguide.icu-project.org/formatparse/datetime
+     * Display format for the time - see ICU formatting: https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
      *
      * Typical formats are:
      *

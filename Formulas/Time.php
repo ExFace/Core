@@ -21,10 +21,10 @@ use exface\Core\CommonLogic\Model\Formula;
  * - `=Time('1585090800', 'HH:mm:ss)` = 00:00:00
  * - `=Time('2020-03-25 21:00:55', 'HHmmss')` = 210055
  * 
- * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
+ * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
  *
- * @link http://userguide.icu-project.org/formatparse/datetime
+ * @link https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
  */
 class Time extends Formula
 {
