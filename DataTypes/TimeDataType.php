@@ -17,6 +17,12 @@ class TimeDataType extends AbstractDataType
     
     const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
     
+    const PERIOD_HOUR = 'h';
+    
+    const PERIOD_MINUTE = 'm';
+    
+    const PERIOD_SECOND = 's';
+    
     /**
      * 
      * {@inheritDoc}
@@ -91,7 +97,7 @@ class TimeDataType extends AbstractDataType
      * @param \DateTime $date
      * @return string
      */
-    public static function formatTimeNormalized(\DateTime $date)
+    public static function formatTimeNormalized(\DateTimeInterface $date)
     {    
         return $date->format(self::TIME_FORMAT_INTERNAL);
     }
@@ -265,5 +271,28 @@ class TimeDataType extends AbstractDataType
     {
         $this->format = $value;
         return $this;
+    }
+    
+    /**
+     * Add hours (`h`), minutes (`m`) or seconds (`s`) to a time value.
+     * 
+     * @param string $timeString
+     * @param int $number
+     * @param string $period
+     * @return string|NULL
+     */
+    public static function addInterval(string $timeString, int $number, string $period = self::PERIOD_HOUR) : ?string
+    {
+        if ($timeString === '' || $timeString === null) {
+            return $timeString;
+        }
+        if ($number === 0) {
+            return $timeString;
+        }
+        
+        $dateTime = new \DateTime('1970-01-01 ', static::cast($timeString));
+        $result = DateTimeDataType::addInterval($dateTime, $number, $period, true);
+        
+        return static::formatTimeNormalized($result);
     }
 }
