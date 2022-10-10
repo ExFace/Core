@@ -11,6 +11,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Instantiates condition groups
@@ -76,6 +77,17 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     }
     
     /**
+     * Instantiates a ConditionGroup from a string or stringified UXON
+     * 
+     * Examples working:
+     * - `{"operator": "AND", "conditions": [{"expression": "ATTR1", "comparator": "==", "value": "val1"}]}` -> AND(ATTR1==val1)
+     * 
+     * Examples planned:
+     * 
+     * - `ATTR1 = val1 AND ATTR2 < val2` -> AND(ATTR1=val1, ATTR2<val2)
+     * - `ATTR1 = (val1 AND ATTR2 < val2) OR ATTR3 > val3` -> OR(AND(ATTR1=val1, ATTR2<val2), ATTR3>val3)
+     * - `ATTR1 = val1 AND (ATTR2 < val2 OR ATTR3 > val3)` -> AND(ATTR1=val1, OR(ATTR2<val2, ATTR3>val3))
+     * - `ATTR1 = val1 AND (ATTR2 < val2 OR ATTR3 > val3) AND ATTR4=val4` -> AND(ATTR1=val1, OR(ATTR2<val2, ATTR3>val3), ATTR4=val4)
      * 
      * @param string $string
      * @param MetaObjectInterface $object
@@ -86,36 +98,45 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     {
         $string = trim($string);
         if (substr($string, 0, 1) === '{' && substr($string, -1) === '}') {
-            return static::createFromUxon($object->getWorkbench(), UxonObject::fromJson($string));
+            return static::createFromUxon($object->getWorkbench(), UxonObject::fromJson($string), $object);
         }
-        /* TODO write a parser
-        $grp = null;
+        /*
+        $ops = [EXF_LOGICAL_AND, EXF_LOGICAL_OR, EXF_LOGICAL_XOR];
+        $tokens = explode(' ', $string);
         
-        $remain = $string;
-        $tokens = [EXF_LOGICAL_AND, EXF_LOGICAL_OR, EXF_LOGICAL_XOR, '('];
-        $nextPos = false;
-        $nextToken = null;
-        
-        do {
-            foreach ($tokens as $t) {
-                $pos = stripos($remain, $t);
-                if ($pos !== false && ($nextPos === false || $nextPos > $pos)) {
-                    $nextPos = $pos;
-                    $nextToken = $t;
-                }
+        $groups = [];
+        $openIdx = 0;
+        $openGroup = null;
+        for ($i = 0; $i < count($tokens); $i = $i+4) {
+            $left = $tokens[$i];
+            $comp = $tokens[$i+1];
+            $right = $tokens[$i+2];
+            $op = strtoupper($tokens[$i+3] ?? '');
+            if (! in_array($op, $ops)) {
+                throw new UnexpectedValueException('Cannot parse condition group "' . $string . '": "' . $op . '" is not a valid logical operator!');
             }
-            
-            switch ($nextToken) {
-                case null:
-                    if ($grp === null) {
-                        $grp = static::createForObject($object, $operator);
+            switch (true) {
+                case empty($groups):
+                case substr($left, 0, 1) === '(':
+                    $left = ltrim($left, '(');
+                    $parentGrp = $openGroup;
+                    $openGroup = static::createForObject($object, $op ?? EXF_LOGICAL_AND, $ignoreEmptyValues);
+                    $openIdx = count($groups);
+                    $groups[$openIdx] = $openGroup;
+                    $openGroup->addConditionFromString($left, $right, $comp);
+                    if ($parentGrp !== null) {
+                        $parentGrp->addNestedGroup($openGroup);
                     }
-                    $remain = '';
                     break;
+                case $op === '':
+                    // we are done parsing
+                    break;
+                case $op !== null && $op !== $openGroup->getOperator():
+                    throw new UnexpectedValueException('Cannot parse condition group "' . $string . '": cannot mix operators "' . $op . '" and "' . $openGroup->getOperator() . '" without parenthes!');
+                    
             }
-        } while ($remain !== '');
+        }
         */
-        
         throw new RuntimeException('Cannot parse conditional expression "' . $string . '": parsing non-UXON conditions not implemented yet!');
     }
     
