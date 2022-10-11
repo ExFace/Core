@@ -66,6 +66,8 @@ class StateMachineBehavior extends AbstractBehavior
 
     private $states = null;
     
+    private $stateIndex = [];
+    
     private $overrideAttributeEditorWidget = true;
     
     private $overrideAttributeDisplayWidget = true;
@@ -447,6 +449,8 @@ class StateMachineBehavior extends AbstractBehavior
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
         
+        $this->stateIndex = array_keys($this->states);
+        
         return $this;
     }
     
@@ -475,9 +479,25 @@ class StateMachineBehavior extends AbstractBehavior
         return $state;
     }
     
+    /**
+     * 
+     * @param unknown $state_id
+     * @return bool
+     */
     public function hasState($state_id) : bool
     {
         return $this->states[$state_id] !== null;
+    }
+    
+    /**
+     * 
+     * @param StateMachineState|string $state
+     * @return int
+     */
+    public function getStateIndex($state) : int
+    {
+        $stateId = $state instanceof StateMachineState ? $state->getStateId() : $state;
+        return array_search($stateId, $this->stateIndex);
     }
 
     /**

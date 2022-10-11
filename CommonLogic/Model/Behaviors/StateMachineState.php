@@ -264,8 +264,19 @@ class StateMachineState implements iHaveIcon
                 $array = [];
             }
         } else {
-            if ($this->getDisableEditing() !== true && ! array_key_exists($this->getStateId(), $array)) {
-                $array[$this->getStateId()] = '';
+           // Add the current state to the transitions if the object is editable in this state
+           // Make sure to place it correctly - right before the transition to the next available
+           // state. This way, if we are at the second state, the self-transition will be placed
+           // on position two and not at the beginning or the end of the array.
+           if ($this->getDisableEditing() !== true && ! array_key_exists($this->getStateId(), $array)) {
+               $array = [];
+               $thisStateIdx = $this->getStateMachine()->getStateIndex($this);
+               foreach ($this->transitions as $targetStateId => $action) {
+                   if ($this->getStateMachine()->getStateIndex($targetStateId) > $thisStateIdx) {
+                       $array[$this->getStateId()] = '';
+                   }
+                   $array[$targetStateId] = $action;
+               }
             }
         }
         
