@@ -49,7 +49,7 @@
     "rows": [
         {
             "CREATED_ON": "2021-04-15 16:34:40",
-            "MODIFIED_ON": "2022-10-02 10:32:55",
+            "MODIFIED_ON": "2022-10-11 10:28:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb87dcb685391287dc025041000001",
@@ -61,6 +61,18 @@
                     "10": {
                         "name": "New",
                         "icon": "eye",
+                        "color": "orangered",
+                        "transitions": [
+                            15,
+                            20,
+                            40,
+                            90,
+                            99
+                        ]
+                    },
+                    "15": {
+                        "name": "Reported",
+                        "icon": "commenting-o",
                         "color": "orangered",
                         "transitions": [
                             20,
@@ -110,7 +122,28 @@
             },
             "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "State model",
+            "NAME": "Monitored error state model",
+            "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2022-10-07 15:16:16",
+            "MODIFIED_ON": "2022-10-07 15:16:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8dcd39d0bd208dcd747827435ce5",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
+            "CONFIG_UXON": {
+                "notify_on_event": "exface.Core.DataSheet.OnCreateData",
+                "prevent_recursion": true,
+                "notifications": [
+                    {
+                        "template": "test_teams_onerror"
+                    }
+                ]
+            },
+            "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Test ",
             "DESCRIPTION": ""
         }
     ],

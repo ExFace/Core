@@ -265,7 +265,7 @@
         },
         {
             "CREATED_ON": "2021-04-06 13:44:54",
-            "MODIFIED_ON": "2021-04-21 11:13:02",
+            "MODIFIED_ON": "2022-10-07 16:42:26",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebae1281429d7aae128c04ba002958",
@@ -306,7 +306,7 @@
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
-                "length_max": 20
+                "use_numeric_levels": false
             }
         },
         {
@@ -489,7 +489,7 @@
         },
         {
             "CREATED_ON": "2021-04-14 12:53:54",
-            "MODIFIED_ON": "2022-10-02 10:33:19",
+            "MODIFIED_ON": "2022-10-11 10:28:39",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb67ab497a790b67a8c04ba002958",
@@ -534,6 +534,7 @@
             "CUSTOM_DATA_TYPE": {
                 "values": {
                     "10": "New",
+                    "15": "Reported",
                     "20": "ToDo",
                     "40": "Ticket",
                     "90": "Obsolete\/Duplicate",
@@ -723,6 +724,50 @@
             "CUSTOM_DATA_TYPE": {
                 "length_max": 65535
             }
+        },
+        {
+            "CREATED_ON": "2022-10-10 18:28:26",
+            "MODIFIED_ON": "2022-10-11 10:32:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda38b9213c5c2a38b025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Repeated",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 0,
+            "ALIAS": "REPEATED",
+            "DATATYPE": "0x11e7b0277435425e98350205857feb80",
+            "DATA_ADDRESS": "(SELECT COUNT(*) FROM exf_monitor_error [#~alias#]_rep WHERE [#~alias#]_rep.message = [#~alias#].message AND [#~alias#].oid <> [#~alias#]_rep.oid AND [#~alias#].status < 90)",
+            "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "Current number of other non-closed entries with the same error",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],
