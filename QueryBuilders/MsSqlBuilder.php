@@ -673,12 +673,42 @@ class MsSqlBuilder extends AbstractSqlBuilder
         return parent::buildSqlSelectSubselectJunctionWhere($qpart, $junctionAttribute, $select_from);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeString()
+     */
     protected function escapeString($string)
     {
+        /* This did not work because it escaped `'` and `\` with backslashes.
+         * It is also not clear if excaping \x0A (= \n) and \x0D (= \r) is needed.
         if (function_exists('mb_ereg_replace')) {
             return mb_ereg_replace('[\x00\x0A\x0D\x1A\x27\x5C]', '\\\0', $string);
         } else {
             return preg_replace('~[\x00\x0A\x0D\x1A\x27\x5C]~u', '\\\$0', $string);
+        }*/
+        
+        
+        if (!isset($string) || empty($string)){
+            return '';
         }
+        if (is_numeric($string)) return $string;
+        
+        // Remove invisible ASCII control chars like \x00 (NUL), etc.
+        $toRemove = [
+            '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
+            '/%1[0-9a-f]/',             // url encoded 16-31
+            '/[\x00-\x08]/',            // 00-08
+            '/\x0b/',                   // 11
+            '/\x0c/',                   // 12
+            '/[\x0e-\x1f]/'             // 14-31
+        ];
+        foreach ($toRemove as $regex) {
+            $string = preg_replace($regex, '', $string );
+        }
+        // Escape single quotes with another single quote
+        $string = str_replace("'", "''", $string );
+        
+        return $string;
     }
 }
