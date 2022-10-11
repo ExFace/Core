@@ -35,8 +35,11 @@ class SendMessage extends AbstractAction
         try {
             $communicator = $this->getWorkbench()->getCommunicator();
             foreach ($this->getMessageEnvelopes(($this->messageUxons ?? new UxonObject()), $dataSheet) as $envelope) {
-                $communicator->send($envelope);
-                $count++;
+                foreach ($communicator->send($envelope) as $receipt) {
+                    if ($receipt && $receipt->isSent()) {
+                        $count++;
+                    }
+                }
             }
         } catch (\Throwable $e) {
             if (($e instanceof CommunicationExceptionInterface) || $envelope === null) {
@@ -48,7 +51,7 @@ class SendMessage extends AbstractAction
         }
         
         $result = ResultFactory::createDataResult($task, $dataSheet);
-        $result->setMessage($count . ' messages send');
+        $result->setMessage($count . ' messages sent');
         
         return $result;
     }
