@@ -12,8 +12,6 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\Communication\Recipients\EmailRecipient;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Interfaces\Communication\UserRecipientInterface;
-use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\Uxon\CommunicationMessageSchema;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\ExpressionFactory;
