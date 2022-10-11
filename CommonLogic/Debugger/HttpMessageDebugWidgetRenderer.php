@@ -138,7 +138,7 @@ return $debug_widget;
                         if ($this->isHeaderSensitive($header)) {
                             $value = '***';
                         }
-                        $value = str_replace('|', '\|', $value);
+                        $value = $this->escapeMardownTableCellContents($value ?? '');
                         $messageHeaders .= "| $header | $value |" . PHP_EOL;
                     }
                 }
@@ -154,6 +154,16 @@ return $debug_widget;
     
     /**
      * 
+     * @param string $text
+     * @return string
+     */
+    protected function escapeMardownTableCellContents(string $text) : string
+    {
+        return str_replace('|', '\|', $text);
+    }
+    
+    /**
+     * 
      * @param ServerRequestInterface $message
      * @return string
      */
@@ -163,6 +173,7 @@ return $debug_widget;
             $mdTable  = "| Server parameter | Value |" . PHP_EOL;
             $mdTable .= "| ----------- | ----- |" . PHP_EOL;
             foreach ($message->getServerParams() as $param => $value) {
+                $value = $this->escapeMardownTableCellContents($value ?? '');
                 $mdTable .= "| $param | $value |" . PHP_EOL;
             }
         } catch (\Throwable $e) {
