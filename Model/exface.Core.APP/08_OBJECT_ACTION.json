@@ -202,7 +202,7 @@
         },
         {
             "CREATED_ON": "2020-11-09 09:16:38",
-            "MODIFIED_ON": "2021-02-02 10:34:07",
+            "MODIFIED_ON": "2022-10-11 12:26:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb9dc145a378fa9dc1025041000001",
@@ -279,9 +279,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 },
                                                                 {
                                                                     "attribute_alias": "DATA_ADDRESS",
@@ -405,9 +403,7 @@
                                                 {
                                                     "attribute_alias": "APP",
                                                     "required": true,
-                                                    "input_widget": {
-                                                        "widget_type": "InputHidden"
-                                                    }
+                                                    "hidden": true
                                                 }
                                             ],
                                             "columns": [
@@ -532,9 +528,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 },
                                                                 {
                                                                     "attribute_alias": "CONFIG_UXON",
@@ -596,9 +590,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 },
                                                                 {
                                                                     "attribute_alias": "CONFIG_UXON",
@@ -663,9 +655,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -759,9 +749,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -841,9 +829,7 @@
                                                                                 {
                                                                                     "attribute_alias": "APP",
                                                                                     "required": true,
-                                                                                    "input_widget": {
-                                                                                        "widget_type": "InputHidden"
-                                                                                    }
+                                                                                    "hidden": true
                                                                                 },
                                                                                 {
                                                                                     "attribute_alias": "AUTHORIZATION_POLICY__AUTHORIZATION_POINT"
@@ -905,9 +891,7 @@
                                                                                 {
                                                                                     "attribute_alias": "APP",
                                                                                     "required": true,
-                                                                                    "input_widget": {
-                                                                                        "widget_type": "InputHidden"
-                                                                                    }
+                                                                                    "hidden": true
                                                                                 }
                                                                             ],
                                                                             "columns": [
@@ -969,9 +953,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 },
                                                                 {
                                                                     "attribute_alias": "TARGET_OBJECT"
@@ -1072,9 +1054,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -1131,9 +1111,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -1154,6 +1132,161 @@
                                                                 },
                                                                 {
                                                                     "action_alias": "exface.Core.DeleteObject"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "caption": "Communication",
+                                    "widgets": [
+                                        {
+                                            "widget_type": "SplitHorizontal",
+                                            "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+                                            "panels": [
+                                                {
+                                                    "width": "50%",
+                                                    "widgets": [
+                                                        {
+                                                            "widget_type": "DataTable",
+                                                            "caption": "Communication channels",
+                                                            "id": "communication_channel_table",
+                                                            "filters": [
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "APP",
+                                                                    "hidden": true,
+                                                                    "required": true
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "ALIAS"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MESSAGE_PROTOTYPE"
+                                                                }
+                                                            ],
+                                                            "columns": [
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "APP__ALIAS"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "ALIAS"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MESSAGE_PROTOTYPE__LABEL"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "DATA_CONNECTION__LABEL"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MUTE_FLAG"
+                                                                },
+                                                                {
+                                                                    "calculation": "=Left(DESCRIPTION, 60)"
+                                                                }
+                                                            ],
+                                                            "sorters": [
+                                                                {
+                                                                    "attribute_alias": "CREATED_ON",
+                                                                    "direction": "desc"
+                                                                }
+                                                            ],
+                                                            "buttons": [
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "bind_to_double_click": true
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.DeleteObject",
+                                                                    "visibility": "optional"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "widgets": [
+                                                        {
+                                                            "caption": "Message templates",
+                                                            "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+                                                            "widget_type": "DataTable",
+                                                            "filters": [
+                                                                {
+                                                                    "attribute_alias": "COMMUNICATION_CHANNEL",
+                                                                    "hidden": true,
+                                                                    "value": "=communication_channel_table!UID",
+                                                                    "comparator": "==",
+                                                                    "apply_on_change": true
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "ALIAS"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "APP",
+                                                                    "hidden": true,
+                                                                    "required": true
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "MESSAGE_UXON",
+                                                                    "input_widget": {
+                                                                        "widget_type": "Input",
+                                                                        "width": 1,
+                                                                        "height": 1
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "columns": [
+                                                                {
+                                                                    "attribute_alias": "NAME"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "COMMUNICATION_CHANNEL__LABEL"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "APP__ALIAS"
+                                                                },
+                                                                {
+                                                                    "attribute_alias": "ALIAS"
+                                                                }
+                                                            ],
+                                                            "sorters": [
+                                                                {
+                                                                    "attribute_alias": "NAME",
+                                                                    "direction": "asc"
+                                                                }
+                                                            ],
+                                                            "buttons": [
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCreateDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "bind_to_double_click": true
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.ShowObjectCopyDialog"
+                                                                },
+                                                                {
+                                                                    "action_alias": "exface.Core.DeleteObject",
+                                                                    "visibility": "optional"
                                                                 }
                                                             ]
                                                         }
@@ -1186,9 +1319,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -1239,9 +1370,7 @@
                                                                 {
                                                                     "attribute_alias": "APP",
                                                                     "required": true,
-                                                                    "input_widget": {
-                                                                        "widget_type": "InputHidden"
-                                                                    }
+                                                                    "hidden": true
                                                                 }
                                                             ],
                                                             "columns": [
@@ -1296,9 +1425,7 @@
                                                 {
                                                     "attribute_alias": "APP",
                                                     "required": true,
-                                                    "input_widget": {
-                                                        "widget_type": "InputHidden"
-                                                    }
+                                                    "hidden": true
                                                 },
                                                 {
                                                     "attribute_alias": "CONFIG_UXON",
@@ -1369,9 +1496,7 @@
                                                 {
                                                     "attribute_alias": "APP",
                                                     "required": true,
-                                                    "input_widget": {
-                                                        "widget_type": "InputHidden"
-                                                    }
+                                                    "hidden": true
                                                 },
                                                 {
                                                     "attribute_alias": "PROTOTYPE",
