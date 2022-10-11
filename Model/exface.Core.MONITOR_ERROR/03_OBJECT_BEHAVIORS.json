@@ -124,27 +124,6 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Monitored error state model",
             "DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "2022-10-07 15:16:16",
-            "MODIFIED_ON": "2022-10-07 15:16:16",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ed8dcd39d0bd208dcd747827435ce5",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
-            "CONFIG_UXON": {
-                "notify_on_event": "exface.Core.DataSheet.OnCreateData",
-                "prevent_recursion": true,
-                "notifications": [
-                    {
-                        "template": "test_teams_onerror"
-                    }
-                ]
-            },
-            "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Test ",
-            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
