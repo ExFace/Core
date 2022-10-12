@@ -142,7 +142,7 @@ class FilterContext extends AbstractContext
     {
         $objectId = $condition->getExpression()->getMetaObject()->getId();
         if (($this->conditions_by_object === null || $this->conditions_by_object[$objectId] === null) && $this->isEmpty() === false) {
-            $this->conditions_by_object[$objectId] = $this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId];
+            $this->conditions_by_object[$objectId] = $this->conditionsUxon === null ? [] : ($this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId] ?? []);
         }
         $this->conditions_by_object[$objectId][$condition->getExpression()->toString()] = $condition;
         $this->updatedObjectIds[] = $objectId;
