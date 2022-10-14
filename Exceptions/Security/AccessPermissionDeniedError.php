@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Security\Traits\AuthorizationDebugTrait;
 use exface\Core\Widgets\DebugMessage;
 
@@ -106,7 +105,7 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return $this->getAuthorizationPoint()->getWorkbench()->getConfig()->getOption('DEBUG.LOG_LEVEL_AUTHORIZATION_DENIED' . ($this->getSubject()->isAnonymous() ? '_ANONYMOUS' : ''));
     }
     /**
      *

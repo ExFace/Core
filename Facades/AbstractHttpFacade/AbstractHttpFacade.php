@@ -14,6 +14,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
 use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
+use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
 
 /**
  * Common base structure for HTTP facades.
@@ -57,12 +58,13 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if (! $workbench->isStarted()) {
                 $workbench->start();
             }
+            $eventMgr = $workbench->eventManager();
             
             // If no processing was done yet, pass the request through a middleware bus
             if ($request->getAttribute($this->getRequestAttributeForFacade()) === null) {
                 // Log the request as-is
-                if ($this->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
-                    $this->getWorkbench()->getLogger()->debug('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
+                if ($workbench->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
+                    $workbench->getLogger()->debug('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
                 }
                 
                 // Save the facade in the request attributes, to mark the request as being processed
@@ -75,7 +77,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
                 }
                 
                 // Fire the request-received event to allow listeners to add their own middleware (e.g. a PhpDebugBar or similar)
-                $this->getWorkbench()->eventManager()->dispatch(new OnHttpRequestReceivedEvent($this, $request));
+                $eventMgr->dispatch(new OnHttpRequestReceivedEvent($this, $request));
                 
                 // Run the middleware. Since the facade itself is the fallback handler of the bus, the
                 // handle method of the facade will be called again after all middleware is done and we
@@ -84,12 +86,16 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
                 return $handler->handle($request);
             }
             
-            $this->getWorkbench()->eventManager()->dispatch(new OnHttpRequestHandlingEvent($this, $request));
+            $eventMgr->dispatch(new OnHttpRequestHandlingEvent($this, $request));
             
-            return $this->createResponse($request);
+            $response = $this->createResponse($request);
+            
+            $eventMgr->dispatch(new OnHttpBeforeResponseSentEvent($this, $request, $response));
         } catch (\Throwable $e) {
-            return $this->createResponseFromError($request, $e);
+            $response = $this->createResponseFromError($request, $e);
         }
+        
+        return $response;
     }
     
     /**

@@ -36,7 +36,7 @@ use exface\Core\CommonLogic\Model\Expression;
  * ```
  * {
  *  "alias": "exface.Core.GoToEMail",
- *  "to": "=GetConfig('DEBUG.SUPPORT_EMAIL_ADDRESS')",
+ *  "to": "=GetConfig('SERVER.SUPPORT_EMAIL_ADDRESS')",
  *  "subject": "[#LOG_ID#]",
  *  "body": "[#MESSAGE#]"
  * }
