@@ -6,18 +6,23 @@ use exface\Core\Interfaces\Events\FacadeEventInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Events\HttpRequestEventInterface;
+use exface\Core\Interfaces\Facades\HttpMiddlewareBusInterface;
+use Psr\Http\Message\ResponseInterface;
+use exface\Core\Interfaces\Events\HttpResponseEventInterface;
 
 /**
- * Event triggered right before the handler of an HTTP request in a facade - after all middleware processing is done.
+ * Event triggered right before an HTTP facade sends the response to the browser
  * 
- * @event exface.Core.Facades.OnHttpRequestHandling
+ * @event exface.Core.Facades.OnHttpBeforeResponseSent
  * 
  * @author Andrej Kabachnik
  *
  */
-class OnHttpRequestHandlingEvent extends AbstractEvent implements FacadeEventInterface, HttpRequestEventInterface
+class OnHttpBeforeResponseSentEvent extends AbstractEvent implements FacadeEventInterface, HttpRequestEventInterface, HttpResponseEventInterface
 {
     private $facade = null;
+    
+    private $response = null;
     
     private $request = null;
     
@@ -25,11 +30,13 @@ class OnHttpRequestHandlingEvent extends AbstractEvent implements FacadeEventInt
      * 
      * @param FacadeInterface $facade
      * @param ServerRequestInterface $request
+     * @param HttpMiddlewareBusInterface $middlewareBus
      */
-    public function __construct(FacadeInterface $facade, ServerRequestInterface $request)
+    public function __construct(FacadeInterface $facade, ServerRequestInterface $request, ResponseInterface $response)
     {
         $this->facade = $facade;
         $this->request = $request;
+        $this->response = $response;
     }
     
     /**
@@ -55,9 +62,19 @@ class OnHttpRequestHandlingEvent extends AbstractEvent implements FacadeEventInt
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\HttpResponseEventInterface::getResponse()
+     */
+    public function getResponse() : ResponseInterface
+    {
+        return $this->response;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Events\HttpRequestEventInterface::getRequest()
      */
-    public function getRequest() : ServerRequestInterface
+    public function getRequest(): ServerRequestInterface
     {
         return $this->request;
     }

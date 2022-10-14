@@ -5,7 +5,6 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Events\Security\OnAuthenticationFailedEvent;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
@@ -85,6 +84,6 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return $this->getAuthenticationProvider()->getWorkbench()->getConfig()->getOption('DEBUG.LOG_LEVEL_AUTHENTICATION_FAILED');
     }
 }

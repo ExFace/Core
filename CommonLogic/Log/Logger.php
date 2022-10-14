@@ -248,9 +248,9 @@ class Logger implements LoggerInterface
     public function logException(\Throwable $e, $level = null)
     {
         if ($e instanceof ExceptionInterface){
-            $this->log((is_null($level) ? $e->getLogLevel() : $level), $e->getMessage(), [], $e);
+            $this->log($level ?? $e->getLogLevel(), $e->getMessage(), [], $e);
         } else {
-            $this->log((is_null($level) ? LoggerInterface::CRITICAL : $level), $e->getMessage(), ["exception" => $e]);
+            $this->log($level ?? LoggerInterface::CRITICAL, $e->getMessage(), ["exception" => $e]);
         }
         return $this;
     }

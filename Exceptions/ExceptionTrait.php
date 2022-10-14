@@ -199,7 +199,7 @@ trait ExceptionTrait {
         $hintWidget = null;
         $wb = $parentWidget->getWorkbench();
         $wbName = $wb->getUrl();
-        $email = $wb->getConfig()->getOption("DEBUG.SUPPORT_EMAIL_ADDRESS");
+        $email = $wb->getConfig()->getOption("SERVER.SUPPORT_EMAIL_ADDRESS");
         if ($email) {
             $hintMessage = $wb->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT_WITH_EMAIL', [
                 '%log_id%' => 'LOG-'.$this->getId(), 

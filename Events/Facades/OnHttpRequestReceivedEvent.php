@@ -59,7 +59,8 @@ class OnHttpRequestReceivedEvent extends AbstractEvent implements FacadeEventInt
     
     /**
      * 
-     * @return ServerRequestInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\HttpRequestEventInterface::getRequest()
      */
     public function getRequest() : ServerRequestInterface
     {
