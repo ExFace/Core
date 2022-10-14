@@ -664,7 +664,8 @@ class StateMachineBehavior extends AbstractBehavior
             $stateId = $state->getStateId();
             foreach ($stateCol->getValues(false) as $stateVal) {
                 if ($stateVal == $stateId) {
-                    throw new DataSheetDeleteForbiddenError($data_sheet, 'Not allowed to delete "' . $thisObj->getName() . '" in state "' . $state->getName() . '"!');
+                    $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+                    throw (new DataSheetDeleteForbiddenError($data_sheet, $translator->translate('BEHAVIOR.STATEMACHINEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%object%' => $thisObj->getName(), '%state%' => $state->getName()])))->setUseExceptionMessageAsTitle(true);
                 }
             }
         }

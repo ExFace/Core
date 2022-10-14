@@ -641,7 +641,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (defined(__CLASS__ . '::ON_DUPLICATE_' . $value)) {
             $this->onDuplicateMultiRow = $value;
         } else {
-            throw new WidgetPropertyInvalidValueError('Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
+            throw new BehaviorConfigurationError($this->getObject(), 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
         }
         return $this;
     }
@@ -677,7 +677,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (defined(__CLASS__ . '::ON_DUPLICATE_' . $value)) {
             $this->onDuplicateSingleRow = $value;
         } else {
-            throw new WidgetPropertyInvalidValueError('Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
+            throw new BehaviorConfigurationError($this->getObject(), 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
         }
         return $this;
     }

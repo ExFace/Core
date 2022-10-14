@@ -265,7 +265,7 @@ class UndeletableBehavior extends AbstractBehavior
                 ]);
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, $message);    
+            throw (new DataSheetDeleteForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true);    
         }
     }
     
