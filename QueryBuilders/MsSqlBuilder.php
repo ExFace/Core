@@ -689,7 +689,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         }*/
         
         
-        if (!isset($string) || empty($string)){
+        if ($string === null || $string === ''){
             return '';
         }
         if (is_numeric($string)) return $string;
