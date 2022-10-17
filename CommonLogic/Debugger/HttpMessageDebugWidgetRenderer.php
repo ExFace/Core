@@ -174,7 +174,7 @@ return $debug_widget;
             $mdTable .= "| ----------- | ----- |" . PHP_EOL;
             foreach ($message->getServerParams() as $param => $value) {
                 if (is_array($value) || is_object($value)) {
-                    $value = print_r($value, true);
+                    $value = JsonDataType::encodeJson($value);
                 }
                 $value = $this->escapeMardownTableCellContents($value ?? '');
                 $mdTable .= "| $param | $value |" . PHP_EOL;
