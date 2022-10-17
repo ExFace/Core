@@ -173,6 +173,9 @@ return $debug_widget;
             $mdTable  = "| Server parameter | Value |" . PHP_EOL;
             $mdTable .= "| ----------- | ----- |" . PHP_EOL;
             foreach ($message->getServerParams() as $param => $value) {
+                if (is_array($value) || is_object($value)) {
+                    $value = print_r($value, true);
+                }
                 $value = $this->escapeMardownTableCellContents($value ?? '');
                 $mdTable .= "| $param | $value |" . PHP_EOL;
             }
@@ -204,73 +207,88 @@ return $debug_widget;
      */
     protected function buildMarkdownMessageBody(MessageInterface $message = null) : string
     {
-        if (! is_null($message)) {
-            try {
-                if (is_null($bodySize = $message->getBody()->getSize()) || $bodySize > 1048576) {
-                    // Groesse des Bodies unbekannt oder groesser 1Mb.
-                    $messageBody = 'Message body is too big to display.';
-                } else {
-                    $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
-                    
-                    switch (true) {
-                        case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
-                            $messageBody = <<<MD
+        if ($message === null) {
+            return 'Message empty.';
+        }
+        try {
+            $bodySize = $message->getBody()->getSize();
+            if ($bodySize === null || $bodySize === 0) {
+                return 'Message body is empty.';
+            }
+            if ($bodySize > 1048576) {
+                return 'Message body is too big to display.';
+            } 
+            
+            $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
+            switch (true) {
+                case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
+                    if (! $message->getBody()->isReadable() && $message instanceof ServerRequestInterface) {
+                        $bodyString = http_build_query($message->getParsedBody());
+                    } else {
+                        $bodyString = $message->getBody()->__toString();
+                    }
+                    $messageBody = <<<MD
                             
 ```
-{$this->prettifyUrlParams($message->getBody()->__toString())}
+{$this->prettifyUrlParams($bodyString)}
 ```
 MD;
-                            break;
-                        case stripos($contentType, 'json') !== false:
-                            $prettified = JsonDataType::prettify($message->getBody()->__toString());
-                            $messageBody = <<<MD
+                    break;
+                case stripos($contentType, 'json') !== false:
+                    $prettified = JsonDataType::prettify($message->getBody()->__toString());
+                    $messageBody = <<<MD
                             
 ```json
 {$prettified}
 ```
 MD;
-break;
-                        case stripos($contentType, 'xml') !== false:
-                            $domxml = new \DOMDocument();
-                            $domxml->preserveWhiteSpace = false;
-                            $domxml->formatOutput = true;
-                            $domxml->loadXML($message->getBody());
-                            $messageBody = <<<MD
+                    break;
+                case stripos($contentType, 'xml') !== false:
+                    $domxml = new \DOMDocument();
+                    $domxml->preserveWhiteSpace = false;
+                    $domxml->formatOutput = true;
+                    $domxml->loadXML($message->getBody());
+                    $messageBody = <<<MD
                             
 ```xml
 {$domxml->saveXML()}
 ```
 MD;
-break;
-                        case stripos($contentType, 'html') !== false:
-                            $prettified = HtmlDataType::prettify($message->getBody()->__toString());
-                            $messageBody = <<<MD
+                    break;
+                case stripos($contentType, 'html') !== false:
+                    $prettified = HtmlDataType::prettify($message->getBody()->__toString());
+                    $messageBody = <<<MD
                             
 ```html
 {$prettified}
 ```
 MD;
-break;
-                        default:
-                            $messageBody = <<<MD
+                    break;
+                default:
+                    if (! $message->getBody()->isReadable()) {
+                        return 'Message body is no readable or detached!';
+                    }
+                    $messageBody = <<<MD
                             
 ```
 {$message->getBody()->__toString()}
 ```
 MD;
-break;
-                    }
-                }
-            } catch (\Throwable $e) {
-                $messageBody = 'Error reading message body: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+                    break;
             }
-        } else {
-            $messageBody = 'Message empty.';
+            
+        } catch (\Throwable $e) {
+            $messageBody = 'Error reading message body: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
         }
         
         return $messageBody;
     }
     
+    /**
+     * 
+     * @param string $urlencoded
+     * @return string
+     */
     protected function prettifyUrlParams(string $urlencoded) : string
     {
         $params = explode('&', $urlencoded);
