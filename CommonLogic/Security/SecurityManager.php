@@ -88,6 +88,7 @@ class SecurityManager implements SecurityManagerInterface
             try {
                 $authenticated = $authenticator->authenticate($token);
                 $this->storeAuthenticatedToken($authenticated);
+                $this->getWorkbench()->getLogger()->debug('Authenticated user "' . $authenticated->getUsername() . '" via "' . $authenticator->getName() . '"');
                 $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 return $authenticated;
@@ -98,6 +99,7 @@ class SecurityManager implements SecurityManagerInterface
         
         // If no authenticators worked, the user is a guest
         if ($token->isAnonymous() === true) {
+            $this->getWorkbench()->getLogger()->debug('Authenticated anonymous user');
             $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
             $this->getWorkbench()->eventManager()->dispatch($event);
             $this->storeAuthenticatedToken($token);
@@ -379,6 +381,16 @@ class SecurityManager implements SecurityManagerInterface
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
     public function getTokenLifetime(AuthenticationTokenInterface $token): ?int
+    {
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenRefreshInterval()
+     */
+    public function getTokenRefreshInterval(): ?int
     {
         return null;
     }
