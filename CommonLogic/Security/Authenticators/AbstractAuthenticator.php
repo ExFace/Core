@@ -44,6 +44,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     private $lifetime = null;
     
+    private $lifetimeRefreshInterval = null;
+    
     private $disabled = false;
     
     private $usernameReplaceChars = [];
@@ -164,6 +166,38 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int
     {
         return $this->lifetime;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenRefreshInterval()
+     */
+    public function getTokenRefreshInterval() : ?int
+    {
+        return $this->lifetimeRefreshInterval;
+    }
+    
+    /**
+     * Number of seconds after which the token lifetime will be extended.
+     * 
+     * This option allows to extend the token while the user is active. Thus, the token would expire only
+     * after a period of inactivity longer than `token_lifetime`. If the user is authenticated sooner, the
+     * lifetime counter will be refreshed. 
+     * 
+     * If set to 0, the lifetime is concidere absolute. Thus, the user will be logged out after `token_lifetime`
+     * regardless of his actual activity.
+     * 
+     * @uxon-property token_refresh_interval
+     * @uxon-type integer
+     *
+     * @param int $seconds
+     * @return AbstractAuthenticator
+     */
+    protected function setTokenRefreshInterval(int $seconds) : AbstractAuthenticator
+    {
+        $this->lifetimeRefreshInterval = $seconds;
+        return $this;
     }
     
     /**

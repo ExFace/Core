@@ -17,8 +17,8 @@ use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\CommonLogic\Security\AuthenticationToken\AnonymousAuthToken;
-use exface\Core\Exceptions\Security\AuthenticationRuntimeError;
 use exface\Core\Exceptions\Security\AuthenticationExpiredError;
+use exface\Core\Interfaces\UserInterface;
 
 /**
  * Stores user data in the session context scope and attempts to re-authenticate the user with every request.
@@ -36,7 +36,19 @@ use exface\Core\Exceptions\Security\AuthenticationExpiredError;
  */
 class RememberMeAuthenticator extends AbstractAuthenticator
 {    
-    CONST SESSION_DATA_DELIMITER = ':';
+    const SESSION_DATA_DELIMITER = ':';
+    
+    const SESSION_DATA_USERNAME = 'username';
+    
+    const SESSION_DATA_PASSWORD = 'password';
+    
+    const SESSION_DATA_STARTED = 'started';
+    
+    const SESSION_DATA_EXPIRES = 'expires';
+    
+    const SESSION_DATA_REFRESH_INTERVAL = 'refresh';
+    
+    const SESSION_DATA_HASH = 'hash';
     
     private $sessionData = null;
     
@@ -113,35 +125,55 @@ class RememberMeAuthenticator extends AbstractAuthenticator
         }
         
         $sessionData = $this->getSessionData();
+        $sessionUserName = $sessionData[self::SESSION_DATA_USERNAME] ?? null;
+        $logger = $this->getWorkbench()->getLogger();
         
-        $sessionUserName = $sessionData['username'];
+        if (empty($sessionData)) {
+            $logger->debug('Remember-me authenticator: no data found in session "' . $this->getWorkbench()->getContext()->getScopeSession()->getScopeId() . '".');
+        } else {
+            $logger->debug('Remember-me authenticator: found user "' . $sessionUserName . '" in session "' . $this->getWorkbench()->getContext()->getScopeSession()->getScopeId() . '".');
+        }
         
         if ($token->getUsername() === null && $sessionUserName !== null) {
-            $token = new RememberMeAuthToken($sessionUserName, $token->getFacade());
+            $token = new RememberMeAuthToken(
+                $sessionUserName, 
+                $token->getFacade(), 
+                $sessionData[self::SESSION_DATA_STARTED],
+                $sessionData[self::SESSION_DATA_EXPIRES],
+                $sessionData[self::SESSION_DATA_REFRESH_INTERVAL]
+            );
         } elseif ($token->getUsername() === null || $token->getUsername() !== $sessionUserName) {
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. User name does not match session!');
         }
+        $logger->debug('Remember-me authenticator: user "' . $sessionUserName . '" still authenticated');
         $user = $this->getWorkbench()->getSecurity()->getUser($token);
         if ($user->hasModel() === false) {
-            //return new AnonymousAuthToken($this->getWorkbench());
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. User does not exist!');
         }
         if ($user->isDisabled()) {
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. User is disabled!');
         }        
-        if (false === hash_equals($this->generateSessionDataHash($user->getUsername(), $sessionData['expires'], $user->getPassword()), $sessionData['hash'])) {
+        if (false === hash_equals($this->generateSessionDataHash($user, $sessionData), $sessionData[self::SESSION_DATA_HASH])) {
             throw new AuthenticationFailedError($this, 'Cannot authenticate user "' . $token->getUsername() . '" via remember-me. Hash is invalid!');
         }
-        if ($sessionData['expires'] < time()) {
-            $token = new ExpiredAuthToken($token);
-            $this->expiredToken = $token;
-            // Allow the request to do its job, so the user will not loose data just because the token timed out, but remember
-            // to clear the session when the workbench stops.
-            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), [$this, 'onBeforeStopLogout']);
-            // In case of HTTP requests, clear the session a little earlier - before the response is sent, so that the response
-            // will already include the authentication error. If the response will be OK, the user will be able to start another
-            // request, which might also include data, that will get lost then.
-            $this->getWorkbench()->eventManager()->addListener(OnHttpBeforeResponseSentEvent::getEventName(), [$this, 'onBeforeStopLogout']);
+        
+        if ($token instanceof RememberMeAuthToken) {
+            // If the token has expired, wrap it in ExpiredAuthToken and make sure the user is logged out at the end of the 
+            // current request
+            // If the token is still OK, but is ready to be refreshed, refresh the session data, but leave the token as it is.
+            if ($token->isExpired()) {
+                $token = new ExpiredAuthToken($token);
+                $this->expiredToken = $token;
+                // Allow the request to do its job, so the user will not loose data just because the token timed out, but remember
+                // to clear the session when the workbench stops.
+                $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), [$this, 'onBeforeStopLogout']);
+                // In case of HTTP requests, clear the session a little earlier - before the response is sent, so that the response
+                // will already include the authentication error. If the response will be OK, the user will be able to start another
+                // request, which might also include data, that will get lost then.
+                $this->getWorkbench()->eventManager()->addListener(OnHttpBeforeResponseSentEvent::getEventName(), [$this, 'onBeforeStopLogout']);
+            } elseif ($token->isRefreshDue()) {
+                $this->saveSessionData($token);
+            }
         }
         return $token;
     }
@@ -236,30 +268,50 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      * @param AuthenticationTokenInterface $token
      * @return string
      */
-    protected function createSessionDataString(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider) : string
+    protected function createSessionDataString(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null) : string
     {
         $data = [];
         $oldSessionData = $this->getSessionData();
-        if ($oldSessionData !== null && $oldSessionData['username'] === $token->getUsername()) {
-            $expires = $oldSessionData['expires'];
-        } else {
-            if (! ($provider instanceof AuthenticatorInterface) || ($lifetime = $provider->getTokenLifetime($token)) === null) {
+        $logger = $this->getWorkbench()->getLogger();
+        
+        switch (true) {
+            case $provider !== null: 
+                $lifetime = $this->getTokenLifetimeDefault($token, $provider);
+                $refreshAfter = $this->getTokenRefreshIntervalDefault($provider);
+                break;
+            case $token instanceof RememberMeAuthToken:
+                $lifetime = $token->getLifetime();
+                $refreshAfter = $token->getRefreshInterval();
+                break;
+            default:
                 $lifetime = $this->getTokenLifetime($token);
+                $refreshAfter = 0;
+        }
+        
+        $curTime = time();
+        if ($oldSessionData !== null && $oldSessionData[self::SESSION_DATA_USERNAME] === $token->getUsername()) {
+            $expires = $oldSessionData[self::SESSION_DATA_EXPIRES];
+            $stored = $oldSessionData[self::SESSION_DATA_STARTED] ?? ($expires - $lifetime);
+            if ($stored + $refreshAfter < $curTime) {
+                $expires = $curTime + $lifetime;
+                $logger->debug('Remember-me authenticator: refreshing token "' . $token->getUsername() . '" for another ' . $lifetime . ' seconds - till ' . date('Y-m-d H:i:s', $expires) . '!');
             }
-            
+        } else {
             // If the lifetime is 0, we should not store any information at all!
             if ($lifetime === 0) {
-                $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: will not remember "' . $token->getUsername() . '" because authenticator "' . get_class($provider) . '" has a token lifetime of 0!');
+                $logger->debug('Remember-me authenticator: will not remember "' . $token->getUsername() . '" because authenticator "' . ($provider ? get_class($provider) : '') . '" has a token lifetime of 0!');
                 return '';
             }
             
-            $expires = time() + $lifetime;
-            $this->getWorkbench()->getLogger()->debug('Remember-me authenticator: remembering "' . $token->getUsername() . '" for ' . $lifetime . ' seconds - till ' . date('Y-m-d H:i:s', $expires) . '!');
+            $expires = $curTime + $lifetime;
+            $logger->debug('Remember-me authenticator: remembering "' . $token->getUsername() . '" for ' . $lifetime . ' seconds - till ' . date('Y-m-d H:i:s', $expires) . '!');
         }
         $user = $this->getWorkbench()->getSecurity()->getUser($token);
-        $data['username'] = $user->getUsername();
-        $data['expires'] = $expires;
-        $data['hash'] = $this->generateSessionDataHash($user->getUsername(), $expires, $user->getPassword());
+        $data[self::SESSION_DATA_USERNAME] = $user->getUsername();
+        $data[self::SESSION_DATA_STARTED] = $curTime;
+        $data[self::SESSION_DATA_EXPIRES] = $expires;
+        $data[self::SESSION_DATA_REFRESH_INTERVAL] = $refreshAfter;
+        $data[self::SESSION_DATA_HASH] = $this->generateSessionDataHash($user, $data);
         $string = json_encode($data);
         $string = EncryptedDataType::encrypt($this->getSecret(), $string);
         return $string;
@@ -272,11 +324,11 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      * @param string $password
      * @return string
      */
-    protected function generateSessionDataHash (string $username, int $expires, string $password = null) : string
+    protected function generateSessionDataHash(UserInterface $user, array $sessionData) : string
     {
-        if ($password === null) {
-            $password = '';
-        }
+        $username = $user->getUsername();
+        $password = $user->getPassword() ?? '';
+        $expires = $sessionData[self::SESSION_DATA_EXPIRES] ?? 0;
         return hash_hmac('sha256', $username . self::SESSION_DATA_DELIMITER . $expires . self::SESSION_DATA_DELIMITER . $password, $this->getSecret());
     }
     
@@ -291,15 +343,40 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     
     /**
      * 
+     * @param AuthenticationTokenInterface $token
+     * @param AuthenticationProviderInterface $provider
+     * @return int
+     */
+    protected function getTokenLifetimeDefault(AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider) : int
+    {
+        $lifetime = ($provider instanceof AuthenticatorInterface) ? null : $provider->getTokenLifetime($token);
+        return $lifetime ?? $this->getTokenLifetime($token);
+    }
+    
+    protected function getTokenRefreshIntervalDefault(AuthenticationProviderInterface $provider) : int
+    {
+        $extendAfter = ($provider instanceof AuthenticatorInterface) ? null : $provider->getTokenRefreshInterval();
+        return $extendAfter ?? $this->getTokenRefreshInterval();
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getTokenLifetime()
      */
     public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int
     {
-        if ($this->lifetime === null) {
-            return 60*60*24*7;
-        }
-        return $this->lifetime;
+        return parent::getTokenLifetime($token) ?? 60*60*24*7;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::getTokenRefreshInterval()
+     */
+    public function getTokenRefreshInterval() : ?int
+    {
+        return parent::getTokenRefreshInterval() ?? 0;
     }
     
     /**
@@ -310,5 +387,10 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {
         return $container;
+    }
+    
+    protected function getSessionDataUsername() : ?string
+    {
+        
     }
 }
