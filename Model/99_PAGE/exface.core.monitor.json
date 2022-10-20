@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-10-11 13:10:24",
+    "modified_on": "2022-10-20 11:53:27",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -221,6 +221,30 @@
                                         "empty_text": "No errors found. If this is a surprise, check if error monitoring is enabled in System.config.js (MONITOR.ENABLED, MONITOR.ERRORS.ENABLED)",
                                         "filters": [
                                             {
+                                                "attribute_alias": "USER",
+                                                "value": "=user_chart!USER",
+                                                "hidden": true,
+                                                "apply_on_change": true
+                                            },
+                                            {
+                                                "attribute_alias": "MONITOR_ACTION__PAGE",
+                                                "value": "=page_chart!PAGE",
+                                                "apply_on_change": true,
+                                                "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "DATE",
+                                                "value": "=date_chart!DATE",
+                                                "apply_on_change": true,
+                                                "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "MONITOR_ACTION",
+                                                "value": "=action_table!UID",
+                                                "hidden": true,
+                                                "apply_on_change": true
+                                            },
+                                            {
                                                 "attribute_alias": "STATUS",
                                                 "input_widget": {
                                                     "widget_type": "InputSelect",
@@ -249,30 +273,6 @@
                                             {
                                                 "attribute_alias": "CREATED_ON",
                                                 "widget_type": "RangeFilter"
-                                            },
-                                            {
-                                                "attribute_alias": "USER",
-                                                "value": "=user_chart!USER",
-                                                "hidden": true,
-                                                "apply_on_change": true
-                                            },
-                                            {
-                                                "attribute_alias": "MONITOR_ACTION__PAGE",
-                                                "value": "=page_chart!PAGE",
-                                                "apply_on_change": true,
-                                                "hidden": true
-                                            },
-                                            {
-                                                "attribute_alias": "DATE",
-                                                "value": "=date_chart!DATE",
-                                                "apply_on_change": true,
-                                                "hidden": true
-                                            },
-                                            {
-                                                "attribute_alias": "MONITOR_ACTION",
-                                                "value": "=action_table!UID",
-                                                "hidden": true,
-                                                "apply_on_change": true
                                             }
                                         ],
                                         "sorters": [
@@ -293,10 +293,13 @@
                                                 "calculation": "=Left(MESSAGE,100)"
                                             },
                                             {
-                                                "attribute_alias": "LOG_ID"
+                                                "attribute_alias": "USER__LABEL"
                                             },
                                             {
-                                                "attribute_alias": "USER__LABEL"
+                                                "attribute_alias": "ERROR_LEVEL"
+                                            },
+                                            {
+                                                "attribute_alias": "LOG_ID"
                                             }
                                         ],
                                         "buttons": [
@@ -344,26 +347,30 @@
                                             {
                                                 "attribute_alias": "USER",
                                                 "value": "=user_chart!USER",
-                                                "apply_on_change": true
+                                                "apply_on_change": true,
+                                                "hidden": true
                                             },
                                             {
                                                 "attribute_alias": "PAGE",
                                                 "value": "=page_chart!PAGE",
-                                                "apply_on_change": true
+                                                "apply_on_change": true,
+                                                "hidden": true
                                             },
                                             {
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                },
                                                 "attribute_alias": "DATE",
                                                 "value": "=date_chart!DATE",
-                                                "apply_on_change": true
+                                                "apply_on_change": true,
+                                                "hidden": true
                                             },
                                             {
                                                 "attribute_alias": "ACTION_NAME"
                                             },
                                             {
                                                 "attribute_alias": "WIDGET_NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "TIME",
+                                                "widget_type": "RangeFilter"
                                             }
                                         ],
                                         "columns": [
