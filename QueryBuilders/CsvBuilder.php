@@ -84,17 +84,17 @@ class CsvBuilder extends FileContentsBuilder
             } 
         }
         
-        // Prepare filters
-        $readAll = $this->prepareFilters($query);
+        // See which filters and sorters can be applied inside the reader and which must
+        // be applied after reading generically
+        $readAll = $this->prepareFilters($query) || $this->prepareSorters($query);
         
         return $this->readCsv($query, $static_values, $readAll);
     }
     
     /**
-     * Returns TRUE if filtering is neaded in the CSV reader and FALSE otherwise.
      * 
-     * @param FileContentsDataQuery $query
-     * @return bool
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileContentsBuilder::prepareFilters()
      */
     protected function prepareFilters(FileContentsDataQuery $query) : bool
     {
