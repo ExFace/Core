@@ -5,8 +5,6 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\iCanBeCopied;
-use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 
 /**
  * A filter group query part represents a condition group used for filtering in a query.
@@ -45,7 +43,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     {
         // Only add filters based on attributes. A query can only work with meta model attributes, not with other
         // expressions. Filters based on formulas need to be applied by the DataSheet and cannot be handled by queries!
-        if ($filter->getAttribute() && ! is_null($filter->getCompareValue()) && $filter->getCompareValue() !== '') {
+        if ($filter->getAttribute() && ! ($filter->getCondition()->willIgnoreEmptyValues() && ($filter->getCompareValue() === null || $filter->getCompareValue() === ''))) {
             $this->filters[] = $filter;
             $this->getConditionGroup()->addCondition($filter->getCondition());
         }
@@ -335,7 +333,11 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
                 continue;
             }
             // Do not filter if already filtered (remotely)
-            if (($onlyIfApplyAfterReading === true && $qpart->getApplyAfterReading() === false) || ! $qpart->getCompareValue()) {
+            if (($onlyIfApplyAfterReading === true && $qpart->getApplyAfterReading() === false)) {
+                continue;
+            }
+            // Do not filter if ignoring empty values and the value actually is empty
+            if ($qpart->getCondition()->willIgnoreEmptyValues() && $qpart->getCondition()->isEmpty()) {
                 continue;
             }
             switch ($op) {
