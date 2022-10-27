@@ -8,7 +8,6 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
 
@@ -33,6 +32,13 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
      */
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        foreach ($this->getSorters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        
         $rows = [];
         foreach ($this->getAuthenticators() as $pos => $authenticator) {
             $row = [
