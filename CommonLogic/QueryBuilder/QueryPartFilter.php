@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
