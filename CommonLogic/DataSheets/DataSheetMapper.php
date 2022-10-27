@@ -592,6 +592,24 @@ class DataSheetMapper implements DataSheetMapperInterface
         return $this;
     }
     
+    /**
+     * Transform selected columns of the from-sheet to rows in the to-sheet (resulting in two columns - labels and values)
+     * 
+     * @uxon-property unpivot_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataUnpivotMapping[]
+     * @uxon-template [{"from_columns": [""], "to_labels_column": "", "to_values_column": ""}]
+     * 
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setUnpivotMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataUnpivotMapping($this, $prop));
+        }
+        return $this;
+    }
+    
    /**
     * 
     * {@inheritDoc}
