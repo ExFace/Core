@@ -9,6 +9,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
@@ -100,13 +101,12 @@ class ExcelBuilder extends FileContentsBuilder
             throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
         }
         
+        $this->prepareFilters($query);
+        $this->prepareSorters($query);
+        
         $lastRow = $sheet->getHighestDataRow();
         $static_values = [];
         foreach ($this->getAttributes() as $qpart) {
-            if ($this->isFileProperty($qpart->getDataAddress())) {
-                $static_values[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
-                continue;
-            } 
             $colKey = $qpart->getColumnKey();
             $address = $qpart->getDataAddress();
             $attrType = $qpart->getDataType();
@@ -115,6 +115,9 @@ class ExcelBuilder extends FileContentsBuilder
                 default: $formatValues = false;
             }
             switch (true) {
+                case $this->isFileProperty($address):
+                    $static_values[$colKey] = $this->getFileProperty($query, $address);
+                    continue 2;
                 case $this->isAddressRange($address):
                     $resultRowNo = 0;
                     foreach ($this->getValuesOfRange($sheet, $address, $formatValues) as $sheetRowNo => $colVals) {
@@ -127,6 +130,11 @@ class ExcelBuilder extends FileContentsBuilder
                         }
                     }
                     break;
+                case $this->isAddressCoordinate($address):
+                    $static_values[$colKey] = $this->getValueOfCoordinate($sheet, $address, $formatValues);
+                    break;
+                default:
+                    throw new QueryBuilderException('Invalid data address "' . $address . '" for Excel query builder!');
             }
         }
         
@@ -139,10 +147,10 @@ class ExcelBuilder extends FileContentsBuilder
         
         $resultTotalRows = count($result_rows);
         
-        $this->applyFilters($result_rows);
-        $this->applySorting($result_rows);
-        $this->applyAggregations($result_rows, $this->getAggregations());
-        $this->applyPagination($result_rows);
+        $result_rows = $this->applyFilters($result_rows);
+        $result_rows = $this->applySorting($result_rows);
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        $result_rows = $this->applyPagination($result_rows);
         
         $cnt = count($result_rows);
         return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
@@ -155,10 +163,33 @@ class ExcelBuilder extends FileContentsBuilder
      */
     protected function isAddressRange(string $dataAddress) : bool
     {
-        switch (true) {
-            case (count(explode(':', $dataAddress)) === 2): return true;
+        return preg_match('/^[a-z]+\d+:[a-z]+\d+$/i', $dataAddress) === 1;
+    }
+    
+    /**
+     * 
+     * @param string $dataAddress
+     * @return bool
+     */
+    protected function isAddressCoordinate(string $dataAddress) : bool
+    {
+        return preg_match('/^[a-z]+\d+$/i', $dataAddress) === 1;
+    }
+    
+    /**
+     * 
+     * @param Worksheet $sheet
+     * @param string $coordinate
+     * @param bool $formatValues
+     * @return string|mixed|number|string|boolean|NULL|\PhpOffice\PhpSpreadsheet\RichText\RichText
+     */
+    protected function getValueOfCoordinate(Worksheet $sheet, string $coordinate, bool $formatValues = false)
+    {
+        if ($formatValues) {
+            return $sheet->getCell($coordinate)->getFormattedValue();
+        } else {
+            return $sheet->getCell($coordinate)->getValue();
         }
-        return false;
     }
     
     /**
@@ -176,5 +207,33 @@ class ExcelBuilder extends FileContentsBuilder
             $formatValues,        // Should values be formatted (the equivalent of getFormattedValue() for each cell)
             true         // Should the array be indexed by cell row and cell column
         );
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileContentsBuilder::prepareFilters()
+     */
+    protected function prepareFilters(FileContentsDataQuery $query) : bool
+    {
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileContentsBuilder::prepareSorters()
+     */
+    protected function prepareSorters(FileContentsDataQuery $query) : bool
+    {
+        foreach ($this->getSorters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        
+        return true;
     }
 }

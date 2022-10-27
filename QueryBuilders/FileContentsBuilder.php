@@ -134,10 +134,10 @@ class FileContentsBuilder extends AbstractQueryBuilder
         
         $resultTotalRows = count($result_rows);
         
-        $this->applyFilters($result_rows);
-        $this->applySorting($result_rows);
-        $this->applyAggregations($result_rows, $this->getAggregations());
-        $this->applyPagination($result_rows);
+        $result_rows = $this->applyFilters($result_rows);
+        $result_rows = $this->applySorting($result_rows);
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        $result_rows = $this->applyPagination($result_rows);
         
         $cnt = count($result_rows);
         return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
@@ -163,5 +163,26 @@ class FileContentsBuilder extends AbstractQueryBuilder
     {
         return $attribute->getRelationPath()->isEmpty();
     }
+    
+    /**
+     * Returns TRUE if filtering needs to be done after reading and thus all data needs to be read.
+     *
+     * @param FileContentsDataQuery $query
+     * @return bool
+     */
+    protected function prepareFilters(FileContentsDataQuery $query) : bool
+    {
+        return false;
+    }
+    
+    /**
+     * Returns TRUE if sorting needs to be done after reading and thus all data needs to be read.
+     *
+     * @param FileContentsDataQuery $query
+     * @return bool
+     */
+    protected function prepareSorters(FileContentsDataQuery $query) : bool
+    {
+        return false;
+    }
 }
-?>
