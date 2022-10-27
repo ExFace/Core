@@ -46,10 +46,10 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
             $rows[] = $row;
         }
         
-        $this->applyFilters($rows);
-        $this->applySorting($rows);
+        $rows = $this->applyFilters($rows);
+        $rows = $this->applySorting($rows);
         $totalCount = count($rows);
-        $this->applyPagination($rows);
+        $rows = $this->applyPagination($rows);
         
         return new DataQueryResultData($rows, count($rows), false, $totalCount);
     }
