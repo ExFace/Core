@@ -231,18 +231,27 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         $workbench = $object->getWorkbench();
         $sqlType = strtoupper($sql_data_type);
         switch (true) {
-            case $sqlType === 'BIGINT':
+            case $sqlType === 'BIT':
+                $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
+                break;
             case $sqlType === 'INT':
             case $sqlType === 'INTEGER':
-                if ($length == 1) {
+            case $sqlType === 'BIGINT':
+            case $sqlType === 'MEDIUMINT':
+            case $sqlType === 'SMALLINT':
+            case $sqlType === 'TINYINT':
+                if ($length === 1) {
                     $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 }
                 break;
             case $sqlType === 'NUMBER':
+            case $sqlType === 'NUMERIC':
             case $sqlType === 'DECIMAL':
+            case $sqlType === 'DEC':
             case $sqlType === 'FLOAT':
+            case $sqlType === 'REAL':
             case $sqlType === 'DOUBLE':
                 if (is_numeric($scale) === true && $scale == 0) {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
