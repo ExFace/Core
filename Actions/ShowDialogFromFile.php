@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -117,6 +118,9 @@ class ShowDialogFromFile extends ShowDialog
             $completeFilename = $basePath . '/' . $filename . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
             if (file_exists($completeFilename)) {
                 $json = file_get_contents($completeFilename);
+                if ($json === false) {
+                    throw new FileNotReadableError('Cannot read file "' . $completeFilename . '"!');
+                }
                 $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
             } else {
                 throw new FileNotFoundError('File "' . $completeFilename . '" not found!');

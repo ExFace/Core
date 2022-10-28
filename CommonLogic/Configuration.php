@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\OutOfBoundsException;
+use exface\Core\Exceptions\FileNotReadableError;
 
 class Configuration implements ConfigurationInterface
 {
@@ -227,8 +228,15 @@ class Configuration implements ConfigurationInterface
     protected function readFile(string $absolute_path) : ?UxonObject
     {
         $uxon = null;
-        if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path), CASE_UPPER)) {
-            $this->loadConfigUxon($uxon);
+        if (file_exists($absolute_path)) {
+            $json = file_get_contents($absolute_path);
+            if ($json === false) {
+                throw new FileNotReadableError('Cannot read configuration file "' . $absolute_path . "!");
+            }
+            if ($json !== null && $json !== '') {
+                $uxon = UxonObject::fromJson($json, CASE_UPPER);
+                $this->loadConfigUxon($uxon);
+            }
         }
         return $uxon;
     }

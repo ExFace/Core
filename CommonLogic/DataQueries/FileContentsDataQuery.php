@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\DataQueries;
 
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Exceptions\FileNotReadableError;
 
 class FileContentsDataQuery extends AbstractDataQuery
 {
@@ -23,10 +24,15 @@ class FileContentsDataQuery extends AbstractDataQuery
     
     public function getFileContents() : ?string
     {
-        if (! file_exists($this->getPathAbsolute())) {
+        $path = $this->getPathAbsolute();
+        if (! file_exists($path)) {
             return null;
         }
-        return file_get_contents($this->getPathAbsolute());
+        $string = file_get_contents($path);
+        if ($string === false) {
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!');
+        }
+        return $string;
     }
 
     public function getBasePath()

@@ -8,6 +8,7 @@ use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * This is the default implementation of the TranslationInterface.
@@ -174,7 +175,11 @@ class Translation implements TranslationInterface
                 return [];
             }
             if ($this->domains_data[$domain] === null) {
-                $this->domains_data[$domain] = json_decode(file_get_contents($this->domains[$domain]), true);
+                $json = file_get_contents($this->domains[$domain]);
+                if ($json === false) {
+                    throw new FileNotReadableError('Cannot read file "' . $this->domains[$domain] . '"!');
+                }
+                $this->domains_data[$domain] = json_decode($json, true);
             }
             return $this->domains_data[$domain];
         } else {
@@ -234,8 +239,12 @@ class Translation implements TranslationInterface
             $filename = pathinfo($path, PATHINFO_FILENAME);
             $lang = StringDataType::substringAfter($filename, '.', false, false, true);
             if ($forceLocale) {
-                $json = json_decode(file_get_contents($path), true);
-                if ($json && $locale = $json['LOCALIZATION.LOCALE']) {
+                $json = file_get_contents($path);
+                if ($json === false) {
+                    throw new FileNotReadableError('Cannot read file "' . $path . '"!');
+                }
+                $array = json_decode($json, true);
+                if ($array && null !== $locale = $array['LOCALIZATION.LOCALE'] ?? null) {
                     $langs[] = $locale;
                 } else {
                     $langs[] = $lang;

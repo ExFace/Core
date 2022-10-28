@@ -20,6 +20,8 @@ class CoreApp extends App
 {
     const CONFIG_FILENAME_SYSTEM = 'System';
     
+    private $config_loading = false;
+    
     private $config_loaded = false;
     
     private $system_config = null;
@@ -160,7 +162,7 @@ RewriteRule ^data/\..*$ - [F]
     public function getConfig()
     {
         // Make sure the system config is loaded in the first place
-        if (is_null($this->system_config)){
+        if ($this->system_config === null){
             $this->system_config = ConfigurationFactory::createFromApp($this);
             // First from the app folder (without a scope, thus not writable)
             $this->system_config->loadConfigFile($this->getConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName(static::CONFIG_FILENAME_SYSTEM));
@@ -168,16 +170,20 @@ RewriteRule ^data/\..*$ - [F]
             $this->system_config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName(static::CONFIG_FILENAME_SYSTEM), AppInterface::CONFIG_SCOPE_SYSTEM);
         }
         
-        // If the workbench has not been started yet, just return the system config
-        if (! $this->getWorkbench()->isStarted()){
-            return $this->system_config;
-        } else {
-            // If the workbench finished starting, load the regular core config 
-            // files - but do it only once!
-            if ($this->config_loaded === false){
-                $this->setConfig($this->loadConfigFiles($this->system_config));
-                $this->config_loaded = true;
+        // Then load the core config on-top - only once and only if the workbench has already started up
+        if ($this->config_loaded === false) {
+            // If the workbench has not been fully started yet, just return the system config
+            if (! $this->getWorkbench()->isStarted() || $this->config_loading === true){
+                return $this->system_config;
             }
+            
+            // If the workbench finished starting, load the regular core config files - but 
+            // do it only once! Also keep in mind, that loading the config the files might
+            // call getConfig() again, so also prevent loops whild actually loading
+            $this->config_loading = true;
+            $this->setConfig($this->loadConfigFiles($this->system_config));
+            $this->config_loading = false;
+            $this->config_loaded = true;
         }
         return parent::getConfig();
     }
