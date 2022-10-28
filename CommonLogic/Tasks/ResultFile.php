@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * Task result containing a file.
@@ -95,6 +96,9 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     public function getContents() : string
     {
         $result = file_get_contents($this->getPathAbsolute());
+        if ($result === false) {
+            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!');
+        }
         if ($result === false) {
             throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
         }

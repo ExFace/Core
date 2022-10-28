@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * 
@@ -193,7 +194,11 @@ class InstallationContextScope extends AbstractContextScope
         if ($this->context_file_contents === null || $noCache === true) {
             if (file_exists($this->getFilePathAbsolute())) {
                 try {
-                    $uxon = UxonObject::fromAnything(file_get_contents($this->getFilePathAbsolute()));
+                    $json = file_get_contents($this->getFilePathAbsolute());
+                    if ($json === false) {
+                        throw new FileNotReadableError('Cannot read file "' . $this->getFilePathAbsolute() . '"!');
+                    }
+                    $uxon = UxonObject::fromAnything($json);
                 } catch (\Throwable $e) {
                     $this->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot load installation context data! ' . $e->getMessage(), null, $e));
                     $uxon = new UxonObject();

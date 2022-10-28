@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\TemplateRenderer\Traits;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * Trait for templates stored as files: text, XML, HTML, etc.
@@ -63,6 +64,10 @@ trait FileTemplateRendererTrait
         if (file_exists($absPath) === false) {
             throw new RuntimeException('Template file "' . $absPath . '" not found!');
         }
-        return file_get_contents($absPath);
+        $string = file_get_contents($absPath);
+        if ($string === false) {
+            throw new FileNotReadableError('Cannot read file "' . $absPath . '"!');
+        }
+        return $string;
     }
 }
