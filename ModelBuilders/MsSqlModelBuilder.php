@@ -4,6 +4,9 @@ namespace exface\Core\ModelBuilders;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 class MsSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -145,5 +148,21 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
         
         return $result;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::guessDataType()
+     */
+    protected function guessDataType(MetaObjectInterface $object, string $sql_data_type, $length = null, $scale = null) : DataTypeInterface
+    {
+        $workbench = $object->getWorkbench();
+        $sqlType = strtoupper($sql_data_type);
+        switch (true) {
+            case $sqlType === 'DATETIME2':
+                return DataTypeFactory::createFromString($workbench, DateTimeDataType::class);
+            default:
+                return parent::guessDataType($object, $sql_data_type, $length, $scale);
+        }
+    }
 }
-?>
