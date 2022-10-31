@@ -10,6 +10,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
@@ -28,6 +32,11 @@ use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
  * the file in Excel).
  * - `path/from/installation/root/excel_file.xlsx[My sheet]` will access the sheet named `My sheet`
  * 
+ * ### Data address properties on object-level
+ * 
+ * - `EXCEL_FILL_MERGED_CELLS` - if set to FALSE will prevent values of merged cells from being filled into all cells
+ * of the merge range.
+ * 
  * ## Attribute data addresses
  * 
  * Attributes of the meta objects can be
@@ -36,14 +45,28 @@ use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
  * file! Don't worry about empty rows - only rows with values will actually be read!
  * - cell ranges in multiple columns (e.g. `A10:B20`) - all values will be read into a single data column row-by-row from 
  * left to right.
- * - column names (e.g. `[my column]`) - not yet available!
- *
+ * - single cell coordinates (e.g. `B3`) will add the value of the cell to each row - handy for reading header data for
+ * a table.
  *
  * @author Andrej Kabachnik
  *        
  */
 class ExcelBuilder extends FileContentsBuilder
 {    
+    /**
+     * Set to FALSE to keep the value of a merged cell in the first (top left) cell only.
+     * 
+     * By default the value of a merged cell is replicated into every cell of the merge
+     * range. If set to FALSE, the value will be kept in the top left cell only - just
+     * like if you would unmerge the cell in Excel.
+     *
+     * @uxon-property EXCEL_FILL_MERGED_CELLS
+     * @uxon-target object
+     * @uxon-default true
+     * @uxon-type boolean
+     */
+    const DAP_EXCEL_FILL_MERGED_CELLS = 'EXCEL_FILL_MERGED_CELLS';
+    
     /**
      * 
      * @param MetaObjectInterface $object
@@ -200,13 +223,124 @@ class ExcelBuilder extends FileContentsBuilder
      */
     protected function getValuesOfRange(Worksheet $sheet, string $range, bool $formatValues = false) : array
     {
+        $fill = BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_EXCEL_FILL_MERGED_CELLS) ?? true);
+        if ($fill && $this->hasMergedCells($sheet, $range)) {
+            return $this->rangeToArrayUnmerged(
+                $sheet,
+                $range,         // The worksheet range that we want to retrieve
+                null,           // Value that should be returned for empty cells
+                true,           // Should formulas be calculated (the equivalent of getCalculatedValue() for each cell)
+                $formatValues,  // Should values be formatted (the equivalent of getFormattedValue() for each cell)
+                true            // Should the array be indexed by cell row and cell column
+            );
+        }
         return $sheet->rangeToArray(
-            $range,     // The worksheet range that we want to retrieve
-            null,        // Value that should be returned for empty cells
-            true,        // Should formulas be calculated (the equivalent of getCalculatedValue() for each cell)
-            $formatValues,        // Should values be formatted (the equivalent of getFormattedValue() for each cell)
-            true         // Should the array be indexed by cell row and cell column
+            $range,             // The worksheet range that we want to retrieve
+            null,               // Value that should be returned for empty cells
+            true,               // Should formulas be calculated (the equivalent of getCalculatedValue() for each cell)
+            $formatValues,      // Should values be formatted (the equivalent of getFormattedValue() for each cell)
+            true                // Should the array be indexed by cell row and cell column
         );
+    }
+    
+    /**
+     * 
+     * @param Worksheet $sheet
+     * @param string $pRange
+     * @param mixed $nullValue
+     * @param boolean $calculateFormulas
+     * @param boolean $formatData
+     * @param boolean $returnCellRef
+     * 
+     * @return array|string
+     */
+    protected function rangeToArrayUnmerged(Worksheet $sheet, $pRange, $nullValue = null, $calculateFormulas = true, $formatData = true, $returnCellRef = false)
+    {
+        // Returnvalue
+        $returnValue = [];
+        //    Identify the range that we need to extract from the worksheet
+        [$rangeStart, $rangeEnd] = Coordinate::rangeBoundaries($pRange);
+        $minCol = Coordinate::stringFromColumnIndex($rangeStart[0]);
+        $minRow = $rangeStart[1];
+        $maxCol = Coordinate::stringFromColumnIndex($rangeEnd[0]);
+        $maxRow = $rangeEnd[1];
+        $cellCollection = $sheet->getCellCollection();
+        $parent = $sheet->getParent();
+        
+        ++$maxCol;
+        // Loop through rows
+        $r = -1;
+        for ($row = $minRow; $row <= $maxRow; ++$row) {
+            $rRef = $returnCellRef ? $row : ++$r;
+            $c = -1;
+            // Loop through columns in the current row
+            for ($col = $minCol; $col != $maxCol; ++$col) {
+                $cRef = $returnCellRef ? $col : ++$c;
+                //    Using getCell() will create a new cell if it doesn't already exist. We don't want that to happen
+                //        so we test and retrieve directly against cellCollection
+                if ($cellCollection->has($col . $row)) {
+                    // Cell exists
+                    $cell = $cellCollection->get($col . $row);
+                    $mergeRange = $cell->getMergeRange();
+                    if ($mergeRange !== null) {
+                        $mergeStart = Coordinate::rangeBoundaries($mergeRange)[0];
+                        $cell = $sheet->getCellByColumnAndRow($mergeStart[0], $mergeStart[1]);
+                    }
+                    if ($cell->getValue() !== null) {
+                        if ($cell->getValue() instanceof RichText) {
+                            $returnValue[$rRef][$cRef] = $cell->getValue()->getPlainText();
+                        } else {
+                            if ($calculateFormulas) {
+                                $returnValue[$rRef][$cRef] = $cell->getCalculatedValue();
+                            } else {
+                                $returnValue[$rRef][$cRef] = $cell->getValue();
+                            }
+                        }
+                        
+                        if ($formatData) {
+                            $style = $parent->getCellXfByIndex($cell->getXfIndex());
+                            $returnValue[$rRef][$cRef] = NumberFormat::toFormattedString(
+                                $returnValue[$rRef][$cRef],
+                                ($style && $style->getNumberFormat()) ? $style->getNumberFormat()->getFormatCode() : NumberFormat::FORMAT_GENERAL
+                                );
+                        }
+                    } else {
+                        // Cell holds a NULL
+                        $returnValue[$rRef][$cRef] = $nullValue;
+                    }
+                } else {
+                    // Cell doesn't exist
+                    $returnValue[$rRef][$cRef] = $nullValue;
+                }
+            }
+        }
+        
+        // Return
+        return $returnValue;
+    }
+    
+    /**
+     * 
+     * @param Worksheet $sheet
+     * @param string $range
+     * @return bool
+     */
+    protected function hasMergedCells(Worksheet $sheet, string $range) : bool
+    {
+        $merges = $sheet->getMergeCells();
+        if (empty($merges)) {
+            return false;
+        }
+        $range = $sheet->shrinkRangeToFit($range);
+        $rangeCells = Coordinate::extractAllCellReferencesInRange($range);
+        foreach ($merges as $mergeRange) {
+            $mergedCells = Coordinate::extractAllCellReferencesInRange($mergeRange);
+            $intercect = array_intersect($rangeCells, $mergedCells);
+            if (! empty($intercect)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
