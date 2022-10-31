@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 
 /**
  * Tansforms selected columns to rows.
@@ -81,6 +82,8 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     private $toColForValues = null;
     
     private $ignoreEmptyValues = false;
+    
+    private $ignoreEmptyValuesInColumns = [];
     
     /**
      * Array of columns to be transposed
@@ -265,6 +268,9 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
                 if ($ignoreEmpty && $dataType->isValueEmpty($val)) {
                     continue;
                 }
+                if (in_array($fromExpr->__toString(), $this->ignoreEmptyValuesInColumns) && $dataType->isValueEmpty($val)) {
+                    continue;
+                }
                 $toRow[$toColLabels->getName()] = $labelValue;
                 $toRow[$toColValues->getName()] = $val;
                 $toRowsAfter[] = $toRow;
@@ -295,7 +301,10 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     }
     
     /**
-     * Set to TRUE to create new rows only if the `from`-value is not empty.
+     * Set to TRUE to NOT create new rows if the `from`-value is empty.
+     * 
+     * You can also turn this feature on for specific from-columns only by using
+     * `ignore_empty_values_in_columns`.
      * 
      * @uxon-property ignore_empty_values
      * @uxon-type boolean
@@ -307,6 +316,44 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
     protected function setIgnoreEmptyValues(bool $value) : DataUnpivotMapping
     {
         $this->ignoreEmptyValues = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getIgnoreEmptyValuesInColumns() : array
+    {
+        return $this->ignoreEmptyValuesInColumns;
+    }
+    
+    /**
+     * Do not create rows for empty values in the listed from-column only.
+     * 
+     * You can also turn enable this filter for all columns using `ignore_empty_values`.
+     * 
+     * @uxon-property ignore_empty_values_in_columns
+     * @uxon-type metamodel:expression[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $value
+     * @throws DataMapperConfigurationError
+     * @return DataUnpivotMapping
+     */
+    protected function setIgnoreEmptyValuesInColumns($value) : DataUnpivotMapping
+    {
+        switch (true) {
+            case $value instanceof UxonObject:
+                $array = $value->toArray();
+                break;
+            case is_array($value):
+                $array = $value;
+                break;
+            default:
+                throw new DataMapperConfigurationError($this, 'Invalid value for `ignore_empty_values_in_columns`: expection an array of expressions!');
+        }
+        $this->ignoreEmptyValuesInColumns = $array;
         return $this;
     }
 }
