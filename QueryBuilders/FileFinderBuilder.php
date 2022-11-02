@@ -692,6 +692,9 @@ class FileFinderBuilder extends AbstractQueryBuilder
                     case $fieldLC === 'mimetype':
                         $value = MimeTypeDataType::findMimeTypeOfFile($file->getPathname());
                         break;
+                    case $fieldLC === 'contents':
+                        $value = $file->isFile() ? $file->getContents() : null;
+                        break;
                     default: 
                         $method_name = 'get' . ucfirst($field);
                         if (method_exists($file, $method_name)) {
