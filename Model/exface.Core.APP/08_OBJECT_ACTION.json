@@ -1549,6 +1549,64 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2022-11-02 16:23:32",
+            "MODIFIED_ON": "2022-11-02 17:33:55",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda449507b36eca449025041000001",
+            "OBJECT": "0x35370000000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowAppFilesDialog",
+            "NAME": "Files",
+            "SHORT_DESCRIPTION": "Lists all files contained in the selected app",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "exface.Core.APP",
+                "icon": "folder-open-o",
+                "dialog": {
+                    "widgets": [
+                        {
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.APP_FILE",
+                            "filters": [
+                                {
+                                    "attribute_alias": "APP",
+                                    "hidden": true
+                                },
+                                {
+                                    "attribute_alias": "PATHNAME_RELATIVE"
+                                },
+                                {
+                                    "attribute_alias": "CONTENTS"
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": "PATHNAME_RELATIVE"
+                                },
+                                {
+                                    "attribute_alias": "MODIFIED_ON"
+                                },
+                                {
+                                    "attribute_alias": "SIZE"
+                                }
+                            ],
+                            "sorters": [
+                                {
+                                    "attribute_alias": "PATHNAME_RELATIVE",
+                                    "direction": "asc"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
