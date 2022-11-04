@@ -488,7 +488,7 @@ class Uploader implements WidgetPartInterface
      * 
      * @return bool
      */
-    public function hasFileLastModificationTimeAttribute() : bool
+    public function hasFileModificationTimeAttribute() : bool
     {
         return $this->fileModificationTimeAttributeAlias !== null;
     }

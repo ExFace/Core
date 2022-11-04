@@ -651,7 +651,7 @@ JS;
         $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
         $contentColName = DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
         $fileModificationColumnJs = '';
-        if ($uploader->hasFileLastModificationTimeAttribute()) {
+        if ($uploader->hasFileModificationTimeAttribute()) {
             $fileModificationColumnJs = DataColumn::sanitizeColumnName($uploader->getFileModificationAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
         }
         $mimeTypeColumnJs = '';
