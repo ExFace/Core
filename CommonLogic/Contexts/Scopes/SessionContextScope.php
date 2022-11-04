@@ -48,6 +48,8 @@ class SessionContextScope extends AbstractContextScope
     
     private $session_disabled = false;
     
+    private $session_failed = false;
+    
     private $useCookieWorkaround = true;
     
     public function __construct(Workbench $exface)
@@ -249,7 +251,7 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionOpen()
     {
-        if (! $this->sessionIsPossible()) {
+        if (! $this->sessionIsPossible() || $this->session_failed === true) {
             return $this;
         }
         
@@ -315,12 +317,14 @@ class SessionContextScope extends AbstractContextScope
                     $started = session_start();
                 } catch (\Throwable $e) {
                     if (! $this->sessionIsOpen()) {
+                        $this->session_failed = true;
                         throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
                     }
                 }
             }
             // Throw an error if the session could not be started. 
             if ($started === false) {
+                $this->session_failed = true;
                 throw new RuntimeException('Opening the session for the session context scope failed: unknown error!');
             } else {
                 $this->setSessionId(session_id());
