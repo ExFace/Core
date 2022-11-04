@@ -251,18 +251,28 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionOpen()
     {
-        if (! $this->sessionIsPossible() || $this->session_failed === true) {
+        $log = '';
+        if (! $this->sessionIsPossible()) {
+            $log .= 'Session disabled or not possible' . PHP_EOL;
             return $this;
         }
+        $sessionOpen = $this->sessionIsOpen();
+        $log .= 'Session initially ' . ($sessionOpen ? 'OPEN' : 'CLOSED') . PHP_EOL;
         
-        if (! $this->sessionIsOpen()) {
+        // FIXME $sessionOpen seems always true on Azure nginx. Originally this check was supposed
+        // to allow external session handling. But is it really needed? Remove the IF completely
+        // after 01.02.2023 if no issues arise
+        if (true /*$sessionOpen !== true*/) {
             $sessionId = $this->getSessionId();
+            $log .= 'Cached id is "' . $sessionId . '"' . PHP_EOL;
             $sessionStartedPreviously = ($sessionId !== null);
-            $cookieHandling = $this->isCookieHandlingEnabled();
             $cookieName = session_name();
             $started = null;
             
             if ($sessionStartedPreviously === false) {
+                $cookieHandling = $this->isCookieHandlingEnabled();
+                $log .= 'Cookie handler is ' . ($cookieHandling ? 'ON' : 'OFF') . PHP_EOL;
+                
                 // Custom cookie handling to avoid headers-already-sent-issues. See method comments
                 // above!
                 if ($cookieHandling === true) {
@@ -292,29 +302,34 @@ class SessionContextScope extends AbstractContextScope
                     if (array_key_exists($cookieName, $_COOKIE)) {
                         $sessionId = $_COOKIE[$cookieName];
                         session_id($sessionId);
+                        $this->setSessionId($sessionId);
+                        $log .= 'Cookie found with session id "' . $sessionId . '"' . PHP_EOL;
                     } else {
                         $started = session_start();
-                        $sessionId = session_id();
-                        $config = $this->getWorkbench()->getConfig();
-                        setcookie(
-                            $cookieName, // name
-                            $sessionId, // value
-                            (time() + $config->getOption('SECURITY.SESSION_COOKIE_LIFETIME')), // expires
-                            $config->getOption('SECURITY.SESSION_COOKIE_PATH'), // path
-                            null, // domain
-                            $config->getOption('SECURITY.FORCE_HTTPS'), // secure
-                            true // httponly
-                        );
-                        session_write_close();
+                        $log .= 'Session start to generate new cookie ' . ($started ? 'OK' : 'FAILED') . PHP_EOL;
+                        if ($started !== false) {
+                            $sessionId = session_id();
+                            $this->setSessionId($sessionId);
+                            $config = $this->getWorkbench()->getConfig();
+                            setcookie(
+                                $cookieName, // name
+                                $sessionId, // value
+                                (time() + $config->getOption('SECURITY.SESSION_COOKIE_LIFETIME')), // expires
+                                $config->getOption('SECURITY.SESSION_COOKIE_PATH'), // path
+                                null, // domain
+                                $config->getOption('SECURITY.FORCE_HTTPS'), // secure
+                                true // httponly
+                            );
+                            session_write_close();
+                        }
                     }
                 }
-            } else {
-                session_id($sessionId);
-            }
+            } 
             
             if ($started === null) {
                 try {
                     $started = session_start();
+                    $log .= 'Session start ' . ($started ? 'OK' : 'FAILED') . PHP_EOL;
                 } catch (\Throwable $e) {
                     if (! $this->sessionIsOpen()) {
                         $this->session_failed = true;
@@ -382,7 +397,7 @@ class SessionContextScope extends AbstractContextScope
     
     protected function sessionIsPossible() : bool
     {
-        return $this->session_disabled === false && ! ConsoleFacade::isPhpScriptRunInCli();
+        return $this->session_failed === false && $this->session_disabled === false && ! ConsoleFacade::isPhpScriptRunInCli();
     }
 
     /**
