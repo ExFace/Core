@@ -21,6 +21,8 @@ class FileBehavior extends AbstractBehavior
     
     private $mimeTypeAttributeAlias = null;
     
+    private $fileSizeAttributeAlias = null;
+    
     private $maxFileSizeMb = null;
     
     /**
@@ -94,6 +96,30 @@ class FileBehavior extends AbstractBehavior
     protected function setMimeTypeAttribute(string $value) : FileBehavior
     {
         $this->mimeTypeAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface|NULL
+     */
+    public function getFileSizeAttribute() : ?MetaAttributeInterface
+    {
+        return $this->getObject()->getAttribute($this->fileSizeAttributeAlias);
+    }
+    
+    /**
+     * Alias of the attribute, that contains the size of the file in bytes (optional)
+     *
+     * @uxon-property file_size_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return FileBehavior
+     */
+    protected function setFileSizeAttribute(string $value) : FileBehavior
+    {
+        $this->fileSizeAttributeAlias = $value;
         return $this;
     }
     

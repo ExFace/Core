@@ -75,6 +75,8 @@ class Uploader implements WidgetPartInterface
     
     private $mimeTypeAttributeAlias = null;
     
+    private $fileSizeAttributeAlias = null;
+    
     private $uxon = null;
     
     /**
@@ -396,11 +398,11 @@ class Uploader implements WidgetPartInterface
     
     /**
      * The alias of the attribute to save the content type (mime type) to
-     * 
-     * If the uploader is based on an object with `FileBehavior`, the `file_mime_type_attribute_alias`
-     * will be determined automatically by default.
-     * 
-     * @uxon-property file_mime_type_attribute
+     *
+     * If the uploader is based on an object with `FileBehavior`, the `file_size_attribute_alias`
+     * can be determined automatically.
+     *
+     * @uxon-property file_size_attribute
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
@@ -409,6 +411,51 @@ class Uploader implements WidgetPartInterface
     public function setFileMimeTypeAttribute(string $value) : Uploader
     {
         $this->mimeTypeAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    protected function getFileSizeAttributeAlias() : ?string
+    {
+        return $this->fileSizeAttributeAlias;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasFileSizeAttribute() : bool
+    {
+        return $this->fileSizeAttributeAlias !== null;
+    }
+    
+    /**
+     *
+     * @return MetaAttributeInterface
+     */
+    public function getFileSizeAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getFileSizeAttributeAlias());
+    }
+    
+    /**
+     * The alias of the attribute to save the file size to
+     * 
+     * If the uploader is based on an object with `FileBehavior`, the `file_size_attribute_alias`
+     * can be determined automatically.
+     * 
+     * @uxon-property file_size_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return Uploader
+     */
+    public function setFileSizeAttribute(string $value) : Uploader
+    {
+        $this->fileSizeAttributeAlias = $value;
         return $this;
     }
     
@@ -434,7 +481,7 @@ class Uploader implements WidgetPartInterface
      * The alias of the attribute to save the filename to
      *
      * If the uploader is based on an object with `FileBehavior`, the `filename_attribute_alias`
-     * will be determined automatically by default.
+     * can be determined automatically.
      * 
      * @uxon-property filename_attribute
      * @uxon-type metamodel:attribute
@@ -470,7 +517,7 @@ class Uploader implements WidgetPartInterface
      * The alias of the attribute to save the (binary) content to
      *
      * If the uploader is based on an object with `FileBehavior`, the `file_content_attribute_alias`
-     * will be determined automatically by default.
+     * can be determined automatically.
      * 
      * @uxon-property file_content_attribute
      * @uxon-type metamodel:attribute
