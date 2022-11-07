@@ -163,10 +163,6 @@ class FileList extends DataTable
     
     private $downloadUrlColumn = null;
     
-    private $fileModificationTimeAttributeAlias = null;
-    
-    private $fileModificationTimeColumn = null;
-    
     private $uploader = null;
     
     private $uploaderUxon = null;
@@ -324,49 +320,6 @@ class FileList extends DataTable
         $this->fileContentAttributeAlias = $value;
         return $this;
     }
-
-    /**
-     * 
-     * @throws WidgetConfigurationError
-     * @return DataColumn
-     */
-    public function getFileModificationTimeColumn() : DataColumn
-    {
-        if ($this->fileModificationTimeColumn !== null) {
-            return $this->fileModificationTimeColumn;
-        }
-        throw new WidgetConfigurationError($this, 'No data column with download URLs found!');
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasFileModificationTimeColumn() : bool
-    {
-        return $this->fileModificationTimeAttributeAlias !== null || $this->fileModificationTimeColumn !== null;
-    }
-    
-    /**
-     * The attribute for last modification time of the file.
-     * 
-     * This property is optional, but if the data source supports it, it can be filled automatically
-     * when uploading files.
-     *
-     * @uxon-property file_modification_time_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return FileList
-     */
-    public function setFileModificationTimeAttributeAlias(string $value) : FileList
-    {
-        $this->fileModificationTimeAttributeAlias = $value;
-        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
-        $this->addColumn($col);
-        $this->fileModificationTimeColumn = $col;
-        return $this;
-    }
     
     /**
      * 
@@ -493,10 +446,6 @@ class FileList extends DataTable
             
             if ($this->mimeTypeAttributeAlias !== null || $this->mimeTypeColumn !== null) {
                 $uxon->setProperty('file_mime_type_attribute', $this->getMimeTypeColumn()->getAttributeAlias());
-            }
-            
-            if ($this->fileModificationTimeAttributeAlias !== null || $this->fileModificationTimeColumn !== null) {
-                $uxon->setProperty('file_modification_time_attribute', $this->getFileModificationTimeColumn()->getAttributeAlias());
             }
             
             if ($this->uploaderUxon !== null) {

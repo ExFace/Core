@@ -650,13 +650,15 @@ JS;
         
         $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
         $contentColName = DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
-        $fileModificationColumnJs = '';
+        $fileColumnsJs = '';
         if ($uploader->hasFileModificationTimeAttribute()) {
-            $fileModificationColumnJs = DataColumn::sanitizeColumnName($uploader->getFileModificationAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
+            $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileModificationAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
         }
-        $mimeTypeColumnJs = '';
+        if ($uploader->hasFileSizeAttribute()) {
+            $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileSizeAttribute()->getAliasWithRelationPath()) . ": file.size,";
+        }
         if ($uploader->hasFileMimeTypeAttribute()) {
-            $mimeTypeColumnJs = DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath()) . ": file.type,";
+            $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath()) . ": file.type,";
         }
             
         // TODO Use built-in file uploading instead of a custom $.ajax request to
@@ -747,8 +749,7 @@ JS;
                     oId: '{$this->getMetaObject()->getId()}',
                     rows: [{
                         {$filenameColName}: (file.name || 'Upload_' + {$this->getDateFormatter()->buildJsFormatDateObject('(new Date())', 'yyyyMMdd_HHmmss')} + '.png'),
-                        {$fileModificationColumnJs}
-                        {$mimeTypeColumnJs}
+                        {$fileColumnsJs}
                         {$contentColName}: sContent,
                     }]
                 };
