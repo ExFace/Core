@@ -20,6 +20,18 @@ use exface\Core\Behaviors\FileBehavior;
 /**
  * Controls how files are uploaded in widgets, that support uploads.
  * 
+ * The Uploader puts file data in a data sheet for its meta object. Which file properties
+ * go to which attributes can be either specified explicitly or determined from the `FileBehavior`
+ * automatically if the object has this behavior:
+ * 
+ * - `filename_attribute` - required
+ * - `file_content_attribute` - required
+ * - `file_mime_type_attribute`
+ * - `file_size_attribute`
+ * - `file_modification_time_attribute`
+ * 
+ * ## Instant upload vs. inclusion in form data
+ * 
  * There are two main operating modes: 
  * 
  * - instant upload with a separate action call every time one or more files are selected
@@ -32,6 +44,8 @@ use exface\Core\Behaviors\FileBehavior;
  * The uploader can be automatically configured if its object has the `FileBehavior`.
  * If not, you will need to set `filename_attribute_alias`, `file_content_attribute_alias`,
  * etc.
+ * 
+ * ## Validations and restrictions
  * 
  * In any case, restrictions can be applied, regulating how many and what type of files 
  * can be uploaded:
@@ -145,7 +159,7 @@ class Uploader implements WidgetPartInterface
     
     /**
      *
-     * @return array
+     * @return string[]
      */
     public function getAllowedFileExtensions() : array
     {
@@ -178,7 +192,7 @@ class Uploader implements WidgetPartInterface
     
     /**
      *
-     * @return array
+     * @return string[]
      */
     public function getAllowedMimeTypes() : array
     {
@@ -402,7 +416,7 @@ class Uploader implements WidgetPartInterface
      * If the uploader is based on an object with `FileBehavior`, the `file_size_attribute_alias`
      * can be determined automatically.
      *
-     * @uxon-property file_size_attribute
+     * @uxon-property file_mime_type_attribute
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
