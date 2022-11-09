@@ -9,6 +9,8 @@ use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Log\Handlers\LimitingHandler;
+use exface\Core\Events\Workbench\OnCleanUpEvent;
+use exface\Core\CommonLogic\Log\LogCleaner;
 
 /**
  * Instantiates default loggers
@@ -37,37 +39,24 @@ abstract class LoggerFactory extends AbstractStaticFactory
                 $handlers = [];
                 $coreLogDir = $workbench->filemanager()->getPathToLogFolder();
                 $coreLogFileExt = 'log';
-                $coreLogFilePath = $coreLogDir . DIRECTORY_SEPARATOR . DateDataType::now() . '.' . $coreLogFileExt;
-                $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder();
+                $date = DateDataType::now();
+                $coreLogFilePath = $coreLogDir . DIRECTORY_SEPARATOR . $date . '.' . $coreLogFileExt;
+                $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder() . DIRECTORY_SEPARATOR . $date;
                 
                 $config             = $workbench->getConfig();
                 $minLogLevel        = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
                 $passthroughLevel   = $config->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
                 $persistLevel       = $config->getOption('LOG.PERSIST_LOG_LEVEL');
                 $minLogLevel        = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
-                $maxDaysToKeep      = $config->getOption('LOG.MAX_DAYS_TO_KEEP');
                 
-                $handlers[] = 
-                new LimitingHandler( // Limit age of log details to $maxDaysToKeep
-                    new LimitingHandler(  // Limit age of CSV logs to $maxDaysToKeep
-                        new MonologCsvFileHandler( // Init the actual logger
-                            $workbench, 
-                            "Workbench", 
-                            $coreLogFilePath, 
-                            $detailsLogDir, 
-                            $minLogLevel, 
-                            $persistLevel, 
-                            $passthroughLevel
-                        ),
-                        $workbench,
-                        $coreLogDir,
-                        $maxDaysToKeep,
-                        $coreLogFileExt
-                    ),
-                    $workbench,
-                    $detailsLogDir,
-                    $maxDaysToKeep,
-                    'json'
+                $handlers[] = new MonologCsvFileHandler( // Init the actual logger
+                    $workbench, 
+                    "Workbench", 
+                    $coreLogFilePath, 
+                    $detailsLogDir, 
+                    $minLogLevel, 
+                    $persistLevel, 
+                    $passthroughLevel
                 );
                 
                 foreach ($handlers as $handler) {
@@ -80,7 +69,10 @@ abstract class LoggerFactory extends AbstractStaticFactory
                 ]);
             }
         }
-        
+        $workbench->eventManager()->addListener(OnCleanUpEvent::getEventName(), [
+            LogCleaner::class,
+            'onCleanUp'
+        ]);
         return static::$logger;
     }
     
