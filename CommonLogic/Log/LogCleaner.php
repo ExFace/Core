@@ -30,21 +30,19 @@ class LogCleaner
         if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_LOGS)) {
             return;
         }
+        
         $workbench = $event->getWorkbench();        
         $config = $workbench->getConfig();
-        $maxDaysToKeep = $config->getOption('LOG.MAX_DAYS_TO_KEEP');
-        
+        $maxDaysToKeep = $config->getOption('LOG.MAX_DAYS_TO_KEEP');        
         if (0 === $maxDaysToKeep) {
             return;
         }
-        $filemanager = $workbench->filemanager();
         
+        $filemanager = $workbench->filemanager();        
         $coreLogDir = $filemanager->getPathToLogFolder();
         $coreLogFileExt = 'log';
         $detailsLogFileExt = 'json';
         $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder();
-        
-        
         
         // Delete log detail files older than max days to keep.
         // If they are not due fordeletion or move them to subfolder.
@@ -54,10 +52,10 @@ class LogCleaner
         foreach ($detailsFiles as $detailFile) {
             if (is_writable($detailFile)) {
                 $mtime = filemtime($detailFile);
-                // delete files that are due
+                // delete files that are due for deletion
                 if ($mtime < $limitTime) {
                     @unlink($detailFile);
-                // else copy them to subfolder and then remove them
+                // else copy them to subfolder and then delete them
                 } else {
                     $subFolderName = date(DateDataType::DATE_FORMAT_INTERNAL, $mtime);
                     $newPath = $detailsLogDir . DIRECTORY_SEPARATOR . $subFolderName . DIRECTORY_SEPARATOR . basename($detailFile);
@@ -75,7 +73,6 @@ class LogCleaner
         foreach ($logFiles as $logFile) {
             if (is_writable($logFile)) {
                 $mtime = filemtime($logFile);
-                // delete files that are due and their corresponding details folder
                 if ($mtime < $limitTime) {
                     $detailsFolderName = pathinfo($logFile, PATHINFO_FILENAME);
                     $detailsSubFolder = $detailsLogDir . DIRECTORY_SEPARATOR . $detailsFolderName;
@@ -87,7 +84,8 @@ class LogCleaner
                     $countFiles++;
                 }
             }
-        }        
+        }
+        
         $event->addResultMessage("Cleaned up log files, deleted {$countFiles} files and {$countDir} details subfolders.");
         
         return;
