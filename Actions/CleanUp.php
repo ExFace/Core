@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Actions\ServiceParameter;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * Triggers various housekeeping procedures: purging older queue messages and monitor data, etc.
@@ -40,6 +41,11 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
     protected function performImmediately(TaskInterface $task, DataTransactionInterface $transaction, ResultMessageStreamInterface $result) : array
     {
         return [];
+    }
+    
+    public function getIcon()
+    {
+        return parent::getIcon() ?? Icons::CLOCK_O;
     }
     
     /**
