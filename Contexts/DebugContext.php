@@ -426,6 +426,8 @@ class DebugContext extends AbstractContext
                     ]
                 ], [
                     'action_alias' => 'exface.Core.ClearCache'
+                ], [
+                    'action_alias' => 'exface.Core.CleanUp'
                 ]
             ]
         ]));
