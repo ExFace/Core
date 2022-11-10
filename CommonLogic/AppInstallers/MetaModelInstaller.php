@@ -350,10 +350,19 @@ class MetaModelInstaller extends AbstractAppInstaller
                 if (file_exists($prevPath)) {
                     $splitSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon)->copy();
                     $decryptedSheet = $splitSheet->copy()->removeRows()->addRows($splitSheet->getRowsDecrypted());
+                    $changesDetected = false;
                     foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
+                        if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
+                            $changesDetected = true;
+                            break;
+                        }
                         $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                        if (! empty($diff)) {
+                            $changesDetected = true;
+                            break;
+                        }
                     }
-                    if (empty($diff)) {
+                    if ($changesDetected === false) {
                         if (! is_dir($modelDir . DIRECTORY_SEPARATOR . $subfolder));
                         mkdir($modelDir . DIRECTORY_SEPARATOR . $subfolder);
                         rename($prevPath, $path);
@@ -368,10 +377,19 @@ class MetaModelInstaller extends AbstractAppInstaller
             $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $fileName;
             if (file_exists($prevPath)) {
                 $decryptedSheet = $data_sheet->copy()->removeRows()->addRows($data_sheet->getRowsDecrypted());
+                $changesDetected = false;
                 foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
+                    if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
+                        $changesDetected = true;
+                        break;
+                    }
                     $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                    if (! empty($diff)) {
+                        $changesDetected = true;
+                        break;
+                    }
                 }
-                if (empty($diff)) {
+                if ($changesDetected === false) {
                     rename($prevPath, $path);
                     return $result;
                 }
