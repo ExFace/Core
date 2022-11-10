@@ -86,7 +86,7 @@ class LogCleaner
             }
         }
         
-        $event->addResultMessage("Cleaned up log files, deleted {$countFiles} files and {$countDir} details subfolders.");
+        $event->addResultMessage("Cleaned up log files removing {$countFiles} expired log files and {$countDir} details subfolders.");
         
         return;
     }
