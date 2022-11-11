@@ -28,7 +28,7 @@ class UrlDataType extends StringDataType
      */
     public static function isAbsolute(string $url) : bool
     {
-        return StringDataType::startsWith('http', $url, false);
+        return preg_match('@^[a-z1-2\+\-\._]+://@i', $url) === 1;
     }
     
     /**
