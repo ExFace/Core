@@ -105,9 +105,16 @@ class ShowLookupDialog extends ShowDialog
                     $inputWidget = $targetWidget->getInputWidget();
                     $tableObj = $data_table->getMetaObject();
                     // Inherit filters from calling widget
+                    // When inheriting filters, it is important to keept their id space. If this is not
+                    // done explicitly, the filter will have a new id space - the one of the lookup
+                    // dialog, thus any value links will stop working as they reference the id space of
+                    // the table.
                     switch (true) {
                         case ($inputWidget instanceof iHaveFilters && $tableObj->is($inputWidget->getMetaObject())): 
                             foreach($inputWidget->getFilters() as $filter) {
+                                // Force the filter to keep its id space - see explanation above the switch()
+                                // TODO maybe better to copy the filters somehow?
+                                $filter->setIdSpace($filter->getIdSpace());
                                 $data_table->addFilter($filter);
                             }
                             break;
@@ -115,6 +122,9 @@ class ShowLookupDialog extends ShowDialog
                         // filters as the lookup table should show the same as the dropdown table
                         case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
                             foreach($inputWidget->getTable()->getFilters() as $filter) {
+                                // Force the filter to keep its id space - see explanation above the switch()
+                                // TODO maybe better to copy the filters somehow?
+                                $filter->setIdSpace($filter->getIdSpace());
                                 $data_table->addFilter($filter);
                             }
                             break;
