@@ -157,11 +157,18 @@ trait CsvBuilderTrait
     {
         switch (true) {
             case $query instanceof FileContentsDataQuery:
-                $splFileInfo = $query->getFileInfo();
-                if ($splFileInfo === null) {
-                    return null;
+                switch (true) {
+                    case $query->getFileExists() === false:
+                        return null;
+                    case null !== ($path = $query->getPathAbsolute()) && file_exists($path):
+                        $csvReader = Reader::createFromPath($path);
+                        break;
+                    case null !== $contents = $query->getFileContents():
+                        $csvReader = Reader::createFromString($contents);
+                        break;
+                    default:
+                        return null;
                 }
-                $csvReader = Reader::createFromPath($splFileInfo);
                 break;
             case is_a($query, 'exface\UrlDataConnector\Psr7DataQuery'):
                 $response = $query->getResponse() ? $query->getResponse()->getBody()->__toString() : null;

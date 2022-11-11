@@ -9,6 +9,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * A query builder to the raw contents of a file.
@@ -18,7 +19,8 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * ## Data source configuration
  * 
- * To access file contents create a data source with this query builder and a connection with the `FileContentsConnector`.
+ * To access file contents create a data source with this query builder and a connection with the `FileContentsConnector`
+ * or the `DataSourceFileContentsConnector`..
  * 
  * ## Object data addresses
  * 
@@ -28,6 +30,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * 
  * - `~filepath`
  * - `~filepath_relative`
+ * - `~folder`
+ * - `~filename`
+ * - `~filename_without_extension`
+ * - `~extension`
  * - `~contents`
  * 
  * These file-specific data addresses are also available in derived query builders.
@@ -41,7 +47,15 @@ class FileContentsBuilder extends AbstractQueryBuilder
     
     const ATTR_ADDRESS_FILEPATH_RELATIVE = '~filepath_relative';
     
+    const ATTR_ADDRESS_FOLDER = '~folder';
+    
     const ATTR_ADDRESS_CONTENTS = '~contents';
+    
+    const ATTR_ADDRESS_FILENAME = '~filename';
+    
+    const ATTR_ADDRESS_FILENAME_WITHOUT_EXTENSION = '~filename_without_extension';
+    
+    const ATTR_ADDRESS_EXTENSION = '~extension';
     
     /**
      *
@@ -50,7 +64,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
     protected function buildQuery()
     {
         $query = new FileContentsDataQuery();
-        $query->setPathRelative($this->getPathForObject($this->getMainObject()));
+        $query->setPath($this->getPathForObject($this->getMainObject()));
         return $query;
     }
     
@@ -88,8 +102,16 @@ class FileContentsBuilder extends AbstractQueryBuilder
                 return $query->getPathAbsolute();
             case self::ATTR_ADDRESS_FILEPATH_RELATIVE:
                 return $query->getPathRelative();
+            case self::ATTR_ADDRESS_FOLDER:
+                return FilePathDataType::findFileName($query->getFileInfo()->getPath());
             case self::ATTR_ADDRESS_CONTENTS:
                 return $query->getFileContents();
+            case self::ATTR_ADDRESS_FILENAME:
+                return $query->getFileInfo()->getFilename();
+            case self::ATTR_ADDRESS_FILENAME_WITHOUT_EXTENSION:
+                return FilePathDataType::findFileName($query->getFileInfo()->getFilename());
+            case self::ATTR_ADDRESS_EXTENSION:
+                return $query->getFileInfo()->getExtension();
             default:
                 throw new QueryBuilderException('Unknown file property data address "' . $data_address . '"!');
         }
@@ -122,10 +144,10 @@ class FileContentsBuilder extends AbstractQueryBuilder
         $result_rows = array();
         $query = $this->buildQuery();
         
-        $data_connection->query($query);
+        $query = $data_connection->query($query);
         
         foreach ($this->getAttributes() as $qpart) {
-            if ($this->getFileProperty($query, $qpart->getDataAddress())) {
+            if ($this->isFileProperty($qpart->getDataAddress())) {
                 $result_rows[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
             } elseif ($qpart->getDataAddress()) {
                 throw new QueryBuilderException('Unknown data address "' . $qpart->getDataAddress() . '"!');
