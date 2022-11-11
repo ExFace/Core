@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2021-04-21 11:47:49",
+            "MODIFIED_ON": "2022-11-09 14:55:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -159,6 +159,10 @@
                     },
                     {
                         "attribute_alias": "level"
+                    },
+                    {
+                        "attribute_alias": "filepath",
+                        "hidden": true
                     }
                 ],
                 "sorters": [
@@ -173,7 +177,7 @@
                         "caption": "Details",
                         "action": {
                             "alias": "exface.Core.ShowDialogFromFile",
-                            "file_path_attribute_alias": "id",
+                            "file_path_attribute_alias": "filepath",
                             "file_extension": "json",
                             "folder_path": "logs\/details",
                             "do_not_prefill": true
