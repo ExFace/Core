@@ -29,6 +29,8 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -329,8 +331,25 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function getChildren() : \Iterator
     {
         $action = $this->getAction();
-        if ($action && $action->implementsInterface('iShowWidget') && $action->isWidgetDefined()) {
-            yield $this->getAction()->getWidget();
+        if ($action) {
+            yield from $this->getChildrenFromAction($action);
+        }
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @return \Iterator
+     */
+    protected function getChildrenFromAction(ActionInterface $action) : \Iterator
+    {
+        if (($action instanceof iShowWidget) && $action->isWidgetDefined()) {
+            yield $action->getWidget();
+        }
+        if ($action instanceof iCallOtherActions) {
+            foreach ($action->getActions() as $child) {
+                yield from $this->getChildrenFromAction($child);
+            }
         }
     }
 
