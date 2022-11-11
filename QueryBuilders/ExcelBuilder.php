@@ -14,15 +14,17 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\DataQueries\DataSourceFileInfo;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
  * 
- * **WARNING:** this is still a very early version, which currently only supports reading simpledata!
+ * **WARNING:** currently only reading is supported
  * 
  * ## Data source configuration
  * 
- * To access Excel files create a data source with this query builder and a connection with the `FileContentsConnector`.
+ * To access Excel files create a data source with this query builder and a connection with the `FileContentsConnector`
+ * or the `DataSourceFileContentsConnector`.
  * 
  * ## Object data addresses
  * 
@@ -86,7 +88,7 @@ class ExcelBuilder extends FileContentsBuilder
     protected function getPathForObject(MetaObjectInterface $object, bool $replacePlaceholders = true) : string
     {
         $addr = trim($object->getDataAddress());
-        $delim = strpos($addr, '[');
+        $delim = strrpos($addr, '[');
         if ($delim !== false) {
             if (substr($addr, -1) === ']') {
                 $path = substr($addr, 0, $delim);
@@ -114,9 +116,26 @@ class ExcelBuilder extends FileContentsBuilder
         $result_rows = [];
         
         $query = $this->buildQuery();
-        $data_connection->query($query);
+        $query = $data_connection->query($query);
         
-        $spreadsheet = IOFactory::load($query->getPathAbsolute());
+        $deleteAfterRead = false;
+        if (null !== ($fileInfo = $query->getFileInfo()) && $fileInfo instanceof DataSourceFileInfo) {
+            $contents = $fileInfo->getContents();
+            if ($contents === null) {
+                throw new QueryBuilderException('Cannot read spreadsheet from "' . $fileInfo->getFilename() . '": fetching contents failed!');
+            }
+            $tmpFolder = $this->getWorkbench()->filemanager()->getPathToTempFolder() . DIRECTORY_SEPARATOR . 'ExcelBuilderCache' . DIRECTORY_SEPARATOR;
+            if (! file_exists($tmpFolder)) {
+                mkdir($tmpFolder);
+            }
+            $excelPath = $tmpFolder . $query->getFileInfo()->getFilename();
+            file_put_contents($excelPath, $contents);
+            $deleteAfterRead = true;
+        } else {
+            $excelPath = $query->getPathAbsolute();
+        }
+        
+        $spreadsheet = IOFactory::load($excelPath);
         $sheetName = $this->getSheetForObject($this->getMainObject());
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
@@ -176,6 +195,11 @@ class ExcelBuilder extends FileContentsBuilder
         $result_rows = $this->applyPagination($result_rows);
         
         $cnt = count($result_rows);
+        
+        if ($deleteAfterRead === true) {
+            @unlink($excelPath);
+        }
+        
         return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
     }
     

@@ -7,8 +7,12 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 /**
  * Makes the object behave as a file regardless of its data source (e.g. files in DB, etc.)
  * 
- * Widgets, that handle files like `ImageGallery`, `FileList`, etc. will require much less
- * configuration if their object has the `FileBehavior`.
+ * Many features like the `DataSourceFileConnector` required objects, that represent files to have
+ * this behavior. Others may work even without the behavior, but will require much more configuration:
+ * e.g. widgets `ImageGallery`, `FileList`, etc.
+ * 
+ * For use in external libaries, there is an adapter for the `splFileinfo` class, that allows PHP code
+ * to use items from an object with `FileBehavior` as files: `DataSourceFileInfo`.
  * 
  * @author Andrej Kabachnik
  *
@@ -22,6 +26,10 @@ class FileBehavior extends AbstractBehavior
     private $mimeTypeAttributeAlias = null;
     
     private $fileSizeAttributeAlias = null;
+    
+    private $timeCreatedAttributeAlias = null;
+    
+    private $timeModifiedAttributeAlias = null;
     
     private $maxFileSizeMb = null;
     
@@ -81,7 +89,7 @@ class FileBehavior extends AbstractBehavior
      */
     public function getMimeTypeAttribute() : ?MetaAttributeInterface
     {
-        return $this->getObject()->getAttribute($this->mimeTypeAttributeAlias);
+        return $this->mimeTypeAttributeAlias === null ? null : $this->getObject()->getAttribute($this->mimeTypeAttributeAlias);
     }
     
     /**
@@ -105,7 +113,7 @@ class FileBehavior extends AbstractBehavior
      */
     public function getFileSizeAttribute() : ?MetaAttributeInterface
     {
-        return $this->getObject()->getAttribute($this->fileSizeAttributeAlias);
+        return $this->fileSizeAttributeAlias === null ? null : $this->getObject()->getAttribute($this->fileSizeAttributeAlias);
     }
     
     /**
@@ -120,6 +128,54 @@ class FileBehavior extends AbstractBehavior
     protected function setFileSizeAttribute(string $value) : FileBehavior
     {
         $this->fileSizeAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return MetaAttributeInterface|NULL
+     */
+    public function getTimeCreatedAttribute() : ?MetaAttributeInterface
+    {
+        return $this->timeCreatedAttributeAlias === null ? null : $this->getObject()->getAttribute($this->timeCreatedAttributeAlias);
+    }
+    
+    /**
+     * Alias of the attribute, that contains the creation time of the file (optional)
+     *
+     * @uxon-property time_created_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return FileBehavior
+     */
+    protected function setTimeCreatedAttribute(string $value) : FileBehavior
+    {
+        $this->timeCreatedAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return MetaAttributeInterface|NULL
+     */
+    public function getTimeModifiedAttribute() : ?MetaAttributeInterface
+    {
+        return $this->timemo === null ? null : $this->getObject()->getAttribute($this->timeModifiedAttributeAlias);
+    }
+    
+    /**
+     * Alias of the attribute, that contains the modification time of the file (optional)
+     *
+     * @uxon-property time_modified_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return FileBehavior
+     */
+    protected function setTimeModifiedAttribute(string $value) : FileBehavior
+    {
+        $this->timeModifiedAttributeAlias = $value;
         return $this;
     }
     
@@ -145,5 +201,33 @@ class FileBehavior extends AbstractBehavior
     {
         $this->maxFileSizeMb = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface[]
+     */
+    public function getFileAttributes() : array
+    {
+        $attrs = [];
+        if (null !== $attr = $this->getFilenameAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getContentsAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getFileSizeAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getMimeTypeAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getTimeCreatedAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getTimeModifiedAttribute()) {
+            $attrs[] = $attr;
+        }
+        return $attrs;
     }
 }

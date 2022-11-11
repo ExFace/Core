@@ -14,7 +14,8 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
  * 
  * ## Data source configuration
  * 
- * To access CSV files create a data source with this query builder and a connection with the `FileContentsConnector`.
+ * To access CSV files create a data source with this query builder and a connection with the `FileContentsConnector`
+ * or the `DataSourceFileContentsConnector`..
  * 
  * ## Object data addresses
  * 
@@ -74,7 +75,7 @@ class CsvBuilder extends FileContentsBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $query = $this->buildQuery();        
-        $data_connection->query($query);
+        $query = $data_connection->query($query);
         
         // Compute static values (not depending on the contents of the CSV)
         $static_values = array();

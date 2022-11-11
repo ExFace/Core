@@ -166,6 +166,20 @@
             "READONLY": 0,
             "ALIAS": "WORKBENCH_CONTEXTS",
             "FILTER_CONTEXT": null
+        },
+        {
+            "CREATED_ON": "2022-11-10 21:34:36",
+            "MODIFIED_ON": "2022-11-11 16:25:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed992617f9ad829926747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "LABEL": "Objects with FileBehavior",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/DataSourceFileContentsConnector.php",
+            "CONFIG": "$$~~IZB6HDQtsqJ3gaIFyFZoNDzPcS3Rv8\/kQPHAlHb4dwV81eLVMibHrVl9dMq\/qtP\/Uxwc6xpa\/Qxdpdq13GjPyPxD9\/pg3Z7r\/A==",
+            "READONLY": 0,
+            "ALIAS": "objects_with_filebehavior",
+            "FILTER_CONTEXT": null
         }
     ],
     "totals_rows": [],
