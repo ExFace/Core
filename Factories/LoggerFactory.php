@@ -8,7 +8,6 @@ use Monolog\ErrorHandler;
 use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\CommonLogic\Log\Handlers\LimitingHandler;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
 use exface\Core\CommonLogic\Log\LogCleaner;
 
