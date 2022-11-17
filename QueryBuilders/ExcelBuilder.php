@@ -375,7 +375,19 @@ class ExcelBuilder extends FileContentsBuilder
     protected function prepareFilters(FileContentsDataQuery $query) : bool
     {
         foreach ($this->getFilters()->getFilters() as $qpart) {
-            $qpart->setApplyAfterReading(true);
+            switch (true) {
+                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FOLDER) === 0:
+                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_CONTENTS) === 0:
+                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_EXTENSION) === 0:
+                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FILENAME_WITHOUT_EXTENSION) === 0:
+                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FILENAME) === 0:
+                    if (! $this->getAttribute($qpart->getAlias())) {
+                        // FIXME What to do with filters over missing file values??? Error? Ignore? Auto-add to read?
+                        throw new QueryBuilderException('Cannot filter "' . $this->getMainObject() . '" over "' . $qpart->getAlias(). '" - no correspoinding column is being read!');
+                    }
+                default:
+                    $qpart->setApplyAfterReading(true);
+            }
         }
         
         return true;
