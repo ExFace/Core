@@ -21,6 +21,8 @@ class FileBehavior extends AbstractBehavior
 {    
     private $filenameAttributeAlias = null;
     
+    private $folderAttributeAlias = null;
+    
     private $contentsAttributeAlias = null;
     
     private $mimeTypeAttributeAlias = null;
@@ -161,7 +163,7 @@ class FileBehavior extends AbstractBehavior
      */
     public function getTimeModifiedAttribute() : ?MetaAttributeInterface
     {
-        return $this->timemo === null ? null : $this->getObject()->getAttribute($this->timeModifiedAttributeAlias);
+        return $this->timeModifiedAttributeAlias === null ? null : $this->getObject()->getAttribute($this->timeModifiedAttributeAlias);
     }
     
     /**
@@ -205,12 +207,44 @@ class FileBehavior extends AbstractBehavior
     
     /**
      * 
+     * @return MetaAttributeInterface|NULL
+     */
+    public function getFolderAttribute() : ?MetaAttributeInterface
+    {
+        if ($this->folderAttributeAlias === null) {
+            if ($this->getObject()->hasUidAttribute()) {
+                return $this->getObject()->getUidAttribute();
+            }
+        }
+        return $this->folderAttributeAlias === null ? null : $this->getObject()->getAttribute($this->folderAttributeAlias);
+    }
+    
+    /**
+     * Alias of the attribute, that contains the folder path of the file
+     * 
+     * @uxon-property folder_attribute
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return FileBehavior
+     */
+    protected function setFolderAttribute(string $value) : FileBehavior
+    {
+        $this->folderAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
      * @return MetaAttributeInterface[]
      */
     public function getFileAttributes() : array
     {
         $attrs = [];
         if (null !== $attr = $this->getFilenameAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getFolderAttribute()) {
             $attrs[] = $attr;
         }
         if (null !== $attr = $this->getContentsAttribute()) {

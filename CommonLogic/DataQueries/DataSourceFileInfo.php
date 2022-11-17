@@ -13,6 +13,7 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Custom splFileInfo implementation working with files stored in data sources if the meta object has the `FileBehavior`.
@@ -30,7 +31,7 @@ class DataSourceFileInfo extends \SplFileInfo
     
     private $pathname = null;
     
-    private $uid = null;
+    private $folder = null;
     
     private $filename = null;
     
@@ -63,7 +64,7 @@ class DataSourceFileInfo extends \SplFileInfo
         }
         $this->pathname = $path;
         $this->filename = $filename;
-        $this->uid = $uid;
+        $this->folder = $uid;
         $this->object = MetaObjectFactory::createFromString($workbench, $objectSelector);
     }
     
@@ -80,9 +81,9 @@ class DataSourceFileInfo extends \SplFileInfo
      * 
      * @return string
      */
-    public function getUid() : string
+    public function getFolder() : string
     {
-        return $this->uid;
+        return $this->folder;
     }
     
     /**
@@ -120,7 +121,7 @@ class DataSourceFileInfo extends \SplFileInfo
     {
         if ($this->fileData === null) {
             $this->fileData = DataSheetFactory::createFromObject($this->getMetaObject());
-            $this->fileData->getFilters()->addConditionFromAttribute($this->getMetaObject()->getUidAttribute(), $this->getUid());
+            $this->fileData->getFilters()->addConditionFromAttribute($this->getFileBehavior()->getFolderAttribute(), $this->getFolder(), ComparatorDataType::EQUALS);
             $this->fileAttributes = $this->getFileBehavior()->getFileAttributes();
             foreach ($this->fileAttributes as $attr) {
                 $this->fileData->getColumns()->addFromAttribute($attr);
