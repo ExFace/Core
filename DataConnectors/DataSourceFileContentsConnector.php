@@ -74,7 +74,7 @@ class DataSourceFileContentsConnector extends TransparentConnector
      * @param bool $value
      * @return FileContentsConnector
      */
-    public function setErrorIfFileNotFound(bool $value) : FileContentsConnector
+    public function setErrorIfFileNotFound(bool $value) : DataSourceFileContentsConnector
     {
         $this->error_if_file_not_found = $value;
         return $this;
