@@ -1246,98 +1246,97 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlSelectSubselect(QueryPart $qpart, $select_from = null)
     {
         $rev_rel = $qpart->getFirstRelation(RelationTypeDataType::REVERSE);
-        if (! $rev_rel)
+        if (! $rev_rel) {
             return '';
+        }
             
-            /*
-             * if there is at least one reverse relation, we need to build a subselect. This is a bit tricky since
-             * "normal" and reverse relations can be mixed in the chain of relations for a certain attribute. Imagine,
-             * we would like to see the customer card number and type in a list of orders. Assuming the customer may
-             * have multiple cards we get the following: ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE->LABEL. Thus we need to
-             * join ORDER and CUSTOMER in the main query and create a subselect for CUSTOMER_CARD joined with TYPE.
-             * The subselect needs to be filtered by ORDER.CUSTOMER_ID which is the foriegn key of CUSTOMER. We will
-             * reference this example in the comments below.
-             */
-            $rel_path = $qpart->getAttribute()->getRelationPath();
-            /** @var MetaRelationPathInterface $reg_rel_path part of the relation part up to the first reverse relation */
-            $reg_rel_path = $rel_path->getSubpath(0, $rel_path->getIndexOf($rev_rel));
-            /** @var MetaRelationPathInterface complete path of the first reverse relation */
-            $rev_rel_path = $reg_rel_path->copy()->appendRelation($rev_rel);
+        /*
+         * if there is at least one reverse relation, we need to build a subselect. This is a bit tricky since
+         * "normal" and reverse relations can be mixed in the chain of relations for a certain attribute. Imagine,
+         * we would like to see the customer card number and type in a list of orders. Assuming the customer may
+         * have multiple cards we get the following: ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE->LABEL. Thus we need to
+         * join ORDER and CUSTOMER in the main query and create a subselect for CUSTOMER_CARD joined with TYPE.
+         * The subselect needs to be filtered by ORDER.CUSTOMER_ID which is the foriegn key of CUSTOMER. We will
+         * reference this example in the comments below.
+         */
+        $rel_path = $qpart->getAttribute()->getRelationPath();
+        /** @var MetaRelationPathInterface $reg_rel_path part of the relation part up to the first reverse relation */
+        $reg_rel_path = $rel_path->getSubpath(0, $rel_path->getIndexOf($rev_rel));
+        /** @var MetaRelationPathInterface complete path of the first reverse relation */
+        $rev_rel_path = $reg_rel_path->copy()->appendRelation($rev_rel);
+        
+        // build a subquery
+        /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
+        $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
+        // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
+        $relq->setMainObject($rev_rel->getRightObject());
+        $relq->setQueryId($this->getNextSubqueryId());
+        
+        // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
+        $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        $relq->addAttribute($relq_attribute_alias);
+        
+        // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
+        // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
+        // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
+        // If we would rebase and add all filters, it will still work, but the SQL would get much more complex and surely
+        // slow with large data sets.
+        // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
+        // path we rebase to matches the beginning of the condition's relation path.
+        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) {
+            if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
+        // Add a new filter to attach to the main query (WHERE CUSTOMER_CARD.CUSTOMER_ID = ORDER.CUSTOMER_ID for the above example)
+        // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
+        if ($select_from) {
+            $rightKeyAttribute = $rev_rel->getRightKeyAttribute();
+            $customJoinOn = $rightKeyAttribute->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
+            if (! $reg_rel_path->isEmpty()) {
+                // attach to the related object key of the last regular relation before the reverse one
+                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
+            } else {
+                // attach to the target key in the core query if there are no regular relations preceeding the reversed one
+                $junction_attribute = $rev_rel->getLeftKeyAttribute();
+            } 
             
-            // build a subquery
-            /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
-            $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
-            // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
-            $relq->setMainObject($rev_rel->getRightObject());
-            $relq->setQueryId($this->getNextSubqueryId());
-            
-            // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
-            $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
-            $relq->addAttribute($relq_attribute_alias);
-            
-            // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
-            // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
-            // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
-            // If we would rebase and add all filters, it will still work, but the SQL would get much more complex and surely
-            // slow with large data sets.
-            // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
-            // path we rebase to matches the beginning of the condition's relation path.
-            $relq_condition_filter = function($condition, $relation_path_to_new_base_object) {
-                if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
-                    return false;
-                } else {
-                    return true;
+            // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
+            // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
+            if ($rightKeyAttribute instanceof CompoundAttributeInterface) {
+                // If it's a compound attribute, we need filter query parts for every compound
+                if (! $junction_attribute instanceof CompoundAttributeInterface) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": Relations with compound attributes as keys only supported in SQL query builders if both keys are compounds!');
                 }
-            };
-            $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
-            // Add a new filter to attach to the main query (WHERE CUSTOMER_CARD.CUSTOMER_ID = ORDER.CUSTOMER_ID for the above example)
-            // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
-            if ($select_from) {
-                $rightKeyAttribute = $rev_rel->getRightKeyAttribute();
-                $customJoinOn = $qpart->getDataAddressProperty(self::DAP_SQL_JOIN_ON);
-                if (! $reg_rel_path->isEmpty()) {
-                    // attach to the related object key of the last regular relation before the reverse one
-                    $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $rev_rel->getLeftKeyAttribute()->getAlias()));
-                    // TODO Remove the line below after 31.10.22 if not issues arise
-                    //$junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRightKeyAttribute()->getAlias()));
-                } else {
-                    // attach to the target key in the core query if there are no regular relations preceeding the reversed one
-                    $junction_attribute = $rev_rel->getLeftKeyAttribute();
-                } 
-                
-                // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
-                // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-                if ($rightKeyAttribute instanceof CompoundAttributeInterface) {
-                    // If it's a compound attribute, we need filter query parts for every compound
-                    if (! $junction_attribute instanceof CompoundAttributeInterface) {
-                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": Relations with compound attributes as keys only supported in SQL query builders if both keys are compounds!');
-                    }
-                    if (count($rightKeyAttribute->getComponents()) !== count($junction_attribute->getComponents())) {
-                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": the compound attribute keys on both sides have different number of components!');
-                    }
-                    foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
-                        $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute->getComponent($compIdx)->getAttribute(), $select_from), EXF_COMPARATOR_EQUALS);
-                    }
-                } else {
-                    if (! $this->buildSqlDataAddress($junction_attribute) && ! $customJoinOn) {
-                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": one of the relation key attributes has neither a data address nor an SQL_JOIN_ON custom address property!');
-                    }
-                    $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute, $select_from), EXF_COMPARATOR_EQUALS);
+                if (count($rightKeyAttribute->getComponents()) !== count($junction_attribute->getComponents())) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": the compound attribute keys on both sides have different number of components!');
                 }
-                
-                if ($customJoinOn) {
-                    if (! $junctionQpart) {
-                        throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": custom JOINs via SQL_JOIN_ON only supported for regular key attributes (no compounds, etc.)!');
-                    }
-                    // If it's a custom JOIN, calculate it here
-                    $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $this->getShortAlias($this->getMainObject()->getAlias()), '~right_alias' => $select_from]);
-                    $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
+                foreach ($rightKeyAttribute->getComponents() as $compIdx => $rightKeyComp) {
+                    $relq->addFilterWithCustomSql($rightKeyComp->getAttribute()->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute->getComponent($compIdx)->getAttribute(), $select_from), EXF_COMPARATOR_EQUALS);
                 }
+            } else {
+                if (! $this->buildSqlDataAddress($junction_attribute) && ! $customJoinOn) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": one of the relation key attributes has neither a data address nor an SQL_JOIN_ON custom address property!');
+                }
+                $junctionQpart = $relq->addFilterWithCustomSql($rightKeyAttribute->getAlias(), $this->buildSqlSelectSubselectJunctionWhere($qpart, $junction_attribute, $select_from), EXF_COMPARATOR_EQUALS);
             }
             
-            $output = '(' . $relq->buildSqlQuerySelect() . ')';
-            
-            return $output;
+            if ($customJoinOn) {
+                if (! $junctionQpart) {
+                    throw new QueryBuilderException('Cannot render SQL subselect from "' . $qpart->getAlias() . '": custom JOINs via SQL_JOIN_ON only supported for regular key attributes (no compounds, etc.)!');
+                }
+                // If it's a custom JOIN, calculate it here
+                $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $select_from]);
+                $junctionQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
+            }
+        }
+        
+        $output = '(' . $relq->buildSqlQuerySelect() . ')';
+        
+        return $output;
     }
     
     /**
