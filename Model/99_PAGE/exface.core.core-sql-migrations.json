@@ -216,26 +216,6 @@
                 "action_alias": "axenox.PackageManager.ShowPackageManagerConsole"
             },
             {
-                "caption": "Log Details",
-                "disabled_if": {
-                    "operator": "AND",
-                    "conditions": [
-                        {
-                            "value_left": "=MigrationsTable!log_id",
-                            "comparator": "==",
-                            "value_right": ""
-                        }
-                    ]
-                },
-                "action": {
-                    "alias": "exface.Core.ShowDialogFromFile",
-                    "file_path_attribute_alias": "log_id",
-                    "file_extension": "json",
-                    "folder_path": "logs\/details",
-                    "do_not_prefill": true
-                }
-            },
-            {
                 "caption": "Error Details",
                 "disabled_if": {
                     "operator": "AND",
