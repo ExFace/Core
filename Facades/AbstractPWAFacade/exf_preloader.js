@@ -526,17 +526,15 @@ const exfPreloader = {};
 		};		
 		var updated = await _actionsTable.update(element.id, updatedElement);
 		
-		var params = element.request.data;
-		params = _preloader.encodeJson(params);
 		try {
 			var response = await fetch(element.request.url, {
 				method: element.request.type,
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type': 'application/json; charset=UTF-8',
 					'X-Request-ID': element.id,
 					'X-Client-ID': _preloader.getDeviceId()
 				},
-				body: params
+				body: JSON.stringify(element.request.data)
 			})
 		} catch (error) {
 			console.error("Error sync action with id " + element.id + ". " + error.message);
@@ -595,32 +593,6 @@ const exfPreloader = {};
 		return false;		
 	};
 	
-	/**
-	 * @return {string}
-	 */
-	this.encodeJson = function(srcjson, parent=""){
-		if(typeof srcjson !== "object")
-		  if(typeof console !== "undefined"){
-			//console.log("\"srcjson\" is not a JSON object");
-			return null;
-		}
-		let u = encodeURIComponent;
-		let urljson = "";
-		let keys = Object.keys(srcjson);
-
-		for(let i=0; i < keys.length; i++){
-		  let k = parent ? parent + "[" + keys[i] + "]" : keys[i];
-
-		  if(typeof srcjson[keys[i]] !== "object"){
-			urljson += u(k) + "=" + u(srcjson[keys[i]]);
-		  } else {
-			urljson += _preloader.encodeJson(srcjson[keys[i]], k)
-		  }
-		  if(i < (keys.length-1))urljson+="&";
-		}
-
-		return urljson;
-	}
 	this.getUrlString = function(params, keys = [], isArray = false) {
 		  const p = Object.keys(params).map(key => {
 		    let val = params[key]
