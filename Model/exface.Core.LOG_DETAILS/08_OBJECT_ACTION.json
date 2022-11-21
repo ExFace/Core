@@ -71,7 +71,7 @@
             "NAME": "Show log details",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
-                "file_path_attribute_alias": "id",
+                "file_path_attribute_alias": "filepath",
                 "file_extension": "json",
                 "folder_path": "logs\/details",
                 "do_not_prefill": true

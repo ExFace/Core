@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -86,7 +87,11 @@ class ShowDialogFromFile extends ShowDialog
     }
 
     /**
-     *
+     * Alias of the attribute holding the path to the folder containing the files
+     * 
+     * @uxon-property file_path_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
      * @param string $value            
      * @return \exface\Core\Actions\ShowDialogFromFile
      */
@@ -96,12 +101,26 @@ class ShowDialogFromFile extends ShowDialog
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $idCol = $this->getInputDataSheet($task)->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
-            throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');
+        $inputSheet = $this->getInputDataSheet($task);
+        if (! $fileCol = $inputSheet->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
+            if ($inputSheet->hasUidColumn(true)) {
+                $fileSheet = DataSheetFactory::createFromObject($inputSheet->getMetaObject());
+                $fileSheet->getColumns()->addFromUidAttribute();
+                $fileCol = $inputSheet->getColumns()->addFromExpression($this->getFilePathAttributeAlias());
+                $fileSheet->getFilters()->addConditionFromColumnValues($inputSheet->getUidColumn());
+                $fileSheet->dataRead();
+            } else {
+                throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');
+            }
         }
-        $filename = $idCol->getCellValue(0);
+        $filename = $fileCol->getCellValue(0);
         $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
 
         if (strlen(trim($filename)) > 0) {
@@ -181,10 +200,10 @@ class ShowDialogFromFile extends ShowDialog
      * @uxon-property folder_path
      * @uxon-type string
      *
-     * @param unknown $value            
+     * @param string $value            
      * @return \exface\Core\Actions\ShowDialogFromFile
      */
-    public function setFolderPath($value)
+    public function setFolderPath(string $value)
     {
         $this->folder_path = $value;
         return $this;
