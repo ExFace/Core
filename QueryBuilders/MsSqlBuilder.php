@@ -594,7 +594,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    $value = $value === null ? 'NULL' : "'" . str_replace("'", "''", $value) . "'";
+                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 }
                 break;
             default:
