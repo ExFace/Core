@@ -103,6 +103,7 @@ class MsSqlConnector extends AbstractSqlConnector
         if ($query->isMultipleStatements()) {
             $stmtNo = 0;
             $this->resultCounter = 0;
+            $this->multiqueryResults = [];
             
             $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
             if ($stmt === false) {
@@ -284,7 +285,8 @@ class MsSqlConnector extends AbstractSqlConnector
             return $array;
         }
         if ($query->isMultipleStatements() && ! empty($this->multiqueryResults)) {
-            foreach ($this->multiqueryResults as $rows) {
+            // For multi-query results return the last non-empty result
+            foreach (array_reverse($this->multiqueryResults) as $rows) {
                 if (! empty($rows)) {
                     return $rows;
                 }
