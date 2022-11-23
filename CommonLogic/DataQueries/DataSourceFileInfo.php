@@ -438,7 +438,7 @@ class DataSourceFileInfo extends \SplFileInfo
      */
     public function getRealPath() 
     {
-        return $this->getPath() . '/' . $this->getFilename();
+        return $this->getPath() . self::SLASH . $this->getFilename();
     }
     
     /**
