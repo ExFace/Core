@@ -14,24 +14,36 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\OverflowException;
 
 /**
  * Custom splFileInfo implementation working with files stored in data sources if the meta object has the `FileBehavior`.
  * 
- * The paths have the following scheme: `metamodel://my.app.ObjectAlias/uid_of_file`. 
+ * The paths have the following schemes: 
  * 
- * Currently no folders are supported!
+ * - `metamodel://my.app.ObjectAlias/uid_of_file/filename.ext`
+ * - `metamodel://my.app.ObjectAlias/uid_of_file/*`
+ * - `metamodel://my.app.ObjectAlias/folder_attribute/*`
+ * 
+ * Currently no real (nested) folder structure is supported - you can't travel up the folder tree, but
+ * the `folder_attribute` of the `FileBehavior` may contain a complex path.
  * 
  * @author Andrej Kabachnik
- *
+ * 
+ * IDEA added wildcard support for filenames - to select one of multiple files inside a folder in
+ * case the `folder_attribute` is not a UID. See `getFilenameMask()` for details
  */
 class DataSourceFileInfo extends \SplFileInfo
 {
     const SCHEME = 'metamodel://';
     
+    const SLASH = '/';
+    
     private $pathname = null;
     
     private $folder = null;
+    
+    private $filenameMask = null;
     
     private $filename = null;
     
@@ -49,7 +61,7 @@ class DataSourceFileInfo extends \SplFileInfo
     
     /**
      * 
-     * @param string $uid
+     * @param string $folder
      * @param MetaObjectInterface $object
      */
     public function __construct($path, WorkbenchInterface $workbench)
@@ -57,14 +69,14 @@ class DataSourceFileInfo extends \SplFileInfo
         $matches = [];
         preg_match('@' . self::SCHEME . '([^/]+)/([^/]+)/?(.*)@i', $path, $matches);
         $objectSelector = $matches[1] ?? null;
-        $uid = $matches[2] ?? null;
+        $folder = $matches[2] ?? null;
         $filename = $matches[3] ?? null;
-        if ($uid === null || $objectSelector === null) {
+        if ($folder === null || $objectSelector === null) {
             throw new UnexpectedValueException('Cannot parse virtual file path "' . $path . '".');
         }
         $this->pathname = $path;
-        $this->filename = $filename;
-        $this->folder = $uid;
+        $this->filenameMask = $filename;
+        $this->folder = $folder;
         $this->object = MetaObjectFactory::createFromString($workbench, $objectSelector);
     }
     
@@ -84,6 +96,28 @@ class DataSourceFileInfo extends \SplFileInfo
     public function getFolder() : string
     {
         return $this->folder;
+    }
+    
+    /**
+     * Returns the filename mask from the original virtual path.
+     * 
+     * TODO add support for real masking with wildcards. Currently the mask can either be `*` or a
+     * plain filename (without a wildcard).
+     * 
+     * @return string|NULL
+     */
+    protected function getFilenameMask() : ?string
+    {
+        return $this->filenameMask;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasFilenameMask() : bool
+    {
+        return $this->filenameMask !== null && $this->filenameMask !== '' && $this->filenameMask !== '*';
     }
     
     /**
@@ -120,13 +154,24 @@ class DataSourceFileInfo extends \SplFileInfo
     protected function getFileDataSheet() : DataSheetInterface
     {
         if ($this->fileData === null) {
+            $fileBeh = $this->getFileBehavior();
+            
             $this->fileData = DataSheetFactory::createFromObject($this->getMetaObject());
-            $this->fileData->getFilters()->addConditionFromAttribute($this->getFileBehavior()->getFolderAttribute(), $this->getFolder(), ComparatorDataType::EQUALS);
-            $this->fileAttributes = $this->getFileBehavior()->getFileAttributes();
+            $this->fileAttributes = $fileBeh->getFileAttributes();
             foreach ($this->fileAttributes as $attr) {
                 $this->fileData->getColumns()->addFromAttribute($attr);
             }
+            
+            $this->fileData->getFilters()->addConditionFromAttribute($fileBeh->getFolderAttribute(), $this->getFolder(), ComparatorDataType::EQUALS);
+            if ($this->hasFilenameMask() && $filenameAttr = $this->getFileBehavior()->getFilenameAttribute()) {
+                $this->fileData->getFilters()->addConditionFromAttribute($filenameAttr, $this->getFilenameMask(), ComparatorDataType::EQUALS);
+            }
+            
             $this->fileData->dataRead();
+            
+            if ($this->fileData->countRows() > 1) {
+                throw new OverflowException('Ambiguous virtual file path "' . $this->getPathname() . '": ' . $this->fileData->countRows() . ' matching files found!');
+            }
         }
         return $this->fileData;
     }
@@ -172,10 +217,14 @@ class DataSourceFileInfo extends \SplFileInfo
      */
     public function getFilename() 
     {
-        if (null !== $attr = $this->getFileBehavior()->getFilenameAttribute()) {
-            return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        if ($this->filename === null) {
+            if (null !== $attr = $this->getFileBehavior()->getFilenameAttribute()) {
+                $this->filename = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+            } elseif ($this->hasFilenameMask()) {
+                $this->filename = $this->getFilenameMask();
+            }
         }
-        return '';
+        return $this->filename ?? '';
     }
     
     /**
@@ -389,7 +438,7 @@ class DataSourceFileInfo extends \SplFileInfo
      */
     public function getRealPath() 
     {
-        return $this->pathname;
+        return $this->getPath() . '/' . $this->getFilename();
     }
     
     /**

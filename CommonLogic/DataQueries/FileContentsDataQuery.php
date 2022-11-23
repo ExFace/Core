@@ -87,7 +87,7 @@ class FileContentsDataQuery extends AbstractDataQuery
      */
     public function setPath(string $relativeOrAbsolute) : FileContentsDataQuery
     {
-        if (UrlDataType::isAbsolute($relativeOrAbsolute) || FilePathDataType::isAbsolute($path)) {
+        if (UrlDataType::isAbsolute($relativeOrAbsolute) || FilePathDataType::isAbsolute($relativeOrAbsolute)) {
             $this->setPathAbsolute($relativeOrAbsolute);
         } else {
             $this->setPathRelative($relativeOrAbsolute);
