@@ -229,10 +229,10 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
         $toColLabels = $toSheet->getColumns()->addFromExpression($this->getToLabelsColumnExpression());
         $toColValues = $toSheet->getColumns()->addFromExpression($this->getToValuesColumnExpression());
         
-        
+        // If the from sheet is empty, unpivoting it wont change anything.
         // Data column references should not result in errors if the data sheet is completely empty
         // Otherwise input-mappers would always produce errors on empty input data!
-        if ($fromSheet->getColumns()->isEmpty()) {
+        if ($fromSheet->isEmpty()) {
             return $toSheet;
         }
         
