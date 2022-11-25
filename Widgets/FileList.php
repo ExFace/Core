@@ -571,4 +571,35 @@ class FileList extends DataTable
         
         return;
     }
+    
+    /**
+     * The FileList is concidered to be editable if it allows non-instant uploads, thus
+     * acting as a sort of form to input files.
+     * 
+     * It is important to tell other widgets, that the FileList is editable because
+     * containers should ask it for nested data if it uses non-instant uploads.
+     * 
+     * @see \exface\Core\Widgets\Data::isEditable()
+     */
+    public function isEditable() : bool
+    {
+        if (parent::isEditable()) {
+            return true;
+        }
+        
+        // Can't just use $this->getUploader()->isInstantUpload() here because the isEditable() method
+        // is also called every time a column is added. At this time, the uploader is not instantiated
+        // and cannot be instantiated because it requires all the columns. The following code is a
+        // workaround, that tries to determine editable or not via the uploader UXON if the uploader
+        // has not been instantiated yet.
+        if ($this->isUploadEnabled()) {
+            if ($this->uploader !== null && $this->uploader->isInstantUpload() === false) {
+                return true;
+            }
+            if ($this->uploader === null && $this->uploaderUxon !== null && $this->uploaderUxon->hasProperty('instant_upload') && $this->uploaderUxon->getProperty('instant_upload') === false) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
