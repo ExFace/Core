@@ -568,7 +568,7 @@ class DataSheet implements DataSheetInterface
         } catch (DataSheetReadError $dsre) {
             throw $dsre;  
         } catch (\Throwable $e) {
-            throw new DataSheetReadError($this, 'Cannot initialize query builder for object "' . $thisObject->getName() . '" (' . $thisObject->getAliasWithNamespace() . ')!', null, $e);
+            throw new DataSheetReadError($this, 'Cannot initialize query builder for object ' . $thisObject->__toString() . ': ' . $e->getMessage(), null, $e);
         }
         
         // set sorting
@@ -2609,7 +2609,7 @@ class DataSheet implements DataSheetInterface
         } catch (DataSheetReadError $dsre) {
             throw $dsre;
         } catch (\Throwable $e) {
-            throw new DataSheetReadError($this, 'Cannot initialize query builder for object "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . ')!', null, $e);
+            throw new DataSheetReadError($this, 'Cannot initialize query builder for object ' . $this->getMetaObject()->__toString() . ': ' . $e->getMessage(), null, $e);
         }
         
         try {
