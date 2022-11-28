@@ -62,12 +62,22 @@ class ExcelBuilder extends FileContentsBuilder
      * range. If set to FALSE, the value will be kept in the top left cell only - just
      * like if you would unmerge the cell in Excel.
      *
-     * @uxon-property EXCEL_FILL_MERGED_CELLS
+     * @uxon-property excel_fill_merged_cells
      * @uxon-target object
      * @uxon-default true
      * @uxon-type boolean
      */
-    const DAP_EXCEL_FILL_MERGED_CELLS = 'EXCEL_FILL_MERGED_CELLS';
+    const DAP_EXCEL_FILL_MERGED_CELLS = 'excel_fill_merged_cells';
+    
+    /**
+     * Set to FALSE to return an empty result if the target excel sheet is not found instead of raising an error.
+     *
+     * @uxon-property excel_error_if_sheet_not_found
+     * @uxon-target object
+     * @uxon-default true
+     * @uxon-type boolean
+     */
+    const DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND = 'excel_error_if_sheet_not_found';
     
     /**
      * 
@@ -140,7 +150,11 @@ class ExcelBuilder extends FileContentsBuilder
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
         if (! $sheet) {
-            throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
+            if (BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND) ?? true)) {
+                throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
+            } else {
+                return new DataQueryResultData([], 0, false, 0);
+            }
         }
         
         $this->prepareFilters($query);
