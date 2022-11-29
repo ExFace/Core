@@ -129,8 +129,9 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 $newCol = $toSheet->getColumns()->addFromExpression($toExpr);
                 $newCol->setValues($fromExpr->evaluate($fromSheet));
                 // If the sheet has no rows, setValuesByExpression() will not have an effect, so
-                // we need to add a row manually.
-                if ($toSheet->isEmpty() === true) {
+                // we need to add a row manually. But this will only work if the from-sheet
+                // has at least one row - othewise non-static formulas will throw an error!
+                if ($toSheet->isEmpty() === true && $fromSheet->isEmpty() === false) {
                     $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
                 }
                 break;
