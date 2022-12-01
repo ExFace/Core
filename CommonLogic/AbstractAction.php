@@ -828,7 +828,7 @@ abstract class AbstractAction implements ActionInterface
                 case $selector->isFilepath():
                     $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
                     $actionClassPath = FilePathDataType::normalize(get_class($this));
-                    return $selectorClassPath === $actionClassPath;
+                    return strcasecmp($selectorClassPath, $actionClassPath) === 0;
                 case $selector->isClassname():
                     return ltrim(get_class($this), "\\") === ltrim($selector->toString(), "\\");
                 case $selector->isAlias():
