@@ -106,19 +106,7 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             /* @var $selector \exface\Core\CommonLogic\Selectors\FacadeSelector */
             if (($selector = $this->facadeSelector) !== null) {
-                switch(true) {
-                    case $selector->isFilepath():
-                        $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
-                        $facadeClassPath = FilePathDataType::normalize(get_class($facade));
-                        $applied =  $selectorClassPath === $facadeClassPath;
-                        break;
-                    case $selector->isClassname():
-                        $applied = trim(get_class($facade), "\\") === trim($selector->toString(), "\\");
-                        break;
-                    case $selector->isAlias():
-                        $applied = $facade->getAliasWithNamespace() === $selector->toString();
-                        break;                    
-                }
+                $applied = $facade->isExactly($selector);
             }
             
             if ($applied === false) {
