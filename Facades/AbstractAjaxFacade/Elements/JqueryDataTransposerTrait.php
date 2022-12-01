@@ -264,8 +264,8 @@ trait JqueryDataTransposerTrait {
     			    // TODO save UID and other system attributes to some invisible data structure
     			}
     		}
-    		console.log(oRowKeys);
-    		var subRowCounter = 0;
+    		
+            var subRowCounter = 0;
     		for (var fld in newColVals){
                 var oColOrig = oResult.oColModelsOriginal[fld];
                 oColOrig.iTransposedToSubrow = subRowCounter++;
