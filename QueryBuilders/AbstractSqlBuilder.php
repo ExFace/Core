@@ -38,6 +38,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\Factories\FormulaFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -2410,6 +2411,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $baseObj = $relation_path !== null ? $relation_path->getEndObject() : $this->getMainObject();
         foreach (StringDataType::findPlaceholders($data_address) as $ph) {
+            if (StringDataType::startsWith($ph, '=')) {
+                $formula = FormulaFactory::createFromString($this->getWorkbench(), $ph);
+                if ($formula->isStatic() === false) {
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": the used formula is not static! Only static formulas are supported in data address placeholders!');
+                }
+                $data_address = StringDataType::replacePlaceholder($data_address, $ph, $formula->evaluate());
+                continue;
+            }
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             // If the placeholder is not part of the query already, create a new query part.
