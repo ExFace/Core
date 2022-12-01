@@ -9,7 +9,6 @@ use exface\Core\Facades\AbstractHttpFacade\HttpFacadeInstaller;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Facades\ProxyFacade;
 use exface\Core\Facades\WebConsoleFacade;
 use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
@@ -106,11 +105,6 @@ RewriteRule ^data/\..*$ - [F]
         // Docs facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(DocsFacade::class, $this->getWorkbench()));
-        $installer->addInstaller($tplInstaller);
-        
-        // Proxy facade
-        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
-        $tplInstaller->setFacade(FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         // Web console facade

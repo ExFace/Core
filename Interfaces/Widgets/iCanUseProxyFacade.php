@@ -20,9 +20,9 @@ interface iCanUseProxyFacade extends WidgetInterface
     /**
      * 
      * @param bool|int|string $trueOrFalse
-     * @return iCanUseProxyFacade
+     * @return WidgetInterface
      */
-    public function setUseProxy($trueOrFalse) : iCanUseProxyFacade;
+    public function setUseProxy(bool $trueOrFalse) : WidgetInterface;
     
     /**
      *

@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iCanUseProxyFacade;
-use exface\Core\Facades\ProxyFacade;
 use exface\Core\Factories\FacadeFactory;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 
 trait iCanUseProxyFacadeTrait {
     
@@ -29,7 +29,7 @@ trait iCanUseProxyFacadeTrait {
      * view of the resource server. The latter will not know anything about the
      * the actual client consuming the UI.
      * 
-     * @see ProxyFacade for common examples.
+     * @see axenox\Proxy\Facades\ProxyFacade for common examples.
      * 
      * @uxon-property use_proxy
      * @uxon-type boolean
@@ -37,9 +37,9 @@ trait iCanUseProxyFacadeTrait {
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iCanUseProxyFacade::setUseProxy()
      */
-    public function setUseProxy($trueOrFalse) : iCanUseProxyFacade
+    public function setUseProxy(bool $trueOrFalse) : WidgetInterface
     {
-        $this->useProxy = BooleanDataType::cast($trueOrFalse);
+        $this->useProxy = $trueOrFalse;
         return $this;
     }
     
@@ -55,11 +55,11 @@ trait iCanUseProxyFacadeTrait {
     
     /**
      * 
-     * @return ProxyFacade
+     * @return HttpFacadeInterface
      */
-    protected function getProxyFacade() : ProxyFacade
+    protected function getProxyFacade() : HttpFacadeInterface
     {
-        return FacadeFactory::createFromString(ProxyFacade::class, $this->getWorkbench());
+        return FacadeFactory::createFromString("axenox.Proxy.ProxyFacade", $this->getWorkbench());
     }
     
 }
