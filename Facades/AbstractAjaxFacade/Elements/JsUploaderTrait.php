@@ -123,7 +123,7 @@ JS;
                         }
                         
                         return '{$prefix0x}' + a.join('');
-                    }($fileContentJs);
+                    }($fileContentJs)
 JS;
         }
         return "'data:' + {$mimeTypeJs} + ';base64,' + btoa({$fileContentJs})";
