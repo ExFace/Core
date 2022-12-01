@@ -18,6 +18,7 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A query builder for Microsoft SQL Server 2012+ (T-SQL).
@@ -514,7 +515,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                         if ($aggrPart->getAttribute()->isExactly($qpart->getAttribute())) {
                             continue;
                         }
-                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAlias(), $this->buildSqlSelect($aggrPart, null, null, false, false, false));
+                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAlias(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
