@@ -531,7 +531,7 @@ HTML;
      * @param DataSheetInterface $data_sheet
      * @return array
      */
-    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true) : array
+    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, $forceHtmlEntities = true) : array
     {
         $rows = $decrypt ? $data_sheet->getRowsDecrypted() : $data_sheet->getRows();
         if (empty($rows)) {
@@ -546,10 +546,12 @@ HTML;
                     // FIXME #xss-protection sanitize HTML here!
                     break;
                 case $colType instanceof StringDataType:
-                    foreach ($rows as $i => $row) {
-                        $val = $row[$colName];
-                        if ($val !== null && $val !== '') {
-                            $rows[$i][$colName] = htmlentities($val);
+                    if ($forceHtmlEntities) {
+                        foreach ($rows as $i => $row) {
+                            $val = $row[$colName];
+                            if ($val !== null && $val !== '') {
+                                $rows[$i][$colName] = htmlentities($val);
+                            }
                         }
                     }
                     break;
