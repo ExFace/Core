@@ -526,6 +526,40 @@ HTML;
     abstract public function buildResponseData(DataSheetInterface $data_sheet, WidgetInterface $widget = null);
     
     /**
+     * Returns an array of data rows with sanitized values, that are safe to put publish as HTML
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return array
+     */
+    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true) : array
+    {
+        $rows = $decrypt ? $data_sheet->getRowsDecrypted() : $data_sheet->getRows();
+        if (empty($rows)) {
+            return $rows;
+        }
+        
+        foreach ($data_sheet->getColumns() as $col) {
+            $colName = $col->getName();
+            $colType = $col->getDataType();
+            switch (true) {
+                case $colType instanceof HtmlDataType:
+                    // FIXME #xss-protection sanitize HTML here!
+                    break;
+                case $colType instanceof StringDataType:
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        if ($val !== null && $val !== '') {
+                            $rows[$i][$colName] = htmlentities($val);
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        return $rows;
+    }
+    
+    /**
      *
      * @param array|\stdClass $serializable_data
      * @throws FacadeOutputError
