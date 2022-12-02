@@ -5,6 +5,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This trait enables an exception to output widget specific debug information.
@@ -53,22 +55,52 @@ trait WidgetExceptionTrait {
     {
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
         if ($debug_widget->findChildById('widget_uxon_tab') === false) {
-            $page = $debug_widget->getPage();
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');
             $uxon_tab->setCaption('Widget UXON');
-            $uxon_tab->setNumberOfColumns(1);
-            $request_widget = WidgetFactory::create($page, 'Html');
-            $uxon_tab->addWidget($request_widget);
-            $uxon = $this->getWidget()->exportUxonObjectOriginal();
-            if ($uxon->isEmpty()) {
-                try {
-                    $uxon = $this->getWidget()->exportUxonObject();
-                } catch (\Throwable $e) {
-                    // Do nothing - this will show the empty original UXON
-                }
+            
+            $widget = $this->getWidget();
+            $widgetUxon = $widget->exportUxonObjectOriginal();
+            
+            $parent = $widget;
+            $parentUxon = new UxonObject();
+            while ($parent->hasParent() && $parentUxon->isEmpty()) {
+                $parent = $widget->getParent();
+                $parentUxon = $parent->exportUxonObjectOriginal();
             }
-            $request_widget->setHtml('<pre>' . $uxon->toJson(true) . '</pre>');
+            
+            if (($trigger = $widget->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
+                $action = $trigger->getAction();
+                $actionInfo = $action->getAliasWithNamespace() . ' (' . $action->getName() . ')';
+            } else {
+                $actionInfo = 'exface.Core.ShowWidget (root)';
+            }
+            
+            $tabContents = <<<MD
+
+**Widget ID:** {$widget->getId()}
+
+**Called by action:** {$actionInfo}
+
+## Widget UXON
+
+```
+{$widgetUxon->toJson(true)}
+```
+
+## Parent widget UXON
+
+```
+{$parentUxon->toJson(true)}
+```
+
+MD;
+            $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+                'widget_type' => 'Markdown',
+                'value' => $tabContents,
+                'width' => '100%',
+                'height' => '100%'
+            ])));
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;
