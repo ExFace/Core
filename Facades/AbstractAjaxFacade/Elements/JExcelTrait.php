@@ -270,8 +270,8 @@ JS;
             $columnsJson .= <<<JS
                 "{$col->getDataColumnName()}": {
                     dataColumnName: "{$col->getDataColumnName()}",
-                    caption: {$this->escapeString($col->getCaption())},
-                    tooltip: {$this->escapeString($col->getHint() ?? '')},
+                    caption: {$this->escapeString($col->getCaption(), true, false)},
+                    tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
                     parser: {$parserJs},
                     formatter: {$formatterJs},
                     validator: {$validatorJs},
