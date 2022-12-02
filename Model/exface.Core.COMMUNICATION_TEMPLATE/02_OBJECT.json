@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-09-19 13:19:21",
-            "MODIFIED_ON": "2022-10-07 10:56:49",
+            "MODIFIED_ON": "2022-12-01 12:29:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed830be97308e4830b025041000001",
@@ -189,6 +189,10 @@
                                             {
                                                 "attribute_alias": "OBJECT_BEHAVIOR",
                                                 "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT",
+                                                "hidden": true
                                             }
                                         ],
                                         "sorters": [
@@ -199,7 +203,7 @@
                                         ],
                                         "buttons": [
                                             {
-                                                "caption": "Edit behavior",
+                                                "caption": "Open behavior",
                                                 "action": {
                                                     "alias": "exface.Core.ShowObjectEditDialog",
                                                     "object_alias": "exface.Core.OBJECT_BEHAVIORS",
@@ -224,7 +228,7 @@
                                                 }
                                             },
                                             {
-                                                "caption": "Edit action",
+                                                "caption": "Open action",
                                                 "action": {
                                                     "alias": "exface.Core.ShowObjectEditDialog",
                                                     "object_alias": "exface.Core.OBJECT_ACTION",
@@ -246,6 +250,21 @@
                                                             "value_right": ""
                                                         }
                                                     ]
+                                                }
+                                            },
+                                            {
+                                                "caption": "Open object",
+                                                "action": {
+                                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                                    "object_alias": "exface.Core.OBJECT",
+                                                    "input_mapper": {
+                                                        "column_to_column_mappings": [
+                                                            {
+                                                                "from": "OBJECT",
+                                                                "to": "UID"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             },
                                             {
