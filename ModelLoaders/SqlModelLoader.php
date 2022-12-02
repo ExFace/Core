@@ -93,6 +93,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -1365,18 +1367,22 @@ SQL;
             } else if ($row['target_object_action_oid'] !== null) {
                 $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
             }
-            $authPoint->addPolicy(
-                [
-                    PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
-                    PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
-                    PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
-                    PolicyTargetDataType::ACTION => $action,
-                    PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
-                ],
-                PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
-                $row['name'],
-                UxonObject::fromAnything($row['condition_uxon'] ?? [])
-            );
+            try {
+                $authPoint->addPolicy(
+                    [
+                        PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
+                        PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
+                        PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
+                        PolicyTargetDataType::ACTION => $action,
+                        PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
+                    ],
+                    PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
+                    $row['name'],
+                    UxonObject::fromAnything($row['condition_uxon'] ?? [])
+                );
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Cannot load authorization policy "' . $row['name'] . '": ' . $e->getMessage(), null, $e), LoggerInterface::ALERT);
+            }
         }
         
         return $authPoint;

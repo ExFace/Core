@@ -40,7 +40,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * 6. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
  * 7. Otherwise, the result is "NotApplicable".
  * 
- * Deny Overrides
+ * ## Deny Overrides
  * 
  * The deny overrides combining algorithm is intended for those cases where a deny decision should have priority over a permit decision.
  * This algorithm has the following behavior.
