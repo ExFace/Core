@@ -50,6 +50,8 @@ class CoreApp extends App
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
         
+        // .htaccess for Apache servers
+        
         $htaccessInstaller = new FileContentInstaller($this->getSelector());
         $htaccessInstaller
             ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']))
@@ -87,6 +89,8 @@ RewriteRule ^data/\..*$ - [F]
 ");
         $installer->addInstaller($htaccessInstaller);
         
+        // Web.config for IIS servers
+        
         $webconfigInstaller = new FileContentInstaller($this->getSelector());
         $webconfigInstaller
         ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
@@ -94,6 +98,21 @@ RewriteRule ^data/\..*$ - [F]
         ->setMarkerBegin("\n<!-- BEGIN [#marker#] -->")
         ->setMarkerEnd("<!-- END [#marker#] -->");
         $installer->addInstaller($webconfigInstaller);
+        
+        // robot.txt
+        
+        $robotsTxtInstaller = new FileContentInstaller($this->getSelector());
+        $robotsTxtInstaller
+        ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'robots.txt']))
+        ->setFileTemplatePath('default.robots.txt')
+        ->setMarkerBegin("\n# BEGIN [#marker#]")
+        ->setMarkerEnd('# END [#marker#]')
+        ->addContent('Disallow robots in general', "
+User-agent: *
+Disallow: /
+    
+");
+        $installer->addInstaller($robotsTxtInstaller);
         
         // Add facade installers for core facades
         
