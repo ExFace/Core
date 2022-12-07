@@ -63,6 +63,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * 
@@ -544,6 +545,9 @@ HTML;
             switch (true) {
                 case $colType instanceof HtmlDataType:
                     // FIXME #xss-protection sanitize HTML here!
+                    break;
+                case $colType instanceof JsonDataType:
+                    // FIXME #xss-protection sanitize JSON here!
                     break;
                 case $colType instanceof StringDataType:
                     if ($forceHtmlEntities) {
