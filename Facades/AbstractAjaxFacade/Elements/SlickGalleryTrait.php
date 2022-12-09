@@ -162,7 +162,7 @@ JS;
         {$this->getOnChangeScript()}
     });
 
-    $("#{$this->getIdOfSlick()}").append({$this->escapeString($this->buildHtmlNoDataOverlay())});
+    $("#{$this->getIdOfSlick()}").append({$this->escapeString($this->buildHtmlNoDataOverlay(), true, false)});
 
 JS;
     }
