@@ -95,6 +95,10 @@ use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\MetamodelAliasDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\DataTypes\MessageCodeDataType;
 
 /**
  * Loads metamodel entities from SQL databases supporting the MySQL dialect.
@@ -199,10 +203,14 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
-        if ($object->getId()) {
-            $q_where = 'o.oid = ' . $object->getId();
+        $objectUid = $object->getId();
+        if ($objectUid !== null) {
+            $objectUid = HexadecimalNumberDataType::cast($objectUid);
+            $q_where = 'o.oid = ' . $objectUid;
         } else {
-            $q_where = "a.app_alias = '{$this->buildSqlEscapedString($object->getNamespace())}' AND o.object_alias = '{$this->buildSqlEscapedString($object->getAlias())}'";
+            $namespace = MetamodelAliasDataType::cast($object->getNamespace(), true);
+            $alias = MetamodelAliasDataType::cast($object->getAlias());
+            $q_where = "a.app_alias = '{$namespace}' AND o.object_alias = '{$alias}'";
         }
         $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
@@ -284,6 +292,8 @@ class SqlModelLoader implements ModelLoaderInterface
             throw new MetaObjectNotFoundError('Object with alias "' . $object->getAliasWithNamespace() . '" or id "' . $object->getId() . '" not found!');
         }
         
+        $objectUid = $objectUid ?? HexadecimalNumberDataType::cast($object->getId());
+        
         // select all attributes for this object
         $query = $this->getDataConnection()->runSql('
                 -- Load attributes
@@ -296,7 +306,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
 					o.object_alias as rev_relation_alias
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
-				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
+				WHERE a.object_oid = ' . $objectUid . ' OR a.related_object_oid = ' . $objectUid);
         if ($res = $query->getResultArray()) {
             $relation_attrs = [];
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
@@ -494,7 +504,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
                 -- Load behaviors
-				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$object->getId()}");
+				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']), $row['app_oid']);
@@ -608,9 +618,9 @@ class SqlModelLoader implements ModelLoaderInterface
             // Join data source and connection on alias or UID depending on the type of connection selector
             // Note, that the alias needs to be wrapped in quotes and the UID does not!
             if (false === $connectionSelector->isUid()) {
-                $joinConnectionOn = 'dc.alias = "' . $connectionSelector->toString() . '"';
+                $joinConnectionOn = 'dc.alias = "' . MetamodelAliasDataType::cast($connectionSelector->toString(), true) . '"';
             } else {
-                $joinConnectionOn = 'dc.oid = ' . $connectionSelector->toString();
+                $joinConnectionOn = 'dc.oid = ' . HexadecimalNumberDataType::cast($connectionSelector->toString());
             }
         } else {
             $joinConnectionOn = "{$this->buildSqlCaseWhenThenElse('ds.custom_connection_oid IS NOT NULL', 'ds.custom_connection_oid', 'ds.default_connection_oid')} = dc.oid";
@@ -624,18 +634,19 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         
         if ($selector->isUid() === true) {
-            $selectorFilter = "ds.oid = {$selector->toString()}";
+            $selectorFilter = "ds.oid = " . HexadecimalNumberDataType::cast($selector->toString());
             $joinDataSourceApp = '';
         } else {
             // Now we know, it's an alias
             // Check if it has a namespace. In older versions data sources did not have namespaced aliases, so
             // this if basically takes care of backwards compatibility. Currently this should not be possible!
+            $alias = MetamodelAliasDataType::cast($selector->toString(), true);
             if (strpos($selector->toString(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER) === false) {
                 $joinDataSourceApp = '';
-                $selectorFilter = "ds.alias = '{$selector->toString()}'";
+                $selectorFilter = "ds.alias = '{$alias}'";
             } else {
                 $joinDataSourceApp = 'INNER JOIN exf_app dsa ON ds.app_oid = dsa.oid';
-                $selectorFilter = "ds.alias = '{$selector::stripNamespace($selector->toString())}' AND dsa.app_alias = '{$selector->getAppAlias()}'";
+                $selectorFilter = "ds.alias = '{$selector::stripNamespace($alias)}' AND dsa.app_alias = '{$selector->getAppAlias()}'";
             }
         }
         $sql = "
@@ -787,11 +798,11 @@ class SqlModelLoader implements ModelLoaderInterface
             $filter = 'dc.oid = ' . $selector->toString();
         } else {
             if ($selector->hasNamespace()) {
-                $appAlias = $selector->getAppAlias();
-                $alias = substr($selector->toString(), (strlen($appAlias)+1));
-                $filter = "dc.alias = '{$this->buildSqlEscapedString($alias)}' AND a.app_alias = '{$this->buildSqlEscapedString($appAlias)}'";
+                $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
+                $alias = MetamodelAliasDataType::cast(substr($selector->toString(), (strlen($appAlias)+1)));
+                $filter = "dc.alias = '{$alias}' AND a.app_alias = '{$appAlias}'";
             } else {
-                $filter = "dc.alias = '{$this->buildSqlEscapedString($selector->toString())}'";
+                $filter = "dc.alias = '{$this->buildSqlEscapedString(MetamodelAliasDataType::cast($selector->toString()))}'";
             }
         }
         
@@ -877,8 +888,10 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectActions(MetaObjectActionListInterface $empty_list)
     {
-        $object_id_list = implode(',', $empty_list->getMetaObject()->getParentObjectsIds());
-        $object_id_list = $empty_list->getMetaObject()->getId() . ($object_id_list ? ',' . $object_id_list : '');
+        $object_id_array = $empty_list->getMetaObject()->getParentObjectsIds();
+        array_walk($object_id_array, ['\\' . HexadecimalNumberDataType::class, 'cast']);
+        $object_id_list = implode(',', $object_id_array);
+        $object_id_list = HexadecimalNumberDataType::cast($empty_list->getMetaObject()->getId()) . ($object_id_list ? ',' . $object_id_list : '');
         $sql_where = 'oa.object_oid IN (' . $object_id_list . ')';
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
@@ -890,7 +903,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadAppActions(AppActionList $empty_list)
     {
-        $sql_where = 'a.app_alias = "' . $empty_list->getApp()->getAliasWithNamespace() . '"';
+        $sql_where = 'a.app_alias = "' . MetamodelAliasDataType::cast($empty_list->getApp()->getAliasWithNamespace(), true) . '"';
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
@@ -899,10 +912,12 @@ class SqlModelLoader implements ModelLoaderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadAction()
      */
-    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
+    public function loadAction(AppInterface $app, $actionAlias, WidgetInterface $trigger_widget = null)
     {
-        $sql_where = "a.app_alias = '{$this->buildSqlEscapedString($app->getAliasWithNamespace())}' AND oa.alias = '{$this->buildSqlEscapedString($action_alias)}'";
-        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
+        $appAlias = MetamodelAliasDataType::cast($app->getAliasWithNamespace(), true);
+        $actionAlias = MetamodelAliasDataType::cast($actionAlias);
+        $sqlWhere = "a.app_alias = '{$appAlias}' AND oa.alias = '{$actionAlias}'";
+        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sqlWhere, $trigger_widget);
         return $actions->getFirst();
     }
 
@@ -1005,6 +1020,7 @@ class SqlModelLoader implements ModelLoaderInterface
     */
     public function loadAttributeComponents(CompoundAttributeInterface $attribute) : CompoundAttributeInterface
     {
+        $attrId = HexadecimalNumberDataType::cast($attribute->getId());
         $query = $this->getDataConnection()->runSql("
             -- Load compound attribute
             SELECT
@@ -1012,7 +1028,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 {$this->buildSqlUuidSelector('ac.attribute_oid')} as attribute_oid,
                 {$this->buildSqlUuidSelector('ac.compound_attribute_oid')} as compound_attribute_oid
             FROM exf_attribute_compound ac
-            WHERE ac.compound_attribute_oid = {$attribute->getId()}
+            WHERE ac.compound_attribute_oid = {$attrId}
             ORDER BY ac.sequence_index ASC
         ");
         foreach ($query->getResultArray() as $row) {
@@ -1088,9 +1104,9 @@ class SqlModelLoader implements ModelLoaderInterface
     protected function cacheDataType(DataTypeSelectorInterface $selector)
     {
         if ($selector->isUid()){
-            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $selector->toString() . ')';
+            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . HexadecimalNumberDataType::cast($selector->toString()) . ')';
         } else {
-            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $selector->getAppAlias() . "')";
+            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . MetamodelAliasDataType::cast($selector->getAppAlias(), true) . "')";
         }
         $query = $this->getDataConnection()->runSql('
                 -- Load data types
@@ -1401,13 +1417,13 @@ SQL;
                     return $uiPage;
                 }
             }
-            $where = "p.alias = '" . $selector->toString() . "'";
+            $where = "p.alias = '" . MetamodelAliasDataType::cast($selector->toString(), true) . "'";
             $err = 'alias "' . $selector->toString() . '"';
         } elseif ($selector->isUid()) {
             if ($uiPage = $this->pages_loaded[$selector->toString()]) {
                 return $uiPage;
             }
-            $where = "p.oid = " . $selector->toString();
+            $where = "p.oid = " . HexadecimalNumberDataType::cast($selector->toString());
             $err = 'UID "' . $selector->toString() . '"';
         } else {
             throw new UiPageNotFoundError('Unsupported page selector ' . $selector->toString() . '!');
@@ -1783,6 +1799,7 @@ SQL;
             $sqlWhere = "
             WHERE parent_oid IS NULL AND menu_visible = 1";
         } else {
+            $id = HexadecimalNumberDataType::cast($id);
             $sqlWhere = "
             WHERE (oid = {$id} OR parent_oid = {$id}) AND menu_visible = 1";
         }
@@ -1845,6 +1862,7 @@ SQL;
      */
     protected function buildSqlEscapedString(string $string) : string
     {
+        $string = strip_tags($string);
         if (function_exists('mb_ereg_replace')) {
             return mb_ereg_replace('[\x00\x0A\x0D\x1A\x22\x27\x5C]', '\\\0', $string);
         } else {
@@ -1859,11 +1877,12 @@ SQL;
      */
     public function loadMessageData(MessageInterface $message) : MessageInterface
     {
+        $messageCode = MessageCodeDataType::cast($message->getCode());
         $sql = <<<SQL
 -- Load message
 SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
     FROM exf_message
-    WHERE code = '{$message->getCode()}'
+    WHERE code = '{$messageCode}'
 SQL;
         $result = $this->getDataConnection()->runSql($sql);
         $row = $result->getResultArray()[0];
@@ -1948,9 +1967,12 @@ SQL;
     {
         if ($selector->isAlias()) {
             if ($selector->hasNamespace()) {
-                $selectorWhere = "cc.alias = '{$selector::stripNamespace($selector->toString())}' AND a.app_alias = '{$selector->getAppAlias()}'";
+                $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
+                $alias = MetamodelAliasDataType::cast($selector::stripNamespace($selector->toString()));
+                $selectorWhere = "cc.alias = '{$alias}' AND a.app_alias = '{$appAlias}'";
             } else {
-                $selectorWhere = "cc.alias = '{$selector->toString()}' AND cc.app_oid IS NULL";
+                $alias = MetamodelAliasDataType::cast($selector->toString());
+                $selectorWhere = "cc.alias = '{$alias}' AND cc.app_oid IS NULL";
             }
         } else {
             throw new CommunicationChannelNotFoundError('Cannot load communication channel "' . $selector->toString() . '" from model: this is not a valid alias!');
@@ -2021,9 +2043,12 @@ SQL;
             $selectorStrings[$selector->toString()] = $selector;
             if ($selector->isAlias()) {
                 if ($selector->hasNamespace()) {
-                    $ors[] = "(ct.alias = '{$selector::stripNamespace($selector->toString())}' AND a.app_alias = '{$selector->getAppAlias()}')";
+                    $appAlias = MetamodelAliasDataType::cast($selector->getAppAlias(), true);
+                    $alias = MetamodelAliasDataType::cast($selector::stripNamespace($selector->toString()));
+                    $ors[] = "(ct.alias = '{$alias}' AND a.app_alias = '{$appAlias}')";
                 } else {
-                    $ors[] = "(ct.alias = '{$selector->toString()}' AND ct.app_oid IS NULL)";
+                    $alias = MetamodelAliasDataType::cast($selector->toString());
+                    $ors[] = "(ct.alias = '{$alias}' AND ct.app_oid IS NULL)";
                 }
             } else {
                 throw new CommunicationTemplateNotFoundError('Cannot load communication template "' . $selector->toString() . '" from model: this is not a valid alias!');
