@@ -554,7 +554,7 @@ HTML;
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if ($val !== null && $val !== '') {
-                                $rows[$i][$colName] = htmlentities($val);
+                                $rows[$i][$colName] = htmlspecialchars($val);
                             }
                         }
                     }
@@ -739,11 +739,11 @@ HTML;
      * @param \Throwable $exception
      * @return mixed
      */
-    public function buildResponseDataError(\Throwable $exception)
+    public function buildResponseDataError(\Throwable $exception, bool $forceHtmlEntities = true)
     {
         $error = [
             'code' => $exception->getCode(),
-            'message' => $exception->getMessage(),
+            'message' => $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage(),
         ];
         
         if ($exception instanceof ExceptionInterface) {
@@ -752,9 +752,9 @@ HTML;
             
             $wb = $this->getWorkbench();
             $msg = $exception->getMessageModel($wb);
-            $error['title'] = $msg->getTitle();
-            $error['hint'] = $msg->getHint();
-            $error['description'] = $msg->getDescription();
+            $error['title'] = $forceHtmlEntities ? htmlspecialchars($msg->getTitle()) : $msg->getTitle();
+            $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
+            $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
             $error['type'] = $msg->getType();
         }
         
