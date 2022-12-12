@@ -435,7 +435,7 @@ JS;
                     {
                         "oId": "{$widget->getMetaObject()->getId()}"
                     }, 
-                    $('#{$this->getIdOfSlick()}').data('_exfData')
+                    ($('#{$this->getIdOfSlick()}').data('_exfData') || {})
                 )
             }
         ],
@@ -601,8 +601,8 @@ JS;
         return <<<JS
         
             $('#{$this->getIdOfSlick()}')
-                .slick('slickRemove', null, null, true)
-                .data('_exfData', {});
+                .data('_exfData', {})
+                .slick('slickRemove', null, null, true);
             $('#{$this->getIdOfSlick()}-nodata').show();
            
 JS;
