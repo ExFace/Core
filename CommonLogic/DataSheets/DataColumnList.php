@@ -153,18 +153,18 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromAttribute()
      */
-    public function addFromAttribute(MetaAttributeInterface $attribute)
+    public function addFromAttribute(MetaAttributeInterface $attribute, bool $hidden = false)
     {
         $sheetObject = $this->getDataSheet()->getMetaObject();
         // Make sure, it is clear, how the attribute is related to the sheet object. Pay attention to
         // the fact, that the attribute may have a relation path.
         if ($sheetObject->is($attribute->getRelationPath()->getStartObject())) {
             // If the relation path starts with the sheet object, just add the attribute as-is.
-            return $this->addFromExpression($attribute->getAliasWithRelationPath());
+            return $this->addFromExpression($attribute->getAliasWithRelationPath(), null, $hidden);
         } elseif ($sheetObject->is($attribute->getObject())) {
             // If the relation path starts with another object, but the attribute itself belongs 
             // to the sheet object, we can still add it by cutting off the relation path.
-            return $this->addFromExpression($attribute->getAlias());
+            return $this->addFromExpression($attribute->getAlias(), null, $hidden);
         } else {
             // If none of the above worked, it's an error!
             throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add attribute "' . $attribute->getAliasWithRelationPath() . '" to data sheet of "' . $sheetObject->getAliasWithNamespace() . '": no relation to the attribute could be found!');

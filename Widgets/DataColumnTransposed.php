@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+
 /**
  *
  * @author Andrej Kabachnik
@@ -12,11 +14,25 @@ class DataColumnTransposed extends DataColumn
 
     /**
      * 
-     * @return string|NULL
+     * @return string
      */
-    public function getLabelAttributeAlias() : ?string
+    public function getLabelAttributeAlias() : string
     {
         return $this->label_attribute_alias;
+    }
+    
+    /**
+     * 
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
+    public function getLabelColumn() : DataColumn
+    {
+        $col = $this->getDataWidget()->getColumnByAttributeAlias($this->getLabelAttributeAlias());
+        if ($col === null) {
+            throw new WidgetConfigurationError($this, 'Cannot transpose column "' . $this->getAttributeAlias() . '": `label_attribute_alias` not found in data widget!');
+        }
+        return $col;
     }
 
     /**

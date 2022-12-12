@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\DataSheets\PivotSheet;
+
 /**
  * A DataTable with certain columns being transposed.
  * 
@@ -177,5 +180,26 @@ class DataMatrix extends DataTable
         }
         
         return $cols;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        if ($data_sheet === null || $data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
+            $pivotSheet = (new PivotSheet($this->getMetaObject()));
+            $pivotSheet->importUxonObject($data_sheet->exportUxonObject());
+            $pivotSheet = parent::prepareDataSheetToRead($pivotSheet);
+            foreach ($this->getColumnsTransposed() as $valuesWidgetCol) {
+                $valuesSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getDataColumnName());
+                $headerSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getLabelColumn()->getDataColumnName());
+                $pivotSheet->addColumnToTranspose($valuesSheetCol, $headerSheetCol);
+            }
+            return $pivotSheet;
+        }
+        return parent::prepareDataSheetToRead($data_sheet);
     }
 }

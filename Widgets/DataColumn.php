@@ -323,7 +323,15 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
             $this->cellWidget = $cellWidget;
-            // Make sure, the cell widget know, that it is hidden if the column is hidden
+            // Make sure, the cell widget knows, that it is hidden if the column is hidden
+            // Do it only for hidden columns as optional ones can be made visible again
+            // TODO not sure, if this is entirely a good idea, because hidden columns could
+            // also have hidden_if theoretically. Theses would be sort of optional then.
+            // The whole topic arose from the PivotSheet. The pivoting does not work, if the
+            // sheet includes a UID column (which it does almost always). The pivot-algorithm
+            // expcludes hidden data sheet columns, so the idea was to make the cell widget
+            // knows, the column is hidden, thatn it will create a hidden sheet column an that
+            // will be excluded from pivot.
             if ($this->isHidden()) {
                 $cellWidget->setHidden(true);
             }

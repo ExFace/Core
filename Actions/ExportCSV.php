@@ -55,12 +55,12 @@ class ExportCSV extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(WidgetInterface $exportedWidget) : array
+    protected function writeHeader(array $exportedColumns) : array
     {
         $header = [];
         $output = [];
         $indexes = [];
-        foreach ($this->getExportColumnWidgets($exportedWidget) as $widget) {
+        foreach ($exportedColumns as $widget) {
             if ($widget->isHidden()) {
                 continue;   
             }

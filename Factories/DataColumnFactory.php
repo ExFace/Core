@@ -17,15 +17,12 @@ abstract class DataColumnFactory extends AbstractStaticFactory
      * @param string $name            
      * @return DataColumn
      */
-    public static function createFromString(DataSheetInterface $data_sheet, $expression_or_string, $name = null)
+    public static function createFromString(DataSheetInterface $data_sheet, $expression_or_string, string $name = null)
     {
-        if ($expression_or_string instanceof ExpressionInterface) {
-            return self::createFromExpression($data_sheet, $expression_or_string, $name);
-        }
         if ($expression_or_string === null || $expression_or_string === '') {
             throw new DataSheetRuntimeError($data_sheet, 'Cannot create data sheet column from empty string!');
         }
-        return new DataColumn($expression_or_string, $name, $data_sheet);
+        return new DataColumn($expression_or_string, $data_sheet, $name);
     }
 
     /**
@@ -35,9 +32,9 @@ abstract class DataColumnFactory extends AbstractStaticFactory
      * @param string $name            
      * @return DataColumn
      */
-    public static function createFromExpression(DataSheetInterface $data_sheet, ExpressionInterface $expression, $name = null)
+    public static function createFromExpression(DataSheetInterface $data_sheet, ExpressionInterface $expression, string $name = null)
     {
-        return new DataColumn($expression, $name, $data_sheet);
+        return new DataColumn($expression, $data_sheet, $name);
     }
 
     /**
@@ -53,4 +50,3 @@ abstract class DataColumnFactory extends AbstractStaticFactory
         return $result;
     }
 }
-?>
