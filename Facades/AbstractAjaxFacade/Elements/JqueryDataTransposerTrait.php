@@ -64,7 +64,7 @@ trait JqueryDataTransposerTrait {
             sFooterAggregator: {$this->escapeString($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true ? $col->getFooter()->getAggregator()->exportString() : '')},
             fnFormatter: function(value){return {$this->getFacade()->getDataTypeFormatter($col->getCellWidget()->getValueDataType())->buildJsFormatter('value')} },
             bTransposeData: " . ($col instanceof DataColumnTransposed ? 'true' : 'false') . ",
-            sTransposeWithLabelsColumnKey: {$this->escapeString($col instanceof DataColumnTransposed ? $widget->getColumnByAttributeAlias($col->getLabelAttributeAlias())->getDataColumnName() : '')},
+            sTransposeWithLabelsColumnKey: {$this->escapeString($col instanceof DataColumnTransposed ? $col->getLabelColumn()->getDataColumnName() : '')},
             bTransposedColumn: false,
             sTransposedColumnRole: null,
             aTransposedDataKeys: [],

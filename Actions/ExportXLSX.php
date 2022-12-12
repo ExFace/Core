@@ -27,6 +27,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 
 /**
  * Exports data to an Excel file (XLSX).
@@ -89,14 +90,14 @@ class ExportXLSX extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(WidgetInterface $exportedWidget) : array
+    protected function writeHeader(array $exportedColumns) : array
     {
         $headerTypes = [];
         $columnOptions = [];
         $output = [];
         $indexes = [];
-        foreach ($this->getExportColumnWidgets($exportedWidget) as $widget) {
-            if ($widget instanceof iShowDataColumn  && $widget->isExportable(true) === false) {
+        foreach ($exportedColumns as $widget) {
+            if ($widget instanceof iShowDataColumn && $widget->isExportable(true) === false) {
                 continue;
             }
             $colOptions = [];

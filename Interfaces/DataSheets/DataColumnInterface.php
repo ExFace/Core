@@ -17,15 +17,6 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
-
-    /**
-     *
-     * @param ExpressionInterface|string $expression            
-     * @param string $name            
-     * @param DataSheetInterface $data_sheet            
-     */
-    function __construct($expression, $name = '', DataSheetInterface $data_sheet);
-
     /**
      *
      * @return \exface\Core\Interfaces\Model\ExpressionInterface
@@ -54,6 +45,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function setDataSheet(DataSheetInterface $data_sheet);
 
     /**
+     * 
      */
     public function getName();
 
@@ -63,7 +55,23 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param boolean $keep_values            
      */
     public function setName($value, $keep_values = false);
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getTitle() : ?string;
+    
+    /**
+     * 
+     * @param string $string
+     * @return DataColumnInterface
+     */
+    public function setTitle(string $string) : DataColumnInterface;
 
+    /**
+     * 
+     */
     public function getHidden();
 
     /**

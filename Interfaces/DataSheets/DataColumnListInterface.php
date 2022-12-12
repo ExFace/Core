@@ -65,10 +65,11 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Adds a new column with the given attribute and returns it
      *
-     * @param MetaAttributeInterface $attribute            
+     * @param MetaAttributeInterface $attribute  
+     * @param bool $hidden          
      * @return DataColumnInterface
      */
-    public function addFromAttribute(MetaAttributeInterface $attribute);
+    public function addFromAttribute(MetaAttributeInterface $attribute, bool $hidden = false);
     
     /**
      * 

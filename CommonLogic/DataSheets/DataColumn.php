@@ -33,6 +33,8 @@ class DataColumn implements DataColumnInterface
 
     // Properties, to be dublicated on copy()
     private $name = null;
+    
+    private $title = null;
 
     private $attribute_alias = null;
 
@@ -52,7 +54,7 @@ class DataColumn implements DataColumnInterface
     /** @var Formula */
     private $formula = null;
 
-    function __construct($expression, $name = '', DataSheetInterface $data_sheet)
+    function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
@@ -954,4 +956,34 @@ class DataColumn implements DataColumnInterface
         }
         return $rowNos;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getTitle()
+     */
+    public function getTitle(): ?string
+    {
+        if ($this->title === null) {
+            switch (true) {
+                case $this->isAttribute():
+                    return $this->getAttribute()->getName();
+                case $this->isCalculated():
+                    return $this->getExpressionObj()->__toString();
+            }
+        }
+        return $this->title;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setTitle()
+     */
+    public function setTitle(string $string): DataColumnInterface
+    {
+        $this->title = $string;
+        return $this;
+    }
+
 }
