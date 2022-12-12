@@ -117,12 +117,12 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                  if ($this->isBoundToDataColumn()) {
                      $columnName = $this->getDataColumnName();
                  }
-                 $data_sheet->getColumns()->addFromExpression($prefillExpr, $columnName);
+                 $data_sheet->getColumns()->addFromExpression($prefillExpr, $columnName, $this->isHidden());
              }
          } elseif ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
              $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
              if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
-                 $data_sheet->getColumns()->addFromExpression($prefillExpr);
+                 $data_sheet->getColumns()->addFromExpression($prefillExpr, null, $this->isHidden());
              }
          }
          

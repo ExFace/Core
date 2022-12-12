@@ -323,6 +323,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
             $this->cellWidget = $cellWidget;
+            // Make sure, the cell widget know, that it is hidden if the column is hidden
+            if ($this->isHidden()) {
+                $cellWidget->setHidden(true);
+            }
             if ($cellWidgetDefinedInUxon === true && ($cellWidget instanceof iTakeInput)) {
                 $this->setEditable($cellWidget->isReadonly() === false);
             } elseif ($cellWidget instanceof Display) {
