@@ -446,7 +446,7 @@
 		        var iMsPos, iMs;
 		        var iHH, iMM, iSS, sAmPm;
 		            
-		        if (sTime === '' || sTime === null) {
+		        if (sTime === '' || sTime === null || sTime == undefined) {
 					return null;
 				}
 		        
