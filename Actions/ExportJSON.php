@@ -22,7 +22,6 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Widgets\DataColumn;
-use exface\Core\Widgets\DataMatrix;
 use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
 use exface\Core\Factories\WidgetFactory;
@@ -205,28 +204,29 @@ class ExportJSON extends ReadData implements iExportData
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
          
+        $lazyExport = $this->isLazyExport($dataSheetMaster);
+        $rowsOnPage = $this->getLimitRowsPerRequest();
+        
         // If there we expect to do split requests, we MUST sort over a unique attribute!
         // Otherwise, the results of subsequent requests may contain data in different order
         // resulting in dublicate or missing rows from the point of view of the entire
         // (combined) export.
-        if ($this->getLimitRowsPerRequest() > 0) {
+        if ($rowsOnPage > 0) {
             if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
                 $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
             } else {
-                throw new ActionLogicError($this, 'Cannot export data for meta object ' . $dataSheetMaster->getMetaObject()->getAliasWithNamespace() . ': corrupted data expected due to lack of a UID attribute!');
+                $rowsOnPage = null;
             }
         }
         
         $exportedWidget = $this->getWidgetToReadFor($task);
         
-        $lazy = $this->isLazyExport($dataSheetMaster);
-        if ($lazy) {
+        if ($lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
-        $rowsOnPage = $this->getLimitRowsPerRequest();
+        
         $rowOffset = 0;
         $errorMessage = null;
-        
         set_time_limit($this->getLimitTimePerRequest());
         do {
             $dataSheet = $dataSheetMaster->copy();
@@ -246,7 +246,7 @@ class ExportJSON extends ReadData implements iExportData
                 }
             }
             
-            if ($lazy) {
+            if ($lazyExport) {
                 $this->writeRows($dataSheet, $columnNames);
             } else {
                 // Don't add any columns to the master sheet if reading produced hidden/system columns
@@ -263,7 +263,7 @@ class ExportJSON extends ReadData implements iExportData
         // Speicher frei machen
         $dataSheet = null;
         
-        if (! $lazy) {
+        if (! $lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
             $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
         }
