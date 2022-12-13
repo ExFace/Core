@@ -30,14 +30,23 @@ interface iCallOtherActions extends ActionInterface
      * @param bool $onlyThisClass
      * @return bool
      */
-    public function containsActionClass(string $classOrInterface, bool $onlyThisClass = false) : bool;
+    public function containsActionClass(string $classOrInterface, bool $recursive = true, bool $onlyThisClass = false) : bool;
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param bool $recursive
+     * @return bool
+     */
+    public function containsAction(ActionInterface $action, bool $recursive = true): bool;
     
     /**
      * 
      * @param ActionSelectorInterface|string $actionOrSelectorOrString
+     * @param bool $recursive
      * @return bool
      */
-    public function containsAction($actionOrSelectorOrString) : bool;
+    public function containsActionSelector($actionOrSelectorOrString, bool $recursive = true): bool;
     
     /**
      * Returns the first action, that needs to be run for the given task.

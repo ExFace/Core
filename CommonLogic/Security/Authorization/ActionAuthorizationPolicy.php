@@ -410,10 +410,8 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                         if ($widgetAction === $action) {
                             return true;
                         }
-                        foreach ($widgetAction->getActions() as $chainedAction) {
-                            if ($chainedAction === $action) {
-                                return true;
-                            }
+                        if ($widgetAction->containsAction($action) === true) {
+                            return true;
                         }
                         return false;
                     // In all other cases, the check if the action of the widget is really the action being called
