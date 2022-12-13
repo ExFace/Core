@@ -269,11 +269,14 @@ trait AuthorizationDebugTrait
      */
     protected function getObjectText() : string
     {
+        $obj = $this->getObject();
         switch (true) {
-            case $this->getObject() instanceof AliasInterface:
+            case $obj instanceof AliasInterface:
                 return $this->getObject()->getAliasWithNamespace();
+            case is_object($obj):
+                return get_class($obj);
             default:
-                return get_class($this->getObject());
+                return $obj;
         }
     }
 }
