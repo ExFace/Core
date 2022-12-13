@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Parts;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * DataTimeline configuration for data-widgets like Scheduler or certain Chart types.
@@ -15,10 +16,12 @@ class DataTimeline implements WidgetPartInterface
 {
     use DataWidgetPartTrait;
     
-    const GRANULARITY_DAY = 'day';
-    const GRANULARITY_HOUR = 'hour';
-    const GRANULARITY_WEEK = 'week';
-    const GRANULARITY_MONTH = 'month';
+    const GRANULARITY_DAYS = 'days';
+    const GRANULARITY_DAYS_PER_WEEK = 'days_per_week';
+    const GRANULARITY_DAYS_PER_MONTH = 'days_per_month';
+    const GRANULARITY_HOURS = 'hours';
+    const GRANULARITY_WEEKS = 'weeks';
+    const GRANULARITY_MONTHS = 'months';
     
     private $granularity = null;
     
@@ -50,10 +53,10 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
-     * Initial zoom level: hour, day, week or month
+     * Initial zoom level: hours, days, weeks or months
      * 
      * @uxon-property granularity
-     * @uxon-type [hour,day,week,month]
+     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months]
      * @uxon-default hour
      * 
      * @param string $value
@@ -61,6 +64,20 @@ class DataTimeline implements WidgetPartInterface
      */
     public function setGranularity(string $value) : DataTimeline
     {
+        $value = mb_strtolower($value);
+        
+        // Backwards compatibility with legacy granularity types
+        switch ($value) {
+            case 'hour': $value = self::GRANULARITY_HOURS; break;
+            case 'day': $value = self::GRANULARITY_DAYS; break;
+            case 'week': $value = self::GRANULARITY_DAYS_PER_WEEK; break;
+            case 'month': $value = self::GRANULARITY_DAYS_PER_MONTH; break;
+        }
+        
+        $const = DataTimeline::class . '::GRANULARITY_' . strtoupper($value);
+        if (! defined($const)) {
+            throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline granularity "' . $value . '": please use hours, days, days_per_week, days_per_month, weeks or months!');
+        }
         $this->granularity = $value;
         return $this;
     }
