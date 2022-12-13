@@ -1417,7 +1417,7 @@ SQL;
                     return $uiPage;
                 }
             }
-            $where = "p.alias = '" . MetamodelAliasDataType::cast($selector->toString(), true) . "'";
+            $where = "p.alias = '" . $this->buildSqlEscapedString($selector->toString()) . "'";
             $err = 'alias "' . $selector->toString() . '"';
         } elseif ($selector->isUid()) {
             if ($uiPage = $this->pages_loaded[$selector->toString()]) {
