@@ -83,6 +83,8 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $actionTriggerWidgetMatch = null;
     
+    private $actionTriggerWidgetRequired = null;
+    
     private $excludeActionSelectors = [];
     
     private $cliTasks = null;
@@ -232,6 +234,19 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
+            // See if only action should require (or explicitly NOT require) a trigger widget
+            if (null !== $policyRequiresTrigger = $this->getActionTriggerWidgetRequired()) {
+                $actionRequiresTrigger = $action->isTriggerWidgetRequired();
+                switch (true) {
+                    case $policyRequiresTrigger === true && $actionRequiresTrigger === true:
+                    case $policyRequiresTrigger === false && $actionRequiresTrigger === false:
+                        $applied = true;
+                        break;
+                    default:
+                        return PermissionFactory::createNotApplicable($this, 'Action trigger restriction (`action_trigger_widget_required`) set, but does not match action');
+                }
+            }
+            
             // See if trigger widget must be validatable
             if ($this->getActionTriggerWidgetMatch() !== null) {
                 // If the specific action does not require a trigger widget,
@@ -239,11 +254,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 if ($action->isTriggerWidgetRequired() === false) {
                     return PermissionFactory::createNotApplicable($this, 'Widget match restriction (`action_trigger_widget_match`) set, but action does not require a trigger widget');
                 }
-                $triggerRequired = $this->getActionTriggerWidgetMatch();
+                $triggerValidationRequired = $this->getActionTriggerWidgetMatch();
                 $triggerValidated = $this->isActionTriggerWidgetValid($action, $task);
                 switch (true) {
-                    case $triggerRequired === true && $triggerValidated === false:
-                    case $triggerRequired === false && $triggerValidated === true:
+                    case $triggerValidationRequired === true && $triggerValidated === false:
+                    case $triggerValidationRequired === false && $triggerValidated === true:
                         return PermissionFactory::createNotApplicable($this, 'Widget match restriction (`action_trigger_widget_match`)');
                     default:
                         $applied = true;
@@ -327,10 +342,35 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     * Only apply this policy if the action is defined in the same widget it is called from (or not).
      * 
-     * This only has effect on action prototypes, that require a trigger widget
-     * by default.
+     * @return bool|NULL
+     */
+    protected function getActionTriggerWidgetRequired() : ?bool
+    {
+        return $this->actionTriggerWidgetRequired;
+    }
+    
+    /**
+     * Only appy this policy for actions that require (or not) a trigger widget.
+     * 
+     * Each action "knows" if it requires a trigger widget. Using this policy, you can, for example, 
+     * ignore actions, that require triggers or those that work without triggers. This property
+     * can also be used in conjuction with `action_trigger_widget_match`.
+     * 
+     * @uxon-property action_trigger_widget_required
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setActionTriggerWidgetRequired(bool $value) : ActionAuthorizationPolicy
+    {
+        $this->actionTriggerWidgetRequired = $value;
+        return $this;
+    }
+    
+    /**
+     * Only apply this policy if the action is defined in the same widget it is called from (or not).
      * 
      * By default, policies do not check, if their actions are defined in a widget,
      * if that widget exists and if it's really the widget, that calls the action.
@@ -338,6 +378,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      * widget they are defined in (= `true`) and action that are not defined in
      * any widget (= `false`) although the action prototype normally requires a
      * trigger widget.
+     * 
+     * Since there are actions, that require trigger widgets to work properly and those
+     * that do not (e.g. ClearCache, CallEvent, etc.), it is a good idea to use 
+     * `action_trigger_widget_match` together with `action_trigger_widget_required`, which
+     * allow to address each of these action groups independently.
      * 
      * **NOTE** there are some exceptions:
      * 
