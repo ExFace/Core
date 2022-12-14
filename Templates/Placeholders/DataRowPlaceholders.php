@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 
 /**
  * Resolves placeholders to facade propertis: `~facade:property`.
@@ -84,7 +85,11 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
                 throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' not found in data sheet and it could not be loaded automatically.");
             }
             $val = $col->getValue($phRowNo);
-            $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+            if ($col->getAttribute() && DataAggregation::hasAggregation($col->getAttributeAlias())) {
+                $formatted = $val;
+            } else {
+                $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
+            }
             $phVals[$ph] = $this->sanitizeValue($formatted);
         }
         
