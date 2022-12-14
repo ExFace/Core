@@ -85,7 +85,8 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
                 throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' not found in data sheet and it could not be loaded automatically.");
             }
             $val = $col->getValue($phRowNo);
-            if ($col->getAttribute() && DataAggregation::hasAggregation($col->getAttributeAlias())) {
+            // do not format aggregated values as the value type of the column and the value itself might conflict
+            if ($col->hasAggregator()) {
                 $formatted = $val;
             } else {
                 $formatted = $this->isFormattingValues() ? $col->getDataType()->format($val) : $val;
