@@ -4,6 +4,7 @@ namespace exface\Core\Templates;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\BracketHashTemplateRendererTrait;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractTemplateRenderer;
+use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
 
 /**
  * Renderer for string templates using the standard `[##]` placeholder syntax.
@@ -24,8 +25,12 @@ class BracketHashStringTemplateRenderer extends AbstractTemplateRenderer
     {
         $tplString = $tplString ?? '';
         
-        $phs = $this->getPlaceholders($tplString);
-        $phVals = $this->getPlaceholderValues($phs);
+        try {
+            $phs = $this->getPlaceholders($tplString);
+            $phVals = $this->getPlaceholderValues($phs);
+        } catch (\Throwable $e) {
+            throw new TemplateRendererRuntimeError($this, 'Cannot render template. ' . $e->getMessage(), null, $e, $tplString);
+        }
         
         return $this->resolvePlaceholders($tplString, $phVals);
     }
