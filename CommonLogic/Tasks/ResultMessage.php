@@ -189,4 +189,16 @@ class ResultMessage implements ResultInterface
     {
         return $this->getMessage() === '' && ! $this->isContextModified() && ! $this->isDataModified();   
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::withTask()
+     */
+    public function withTask(TaskInterface $task) : ResultInterface
+    {
+        $clone = clone $this;
+        $clone->task = $task;
+        return $clone;
+    }
 }

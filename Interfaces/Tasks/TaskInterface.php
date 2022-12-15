@@ -11,13 +11,14 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
+interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, iCanBeCopied
 {    
     /**
      * 
