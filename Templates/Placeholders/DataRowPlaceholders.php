@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 /**
  * Resolves placeholders to facade propertis: `~facade:property`.
@@ -67,6 +68,9 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         }
         
         if ($needExtraData === true && $this->dataSheet->hasUidColumn()) {
+            if ($this->dataSheet->getUidColumn()->hasEmptyValues()) {
+                throw new DataSheetMissingRequiredValueError($this->dataSheet, null, null, null, $this->dataSheet->getUidColumn(), $this->dataSheet->getUidColumn()->findEmptyRows());
+            }
             $uidCol = $this->dataSheet->getUidColumn();
             $phSheet->getFilters()->addConditionFromExpression($uidCol->getExpressionObj(), $uidCol->getValue($this->rowNumber));
             $phSheet->dataRead();

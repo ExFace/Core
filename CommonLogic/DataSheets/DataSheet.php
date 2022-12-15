@@ -2839,10 +2839,17 @@ class DataSheet implements DataSheetInterface
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
-        $uxon_tab->setNumberOfColumns(1);
-        $uxon_widget = WidgetFactory::create($debug_widget->getPage(), 'Html', $uxon_tab);
+        $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+            'widget_type' => 'InputUxon',
+            'caption' => '',
+            'width' => '100%',
+            'height' => '100%',
+            'disabled' => true,
+            'root_prototype' => '\\' . DataSheet::class,
+            'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
+            'value' => $this->getCensoredDataSheet()->exportUxonObject()->toJson(true)
+        ]));
         $uxon_tab->addWidget($uxon_widget);
-        $uxon_widget->setHtml('<pre>' . $this->getCensoredDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
         $debug_widget->addTab($uxon_tab);
         return $debug_widget;
     }

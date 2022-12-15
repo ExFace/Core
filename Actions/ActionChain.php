@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Actions\Traits\iCallOtherActionsTrait;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
 
 /**
  * This action chains other actions and performs them one after another.
@@ -183,6 +184,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     private $skip_action_if_empty_input = false;
     
     private $result_message_delimiter = "\n";
+    
+    private $skipActionsIfOffline = [];
 
     /**
      * 
@@ -197,18 +200,23 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         
         $inputSheet = $this->getInputDataSheet($task);
         $freezeInputIdx = $this->getUseInputDataOfAction();
+        $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
         $chainDataModified = false;
         $chainMessage = null;
         $chainResult = null;
         $messages = [];
         $results = [];
         $t = clone $task;
+        $logbook = $this->getLogBook($task);
+        $lbId = $logbook->getId();
+        $diagram .= 'graph LR' . PHP_EOL;
+        $diagram .= "{$lbId}T(Task) -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}0" . PHP_EOL;
         foreach ($this->getActions() as $idx => $action) {
             // Prepare the action
             
             // All actions are all called by the widget, that called the chain
-            if ($this->isDefinedInWidget()) {
-                $action->setWidgetDefinedIn($this->getWidgetDefinedIn());
+            if ($triggerWidget !== null) {
+                $action->setWidgetDefinedIn($triggerWidget);
             }
             
             // If the chain should run in a single transaction, this transaction must 
@@ -226,9 +234,28 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             // Every action gets the data resulting from the previous action as input data
             $t->setInputData($inputSheet);
             
+            if ($idx === 0) {
+                // mermaid: id0[alias]
+                $diagram .= "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]";
+            }
+            
             // Perform the action if it should not be skipped
             if ($this->getSkipActionsIfInputEmpty() === false || ! $inputSheet->isEmpty() || $action->getInputRowsMin() === 0) {
-                $lastResult = $action->handle($t, $tx);
+                if ($idx > 0) {
+                    // id0[alias] -->|N| id1[alias]
+                    $diagram .= " -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
+                }
+                try {
+                    $lastResult = $action->handle($t, $tx);
+                } catch (\Throwable $e) {
+                    if ($idx === 0) {
+                        $diagram .= " --> {$lbId}ERR(Error)" . PHP_EOL;
+                        $diagram .= "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}" . PHP_EOL;
+                    }
+                    $diagram .= "style {$lbId}{$idx} {$logbook->getFlowDiagramStyleError()}" . PHP_EOL;
+                    $logbook->setFlowDiagram($diagram);
+                    throw $e;
+                }
                 $results[$idx] = $lastResult;
                 if (null !== $lastMessage = $lastResult->getMessage()) {
                     $messages[$idx] = $lastMessage;
@@ -236,13 +263,27 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 if ($lastResult->isDataModified()) {
                     $chainDataModified = true;
                 }
+                // Determine the input data for the next action: either take that of the last data result or
+                // the explicitly specified step id in `user_result_of_action`
+                // mermaid: 1 // in preparation for the next --> ...
                 if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $lastResult instanceof ResultData) {
                     $inputSheet = $lastResult->getData();
+                    $diagram .= $idx > 0 ? "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]" : '';
+                } else {
+                    $diagram .= $idx > 0 ? "{$lbId}{$freezeInputIdx}[{$action->getAliasWithNamespace()}]" : '';
                 }
+            } else {
+                // mermaid: 0[alias] .-x 1[alias]
+                $diagram .= " .-x {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
             }
         }
         
-        $chainResult = $this->getUseResultOfAction() !== null ? $results[$this->getUseResultOfAction()] : $lastResult;
+        if (null !== $resultIdx = $this->getUseResultOfAction()) {
+            $chainResult = $results[$resultIdx];
+        } else {
+            $chainResult = $lastResult;
+            $resultIdx = $idx;
+        }
         $chainMessage = $this->getResultMessageText() ?? trim(implode($this->getResultMessageDelimiter(), $messages));
         switch (true) {
             case $chainResult === null:
@@ -250,12 +291,16 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 break;
             case $chainMessage !== null && $chainMessage !== '': 
                 if ($chainResult instanceof ResultEmpty) {
-                    $chainResult = ResultFactory::createMessageResult($chainResult->getTask(), $chainMessage);
+                    $chainResult = ResultFactory::createMessageResult($task, $chainMessage);
                 } else {
-                    $chainResult->setMessage($chainMessage);
+                    $chainResult = $chainResult->withTask($task)->setMessage($chainMessage);
                 }
                 break;
         }
+        
+        $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|{$chainResult->getData()->countRows()}x {$chainResult->getData()->getMetaObject()->getAlias()}|" : '';
+        $diagram .= " -->{$chainResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
+        $logbook->setFlowDiagram($diagram);
         
         $chainResult->setDataModified($chainDataModified);
         
@@ -270,6 +315,16 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function getActions() : array
     {
         return $this->actions;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @return int
+     */
+    public function getActionIndex(ActionInterface $action) : int
+    {
+        return array_search($action, $this->getActions());
     }
     
     /**
@@ -564,7 +619,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('actions', UxonObject::fromArray($this->getActions()));
+        foreach ($this->getActions() as $action) {
+            $uxon->appendToProperty('actions', $action->exportUxonObject());
+        }
         return $uxon;
     }
     
@@ -611,6 +668,35 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function setResultMessageDelimiter(string $value) : ActionChain
     {
         $this->result_message_delimiter = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface|int $action
+     * @return bool
+     */
+    public function isSkippedOffline($action) : bool
+    {
+        if (empty($this->skipActionsIfOffline)) {
+            return false;
+        }
+        return in_array((is_int($action) ? $action : $this->getActionIndex($action)), $this->skipActionsIfOffline);
+    }
+    
+    /**
+     * Indexes of actions to be skipped if the browser is offline (indexes start with 0!)
+     * 
+     * @uxon-property skip_actions_if_offline
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $arrayOfIndexes
+     * @return ActionChain
+     */
+    protected function setSkipActionsIfOffline(UxonObject $arrayOfIndexes) : ActionChain
+    {
+        $this->skipActionsIfOffline = $arrayOfIndexes;
         return $this;
     }
 }

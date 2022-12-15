@@ -24,30 +24,30 @@ class DataSheetInvalidValueError extends DataSheetRuntimeError
     /**
      * 
      * @param DataSheetInterface $data_sheet
-     * @param string|NULL $message
+     * @param string|NULL $customMessage
      * @param string|NULL $alias
      * @param \Throwable|NULL $previous
      * @param DataColumnInterface|string|NULL $column
      * @param int[]|null $rowIndexes
      */
-    public function __construct(DataSheetInterface $data_sheet, $message = null, $alias = null, $previous = null, $column = null, array $rowIndexes = null)
+    public function __construct(DataSheetInterface $data_sheet, $customMessage = null, $alias = null, $previous = null, $column = null, array $rowIndexes = null)
     {
         if ($column !== null) {
             $this->columnName = ($column instanceof DataColumnInterface) ? $column->getName() : $column;
         }
         $this->rowIndexes = $rowIndexes;
         
-        if ($message === null && $this->columnName !== null) {
+        if ($customMessage === null && $this->columnName !== null) {
             $col = $data_sheet->getColumns()->get($this->columnName);
             if ($col) {
-                $message = $this->generateMessage($col, $this->getRowNumbers());
+                $customMessage = $this->generateMessage($col, $this->getRowNumbers());
                 $this->setUseExceptionMessageAsTitle(true);
                 $this->setLogLevel($this->getDefaultLogLevel());
                 $this->setAlias($this->getDefaultAlias());
             }
         }
         
-        parent::__construct($data_sheet, $message, $alias, $previous);
+        parent::__construct($data_sheet, $customMessage, $alias, $previous);
     }
     
     /**

@@ -53,6 +53,7 @@ use exface\Core\Interfaces\Actions\ActionDataCheckListInterface;
 use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -138,6 +139,8 @@ abstract class AbstractAction implements ActionInterface
     private $triggerWidgetRequired = null;
     
     private $customEffects = [];
+    
+    private $logBooks = [];
 
     /**
      *
@@ -220,7 +223,6 @@ abstract class AbstractAction implements ActionInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            //$this->id = md5($this->exportUxonObject()->toJson());
             $this->id = uniqid();
         }
         return $this->id;
@@ -338,11 +340,17 @@ abstract class AbstractAction implements ActionInterface
             $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction, function() use ($task) {
                 return $this->getInputDataSheet($task);
             }));
+            $this->getWorkbench()->getLogger()->warning('Action "' . $this->getAliasWithNamespace() . '" failed', [], $this->getLogBook($task));
             throw $e;
         }
         
-        if ($result instanceof ResultData && $this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
-            $result->setData($mapper->map($result->getData()));
+        if ($result instanceof ResultData) {
+            $logbook = $this->getLogBook($task);
+            $logbook->addDataSheet('Output data', $result->getData());
+            if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
+                $result->setData($mapper->map($result->getData()));
+                $logbook->addDataSheet('Output data (mapped)', $result->getData());
+            }
         }
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
@@ -470,6 +478,8 @@ abstract class AbstractAction implements ActionInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction, function() use ($result) {
             return $this->getInputDataSheet($result->getTask());
         }));
+        
+        $this->getWorkbench()->getLogger()->debug('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -789,6 +799,7 @@ abstract class AbstractAction implements ActionInterface
     {
         $copy = clone $this;
         $copy->input_mappers_used = [];
+        $copy->logBooks = [];
         return $copy;
     }
     
@@ -1078,20 +1089,24 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
+        $logbook = $this->getLogBook($task);
         // Get the current input data
         if ($task->hasInputData()) {
             // If the task has some, use it
             $sheet = $task->getInputData();
+            $logbook->addDataSheet('Task data', $sheet);
             // Merge it with the preset if it exists
             if ($this->hasInputDataPreset()) {
+                $logbook->addDataSheet('Input preset', $this->getInputDataPreset());
                 $sheet = $this->getInputDataPreset()->importRows($sheet);
             } 
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
+            $logbook->addDataSheet('Input preset', $sheet);
         } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
-            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());    
+            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
         } else {
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
@@ -1103,6 +1118,7 @@ abstract class AbstractAction implements ActionInterface
         } else {
             $inputData = $sheet;
         }
+        $logbook->addDataSheet('Final input data', $sheet);
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
@@ -1737,5 +1753,22 @@ abstract class AbstractAction implements ActionInterface
             $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return ActionLogBook
+     */
+    protected function getLogBook(TaskInterface $task) : ActionLogBook
+    {
+        foreach ($this->logBooks as $lb) {
+            if ($lb->getTask() === $task) {
+                return $lb;
+            }
+        }
+        $lb = new ActionLogBook('Action', $this, $task);
+        $this->logBooks[] = $lb;
+        return $lb;
     }
 }

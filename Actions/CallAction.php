@@ -17,6 +17,9 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
 
 /**
  * This action performs another action selecting it dynamically based on the input.
@@ -120,12 +123,80 @@ class CallAction extends AbstractAction implements iCallOtherActions
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $action = $this->getActionToStart($task);
-        if ($action !== null) {
-            return $action->handle($task, $transaction);
-        } else {
-            return ResultFactory::createMessageResult($task, 'No action to be performed!');
+        $logbook = $this->getLogBook($task);
+        if ($task->hasParameter(self::TASK_PARAM_ACTION_INDEX)) {
+            $i = $task->getParameter(self::TASK_PARAM_ACTION_INDEX);
+            $logbook->addLine('Task parameter `' . self::TASK_PARAM_ACTION_INDEX . '` found.');
+            $action = $this->getActions()[$i];
+            if ($action === null) {
+                throw new ActionInputError($this, 'Invalid value "' . $i . '" for `start` in action "' . $this->getAliasWithNamespace() . '": no corresponding action found!');
+            }
+            $logbook->addLine('Performing action "' . $action->getAliasWithNamespace() . '".');
+            $resultOfAction = $action->handle($task, $transaction);
+            return $resultOfAction->withTask($task);
         }
+        
+        $inputSheet = $this->getInputDataSheet($task);
+        $results = [];
+        $lbId = $logbook->getId();
+        $diagram .= 'graph TB' . PHP_EOL;
+        foreach ($this->getActions() as $i => $action) {
+            $actionSheet = $this->getActionData($inputSheet, $action);
+            if (! $actionSheet->isEmpty(true)) {
+                $diagram .= "{$lbId}T(Task) -->|{$actionSheet->countRows()}x {$actionSheet->getMetaObject()->getAlias()}| {$lbId}{$i}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
+                try {
+                    $actionTask = $task->copy()->setInputData($actionSheet);
+                    $results[$i] = $action->handle($actionTask, $transaction);
+                } catch (\Throwable $e) {
+                    $diagram .= "style {$lbId}{$i} {$logbook->getFlowDiagramStyleError()}" . PHP_EOL;
+                    $logbook->setFlowDiagram($diagram);
+                    throw $e;
+                }
+            } else {
+                $diagram .= "{$lbId}T(Task) .-x|0| {$lbId}{$i}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
+            }
+        }
+        
+        if (! empty($results)) {
+            $firstIdx = array_key_first($results);
+            $firstResult = $results[$firstIdx];
+            
+            $firstResultArrowComment = ($firstResult instanceof ResultDataInterface) ? "|{$firstResult->getData()->countRows()}x {$firstResult->getData()->getMetaObject()->getAlias()}|" : '';
+            $diagram .= "{$lbId}{$firstIdx} -->{$firstResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
+            $logbook->setFlowDiagram($diagram);
+            
+            return $firstResult->withTask($task);
+        }
+        
+        $logbook->setFlowDiagram($diagram);
+        return ResultFactory::createMessageResult($task, 'No action to be performed!');
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $inputSheet
+     * @param ActionInterface $action
+     * @return DataSheetInterface
+     */
+    protected function getActionData(DataSheetInterface $inputSheet, ActionInterface $action) : DataSheetInterface
+    {
+        if (null !== ($colName = $this->getActionInputColumnName())) {
+            $col = $inputSheet->getColumns()->get($colName);
+            $sheet = $sheet = $inputSheet->copy()->removeRows();
+            foreach ($col->getValues() as $rowIdx => $selector) {
+                if ($selector !== null && $selector !== '' && $action->isExactly($selector)) {
+                    $sheet->addRow($inputSheet->getRow($rowIdx));
+                }
+            }
+        } else {
+            $sheet = $inputSheet;
+        }
+        
+        if (null !== $conditionGroup = $this->getActionFilter($action)) {
+            $sheet = $sheet->extract($conditionGroup);
+        }
+        
+        return $sheet;
     }
 
     /**
@@ -141,38 +212,13 @@ class CallAction extends AbstractAction implements iCallOtherActions
         }
         
         $inputSheet = $this->getInputDataSheet($task);
-        if (null !== ($colName = $this->getActionInputColumnName()) && $task->hasInputData()) {
-            $col = $inputSheet->getColumns()->get($colName);
-            if ($col) {
-                if ($inputSheet->isEmpty(true)) {
-                    return null;
-                }
-                $matches = [];
-                foreach ($this->getActions() as $a) {
-                    $alias = $col->getValue(0);
-                    if ($alias !== null && $a->isExactly($alias)) {
-                        $matches[] = $a;
-                    }
-                }
-                if (count($matches) === 1) {
-                    $action = $matches[0];
-                }
+        foreach ($this->getActions() as $action) {
+            if ($this->getActionData($inputSheet, $action)->isEmpty(true) === false) {
+                return $action;
             }
         }
         
-        if ($this->hasActionsConditions()) {
-            foreach ($this->getActions() as $a) {
-                if (! $inputSheet->extract($this->getActionFilter($a))->isEmpty()) {
-                    return $a;
-                }
-            }
-        }
-        
-        if ($action === null) {
-            throw new ActionRuntimeError($this, 'Cannot call action dynamically in "' . $this->getAliasWithNamespace() . '" - no suitable action found in `actions_allowed`!');
-        }
-        
-        return $action;
+        throw new ActionRuntimeError($this, 'Cannot call action dynamically in "' . $this->getAliasWithNamespace() . '" - no suitable action found in `actions_allowed`!');
     }
 
     /**
@@ -323,16 +369,16 @@ class CallAction extends AbstractAction implements iCallOtherActions
     /**
      * 
      * @param ActionInterface $action
-     * @return ConditionGroupInterface
+     * @return ConditionGroupInterface|NULL
      */
-    protected function getActionFilter(ActionInterface $action) : ConditionalExpressionInterface
+    protected function getActionFilter(ActionInterface $action) : ?ConditionalExpressionInterface
     {
         $i = $this->getActionIndex($action);
         $conditionalProp = $this->getActionsConditions()[$i];
-        if ($conditionalProp === null) {
-            throw new ActionRuntimeError($this, 'Cannot find condition for action "' . $action->getAliasWithNamespace() . '"!');
+        if ($conditionalProp !== null) {
+            return ConditionGroupFactory::createFromConditionalProperty($conditionalProp->getConditionGroup(), $this->getMetaObject());
         }
-        return ConditionGroupFactory::createFromConditionalProperty($conditionalProp->getConditionGroup(), $this->getMetaObject());
+        return null;
     }
     
     /**

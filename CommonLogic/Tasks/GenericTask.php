@@ -540,4 +540,15 @@ class GenericTask implements TaskInterface
         ]);
         return;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
+    public function copy() : self
+    {
+        $copy = clone $this;
+        return $copy;
+    }
 }
