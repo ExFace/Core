@@ -111,11 +111,20 @@ trait BracketHashTemplateRendererTrait
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function isIgnoringUnknownPlaceholders() : bool
     {
         return $this->ignoreUnknownPlaceholders;
     }
     
+    /**
+     * 
+     * @param bool $value
+     * @return TemplateRendererInterface
+     */
     public function setIgnoreUnknownPlaceholders(bool $value) : TemplateRendererInterface
     {
         $this->ignoreUnknownPlaceholders = $value;
