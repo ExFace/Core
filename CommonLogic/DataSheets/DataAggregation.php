@@ -93,6 +93,22 @@ class DataAggregation implements iCanBeConvertedToUxon
     }
     
     /**
+     * Returns TRUE if the alias expression is an aggregation, else returns FALSE
+     * 
+     * @param string $attribute_alias
+     * @return bool
+     */
+    public static function hasAggregation(string $attribute_alias) : bool
+    {
+        $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
+        if ($aggregator_pos !== false){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
      * Returns the passed alias expression with the given aggregator appended to it.
      * 
      * @param string $attribute_alias
