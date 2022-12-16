@@ -184,8 +184,6 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     private $skip_action_if_empty_input = false;
     
     private $result_message_delimiter = "\n";
-    
-    private $skipActionsIfOffline = [];
 
     /**
      * 
@@ -668,35 +666,6 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function setResultMessageDelimiter(string $value) : ActionChain
     {
         $this->result_message_delimiter = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @param ActionInterface|int $action
-     * @return bool
-     */
-    public function isSkippedOffline($action) : bool
-    {
-        if (empty($this->skipActionsIfOffline)) {
-            return false;
-        }
-        return in_array((is_int($action) ? $action : $this->getActionIndex($action)), $this->skipActionsIfOffline);
-    }
-    
-    /**
-     * Indexes of actions to be skipped if the browser is offline (indexes start with 0!)
-     * 
-     * @uxon-property skip_actions_if_offline
-     * @uxon-type array
-     * @uxon-template [""]
-     * 
-     * @param UxonObject $arrayOfIndexes
-     * @return ActionChain
-     */
-    protected function setSkipActionsIfOffline(UxonObject $arrayOfIndexes) : ActionChain
-    {
-        $this->skipActionsIfOffline = $arrayOfIndexes;
         return $this;
     }
 }
