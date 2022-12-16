@@ -79,7 +79,6 @@ class ActionLogBook implements DataLogBookInterface
     {
         if ($this->autoChaptersAdded === false) {
             $this->autoChaptersAdded = true;
-            $this->logBook->addCodeBlock($this->action->exportUxonObject()->toJson(true), 'json');
             $this->logBook->addChapter('Action configuration');
             $this->logBook->addCodeBlock($this->action->exportUxonObject()->toJson(true), 'json');
         }
