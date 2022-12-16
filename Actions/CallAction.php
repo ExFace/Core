@@ -18,7 +18,6 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 
 /**
@@ -26,15 +25,24 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
  * 
  * For security reasons, all callable actions must be listed under `actions_allowed`.
  * 
- * The action to perform can be selected from this list via
+ * If the input data contains multiple rows, it will be split to match the actions:
+ * e.g. if of 5 rows 2 match action1 and 3 match action2, actoin1 will be called with
+ * an input sheet containing only its two rows, while action2 will receive the other 3.
+ * Each action will be called only once though, not once per row!
+ * 
+ * The action to perform for each row can be selected from `action_allowed` via
+ * 
  * - `action_selector_input_column` - that is, getting the action selector from a data column
  * - `actions_conditions` - a set of conditions for every action in `actions_allowed`. These
  * conditions will be evaluated against the input data. If a condition is met, the action with
  * the same index will be called.
+ *   - If a row matches multiple action conditions, it will be passed to all the actions it
+ *   matches, thus being handled multiple times.
  * 
  * **NOTE:** Many action properties, that are normally computed automatically, need to be set
- * manually here: the `name` of the action, its `effects`, etc. The reason is simply, that the
- * facades cannot know which action will be called when rendering the respecitve buttons/triggers. 
+ * manually for CallAction because the facade does not initially know, what the action is going
+ * to do really. Add the `name` of the action, its `effects`, etc. to the UXON configuration 
+ * manually if they are needed. 
  * 
  * ## Examples
  * 
@@ -104,8 +112,6 @@ class CallAction extends AbstractAction implements iCallOtherActions
 {
     use iCallOtherActionsTrait;
     
-    const TASK_PARAM_ACTION_INDEX = 'start';
-    
     private $actionInputColumnName = null;
     
     private $actionsAllowedUxon = null;
@@ -124,18 +130,6 @@ class CallAction extends AbstractAction implements iCallOtherActions
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $logbook = $this->getLogBook($task);
-        if ($task->hasParameter(self::TASK_PARAM_ACTION_INDEX)) {
-            $i = $task->getParameter(self::TASK_PARAM_ACTION_INDEX);
-            $logbook->addLine('Task parameter `' . self::TASK_PARAM_ACTION_INDEX . '` found.');
-            $action = $this->getActions()[$i];
-            if ($action === null) {
-                throw new ActionInputError($this, 'Invalid value "' . $i . '" for `start` in action "' . $this->getAliasWithNamespace() . '": no corresponding action found!');
-            }
-            $logbook->addLine('Performing action "' . $action->getAliasWithNamespace() . '".');
-            $resultOfAction = $action->handle($task, $transaction);
-            return $resultOfAction->withTask($task);
-        }
-        
         $inputSheet = $this->getInputDataSheet($task);
         $results = [];
         $lbId = $logbook->getId();
@@ -206,11 +200,6 @@ class CallAction extends AbstractAction implements iCallOtherActions
      */
     public function getActionToStart(TaskInterface $task) : ?ActionInterface
     {
-        if ($task->hasParameter(self::TASK_PARAM_ACTION_INDEX)) {
-            $i = $task->getParameter(self::TASK_PARAM_ACTION_INDEX);
-            return $this->getActions()[$i];
-        }
-        
         $inputSheet = $this->getInputDataSheet($task);
         foreach ($this->getActions() as $action) {
             if ($this->getActionData($inputSheet, $action)->isEmpty(true) === false) {
@@ -382,7 +371,12 @@ class CallAction extends AbstractAction implements iCallOtherActions
     }
     
     /**
-     * Conditions for every action in `actions_allowed` - the first action will be called where the input matches the condition group
+     * Conditions to filter input rows for every action in `actions_allowed`.
+     * 
+     * Each input rows will be passed to the action with the index of the condition group it matches: e.g.
+     * 
+     * - if a row matches condition 1 and does not match condition 2, it will be passed to action 1 only
+     * - if a row matches condition 1 and condition 2, it will be passed to both actions
      *
      * E.g. 
      *
