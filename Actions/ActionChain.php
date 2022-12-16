@@ -230,7 +230,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             
             // Let the action handle a copy of the task
             // Every action gets the data resulting from the previous action as input data
-            $t = $t->copy()->$t->setInputData($inputSheet);
+            $t = $t->copy()->setInputData($inputSheet);
             
             if ($idx === 0) {
                 // mermaid: id0[alias]
