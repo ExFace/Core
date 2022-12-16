@@ -1118,7 +1118,7 @@ abstract class AbstractAction implements ActionInterface
         } else {
             $inputData = $sheet;
         }
-        $logbook->addDataSheet('Final input data', $sheet);
+        $logbook->addDataSheet('Final input data', $inputData);
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
