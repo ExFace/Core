@@ -206,14 +206,15 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $chainResult = null;
         $messages = [];
         $results = [];
-        $t = clone $task;
+        $t = $task;
         $logbook = $this->getLogBook($task);
         $lbId = $logbook->getId();
-        $diagram .= 'graph LR' . PHP_EOL;
+        // Prepare the flow diagram in mermaid.js syntax
+        // Place the nodes from left to right, if there are max. 3 nodes and top-down if there are more
+        $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR') . PHP_EOL;
         $diagram .= "{$lbId}T(Task) -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}0" . PHP_EOL;
         foreach ($this->getActions() as $idx => $action) {
             // Prepare the action
-            
             // All actions are all called by the widget, that called the chain
             if ($triggerWidget !== null) {
                 $action->setWidgetDefinedIn($triggerWidget);
@@ -230,9 +231,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             }
             
             // Let the action handle a copy of the task
-            
             // Every action gets the data resulting from the previous action as input data
-            $t->setInputData($inputSheet);
+            $t = $t->copy()->$t->setInputData($inputSheet);
             
             if ($idx === 0) {
                 // mermaid: id0[alias]
