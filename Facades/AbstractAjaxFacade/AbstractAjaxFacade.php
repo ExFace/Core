@@ -64,6 +64,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\HtmlDataType;
 
 /**
  * 
