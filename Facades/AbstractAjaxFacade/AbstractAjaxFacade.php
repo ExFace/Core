@@ -554,7 +554,7 @@ HTML;
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if ($val !== null && $val !== '') {
-                                $rows[$i][$colName] = htmlspecialchars($val);
+                                $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
                             }
                         }
                     }
