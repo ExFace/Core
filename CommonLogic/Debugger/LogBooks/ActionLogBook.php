@@ -7,6 +7,10 @@ use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\DebugMessage;
+use exface\Core\Widgets\Tabs;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\PhpClassDataType;
 
 class ActionLogBook implements DataLogBookInterface
 {
@@ -16,18 +20,25 @@ class ActionLogBook implements DataLogBookInterface
     
     private $logBook = null;
     
-    private $autoChaptersAdded = false;
+    private $autoSectionsAdded = false;
     
     private $flowDiagram = null;
 
-    public function __construct(string $title, ActionInterface $action, TaskInterface $task, string $defaultChapter = '')
+    /**
+     * 
+     * @param string $title
+     * @param ActionInterface $action
+     * @param TaskInterface $task
+     * @param string $defaultSection
+     */
+    public function __construct(string $title, ActionInterface $action, TaskInterface $task, string $defaultSection = '')
     {
         $this->task = $task;
         $this->action = $action;
-        if ($defaultChapter === '') {
-            $defaultChapter = 'Logbook for action ' . $action->getAliasWithNamespace();
+        if ($defaultSection === '') {
+            $defaultSection = 'Logbook for action ' . $action->getAliasWithNamespace();
         }
-        $this->logBook = new DataLogBook($title, $defaultChapter);
+        $this->logBook = new DataLogBook($title, $defaultSection);
         $this->logBook->addLine('Prototype class: ' . get_class($action));
     }
     
@@ -64,9 +75,9 @@ class ActionLogBook implements DataLogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLine()
      */
-    public function addLine(string $text, int $indent = 0, string $chapter = null): LogBookInterface
+    public function addLine(string $text, int $indent = 0, $section = null): LogBookInterface
     {
-        $this->logBook->addLine($text, $indent, $chapter);
+        $this->logBook->addLine($text, $indent, $section);
         return $this;
     }
 
@@ -77,12 +88,23 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
-        if ($this->autoChaptersAdded === false) {
-            $this->autoChaptersAdded = true;
-            $this->logBook->addChapter('Action configuration');
-            $this->logBook->addCodeBlock($this->action->exportUxonObject()->toJson(true), 'json');
+        $debug_widget = $this->logBook->createDebugWidget($debug_widget);
+        $tabs = $debug_widget->getWidgetFirst()->getWidgetFirst();
+        if ($tabs instanceof Tabs) {
+            $tab = $tabs->createTab();
+            $tab->setCaption('Action config');
+            $tabs->addTab($tab);
+            $tab->addWidget(WidgetFactory::createFromUxonInParent($tabs, new UxonObject([
+                'widget_type' => 'InputUxon',
+                'width' => 'max',
+                'height' => '100%',
+                'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this->action)),
+                'hide_caption' => true,
+                'value' => $this->action->exportUxonObject()->toJson(true),
+                'root_prototype' => '\\' . get_class($this->action)
+            ])));
         }
-        return $this->logBook->createDebugWidget($debug_widget);
+        return $debug_widget;
     }
 
     /**
@@ -99,11 +121,22 @@ class ActionLogBook implements DataLogBookInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addChapter()
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addSection()
      */
-    public function addChapter(string $title): LogBookInterface
+    public function addSection(string $title): LogBookInterface
     {
-        $this->logBook->addChapter($title);
+        $this->logBook->addSection($title);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeSection()
+     */
+    public function removeSection(string $title): LogBookInterface
+    {
+        $this->logBook->removeSection($title);
         return $this;
     }
 
@@ -112,9 +145,9 @@ class ActionLogBook implements DataLogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLineSpacing()
      */
-    public function addLineSpacing(string $chapter = null): LogBookInterface
+    public function addLineSpacing($section = null): LogBookInterface
     {
-        $this->logBook->addLineSpacing($chapter);
+        $this->logBook->addLineSpacing($section);
         return $this;
     }
     
@@ -124,24 +157,38 @@ class ActionLogBook implements DataLogBookInterface
      * @param string $type
      * @return MarkdownLogBook
      */
-    public function addCodeBlock(string $code, string $type = '', string $chapter = null) : LogBookInterface
+    public function addCodeBlock(string $code, string $type = '', $section = null) : LogBookInterface
     {
         $this->logBook->addCodeBlock($code, $type);
         return $this;
     }
     
-    public function setFlowDiagram(string $mermaid, string $placeInChapter = null) : ActionLogBook
+    /**
+     * 
+     * @param string $mermaid
+     * @param string $placeInSection
+     * @return ActionLogBook
+     */
+    public function setFlowDiagram(string $mermaid) : ActionLogBook
     {
         $this->flowDiagram = $mermaid;
-        $this->logBook->addCodeBlock($mermaid, 'mermaid', $placeInChapter);
+        $this->logBook->addCodeBlock($mermaid, 'mermaid', 1);
         return $this;
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getFlowDiagram() : ?string
     {
         return $this->flowDiagram;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getFlowDiagramStyleError() : string
     {
         return "fill:#FF6347,stroke:#FF0000";

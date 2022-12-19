@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -19,9 +20,12 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     /**
      * 
      * @param DataSheetInterface $fromSheet
+     * @param bool $readMissingColumns
+     * @param LogBookInterface $logbook
+     * 
      * @return DataSheetInterface
      */
-    public function map(DataSheetInterface $fromSheet) : DataSheetInterface;
+    public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface;
     
     /**
      *

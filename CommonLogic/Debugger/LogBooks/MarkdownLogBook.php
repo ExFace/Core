@@ -21,13 +21,13 @@ class MarkdownLogBook implements LogBookInterface
     /**
      * 
      * @param string $title
-     * @param string $defaultChapter
+     * @param string $defaultSection
      * @param bool $enableMermaidDiagrams
      */
-    public function __construct(string $title, string $defaultChapter = '')
+    public function __construct(string $title, string $defaultSection = '')
     {
         $this->title = $title;
-        $this->addChapter($defaultChapter);
+        $this->addSection($defaultSection);
     }
     
     /**
@@ -35,9 +35,9 @@ class MarkdownLogBook implements LogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLine()
      */
-    public function addLine(string $text, int $indent = 0, string $chapter = null): LogBookInterface
+    public function addLine(string $text, int $indent = 0, $section = null): LogBookInterface
     {
-        $this->lines[$chapter ?? $this->getChapterCurrent()][] = ['indent' => $indent, 'text' => $text];
+        $this->lines[$this->getSectionKey($section)][] = ['indent' => $indent, 'text' => $text];
         return $this;
     }
     
@@ -46,24 +46,45 @@ class MarkdownLogBook implements LogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLineSpacing()
      */
-    public function addLineSpacing(string $chapter = null): LogBookInterface
+    public function addLineSpacing($section = null): LogBookInterface
     {
-        $this->lines[$chapter ?? $this->getChapterCurrent()][] = ['indent' => 0, 'text' => ''];
+        $this->lines[$this->getSectionKey($section)][] = ['indent' => 0, 'text' => ''];
         return $this;
     }
     
-    public function addChapter(string $title) : LogBookInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addSection()
+     */
+    public function addSection(string $title) : LogBookInterface
     {
         $this->lines[$title] = [];
         return $this;
     }
     
-    public function addCodeBlock(string $code, string $type = '', string $chapter = null) : LogBookInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeSection()
+     */
+    public function removeSection(string $title) : LogBookInterface
+    {
+        unset($this->lines[$title]);
+        return $this;        
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addCodeBlock()
+     */
+    public function addCodeBlock(string $code, string $type = '', $section = null) : LogBookInterface
     {
         if ($type === 'mermaid') {
             $this->enableMermaidDiagrams(true);
         }
-        return $this->addLine(PHP_EOL . '```' . $type . PHP_EOL . $code . PHP_EOL . '```', 0, $chapter);
+        return $this->addLine(PHP_EOL . '```' . $type . PHP_EOL . $code . PHP_EOL . '```', 0, $section);
     }
 
     /**
@@ -124,9 +145,9 @@ class MarkdownLogBook implements LogBookInterface
     protected function toMarkdown() : string
     {
         $str = '';
-        foreach ($this->lines as $chapter => $lines) {
-            if ($chapter !== '') {
-                $str .= PHP_EOL . '## ' . $chapter . PHP_EOL;
+        foreach ($this->lines as $section => $lines) {
+            if ($section !== '') {
+                $str .= PHP_EOL . '## ' . $section . PHP_EOL;
             }
             foreach ($lines as $lineProps) {
                 $str .= $this->convertIndentToString($lineProps['indent']) . $lineProps['text'] . PHP_EOL;
@@ -136,12 +157,19 @@ class MarkdownLogBook implements LogBookInterface
     }
     
     /**
-     * 
+     *
+     * @param string|int $section
      * @return string
      */
-    protected function getChapterCurrent() : string
+    protected function getSectionKey($section = null) : string
     {
-        return array_key_last($this->lines) ?? '';
+        if ($section === null) {
+            return array_key_last($this->lines) ?? '';
+        }
+        if (is_int($section)) {
+            return array_keys($this->lines)[$section - 1] ?? '';
+        }
+        return $section;
     }
     
     /**
@@ -151,10 +179,13 @@ class MarkdownLogBook implements LogBookInterface
      */
     protected function convertIndentToString(int $indent) : string
     {
+        if ($indent === 0) {
+            return '';
+        }
         $str = '';
         for ($i = 0; $i < $indent; $i++) {
             $str .= self::INDENT;
         }
-        return $str;
+        return $str . '- ';
     }
 }

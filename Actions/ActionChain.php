@@ -268,7 +268,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                     $inputSheet = $lastResult->getData();
                     $diagram .= $idx > 0 ? "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]" : '';
                 } else {
-                    $diagram .= $idx > 0 ? "{$lbId}{$freezeInputIdx}[{$action->getAliasWithNamespace()}]" : '';
+                    // If the input is always taken from a certain step, the arrow needs to start from the
+                    // step before it!
+                    $diagram .= $idx > 0 ? $lbId . ($freezeInputIdx === 0 ? 'T' : ($freezeInputIdx-1)) : '';
                 }
             } else {
                 // mermaid: 0[alias] .-x 1[alias]
