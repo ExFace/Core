@@ -177,10 +177,9 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         // Inherit filters if neccessary
         if ($this->getInheritFilters()){
-            $processedNames = [];
             $toSheet->setFilters($fromSheet->getFilters());
             if ($logbook !== null) {
-                $logbook->addLine(count($fromSheet->getFilters()->getConditions()) . ' filters inherited: ' . $fromSheet->getFilters()->__toString(), 2);
+                $logbook->addLine('Filters inherited: ' . $fromSheet->getFilters()->__toString(), 2);
             }
         } else {
             if ($logbook !== null) {
