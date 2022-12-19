@@ -55,6 +55,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\PhpClassDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2841,7 +2842,8 @@ class DataSheet implements DataSheetInterface
         $uxon_tab->setCaption($tabCaption);
         $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
             'widget_type' => 'InputUxon',
-            'caption' => '',
+            'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
+            'hide_caption' => true,
             'width' => '100%',
             'height' => '100%',
             'disabled' => true,
@@ -2917,5 +2919,33 @@ class DataSheet implements DataSheetInterface
             $diffRows[$i] = $this->getRow($i);
         }
         return $diffRows;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRowDuplicates()
+     */
+    public function removeRowDuplicates() : array
+    {
+        $rowHashes = [];
+        $removeRows = [];
+        if ($this->hasUidColumn() && count(array_unique($this->getUidColumn()->getValues(false))) === $this->countRows()) {
+            return $removeRows;
+        }
+        foreach ($this->getRows() as $i => $row) {
+            $rowHash = json_encode($row);
+            if (in_array($rowHash, $rowHashes)) {
+                $removeRows[$i] = $row;
+            } else {
+                $rowHashes[$i] = $rowHash;
+            }
+        }
+        if (! empty($removeRows)) {
+            foreach (array_reverse(array_keys($removeRows)) as $i) {
+                $this->removeRow($i);
+            }
+        }
+        return $removeRows;
     }
 }

@@ -344,13 +344,19 @@ abstract class AbstractAction implements ActionInterface
             throw $e;
         }
         
+        $logbook = $this->getLogBook($task);
+        $logbook->addSection('Output mapper');
         if ($result instanceof ResultData) {
-            $logbook = $this->getLogBook($task);
             $logbook->addDataSheet('Output data', $result->getData());
+            $logbook->addSection('Output mapper');
             if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
-                $result->setData($mapper->map($result->getData()));
+                $result->setData($mapper->map($result->getData(), null, $logbook));
                 $logbook->addDataSheet('Output data (mapped)', $result->getData());
+            } else {
+                $logbook->addLine('No output mapper found for object ' . $result->getData()->getMetaObject()->__toString());
             }
+        } else {
+            $logbook->addLine('Result has no data - nothing to map.');
         }
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
@@ -1112,11 +1118,14 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // Apply the input mappers
+        $logbook->removeSection('Input mapper');
+        $logbook->addSection('Input mapper');
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
-            $inputData = $mapper->map($sheet);
+            $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
         } else {
             $inputData = $sheet;
+            $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
         $logbook->addDataSheet('Final input data', $inputData);
         

@@ -542,6 +542,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function removeRowsForColumn($column_name);
+    
+    /**
+     * Removes duplicate rows only leaving the first occurrence.
+     * 
+     * Returns the removed rows with their original indexes
+     * 
+     * @return array
+     */
+    public function removeRowDuplicates() : array;
 
     /**
      * Returns TRUE if the sheet currently does not have data (= no rows) and FALSE otherwise.
