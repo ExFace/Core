@@ -180,7 +180,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             $processedNames = [];
             $toSheet->setFilters($fromSheet->getFilters());
             if ($logbook !== null) {
-                $logbook->addLine(count($processedNames) . ' filters inherited: ' . $fromSheet->getFilters()->__toString(), 2);
+                $logbook->addLine(count($fromSheet->getFilters()->getConditions()) . ' filters inherited: ' . $fromSheet->getFilters()->__toString(), 2);
             }
         } else {
             if ($logbook !== null) {
