@@ -52,4 +52,26 @@ interface iCanAutoloadData extends WidgetInterface
      * @return bool
      */
     public function hasAutorefreshData() : bool;
+    
+    /**
+     * Set the intervall for the data to be automatically refreshed in.
+     *
+     * @param int $seconds
+     * @return iCanAutoloadData
+     */
+    public function setAutorefreshIntervall(int $seconds) : iCanAutoloadData;
+    
+    /**
+     * Returns the autorefresh intervall in seconds.
+     *
+     * @return int|NULL
+     */
+    public function getAutorefreshIntervall() : ?int;
+    
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasAutorefreshIntervall() : bool;
 }
