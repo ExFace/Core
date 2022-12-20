@@ -16,6 +16,8 @@ trait iCanAutoloadDataTrait {
     
     private $autorefresh = true;
     
+    private $autorefresh_seconds = null;
+    
     /**
      * 
      * @see iCanAutoloadData::hasAutoloadData()
@@ -94,5 +96,41 @@ trait iCanAutoloadDataTrait {
     public function hasAutorefreshData() : bool
     {
         return $this->autorefresh;
+    }
+    
+    /**
+     * Set the intervall for the data to be automatically refreshed in.
+     *
+     * @uxon-property autorefresh_intervall
+     * @uxon-type int
+     * @uxon-default 60
+     * 
+     * @param int $seconds
+     * @return iCanAutoloadData
+     */
+    public function setAutorefreshIntervall(int $seconds) : iCanAutoloadData
+    {
+        $this->autorefresh_seconds = $seconds;
+        return $this;
+    }
+    
+    /**
+     * Returns the autorefresh intervall in seconds.
+     * 
+     * @return int|NULL
+     */
+    public function getAutorefreshIntervall() : ?int
+    {
+        return $this->autorefresh_seconds;
+    }
+    
+   
+    /**
+     * 
+     * @return bool
+     */
+    public function hasAutorefreshIntervall() : bool
+    {
+        return $this->autorefresh_seconds !== null;
     }
 }
