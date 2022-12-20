@@ -13,8 +13,10 @@ use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use \PhpOffice\PhpSpreadsheet\Shared\Date;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\DataQueries\DataSourceFileInfo;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
@@ -167,7 +169,9 @@ class ExcelBuilder extends FileContentsBuilder
             $address = $qpart->getDataAddress();
             $attrType = $qpart->getDataType();
             switch (true) {
-                case $attrType instanceof DateDataType: $formatValues = true; break;
+                // IDEA some data types may require formatted output. Add them here. Date/time was one of
+                // them at the beginning, but moved to explicit conversion later - see below.
+                // case $attrType instanceof DateDataType: $formatValues = true; break;
                 default: $formatValues = false;
             }
             switch (true) {
@@ -181,13 +185,14 @@ class ExcelBuilder extends FileContentsBuilder
                             break;
                         }
                         foreach ($colVals as $val) {
-                            $result_rows[$resultRowNo][$colKey] = $val;
+                            $result_rows[$resultRowNo][$colKey] = $this->parseExcelValue($val, $attrType);
                             $resultRowNo += 1;
                         }
                     }
                     break;
                 case $this->isAddressCoordinate($address):
-                    $static_values[$colKey] = $this->getValueOfCoordinate($sheet, $address, $formatValues);
+                    $val = $this->getValueOfCoordinate($sheet, $address, $formatValues);
+                    $static_values[$colKey] = $this->parseExcelValue($val, $attrType);
                     break;
                 default:
                     throw new QueryBuilderException('Invalid data address "' . $address . '" for Excel query builder!');
@@ -215,6 +220,42 @@ class ExcelBuilder extends FileContentsBuilder
         }
         
         return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
+    }
+    
+    /**
+     * Parses an Excel-value into the internal format for the given metamodel data type
+     * 
+     * @param mixed|NULL $value
+     * @param DataTypeInterface $dataType
+     * @param bool $nullOnError
+     * @throws \Throwable
+     * 
+     * @return mixed|NULL
+     */
+    protected function parseExcelValue($value, DataTypeInterface $dataType, bool $nullOnError = true)
+    {
+        switch (true) {
+            case $dataType instanceof DateDataType:
+                if ($value === null || $value === '') {
+                    $parsed = null;
+                    break;
+                }
+                try {
+                    $parsed = $dataType::formatDateNormalized(Date::excelToDateTimeObject($value));
+                } catch (\Throwable $e) {
+                    if ($nullOnError === true) {
+                        $parsed = null;
+                        $this->getWorkbench()->getLogger()->warning('Cannot parse excel value "' . $value . '" as date/time: ' . $e->getMessage(), [], $e);
+                    } else {
+                        throw $e;
+                    }
+                }
+                break;
+            default:
+                $parsed = $value;
+                break;
+        }
+        return $parsed;
     }
     
     /**
