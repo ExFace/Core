@@ -58,7 +58,7 @@ trait JqueryDataTransposerTrait {
             sDataColumnName: {$this->escapeString($col->isBoundToDataColumn() ? $col->getDataColumnName() : '')},
             sAttributeAlias: {$this->escapeString($col->isBoundToAttribute() ? $col->getAttributeAlias() : '')},
             sCaption: {$this->escapeString($col->getCaption())},
-            sHint: {$this->escapeString($col->getHint())},
+            sHint: {$this->escapeString($col->getHint(), true, false)},
             bHidden: " . ($col->isHidden() ? 'true' : 'false') . ",
             sAlign: null,
             sFooterAggregator: {$this->escapeString($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true ? $col->getFooter()->getAggregator()->exportString() : '')},
@@ -236,14 +236,18 @@ trait JqueryDataTransposerTrait {
     } // for (fld in oColModels)
     
     if (oData.transposed === false){
-    	for (var i=0; i<aRows.length; i++){
+    	aRows.forEach(function(oRow){
     		var newRowId = '';
     		var newRow = {};
     		var newColVals = {};
     		var newColId = '';
             var newColGroup;
-    		for (var fld in aRows[i]){
-    			var val = aRows[i][fld];
+    		
+            var subRowCounter = 0;
+            var oColOrig, sRowKey;
+
+    		for (var fld in oRow){
+    			var val = oRow[fld];
                 switch (true) {
     			    case oLabelCols[fld] != undefined:
         				if (typeof val !== 'string') {
@@ -264,43 +268,44 @@ trait JqueryDataTransposerTrait {
     			    // TODO save UID and other system attributes to some invisible data structure
     			}
     		}
-    		
-            var subRowCounter = 0;
+
     		for (var fld in newColVals){
-                var oColOrig = oResult.oColModelsOriginal[fld];
+                oColOrig = oResult.oColModelsOriginal[fld];
+                sRowKey = newRowId+fld;
                 oColOrig.iTransposedToSubrow = subRowCounter++;
-    			if (oRowKeys[newRowId+fld] == undefined){
-    				oRowKeys[newRowId+fld] = $.extend(true, {}, newRow);
-    				oRowKeys[newRowId+fld]['_subRowIndex'] = oColOrig.iTransposedToSubrow;
+    			if (oRowKeys[sRowKey] == undefined){
+    				oRowKeys[sRowKey] = $.extend(true, {}, newRow);
+    				oRowKeys[sRowKey]['_subRowIndex'] = oColOrig.iTransposedToSubrow;
     			}
-    			oRowKeys[newRowId+fld][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
-                oRowKeys[newRowId+fld][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
+    			oRowKeys[sRowKey][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
+                oRowKeys[sRowKey][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){
+                    var sTotalColName = newColGroup+'_'+oDataColsTotals[fld];
     				var newVal = parseFloat(newColVals[fld]);
-    				var oldVal = oRowKeys[newRowId+fld][newColGroup+'_'+oDataColsTotals[fld]];
+    				var oldVal = oRowKeys[sRowKey][sTotalColName];
                     var oldTotal = (oData.footer[0][newColId] || 0);
     				oldVal = oldVal ? oldVal : 0;
     				switch (oDataColsTotals[fld]){
     					case 'SUM':
-    						oRowKeys[newRowId+fld][newColGroup+'_'+oDataColsTotals[fld]] = oldVal + newVal;
+    						oRowKeys[sRowKey][sTotalColName] = oldVal + newVal;
                             if (aDataCols.length === 1){
                                 oData.footer[0][newColId] = oldTotal + newVal;
                             }
     						break;
     					case 'MAX':
-    						oRowKeys[newRowId+fld][newColGroup+'_'+oDataColsTotals[fld]] = oldVal < newVal ? newVal : oldVal;
+    						oRowKeys[sRowKey][sTotalColName] = oldVal < newVal ? newVal : oldVal;
                             if (aDataCols.length === 1){
                                 oData.footer[0][newColId] = oldTotal < newVal ? newVal : oldTotal;
                             }
     						break;
     					case 'MIN':
-    						oRowKeys[newRowId+fld][newColGroup+'_'+oDataColsTotals[fld]] = oldVal > newVal ? newVal : oldVal;
+    						oRowKeys[sRowKey][sTotalColName] = oldVal > newVal ? newVal : oldVal;
                             if (aDataCols.length === 1){
                                 oData.footer[0][newColId] = oldTotal > newVal ? newVal : oldTotal;
                             }
     						break;
     					case 'COUNT':
-    						oRowKeys[newRowId+fld][newColGroup+'_'+oDataColsTotals[fld]] = oldVal + 1;
+    						oRowKeys[sRowKey][sTotalColName] = oldVal + 1;
                             if (aDataCols.length === 1){
                                 oData.footer[0][newColId] = oldTotal + 1;
                             }
@@ -309,7 +314,7 @@ trait JqueryDataTransposerTrait {
     				}
     			}
     		}
-    	}
+    	});
     	for (var i in oRowKeys){
     		aRowsNew.push(oRowKeys[i]);
     	}
