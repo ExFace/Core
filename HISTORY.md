@@ -1,9 +1,41 @@
 # Release history
 
-## 1.4 (in development)
+## 1.7 (in development)
+
+- NEW Configuration GUI for progressive web apps (PWA)
+- FIX data authorization point now correctly handles multiple roles assigned to a user
+
+## 1.6
+
+- NEW Auto-refresh for dashboards
+- NEW Data mapper type "unpivot mapper"
+- NEW Action `CallAction` to select the right action depending on the input
+- Improved `FileBehavior` to save files in any data source transparently
+- Improved security
+- Improved action debugger
+
+## 1.5
+
+- NEW Communication framework to send emails, Teams messages, etc.
+- NEW Full JSON support in HTTP task facade
+- NEW Data authorization point
+- NEW configurable action input validation via `input_invalid_if`
+- Improved debugger menu
+- Improved `ActionChain` configuration
+- Improved Git console in `Administration > Metamodel > Apps`
+
+## 1.4
 
 - NEW GUI to install payload packages on a workbench(`Administration > Package manager`)
 - NEW Single-sign-on via SQL query to validate passwords against hashes stored in a database by other applications
+- NEW PDF layout printer
+- NEW Widget function framework + action `CallWidgetFunction`
+- NEW Map widget layers `DataLines` and `DataPoints`
+- NEW Widget `InputSelectButtons`
+- Improved `disabled_if` and `hidden_if` configuration of widgets
+- Improved `StateMachineBehavior`, added automatically generated flow diagrams
+- Improved widget `DataSpreadsheet`
+- Improved data mappers now allowing explicit ordering and adding using custom classes
 - FIX much improved form layouts in the UI5 facade
 
 ## 1.3
