@@ -597,7 +597,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      *
      * @uxon-property joins
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataJoinMapping[]
-     * @uxon-template [{"join": "left", "join_input_data_on_attribute": "", "join_data_sheet_on_attribute": "", "data_sheet": {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", comparator: "==", "value": ""}]}}}]
+     * @uxon-template [{"join":"left","join_input_data_on_attribute":"","join_data_sheet_on_attribute":"","data_sheet":{"object_alias":"","columns":[{"attribute_alias":""}],"filters":[{"operator":"AND","conditions":[{"expression":"","comparator":"==","value":""}]}]}}]
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
