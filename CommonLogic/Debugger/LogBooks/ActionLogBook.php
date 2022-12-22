@@ -36,7 +36,7 @@ class ActionLogBook implements DataLogBookInterface
         $this->task = $task;
         $this->action = $action;
         if ($defaultSection === '') {
-            $defaultSection = 'Logbook for action ' . $action->getAliasWithNamespace();
+            $defaultSection = 'Action ' . $action->getAliasWithNamespace();
         }
         $this->logBook = new DataLogBook($title, $defaultSection);
         $this->logBook->addLine('Prototype class: ' . get_class($action));
