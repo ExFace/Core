@@ -149,6 +149,7 @@ trait JqueryDataTransposerTrait {
 	var oRowKeys = {};
     
     var oColCurrent;
+    var fld;
     for (fld in oColModels) {
         var oCol = oColModels[fld];
         switch (true) {
@@ -246,7 +247,7 @@ trait JqueryDataTransposerTrait {
             var subRowCounter = 0;
             var oColOrig, sRowKey;
 
-    		for (var fld in oRow){
+    		for (fld in oRow){
     			var val = oRow[fld];
                 switch (true) {
     			    case oLabelCols[fld] != undefined:
@@ -269,7 +270,7 @@ trait JqueryDataTransposerTrait {
     			}
     		}
 
-    		for (var fld in newColVals){
+    		for (fld in newColVals){
                 oColOrig = oResult.oColModelsOriginal[fld];
                 sRowKey = newRowId+fld;
                 oColOrig.iTransposedToSubrow = subRowCounter++;
