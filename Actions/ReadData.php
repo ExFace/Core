@@ -10,7 +10,6 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Exceptions\Actions\ActionInputError;
 
 /**
  * 
@@ -35,12 +34,17 @@ class ReadData extends AbstractAction implements iReadData
     {
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
-        if ($dataWidget = $this->getWidgetToReadFor($task)) {
-            if (! $dataWidget->getMetaObject()->is($data_sheet->getMetaObject())) {
-                throw new ActionInputError($this, 'Invalid input object "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '" for ReadData-action: it must be compatible witht the object of the widget being read for!');
-            }
+        $dataWidget = $this->getWidgetToReadFor($task);
+        
+        // If reading for a specific widget and that widget is based on the object of the data sheet,
+        // ask the widget, what columns it needs.
+        // Note: there may also be cases, where data is read for another object - e.g. if the ReadData
+        // action is part of an action chain. In this case, simply read the columns there are.
+        if ($dataWidget !== null && $dataWidget->getMetaObject()->is($data_sheet->getMetaObject())) {
             $data_sheet = $dataWidget->prepareDataSheetToRead($data_sheet);
         }
+        
+        // Read from the data source
         $affected_rows = $data_sheet->dataRead();
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
