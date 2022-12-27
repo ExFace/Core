@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-05-19 15:52:29",
+            "MODIFIED_ON": "2022-12-19 11:11:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -435,6 +435,10 @@
                                             }
                                         ],
                                         "sorters": [
+                                            {
+                                                "attribute_alias": "ACTION_PROTOTYPE",
+                                                "direction": "asc"
+                                            },
                                             {
                                                 "attribute_alias": "NAME",
                                                 "direction": "asc"
