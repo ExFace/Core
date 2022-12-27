@@ -378,16 +378,14 @@
         },
         {
             "CREATED_ON": "2017-10-13 15:32:48",
-            "MODIFIED_ON": "2019-01-29 08:38:42",
+            "MODIFIED_ON": "2022-12-12 09:19:18",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b02bbffd277c98350205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Meta Model Alias",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
-            "CONFIG_UXON": {
-                "validator_regex": "\/^[^_~=][a-zA-Z0-9_]*$\/"
-            },
+            "PROTOTYPE": "exface\/Core\/DataTypes\/MetamodelAliasDataType.php",
+            "CONFIG_UXON": null,
             "VALIDATION_ERROR": "0x11e7b02c1305514998350205857feb80",
             "DEFAULT_DISPLAY_UXON": null,
             "DEFAULT_EDITOR_UXON": {
