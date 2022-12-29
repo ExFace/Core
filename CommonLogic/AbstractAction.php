@@ -54,6 +54,7 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -66,7 +67,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
  *        
  */
 abstract class AbstractAction implements ActionInterface
-{
+{    
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
@@ -141,6 +142,8 @@ abstract class AbstractAction implements ActionInterface
     private $customEffects = [];
     
     private $logBooks = [];
+    
+    private $offlineStrategy = null;
 
     /**
      *
@@ -1779,5 +1782,26 @@ abstract class AbstractAction implements ActionInterface
         $lb = new ActionLogBook('Action', $this, $task);
         $this->logBooks[] = $lb;
         return $lb;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOfflineStrategy()
+     */
+    public function getOfflineStrategy() : ?string
+    {
+        return $this->offlineStrategy;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOffline()
+     */
+    public function setOfflineStrategy(string $value) : ActionInterface
+    {
+        $this->offlineStrategy = OfflineStrategyDataType::cast($value);
+        return $this;
     }
 }
