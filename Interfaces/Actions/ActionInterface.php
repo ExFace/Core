@@ -522,4 +522,19 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return ActionDataCheckListInterface
      */
     public function getInputChecks() : ActionDataCheckListInterface;
+    
+    
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getOfflineStrategy() : ?string;
+    
+    /**
+     *
+     * @param string $value
+     * @return ActionInterface
+     */
+    public function setOfflineStrategy(string $value) : ActionInterface;
 }
