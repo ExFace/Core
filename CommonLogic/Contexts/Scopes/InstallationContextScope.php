@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Exceptions\Contexts\ContextSaveError;
 
 /**
  * 
@@ -84,6 +85,7 @@ class InstallationContextScope extends AbstractContextScope
                 // important for concurrent requests as another request might have added some
                 // data that was not present when reading this requests data initially.
                 $uxon = $this->getContextsUxon(true);
+                $uxonPrevious = $uxon->copy();
                 foreach ($this->changed_vars as $var) {
                     $uxon->setProperty($var, $this->context_file_contents->getProperty($var));
                 }
@@ -91,17 +93,27 @@ class InstallationContextScope extends AbstractContextScope
                     $uxon->unsetProperty($var);
                 }
                 
+                // If all the above did produce any changes in the saved data, don't overwrite the
+                // file - it won't change anything, there will be one I/O-operation less and we
+                // will have less potential problems with concurrent requests to write the file.
+                $json = $uxon->toJson();
+                if ($json === $uxonPrevious->toJson()) {
+                    return $this;
+                }
+                
                 // Do an atomic write to the .contexts file. Using an atomic dump is important to avoid corrupted data
                 // on multiple simultanious requests.
                 try {
-                    $this->getWorkbench()->filemanager()->dumpFile($this->getFilePathAbsolute(), $uxon->toJson());
+                    $this->getWorkbench()->filemanager()->dumpFile($this->getFilePathAbsolute(), $json);
                 } catch (\Throwable $e) {
-                    throw new RuntimeException('Cannot save installation context data! ' . $e->getMessage());
+                    throw new ContextSaveError($this, 'Cannot save context data! ' . $e->getMessage());
                 }
             }
             // The installation context is actually never empty as the internal sodium secret
             // and the last_install_time are always there. Removing or emptying the file may
             // be dangerous as the secret key would get lost!
+            // FIXME this is not the case for the user scope though - need to separate the two
+            // context scopes and probably let both extend an AbstractJsonFileContextScope or similar.
         }
         return $this;
     }
