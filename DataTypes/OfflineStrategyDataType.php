@@ -9,9 +9,9 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * 
  * @method OfflineStrategyDataType ENQUEUE(\exface\Core\CommonLogic\Workbench $workbench)
  * @method OfflineStrategyDataType PRESYNC(\exface\Core\CommonLogic\Workbench $workbench)
- * @method OfflineStrategyDataType CACHE(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method OfflineStrategyDataType USE_CACHE(\exface\Core\CommonLogic\Workbench $workbench)
  * @method OfflineStrategyDataType SKIP(\exface\Core\CommonLogic\Workbench $workbench)
- * @method OfflineStrategyDataType UNAVAILABLE(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method OfflineStrategyDataType ONLINE_ONLY(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
@@ -24,11 +24,11 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
     
     const PRESYNC = 'presync';
     
-    const CACHE = 'cache';
+    const USE_CACHE = 'use_cache';
     
     const SKIP = 'skip';
     
-    const UNAVAILABLE = 'unavailable';
+    const ONLINE_ONLY = 'online_only';
     
     private $labels = [];
     
@@ -43,7 +43,7 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
             foreach (OfflineStrategyDataType::getValuesStatic() as $val) {
-                $this->labels[$val] = $translator->translate('OFFLINE.STRATEGY.' . $val);
+                $this->labels[$val] = $translator->translate('OFFLINE.STRATEGY.' . mb_strtoupper($val));
             }
         }
         

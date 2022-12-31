@@ -275,6 +275,11 @@
 	"OFFLINE.ACTIONS.NETWORK.ACTION_QUEUE_FAILED": "Aktion kann nicht offline ausgeführt werden!",
 	"OFFLINE.ACTIONS.NETWORK.SYNC_COMPLETE": "Offline-Aktionen synchronisiert",
 	"OFFLINE.ACTIONS.NETWORK.SYNC_FAILED": "Synchronisation von Offline-Aktionen fehlgeschlagen!",
+	"OFFLINE.STRATEGY.ENQUEUE": "Offline-Queue verwenden",
+    "OFFLINE.STRATEGY.PRESYNC": "Vorher synchronisieren",
+    "OFFLINE.STRATEGY.USE_CACHE": "Cache verwenden",
+    "OFFLINE.STRATEGY.SKIP": "Überspringen",
+    "OFFLINE.STRATEGY.ONLINE_ONLY": "Nur online verfügbar",
 	
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
