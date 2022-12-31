@@ -2,12 +2,16 @@
 namespace exface\Core\CommonLogic\PWA;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Interfaces\PWA\ProgressiveWebAppInterface;
+use exface\Core\Interfaces\PWA\PWAInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\PWA\PWARouteInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\Dialog;
+use exface\Core\Widgets\Button;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 class PWARoute implements PWARouteInterface
 {
@@ -15,13 +19,11 @@ class PWARoute implements PWARouteInterface
     
     private $widget = null;
     
-    private $objectAction = null;
-    
     private $pwa = null;
     
     private $url = null;
     
-    public function __construct(ProgressiveWebAppInterface $pwa, string $url, WidgetInterface $widget, ActionInterface $action = null)
+    public function __construct(PWAInterface $pwa, string $url, WidgetInterface $widget)
     {
         $this->pwa = $pwa;
         $this->widget = $widget;
@@ -34,23 +36,143 @@ class PWARoute implements PWARouteInterface
         return new UxonObject();
     }
 
-    public function getPWA(): ProgressiveWebAppInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getPWA()
+     */
+    public function getPWA(): PWAInterface
     {
         return $this->pwa;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getWidget()
+     */
     public function getWidget() : WidgetInterface
     {
         return $this->widget;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getAction()
+     */
+    public function getAction() : ?ActionInterface
+    {
+        if (null !== $triggerWidget = $this->getTriggerWidget()) {
+            return $triggerWidget->getAction();
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getPage()
+     */
     public function getPage() : UiPageInterface
     {
         return $this->getWidget()->getPage();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getURL()
+     */
     public function getURL() : string
     {
-        return $this->getURL();
+        return $this->url;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getDescription()
+     */
+    public function getDescription() : string
+    {
+        $routeWidget = $this->getWidget();
+        if ($routeWidget->hasParent() === false) {
+            return 'Page ' . $routeWidget->getPage()->getAliasWithNamespace();
+        }
+        
+        if (null !== $triggerWidget = $this->getTriggerWidget()) {
+            $triggerWidget = $routeWidget->getParent();
+            if ($triggerWidget instanceof iUseInputWidget) {
+                $inputWidget = $triggerWidget->getInputWidget();
+            } else {
+                $inputWidget = $triggerWidget;
+            }
+        
+            $triggerName = $triggerWidget->getCaption() ?? '';
+            if ($triggerName === '') {
+                $triggerName = $triggerWidget->getAction()->getName();
+            }
+        }
+        
+        return ($inputWidget ? $this->getTriggerInputName($inputWidget) : $routeWidget->getWidgetType()) . ' > ' . $triggerName;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getTriggerWidget()
+     */
+    public function getTriggerWidget() : ?iTriggerAction
+    {
+        $routeWidget = $this->getWidget();
+        if ($routeWidget->hasParent()) {
+            $triggerWidget = $routeWidget->getParent();
+            if ($triggerWidget instanceof iTriggerAction) {
+                return $triggerWidget;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getTriggerInputWidget()
+     */
+    public function getTriggerInputWidget() : ?WidgetInterface
+    {
+        if (null !== $triggerWidget = $this->getTriggerWidget()) {
+            if ($triggerWidget instanceof iUseInputWidget) {
+                return $triggerWidget->getInputWidget();
+            }
+        }
+        return null;
+    }
+    
+    /**
+     *
+     * @param WidgetInterface $inputWidget
+     * @return string
+     */
+    protected function getTriggerInputName(WidgetInterface $inputWidget) : string
+    {
+        $inputName = $inputWidget->getCaption();
+        switch (true) {
+            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
+                $btn = $inputWidget->getParent();
+                if ($btn instanceof Button) {
+                    if ($btnCaption = $btn->getCaption()) {
+                        $inputName = $btnCaption;
+                    }
+                    $btnInput = $btn->getInputWidget();
+                    $inputName = $this->getTriggerInputName($btnInput) . ' > ' . $inputName;
+                }
+                break;
+            case $inputName !== null && $inputName !== '':
+                $inputName = $inputWidget->getWidgetType() . ' "' . $inputName . '"';
+                break;
+        }
+        return $inputName ?? $inputWidget->getWidgetType() . ($inputWidget->getCaption() ? ' "' . $inputWidget->getCaption() . '"' : " [{$inputWidget->getMetaObject()->getAliasWithNamespace()}]");
     }
 }

@@ -1795,8 +1795,11 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * What to do with this action offline: make always available (`presync`), `enqueue` when triggered, `skip`, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property offline_strategy
+     * @uxon-type [enqueue,presync,use_cache,skip,online_only]
+     * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setOffline()
      */
     public function setOfflineStrategy(string $value) : ActionInterface
