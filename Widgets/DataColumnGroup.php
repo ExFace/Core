@@ -86,7 +86,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function removeColumn(DataColumn $column) : iHaveColumns
     {
-        $key = array_search($column, $this->columns);
+        $key = array_search($column, $this->columns, true);
         if ($key !== false){
             unset($this->columns[$key]);
             // Reindex the array to avoid index gaps

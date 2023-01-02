@@ -238,7 +238,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      */
     public function removeFilter(QueryPartFilter $qpart) : QueryPartFilterGroup
     {
-        $key = array_search($qpart, $this->filters);
+        $key = array_search($qpart, $this->filters, true);
         if ($key !== false) {
             $this->getConditionGroup()->removeCondition($qpart->getCondition());
             unset($this->filters[$key]);

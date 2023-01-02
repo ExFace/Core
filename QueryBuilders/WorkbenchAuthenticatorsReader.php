@@ -117,7 +117,7 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
      */
     protected function getAuthenticatorId(AuthenticatorInterface $authenticator) : ?string
     {
-        return $this->ids[array_search($authenticator, $this->getAuthenticators())];
+        return $this->ids[array_search($authenticator, $this->getAuthenticators(), true)];
     }
 }
 ?>

@@ -140,7 +140,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function remove($entity)
     {
-        if ($key = array_search($entity, $this->content_array)) {
+        if ($key = array_search($entity, $this->content_array, true)) {
             $this->removeByKey($key);
         }
         return $this;

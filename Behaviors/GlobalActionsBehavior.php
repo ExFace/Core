@@ -75,7 +75,7 @@ class GlobalActionsBehavior extends AbstractBehavior
         }
         
         $btnGrp = $event->getGlobalActionsButtongGroup();
-        if (in_array($btnGrp, $this->widgetsProcessed) === true) {
+        if (in_array($btnGrp, $this->widgetsProcessed, true) === true) {
             return;
         }
         

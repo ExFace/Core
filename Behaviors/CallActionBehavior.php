@@ -231,7 +231,7 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        if (in_array($data_sheet, $this->ignoreDataSheets)) {
+        if (in_array($data_sheet, $this->ignoreDataSheets, true)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_attributes_change`', [], $data_sheet);
             return;
         }
