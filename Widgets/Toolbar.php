@@ -359,7 +359,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      */
     public function getButtonIndex(Button $widget)
     {
-        return array_search($widget, $this->getButtons());
+        return array_search($widget, $this->getButtons(), true);
     }
     
     /**

@@ -52,7 +52,7 @@ class CompoundAttributeComponent implements CompoundAttributeComponentInterface
      */
     public function getIndex(): int
     {
-        return array_search($this, $this->getCompoundAttribute()->getComponents());
+        return array_search($this, $this->getCompoundAttribute()->getComponents(), true);
     }
 
     /**
