@@ -107,7 +107,7 @@ class Map extends AbstractWidget implements
     
     public function getBaseMapIndex(BaseMapInterface $baseMap) : ?int
     {
-        return array_search($baseMap, $this->getBaseMaps());
+        return array_search($baseMap, $this->getBaseMaps(), true);
     }
     
     /**
@@ -177,7 +177,7 @@ class Map extends AbstractWidget implements
     
     public function getLayerIndex(MapLayerInterface $layer) : ?int
     {
-        return array_search($layer, $this->getLayers());
+        return array_search($layer, $this->getLayers(), true);
     }
     
     /**

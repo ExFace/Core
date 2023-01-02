@@ -187,7 +187,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     public function getWidgetIndex(WidgetInterface $widget)
     {
-        return array_search($widget, $this->getWidgets());
+        return array_search($widget, $this->getWidgets(), true);
     }
     
     /**
@@ -229,7 +229,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     public function removeWidget(WidgetInterface $widget)
     {
-        $key = array_search($widget, $this->widgets);
+        $key = array_search($widget, $this->widgets, true);
         if ($key !== false){
             unset($this->widgets[$key]);
             // Reindex the array to avoid index gaps

@@ -75,7 +75,7 @@ class PivotColumnGroup implements PivotColumnGroupInterface
      */
     public function hasColumnWithValues(DataColumnInterface $col) : bool
     {
-        return in_array($col, $this->valuesCols);
+        return in_array($col, $this->valuesCols, true);
     }
     
     /**

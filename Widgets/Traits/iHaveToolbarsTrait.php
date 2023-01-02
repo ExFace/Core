@@ -118,7 +118,7 @@ trait iHaveToolbarsTrait {
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::removeToolbar()
      */
     public function removeToolbar(Toolbar $toolbar){
-        unset($this->toolbars[array_search($toolbar, $this->toolbars)]);
+        unset($this->toolbars[array_search($toolbar, $this->toolbars, true)]);
         return $this;
     }
     

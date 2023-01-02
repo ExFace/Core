@@ -454,7 +454,7 @@ class MetaObject implements MetaObjectInterface
         }
         
         // Prevent extending multiple times becaus that would double behavior triggers!
-        if (in_array($parent, $this->parent_objects)) {
+        if (in_array($parent, $this->parent_objects, true)) {
             return;
         }
         
@@ -948,7 +948,7 @@ class MetaObject implements MetaObjectInterface
             foreach ($obj->getParentObjects(($depth === null ? null : $depth-1)) as $objParent) {
                 // Can't just use array_unique here because it requires all elements
                 // to be convertable to strings!
-                if (! in_array($objParent, $objects)) {
+                if (! in_array($objParent, $objects, true)) {
                     $objects[] = $objParent;
                 }
             }

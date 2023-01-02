@@ -383,7 +383,7 @@ class NotifyingBehavior extends AbstractBehavior
         }
         
         // Ignore the event if its data was already processed and set to be ignored (e.g. required change did not happen)
-        if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets)) {
+        if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets, true)) {
             $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
             $this->isNotificationInProgress = false;
             return;
