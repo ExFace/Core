@@ -327,7 +327,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                         // Only set cell values if the column is an added column
                         // or the column does not exist yet in the original data sheet.
                         // It is important to check both because formula might lead to more columns being added.
-                        if (in_array($addedCol, $addedCols) || $data_sheet->getColumns()->getByExpression($addedCol->getExpressionObj()) === FALSE) {
+                        if (in_array($addedCol, $addedCols, true) || $data_sheet->getColumns()->getByExpression($addedCol->getExpressionObj()) === FALSE) {
                             $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                         }
                     }

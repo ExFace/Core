@@ -351,7 +351,7 @@ class CallAction extends AbstractAction implements iCallOtherActions
      */
     protected function getActionIndex(ActionInterface $action) : ?int
     {
-        $i = array_search($action, $this->getActions());
+        $i = array_search($action, $this->getActions(), true);
         return $i === false ? null : $i;
     }
     

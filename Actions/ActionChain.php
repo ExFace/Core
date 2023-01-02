@@ -324,7 +324,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getActionIndex(ActionInterface $action) : int
     {
-        return array_search($action, $this->getActions());
+        return array_search($action, $this->getActions(), true);
     }
     
     /**
