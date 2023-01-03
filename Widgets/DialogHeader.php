@@ -127,11 +127,11 @@ class DialogHeader extends Form
      */
     public function prepareDataSheetToRead(DataSheetInterface $dataSheet = null) : DataSheetInterface
     {
-        $sheet = parent::prepareDataSheetToRead($dataSheet);
+        $dataSheet = parent::prepareDataSheetToRead($dataSheet);
         if ($dataSheet->getMetaObject()->is($this->getMetaObject()) && $this->isTitleBoundToAttribute()) {
-            $sheet->getColumns()->addFromAttribute($this->getTitleAttribute());
+            $dataSheet->getColumns()->addFromAttribute($this->getTitleAttribute());
         }
-        return $sheet;
+        return $dataSheet;
     }
     
     protected function doPrefill(DataSheetInterface $dataSheet)
