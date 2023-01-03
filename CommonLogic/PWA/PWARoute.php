@@ -12,6 +12,8 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Actions\ShowWidget;
+use exface\Core\Factories\ActionFactory;
 
 class PWARoute implements PWARouteInterface
 {
@@ -22,6 +24,8 @@ class PWARoute implements PWARouteInterface
     private $pwa = null;
     
     private $url = null;
+    
+    private $action = null;
     
     public function __construct(PWAInterface $pwa, string $url, WidgetInterface $widget)
     {
@@ -63,10 +67,19 @@ class PWARoute implements PWARouteInterface
      */
     public function getAction() : ?ActionInterface
     {
+        if ($this->action !== null) {
+            return $this->action;
+        }
+        
         if (null !== $triggerWidget = $this->getTriggerWidget()) {
             return $triggerWidget->getAction();
         }
-        return null;
+        
+        if ($this->getWidget()->hasParent() === false) {
+            $this->action = ActionFactory::createFromString($this->getPWA()->getWorkbench(), ShowWidget::class, $this->getWidget());
+        }
+        
+        return $this->action;
     }
     
     /**
@@ -96,26 +109,7 @@ class PWARoute implements PWARouteInterface
      */
     public function getDescription() : string
     {
-        $routeWidget = $this->getWidget();
-        if ($routeWidget->hasParent() === false) {
-            return 'Page ' . $routeWidget->getPage()->getAliasWithNamespace();
-        }
-        
-        if (null !== $triggerWidget = $this->getTriggerWidget()) {
-            $triggerWidget = $routeWidget->getParent();
-            if ($triggerWidget instanceof iUseInputWidget) {
-                $inputWidget = $triggerWidget->getInputWidget();
-            } else {
-                $inputWidget = $triggerWidget;
-            }
-        
-            $triggerName = $triggerWidget->getCaption() ?? '';
-            if ($triggerName === '') {
-                $triggerName = $triggerWidget->getAction()->getName();
-            }
-        }
-        
-        return ($inputWidget ? $this->getTriggerInputName($inputWidget) : $routeWidget->getWidgetType()) . ' > ' . $triggerName;
+        return $this->getPWA()->getDescription($this);
     }
     
     /**
@@ -148,31 +142,5 @@ class PWARoute implements PWARouteInterface
             }
         }
         return null;
-    }
-    
-    /**
-     *
-     * @param WidgetInterface $inputWidget
-     * @return string
-     */
-    protected function getTriggerInputName(WidgetInterface $inputWidget) : string
-    {
-        $inputName = $inputWidget->getCaption();
-        switch (true) {
-            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
-                $btn = $inputWidget->getParent();
-                if ($btn instanceof Button) {
-                    if ($btnCaption = $btn->getCaption()) {
-                        $inputName = $btnCaption;
-                    }
-                    $btnInput = $btn->getInputWidget();
-                    $inputName = $this->getTriggerInputName($btnInput) . ' > ' . $inputName;
-                }
-                break;
-            case $inputName !== null && $inputName !== '':
-                $inputName = $inputWidget->getWidgetType() . ' "' . $inputName . '"';
-                break;
-        }
-        return $inputName ?? $inputWidget->getWidgetType() . ($inputWidget->getCaption() ? ' "' . $inputWidget->getCaption() . '"' : " [{$inputWidget->getMetaObject()->getAliasWithNamespace()}]");
     }
 }

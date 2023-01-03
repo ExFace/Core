@@ -280,6 +280,7 @@
     "OFFLINE.STRATEGY.USE_CACHE": "Cache verwenden",
     "OFFLINE.STRATEGY.SKIP": "Überspringen",
     "OFFLINE.STRATEGY.ONLINE_ONLY": "Nur online verfügbar",
+    "OFFLINE.STRATEGY.CLIENT_SIDE": "Im Client",
 	
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
