@@ -1611,7 +1611,7 @@ class DataSheet implements DataSheetInterface
         // Add a UID-filter if we know, which UIDs are to be deleted
         // Otherwise just use all filters of the data sheet
         $uidsToDelete = [];
-        if ($uidCol = $this->getUidColumn()) {
+        if (($uidCol = $this->getUidColumn()) && ! $uidCol->isEmpty(true)) {
             if ($uidsToDelete = $uidCol->getValues(false)) {
                 $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uidsToDelete), EXF_COMPARATOR_IN));
             }
