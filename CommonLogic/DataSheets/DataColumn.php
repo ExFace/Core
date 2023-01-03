@@ -342,6 +342,11 @@ class DataColumn implements DataColumnInterface
      */
     public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
+        // Don't do anything, if there are no rows - nothing to calculate!
+        if ($this->getDataSheet()->isEmpty()) {
+            return $this;
+        }
+        // If there are rows, but this column is empty, or we will be overwriting - calculate
         if ($overwrite || $this->isEmpty()) {
             $this->setValues($expression->evaluate($this->getDataSheet()));
         } else {
