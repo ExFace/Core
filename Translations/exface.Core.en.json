@@ -294,6 +294,7 @@
     "OFFLINE.STRATEGY.USE_CACHE": "Use cache if available",
     "OFFLINE.STRATEGY.SKIP": "Skip",
     "OFFLINE.STRATEGY.ONLINE_ONLY": "Online only",
+    "OFFLINE.STRATEGY.CLIENT_SIDE": "Client-side",
 	
     "PAGE.APPS.REPAIR": "Repair",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Open Object",

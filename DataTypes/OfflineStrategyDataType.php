@@ -12,6 +12,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @method OfflineStrategyDataType USE_CACHE(\exface\Core\CommonLogic\Workbench $workbench)
  * @method OfflineStrategyDataType SKIP(\exface\Core\CommonLogic\Workbench $workbench)
  * @method OfflineStrategyDataType ONLINE_ONLY(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method OfflineStrategyDataType CLIENT_SIDE(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
@@ -29,6 +30,8 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
     const SKIP = 'skip';
     
     const ONLINE_ONLY = 'online_only';
+    
+    const CLIENT_SIDE = 'client_side';
     
     private $labels = [];
     
