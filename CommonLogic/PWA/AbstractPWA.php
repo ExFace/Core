@@ -18,9 +18,12 @@ use exface\Core\Interfaces\PWA\PWARouteInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\PWA\PWADatasetInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Widgets\Data;
+use exface\Core\Widgets\InputComboTable;
+use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Widgets\Dialog;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -186,9 +189,9 @@ abstract class AbstractPWA implements PWAInterface
     public function findDataSet(DataSheetInterface $dataSheet) : ?PWADatasetInterface
     {
         $obj = $dataSheet->getMetaObject();
+        $match = null;
         foreach ($this->getDatasets() as $set) {
             if (! $set->getMetaObject()->is($obj)) {
-                $set = null;
                 continue;
             }
             $setSheet = $set->getDataSheet();
@@ -200,13 +203,14 @@ abstract class AbstractPWA implements PWAInterface
                 }
                 return $set;
             }
-            if ($setSheet->hasAggregateAll() && ! $dataSheet->hasAggregateAll()) {
-                $set = null;
+            if ($setSheet->hasAggregateAll() !== $dataSheet->hasAggregateAll()) {
                 continue;
             }
             // TODO compare filters too!!!
+            $match = $set;
+            break;
         }
-        return $set;
+        return $match;
     }
     
     /**
@@ -221,7 +225,7 @@ abstract class AbstractPWA implements PWAInterface
         foreach ($this->getDatasets() as $set) {
             $dsDatasets->addRow([
                 'PWA' => $this->getUid(),
-                'DESCRIPTION' => $set->getDescription(),
+                'DESCRIPTION' => $this->getDescriptionOf($set),
                 'OBJECT' => $set->getMetaObject()->getId(),
                 'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson(),
                 'USER_DEFINED_FLAG' => 0
@@ -240,7 +244,7 @@ abstract class AbstractPWA implements PWAInterface
                 'PAGE' => $widget ? $widget->getPage()->getId() : null,
                 'TRIGGER_WIDGET_ID' => $widget ? $widget->getId() : null,
                 'TRIGGER_WIDGET_TYPE' => $widget ? $widget->getWidgetType() : null,
-                'DESCRIPTION' => $this->getDescription($action),
+                'DESCRIPTION' => $this->getDescriptionOf($action),
                 'OFFLINE_STRATEGY' => $this->getActionOfflineStrategy($action),
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
                 'PWA_DATASET' => null !== ($set = $this->getActionDataSet($action)) ? $this->getDatasetPWAModelUID($set) : null
@@ -265,7 +269,7 @@ abstract class AbstractPWA implements PWAInterface
                 'PWA' => $this->getUid(),
                 'PWA_ACTION' => $this->getActionPWAModelUID($route->getAction()),
                 'URL' => $route->getUrl(),
-                'DESCRIPTION' => $route->getDescription(),
+                'DESCRIPTION' => $this->getDescriptionOf($route),
                 'USER_DEFINED_FLAG' => 0
             ]);
         }
@@ -280,6 +284,10 @@ abstract class AbstractPWA implements PWAInterface
     
     protected abstract function getActionOfflineStrategy(ActionInterface $action) : string;
     
+    /**
+     * 
+     * @return DataSheetInterface
+     */
     protected function getDataForRoutes() : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_ROUTE');
@@ -294,20 +302,10 @@ abstract class AbstractPWA implements PWAInterface
         return $ds;
     }
     
-    protected function getDataForWidgets() : DataSheetInterface
-    {
-        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_WIDGET');
-        $ds = DataSheetFactory::createFromObject($obj);
-        $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
-        if ($this->selector->isUid()) {
-            $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
-        } else {
-            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
-        }
-        $ds->dataRead();
-        return $ds;
-    }
-    
+    /**
+     * 
+     * @return DataSheetInterface
+     */
     protected function getDataForActions() : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_ACTION');
@@ -322,6 +320,10 @@ abstract class AbstractPWA implements PWAInterface
         return $ds;
     }
     
+    /**
+     * 
+     * @return DataSheetInterface
+     */
     protected function getDataForDatasets() : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_DATASET');
@@ -336,6 +338,10 @@ abstract class AbstractPWA implements PWAInterface
         return $ds;
     }
     
+    /**
+     * 
+     * @return DataSheetInterface
+     */
     protected function getDataForPWA() : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
@@ -350,7 +356,12 @@ abstract class AbstractPWA implements PWAInterface
         return $ds;
     }
     
-    public function getDescription($subject) : string
+    /**
+     * 
+     * @param ActionInterface|PWARouteInterface|PWADatasetInterface $subject
+     * @return string
+     */
+    public function getDescriptionOf($subject) : string
     {
         switch (true) {
             case $subject instanceof ActionInterface:
@@ -372,36 +383,54 @@ abstract class AbstractPWA implements PWAInterface
                     }
                 }
                 
-                return ($inputWidget ? $this->getTriggerInputName($inputWidget) : $triggerWidget->getWidgetType()) . ' > ' . $triggerName;
+                return ($inputWidget ? $this->getDescriptionOfWidget($inputWidget) : $triggerWidget->getWidgetType()) . ' > ' . $triggerName;
             case $subject instanceof PWARouteInterface:
-                return $this->getDescription($subject->getAction());
+                return $this->getDescriptionOf($subject->getAction());
+            case $subject instanceof PWADatasetInterface:
+                $descr = $subject->getMetaObject()->getName() . ' [' . $subject->getMetaObject()->getAliasWithNamespace() . ']';
+                $ds = $subject->getDataSheet();
+                if ($ds->hasAggregateAll()) {
+                    $ds .= '; aggregated';
+                }
+                if ($ds->hasAggregations()) {
+                    $descr .= '; aggregated by ';
+                    foreach ($ds->getAggregations() as $aggr) {
+                        $descr .= $aggr->getAttributeAlias() . ', ';
+                    }
+                    $descr = mb_substr($descr, 0, -2);
+                }
+                return $descr;
         }
+        return '';
     }
     
     /**
      *
-     * @param WidgetInterface $inputWidget
+     * @param WidgetInterface $widget
      * @return string
      */
-    protected function getTriggerInputName(WidgetInterface $inputWidget) : string
+    protected function getDescriptionOfWidget(WidgetInterface $widget) : string
     {
-        $inputName = $inputWidget->getCaption();
+        $inputName = $widget->getCaption();
         switch (true) {
-            case $inputWidget instanceof Dialog && $inputWidget->hasParent():
-                $btn = $inputWidget->getParent();
+            case $widget instanceof Dialog && $widget->hasParent():
+                $btn = $widget->getParent();
                 if ($btn instanceof Button) {
                     if ($btnCaption = $btn->getCaption()) {
                         $inputName = $btnCaption;
                     }
                     $btnInput = $btn->getInputWidget();
-                    $inputName = $this->getTriggerInputName($btnInput) . ' > ' . $inputName;
+                    $inputName = $this->getDescriptionOfWidget($btnInput) . ' > ' . $inputName;
                 }
                 break;
+            case $widget instanceof Data && (null !== $parent = $widget->getParent()) && ($parent instanceof InputComboTable || $parent instanceof iUseData):
+                $inputName = $parent->getWidgetType() . ' "' . $parent->getCaption() . '"';
+                break;
             case $inputName !== null && $inputName !== '':
-                $inputName = $inputWidget->getWidgetType() . ' "' . $inputName . '"';
+                $inputName = $widget->getWidgetType() . ' "' . $inputName . '"';
                 break;
         }
-        return $inputName ?? $inputWidget->getWidgetType() . ($inputWidget->getCaption() ? ' "' . $inputWidget->getCaption() . '"' : " [{$inputWidget->getMetaObject()->getAliasWithNamespace()}]");
+        return $inputName ?? $widget->getWidgetType() . ($widget->getCaption() ? ' "' . $widget->getCaption() . '"' : " [{$widget->getMetaObject()->getAliasWithNamespace()}]");
     }
     
     /**
@@ -427,6 +456,11 @@ abstract class AbstractPWA implements PWAInterface
         return new UxonObject();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->workbench;
@@ -434,19 +468,16 @@ abstract class AbstractPWA implements PWAInterface
     
     public function isAvailableOffline() : bool
     {
-        // TODO
-        return true;
+        return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_FLAG', 0);
     }
     
     public function isAvailableOfflineHelp() : bool
     {
-        // TODO
-        return false;
+        return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_HELP_FLAG', 0);
     }
     
     public function isAvailableOfflineUnpublished() : bool
     {
-        // TODO
-        return false;
+        return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_UNPUBLISHED_FLAG', 0);
     }
 }

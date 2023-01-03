@@ -17,6 +17,4 @@ interface PWADatasetInterface extends iCanBeConvertedToUxon
     public function getMetaObject() : MetaObjectInterface;
     
     public function getDataSheet() : DataSheetInterface;
-    
-    public function getDescription() : string;
 }

@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-12-27 17:34:13",
-            "MODIFIED_ON": "2023-01-03 10:21:12",
+            "MODIFIED_ON": "2023-01-03 16:51:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edbb694cebd4babb69747827435ce5",
@@ -103,42 +103,62 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "General",
+                                "caption": "App",
                                 "widgets": [
                                     {
-                                        "attribute_alias": "UID",
-                                        "widget_type": "InputHidden",
-                                        "id": "uid_field"
+                                        "widget_type": "WidgetGroup",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "UID",
+                                                "widget_type": "InputHidden",
+                                                "id": "uid_field"
+                                            },
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "APP"
+                                            },
+                                            {
+                                                "attribute_alias": "PAGE_TEMPLATE"
+                                            },
+                                            {
+                                                "attribute_alias": "START_PAGE"
+                                            },
+                                            {
+                                                "attribute_alias": "ACTIVE_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "DESCRIPTION"
+                                            }
+                                        ]
                                     },
                                     {
-                                        "attribute_alias": "NAME"
-                                    },
-                                    {
-                                        "attribute_alias": "PAGE_TEMPLATE"
-                                    },
-                                    {
-                                        "attribute_alias": "ALIAS"
-                                    },
-                                    {
-                                        "attribute_alias": "APP"
-                                    },
-                                    {
-                                        "attribute_alias": "START_PAGE"
-                                    },
-                                    {
-                                        "attribute_alias": "URL"
-                                    },
-                                    {
-                                        "attribute_alias": "AVAILABLE_OFFLINE_FLAG"
-                                    },
-                                    {
-                                        "attribute_alias": "INSTALLABLE_FLAG"
-                                    },
-                                    {
-                                        "attribute_alias": "ACTIVE_FLAG"
-                                    },
-                                    {
-                                        "attribute_alias": "ICON_URI"
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "PWA configuration",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "URL"
+                                            },
+                                            {
+                                                "attribute_alias": "ICON_URI"
+                                            },
+                                            {
+                                                "attribute_alias": "INSTALLABLE_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "AVAILABLE_OFFLINE_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "AVAILABLE_OFFLINE_HELP_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "AVAILABLE_OFFLINE_UNPUBLISHED_FLAG"
+                                            }
+                                        ]
                                     }
                                 ]
                             },

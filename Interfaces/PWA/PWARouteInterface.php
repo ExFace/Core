@@ -28,8 +28,6 @@ interface PWARouteInterface extends iCanBeConvertedToUxon
     
     public function getURL() : string;
     
-    public function getDescription() : string;
-    
     public function getTriggerWidget() : ?iTriggerAction;
     
     public function getTriggerInputWidget() : ?WidgetInterface;

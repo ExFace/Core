@@ -56,11 +56,6 @@ class PWADataset implements PWADatasetInterface
     {
         return $this->metaObject;
     }
-
-    public function getDescription(): string
-    {
-        return $this->getMetaObject()->__toString();
-    }
     
     public function addAction(ActionInterface $action) : PWADatasetInterface
     {
