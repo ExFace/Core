@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-01-02 08:45:35",
-            "MODIFIED_ON": "2023-01-03 09:43:43",
+            "MODIFIED_ON": "2023-01-03 16:58:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eda34a71852896a34a025041000001",
@@ -98,20 +98,17 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
+                "header": {
+                    "title_attribute_alias": "LABEL"
+                },
                 "widgets": [
                     {
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "Usage",
+                                "caption": "Used by",
                                 "readonly": true,
                                 "widgets": [
-                                    {
-                                        "attribute_alias": "DESCRIPTION"
-                                    },
-                                    {
-                                        "attribute_alias": "OBJECT__LABEL"
-                                    },
                                     {
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.PWA_ACTION",

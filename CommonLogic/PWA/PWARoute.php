@@ -8,8 +8,6 @@ use exface\Core\Interfaces\PWA\PWARouteInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Widgets\Dialog;
-use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Actions\ShowWidget;
@@ -100,16 +98,6 @@ class PWARoute implements PWARouteInterface
     public function getURL() : string
     {
         return $this->url;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getDescription()
-     */
-    public function getDescription() : string
-    {
-        return $this->getPWA()->getDescription($this);
     }
     
     /**
