@@ -1,0 +1,84 @@
+{
+    "uid": "0x11ed9ffd873627329ffd747827435ce5",
+    "alias_with_namespace": "exface.core.web-apps-pwas",
+    "menu_parent_page_selector": "0xaab623e6632411e8aab30205857feb80",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Web Apps (PWAs)",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2022-12-27 17:43:01",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2022-12-30 14:53:55",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.PWA",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "ACTIVE_FLAG"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "URL"
+            },
+            {
+                "attribute_alias": "ICON_URI"
+            },
+            {
+                "attribute_alias": "START_PAGE__LABEL"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "INSTALLABLE_FLAG"
+            },
+            {
+                "attribute_alias": "AVAILABLE_OFFLINE_FLAG"
+            },
+            {
+                "attribute_alias": "PAGE_TEMPLATE__LABEL"
+            },
+            {
+                "attribute_alias": "PAGE_TEMPLATE__FACADE"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "NAME",
+                "direction": "asc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.GeneratePWA"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            }
+        ]
+    }
+}
