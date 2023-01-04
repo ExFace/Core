@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Actions;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * This trait enables an exception to output action specific debug information.
@@ -53,5 +54,14 @@ trait ActionExceptionTrait {
         $this->action = $value;
         return $this;
     }
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $error_message)
+    {
+        $error_message = parent::createDebugWidget($error_message);
+        return $this->getAction()->createDebugWidget($error_message);
+    }
 }
-?>

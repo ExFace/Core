@@ -22,6 +22,7 @@ use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 /**
  * Common interface for all actions.
@@ -46,7 +47,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface
+interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface, iCanGenerateDebugWidgets
 {
     
     /**

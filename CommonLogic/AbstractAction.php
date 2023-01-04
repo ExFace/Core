@@ -54,6 +54,7 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1779,5 +1780,18 @@ abstract class AbstractAction implements ActionInterface
         $lb = new ActionLogBook('Action', $this, $task);
         $this->logBooks[] = $lb;
         return $lb;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $error_message)
+    {
+        foreach ($this->logBooks as $logbook) {
+            $error_message = $logbook->createDebugWidget($error_message);
+        }
+        return $error_message;
     }
 }
