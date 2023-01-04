@@ -55,6 +55,7 @@ use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Widgets\DebugMessage;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -67,7 +68,7 @@ use exface\Core\Widgets\DebugMessage;
  *        
  */
 abstract class AbstractAction implements ActionInterface
-{
+{    
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
@@ -142,6 +143,8 @@ abstract class AbstractAction implements ActionInterface
     private $customEffects = [];
     
     private $logBooks = [];
+    
+    private $offlineStrategy = null;
 
     /**
      *
@@ -1793,5 +1796,28 @@ abstract class AbstractAction implements ActionInterface
             $error_message = $logbook->createDebugWidget($error_message);
         }
         return $error_message;
+    }
+    
+    /**
+     *
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOfflineStrategy()
+     */
+    public function getOfflineStrategy() : ?string
+    {
+        return $this->offlineStrategy;
+    }
+    
+    /**
+     * What to do with this action offline: make always available (`presync`), `enqueue` when triggered, `skip`, etc.
+     * 
+     * @uxon-property offline_strategy
+     * @uxon-type [enqueue,presync,use_cache,skip,online_only,client_side]
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOffline()
+     */
+    public function setOfflineStrategy(string $value) : ActionInterface
+    {
+        $this->offlineStrategy = OfflineStrategyDataType::cast($value);
+        return $this;
     }
 }

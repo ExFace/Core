@@ -1096,6 +1096,24 @@
             },
             "ALIAS": "UxonCommunicationChannel",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema) for communication channel configuration"
+        },
+        {
+            "CREATED_ON": "2022-12-31 11:30:43",
+            "MODIFIED_ON": "2022-12-31 11:30:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edb0912e83e400b091747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Offline strategy",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/OfflineStrategyDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect"
+            },
+            "ALIAS": "OfflineStrategy",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

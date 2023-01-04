@@ -289,6 +289,12 @@
 	"OFFLINE.ACTIONS.ACTION_QUEUE_FAILED": "Action cannot be handled offline!",
 	"OFFLINE.ACTIONS.SYNC_COMPLETE": "Offline actions synchronized",
 	"OFFLINE.ACTIONS.SYNC_FAILED": "Cannot synchronize offline actions!",
+	"OFFLINE.STRATEGY.ENQUEUE": "Enqueue",
+    "OFFLINE.STRATEGY.PRESYNC": "Pre-sync",
+    "OFFLINE.STRATEGY.USE_CACHE": "Use cache if available",
+    "OFFLINE.STRATEGY.SKIP": "Skip",
+    "OFFLINE.STRATEGY.ONLINE_ONLY": "Online only",
+    "OFFLINE.STRATEGY.CLIENT_SIDE": "Client-side",
 	
     "PAGE.APPS.REPAIR": "Repair",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Open Object",
