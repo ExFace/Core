@@ -132,6 +132,17 @@ class ActionLogBook implements DataLogBookInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::setSectionActive()
+     */
+    public function setSectionActive($section) : LogBookInterface
+    {
+        $this->logBook->setSectionActive($section);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeSection()
      */
     public function removeSection(string $title): LogBookInterface

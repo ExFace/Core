@@ -23,10 +23,17 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     
     /**
      * 
-     * @param string $title
+     * @param string|int $title
      * @return LogBookInterface
      */
     public function addSection(string $title) : LogBookInterface;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @return LogBookInterface
+     */
+    public function setSectionActive($section) : LogBookInterface;
     
     /**
      * 
