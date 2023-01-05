@@ -125,7 +125,11 @@ class Model implements ModelInterface
         
         if (! $object) {
             $alias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
-            $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
+            if ($alias === false) {
+                throw new MetaObjectNotFoundError('Requested meta object "' . $alias . '" without a namespace (app alias)! Currently running app "' . $selector->toString() . '" did not contain the object either.');
+            } else {
+                $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
+            }
         }
         
         return $object;
