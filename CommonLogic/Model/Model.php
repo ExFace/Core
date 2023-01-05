@@ -113,23 +113,22 @@ class Model implements ModelInterface
             $selector = new MetaObjectSelector($this->getWorkbench(), $selectorOrString);
         }
         
-        // If the given identifier looks like a UUID, try using it as object id. If this fails, try using it as alias anyway.
         $object = null;
         if ($selector->isUid()) {
-            try {
-                $object = $this->getObjectById($selector->toString());
-            } catch (MetaObjectNotFoundError $e) {
-                $object = null;
+            $object = $this->getObjectById($selector->toString());
+        } else {
+            $fullAlias = trim($selector->toString());
+            if ($fullAlias === '') {
+                throw new MetaObjectNotFoundError('Meta object with alias "' . $fullAlias . '" not found!');
             }
-        }
-        
-        if (! $object) {
-            $alias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
-            if ($alias === false) {
-                throw new MetaObjectNotFoundError('Requested meta object "' . $alias . '" without a namespace (app alias)! Currently running app "' . $selector->toString() . '" did not contain the object either.');
+            $appAlias = $selector->getAppAlias();
+            if ($appAlias === $fullAlias) {
+                $alias = $appAlias;
+                $appAlias = '';
             } else {
-                $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
+                $alias = substr($fullAlias, (strlen($appAlias)+1));
             }
+            $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
         }
         
         return $object;
