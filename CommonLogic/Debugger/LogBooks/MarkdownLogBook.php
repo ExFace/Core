@@ -18,6 +18,8 @@ class MarkdownLogBook implements LogBookInterface
     
     private $id = null;
     
+    private $currentSection = null;
+    
     /**
      * 
      * @param string $title
@@ -60,6 +62,18 @@ class MarkdownLogBook implements LogBookInterface
     public function addSection(string $title) : LogBookInterface
     {
         $this->lines[$title] = [];
+        $this->currentSection = $title;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::setSectionActive()
+     */
+    public function setSectionActive($section) : LogBookInterface
+    {
+        $this->currentSection = $this->getSectionKey($section);
         return $this;
     }
     
@@ -164,11 +178,15 @@ class MarkdownLogBook implements LogBookInterface
     protected function getSectionKey($section = null) : string
     {
         if ($section === null) {
-            return array_key_last($this->lines) ?? '';
+            return $this->currentSection ?? array_key_last($this->lines) ?? '';
         }
         if (is_int($section)) {
-            return array_keys($this->lines)[$section - 1] ?? '';
+            if ($section === 0) {
+                $section = 1;
+            }
+            $section = array_keys($this->lines)[$section - 1] ?? $this->currentSection;
         }
+        $this->currentSection = $section;
         return $section;
     }
     
