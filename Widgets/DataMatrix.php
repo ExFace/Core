@@ -191,7 +191,9 @@ class DataMatrix extends DataTable
     {
         if ($data_sheet === null || $data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
             $pivotSheet = (new PivotSheet($this->getMetaObject()));
-            $pivotSheet->importUxonObject($data_sheet->exportUxonObject());
+            if ($data_sheet !== null) {
+                $pivotSheet->importUxonObject($data_sheet->exportUxonObject());
+            }
             $pivotSheet = parent::prepareDataSheetToRead($pivotSheet);
             foreach ($this->getColumnsTransposed() as $valuesWidgetCol) {
                 $valuesSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getDataColumnName());
