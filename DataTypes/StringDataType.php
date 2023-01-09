@@ -132,7 +132,7 @@ class StringDataType extends AbstractDataType
      */
     public static function startsWith($haystack, $needle, $case_sensitive = true)
     {
-        $substr = substr($haystack, 0, strlen($needle));
+        $substr = mb_substr($haystack, 0, strlen($needle));
         if ($case_sensitive) {
             return $substr === $needle;
         } else {
@@ -150,9 +150,9 @@ class StringDataType extends AbstractDataType
     public static function endsWith($haystack, $needle, $case_sensitive = true)
     {
         if ($case_sensitive) {
-            return substr($haystack, (-1)*strlen($needle)) === $needle;
+            return mb_substr($haystack, (-1)*strlen($needle)) === $needle;
         } else {
-            return substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+            return mb_substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
         }
     }
     
@@ -195,7 +195,7 @@ class StringDataType extends AbstractDataType
             throw $this->createValidationError('The lenght of the string ' . $excValue . ' is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
-            $value = substr($value, 0, $this->getLengthMax());
+            $value = mb_substr($value, 0, $this->getLengthMax());
         }
         
         // validate against regex
@@ -381,7 +381,7 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, 0, $pos);
+                    $substr = mb_substr($haystack, 0, $pos);
                 }
             } else {
                 $substr = strstr($haystack, $needle, true);
@@ -395,7 +395,7 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, 0, $pos);
+                    $substr = mb_substr($haystack, 0, $pos);
                 }
             } else {
                 $substr = stristr($haystack, $needle, true);
@@ -429,14 +429,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+strlen($needle)));
+                    $substr = mb_substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = strstr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, strlen($needle));
+                    $substr = mb_substr($substr, strlen($needle));
                 }
             }
         } else {
@@ -445,14 +445,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+strlen($needle)));
+                    $substr = mb_substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = stristr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, strlen($needle));
+                    $substr = mb_substr($substr, strlen($needle));
                 }
             }
         }
