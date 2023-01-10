@@ -2637,7 +2637,7 @@
                 "icon": "toggle-off",
                 "input_rows_min": 1,
                 "input_mapper": {
-                    "inherit_columns_only_for_system_attributes": true,
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
                             "from": "=0",
@@ -4084,7 +4084,7 @@
                 "input_rows_min": 1,
                 "icon": "toggle-off",
                 "input_mapper": {
-                    "inherit_columns_only_for_system_attributes": true,
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
                             "from": "=Not(REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS)",

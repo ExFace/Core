@@ -79,34 +79,40 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     
     /**
      * 
-     * @param bool $value
+     * @param string|bool $value
      * @throws DataMapperConfigurationError
      * @return DataSheetMapperInterface
      */
-    public function setInheritColumns(bool $value) : DataSheetMapperInterface;
+    public function setInheritColumns($value) : DataSheetMapperInterface;
     
     /**
+     * 
+     * @param string|bool $value
+     * @throws DataMapperConfigurationError
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritFilters($value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param string|bool $value
+     * @throws DataMapperConfigurationError
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritSorters($value) : DataSheetMapperInterface;
+    
+    /**
+     * Set to TRUE to force the to-sheet to be empty if the from-sheet is empty
+     * 
+     * By default the to-sheet might still get new rows: e.g. if there are column-to-column mappings with
+     * formulas. Setting `inherit_empty_data` to `true` will make sure, no new rows are created if the
+     * from-sheet is empty. In this case, all changes to the data sheet structure (added columns, filters, etc.)
+     * will still be applied - there will only be no rows if the from-sheet had none.
      * 
      * @param bool $value
      * @return DataSheetMapperInterface
      */
-    public function setInheritColumnsOnlyForSystemAttributes(bool $value) : DataSheetMapperInterface;
-    
-    /**
-     * 
-     * @param bool $value
-     * @throws DataMapperConfigurationError
-     * @return DataSheetMapperInterface
-     */
-    public function setInheritFilters(bool $value) : DataSheetMapperInterface;
-    
-    /**
-     * 
-     * @param bool $value
-     * @throws DataMapperConfigurationError
-     * @return DataSheetMapperInterface
-     */
-    public function setInheritSorters(bool $value) : DataSheetMapperInterface;
+    public function setInheritEmptyData(bool $value) : DataSheetMapperInterface;
     
     /**
      * 
