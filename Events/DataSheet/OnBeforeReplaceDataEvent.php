@@ -11,8 +11,6 @@ namespace exface\Core\Events\DataSheet;
  */
 class OnBeforeReplaceDataEvent extends AbstractDataSheetEvent
 {
-    private $preventReplace = false;
-    
     /**
      * Prevents the default replace operation.
      *
@@ -22,7 +20,7 @@ class OnBeforeReplaceDataEvent extends AbstractDataSheetEvent
      */
     public function preventReplace() : OnBeforeReplaceDataEvent
     {
-        $this->preventReplace = true;
+        $this->preventDefault();
         return $this;
     }
     
@@ -32,6 +30,6 @@ class OnBeforeReplaceDataEvent extends AbstractDataSheetEvent
      */
     public function isPreventReplace() : bool
     {
-        return $this->preventReplace;
+        return $this->isDefaultPrevented();
     }
 }

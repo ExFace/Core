@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Events\DataSheet;
 
+use exface\Core\Interfaces\Events\EventInterface;
+
 /**
  * Event fired before a data sheet starts deleting it's data in the corresponding data sources.
  * 
@@ -61,5 +63,27 @@ class OnBeforeDeleteDataEvent extends AbstractDataSheetEvent
     public function isPreventDeleteCascade() : bool
     {
         return $this->preventDeleteCascade;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Events\AbstractEvent::preventDefault()
+     */
+    public function preventDefault() : EventInterface
+    {
+        $this->preventDelete = true;
+        $this->preventDeleteCascade = true;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Events\AbstractEvent::isDefaultPrevented()
+     */
+    public function isDefaultPrevented() : bool
+    {
+        return $this->preventDelete && $this->preventDeleteCascade;
     }
 }

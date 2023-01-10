@@ -21,6 +21,8 @@ abstract class AbstractEvent extends Event implements EventInterface
     private $alias = null;
     
     private $namespace = null;
+    
+    private $preventDefault = false;
 
     /**
      *
@@ -93,5 +95,26 @@ abstract class AbstractEvent extends Event implements EventInterface
         }
         
         return [$namespace, $alias];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventInterface::preventDefault()
+     */
+    public function preventDefault() : EventInterface
+    {
+        $this->preventDefault = true;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventInterface::isDefaultPrevented()
+     */
+    public function isDefaultPrevented() : bool
+    {
+        return $this->preventDefault;
     }
 }

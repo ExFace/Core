@@ -23,8 +23,6 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
 {
     private $dataSheet = null;
     
-    private $preventRead = false;
-    
     private $limit = null;
     
     private $offset = 0;
@@ -69,7 +67,7 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
      */
     public function preventRead() : OnBeforeReadDataEvent
     {
-        $this->preventRead = true;
+        $this->preventDefault();
         return $this;
     }
     
@@ -79,7 +77,7 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
      */
     public function isPreventRead() : bool
     {
-        return $this->preventRead;
+        return $this->isDefaultPrevented();
     }
     
     /**
