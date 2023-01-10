@@ -71,7 +71,15 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  */
 class CallActionBehavior extends AbstractBehavior
 {
+    const PREVENT_DEFAULT_ALWAYS = 'always';
+    
+    const PREVENT_DEFAULT_NEVER = 'never';
+    
+    const PREVENT_DEFAULT_IF_ACTION_CALLED = 'if_action_called';
+    
     private $eventAlias = null;
+    
+    private $eventPreventDefault = null;
 
     private $action = null;
     
@@ -236,6 +244,10 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
+        if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_ALWAYS) {
+            $event->preventDefault();
+        }
+        
         try {
             if ($this->hasRestrictionConditions()) {
                 $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
@@ -259,6 +271,9 @@ class CallActionBehavior extends AbstractBehavior
                     $action->handle($task, $event->getTransaction());
                 } else {
                     $action->handle($task);
+                }
+                if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_IF_ACTION_CALLED) {
+                    $event->preventDefault();
                 }
             }
         } catch (\Throwable $e) {
@@ -412,6 +427,32 @@ class CallActionBehavior extends AbstractBehavior
     public function setErrorIfActionFails(bool $value) : CallActionBehavior
     {
         $this->onFailError = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getEventPreventDefault() : ?string
+    {
+        return $this->eventPreventDefault;
+    }
+    
+    /**
+     * Allows to prevent the default event consequence `always`, `never` or `if_action_called`.
+     * 
+     * @uxon-property event_prevent_default
+     * @uxon-type [always,never,if_action_called]
+     * @uxon-default never
+     * @uxon-template if_action_called
+     * 
+     * @param string $value
+     * @return CallActionBehavior
+     */
+    protected function setEventPreventDefault(string $value) : CallActionBehavior
+    {
+        $this->eventPreventDefault = $value;
         return $this;
     }
 }

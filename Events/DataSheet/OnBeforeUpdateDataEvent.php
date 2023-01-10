@@ -25,8 +25,6 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  */
 class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
 {
-    private $preventUpdate = false;
-    
     private $createIfUidNotFound = false;
     
     private $oldDataSheet = null;
@@ -52,8 +50,7 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
      */
     public function preventUpdate() : OnBeforeUpdateDataEvent
     {
-        $this->preventUpdate = true;
-        return $this;
+        return $this->preventDefault();
     }
     
     /**
@@ -62,7 +59,7 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
      */
     public function isPreventUpdate() : bool
     {
-        return $this->preventUpdate;
+        return $this->isDefaultPrevented();
     }
     
     /**

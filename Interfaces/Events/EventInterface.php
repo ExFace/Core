@@ -16,9 +16,13 @@ interface EventInterface extends WorkbenchDependantInterface, AliasInterface
     /**
      * Returns TRUE if no further listeners will be triggerd by this event or FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function isPropagationStopped();
+    public function isPropagationStopped() : bool;
+    
+    public function preventDefault() : EventInterface;
+    
+    public function isDefaultPrevented() : bool;
     
     /**
      * 
