@@ -99,7 +99,7 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
  *          },
  *          {
  *              "alias": "exface.Core.UpdateData",
- *              "inherit_columns_only_for_system_attributes": true,
+ *              "inherit_columns": "own_system_attributes",
  *              "column_to_column_mappings": [
  *                  {
  *                      "from": 95,
@@ -147,7 +147,7 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
  *         {
  *           "alias": "exface.Core.UpdateData",
  *           "input_mapper": {
- *             "inherit_columns_only_for_system_attributes": true,
+ *             "inherit_columns": "own_system_attributes",
  *             "column_to_column_mappings": [
  *               {
  *                 "from": 95,
