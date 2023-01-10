@@ -830,137 +830,138 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $this->isWritable())
+        if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
+        }
             
-            // Filters -> WHERE
-            // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
-            $where = $this->buildSqlWhere($this->getFilters(), false);
-            $where = $where ? "\n WHERE " . $where : '';
-            if (! $where) {
-                throw new QueryBuilderException('Cannot perform update on all objects "' . $this->getMainObject()->getAlias() . '"! Forbidden operation!');
+        // Filters -> WHERE
+        // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
+        $where = $this->buildSqlWhere($this->getFilters(), false);
+        $where = $where ? "\n WHERE " . $where : '';
+        if (! $where) {
+            throw new QueryBuilderException('Cannot perform update on all objects "' . $this->getMainObject()->getAlias() . '"! Forbidden operation!');
+        }
+        
+        // Attributes -> SET
+        $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
+        // Array of SET statements for the single-value-query which updates all rows matching the given filters
+        // [ 'data_address = value' ]
+        $updates_by_filter = array();
+        // Array of SET statements to update multiple values per attribute. They will be used to build one UPDATE statement per UID value
+        // [ uid_value => [ data_address => 'data_address = value' ] ]
+        $updates_by_uid = array();
+        // Array of query parts to be placed in subqueries
+        $subqueries_qparts = array();
+        foreach ($this->getValues() as $qpart) {
+            $attr = $qpart->getAttribute();
+            if ($attr->getRelationPath()->toString()) {
+                $subqueries_qparts[] = $qpart;
+                continue;
             }
             
-            // Attributes -> SET
-            $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
-            // Array of SET statements for the single-value-query which updates all rows matching the given filters
-            // [ 'data_address = value' ]
-            $updates_by_filter = array();
-            // Array of SET statements to update multiple values per attribute. They will be used to build one UPDATE statement per UID value
-            // [ uid_value => [ data_address => 'data_address = value' ] ]
-            $updates_by_uid = array();
-            // Array of query parts to be placed in subqueries
-            $subqueries_qparts = array();
-            foreach ($this->getValues() as $qpart) {
-                $attr = $qpart->getAttribute();
-                if ($attr->getRelationPath()->toString()) {
-                    $subqueries_qparts[] = $qpart;
-                    continue;
+            $attrAddress = $this->buildSqlDataAddress($attr);
+            // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
+            if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->checkForSqlStatement($attrAddress)) {
+                continue;
+            }
+            
+            if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
+                $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS));
+            } else {
+                $column = $table_alias . $this->getAliasDelim() . $attrAddress;
+            }
+            
+            $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
+            
+            // If there is only a single row and there is no UID for it, it will become an update-by-filter
+            // Otherwise we will do an UPDATE with a WHERE over the UID-column
+            if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
+                $values = $qpart->getValues();
+                try {
+                    $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
+                } catch (\Throwable $e) {
+                    throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                 }
-                
-                $attrAddress = $this->buildSqlDataAddress($attr);
-                // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
-                if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->checkForSqlStatement($attrAddress)) {
-                    continue;
-                }
-                
-                if ($qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS)){
-                    $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS));
+                if ($custom_update_sql) {
+                    // If there is a custom update SQL for the attribute, use it ONLY if there is no value
+                    // Otherwise there would not be any possibility to save explicit values
+                    $updates_by_filter[] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                 } else {
-                    $column = $table_alias . $this->getAliasDelim() . $attrAddress;
+                    $updates_by_filter[] = $column . ' = ' . $value;
+                }
+            } else {
+                // TODO check, if there is an id for each value. Those without ids should be put into another query to make an insert
+                // $cases = '';
+                if (count($qpart->getUids()) == 0) {
+                    throw new QueryBuilderException('Cannot update attribute "' . $qpart->getAlias() . "': no UIDs for rows to update given!");
                 }
                 
-                $custom_update_sql = $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE);
-                
-                // If there is only a single row and there is no UID for it, it will become an update-by-filter
-                // Otherwise we will do an UPDATE with a WHERE over the UID-column
-                if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
-                    $values = $qpart->getValues();
+                foreach ($qpart->getValues() as $row_nr => $value) {
                     try {
-                        $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
+                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
                     } catch (\Throwable $e) {
-                        throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
+                        throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                     }
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
-                        $updates_by_filter[] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
+                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                     } else {
-                        $updates_by_filter[] = $column . ' = ' . $value;
+                        /*
+                         * IDEA In earlier versions multi-value-updates generated a single query with a CASE statement for each attribute.
+                         * This worked fine for smaller numbers of values (<50) but depleted the memory with hundreds of values per attribute.
+                         * A quick fix was to introduce separate queries per value. But it takes a lot of time to fire 1000 separate queries.
+                         * So we could mix the two approaches and make separate queries every 10-30 values with fairly short CASE statements.
+                         * This would shorten the number of queries needed by factor 10-30, but it requires the separation of values of all
+                         * participating attributes into blocks sorted by UID. In other words, the resulting queries must have all values for
+                         * the UIDs they address and a new filter with exactly this list of UIDs.
+                         */
+                        // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
+                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
                     }
-                } else {
-                    // TODO check, if there is an id for each value. Those without ids should be put into another query to make an insert
-                    // $cases = '';
-                    if (count($qpart->getUids()) == 0) {
-                        throw new QueryBuilderException('Cannot update attribute "' . $qpart->getAlias() . "': no UIDs for rows to update given!");
-                    }
-                    
-                    foreach ($qpart->getValues() as $row_nr => $value) {
-                        try {
-                            $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
-                        } catch (\Throwable $e) {
-                            throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
-                        }
-                        if ($custom_update_sql) {
-                            // If there is a custom update SQL for the attribute, use it ONLY if there is no value
-                            // Otherwise there would not be any possibility to save explicit values
-                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
-                        } else {
-                            /*
-                             * IDEA In earlier versions multi-value-updates generated a single query with a CASE statement for each attribute.
-                             * This worked fine for smaller numbers of values (<50) but depleted the memory with hundreds of values per attribute.
-                             * A quick fix was to introduce separate queries per value. But it takes a lot of time to fire 1000 separate queries.
-                             * So we could mix the two approaches and make separate queries every 10-30 values with fairly short CASE statements.
-                             * This would shorten the number of queries needed by factor 10-30, but it requires the separation of values of all
-                             * participating attributes into blocks sorted by UID. In other words, the resulting queries must have all values for
-                             * the UIDs they address and a new filter with exactly this list of UIDs.
-                             */
-                            // $cases[$qpart->getUids()[$row_nr]] = 'WHEN ' . $qpart->getUids()[$row_nr] . ' THEN ' . $value . "\n";
-                            $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $value;
-                        }
-                    }
-                    // See comment about CASE-based updates a few lines above
-                    // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
                 }
+                // See comment about CASE-based updates a few lines above
+                // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
             }
-            
-            // Execute UPDATE statements
-            // First the rows, that can be updated filtering over 
-            if (! empty($updates_by_uid)) {
-                $uidAttr = $this->getUidAttribute() ?? ($this->getMainObject()->hasUidAttribute() ? $this->getMainObject()->getUidAttribute() : null);
-                if ($uidAttr === null) {
-                    throw new QueryBuilderException('Cannot perform SQL update by UID: no UID attribtue or query part found!');
-                }
-                $uidConditionGrp = ConditionGroupFactory::createAND($this->getMainObject());
-                $uidConditionGrp->addConditionFromAttribute($uidAttr, '', ComparatorDataType::IN, false);
-                foreach ($updates_by_uid as $uid => $row) {
-                    $uidConditionGrp->getConditions()[0]->setValue($uid);
-                    $uidWhere = $this->buildSqlWhere(
-                        QueryPartFilterGroup::createQueryPartFromConditionGroup(
-                            $uidConditionGrp,
-                            $this
-                        )
-                    );
-                    $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
-                    $query = $data_connection->runSql($sql);
-                    $affected_rows += $query->countAffectedRows();
-                    $query->freeResult();
-                }
+        }
+        
+        // Execute UPDATE statements
+        // First the rows, that can be updated filtering over 
+        if (! empty($updates_by_uid)) {
+            $uidAttr = $this->getUidAttribute() ?? ($this->getMainObject()->hasUidAttribute() ? $this->getMainObject()->getUidAttribute() : null);
+            if ($uidAttr === null) {
+                throw new QueryBuilderException('Cannot perform SQL update by UID: no UID attribtue or query part found!');
             }
-            // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
-            if (count($updates_by_filter) > 0) {
-                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
+            $uidConditionGrp = ConditionGroupFactory::createAND($this->getMainObject());
+            $uidConditionGrp->addConditionFromAttribute($uidAttr, '', ComparatorDataType::IN, false);
+            foreach ($updates_by_uid as $uid => $row) {
+                $uidConditionGrp->getConditions()[0]->setValue($uid);
+                $uidWhere = $this->buildSqlWhere(
+                    QueryPartFilterGroup::createQueryPartFromConditionGroup(
+                        $uidConditionGrp,
+                        $this
+                    )
+                );
+                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
                 $query = $data_connection->runSql($sql);
-                $affected_rows = $query->countAffectedRows();
+                $affected_rows += $query->countAffectedRows();
                 $query->freeResult();
             }
-            
-            // Execute Subqueries
-            foreach ($this->splitByMetaObject($subqueries_qparts) as $subquery) {
-                $subquery->update($data_connection);
-            }
-            
-            return new DataQueryResultData([], $affected_rows ?? 0);
+        }
+        // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
+        if (count($updates_by_filter) > 0) {
+            $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $updates_by_filter), $where);
+            $query = $data_connection->runSql($sql);
+            $affected_rows = $query->countAffectedRows();
+            $query->freeResult();
+        }
+        
+        // Execute Subqueries
+        foreach ($this->splitByMetaObject($subqueries_qparts) as $subquery) {
+            $subquery->update($data_connection);
+        }
+        
+        return new DataQueryResultData([], $affected_rows ?? 0);
     }
     
     /**
