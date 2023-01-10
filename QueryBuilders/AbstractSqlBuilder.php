@@ -39,6 +39,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Factories\FormulaFactory;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -924,17 +925,27 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             
             // Execute UPDATE statements
-            // First the rows, that can be updated filtering over UID
-            foreach ($updates_by_uid as $uid => $row) {
-                $type = $this->getUidAttribute() ? $this->getUidAttribute()->getDataType() : ($this->getMainObject()->hasUidAttribute() ? $this->getMainObject()->getUidAttribute()->getDataType() : null);
-                if ($type === null) {
+            // First the rows, that can be updated filtering over 
+            if (! empty($updates_by_uid)) {
+                $uidAttr = $this->getUidAttribute() ?? ($this->getMainObject()->hasUidAttribute() ? $this->getMainObject()->getUidAttribute() : null);
+                if ($uidAttr === null) {
                     throw new QueryBuilderException('Cannot perform SQL update by UID: no UID attribtue or query part found!');
                 }
-                $where = $this->buildSqlWhereComparator($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), ComparatorDataType::IN, $uid, $type);
-                $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $where);
-                $query = $data_connection->runSql($sql);
-                $affected_rows += $query->countAffectedRows();
-                $query->freeResult();
+                $uidConditionGrp = ConditionGroupFactory::createAND($this->getMainObject());
+                $uidConditionGrp->addConditionFromAttribute($uidAttr, '', ComparatorDataType::IN, false);
+                foreach ($updates_by_uid as $uid => $row) {
+                    $uidConditionGrp->getConditions()[0]->setValue($uid);
+                    $uidWhere = $this->buildSqlWhere(
+                        QueryPartFilterGroup::createQueryPartFromConditionGroup(
+                            $uidConditionGrp,
+                            $this
+                        )
+                    );
+                    $sql = $this->buildSqlQueryUpdate(' SET ' . implode(', ', $row), ' WHERE ' . $uidWhere);
+                    $query = $data_connection->runSql($sql);
+                    $affected_rows += $query->countAffectedRows();
+                    $query->freeResult();
+                }
             }
             // Then those to be update filtering over other values (i.e. mass-updates without selection of specific rows)
             if (count($updates_by_filter) > 0) {
@@ -1547,8 +1558,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * When $leftKeyAttr and $rightKeyAttr are compound attributes, string is build for each component and
      * connected with `AND`.
      *
-     * @param CompoundAttributeInterface $leftKeyAttr
-     * @param CompoundAttributeInterface $rightKeyAttr
+     * @param MetaAttributeInterface $leftKeyAttr
+     * @param MetaAttributeInterface $rightKeyAttr
      * @param string $leftTableAlias
      * @param string $rightTableAlias
      * @throws RuntimeException
@@ -1732,13 +1743,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
-            if ($qpart_fltr->isCompound() === true) {
-                if ($grp_string = $this->buildSqlWhere($qpart_fltr->getCompoundFilterGroup(), $rely_on_joins)) {
-                    $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
-                }
-            } elseif ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
-                $where .= "\n-- buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")"
-                    . "\n " . ($where ? $op . " " : '') . $fltr_string;
+            switch (true) {
+                case $qpart_fltr->isCompound() === true:
+                    if ($grp_string = $this->buildSqlWhere($qpart_fltr->getCompoundFilterGroup(), $rely_on_joins)) {
+                        $where .= "\n " . ($where ? $op . " " : '') . "(" . $grp_string . ")";
+                    }
+                    break;
+                case $fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins):
+                    $where .= "\n-- buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")"
+                           . "\n " . ($where ? $op . " " : '') . $fltr_string;
+                    break;
             }
         }
         
