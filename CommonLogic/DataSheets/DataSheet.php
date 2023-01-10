@@ -238,8 +238,8 @@ class DataSheet implements DataSheetInterface
      */
     public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true)
     {
-        if (! $this->getMetaObject()->isExactly($other_sheet->getMetaObject()->getAliasWithNamespace())) {
-            throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for identical objects!', '6T5V1DR');
+        if (! $this->getMetaObject()->is($other_sheet->getMetaObject()->getAliasWithNamespace())) {
+            throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for compatible objects!', '6T5V1DR');
         }
         
         // Make sure, the UID is present in the result if it is there in the other sheet
