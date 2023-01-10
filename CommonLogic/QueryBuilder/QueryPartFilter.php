@@ -68,6 +68,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setCompareValue($value)
     {
         $this->compare_value = trim($value);
+        $this->compoundFilterGroup = null;
         return $this;
     }
 
@@ -92,6 +93,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setComparator($value)
     {
         $this->comparator = $value;
+        $this->compoundFilterGroup = null;
         return $this;
     }
 
@@ -140,6 +142,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setValueIsDataAddress($true_or_false) 
     {
         $this->value_is_data_address = $true_or_false;
+        $this->compoundFilterGroup = null;
         return $this;
     }
     
