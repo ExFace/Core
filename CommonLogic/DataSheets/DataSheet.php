@@ -615,7 +615,6 @@ class DataSheet implements DataSheetInterface
                 if (null !== $parentSheetKeyExpr = $parentSheetKeyCol->getAttribute()->getCalculationExpression()) {
                     $this->setColumnValues($parentSheetKeyCol->getName(), $parentSheetKeyExpr->evaluate($this));
                 }
-                $foreign_keys = $parentSheetKeyCol->getValues(false);
                 if ($subsheet->getJoinKeyColumnOfSubsheet()->isAttribute() && $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->isReadable() === false) {
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
                 }
@@ -623,11 +622,13 @@ class DataSheet implements DataSheetInterface
                 // Make sure the subsheet inherits all the filters of this sheet that apply to
                 // the subsheet's object (= start with the relation path to the subsheet)
                 $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
+                $foreign_keys = array_unique($parentSheetKeyCol->getValues(false));
+                $foreign_keys = array_filter($foreign_keys, function($val) {return $val !== '' && $val !== null;});
                 $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
                     return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
                 }));
                 // Also add a filter over the UIDs of this sheet for the later JOIN
-                $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreign_keys), EXF_COMPARATOR_IN);
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);
