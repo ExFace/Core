@@ -55,7 +55,6 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * filter and other things from the to-sheet:
  * 
  * - `inherit_columns`
- * - `inherit_column_only_for_system_attributes`
  * - `inherit_filters`
  * - `inherit_sorters`
  * 
@@ -97,6 +96,16 @@ class DataSheetMapper implements DataSheetMapperInterface
 {
     use ImportUxonObjectTrait;
     
+    const INHERIT_ALL = 'all';
+    
+    const INHERIT_NONE = 'none';
+    
+    const INHERIT_COLUMNS_OWN_ATTRIBUTES = 'own_attributes';
+    
+    const INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES = 'own_system_attributes';
+    
+    const INHERIT_COLUMNS_ALL_SYSTEM_ATTRIBUTES = 'all_system_attributes';
+    
     private $workbench = null;
     
     private $fromMetaObject = null;
@@ -106,8 +115,6 @@ class DataSheetMapper implements DataSheetMapperInterface
     private $mappings = [];
     
     private $inheritColumns = null;
-    
-    private $inheritColumnsOnlySystem = false;
     
     private $inheritFilters = null;
     
@@ -142,7 +149,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         $fromSheetWasEmpty = $fromSheet->isEmpty();
         
         if ($logbook !== null) {
-            $logbook->addLine('Mapper input: ' . $fromSheet->countRows() . ' rows of ' . $fromSheet->getMetaObject()->__toString(), 1);
+            $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**', 1);
         }
         
         // Make sure, the from-sheet has everything needed
@@ -156,18 +163,29 @@ class DataSheetMapper implements DataSheetMapperInterface
             $logbook->addLine('Inheriting: ', 1);
         }
         // Inherit columns if neccessary
-        if ($this->getInheritColumns()){
+        if (self::INHERIT_NONE !== $inheritMode = $this->getInheritColumns()){
             $processedNames = [];
             foreach ($fromSheet->getColumns() as $fromCol){
-                if ($this->getInheritColumnsOnlyForSystemAttributes() && (! $fromCol->isAttribute() || ! $fromCol->getAttribute()->isSystem())) {
+                if ($inheritMode === self::INHERIT_COLUMNS_ALL_SYSTEM_ATTRIBUTES && (! $fromCol->isAttribute() || ! $fromCol->getAttribute()->isSystem())) {
+                    continue;
+                }
+                if ($inheritMode === self::INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES && (! $fromCol->isAttribute() || ! $fromCol->getAttribute()->isSystem() || $fromCol->getAttribute()->isRelated())) {
+                    continue;
+                }
+                if ($inheritMode === self::INHERIT_COLUMNS_OWN_ATTRIBUTES && (! $fromCol->isAttribute() || $fromCol->getAttribute()->isRelated())) {
                     continue;
                 }
                 $processedNames[] = $fromCol->getName();
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
-            $toSheet->importRows($fromSheet);
             if ($logbook !== null) {
-                $logbook->addLine(count($processedNames) . ' columns: ' . implode(', ', $processedNames), 2);
+                $logbook->addLine(count($processedNames) . ' columns (mode "' . $inheritMode . '"): ' . implode(', ', $processedNames), 2);
+            }
+            try {
+                $toSheet->importRows($fromSheet);
+            } catch (\Throwable $e) {
+                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage());
             }
         } else {
             if ($logbook !== null) {
@@ -176,10 +194,15 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         // Inherit filters if neccessary
-        if ($this->getInheritFilters()){
-            $toSheet->setFilters($fromSheet->getFilters());
+        if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
             if ($logbook !== null) {
-                $logbook->addLine('Filters inherited: ' . $fromSheet->getFilters()->__toString(), 2);
+                $logbook->addLine('Filters: ' . $fromSheet->getFilters()->__toString(), 2);
+            }
+            try {
+                $toSheet->setFilters($fromSheet->getFilters());
+            } catch (\Throwable $e) {
+                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot filters in data mapper. ' . $e->getMessage());
             }
         } else {
             if ($logbook !== null) {
@@ -188,14 +211,19 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         // Inherit sorters if neccessary
-        if ($this->getInheritSorters()){
-            $processedNames = [];
-            foreach ($fromSheet->getSorters()->getAll() as $sorter) {
-                $toSheet->getSorters()->add($sorter);
-                $processedNames[] = $sorter->__toString();
-            }
-            if ($logbook !== null) {
-                $logbook->addLine(count($processedNames) . ' sorters inherited: ' . implode(', ', $processedNames), 2);
+        if (self::INHERIT_NONE !== $inheritMode = $this->getInheritSorters()){
+            try {
+                $processedNames = [];
+                foreach ($fromSheet->getSorters()->getAll() as $sorter) {
+                    $toSheet->getSorters()->add($sorter);
+                    $processedNames[] = $sorter->__toString();
+                }
+                if ($logbook !== null) {
+                    $logbook->addLine(count($processedNames) . ' sorters: ' . implode(', ', $processedNames), 2);
+                }
+            } catch (\Throwable $e) {
+                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage());
             }
         } else {
             if ($logbook !== null) {
@@ -203,7 +231,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             }
         }
         
-        // Map columns to columns
+        // Apply mappers
         foreach ($this->getMappings() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
         }
@@ -712,33 +740,57 @@ class DataSheetMapper implements DataSheetMapperInterface
     }
     
     /**
-     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     * Returns one of the INHERIT_X constants
      * 
-     * By default, this will be TRUE if the to-sheet is based on the same object as the 
-     * from-sheet or a derivative and FALSE otherwise.
-     * 
-     * @return boolean
+     * @return string
      */
-    protected function getInheritColumns() : bool
+    protected function getInheritColumns() : string
     {
-        return $this->inheritColumns ?? $this->canInheritColumns();
+        return $this->inheritColumns ?? ($this->canInheritColumns() ? self::INHERIT_ALL : self::INHERIT_NONE);
     }
     
     /**
-     * Set to FALSE to prevent the to-sheet from inheriting compatible columns from the from-sheet.
+     * Set to `none` to prevent the to-sheet from inheriting compatible columns from the from-sheet.
      * 
      * If the to-sheet is based on the same object as the from-sheet or a derivative,
      * the mapper will copy all columns by default and apply the mapping afterwards.
      * This option can prevent this behavior.
      * 
+     * Available options:
+     * 
+     * - `all` - all columns will be inherited
+     * - `none` - no columns will be inherited, even no system columns!
+     * - `own_attributes` - only columns for direct attributes of the from-object will be inherited
+     * - `own_system_attributes` - only system attributes of the from-object will be inherited. This
+     * is very usefull if you just need the UID and everything else required for a potential update.
+     * - `all_system_attributes` - only system attributes of the from-object and any related objects
+     * present in the from-sheet. This is a good choice for data sheets, that update their main object 
+     * along with certain attributes of related objects.
+     * 
      * @uxon-property inherit_columns
-     * @uxon-type boolean
+     * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes]
+     * @uxon-template own_system_attributes
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritColumns()
      */
-    public function setInheritColumns(bool $value) : DataSheetMapperInterface
+    public function setInheritColumns($value) : DataSheetMapperInterface
     {
-        if ($value){
+        switch (true) {
+            case is_string($value):
+                $value = mb_strtolower($value);
+                if (! defined('self::INHERIT_COLUMNS_' . mb_strtoupper($value))) {
+                    throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_columns`');
+                }
+                break;
+            case $value === false:
+                $value = self::INHERIT_NONE;
+                break;
+            case $value === true:
+                $value = self::INHERIT_ALL;
+                break;
+        }
+        
+        if ($value !== self::INHERIT_NONE){
             if (! $this->canInheritColumns()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -749,65 +801,56 @@ class DataSheetMapper implements DataSheetMapperInterface
     }
     
     /**
-     * 
-     * @return bool
-     */
-    protected function getInheritColumnsOnlyForSystemAttributes() : bool
-    {
-        return $this->inheritColumnsOnlySystem;
-    }
-    
-    /**
      * Set to TRUE to inherit only system columns
      * 
-     * @uxon-property inherit_columns_only_for_system_attributes
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritColumnsOnlyForSystemAttributes()
+     * @deprecated use setInheritColumns(self::INHERIT_COLUMNS_SYSTEM_ATTRIBUTES) instead!
      */
-    public function setInheritColumnsOnlyForSystemAttributes(bool $value) : DataSheetMapperInterface
+    private function setInheritColumnsOnlyForSystemAttributes(bool $value) : DataSheetMapperInterface
     {
         if ($value) {
             if (! $this->canInheritColumns()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
-            $this->setInheritColumns(true);
+            $this->setInheritColumns(self::INHERIT_COLUMNS_ALL_SYSTEM_ATTRIBUTES);
         }
-        $this->inheritColumnsOnlySystem = $value;
         return $this;
-    }
-    
+    }    
     
     /**
-     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
-     *
-     * By default, this will be TRUE if the to-sheet is based on the same object as the
-     * from-sheet or a derivative and FALSE otherwise.
+     * Returns one of the INHERIT_X constants
      *
      * @return boolean
      */
-    protected function getInheritFilters() : bool
+    protected function getInheritFilters() : string
     {
-        return $this->inheritFilters ?? $this->canInheritFilters();
+        return $this->inheritFilters ?? ($this->canInheritFilters() ? self::INHERIT_ALL : self::INHERIT_NONE);
     }
     
     /**
-     * Set to FALSE to prevent the to-sheet from inheriting compatible filters from the from-sheet.
+     * Set to `none` to prevent the to-sheet from inheriting compatible filters from the from-sheet.
      *
      * If the to-sheet is based on the same object as the from-sheet or a derivative,
      * the mapper will copy all filters by default and apply the mapping afterwards.
      * This option can prevent this behavior.
      *
      * @uxon-property inherit_filters
-     * @uxon-type boolean
+     * @uxon-type [all,none]
+     * @uxon-template none
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritFilters()
      */
-    public function setInheritFilters(bool $value) : DataSheetMapperInterface
+    public function setInheritFilters($value) : DataSheetMapperInterface
     {
-        if ($value){
+        switch (true) {
+            case $value === true:
+                $value = self::INHERIT_ALL;
+                break;
+            case $value === false:
+                $value = self::INHERIT_NONE;
+                break;
+        }
+        if ($value !== self::INHERIT_NONE){
             if (! $this->canInheritFilters()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -818,33 +861,38 @@ class DataSheetMapper implements DataSheetMapperInterface
     }
     
     /**
-     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
-     *
-     * By default, this will be TRUE if the to-sheet is based on the same object as the
-     * from-sheet or a derivative and FALSE otherwise.
+     * Returns one of the INHERIT_X constants
      *
      * @return boolean
      */
-    protected function getInheritSorters() : bool
+    protected function getInheritSorters() : string
     {
-        return $this->inheritSorters ?? $this->canInheritSorters();
+        return $this->inheritSorters ?? ($this->canInheritSorters() ? self::INHERIT_ALL : self::INHERIT_NONE);
     }
     
     /**
-     * Set to FALSE to prevent the to-sheet from inheriting compatible sorters from the from-sheet.
+     * Set to `none` to prevent the to-sheet from inheriting compatible sorters from the from-sheet.
      *
      * If the to-sheet is based on the same object as the from-sheet or a derivative,
      * the mapper will copy all sorters by default and apply the mapping afterwards.
      * This option can prevent this behavior.
      *
      * @uxon-property inherit_sorters
-     * @uxon-type boolean
+     * @uxon-type [all,none]
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritSorters()
      */
-    public function setInheritSorters(bool $value) : DataSheetMapperInterface
+    public function setInheritSorters($value) : DataSheetMapperInterface
     {
-        if ($value){
+        switch (true) {
+            case $value === true:
+                $value = self::INHERIT_ALL;
+                break;
+            case $value === false:
+                $value = self::INHERIT_NONE;
+                break;
+        }
+        if ($value !== self::INHERIT_NONE){
             if (! $this->canInheritSorters()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit sorters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -965,10 +1013,9 @@ class DataSheetMapper implements DataSheetMapperInterface
      * @uxon-type boolean
      * @uxon-default false
      * 
-     * @param bool $value
-     * @return DataSheetMapper
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritEmptyData()
      */
-    protected function setInheritEmptyData(bool $value) : DataSheetMapper
+    public function setInheritEmptyData(bool $value) : DataSheetMapperInterface
     {
         $this->inheritEmptyData = $value;
         return $this;
