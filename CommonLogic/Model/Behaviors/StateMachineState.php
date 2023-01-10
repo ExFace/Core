@@ -101,7 +101,7 @@ class StateMachineState implements iHaveIcon
                             "input_mappers"=> [
                                 [
                                     "from_object_alias" => $this->getStateMachine()->getObject()->getAliasWithNamespace(),
-                                    "inherit_columns_only_for_system_attributes" => true,
+                                    "inherit_columns" => "own_system_attributes",
                                     "column_to_column_mappings" => [
                                         [
                                             "from" => "'$stateId'",
@@ -153,7 +153,7 @@ class StateMachineState implements iHaveIcon
      *                      "input_object_alias":"my.App.object_of_behavior",
      *                      "input_mappers":[{
      *                              "from_object_alias": "exface.Core.MONITOR_ERROR",
-     *                              "inherit_columns_only_for_system_attributes": true,
+     *                              "inherit_columns": "own_system_attributes",
      *                              "column_to_column_mappings":[
      *                                  {"from": 20,"to":"STATUS"}
      *                               ]
