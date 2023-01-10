@@ -50,6 +50,7 @@ class DocsFacade extends AbstractHttpFacade
             $path = $uri->getPath();
             $url = StringDataType::substringAfter($path, '/' . $this->buildUrlToFacade(true), '');
             $url = ltrim($url, "/");
+            $url = urldecode($url);
             if ($q = $uri->getQuery()) {
                 $url .= '?' . $q;
             }
