@@ -765,7 +765,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * is very usefull if you just need the UID and everything else required for a potential update.
      * - `all_system_attributes` - only system attributes of the from-object and any related objects
      * present in the from-sheet. This is a good choice for data sheets, that update their main object 
-     * along with certain attributes of related objects.     * 
+     * along with certain attributes of related objects.
      * 
      * @uxon-property inherit_columns
      * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes]
