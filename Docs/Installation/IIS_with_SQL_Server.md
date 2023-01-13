@@ -1,13 +1,15 @@
 # IIS with SQL Server
 
-## PHP Installation with FastCGI module
+## Installation
+
+### PHP Installation as FastCGI module
 
 To run PowerUI on an IIS server with SQL, configure the IIS server and install PHP as shown in one of these guides: 
 
 - [Install on Windows Server 2016+ manually or via "Microsoft Web Platform Installer" (Web PI)](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
 - [Install on Windows Server 2008+ (IIS 7+) manually](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
 
-### Recommended PHP installation
+##### Recommended PHP installation
 
 Since the Web PI does not offer most recent versions of PHP, it is probably a good idea to install everything manually. 
 
@@ -23,14 +25,14 @@ Since the Web PI does not offer most recent versions of PHP, it is probably a go
 5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the `tmp` folder.
 6. The other folders will be used in `php.ini` - see below.
 
-## Rewrite Module Installation
+### Rewrite Module installation
 
 For the workbench to work properly, the support for rewrite rules needs to be enabled on the IIS server.
 
 1. [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
 2. Run the installer. No additional configuration is required.
 
-## WinCache Extension Installation
+### WinCache Extension Installation
 
 The WinCache extension is recommended for PHP < 8 in addition to opcache. It accelerates PHP on IIS greatly. So far there is no WinCache for PHP 8.
 
@@ -45,7 +47,7 @@ Alternatively, you can install via CMD or PowerShell:
 
 where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `{PHPPath}` is the path to the php folder. **Important:** The php path must end with a trailing slash! If an error like `"PHPPATH property must be set to the directory where PHP resides"` occurs, try to install it via PowerShell.
 
-## SQL Server extension
+### SQL Server extension
 
 1. [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
 2. Copy `php_sqlsrv_74_nts.dll` (or similar) to the `ext` folder of PHP. Use the `ts`/`nts` version according to your PHP binaries (see above)
@@ -85,7 +87,16 @@ Check you PHP configuration by creating a file in `C:\inetpub\wwwroot` (e.g. `ph
 	
 ## Installing the workbench
 
-Create a folder for the workbench in `C:\inetpub\wwwroot`. The name of the forlder will also be the path in your future URLs.
+### Create a folder
+
+1. Open IIS Manager
+2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+3. Right click on `Default Web Site` and select `Add Virtual Directory`
+4. Fill out the form 
+	- The `Alias` will be the URL path to the workbench 
+	- The `Physical path` is the actual location on the file system - e.g. `C:\inetpub\wwwroot\workbench`
+
+This will automatically create the physical path.
 
 **IMPORTANT**: the built-in user `IUSR` MUST have full access to the newly created folder! Otherwise many administration features will not work properly.
 
@@ -97,6 +108,45 @@ Now it is time to install the workbench via [Composer](Install_via_Composer.md) 
 "INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"
 
 ```
+
+### Create a database
+
+Create a separate database on the SQL server and assign a user to it. The user **must** have permissions to read and write data and to execute DDL statements lie `CREATE TABLE`, `CREATE VIEW`, etc.
+
+You can use different types of authentication for the DB user - see documentation of the `MsSqlConnector` in `Administration > Documentations > Data Connectors`for more details.
+
+**WARNING:** the credentials for the DB connection will be stored in the `System.config.json` unencrypted inside the workbench directory. You can avoid this if you use a Windows authentication. In this case, the credentials will only be stored in the IIS.
+
+#### Set up SQL Server Windows authentication
+
+Place the following in the `System.config.json`. No username or password needed!
+
+```
+{
+	"METAMODEL.CONNECTOR_CONFIG": {
+	    "host": "SERVER\\INSTANCE",
+	    "database": "<database>",
+	    "character_set": "UTF-8"
+  	}
+}
+```
+
+**IMPORTANT:** the PHP process must run as the user you need to authenticate with. Depending on the web
+server used, different approaches are possible.
+
+In the case of Microsoft IIS, the workbench needs to be installed in a "Virtual folder" in one of the
+IIS application pools. The configuration of the pool seems not important, but in the settings of the
+virtual folder, you need to specify the user and password:
+
+1. Open IIS Manager
+2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+3. Right click on `Default Web Site` and select `Add Virtual Directory`
+4. Fill out the form and press `Connect as...`
+5. Select `Specific user` and press `Set...` right next to it
+6. Type the user name with domain like `MYDOMAIN\User name` and that users current password
+
+The workbench must be installed within the folder above. If you need to change the password, select your
+created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
 
 ## Securing sensitive folders
 

@@ -23,6 +23,113 @@ use exface\Core\CommonLogic\UxonObject;
  * Also note, that the connector handles SQL server warnings as errors by default. If you wish to suppress
  * error messages for warnings, set `warnings_return_as_errors` to `false`. See the official documentation
  * for more details: https://www.php.net/manual/en/function.sqlsrv-configure.php.
+ * 
+ * ## Connection types and authentication
+ * 
+ * ### SQL Server authentication (user+password)
+ * 
+ * The simplest way to connect to an SQL Server is to use a local user configured inside the SQL Server.
+ * The downside is, that this user will not be visible to any centra authority like ActiveDirectory, etc.
+ * 
+ * **Security concerns:** The password is stored encrypted in the metamodel, but if the DB connection is 
+ * defined in the `System.config.json`, the password will be stored as plain text on the file system, 
+ * which may be a security risc! The encrypted password will also be decrypted and shown to users that 
+ * can edit the connection configuration.
+ * 
+ * ```
+ * {
+ *  "host": "<NETWORKNAME/INSTANCE or localhost>",
+ *  "user": "<SQL Server user>",
+ *  "password": "<password>"
+ * }
+ * 
+ * ```
+ * 
+ * ### Windows authentication
+ * 
+ * Another common way to connect using a Windows user (typically managed by ActiveDirectory). In this case,
+ * the authentication is actually done by the web server, not by the workbench. This is the preferred option
+ * for metamodel connections when using the IIS as server since the password must not be stored in the
+ * configuration of the workbench.
+ * 
+ * ```
+ * {
+ *  "host": "<NETWORKNAME/INSTANCE or localhost>"
+ * }
+ * 
+ * ```
+ * 
+ * **IMPORTANT:** the PHP process must run as the user you need to authenticate with. Depending on the web
+ * server used, different approaches are possible.
+ * 
+ * In the case of Microsoft IIS, the workbench needs to be installed in a "Virtual folder" in one of the
+ * IIS application pools. The configuration of the pool seems not important, but in the settings of the
+ * virtual folder, you need to specify the user and password:
+ * 
+ * 1. Open IIS Manager
+ * 2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+ * 3. Right click on `Default Web Site` and select `Add Virtual Directory`
+ * 4. Fill out the form and press `Connect as...`
+ * 5. Select `Specific user` and press `Set...` right next to it
+ * 6. Type the user name with domain like `MYDOMAIN\User name` and that users current password
+ * 
+ * The workbench must be installed within the folder above. If you need to change the password, select your
+ * created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
+ * 
+ * ### Azure AD authentication
+ * 
+ * See https://learn.microsoft.com/en-us/sql/connect/php/azure-active-directory?view=sql-server-ver16
+ * 
+ * ### Azure KeyVault authentication
+ * 
+ * See https://learn.microsoft.com/en-us/sql/connect/php/using-always-encrypted-php-drivers?view=sql-server-ver16#using-azure-key-vault
+ * 
+ * ### Force secure connections (SSL)
+ * 
+ * ```
+ * {
+ *  "host": "<NETWORKNAME/INSTANCE or localhost>"
+ *  "connection_options": {
+ *      "Encrypt": true,
+ *      "TrustServerCertificate": true
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * ## Testing the connection
+ * 
+ * Place the folloing code into a *.php file on the server to test the connection independently from the workbench.
+ * 
+ * ```
+<?php
+    $serverName = "<SERVER>\<INSTANCE>";  
+    $connectionInfo = [
+    	"Database" => "<dbname>"
+    	// Add more options here
+    ];  
+      
+    $conn = sqlsrv_connect($serverName, $connectionInfo);  
+    if( $conn === false ) {  
+         echo "Unable to connect.</br>";  
+         die( print_r( sqlsrv_errors(), true));  
+    }  
+    
+    $tsql = "SELECT CONVERT(varchar(32), SUSER_SNAME())";  
+    $stmt = sqlsrv_query( $conn, $tsql);  
+    if( $stmt === false )  {  
+         echo "Error in executing query.</br>";  
+         die( print_r( sqlsrv_errors(), true));  
+    }  
+     
+    $row = sqlsrv_fetch_array($stmt);  
+    echo "User login: ".$row[0]."</br>";  
+      
+    sqlsrv_free_stmt( $stmt);  
+    sqlsrv_close( $conn);  
+?>
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *
