@@ -416,10 +416,11 @@ class DataSheetMapper implements DataSheetMapperInterface
                             foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                                 $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
                             }
+                            if ($logbook !== null) {
+                                $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
+                            }
                         }
-                        if ($logbook !== null) {
-                            $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
-                        }
+                        
                     } // END foreach ($expr->getRequiredAttributes())
                 } // END foreach($map->getRequiredExpressions($data_sheet))
             } // END foreach($this->getMappings())
