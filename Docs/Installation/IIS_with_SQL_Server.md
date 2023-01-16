@@ -22,7 +22,7 @@ Since the Web PI does not offer most recent versions of PHP, it is probably a go
 2. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
 3. Unpack it into `C:\Program Files\PHP\bin`
 4. Follow the guides above to register it as a FastCGI module in IIS
-5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the `tmp` folder.
+5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the folders `tmp` and `logs`.
 6. The other folders will be used in `php.ini` - see below.
 
 ### Rewrite Module installation
