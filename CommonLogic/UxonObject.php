@@ -251,7 +251,7 @@ class UxonObject implements \IteratorAggregate
      *
      * @see \IteratorAggregate::getIterator()
      */
-    public function getIterator()
+    public function getIterator() : \Traversable
     {
         return new \ArrayIterator($this->getPropertiesAll());
     }
