@@ -23,6 +23,8 @@ const exfPreloader = {};
 (function(){
 	
 	var _preloader = this;
+	
+	var _error = null;
 		
 	var _db = function() {
 		var dexie = new Dexie('exf-preload');
@@ -35,16 +37,18 @@ const exfPreloader = {};
             'deviceId': 'id'
 		});
 		dexie.open().catch(function (e) {
+			_error = e;
 		    console.error("Preloader error: " + e.stack);
 		});
 		return dexie;
 	}();
 	
-	
-	var _preloadTable = _db.table('preloads');
-	var _actionsTable = _db.table('actionQueue');
-	var _deviceIdTable = _db.table('deviceId');
-	var _topics = ['offlineTask'];
+	if (_error === null) {
+		var _preloadTable = _db.table('preloads');
+		var _actionsTable = _db.table('actionQueue');
+		var _deviceIdTable = _db.table('deviceId');
+		var _topics = ['offlineTask'];
+	}
 	
 	var _deviceId;
 	
@@ -59,6 +63,13 @@ const exfPreloader = {};
 			}
 		})
 	}());
+	
+	/**
+	 * @return {bool}
+	 */
+	this.isAvailable = function() {
+		return _error === null;
+	}
 	
 	/**
 	 * @return {string}
@@ -86,6 +97,9 @@ const exfPreloader = {};
 	 * @return self
 	 */
 	this.addPreload = function(sAlias, aDataCols, aImageCols, sPageAlias, sWidgetId, sUidAlias, sName) {		
+		if (_error === false) {
+			return _preloader;
+		}
 		_preloadTable
 		.get(sAlias)
 		.then(item => {
@@ -114,6 +128,9 @@ const exfPreloader = {};
 	 * @return {promise}
 	 */
 	this.getPreload = function(sAlias, sPageAlias, sWidgetId) {
+		if (_error === false) {
+			return Promise.resolve(null);
+		}
 		return _preloadTable.get(sAlias);
 	};
 	
@@ -133,6 +150,9 @@ const exfPreloader = {};
 		//return $.when.apply($, deferreds)
 		return Promise.all(deferreds)
 		.then(function() {
+			if (_error) {
+				return;
+			}
 			//delete all actions with status "synced" from actionQueue
 			_preloader.getActionQueueData('synced')
 			.then(function(data) {
@@ -151,11 +171,13 @@ const exfPreloader = {};
 		var sPageAlias = item.page;
 		var sWidgetId = item.widget;
 		var aImageCols = item.imageCols;
-		var sUidAlias = item.uidAlias
-		aUid
+		var sUidAlias = item.uidAlias;
 		//console.log('Syncing preload for object "' + sObjectAlias + '", widget "' + sWidgetId + '" on page "' + sPageAlias + '"');
 		if (! sPageAlias || ! sWidgetId) {
 			throw {"message": "Cannot sync preload for object " + sObjectAlias + ": incomplete preload configuration!"};
+		}
+		if (_error) {
+			return Promise.resolve(null);
 		}
 		var requestData = {
 				action: 'exface.Core.ReadPreload',
@@ -292,6 +314,9 @@ const exfPreloader = {};
 	 * @return {promise}
 	 */
 	this.reset = function() {
+		if (_error) {
+			return Promise.resolve(null);
+		}
 		return clear = _preloadTable.toArray()
 		.then(function(dbContent) {
 			var promises = [];
@@ -325,6 +350,9 @@ const exfPreloader = {};
 	 * @return Promise
 	 */
 	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName, aEffects) {
+		if (_error) {
+			return Promise.resolve(null);
+		}
 		var topics = _preloader.getTopics();
 		offlineAction.url = 'api/task/' + topics.join('/');
 		var xRequestId = _preloader.createUniqueId();
@@ -368,6 +396,9 @@ const exfPreloader = {};
 	 * @return {promise}
 	 */
 	this.getActionQueueData = function(sStatus, sObjectAlias, fnRowFilter) {
+		if (_error) {
+			return Promise.resolve([]);
+		}
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
 			var data = [];
@@ -422,6 +453,9 @@ const exfPreloader = {};
 	 * 		  }>}
 	 */
 	this.getOfflineActionsEffects = async function(sEffectedObjectAlias) {
+		if (_error) {
+			return [];
+		}
 		var dbContent = await _actionsTable.toArray();
 		var aEffects = [];
 		dbContent.forEach(function(oQueueItem) {
@@ -448,6 +482,9 @@ const exfPreloader = {};
 	 * @return {promise}
 	 */
 	this.getActionQueueIds = function(filter) {
+		if (_error) {
+			return Promise.resolve([]);
+		}
 		return _actionsTable.toArray()
 		.then(function(dbContent) {
 			var ids = [];
@@ -752,6 +789,10 @@ const exfPreloader = {};
 			}
 		};
 		
+		if (_error) {
+			return Promise.resolve({});
+		}
+		
 		return fetch('api/ui5?' + $.param(body), {
 			method: 'GET'
 		})
@@ -774,7 +815,7 @@ const exfPreloader = {};
 	 * @param {string[]} aIds
 	 * @return {object[]} 
 	 */
-	this.getActionsData = function(aMessageIds) {		
+	this.getActionsData = function(aMessageIds) {
 		return _preloader.getActionQueueData('offline')
 		.then(function(actionsData) {
 			var data = {deviceId: _preloader.getDeviceId()};
