@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec816c07f0c7d6816c025041000001",
@@ -199,7 +199,7 @@
             "DATA_ADDRESS": "app_oid",
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": 4,
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
@@ -217,7 +217,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec94e207f0a2d894e2025041000001",
@@ -263,7 +263,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9a5307f08cd09a53025041000001",
@@ -309,7 +309,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca39507f0d7eea395025041000001",
@@ -335,7 +335,7 @@
             "DATA_ADDRESS": "data_connection_oid",
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": 3,
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
@@ -353,7 +353,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca49207f0e9f0a492025041000001",
@@ -379,7 +379,7 @@
             "DATA_ADDRESS": "mute_flag",
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": 2,
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
@@ -397,7 +397,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecbbc407f0b89abbc4025041000001",
@@ -443,7 +443,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecbd9b07f06c1ebd9b025041000001",
@@ -469,7 +469,7 @@
             "DATA_ADDRESS": "name",
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "FORMATTER": "",
-            "DISPLAYORDER": null,
+            "DISPLAYORDER": 1,
             "LABELFLAG": 1,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
@@ -489,7 +489,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:44:24",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9569cadb075c9569025041000001",
@@ -535,7 +535,7 @@
         },
         {
             "CREATED_ON": "2022-01-28 08:27:56",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecac41d03aece8ac41025041000001",
@@ -579,7 +579,7 @@
         },
         {
             "CREATED_ON": "2022-01-31 18:14:24",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec9afc3cb37c289afc025041000001",
@@ -623,7 +623,7 @@
         },
         {
             "CREATED_ON": "2022-02-01 16:05:38",
-            "MODIFIED_ON": "2022-09-19 13:53:34",
+            "MODIFIED_ON": "2023-01-17 14:06:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec872f6a9f90d8872f747827435ce5",
