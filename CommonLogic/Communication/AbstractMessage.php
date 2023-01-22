@@ -99,7 +99,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
 
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationMessageInterface::getRecipients()
      */
     public function getRecipients() : array
     {
@@ -107,9 +108,11 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
             $this->recipientsCached = $this->getRecipientsAddedExplicitly();
             
             foreach ($this->getRecipientAddresses() as $addr) {
-                // TODO move to factory
-                if (false !== $filtered = filter_var($addr, FILTER_VALIDATE_EMAIL)) {
-                    $this->recipientsCached[] = new EmailRecipient($filtered);
+                if ($addr === null || $addr === '') {
+                    continue;
+                }
+                if (null !== $recipient = $this->parseRcipientAddress($addr)) {
+                    $this->recipientsCached[] = $recipient;
                 }
             }
             
@@ -151,6 +154,19 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
             $this->recipientsCached = array_merge($this->recipientsCached, $userRecipients);
         }
         return $this->recipientsCached;
+    }
+    
+    /**
+     * 
+     * @param string $address
+     * @return RecipientInterface|NULL
+     */
+    protected function parseRcipientAddress(string $address) : ?RecipientInterface
+    {
+        if (false !== $filtered = filter_var($address, FILTER_VALIDATE_EMAIL)) {
+            return new EmailRecipient($filtered);
+        }
+        return null;
     }
     
     /**
@@ -345,9 +361,9 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     }
     
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::fromOtherMessageType()
+     * 
+     * @param CommunicationMessageInterface $anotherMsg
+     * @return CommunicationMessageInterface
      */
     public static function fromOtherMessageType(CommunicationMessageInterface $anotherMsg) : CommunicationMessageInterface
     {
