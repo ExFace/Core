@@ -11,9 +11,36 @@ class UxonObject implements \IteratorAggregate
 {
     private $array = [];
     
+    private $childUxons = [];
+    
     public function __construct(array $properties = [])
     {
-        $this->array = $properties;
+        $this->array = $this->stripComments($properties);
+    }
+    
+    /**
+     * 
+     * @param array $properties
+     * @return array
+     */
+    protected function stripComments(array $properties) : array
+    {
+        $skip = false;
+        foreach ($properties as $prop => $val) {
+            $prefix = mb_substr($prop, 0, 2);
+            switch ($prefix) {
+                case '//': unset($properties[$prop]); break;
+                case '/*': unset($properties[$prop]); $skip = true; break;
+                case '*/':  unset($properties[$prop]); $skip = false; break;
+            }
+            if ($skip === true) {
+                unset($properties[$prop]);
+            }
+            if (is_array($val) && array_key_first($val) === '/*' && array_key_last($val) === '*/') {
+                unset($properties[$prop]);
+            }
+        }
+        return $properties;
     }
 
     /**
@@ -112,7 +139,13 @@ class UxonObject implements \IteratorAggregate
     public function getProperty($name)
     {
         $val = $this->array[$name] ?? null;
-        return is_array($val) ? new self($val) : $val;
+        if (is_array($val) === true) {
+            if (null === $child = $this->childUxons[$name] ?? null) {
+                $this->childUxons[$name] = $child = new self($val);
+            } 
+            return $child;
+        }
+        return $val;
     }
 
     /**
