@@ -545,6 +545,38 @@ JS;
                                     }
                                 });
                             }
+
+                            // Add comment toggle button
+                            if(menuNodeType !== "array" && menuNode.type !== 'root') {
+                                items.push({
+                                    text : "{$trans['CONTEXT_MENU.COMMENT.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['CONTEXT_MENU.COMMMENT.HINT']}",  // the HTML title attribute
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-quote-left",
+                                    click: function(){
+                                        var sFld;
+                                        switch (menuNodeType) {
+                                            case "object":
+                                                if (menuNode.childs[0].field === '/*' && menuNode.childs[menuNode.childs.length-1].field === '*/') {
+                                                    menuNode.removeChild(menuNode.childs[menuNode.childs.length-1]);
+                                                    menuNode.removeChild(menuNode.childs[0]);
+                                                } else {
+                                                    menuNode.childs[0]._onInsertBefore('/*', '');
+                                                    menuNode.childs[menuNode.childs.length-1]._onInsertAfter('*/', '');
+                                                }
+                                                break;
+                                            default:    
+                                                sFld = menuNode.getField();
+                                                if (sFld.substring(0, 2) === '//') {
+                                                    menuNode.setField(sFld.substring(2), menuNode.editable.field);
+                                                    menuNode.recreateDom();
+                                                } else {
+                                                    menuNode.setField('//' + sFld, menuNode.editable.field);
+                                                    menuNode.recreateDom();
+                                                }
+                                        }
+                                    }
+                                });
+                            }
                             
                             return items;
                         }, // onCreateMenu
