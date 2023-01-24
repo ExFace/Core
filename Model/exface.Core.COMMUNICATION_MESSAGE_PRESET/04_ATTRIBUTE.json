@@ -173,7 +173,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-01-22 20:05:14",
-            "MODIFIED_ON": "2023-01-22 20:06:25",
+            "MODIFIED_ON": "2023-01-24 17:23:26",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed8b04b3ab353c8b04025041000001",
@@ -212,7 +212,7 @@
             "SHORT_DESCRIPTION": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
-            "FIXED_VALUE": "'communication_message'",
+            "FIXED_VALUE": "'\\exface\\Core\\Uxon\\CommunicationMessageSchema'",
             "CUSTOM_DATA_TYPE": null
         },
         {

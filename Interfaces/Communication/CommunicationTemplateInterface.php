@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
 interface CommunicationTemplateInterface extends iCanBeConvertedToUxon, AliasInterface
 {
@@ -25,4 +26,16 @@ interface CommunicationTemplateInterface extends iCanBeConvertedToUxon, AliasInt
      * @return CommunicationTemplateSelectorInterface
      */
     public function getSelector() : CommunicationTemplateSelectorInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getUid() : string;
+    
+    /**
+     * 
+     * @return CommunicationChannelSelectorInterface|NULL
+     */
+    public function getChannelSelector() : ?CommunicationChannelSelectorInterface;
 }
