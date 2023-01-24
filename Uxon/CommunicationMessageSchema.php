@@ -6,6 +6,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
 use exface\Core\Factories\CommunicationFactory;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
 
 /**
  * UXON-schema class for communication messages.
@@ -33,9 +34,16 @@ class CommunicationMessageSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'channel') === 0) {
-                $w = $this->getPrototypeClassFromSelector($value);
-                if ($this->validatePrototypeClass($w) === true) {
-                    $name = $w;
+                $p = $this->getPrototypeClassFromChannel($value);
+                if ($this->validatePrototypeClass($p) === true) {
+                    $name = $p;
+                }
+                break;
+            }
+            if (strcasecmp($key, 'template') === 0) {
+                $p = $this->getPrototypeClassFromTemplate($value);
+                if ($p !== null && $this->validatePrototypeClass($p) === true) {
+                    $name = $p;
                 }
                 break;
             }
@@ -49,15 +57,33 @@ class CommunicationMessageSchema extends UxonSchema
     }
     
     /**
+     * 
+     * @param string $selectorString
+     * @return string|NULL
+     */
+    protected function getPrototypeClassFromTemplate(string $selectorString) : ?string
+    {
+        $tpl = CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), [$selectorString])[0];
+        if ($channelSelector = $tpl->getChannelSelector()) {
+            return $this->getPrototypeClassFromChannel($channelSelector);
+        }
+        return null;
+    }
+    
+    /**
      * Returns the prototype class for a given action selector (e.g. alias).
      *
-     * @param string $selectorString
+     * @param string|CommunicationChannelSelectorInterface $selectorOrString
      * @return string
      */
-    protected function getPrototypeClassFromSelector(string $selectorString) : string
+    protected function getPrototypeClassFromChannel($selectorOrString) : string
     {
         try {
-            $channel = CommunicationFactory::createChannelFromString($this->getWorkbench(), $selectorString);
+            if ($selectorOrString instanceof CommunicationChannelSelectorInterface) {
+                $channel = CommunicationFactory::createFromSelector($selectorOrString);
+            } else {
+                $channel = CommunicationFactory::createChannelFromString($this->getWorkbench(), $selectorOrString);
+            }
             $message = CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $channel->getMessagePrototypeSelector());
         } catch (\Throwable $e) {
             $ex = new RuntimeException('Error loading message autosuggest - falling back to "AbstractMessage"!', null, $e);

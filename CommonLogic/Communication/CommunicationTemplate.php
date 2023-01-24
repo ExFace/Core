@@ -7,6 +7,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Communication\CommunicationTemplateInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
 
 /**
  * 
@@ -131,14 +133,37 @@ class CommunicationTemplate implements CommunicationTemplateInterface
         return $this->namespace . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->alias;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationTemplateInterface::getUid()
+     */
     public function getUid() : string
     {
         return $this->uid;
     }
     
+    /**
+     * 
+     * @param string $value
+     * @return CommunicationTemplate
+     */
     protected function setUid(string $value) : CommunicationTemplate
     {
         $this->uid = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\CommunicationTemplateInterface::getChannelSelector()
+     */
+    public function getChannelSelector() : ?CommunicationChannelSelectorInterface
+    {
+        if ($this->getMessageUxon()->hasProperty('channel')) {
+            return new CommunicationChannelSelector($this->selector->getWorkbench(), $this->getMessageUxon()->getProperty('channel'));
+        }
+        return null;
     }
 }
