@@ -37,6 +37,15 @@ class OnUiPageInitializedEvent extends AbstractEvent
     }
     
     /**
+     * 
+     * @return UiPageInterface
+     */
+    public function getPage() : UiPageInterface
+    {
+        return $this->page;
+    }
+    
+    /**
      * {@inheritdoc}
      * @see \exface\Core\Events\AbstractEvent::getEventName()
      */
