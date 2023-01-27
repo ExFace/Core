@@ -130,6 +130,7 @@ class JsonDataType extends TextDataType
      */
     public static function encodeJson(array $json, $prettify = false): string
     {
+        $params = null;
         if ($prettify === true) {
             $params = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
         }
