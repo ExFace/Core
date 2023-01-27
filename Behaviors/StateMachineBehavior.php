@@ -152,6 +152,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         $attr->setCustomDataTypeUxon($configUxon);
         
+        $enumType = null;
         if (! ($type instanceof EnumDataTypeInterface)) {
             if ($type instanceof NumberDataType) {
                 $enumType = '0x11e7c39621725c1e8001e4b318306b9a';

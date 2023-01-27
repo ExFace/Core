@@ -959,8 +959,8 @@ class Attribute implements MetaAttributeInterface
     public function getCustomDataTypeUxon()
     {
         if ($this->custom_data_type_uxon === null){
-            if ($this->custom_data_type_uxon_string !== null) {
-                $this->custom_data_type_uxon = UxonObject::fromJson($this->custom_data_type_uxon_string);
+            if ($this->custom_data_type_string !== null) {
+                $this->custom_data_type_uxon = UxonObject::fromJson($this->custom_data_type_string);
             } else {
                 return new UxonObject();
             }
@@ -977,9 +977,9 @@ class Attribute implements MetaAttributeInterface
     {
         if ($uxonOrString instanceof UxonObject) {
             $this->custom_data_type_uxon = $uxonOrString;
-            $this->custom_data_type_uxon_string = null;
+            $this->custom_data_type_string = null;
         } elseif (is_string($uxonOrString)) {
-            $this->custom_data_type_uxon_string = $uxonOrString;
+            $this->custom_data_type_string = $uxonOrString;
             $this->custom_data_type_uxon = null;
         } else {
             throw new InvalidArgumentException('Invalid custom data type UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');

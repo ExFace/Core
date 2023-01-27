@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Debugger;
 
 use exface\Core\Interfaces\Exceptions\iContainCustomTrace;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 if (!function_exists('get_debug_type')) {
     function get_debug_type($value): string { return \Symfony\Polyfill\Php80::get_debug_type($value); }
@@ -24,6 +25,7 @@ class ExceptionRenderer
     private $file;
     private $line;
     private $charset = null;
+    private $statusCode = null;
     
     public function __construct(\Throwable $exception, string $charset = null)
     {
@@ -35,6 +37,10 @@ class ExceptionRenderer
         $this->setMessage($exception->getMessage());
         $this->setTraceFromThrowable($exception);
         $this->setClass(get_debug_type($exception));
+        
+        if ($exception instanceof ExceptionInterface) {
+            $this->statusCode = $exception->getStatusCode();
+        }
         
         $previous = $exception->getPrevious();
         if ($previous instanceof \Throwable) {

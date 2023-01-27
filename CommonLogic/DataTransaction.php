@@ -153,12 +153,11 @@ class DataTransaction implements DataTransactionInterface
         }
         
         // See if the connection is already registered in this transaction
+        $existing_connection = null;
         foreach ($this->getDataConnections() as $existing_connection) {
             if ($existing_connection === $connection) {
                 break;
-            } else {
-                $existing_connection = null;
-            }
+            } 
         }
         
         // If this is a new connection, start a transaction there and add it to this DataTransaction.
