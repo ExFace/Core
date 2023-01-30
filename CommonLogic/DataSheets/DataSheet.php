@@ -184,7 +184,13 @@ class DataSheet implements DataSheetInterface
         $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
         if (! is_null($leftKeyColName) && ! is_null($rightKeyColName)) {
+            $addedRowsCnt = 0;
             foreach ($this->rows as $left_row_nr => $row) {
+                // foreach() iterates over a COPY of the array, so $left_row_nr will always
+                // be the number of the original left row! If rows are added while joining,
+                // it must be increasead in order to match the index of that row in the new
+                // data.
+                $left_row_nr += $addedRowsCnt;
                 // Check if the right column is really present in the data to be joined
                 if (! $rCol = $other_sheet->getColumns()->get($rightKeyColName)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $rightKeyColName . '" for a left join!', '6T5E849');
@@ -199,11 +205,14 @@ class DataSheet implements DataSheetInterface
                     // right columns are appended to this row copy.
                     $needRowCopy = false;
                     $left_row_new_nr = null;
-                    $left_row = $this->getRow($left_row_nr);
+                    // Make sure to get the current state of the left row instead of using $row
+                    // because theoretically it may have been changed already
+                    $left_row = $row;
                     foreach ($right_row_nrs as $right_row_nr) {
                         if ($needRowCopy === true) {
                             $left_row_new_nr = ($left_row_new_nr ?? $left_row_nr) + 1;
                             $this->addRow($left_row, false, false, $left_row_new_nr);
+                            $addedRowsCnt++;
                         }
                         $right_row = $other_sheet->getRow($right_row_nr);
                         foreach ($right_row as $col_name => $val) {
