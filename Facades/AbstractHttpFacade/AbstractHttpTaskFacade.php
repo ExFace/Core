@@ -37,16 +37,9 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
      */
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
-        try {
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
-            $result = $this->getWorkbench()->handle($task);
-            return $this->createResponseFromTaskResult($request, $result);
-        } catch (\Throwable $e) {
-            if (! $e instanceof ExceptionInterface){
-                $e = new InternalError($e->getMessage(), null, $e);
-            }
-            return $this->createResponseFromError($request, $e);
-        }
+        $task = $request->getAttribute($this->getRequestAttributeForTask());
+        $result = $this->getWorkbench()->handle($task);
+        return $this->createResponseFromTaskResult($request, $result);
     }
     
     /**

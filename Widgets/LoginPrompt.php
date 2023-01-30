@@ -113,7 +113,7 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
     public static function createFromException(UiPageInterface $page, \Throwable $exception) : LoginPrompt
     {
         $authErr = $exception;
-        while (! ($authErr instanceof AuthenticationFailedError)) {
+        while (! ($authErr instanceof AuthenticationFailedError) && ($authErr instanceof \Exception)) {
             $authErr = $authErr->getPrevious();
         }
         if ($authErr !== null) {
