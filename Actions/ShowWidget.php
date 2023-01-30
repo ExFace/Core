@@ -1,4 +1,4 @@
-<?php
+    <?php
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowWidget;
@@ -222,7 +222,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('widget_id', $this->getWidgetId());
-        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace());
+        $pageAlias = $this->page_alias ?? ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace() : null);
+        if ($pageAlias !== null) {
+            $uxon->setProperty('page_alias', $pageAlias);
+        }
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->hasPrefillDataPreset()) {

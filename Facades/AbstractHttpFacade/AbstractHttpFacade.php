@@ -17,6 +17,7 @@ use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
 use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\InternalError;
 
 /**
  * Common base structure for HTTP facades.
@@ -94,15 +95,19 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             
             $eventMgr->dispatch(new OnHttpBeforeResponseSentEvent($this, $request, $response));
         } catch (\Throwable $e) {
-            
-            // If the user is not logged on an the permission is denied, wrap the error in an
-            // AuthenticationFailedError to tell the facade to handle it as an unauthenticated-error
-            if ($e instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
-                $e = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $e->getMessage(), null, $e);
+            switch (true) {
+                // If it is not a workbench exception, wrap an internal error around it
+                case ! $e instanceof ExceptionInterface: 
+                    $e = new InternalError($e->getMessage(), null, $e);
+                    break;
+                // If the user is not logged on an the permission is denied, wrap the error in an
+                // AuthenticationFailedError to tell the facade to handle it as an unauthenticated-error
+                case $e instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+                    $e = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $e->getMessage(), null, $e);
+                    break;
             }
             
             $this->getWorkbench()->getLogger()->logException($e);
-            
             $response = $this->createResponseFromError($request, $e);
         }
         
