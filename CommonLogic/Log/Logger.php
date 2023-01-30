@@ -184,7 +184,7 @@ class Logger implements LoggerInterface
         $this->setLogging(true);
 
         try {
-            if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets) {
+            if (is_null($sender) && ($context['exception'] ?? null) instanceof iCanGenerateDebugWidgets) {
                 $sender = $context['exception'];
             }
 
