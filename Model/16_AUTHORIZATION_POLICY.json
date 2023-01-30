@@ -560,9 +560,9 @@
         },
         {
             "CREATED_ON": "2021-04-21 14:52:23",
-            "MODIFIED_ON": "2022-12-02 09:57:00",
+            "MODIFIED_ON": "2023-01-30 10:57:21",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eb82676b1a93d48267025041000001",
             "NAME": "ConsoleFacade for CLI users",
             "DESCRIPTION": "",
@@ -575,7 +575,7 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "exface\/Core\/Facades\/ConsoleFacade"
+            "TARGET_FACADE": "exface\/core\/Facades\/ConsoleFacade.php"
         },
         {
             "CREATED_ON": "2021-04-22 11:07:01",
@@ -659,9 +659,9 @@
         },
         {
             "CREATED_ON": "2022-12-01 21:40:01",
-            "MODIFIED_ON": "2022-12-01 21:40:01",
+            "MODIFIED_ON": "2023-01-30 10:55:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed9fd25427322a9fd2025041000001",
             "NAME": "Docs for authenticated users",
             "DESCRIPTION": "",
@@ -674,13 +674,13 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "exface\/Core\/Facades\/DocsFacade"
+            "TARGET_FACADE": "exface\/core\/Facades\/DocsFacade.php"
         },
         {
             "CREATED_ON": "2022-12-01 21:59:59",
-            "MODIFIED_ON": "2022-12-01 21:59:59",
+            "MODIFIED_ON": "2023-01-30 10:55:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11edb2e71df168a8b2e7025041000001",
             "NAME": "WebConsole for authenticated",
             "DESCRIPTION": "",
@@ -693,7 +693,7 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": "exface\/Core\/Facades\/WebConsoleFacade.php"
+            "TARGET_FACADE": "exface\/core\/Facades\/WebConsoleFacade.php"
         },
         {
             "CREATED_ON": "2022-12-02 08:34:26",
