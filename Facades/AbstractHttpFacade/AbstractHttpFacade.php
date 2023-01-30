@@ -15,6 +15,8 @@ use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
 use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
 use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
+use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 
 /**
  * Common base structure for HTTP facades.
@@ -92,6 +94,15 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             
             $eventMgr->dispatch(new OnHttpBeforeResponseSentEvent($this, $request, $response));
         } catch (\Throwable $e) {
+            
+            // If the user is not logged on an the permission is denied, wrap the error in an
+            // AuthenticationFailedError to tell the facade to handle it as an unauthenticated-error
+            if ($e instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
+                $e = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $e->getMessage(), null, $e);
+            }
+            
+            $this->getWorkbench()->getLogger()->logException($e);
+            
             $response = $this->createResponseFromError($request, $e);
         }
         
@@ -205,9 +216,8 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     {
         $code = ($exception instanceof ExceptionInterface) ? $exception->getStatusCode() : 500;
         if ($this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
-            $this->getWorkbench()->getLogger()->logException($exception);
             return new Response($code);
         }
-        throw $exception;
+        return new Response($code, [], $exception->getMessage());
     }
 }
