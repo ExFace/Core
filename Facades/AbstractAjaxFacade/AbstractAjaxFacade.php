@@ -596,12 +596,6 @@ HTML;
             $status_code = 500;
         }
         
-        // If the user is not logged on an the permission is denied, wrap the error in an
-        // AuthenticationFailedError to tell the facade to handle it as an unauthorized-error
-        if ($exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
-            $exception = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $exception->getMessage(), null, $exception);
-        }
-        
         // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
         if ($exception instanceof ExceptionInterface && $exception->getStatusCode() == 401) {
             // Don't show the login-prompt if the request is a login-action itself. In this case,
@@ -644,8 +638,6 @@ HTML;
         }
         
         $headers = array_merge($headers, $this->buildHeadersForErrors());
-        
-        $this->getWorkbench()->getLogger()->logException($exception);
         
         return new Response($status_code, $headers, $body);
     }
