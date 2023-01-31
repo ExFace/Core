@@ -1,4 +1,4 @@
-    <?php
+<?php
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowWidget;
