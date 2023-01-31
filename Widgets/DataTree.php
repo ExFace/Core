@@ -366,8 +366,10 @@ class DataTree extends DataTable
         if ($this->hasTreeFolderFlag()) {
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
+        if ($this->getTreeParentRelationAlias()) {
+            $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
+            $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
+        }
         
         // Automatically add a root-filter if the root UID is known and lazy_load_tree_levels is not explicitly off
         if ($this->getTreeRootUid() !== null && $this->getLazyLoadTreeLevels() !== false && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
