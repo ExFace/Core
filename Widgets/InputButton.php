@@ -100,6 +100,8 @@ class InputButton extends Input
     
     private $emptyAfterActionFails = false;
     
+    private $valueSelectedOnFocus = true;
+    
     /**
      * The button next to the input: it's action, icon, etc.
      * 
@@ -191,5 +193,32 @@ class InputButton extends Input
     {
         $this->emptyAfterActionFails = $value;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to prevent the complete value being selected when input is focues.
+     * The complete value being selected on focus is handy fpr scanners,
+     * so the next scan will overwrite the value
+     *
+     * @uxon-property value_selected_on_focus
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return InputButton
+     */
+    public function setValueSelectedOnFocus(bool $value) : InputButton
+    {
+        $this->valueSelectedOnFocus = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getValueSelectedOnFocus() : bool
+    {
+        return $this->valueSelectedOnFocus;
     }
 }
