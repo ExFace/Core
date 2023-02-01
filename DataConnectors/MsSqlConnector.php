@@ -162,7 +162,8 @@ class MsSqlConnector extends AbstractSqlConnector
             $connectInfo["UID"] = $this->getUser();
         }
         if ($this->getPassword()) {
-            $connectInfo["PWD"] = $this->getPassword();
+            // Escape closing curly braces in MS SQL password by a second brace
+            $connectInfo["PWD"] = preg_replace('/([^}])}([^}])/', '\\1}}\\2', $this->getPassword());
         }
         
         if (function_exists('sqlsrv_connect') === false) {
