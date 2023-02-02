@@ -22,6 +22,7 @@ class DataTimeline implements WidgetPartInterface
     const GRANULARITY_HOURS = 'hours';
     const GRANULARITY_WEEKS = 'weeks';
     const GRANULARITY_MONTHS = 'months';
+    const GRANULARITY_YEARS = 'years';
     
     private $granularity = null;
     
