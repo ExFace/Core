@@ -11,7 +11,6 @@ use exface\Core\Exceptions\DataSheets\DataSheetDuplicatesError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -423,7 +422,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     {
         $duplicates = [];
         $eventRowCnt = count($eventRows);
+        $checkRowCnt = count($checkRows);
         $caseSensitive = $this->getCompareCaseSensitive();
+        $selfCompare = ($eventRows === $checkRows);
         
         // Extract and parse values relevant for the search. Do it once here in order to
         // improve performance on large data sets. 
@@ -443,10 +444,14 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         // Now compare the keys of each event row to each check row
         for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
-            // For each row loaded from data source
-            $uidMatchProcessed = false;
+            // For each row being saved iterate over all the rows from the data source
+            // NOTE: in self-compare mode (when looking for duplicates inside the data sheet) only 
+            // iterate over the following rows, because previous ones were already checked. 
+            // This also makes sure, the first row is not marked as duplicate of one of the subsequent rows
+            $uidMatchProcessed = $selfCompare === true ? true : false;
             $eventRow = $eventRowsKeys[$eventRowNo];
-            foreach ($checkRowsKeys as $chRowNo => $chRow) {
+            for ($chRowNo = ($selfCompare === true ? $eventRowNo+1 : 0); $chRowNo < $checkRowCnt; $chRowNo++) {
+                $chRow = $checkRowsKeys[$chRowNo];
                 $isDuplicate = true;
                 // Compare all the relevant columns: if any value differs, it is NOT a duplicate
                 foreach ($compareCols as $col) {
