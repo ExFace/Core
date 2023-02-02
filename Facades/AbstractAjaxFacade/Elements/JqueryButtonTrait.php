@@ -897,6 +897,11 @@ JS;
     protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
     {
         $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
+        
+        //add the onErrorScripts of the calling Button to the error scripts of the Button to be pressed
+        if ($action->getFunctionName() === Button::FUNCTION_PRESS && method_exists($targetEl, 'addOnErrorScript')) {
+            $targetEl->addOnErrorScript($this->buildJsOnErrorScript());
+        }
         return <<<JS
 
             {$targetEl->buildJsCallFunction($action->getFunctionName())}
