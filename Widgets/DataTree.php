@@ -80,6 +80,8 @@ class DataTree extends DataTable
     private $tree_leaf_id_column_id = null;
 
     private $tree_expanded = false;
+    
+    private $tree_expanded_levels = null;
 
     private $tree_root_uid = null;
     
@@ -318,7 +320,35 @@ class DataTree extends DataTable
         $this->tree_expanded = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getTreeExpandedLevels() : ?int
+    {
+        return $this->tree_expanded_levels;
+    }
+    
+    /**
+     * Number of levels to expand initially if their child nodes are loaded
+     * 
+     * @uxon-property tree_expanded_levels
+     * @uxon-type integer
+     * 
+     * @param int $numberOfLevels
+     * @return DataTree
+     */
+    public function setTreeExpandedLevels(int $numberOfLevels) : DataTree
+    {
+        $this->tree_expanded_levels = $numberOfLevels;
+        return $this;
+    }
 
+    /**
+     * 
+     * @return string
+     */
     public function getTreeRootUid()
     {
         if ($this->tree_root_uid === null) {
