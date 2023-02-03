@@ -20,6 +20,8 @@ use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 use exface\Core\Communication\Messages\Envelope;
+use exface\Core\Events\Workbench\OnStopEvent;
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -157,6 +159,8 @@ class NotifyingBehavior extends AbstractBehavior
     private $messageUxons = null;
     
     private $preventRecursion = false;
+    
+    private $notifyAfterAllActionsComplete = false;
     
     private $isNotificationInProgress = false;
     
@@ -346,6 +350,18 @@ class NotifyingBehavior extends AbstractBehavior
                     return;
                 }
             }
+        }
+        
+        // If these notifications need to be sent after all transactions commit, add a listener
+        // to the OnStop event of the workbench and remember the original event, that triggered
+        // the notifications. Just call this whole method again then, but remove the postponing-flag.
+        if ($this->getNotifyAfterAllActionsComplete() === true) {
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $onBeforeStopEvent) use ($event) {
+                $this->setNotifyAfterAllActionsComplete(false);
+                $this->onEventNotify($event);
+            });
+            $this->isNotificationInProgress = false;
+            return;
         }
         
         // Here is a possibility to add custom placeholder resolvers depending on the event type:
@@ -675,6 +691,27 @@ class NotifyingBehavior extends AbstractBehavior
     protected function setPreventRecursion(bool $value) : NotifyingBehavior
     {
         $this->preventRecursion = $value;
+        return $this;
+    }
+    
+    protected function getNotifyAfterAllActionsComplete() : bool
+    {
+        return $this->notifyAfterAllActionsComplete;
+    }
+    
+    /**
+     * Set to TRUE to not notify immediately, but to wait until all business logic is done and transactions are committed
+     * 
+     * @uxon-property notify_after_all_actions_complete
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NotifyingBehavior
+     */
+    public function setNotifyAfterAllActionsComplete(bool $value) : NotifyingBehavior
+    {
+        $this->notifyAfterAllActionsComplete = $value;
         return $this;
     }
 }
