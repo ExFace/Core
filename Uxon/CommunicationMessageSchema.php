@@ -66,6 +66,7 @@ class CommunicationMessageSchema extends UxonSchema
     protected function getPrototypeClassFromTemplate(string $selectorString) : ?string
     {
         try {
+            $selectorString = trim($selectorString);
             $tpl = CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), [$selectorString])[0];
         } catch (CommunicationTemplateNotFoundError $e) {
             // No need to worry: this just means, the user is typing the template name and needs an
@@ -94,7 +95,7 @@ class CommunicationMessageSchema extends UxonSchema
             if ($selectorOrString instanceof CommunicationChannelSelectorInterface) {
                 $channel = CommunicationFactory::createFromSelector($selectorOrString);
             } else {
-                $channel = CommunicationFactory::createChannelFromString($this->getWorkbench(), $selectorOrString);
+                $channel = CommunicationFactory::createChannelFromString($this->getWorkbench(), trim($selectorOrString));
             }
             $message = CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $channel->getMessagePrototypeSelector());
         } catch (CommunicationChannelNotFoundError $e) {
