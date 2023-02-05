@@ -2296,9 +2296,17 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removeRows()
      */
-    public function removeRows()
+    public function removeRows(array $rowIndexes = null)
     {
-        $this->rows = array();
+        if ($rowIndexes !== null) {
+            $rowIndexes = array_unique($rowIndexes);
+            krsort($rowIndexes);
+            foreach ($rowIndexes as $i) {
+                $this->removeRow($i);
+            }
+        } else {
+            $this->rows = array();
+        }
         return $this;
     }
 

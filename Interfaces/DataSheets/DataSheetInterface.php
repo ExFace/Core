@@ -494,9 +494,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Removes all rows of the data sheet without chaning anything in the column structure
      *
+     * @param int[]|NULL $rowIndexes
      * @return DataSheetInterface
      */
-    public function removeRows();
+    public function removeRows(array $rowIndexes = null);
 
     /**
      * Removes a single row of the data sheet.
