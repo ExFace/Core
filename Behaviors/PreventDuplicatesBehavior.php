@@ -16,6 +16,10 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
+use exface\Core\CommonLogic\DataSheets\Matcher\DataRowMatcher;
+use exface\Core\CommonLogic\DataSheets\Matcher\MultiMatcher;
+use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -88,6 +92,10 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     
     const ON_DUPLICATE_IGNORE = 'IGNORE';
     
+    const LOCATED_IN_EVENT_DATA = 'event_data';
+    
+    const LOCATED_IN_DATA_SOURCE = 'data_source';
+    
     private $onDuplicateMultiRow = null;
     
     private $onDuplicateSingleRow = null;
@@ -103,6 +111,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     private $errorCode = null;
     
     private $errorText = null;
+    
+    private $ignoreDataSheets = [];
     
     /**
      *
@@ -152,78 +162,35 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        $duplicates = $this->getDuplicates($eventSheet);
-        
-        if (empty($duplicates) === true) {
+        if ($eventSheet->isEmpty(true)) {
             return;
         }
         
-        if ($eventSheet->countRows() === 1) {
-            switch ($this->getOnDuplicateSingleRow()) {
-                case self::ON_DUPLICATE_IGNORE:
-                    $event->preventCreate();
-                    return;
-                case self::ON_DUPLICATE_UPDATE:
-                    $row = $eventSheet->getRow(0);
-                    $duplRows = $duplicates[0];
-                    if (count($duplRows) !== 1) {
-                        throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
-                    }
-                    foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
-                        $row[$systemAttr->getAlias()] = $duplRows[0][$systemAttr->getAlias()];
-                    }
-                    $event->preventCreate();
-                    $eventSheet->removeRows();
-                    $eventSheet->addRow($row);
-                    $eventSheet->dataUpdate(false, $event->getTransaction());
-                    return;
-            }
-        } else {
-            switch ($this->getOnDuplicateMultiRow()) {
-                case self::ON_DUPLICATE_IGNORE:
-                    $duplRowNos = array_keys($duplicates);
-                    foreach (array_reverse($duplRowNos) as $duplRowNo) {
-                        // have to reverse array with indices because rows in data sheet get reindexed when one is removed
-                        $eventSheet->removeRow($duplRowNo);                    
-                    }
-                    
-                    if ($eventSheet->isEmpty()) {
-                        $event->preventCreate();
-                    }
-                    
-                    return;
-                case self::ON_DUPLICATE_UPDATE:
-                    //copy the dataSheet and empty it
-                    $updateSheet = $eventSheet->copy();
-                    $updateSheet->removeRows();
-                    $duplRowNos = array_keys($duplicates);
-                    foreach (array_reverse($duplRowNos) as $duplRowNo) {                    
-                        // have to reverse array with indices because rows in data sheet get reindexed when one is removed
-                        $row = $eventSheet->getRow($duplRowNo);
-                        $duplRows = $duplicates[$duplRowNo];
-                        if (count($duplRows) !== 1) {
-                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): multiple potential duplicates found!');
-                        }
-                        //copy system attributes values
-                        foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
-                            $row[$systemAttr->getAlias()] = $duplRows[0][$systemAttr->getAlias()];
-                        }
-                        $updateSheet->addRow($row);
-                        //delete row from event data sheet
-                        $eventSheet->removeRow($duplRowNo);
-                    }
-                    //call update on update sheet
-                    $updateSheet->dataUpdate(false, $event->getTransaction());
-                    
-                    if ($eventSheet->isEmpty()) {
-                        $event->preventCreate();
-                    }
-                    
-                    return;
-            }
+        $mode = $this->getMode($eventSheet);
+        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, true);
+        
+        if (! $matcher->hasMatches()) {
+            return;
         }
         
-        throw $this->createDuplicatesError($eventSheet, $duplicates);
+        switch ($mode) {
+            case self::ON_DUPLICATE_IGNORE:
+                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher);
+                break;
+            case self::ON_DUPLICATE_UPDATE:
+                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction());
+                break;
+            case self::ON_DUPLICATE_ERROR:
+            default:
+                throw $this->createDuplicatesError($eventSheet, $matcher);
+                
+        }
+        
+        if ($eventSheet->isEmpty()) {
+            $event->preventCreate();
+        }
+        
+        return; 
     }
     
     /**
@@ -246,6 +213,14 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
+        if (in_array($eventSheet, $this->ignoreDataSheets)) {
+            return;
+        }
+        
+        if ($eventSheet->isEmpty(true)) {
+            return;
+        }
+        
         // Ignore partial updates, that do not change compared attributes
         $foundCompareCols = false;
         foreach ($this->getCompareAttributeAliases() as $attrAlias) {
@@ -258,34 +233,166 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         } 
         
-        $duplicates = $this->getDuplicates($eventSheet);
-        if (empty($duplicates)) {
+        $mode = $this->getMode($eventSheet);
+        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, false);
+        
+        if (! $matcher->hasMatches()) {
             return;
         }
         
-        throw $this->createDuplicatesError($eventSheet, $duplicates);
+        switch ($mode) {
+                // This should never be reached, as the exceptions will be thrown earlier
+            case self::ON_DUPLICATE_IGNORE:
+                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher);
+                break;
+            case self::ON_DUPLICATE_UPDATE:
+                // When updating with on_duplicate_xxx_update, exact UID-matches must be ignored. Otherwise
+                // there will be an infinite loop:
+                // - create finds duplicate and orders and update inheriting the duplicates UID
+                // - the following update will check AGAIN, find the same duplicate, order another
+                // update, and so on.
+                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), true);
+                break;
+            case self::ON_DUPLICATE_ERROR:
+            default:
+                throw $this->createDuplicatesError($eventSheet, $matcher);
+                
+        }
+        
+        if ($eventSheet->isEmpty()) {
+            $event->preventUpdate();
+        }
+        
+        return; 
+    }
+    
+    protected function getMode(DataSheetInterface $eventSheet) : string
+    {
+        $cnt = $eventSheet->countRows();
+        switch ($cnt) {
+            case 0:
+            case 1: return $this->getOnDuplicateSingleRow();
+            default: return $this->getOnDuplicateMultiRow();
+        }
     }
     
     /**
-     * Returns array of associative array with original row numbers for keys and arrays of potential duplicate rows as values
-     * 
-     * The array has the following format:
-     * [
-     *  <eventDataRowNumber> => [
-     *      <duplicateDataRow1Array>,
-     *      <duplicateDataRow2Array>,
-     *      ...
-     *  ]
-     * ]
      * 
      * @param DataSheetInterface $eventSheet
-     * @return array
+     * @param DataMatcherInterface $matcher
+     * @param DataTransactionInterface $transaction
+     * @param bool $ignoreUidMatches
+     * @throws BehaviorRuntimeError
+     * @return DataSheetInterface
      */
-    protected function getDuplicates(DataSheetInterface $eventSheet) : array
+    protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction) : DataSheetInterface
+    {
+        if (! $eventSheet->getMetaObject()->hasUidAttribute())  {
+            throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!');
+        }
+        
+        //copy the dataSheet and empty it
+        $updateSheet = $eventSheet->copy();
+        $updateSheet->removeRows();
+        if (! $updateSheet->hasUidColumn()) {
+            $uidCol = $updateSheet->getColumns()->addFromUidAttribute();
+            $uidColName = $uidCol->getName();
+        }
+        $duplRowNos = $matcher->getMatchedRowIndexes();
+        $rowsToRemove = [];
+        foreach ($duplRowNos as $duplRowNo) {
+            // Don't bother about rows, that need to be removed anyway
+            if (in_array($duplRowNo, $rowsToRemove)) {
+                continue;
+            }
+            $row = $eventSheet->getRow($duplRowNo);
+            
+            // First check duplicates in the data source. There should be at most one and it must have a UID in order
+            // to be updated.
+            $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE);
+            if (! empty($matches)) {
+                if (count($matches) > 1) {
+                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!');
+                }
+                $match = $matches[0] ?? null;
+                if($match->hasUid()) {
+                    // If the event row does not have a UID value, it was intended to be created.
+                    // But since there is a duplicate, it is now an update. In this case, we need
+                    // to inherit system attributes from the duplicate! The UID is required to
+                    // perform the update, but other things like the timestamp from the TimestampingBehavior
+                    // should also be overwritten by values from the duplicate to be updated.
+                    if (null === $row[$uidColName] ?? null) {
+                        $matchedRow = $match->getMatchedRow();
+                        foreach ($eventSheet->getMetaObject()->getAttributes()->getSystem() as $systemAttr) {
+                            $row[$systemAttr->getAlias()] = $matchedRow[$systemAttr->getAlias()];
+                        }
+                    }
+                    $updateSheet->addRow($row);
+                    $rowsToRemove[] = $duplRowNo;
+                } else {
+                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!');
+                }
+            }
+            
+            // For duplicates found within the event data, just keep the first one. So remove all other
+            // (duplicate) rows in the sheet.
+            $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_EVENT_DATA);
+            foreach ($matches as $match) {
+                $rowsToRemove[] = $match->getMatchedRowIndex();
+            }
+        }
+        
+        if (! empty($rowsToRemove)) {
+            $eventSheet->removeRows(array_unique($rowsToRemove));
+        }
+        
+        if (! $updateSheet->isEmpty()) {
+            $this->ignoreDataSheets[] = $updateSheet;
+            $updateSheet->dataUpdate(false, $transaction);
+        }
+        
+        return $eventSheet;
+    }
+    
+    protected function ignoreDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher) : DataSheetInterface
+    {
+        $duplRowNos = $matcher->getMatchedRowIndexes();
+        $rowsToRemove = [];
+        foreach ($duplRowNos as $duplRowNo) {
+            // Don't bother about rows, that need to be removed anyway
+            if (in_array($duplRowNo, $rowsToRemove)) {
+                continue;
+            }
+            
+            // First check duplicates in the data source. Remove this rows from the data source if it
+            // has a match here.
+            if (! empty($matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE))) {
+                $rowsToRemove[] = $duplRowNo;
+            }
+            
+            // For duplicates found within the event data, just keep the first one. So remove all other
+            // (duplicate) rows in the sheet.
+            $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_EVENT_DATA);
+            foreach ($matches as $match) {
+                $rowsToRemove[] = $match->getMatchedRowIndex();
+            }
+        }
+        
+        if (! empty($rowsToRemove)) {
+            $eventSheet->removeRows(array_unique($rowsToRemove));
+        }
+        return $eventSheet;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $eventSheet
+     * @return DataMatcherInterface
+     */
+    protected function getDuplicatesMatcher(DataSheetInterface $eventSheet, string $mode, bool $treatUidMatchesAsDuplicates = true) : DataMatcherInterface
     {   
         $eventDataCols = $eventSheet->getColumns();
         
-        $duplicates = [];
         $compareCols = [];
         $missingCols = [];
         $missingAttrs = [];
@@ -298,67 +405,61 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             }
         }
         
-        $eventRows = $eventSheet->getRows();
-        
         if (empty($missingAttrs) === false) {
             if ($eventSheet->hasUidColumn(true) === false) {
-                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates of "' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
-            } else {
-                $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
-                $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
-                $missingCols = [];
-                foreach ($missingAttrs as $attr) {
-                    $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
-                }
-                $missingAttrSheet->dataRead();
-                
-                $uidColName = $eventSheet->getUidColumnName();
-                foreach ($eventRows as $rowNo => $row) {
-                    foreach ($missingCols as $missingCol) {
-                        $eventRows[$rowNo][$missingCol->getName()] = $missingCol->getValueByUid($row[$uidColName]);
-                    }
+                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
+            } 
+            
+            $eventRows = $eventSheet->getRows();
+            $missingAttrSheet = DataSheetFactory::createFromObject($this->getObject());
+            $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
+            $missingCols = [];
+            foreach ($missingAttrs as $attr) {
+                $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
+            }
+            $missingAttrSheet->dataRead();
+            
+            $uidColName = $eventSheet->getUidColumnName();
+            foreach ($eventRows as $rowNo => $row) {
+                foreach ($missingCols as $missingCol) {
+                    $eventRows[$rowNo][$missingCol->getName()] = $missingCol->getValueByUid($row[$uidColName]);
                 }
             }
+            
+            $mainSheet = $eventSheet->copy()->removeRows()->addRows($eventRows);
+            $compareCols = array_merge($compareCols, $missingCols);
+        } else {
+            $mainSheet = $eventSheet;
         }
         
+        $matcher = new MultiMatcher($mainSheet);
+        
         // See if there are duplicates within the current set of data
-        if (count($eventRows) > 1) {
+        if ($mainSheet->countRows() > 1) {
             if ($this->hasCustomConditions()) {
                 $selfCheckSheet = DataSheetFactory::createFromObject($eventSheet->getMetaObject());
-                $selfCheckSheet->addRows($eventRows);
+                $selfCheckSheet->addRows($mainSheet->getRows());
                 $selfCheckFilters = ConditionGroupFactory::createForDataSheet($selfCheckSheet, $this->getCompareWithConditions()->getOperator());
                 foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
                     if ($selfCheckSheet->getColumns()->getByExpression($cond->getExpression())) {
                         $selfCheckFilters->addCondition($cond);
                     }
                 }
-                $selfCheckRows = $selfCheckSheet->extract($selfCheckFilters)->getRows();
-            } else {
-                $selfCheckRows = $eventRows;
-            }
-            $duplicates = $this->findDuplicatesInRows($eventRows, $selfCheckRows, array_merge($compareCols, $missingCols), ($eventSheet->hasUidColumn() ? $eventSheet->getUidColumn() : null));
+                $selfCheckSheet = $selfCheckSheet->extract($selfCheckFilters);
+            } 
+            $selfMatcher = new DataRowMatcher($mainSheet, $selfCheckSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
+            //$selfMatcher->setIgnoreUidMatches(true);
+            $matcher->addMatcher($selfMatcher);
         }
         
         // Create a data sheet to search for possible duplicates
-        $checkSheet = $eventSheet->copy();
-        $checkSheet->removeRows();
-        $checkSheet->getFilters()->removeAll();
-        
-        // Make sure the check-sheet always has a UID column if there is a UID attribute
-        // This is important in case the event sheet did not have a UID and we would not
-        // be able to do proper comparisons below. This is a difference to the self-compare
-        // above!
-        if (! $checkSheet->hasUidColumn(false) && $checkSheet->getMetaObject()->hasUidAttribute()) {
-            $checkSheet->getColumns()->addFromUidAttribute();
-        }
-        
-        // Add columns even for attributes that are not present in the original event sheet
-        foreach ($missingAttrs as $attr) {
-            $checkSheet->getColumns()->addFromAttribute($attr);
-        }
-        
+        $checkSheet = DataSheetFactory::createFromObject($eventSheet->getMetaObject());
         // Add system attributes in case we are going to update
         $checkSheet->getColumns()->addFromSystemAttributes();
+        // Only include the compare-columns to speed up reading
+        foreach ($compareCols as $col) {
+            $checkSheet->getColumns()->addFromExpression($col->getExpressionObj());
+        }
         
         // Add custom filters if defined
         if (null !== $customFilters = $this->getCompareWithConditions()) {
@@ -368,7 +469,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         // To get possible duplicates transform every row in event data sheet into a filter for 
         // the check sheet
         $orFilterGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_OR, $checkSheet->getMetaObject());
-        foreach ($eventRows as $rowNo => $row) {
+        foreach ($mainSheet->getRows() as $rowNo => $row) {
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
                 if (! array_key_exists($col->getName(), $row)) {
@@ -398,124 +499,26 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         // Read the data with the applied filters
         $checkSheet->dataRead();
         
-        $checkRows = $checkSheet->getRows();
-        
-        if (empty($checkRows)) {
-            return $duplicates;
-        }
-
-        foreach ($this->findDuplicatesInRows($eventRows, $checkRows, $compareCols, ($checkSheet->hasUidColumn() ? $checkSheet->getUidColumn() : null)) as $rowNo => $rows) {
-            $duplicates[$rowNo] = array_merge(($duplicates[$rowNo] ?? []), $rows);
-        }
-        return $duplicates;
-    }
-    
-    /**
-     * 
-     * @param array $eventRows
-     * @param array $checkRows
-     * @param array $compareCols
-     * @param DataColumn|NULL $uidCol
-     * @return array
-     */
-    protected function findDuplicatesInRows(array $eventRows, array $checkRows, array $compareCols, DataColumn $uidCol = null) : array
-    {
-        $duplicates = [];
-        $eventRowCnt = count($eventRows);
-        $checkRowCnt = count($checkRows);
-        $caseSensitive = $this->getCompareCaseSensitive();
-        $selfCompare = ($eventRows === $checkRows);
-        
-        // Extract and parse values relevant for the search. Do it once here in order to
-        // improve performance on large data sets. 
-        $eventRowsKeys = [];
-        $checkRowsKeys = [];
-        $keyCols = $uidCol !== null ? array_merge($compareCols, [$uidCol]) : $compareCols;
-        foreach ($keyCols as $col) {
-            $key = $col->getName();
-            $type = $col->getDataType();
-            foreach ($eventRows as $eventRowNo => $eventRow) {
-                $eventRowsKeys[$eventRowNo][$key] = $type->parse($eventRow[$key]);
-            }
-            foreach ($checkRows as $chRowNo => $chRow) {
-                $checkRowsKeys[$chRowNo][$key] = $type->parse($chRow[$key]);
-            }
+        if ($checkSheet->isEmpty()) {
+            return $matcher;
         }
         
-        // Now compare the keys of each event row to each check row
-        for ($eventRowNo = 0; $eventRowNo < $eventRowCnt; $eventRowNo++) {
-            // For each row being saved iterate over all the rows from the data source
-            // NOTE: in self-compare mode (when looking for duplicates inside the data sheet) only 
-            // iterate over the following rows, because previous ones were already checked. 
-            // This also makes sure, the first row is not marked as duplicate of one of the subsequent rows
-            $uidMatchProcessed = $selfCompare === true ? true : false;
-            $eventRow = $eventRowsKeys[$eventRowNo];
-            for ($chRowNo = ($selfCompare === true ? $eventRowNo+1 : 0); $chRowNo < $checkRowCnt; $chRowNo++) {
-                $chRow = $checkRowsKeys[$chRowNo];
-                $isDuplicate = true;
-                // Compare all the relevant columns: if any value differs, it is NOT a duplicate
-                foreach ($compareCols as $col) {
-                    $key = $col->getName();
-                    $eventVal = $eventRow[$key];
-                    $checkVal = $chRow[$key];
-                    // If both values are strings, use a case-insensitive comparison if required
-                    // Otherwise compare directly
-                    if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
-                        if (strcasecmp($eventVal, $checkVal) !== 0) {
-                            $isDuplicate = false;
-                            break;  
-                        }
-                    } elseif ($eventVal != $checkVal) {
-                        $isDuplicate = false;
-                        break;
-                    }
-                }
-                
-                // If the data source row has matching columns, check if the UID also matches: if so,
-                // it is the same row and, thus, NOT a duplicate. If there is no UID, just ignore the
-                // first match.
-                if ($isDuplicate === true && $uidMatchProcessed === false) {
-                    if ($uidCol !== null) {
-                        $key = $uidCol->getName();
-                        $eventVal = $eventRow[$key];
-                        $checkVal = $chRow[$key];
-                        // If both values are strings, use a case-insensitive comparison if required
-                        // Otherwise compare directly
-                        if (is_string($eventVal) && is_string($checkVal) && $caseSensitive === false) {
-                            if (strcasecmp($eventVal, $checkVal) === 0) {
-                                $isDuplicate = false;
-                                $uidMatchProcessed = true;
-                                // Don't break here as other $checkRows may still be duplicates!!!
-                            }
-                        } elseif ($eventVal == $checkVal) {
-                            $isDuplicate = false;
-                            $uidMatchProcessed = true;
-                            // Don't break here as other $checkRows may still be duplicates!!!
-                        }
-                    } else {
-                        $isDuplicate = false;
-                        $uidMatchProcessed = true;
-                    }
-                }
-                
-                // If it is still a potential duplicate, it really is one
-                if ($isDuplicate === true) {
-                    $duplicates[$eventRowNo][] = $checkRows[$chRowNo];
-                    break;
-                }
-            }
+        $dataSourceMatcher = new DataRowMatcher($mainSheet, $checkSheet, $compareCols, self::LOCATED_IN_DATA_SOURCE);
+        if ($treatUidMatchesAsDuplicates === false) {
+            $dataSourceMatcher->setIgnoreUidMatches(true);
         }
+        $matcher->addMatcher($dataSourceMatcher);
         
-        return $duplicates;
+        return $matcher;
     }
     
     /**
      * 
      * @param DataSheetInterface $dataSheet
-     * @param array[] $duplicates
+     * @param array[] $matcher
      * @return DataSheetDuplicatesError
      */
-    protected function createDuplicatesError(DataSheetInterface $dataSheet, array $duplicates) : DataSheetDuplicatesError
+    protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher) : DataSheetDuplicatesError
     {
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
@@ -523,7 +526,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $errorRowDescriptor = '';
         $errorMessage = '';
         $duplValues = [];
-        foreach (array_keys($duplicates) as $duplRowNo) {
+        foreach ($matcher->getMatchedRowIndexes() as $duplRowNo) {
             $row = $rows[$duplRowNo];
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
                 $duplValues[] = "'{$row[$labelAttributeAlias]}'";
