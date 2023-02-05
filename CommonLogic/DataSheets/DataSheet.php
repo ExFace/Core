@@ -2300,7 +2300,7 @@ class DataSheet implements DataSheetInterface
     {
         if ($rowIndexes !== null) {
             $rowIndexes = array_unique($rowIndexes);
-            krsort($rowIndexes);
+            rsort($rowIndexes);
             foreach ($rowIndexes as $i) {
                 $this->removeRow($i);
             }
