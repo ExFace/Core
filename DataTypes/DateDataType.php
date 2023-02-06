@@ -55,47 +55,81 @@ class DateDataType extends AbstractDataType
     
     private $format = null;
     
+    private $timeZone = null;
+    
     /**
      *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::cast()
      */
-    public static function cast($string, bool $returnPhpDate = false)
+    public static function cast($string, bool $returnPhpDate = false, string $fromTimeZone = null)
     {
         $string = trim($string);
+        if ($fromTimeZone !== null && $fromTimeZone === date_default_timezone_get()) {
+            $fromTimeZone = null;
+        }
         
         // Return NULL for casting empty values as an empty string '' actually is not a date!
         if (static::isValueEmpty($string) === true || static::isValueLogicalNull($string)) {
             return null;
         }
         
-        // If a timestamp is passed (seconds since epoche), it must not be interpreted as
-        // a relative date - therefore prefix really large numbers with an @, which will
-        // mark it as a timestamp for the \DateTime consturctor.
-        if (is_numeric($string) && intval($string) >= self::TIMESTAMP_MIN_VALUE) {
-            $string = '@' . $string;
-        }
+        $parsedString = null;
+        switch (true) {
+            // If a timestamp is passed (seconds since epoche), it must not be interpreted as
+            // a relative date - therefore prefix really large numbers with an @, which will
+            // mark it as a timestamp for the \DateTime consturctor.
+            case is_numeric($string) && intval($string) >= self::TIMESTAMP_MIN_VALUE:
+                $parsedString = '@' . $string;
+                break;            
+            case $relative = static::parseRelativeDate($string):
+                $parsedString = $relative;
+                break;
+            case $short = static::parseShortDate($string):
+                $parsedString = $short;
+                break;
+            // Numeric values, that are neither relative nor short dates, must be invalid!
+            case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
+                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
+                break;
+        }        
         
-        if ($relative = static::parseRelativeDate($string)) {
-            return $returnPhpDate ? new \DateTime($relative) : $relative;
-        }
-        
-        if ($short = static::parseShortDate($string)) {
-            return $returnPhpDate ? new \DateTime($short) : $short;
-        }
-        
-        // Numeric values, that are neither relative nor short dates, must be invalid!
-        if (is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE) {
-            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
+        if ($parsedString !== null && $returnPhpDate === false && $fromTimeZone === null) {
+            return $parsedString; 
         }
         
         try {
-            $date = new \DateTime($string);
+            $tz = $fromTimeZone !== null ? new \DateTimeZone($fromTimeZone) : null;
+            $dateTime = new \DateTime($string, $tz);
         } catch (\Exception $e) {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
         
-        return static::castFromPhpDate($date, $returnPhpDate);
+        if ($tz !== null) {
+            $dateTime->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+        }
+        
+        return $returnPhpDate === true ? $dateTime : static::castFromPhpDate($dateTime, $returnPhpDate);
+    }
+    
+    /**
+     * 
+     * @param string|\DateTimeInterface $dateTime
+     * @param string $fromTimeZone
+     * @param string $toTimeZone
+     * @param bool $returnPhpDate
+     * @return string|\DateTimeInterface|NULL
+     */
+    public static function convertTimeZone($dateTime, string $fromTimeZone, string $toTimeZone, bool $returnPhpDate = false)
+    {
+        if ($dateTime === null || $dateTime === '') {
+            return null;
+        }
+        if (! $dateTime instanceof \DateTimeInterface) {
+            $dateTime = static::cast($dateTime, true, $fromTimeZone);
+        }
+        $dateTime->setTimezone(new \DateTimeZone($toTimeZone));
+        return $returnPhpDate === true ? $dateTime : static::castFromPhpDate($dateTime, $returnPhpDate);
     }
     
     /**
@@ -120,6 +154,15 @@ class DateDataType extends AbstractDataType
         return static::cast($string, true);
     }
     
+    /**
+     * 
+     * @param string|NULL $string
+     * @param string $format
+     * @param string $locale
+     * @param bool $returnPhpDate
+     * @throws DataTypeCastingError
+     * @return string|\DateTimeInterface|NULL
+     */
     public static function castFromFormat($string, string $format, string $locale, bool $returnPhpDate = false)
     {
         $intl = static::createIntlDateFormatter($locale, $format);
@@ -155,9 +198,16 @@ class DateDataType extends AbstractDataType
      * @param string $format
      * @return \IntlDateFormatter
      */
-    protected static function createIntlDateFormatter(string $locale, string $format) : \IntlDateFormatter
+    protected static function createIntlDateFormatter(string $locale, string $format, string $timezone = null) : \IntlDateFormatter
     {
-        return new \IntlDateFormatter($locale, NULL, NULL, NULL, NULL, $format);
+        return new \IntlDateFormatter(
+            $locale, 
+            null, // date type
+            null, // time type
+            ($timezone === null ? null : new \DateTimeZone($timezone)), // time zone
+            null, // calendar
+            $format // pattern
+        );
     }
     
     /**
@@ -166,7 +216,7 @@ class DateDataType extends AbstractDataType
      */
     protected function getIntlDateFormatter() : \IntlDateFormatter
     {
-        return self::createIntlDateFormatter($this->getLocale(), $this->getFormat());
+        return self::createIntlDateFormatter($this->getLocale(), $this->getFormat(), $this->getFormatToTimeZone());
     }
     
     /**
@@ -275,7 +325,7 @@ class DateDataType extends AbstractDataType
      */
     public static function formatDateLocalized(\DateTimeInterface $date, WorkbenchInterface $workbench) : string
     {
-        $format = static::getFormatForCurrentTranslation($workbench);
+        $format = static::getFormatFromLocale($workbench);
         $locale = $workbench->getContext()->getScopeSession()->getSessionLocale();
         $formatter = static::createIntlDateFormatter($locale, $format);
         return $formatter->format($date);
@@ -286,7 +336,7 @@ class DateDataType extends AbstractDataType
      * @param WorkbenchInterface $workbench
      * @return string
      */
-    protected static function getFormatForCurrentTranslation(WorkbenchInterface $workbench) : string
+    public static function getFormatFromLocale(WorkbenchInterface $workbench) : string
     {
         return $workbench->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT');
     }
@@ -344,7 +394,7 @@ class DateDataType extends AbstractDataType
      */
     public function getFormat() : string
     {
-        return $this->format ?? self::getFormatForCurrentTranslation($this->getWorkbench());
+        return $this->format ?? self::getFormatFromLocale($this->getWorkbench());
     }
     
     /**
@@ -579,5 +629,39 @@ class DateDataType extends AbstractDataType
         $result = $number > 0 ? $dateTime->add($dateInterval) : $dateTime->sub($dateInterval);
         
         return $returnPhpDate ? $result : static::formatDateNormalized($result);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getFormatToTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * If set, the value will be displayed in the specified timezone
+     * 
+     * @uxon-property format_to_time_zone
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return DateDataType
+     */
+    public function setFormatToTimeZone(string $value) : DateDataType
+    {
+        $this->timeZone = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    public static function getTimeZoneDefault(WorkbenchInterface $workbench) : string
+    {
+        return date_default_timezone_get();
     }
 }

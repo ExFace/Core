@@ -79,7 +79,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         if (is_null($this->getCurrentConnection())) {
             $this->connect();
         }
-        $query->setConnection($this);
+        $query->setConnection($this);        
         return $this->performQuerySql($query);
     }
 

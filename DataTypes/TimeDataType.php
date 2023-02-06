@@ -4,15 +4,10 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class TimeDataType extends AbstractDataType
 {    
-    private $showSeconds = false;
-    
-    private $amPm = false;
-    
-    private $format = null;
-    
     const TIME_FORMAT_INTERNAL = 'H:i:s';
     
     const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
@@ -22,6 +17,14 @@ class TimeDataType extends AbstractDataType
     const PERIOD_MINUTE = 'm';
     
     const PERIOD_SECOND = 's';
+    
+    private $showSeconds = false;
+    
+    private $amPm = false;
+    
+    private $format = null;
+    
+    private $timeZone = null;
     
     /**
      * 
@@ -290,9 +293,83 @@ class TimeDataType extends AbstractDataType
             return $timeString;
         }
         
-        $dateTime = new \DateTime('1970-01-01 ', static::cast($timeString));
+        $dateTime = static::castToPhpDateTime($timeString);
         $result = DateTimeDataType::addInterval($dateTime, $number, $period, true);
         
         return static::formatTimeNormalized($result);
+    }
+    
+    protected static function castToPhpDateTime($timeString, string $fromTimeZone = null) : \DateTimeInterface
+    {
+        if ($fromTimeZone !== null && $fromTimeZone !== date_default_timezone_get()) {
+            $tz = new \DateTimeZone($fromTimeZone);
+        } else {
+            $tz = null;
+        }
+        return new \DateTime('1970-01-01 ' . static::cast($timeString), $tz);
+    }
+    
+    /**
+     * 
+     * @param \DateTimeInterface $dateTime
+     * @return string
+     */
+    public static function castFromPhpDateTime(\DateTimeInterface $dateTime) : string
+    {
+        return static::formatTimeNormalized($dateTime);
+    }
+    
+    /**
+     *
+     * @param string|\DateTimeInterface $time
+     * @param string $fromTimeZone
+     * @param string $toTimeZone
+     * @param bool $returnPhpDate
+     * @return string|\DateTimeInterface|NULL
+     */
+    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone) : string
+    {
+        if ($time === null || $time === '') {
+            return null;
+        }
+        if (! $time instanceof \DateTimeInterface) {
+            $time = static::castToPhpDateTime($time, $fromTimeZone);
+        }
+        $time->setTimezone(new \DateTimeZone($toTimeZone));
+        return static::formatTimeNormalized($time);
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getFormatToTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * If set, the value will be displayed in the specified timezone
+     *
+     * @uxon-property format_to_time_zone
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return DateDataType
+     */
+    public function setFormatToTimeZone(string $value) : DateDataType
+    {
+        $this->timeZone = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    public static function getTimeZoneDefault(WorkbenchInterface $workbench) : string
+    {
+        return date_default_timezone_get();
     }
 }

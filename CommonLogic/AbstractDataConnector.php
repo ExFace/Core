@@ -62,6 +62,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     
     private $readonly = false;
     
+    private $timeZone = null;
+    
     /**
      *
      * @deprecated Use DataConnectionFactory instead!
@@ -264,8 +266,14 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         if ($this->isConnected() === false) {
             $this->connect();
         }
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));        
+        
+        if ((null !== $tz = $this->getTimeZone()) && $query->getTimeZone() === null) {
+            $query->setTimeZone($tz);
+        }
         $result = $this->performQuery($query);
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
         return $result;
     }
@@ -574,6 +582,31 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         
         $transaction->commit();
         
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getTimeZone()
+     */
+    public function getTimeZone() : ?string
+    {
+        return $this->property;
+    }
+    
+    /**
+     * The time zone expected for all values inside this data source, that do not have an explicit time zone defined
+     * 
+     * @uxon-property time_zone
+     * @uxon-type string 
+     * 
+     * @param string $value
+     * @return AbstractDataConnector
+     */
+    public function setTimeZone(string $value) : AbstractDataConnector
+    {
+        $this->property = $value;
         return $this;
     }
 }

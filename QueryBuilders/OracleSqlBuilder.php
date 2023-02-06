@@ -469,27 +469,22 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
-        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
-            $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
-        } else {
-            $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
+        switch (true) {
+            case $data_type instanceof DateDataType:
+            case $data_type instanceof TimestampDataType:
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    if (null !== $tz = $this->getSqlTimeZone()) {
+                        $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                    }
+                    $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
+                }
+                break;
+            default: 
+                $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
         }
         return $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
-     */
-    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
-    {
-        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
-            $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";
-        } else {
-            $output = parent::prepareWhereValue($value, $data_type);
-        }
-        return $output;
     }
 
     /**
@@ -509,8 +504,11 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $this->isWritable())
+        if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
+        }
+        
+        $this->setSqlTimeZone($data_connection->getTimeZone());
         
         $values = array();
         $columns = array();
