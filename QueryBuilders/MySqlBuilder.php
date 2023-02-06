@@ -373,8 +373,9 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        // filters -> WHERE
+        $this->setSqlTimeZone($data_connection->getTimeZone());
         
+        // filters -> WHERE
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $rels = $qpart->getUsedRelations();
             switch (count($rels)) {

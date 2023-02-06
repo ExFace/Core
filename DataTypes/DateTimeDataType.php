@@ -54,7 +54,7 @@ class DateTimeDataType extends DateDataType
      */
     public function getFormat() : string
     {
-        return $this->hasCustomFormat() ? parent::getFormat() : static::getFormatForCurrentTranslation($this->getWorkbench(), $this->getShowSeconds());
+        return $this->hasCustomFormat() ? parent::getFormat() : static::getFormatFromLocale($this->getWorkbench(), $this->getShowSeconds());
     }
     
     /**
@@ -72,7 +72,7 @@ class DateTimeDataType extends DateDataType
      * @param WorkbenchInterface $workbench
      * @return string
      */
-    protected static function getFormatForCurrentTranslation(WorkbenchInterface $workbench, bool $withSeconds = false) : string
+    public static function getFormatFromLocale(WorkbenchInterface $workbench, bool $withSeconds = false) : string
     {
         return $workbench->getCoreApp()->getTranslator()->translate($withSeconds ? 'LOCALIZATION.DATE.DATETIME_FORMAT_WITH_SECONDS' : 'LOCALIZATION.DATE.DATETIME_FORMAT');
     }

@@ -156,6 +156,15 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     public function setReadOnly(bool $trueOrFalse) : DataConnectionInterface;
     
     /**
+     * Returns the time zone to be expected for time values from this connection, that do not have an explizit time zone.
+     * 
+     * Returns NULL if the connection has the same time zone, as the workbench
+     * 
+     * @return string|NULL
+     */
+    public function getTimeZone() : ?string;
+    
+    /**
      * 
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::createLoginWidget()

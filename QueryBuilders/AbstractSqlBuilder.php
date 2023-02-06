@@ -415,6 +415,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     private $dirtyFlag = false;
     
+    private $dbTimeZone = null;
+    
     public function getSelectDistinct()
     {
         return $this->select_distinct;
@@ -457,6 +459,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
+        $this->setSqlTimeZone($data_connection->getTimeZone());
         $query = $this->buildSqlQuerySelect();
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
@@ -514,31 +517,46 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function getReadResultRows(SqlDataQuery $query) : array
     {
-        if ($rows = $query->getResultArray()) {            
-            // TODO filter away the EXFRN column!
-            foreach ($this->short_aliases as $short_alias) {
-                $full_alias = $this->getFullAlias($short_alias);
-                if ($full_alias !== $short_alias) {
-                    foreach ($rows as $nr => $row) {
-                        $rows[$nr][$full_alias] = $row[$short_alias];
-                        unset($rows[$nr][$short_alias]);
-                    }
-                }
-            }
-            //convert binary
-            foreach ($this->getBinaryColumns() as $full_alias) {
+        if (! $rows = $query->getResultArray()) {  
+            return [];
+        }
+        $tz = $query->getTimeZone();
+        
+        // TODO filter away the EXFRN column!
+        foreach ($this->short_aliases as $short_alias) {
+            $full_alias = $this->getFullAlias($short_alias);
+            if ($full_alias !== $short_alias) {
                 foreach ($rows as $nr => $row) {
-                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
+                    $rows[$nr][$full_alias] = $row[$short_alias];
+                    unset($rows[$nr][$short_alias]);
                 }
             }
-            foreach ($this->getAttributes() as $qpart) {
-                if (($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true) {
+        }
+        
+        //convert binary
+        foreach ($this->getBinaryColumns() as $full_alias) {
+            foreach ($rows as $nr => $row) {
+                $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
+            }
+        }
+        
+        $rowCnt = count($rows);
+        foreach ($this->getAttributes() as $qpart) {
+            switch (true) {
+                case ($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true:
                     $colKey = $qpart->getColumnKey();
                     foreach ($rows as $nr => $row) {
                         unset ($rows[$nr][$colKey]);
                     }
-                }
-                if ($qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface) {
+                    break;
+                case $tz !== null && ($type = $qpart->getDataType()) instanceof DateDataType:
+                    $colKey = $qpart->getColumnKey();
+                    $type = $qpart->getDataType();
+                    for ($i = 0; $i < $rowCnt; $i++) {
+                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey], false, $tz);
+                    }
+                    break;
+                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
                     foreach ($rows as $nr => $row) {
                         $compValues = [];
                         if ($qpart->hasAggregator() === true) {
@@ -558,11 +576,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             $rows[$nr][$qpart->getColumnKey()] = $qpart->getAttribute()->mergeValues($compValues);
                         }
                     }
-                }
+                    break;
             }
-        } else {
-            $rows = [];
         }
+        
         return $rows;
     }
     
@@ -602,6 +619,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return new DataQueryResultData([], 0);
         }
         
+        $this->setSqlTimeZone($data_connection->getTimeZone());
         $mainObj = $this->getMainObject();
         
         $values = array();
@@ -834,6 +852,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return new DataQueryResultData([], 0);
         }
             
+        $this->setSqlTimeZone($data_connection->getTimeZone());
+        
         // Filters -> WHERE
         // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
         $where = $this->buildSqlWhere($this->getFilters(), false);
@@ -1034,7 +1054,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $value = $data_type::isValueEmpty($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    if (null !== $tz = $this->getSqlTimeZone()) {
+                        $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                    }
+                    $value = "'" . $this->escapeString($value) . "'";
+                }
                 break;
             default:
                 $value = "'" . $this->escapeString($value) . "'";
@@ -1063,6 +1090,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
+        $this->setSqlTimeZone($data_connection->getTimeZone());
+        
         // filters -> WHERE
         $where = $this->buildSqlWhere($this->getFilters(), false);
         // add custom sql where from the object
@@ -1087,6 +1116,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
+        $this->setSqlTimeZone($data_connection->getTimeZone());
         $result = $data_connection->runSql($this->buildSqlQueryCount());
         $cnt = $result->getResultArray()[0]['EXFCNT'];
         $result->freeResult();
@@ -2043,7 +2073,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $output = "'" . $this->escapeString($value) . "'";
+                $output = $this->prepareInputValue($value, $data_type, $sql_data_type);
                 break;
             default:
                 $output = $this->escapeString($value);
@@ -2799,5 +2829,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function isDirty() : bool
     {
         return $this->dirtyFlag;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getSqlTimeZone() : ?string
+    {
+        return $this->dbTimeZone;
+    }
+    
+    /**
+     * 
+     * @param string|NULL $value
+     * @return AbstractSqlBuilder
+     */
+    protected function setSqlTimeZone(string $value = null) : AbstractSqlBuilder
+    {
+        $this->dbTimeZone = $value;
+        return $this;
     }
 }
