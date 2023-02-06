@@ -446,7 +446,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     }
                 }
                 $selfCheckSheet = $selfCheckSheet->extract($selfCheckFilters);
-            } 
+            } else {
+                $selfCheckSheet = $mainSheet;
+            }
             $selfMatcher = new DataRowMatcher($mainSheet, $selfCheckSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
             //$selfMatcher->setIgnoreUidMatches(true);
             $matcher->addMatcher($selfMatcher);
