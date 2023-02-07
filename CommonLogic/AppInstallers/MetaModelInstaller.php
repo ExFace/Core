@@ -912,6 +912,27 @@ class MetaModelInstaller extends AbstractAppInstaller
             }
         }
         
+        // Upgrade to 1.7: move legacy filter_context property of data connections to their config
+        if ($sheet->getMetaObject()->isExactly('exface.Core.CONNECTION')) {
+            if ($contextCol = $sheet->getColumns()->getByExpression('FILTER_CONTEXT')) {
+                $configCol = $sheet->getColumns()->getByExpression('CONFIG');
+                foreach ($contextCol->getValues() as $rowIdx => $contextJson) {
+                    if ($contextJson === '' || $contextJson === null) {
+                        continue;
+                    }
+                    $contextUxon = UxonObject::fromJson($contextJson);
+                    if ($contextUxon->isEmpty()) {
+                        continue;
+                    }
+                    $configJson = $configCol->getValue($rowIdx);
+                    $configJson = $configJson === '' || $configJson === null ? '{}' : $configJson;
+                    $configUxon = UxonObject::fromJson($configJson);
+                    $configUxon->setProperty('filter_context', $contextUxon);
+                    $configCol->setValue($rowIdx, $configUxon->toJson());
+                }
+            }
+        }
+        
         return $sheet;
     }
     

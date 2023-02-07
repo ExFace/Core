@@ -1114,6 +1114,24 @@
             },
             "ALIAS": "OfflineStrategy",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2023-02-07 11:34:43",
+            "MODIFIED_ON": "2023-02-07 11:35:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda0d30920b602a0d3025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Time zone",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TimeZoneDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect"
+            },
+            "ALIAS": "TimeZone",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
