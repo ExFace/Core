@@ -44,6 +44,8 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     
     private $workbench = null;
     
+    private $timeZone = null;
+    
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
         $this->selector = $selector;
@@ -750,5 +752,26 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public static function getUxonSchemaClass() : ?string
     {
         return QueryBuilderSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::getTimeZone()
+     */
+    public function getTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::setTimeZone()
+     */
+    public function setTimeZone(string $value = null) : QueryBuilderInterface
+    {
+        $this->timeZone = $value;
+        return $this;
     }
 }

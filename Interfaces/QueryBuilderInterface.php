@@ -74,5 +74,18 @@ interface QueryBuilderInterface extends WorkbenchDependantInterface
      */
     public static function getUxonSchemaClass() : ?string;
     
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getTimeZone() : ?string;
+    
+    /**
+     * 
+     * @param string $value
+     * @return QueryBuilderInterface
+     */
+    public function setTimeZone(string $value = null) : QueryBuilderInterface;
+    
     // TODO
 }

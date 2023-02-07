@@ -415,8 +415,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     private $dirtyFlag = false;
     
-    private $dbTimeZone = null;
-    
     public function getSelectDistinct()
     {
         return $this->select_distinct;
@@ -459,7 +457,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $this->setSqlTimeZone($data_connection->getTimeZone());
         $query = $this->buildSqlQuerySelect();
         if (! empty($this->getAttributes())) {
             $q = new SqlDataQuery();
@@ -619,7 +616,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return new DataQueryResultData([], 0);
         }
         
-        $this->setSqlTimeZone($data_connection->getTimeZone());
         $mainObj = $this->getMainObject();
         
         $values = array();
@@ -852,8 +848,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return new DataQueryResultData([], 0);
         }
             
-        $this->setSqlTimeZone($data_connection->getTimeZone());
-        
         // Filters -> WHERE
         // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
         $where = $this->buildSqlWhere($this->getFilters(), false);
@@ -1057,7 +1051,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    if (null !== $tz = $this->getSqlTimeZone()) {
+                    if (null !== $tz = $this->getTimeZone()) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "'" . $this->escapeString($value) . "'";
@@ -1090,8 +1084,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $this->setSqlTimeZone($data_connection->getTimeZone());
-        
         // filters -> WHERE
         $where = $this->buildSqlWhere($this->getFilters(), false);
         // add custom sql where from the object
@@ -1116,7 +1108,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $this->setSqlTimeZone($data_connection->getTimeZone());
         $result = $data_connection->runSql($this->buildSqlQueryCount());
         $cnt = $result->getResultArray()[0]['EXFCNT'];
         $result->freeResult();
@@ -2501,7 +2492,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         // TODO Check if all objects along the relation path also belong to the data source
         // TODO Instead of checking the data source, check if it points to the same data base
-        return $attribute->getObject()->getDataSourceId() === $this->getMainObject()->getDataSourceId();
+        return $attribute->getObject()->getDataSource() === $this->getMainObject()->getDataSource();
     }
     
     /**
@@ -2829,25 +2820,5 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function isDirty() : bool
     {
         return $this->dirtyFlag;
-    }
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    protected function getSqlTimeZone() : ?string
-    {
-        return $this->dbTimeZone;
-    }
-    
-    /**
-     * 
-     * @param string|NULL $value
-     * @return AbstractSqlBuilder
-     */
-    protected function setSqlTimeZone(string $value = null) : AbstractSqlBuilder
-    {
-        $this->dbTimeZone = $value;
-        return $this;
     }
 }

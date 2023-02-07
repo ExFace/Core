@@ -33,6 +33,7 @@ use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -751,28 +752,20 @@ class MetaObject implements MetaObjectInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSourceId()
-     */
-    public function getDataSourceId()
-    {
-        return $this->data_source_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataSourceId()
      */
-    public function setDataSourceId($value)
+    public function setDataSourceId($value) : MetaObjectInterface
     {
         $this->data_source_id = $value;
+        return $this;
     }
     
     /**
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::hasDataSource()
      */
-    public function hasDataSource()
+    public function hasDataSource() : bool
     {
         return is_null($this->data_source_id) ? false : true;
     }
@@ -782,9 +775,12 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSource()
      */
-    public function getDataSource()
+    public function getDataSource() : DataSourceInterface
     {
-        return $this->getModel()->getWorkbench()->data()->getDataSource($this->getDataSourceId(), $this->data_connection_alias);
+        if (! $this->hasDataSource()) {
+            throw new MetaObjectHasNoDataSourceError($this, 'No data source is specified for object "' . $this->__toString() . '!');
+        }
+        return $this->getWorkbench()->data()->getDataSource($this->data_source_id, $this->data_connection_alias);
     }
 
     /**
@@ -801,29 +797,14 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Sets a custom data connection to be used for this object.
-     * This way, the default connection for the data source can be overridden!
-     *
-     * @param string $alias            
-     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataConnectionAlias()
      */
-    function setDataConnectionAlias($alias)
+    public function setDataConnectionAlias($alias) : MetaObjectInterface
     {
         $this->data_connection_alias = $alias;
         return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getQueryBuilder()
-     */
-    public function getQueryBuilder()
-    {
-        if (! $this->hasDataSource()) {
-            throw new MetaObjectHasNoDataSourceError($this, 'Cannot create a query builder for "' . $this->getName() . '" (' . $this->getAliasWithNamespace() . '): the object does not have a data source!');
-        }
-        return $this->getModel()->getWorkbench()->data()->getQueryBuilder($this->data_source_id);
     }
 
     public function getId()
