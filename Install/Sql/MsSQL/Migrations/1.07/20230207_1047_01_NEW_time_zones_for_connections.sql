@@ -14,7 +14,7 @@ INSERT INTO dbo.[exf_data_type] (
 	[created_on],
 	[modified_on],
 	[created_by_user_oid],
-	[modified_by_user_oid`
+	[modified_by_user_oid]
 ) VALUES (
 	0x11EDA0D30920B602A0D3025041000001,
 	'TimeZone',
