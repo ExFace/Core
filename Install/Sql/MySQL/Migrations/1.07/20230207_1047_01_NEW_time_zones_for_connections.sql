@@ -43,3 +43,15 @@ ALTER TABLE `exf_data_connection`
 	
 -- DOWN
 
+ALTER TABLE `exf_data_connection`
+	ADD COLUMN `filter_context` TEXT NULL DEFAULT NULL AFTER `data_connector_config`;
+	
+UPDATE exf_data_connection 
+	SET filter_context = JSON_EXTRACT(data_connector_config, '$.filter_context')
+	WHERE 
+		data_connector_config IS NOT NULL 
+		AND JSON_CONTAINS(data_connector_config, '$.filter_context');
+		
+ALTER TABLE `exf_data_connection`
+	DROP COLUMN `time_zone`;
+
