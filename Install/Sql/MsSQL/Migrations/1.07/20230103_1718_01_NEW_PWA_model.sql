@@ -76,11 +76,23 @@ CREATE TABLE dbo.exf_pwa_route (
 	
 -- DOWN
 
-IF OBJECT_ID('dbo.exf_pwa', 'U') IS NULL 
+DECLARE @SQL NVARCHAR(MAX) = N'';
+SELECT @SQL += N'
+ALTER TABLE ' + OBJECT_NAME(PARENT_OBJECT_ID) + ' DROP CONSTRAINT ' + OBJECT_NAME(OBJECT_ID) + ';' 
+FROM SYS.OBJECTS
+WHERE TYPE_DESC LIKE '%CONSTRAINT' AND OBJECT_NAME(PARENT_OBJECT_ID) IN (
+	'exf_pwa', 
+	'exf_pwa_action', 
+	'exf_pwa_route', 
+	'exf_pwa_dataset'
+);
+EXECUTE(@SQL);
+
+IF OBJECT_ID('dbo.exf_pwa', 'U') IS NOT NULL 
 DROP TABLE dbo.exf_pwa;
-IF OBJECT_ID('dbo.exf_pwa_action', 'U') IS NULL 
+IF OBJECT_ID('dbo.exf_pwa_action', 'U') IS NOT NULL 
 DROP TABLE IF EXISTS exf_pwa_action;
-IF OBJECT_ID('dbo.exf_pwa_route', 'U') IS NULL 
+IF OBJECT_ID('dbo.exf_pwa_route', 'U') IS NOT NULL 
 DROP TABLE IF EXISTS exf_pwa_route;
-IF OBJECT_ID('dbo.exf_pwa_dataset', 'U') IS NULL 
+IF OBJECT_ID('dbo.exf_pwa_dataset', 'U') IS NOT NULL 
 DROP TABLE IF EXISTS exf_pwa_dataset;
