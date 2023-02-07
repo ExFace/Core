@@ -26,6 +26,10 @@
             "attribute_alias": "APP"
         },
         {
+            "name": "TIME_ZONE",
+            "attribute_alias": "TIME_ZONE"
+        },
+        {
             "name": "LABEL",
             "attribute_alias": "LABEL"
         },
@@ -44,10 +48,6 @@
         {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
-        },
-        {
-            "name": "FILTER_CONTEXT",
-            "attribute_alias": "FILTER_CONTEXT"
         }
     ],
     "rows": [
@@ -58,12 +58,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6afd88b5ffcd28943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Local Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
             "CONFIG": null,
             "READONLY": 0,
-            "ALIAS": "LOCAL_FOLDERS",
-            "FILTER_CONTEXT": null
+            "ALIAS": "LOCAL_FOLDERS"
         },
         {
             "CREATED_ON": "2016-11-22 10:15:14",
@@ -72,14 +72,14 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b09c8ccac11d8943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Local Vendor Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
             "CONFIG": {
                 "use_vendor_folder_as_base": 1
             },
             "READONLY": 0,
-            "ALIAS": "LOCAL_VENDOR_FOLDERS",
-            "FILTER_CONTEXT": null
+            "ALIAS": "LOCAL_VENDOR_FOLDERS"
         },
         {
             "CREATED_ON": "2016-12-06 15:18:21",
@@ -88,12 +88,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6bbc738b084ae9ee0e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "PHP Annotations",
             "CONNECTOR": "exface\/Core\/DataConnectors\/PhpAnnotationsConnector.php",
             "CONFIG": null,
             "READONLY": 1,
-            "ALIAS": "PHP_ANNOTATIONS",
-            "FILTER_CONTEXT": null
+            "ALIAS": "PHP_ANNOTATIONS"
         },
         {
             "CREATED_ON": "2017-04-27 15:27:08",
@@ -102,14 +102,14 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72b5df9840faea3bee4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Local file",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileContentsConnector.php",
             "CONFIG": {
                 "error_if_file_not_found": false
             },
             "READONLY": 0,
-            "ALIAS": "LOCAL_FILE",
-            "FILTER_CONTEXT": null
+            "ALIAS": "LOCAL_FILE"
         },
         {
             "CREATED_ON": "2017-11-28 09:53:47",
@@ -118,12 +118,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d421dd76d008a3da0205857feb80",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "No Connection (Transparent)",
             "CONNECTOR": "exface\/Core\/DataConnectors\/TransparentConnector.php",
             "CONFIG": null,
             "READONLY": 0,
-            "ALIAS": "TRANSPARENT_CONNECTION",
-            "FILTER_CONTEXT": null
+            "ALIAS": "TRANSPARENT_CONNECTION"
         },
         {
             "CREATED_ON": "2020-03-30 19:53:02",
@@ -132,12 +132,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea72c00f0fadeca3480205857feb80",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Metamodel DB",
             "CONNECTOR": "exface\/Core\/DataConnectors\/ModelLoaderConnector.php",
             "CONFIG": null,
             "READONLY": 0,
-            "ALIAS": "METAMODEL_DB",
-            "FILTER_CONTEXT": null
+            "ALIAS": "METAMODEL_DB"
         },
         {
             "CREATED_ON": "2020-04-24 09:26:47",
@@ -146,12 +146,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea860db216206d97940205857feb80",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Workbench Config",
             "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchConfigConnector.php",
             "CONFIG": null,
             "READONLY": 1,
-            "ALIAS": "WORKBENCH_CONFIG",
-            "FILTER_CONTEXT": null
+            "ALIAS": "WORKBENCH_CONFIG"
         },
         {
             "CREATED_ON": "2022-01-31 16:30:30",
@@ -160,12 +160,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecae3bb921a636ae3b025041000001",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Workbench Contexts",
             "CONNECTOR": "exface\/Core\/DataConnectors\/WorkbenchContextConnector.php",
             "CONFIG": null,
             "READONLY": 0,
-            "ALIAS": "WORKBENCH_CONTEXTS",
-            "FILTER_CONTEXT": null
+            "ALIAS": "WORKBENCH_CONTEXTS"
         },
         {
             "CREATED_ON": "2022-11-10 21:34:36",
@@ -174,12 +174,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed992617f9ad829926747827435ce5",
             "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
             "CONNECTOR": "exface\/Core\/DataConnectors\/DataSourceFileContentsConnector.php",
-            "CONFIG": "$$~~IZB6HDQtsqJ3gaIFyFZoNDzPcS3Rv8\/kQPHAlHb4dwV81eLVMibHrVl9dMq\/qtP\/Uxwc6xpa\/Qxdpdq13GjPyPxD9\/pg3Z7r\/A==",
+            "CONFIG": "$$~~KYpFY++9dNq1piLL678fOG1N7an\/yCUWmUxgbYdDP\/RkrI546A4sk6FIqWug+5SCBQCiaXY0pAG\/F+2E136Q2IGXcVt9bjt90w==",
             "READONLY": 0,
-            "ALIAS": "objects_with_filebehavior",
-            "FILTER_CONTEXT": null
+            "ALIAS": "objects_with_filebehavior"
         }
     ],
     "totals_rows": [],

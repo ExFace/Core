@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2022-03-16 11:51:53",
+            "MODIFIED_ON": "2023-02-07 11:35:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x33380000000000000000000000000000",
@@ -123,16 +123,14 @@
                         "id": "connector_selector"
                     },
                     {
+                        "attribute_alias": "TIME_ZONE"
+                    },
+                    {
                         "attribute_alias": "CONFIG",
                         "width": "max",
                         "height": "max",
                         "widget_type": "InputUxon",
                         "root_prototype": "=connector_selector"
-                    },
-                    {
-                        "attribute_alias": "FILTER_CONTEXT",
-                        "width": "max",
-                        "height": 5
                     }
                 ]
             },

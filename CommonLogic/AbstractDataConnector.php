@@ -36,6 +36,7 @@ use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Factories\ConditionFactory;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -63,6 +64,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     private $readonly = false;
     
     private $timeZone = null;
+    
+    private $filterContextUxon = null;
     
     /**
      *
@@ -607,6 +610,53 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function setTimeZone(string $value) : AbstractDataConnector
     {
         $this->property = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return UxonObject|NULL
+     */
+    protected function getFilterContext() : ?UxonObject
+    {
+        return $this->filterContextUxon;
+    }
+    
+    /**
+     * Adds conditions to the filter context (in the application context scope)
+     * 
+     * This feature allows to add global filters to all queries over certain object. This may be
+     * usefull, if a connection should only make parts of the data visible. 
+     * 
+     * **NOTE:** in general, it is better to use the data authorization point to hide data on certain
+     * occasions. Concider data authorization first, before using hard-coded filter context
+     * conditions here!
+     * 
+     * @uxon-property filter_context
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * 
+     * @param UxonObject $uxonObjectOrArray
+     * @return AbstractDataConnector
+     */
+    protected function setFilterContext(UxonObject $uxonObjectOrArray) : AbstractDataConnector
+    {
+        if ($uxonObjectOrArray->isEmpty()) {
+            return $this;
+        }
+        
+        $this->filterContextUxon = $uxonObjectOrArray;
+        
+        // If there is only one filter, make an array out of it (needed for backwards compatibility)
+        if (! $uxonObjectOrArray->isArray()){
+            $uxonObjectOrArray = new UxonObject([$uxonObjectOrArray->toArray()]);
+        }
+        
+        // Register the filters in the application context scope
+        foreach ($uxonObjectOrArray as $filter) {
+            $condition = ConditionFactory::createFromUxon($this->getWorkbench(), $filter);
+            $this->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
+        }
+        
         return $this;
     }
 }

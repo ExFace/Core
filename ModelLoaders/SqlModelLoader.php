@@ -664,7 +664,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				dc.name AS data_connection_name,
 				dc.data_connector,
 				dc.data_connector_config,
-				dc.filter_context_uxon,
+                dc.time_zone,
                 dca.app_alias AS data_connection_app_alias
                 {$selectUserCredentials}
 			FROM exf_data_source ds 
@@ -691,19 +691,6 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         if (! is_null($ds['data_source_writable'])){
             $data_source->setWritable($ds['data_source_writable'] && ! $ds['connection_read_only']);
-        }
-        
-        // Some data connections may have their own filter context. Add them to the application context scope
-        if ($ds['filter_context_uxon'] && $filter_context = UxonObject::fromJson($ds['filter_context_uxon'])) {
-            // If there is only one filter, make an array out of it (needed for backwards compatibility)
-            if (! $filter_context->isArray()){
-                $filter_context = new UxonObject([$filter_context->toArray()]);
-            }
-            // Register the filters in the application context scope
-            foreach ($filter_context as $filter) {
-                $condition = ConditionFactory::createFromUxon($exface, $filter);
-                $data_source->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
-            }
         }
         
         // The query builder
@@ -766,6 +753,9 @@ class SqlModelLoader implements ModelLoaderInterface
                 $this->getWorkbench()->getLogger()->logException($e);
             }
         }
+        if (! empty($row['time_zone'])) {
+            $config->setProperty('time_zone', $row['time_zone']);
+        }
         // Instantiate the connection
         $connection = DataConnectionFactory::create(
             $connectorSelector,
@@ -825,7 +815,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				dc.name AS data_connection_name,
 				dc.data_connector,
 				dc.data_connector_config,
-				dc.filter_context_uxon,
+                dc.time_zone,
                 a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
 			FROM exf_data_connection dc
                 ' . $join_user_credentials . '
