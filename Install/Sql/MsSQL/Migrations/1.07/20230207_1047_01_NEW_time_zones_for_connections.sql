@@ -1,6 +1,6 @@
 -- UP
 
-INSERT INTO `exf_data_type` (
+INSERT INTO dbo.[exf_data_type] (
 	[oid],
 	[data_type_alias],
 	[app_oid],
@@ -32,14 +32,19 @@ INSERT INTO `exf_data_type` (
 	0x31000000000000000000000000000000
 );
 		
-ALTER TABLE `exf_data_connection`
+ALTER TABLE dbo.[exf_data_connection]
 	ADD [time_zone] NVARCHAR(50) NULL,
 	DROP COLUMN [filter_context_uxon];
 
-UPDATE exf_data_connection 
+UPDATE dbo.[exf_data_connection] 
 	SET data_connector_config = JSON_MODIFY(data_connector_config, '$.filter_context', JSON_QUERY(filter_context_uxon)) 
 	WHERE filter_context_UXON IS NOT NULL 
 		AND filter_context_uxon <> '';
 	
 -- DOWN
 
+ALTER TABLE dbo.[exf_data_connection]
+	ADD [filter_context_uxon] NVARCHAR(max) NULL;
+	
+ALTER TABLE dbo.[exf_data_connection]
+	DROP COLUMN [time_zone];
