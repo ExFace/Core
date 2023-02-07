@@ -658,13 +658,10 @@ class SqlModelLoader implements ModelLoaderInterface
 				ds.default_query_builder,
 				ds.readable_flag AS data_source_readable,
 				ds.writable_flag AS data_source_writable,
-				dc.read_only_flag AS connection_read_only,
-				{$this->buildSqlUuidSelector('dc.oid')} AS data_connection_oid,
+				dc.*,
+                {$this->buildSqlUuidSelector('dc.oid')} AS data_connection_oid,
 				dc.alias AS data_connection_alias,
 				dc.name AS data_connection_name,
-				dc.data_connector,
-				dc.data_connector_config,
-                dc.time_zone,
                 dca.app_alias AS data_connection_app_alias
                 {$selectUserCredentials}
 			FROM exf_data_source ds 
@@ -690,7 +687,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $data_source->setReadable($ds['data_source_readable']);
         }
         if (! is_null($ds['data_source_writable'])){
-            $data_source->setWritable($ds['data_source_writable'] && ! $ds['connection_read_only']);
+            $data_source->setWritable($ds['data_source_writable'] && ! $ds['read_only_flag']);
         }
         
         // The query builder
@@ -764,7 +761,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $row['data_connection_alias'],
             $row['data_connection_app_alias'],
             $row['data_connection_name'],
-            $row['connection_read_only']
+            $row['read_only_flag']
         );
         return $connection;
     }
@@ -809,13 +806,10 @@ class SqlModelLoader implements ModelLoaderInterface
         $sql = '
             -- Load connection
 			SELECT
-				dc.read_only_flag AS connection_read_only,
-				' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
+				dc.*,
+                ' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
 				dc.alias AS data_connection_alias,
 				dc.name AS data_connection_name,
-				dc.data_connector,
-				dc.data_connector_config,
-                dc.time_zone,
                 a.app_alias AS data_connection_app_alias' . $select_user_credentials . '
 			FROM exf_data_connection dc
                 ' . $join_user_credentials . '
