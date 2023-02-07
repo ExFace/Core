@@ -1,6 +1,6 @@
 -- UP
 
-INSERT INTO `exf_data_type` (
+INSERT IGNORE INTO `exf_data_type` (
 	`oid`,
 	`data_type_alias`,
 	`app_oid`,
