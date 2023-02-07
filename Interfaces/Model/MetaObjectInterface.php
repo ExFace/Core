@@ -14,6 +14,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
@@ -266,24 +267,22 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      */
     public function hasLabelAttribute();
     
-    public function getDataSourceId();
-    
     /**
      * Returns TRUE if the object has a data source and FALSE otherwise.
      * 
      * @return boolean
      */
-    public function hasDataSource();
+    public function hasDataSource() : bool;
     
-    public function setDataSourceId($value);
+    public function setDataSourceId($value) : MetaObjectInterface;
     
     /**
      * Returns the data source for this object.
      * The data source is fully initialized and the connection is already established.
      *
-     * @return \exface\Core\CommonLogic\DataSource
+     * @return DataSourceInterface
      */
-    public function getDataSource();
+    public function getDataSource() : DataSourceInterface;
     
     /**
      * Returns the data connection for this object.
@@ -300,12 +299,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param string $alias
      * @return MetaObjectInterface
      */
-    public function setDataConnectionAlias($alias);
-    
-    /**
-     * @return AbstractQueryBuilder
-     */
-    public function getQueryBuilder();
+    public function setDataConnectionAlias($alias) : MetaObjectInterface;
     
     public function getId();
     

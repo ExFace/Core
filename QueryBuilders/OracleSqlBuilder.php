@@ -475,7 +475,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    if (null !== $tz = $this->getSqlTimeZone()) {
+                    if (null !== $tz = $this->getTimeZone()) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
@@ -507,8 +507,6 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
         }
-        
-        $this->setSqlTimeZone($data_connection->getTimeZone());
         
         $values = array();
         $columns = array();

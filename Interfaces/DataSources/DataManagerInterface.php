@@ -20,12 +20,12 @@ interface DataManagerInterface extends WorkbenchDependantInterface
      * need to access it via meta object. This would cause trouble with the name-value pairs in the config,
      * since they are not real attributes. Should think about that later.
      *
-     * @param int $id
-     * @param string $data_connection_id_or_alias
+     * @param string $uid
+     * @param string|NULL $data_connection_id_or_alias
      * 
      * @return DataSourceInterface
      */
-    public function getDataSource($id, $data_connection_id_or_alias = NULL);
+    public function getDataSource($uid, $data_connection_id_or_alias = NULL);
 
     /**
      * Shut down all open connections

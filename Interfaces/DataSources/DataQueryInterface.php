@@ -31,5 +31,19 @@ interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToStr
      * @see \exface\Core\Interfaces\iCanBePrinted::toString()
      */
     public function toString($prettify = true);
+    
+    /**
+     * Returns the time zone for time values inside the data source
+     *
+     * @return string|NULL
+     */
+    public function getTimeZone() : ?string;
+    
+    /**
+     *
+     * @param string|NULL $value
+     * @return DataQueryInterface
+     */
+    public function setTimeZone(string $value = null) : DataQueryInterface;
 }
 ?>

@@ -382,7 +382,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $ds->getColumns()->addFromUidAttribute();
                 $ds->getColumns()->addFromExpression('NAME');
                 $ds->getFilters()->addConditionFromString('DATA_ADDRESS', $relatedTable, EXF_COMPARATOR_EQUALS);
-                $ds->getFilters()->addConditionFromString('DATA_SOURCE', $object->getDataSourceId(), EXF_COMPARATOR_EQUALS);
+                $ds->getFilters()->addConditionFromString('DATA_SOURCE', $object->getDataConnection()->getId(), EXF_COMPARATOR_EQUALS);
                 $ds->dataRead();
                 if ($ds->countRows() === 1) {
                     $row['RELATED_OBJ'] = $ds->getUidColumn()->getValues()[0];

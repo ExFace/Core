@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\QueryBuilders\ModelLoaderQueryBuilder;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 /**
  * 
@@ -54,8 +55,22 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
      */
     public static function createForObject(MetaObjectInterface $object) : QueryBuilderInterface
     {
-        $qb = static::createFromString($object->getWorkbench(), $object->getQueryBuilder());
+        $qb = static::createForDataSource($object->getDataSource());
         $qb->setMainObject($object);
+        return $qb;
+    }
+    
+    /**
+     * 
+     * @param DataSourceInterface $dataSource
+     * @return QueryBuilderInterface
+     */
+    public static function createForDataSource(DataSourceInterface $dataSource) : QueryBuilderInterface
+    {
+        $qb = static::createFromString($dataSource->getWorkbench(), $dataSource->getQueryBuilderAlias());
+        if (null !== $tz = $dataSource->getConnection()->getTimeZone()) {
+            $qb->setTimeZone($tz);
+        }
         return $qb;
     }
     
