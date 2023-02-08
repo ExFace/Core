@@ -2492,7 +2492,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         // TODO Check if all objects along the relation path also belong to the data source
         // TODO Instead of checking the data source, check if it points to the same data base
-        return $attribute->getObject()->getDataSource() === $this->getMainObject()->getDataSource();
+        return $attribute->getObject()->getDataSource()->getId() === $this->getMainObject()->getDataSource()->getId();
     }
     
     /**
