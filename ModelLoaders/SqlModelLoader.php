@@ -1295,7 +1295,8 @@ SQL;
         // UIDs of the authorization point. All subsequent calls for specific authorization points will then
         // use this array instead of querying the DB every time. This should be faster as most authorization
         // points will be required for every request anyway, so we simply save DB queries here.
-        if ($this->auth_policies_loaded === null) {
+        $username = $userOrToken->getUsername();
+        if (null === $this->auth_policies_loaded[$username] ?? null) {
             if ($userOrToken->isAnonymous()) {
                 // Load all policies of the anonymous user
                 // + all policies without a user group
@@ -1356,13 +1357,13 @@ WHERE
     )
 SQL;
             $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
-            $this->auth_policies_loaded = [];
+            $this->auth_policies_loaded[$username] = [];
             foreach ($rows as $row) {
-                $this->auth_policies_loaded[$row['auth_point_oid']][] = $row;
+                $this->auth_policies_loaded[$username][$row['auth_point_oid']][] = $row;
             }
         }
         
-        foreach (($this->auth_policies_loaded[$authPoint->getUid()] ?? []) as $row) {
+        foreach (($this->auth_policies_loaded[$username][$authPoint->getUid()] ?? []) as $row) {
             $action = null;
             if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
                 throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
