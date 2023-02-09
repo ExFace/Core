@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
-use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -97,7 +96,6 @@ use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\MetamodelAliasDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\DataTypes\MessageCodeDataType;
 
 /**
@@ -507,7 +505,14 @@ class SqlModelLoader implements ModelLoaderInterface
 				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], UxonObject::fromJson($row['config_uxon']), $row['app_oid']);
+                    $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
+                    if (intval($row['disabled_flag']) === 1) {
+                        $configUxon->setProperty('disabled', true);
+                    }
+                    if ($row['priority'] !== null) {
+                        $configUxon->setProperty('priority', $row['priority']);
+                    }
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['app_oid']);
                     $object->getBehaviors()->add($behavior, $row['oid']);
                 }
             }
