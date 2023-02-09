@@ -66,5 +66,18 @@ interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConverted
      * @return BehaviorSelectorInterface
      */
     public function getSelector() : BehaviorSelectorInterface;
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getPriority() : ?int;
+    
+    /**
+     * The priority for the event listeners registered by this behavior
+     *
+     * @param int $value
+     * @return BehaviorInterface
+     */
+    public function setPriority(int $value) : BehaviorInterface;
 }
-?>

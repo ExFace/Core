@@ -269,11 +269,11 @@ class NotifyingBehavior extends AbstractBehavior
         // call-action listener even if both listen the OnBeforeUpdateData event
         if ($this->hasRestrictionOnAttributeChange()) {
             $this->getWorkbench()->eventManager()
-                ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange']);
+            ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeUpdateCheckChange'], $this->getPriority());
         }
         
         $this->getWorkbench()->eventManager()
-            ->addListener($this->getNotifyOnEventName(), [$this, 'onEventNotify']);
+        ->addListener($this->getNotifyOnEventName(), [$this, 'onEventNotify'], $this->getPriority());
         
         return $this;
     }

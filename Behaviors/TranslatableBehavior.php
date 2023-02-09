@@ -161,24 +161,24 @@ class TranslatableBehavior extends AbstractBehavior
     protected function registerEventListeners() : BehaviorInterface
     {
         $obj = $this->getObject();
-        
+        $priority = $this->getPriority();
         if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
             $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [
                 $this,
                 'onReadForKeyCreateFiles'
-            ]);
+            ], $priority);
             
             $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onEditDictPrefill'
-            ]);
+            ], $priority);
         }
         
         if ($this->hasTranslatableAttributes()) {
             $this->getWorkbench()->eventManager()->addListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
                 $this,
                 'onObjectEditorInitAddTranslateButton'
-            ]);
+            ], $priority);
         }
         
         return $this;

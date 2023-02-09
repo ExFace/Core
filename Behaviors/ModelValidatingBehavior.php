@@ -47,13 +47,13 @@ class ModelValidatingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
             $this,
             'handleObjectEditDialog'
-        ]);
+        ], $this->getPriority());
         
         // Add checks when saving model data
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
             $this,
             'handleModelDataSave'
-        ]);
+        ], $this->getPriority());
         
         return $this;
     }

@@ -9,6 +9,7 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\DataTypes\PasswordDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 
 /**
  * This behavior will hash password attribute values when data is created or updated.
@@ -18,7 +19,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-class PasswordHashingBehavior extends AbstractBehavior
+class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {    
     private $passwordAttribute = null;
     
@@ -45,8 +46,8 @@ class PasswordHashingBehavior extends AbstractBehavior
         // Give the event handlers a hight priority to make sure, the passwords are encoded before
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
-        ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000)
-        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], 1000);
+        ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], $this->getPriority())
+        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], $this->getPriority());
         return $this;
     }
     
@@ -63,6 +64,16 @@ class PasswordHashingBehavior extends AbstractBehavior
         ->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'])
         ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent']);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::getPriority()
+     */
+    public function getPriority() : ?int
+    {
+        return parent::getPriority() ?? 1000;
     }
     
     /**
@@ -147,5 +158,22 @@ class PasswordHashingBehavior extends AbstractBehavior
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('password_attribute_alias', $this->getPasswordAttributeAlias());
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        return [
+            $this->getPasswordAttribute()
+        ];
+    }
+    
+    public function canAddColumnsToData(): bool
+    {
+        return false;
     }
 }

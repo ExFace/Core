@@ -85,8 +85,6 @@ class CallActionBehavior extends AbstractBehavior
     
     private $actionConfig = null;
     
-    private $priority = null;
-    
     private $onlyIfAttributesChange = [];
     
     private $onlyIfDataMatchesConditionGroupUxon = null;
@@ -315,29 +313,9 @@ class CallActionBehavior extends AbstractBehavior
     }
     
     /**
-     *
-     * @return int|NULL
-     */
-    protected function getPriority() : ?int
-    {
-        return $this->priority;
-    }
-    
-    /**
-     * Event handlers with higher priority will be executed first!
      * 
-     * @uxon-property priority
-     * @uxon-type integer
-     * 
-     * @param int $value
-     * @return CallActionBehavior
+     * @return string[]
      */
-    public function setPriority(int $value) : CallActionBehavior
-    {
-        $this->priority = $value;
-        return $this;
-    }
-    
     protected function getOnlyIfAttributesChange() : array
     {
         return $this->onlyIfAttributesChange ?? [];

@@ -16,12 +16,12 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -89,7 +89,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
  * @author Andrej Kabachnik
  *
  */
-class TimeStampingBehavior extends AbstractBehavior
+class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
 
     private $createdOnAttributeAlias = null;
@@ -153,10 +153,11 @@ class TimeStampingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
+        $prio = $this->getPriority();
         $this->getWorkbench()->eventManager()
-            ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onCreateSetValues'])
-            ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onUpdateSetValuesAndCheckConflicts'])
-            ->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), [$this, 'onAttributeValidatedDisableFields']);
+            ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onCreateSetValues'], $prio)
+            ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onUpdateSetValuesAndCheckConflicts'], $prio)
+            ->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), [$this, 'onAttributeValidatedDisableFields'], $prio);
         return $this;
     }
     
@@ -841,5 +842,38 @@ class TimeStampingBehavior extends AbstractBehavior
     {
         $this->checkForConflictsNotMandatoryForSubsheets = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        $attrs = [];
+        if ($this->hasCreatedOnAttribute()) {
+            $attrs[] = $this->getCreatedOnAttribute();
+        }
+        if ($this->hasUpdatedOnAttribute()) {
+            $attrs[] = $this->getUpdatedOnAttribute();
+        }
+        if ($this->hasCreatedByAttribute()) {
+            $attrs[] = $this->getCreatedByAttribute();
+        }
+        if ($this->hasUpdatedByAttribute()) {
+            $attrs[] = $this->getUpdatedByAttribute();
+        }
+        return $attrs;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumnsToData()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return true;
     }
 }
