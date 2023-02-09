@@ -14,12 +14,12 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\CommonLogic\DataSheets\Matcher\DataRowMatcher;
 use exface\Core\CommonLogic\DataSheets\Matcher\MultiMatcher;
 use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -100,6 +100,8 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     
     private $onDuplicateSingleRow = null;
     
+    private $onDuplicateUpdateColumns = null;
+    
     private $compareAttributeAliases = [];
     
     private $allowEmptyValuesForAttributeAliases = [];
@@ -121,9 +123,19 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate']);
+        $priority = $this->getPriority();
         
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate']);
+        if ($priority === null) {
+            foreach ($this->getObject()->getBehaviors() as $behavior) {
+                if (($behavior instanceof DataModifyingBehaviorInterface) && $behavior->canAddColumnsToData() === true) {
+                    $priority = 1 + ($priority === null ? $behavior->getPriority() : max($priority, $behavior->getPriority()));
+                }
+            }
+        }
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate'], $priority);
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate'], $priority);
         
         return $this;
     }
@@ -787,6 +799,22 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function setCompareCaseSensitive(bool $value) : PreventDuplicatesBehavior
     {
         $this->compareCaseSensitive = $value;
+        return $this;
+    }
+    
+    protected function getOnDuplicateUpdateColumns() : array
+    {
+        return $this->onDuplicateUpdateColumns;
+    }
+    
+    /**
+     * 
+     * @param array $value
+     * @return PreventDuplicatesBehavior
+     */
+    protected function setOnDuplicateUpdateColumns(array $value) : PreventDuplicatesBehavior
+    {
+        $this->onDuplicateUpdateColumns = $value;
         return $this;
     }
 }

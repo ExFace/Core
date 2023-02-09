@@ -28,9 +28,10 @@ class CacheClearingBehavior extends AbstractBehavior
             $this,
             'handleEvent'
         );
-        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $handler);
-        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $handler);
-        $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $handler);
+        $prio = $this->getPriority();
+        $this->getWorkbench()->eventManager()->addListener(OnUpdateDataEvent::getEventName(), $handler, $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnCreateDataEvent::getEventName(), $handler, $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnDeleteDataEvent::getEventName(), $handler, $prio);
         
         return $this;
     }

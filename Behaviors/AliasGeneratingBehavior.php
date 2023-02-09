@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
@@ -84,7 +85,7 @@ use exface\Core\DataTypes\StringDataType;
  * ```
  * 
  */
-class AliasGeneratingBehavior extends AbstractBehavior
+class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
     const CASE_UPPER = 'UPPER';
     
@@ -130,8 +131,8 @@ class AliasGeneratingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate'], $this->getPriority());
         
         return $this;
     }
@@ -624,5 +625,27 @@ class AliasGeneratingBehavior extends AbstractBehavior
     protected function getReplaceCharacters() : array
     {
         return $this->replaceCharacters;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        return [
+            $this->getTargetAttribute()
+        ];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumns()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return false;
     }
 }

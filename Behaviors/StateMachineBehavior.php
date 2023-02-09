@@ -91,9 +91,10 @@ class StateMachineBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        $prio = $this->getPriority();
+        $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates'], $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate'], $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete'], $prio);
         
         if ($this->getOverrideAttributeDataType() === true) {
             $this->overrideAttributeDataType();
@@ -113,7 +114,7 @@ class StateMachineBehavior extends AbstractBehavior
                 $behavior->enable();
         }
         
-        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
+        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram'], $prio);
         
         return $this;
     }

@@ -37,6 +37,8 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $name_resolver = false;
     
     private $appSelectorOrString = null;
+    
+    private $priority = null;
 
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
@@ -256,5 +258,29 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function setAppSelector($selectorOrString) : BehaviorInterface
     {
         $this->appSelectorOrString = $selectorOrString;
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getPriority() : ?int
+    {
+        return $this->priority;
+    }
+    
+    /**
+     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the same event.
+     *
+     * @uxon-property priority
+     * @uxon-type integer
+     *
+     * @param int $value
+     * @return BehaviorInterface
+     */
+    public function setPriority(int $value) : BehaviorInterface
+    {
+        $this->priority = $value;
+        return $this;
     }
 }

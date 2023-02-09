@@ -112,7 +112,7 @@ class LockingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData']);
+        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData'], $this->getPriority());
         
         return $this;
     }

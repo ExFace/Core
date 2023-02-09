@@ -41,7 +41,7 @@ class GlobalActionsBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnGlobalActionsAddedEvent::getEventName(), [$this, 'onGlobalActionsAdded']);
+        $this->getWorkbench()->eventManager()->addListener(OnGlobalActionsAddedEvent::getEventName(), [$this, 'onGlobalActionsAdded'], $this->getPriority());
         
         return $this;
     }

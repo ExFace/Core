@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 
 /**
  * Replaces the default delete-operation by setting a "deleted"-attribute to a special value.
@@ -38,7 +39,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * @author Andrej Kabachnik
  *
  */
-class SoftDeleteBehavior extends AbstractBehavior
+class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
     private $soft_delete_attribute_alias = null;
     
@@ -51,7 +52,7 @@ class SoftDeleteBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete'], $this->getPriority());
 
         return $this;
     }
@@ -225,5 +226,27 @@ class SoftDeleteBehavior extends AbstractBehavior
         $uxon->setProperty('soft_delete_attribute_alias', $this->getSoftDeleteAttributeAlias());
         $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue());
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        return [
+            $this->getSoftDeleteAttribute()
+        ];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumnsToData()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return true;   
     }
 }
