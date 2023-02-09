@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -67,7 +75,9 @@
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Generate Alias from page name",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-08-27 19:30:23",
@@ -92,7 +102,9 @@
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
-            "DESCRIPTION": "Makes page attributes translatable"
+            "DESCRIPTION": "Makes page attributes translatable",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-11-20 21:04:43",
@@ -105,7 +117,9 @@
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

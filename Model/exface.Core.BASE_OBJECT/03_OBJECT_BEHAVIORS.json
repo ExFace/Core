@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -63,7 +71,9 @@
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Create\/Update tracking + optimistic locking",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2022-03-16 17:16:25",
@@ -111,7 +121,9 @@
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Info-button for system attributes",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

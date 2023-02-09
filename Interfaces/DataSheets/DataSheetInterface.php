@@ -492,7 +492,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function setFilters(ConditionGroup $condition_group);
 
     /**
-     * Removes all rows of the data sheet without chaning anything in the column structure
+     * Removes all or specified rows of the data sheet without changing anything in the column structure
      *
      * @param int[]|NULL $rowIndexes
      * @return DataSheetInterface

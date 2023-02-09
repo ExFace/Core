@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -69,7 +77,9 @@
             "OBJECT": "0x11ea5edb3ee5cbe8b9920205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting core auth. points",
-            "DESCRIPTION": "Action and page authorization points are used within the code, so the must not be deleted!"
+            "DESCRIPTION": "Action and page authorization points are used within the code, so the must not be deleted!",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],
