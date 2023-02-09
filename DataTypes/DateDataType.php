@@ -58,11 +58,17 @@ class DateDataType extends AbstractDataType
     private $timeZone = null;
     
     /**
-     *
-     * {@inheritDoc}
+     * 
+     * @param string|\DateTimeInterface|NULL $string
+     * @param bool $returnPhpDate
+     * @param string $fromTimeZone
+     * @param bool $parseRelative - set to FALSE to increase performance not parsing +/-1 values, etc.
+     * @throws DataTypeCastingError
+     * @return string|NULL|\DateTimeInterface
+     * 
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::cast()
      */
-    public static function cast($string, bool $returnPhpDate = false, string $fromTimeZone = null)
+    public static function cast($string, bool $returnPhpDate = false, string $fromTimeZone = null, bool $parseRelative = true)
     {
         $string = trim($string);
         if ($fromTimeZone !== null && $fromTimeZone === date_default_timezone_get()) {
@@ -74,28 +80,30 @@ class DateDataType extends AbstractDataType
             return null;
         }
         
-        $parsedString = null;
-        switch (true) {
-            // If a timestamp is passed (seconds since epoche), it must not be interpreted as
-            // a relative date - therefore prefix really large numbers with an @, which will
-            // mark it as a timestamp for the \DateTime consturctor.
-            case is_numeric($string) && intval($string) >= self::TIMESTAMP_MIN_VALUE:
-                $parsedString = '@' . $string;
-                break;            
-            case $relative = static::parseRelativeDate($string):
-                $parsedString = $relative;
-                break;
-            case $short = static::parseShortDate($string):
-                $parsedString = $short;
-                break;
-            // Numeric values, that are neither relative nor short dates, must be invalid!
-            case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
-                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
-                break;
-        }        
-        
-        if ($parsedString !== null && $returnPhpDate === false && $fromTimeZone === null) {
-            return $parsedString; 
+        if ($parseRelative === true) {
+            $parsedString = null;
+            switch (true) {
+                // If a timestamp is passed (seconds since epoche), it must not be interpreted as
+                // a relative date - therefore prefix really large numbers with an @, which will
+                // mark it as a timestamp for the \DateTime consturctor.
+                case is_numeric($string) && intval($string) >= self::TIMESTAMP_MIN_VALUE:
+                    $parsedString = '@' . $string;
+                    break;            
+                case $relative = static::parseRelativeDate($string):
+                    $parsedString = $relative;
+                    break;
+                case $short = static::parseShortDate($string):
+                    $parsedString = $short;
+                    break;
+                // Numeric values, that are neither relative nor short dates, must be invalid!
+                case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
+                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1');
+                    break;
+            }        
+            
+            if ($parsedString !== null && $returnPhpDate === false && $fromTimeZone === null) {
+                return $parsedString; 
+            }
         }
         
         try {
