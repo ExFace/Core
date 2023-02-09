@@ -962,23 +962,24 @@ class DataSheet implements DataSheetInterface
         // - A data sheet with a single row and no UID column, where the values of that row should be saved to all object matching the filter
         // - A data sheet with a single row and a UID column, where the one row references multiple object explicitly selected by the user (the UID
         // column will have one cell with a list of UIDs in this case.
-        foreach ($this->getColumns() as $column) {
-            if (! $column->getExpressionObj()->isMetaAttribute()) {
+        $sheetHasUidValues = $this->hasUidColumn(true);
+        foreach ($this->getColumns() as $col) {
+            if (! $col->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
                 continue;
             } 
             
-            $columnAttr = $column->getAttribute();
+            $columnAttr = $col->getAttribute();
             switch (true) {
-                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $column === $this->getUidColumn()) === false:
+                case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
                     // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                     continue 2;
-                case $column->getDataType() instanceof DataSheetDataType:
+                case $col->getDataType() instanceof DataSheetDataType:
                     // Update nested sheets - i.e. replace all rows in the data source, that are related to
                     // the each row of the main sheet with the nested rows here.
-                    $this->dataUpdateNestedSheets($column, $create_if_uid_not_found, $transaction);
+                    $this->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2;                
-                case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString()):
+                case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString()):
                     // Skip columns with aggregate functions
                     continue 2;
             }
@@ -986,14 +987,16 @@ class DataSheet implements DataSheetInterface
             // If the column represents a required attribute, check if all rows have values.
             // If not, make sure empty values are ignored (cannot empty a required field!)
             $ignoreEmptyValues = false;
-            if ($columnAttr->isRequired() === true && $column->hasEmptyValues() === true) {
+            if ($columnAttr->isRequired() === true && $col->hasEmptyValues() === true) {
                 $ignoreEmptyValues = true;
             }
             
             // Use the UID column as a filter to make sure, only these rows are affected
-            if ($columnAttr->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
+            if ($columnAttr->getAliasWithRelationPath() === $this->getMetaObject()->getUidAttributeAlias()) {
                 $uidAttr = $this->getMetaObject()->getUidAttribute();
-                $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                if (! $col->isEmpty(true)) {
+                    $query->addFilterFromString($uidAttr->getAlias(), implode($uidAttr->getValueListDelimiter(), array_unique($col->getValues(false))), EXF_COMPARATOR_IN);
+                }
                 // Do not update the UID attribute if it is neither editable nor required
                 if ($uidAttr->isEditable() === false && $uidAttr->isRequired() === false) {
                     continue;
@@ -1007,35 +1010,37 @@ class DataSheet implements DataSheetInterface
                     $uid_column_alias = $rel_path;
                 } else {
                     // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
-                    throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
+                    throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $col->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                 }
             } else {
                 $uid_column_alias = $this->getMetaObject()->getUidAttributeAlias();
             }
             
-            // If it is a direct attribute, add it to the query
-            if ($this->getUidColumn()) {
-                // If the data sheet has separate values per row (identified by the UID column), add all the values to the query.
-                // In this case, each object will get its own value. However, we need to ensure, that there are UIDs for each value,
-                // even if the value belongs to a related object. If there is no appropriate UID column for updated related object,
-                // the UID values must be fetched from the data source using an identical data sheet, but having only the required uid column.
-                // Since the new data sheet is cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those
-                // UIDs, that should have been in the original sheet. Additionally we need to add a filter over the values of the original UID
-                // column, in case the user had explicitly selected some of the rows of the original data set.
-                if (! $uid_column = $this->getColumn($uid_column_alias)) {
+            // Now we know, the column represents a direct attribute. So add it to the query
+            
+            // If the data sheet has separate values per row (identified by the UID column), add all the values 
+            // to the query. In this case, each object will get its own value.
+            if ($sheetHasUidValues) {
+                // However, we need to ensure, that there are UIDs for each value, even if the value belongs to a related object. 
+                // If there is no appropriate UID column for updated related object, the UID values must be fetched from the data 
+                // source using an identical data sheet, but having only the required uid column. Since the new data sheet is 
+                // cloned, it will have exactly the same filters, order, etc. so we can be sure to fetch only those UIDs, that 
+                // should have been in the original sheet. Additionally we need to add a filter over the values of the original 
+                // UID column, in case the user had explicitly selected some of the rows of the original data set.
+                if (! $colObjectUidColumn = $this->getColumns()->getByExpression($uid_column_alias)) {
                     $uid_data_sheet = $this->copy();
                     $uid_data_sheet->getColumns()->removeAll();
                     $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
                     $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
                     $uid_data_sheet->getFilters()->addConditionFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $this->getUidColumn()->getValues()), EXF_COMPARATOR_IN);
                     $uid_data_sheet->dataRead();
-                    $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
+                    $colObjectUidColumn = $uid_data_sheet->getColumn($uid_column_alias);
                 }
                 
-                $values = $column->getValuesNormalized();
-                $uids = $uid_column->getValues(false);
+                $values = $col->getValuesNormalized();
+                $uids = $colObjectUidColumn->getValues(false);
                 if ($ignoreEmptyValues) {
-                    $columnTyle = $column->getDataType();
+                    $columnTyle = $col->getDataType();
                     foreach ($values as $r => $val) {
                         if ($columnTyle->isValueEmpty($val)) {
                             unset($values[$r]);
@@ -1043,11 +1048,11 @@ class DataSheet implements DataSheetInterface
                         }
                     }
                 }
-                $query->addValues($column->getExpressionObj()->toString(), $values, $uids);
+                $query->addValues($col->getExpressionObj()->toString(), $values, $uids);
             } else {
                 // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
                 // In this case all object matching the filter will get updated by this value
-                $query->addValue($column->getExpressionObj()->toString(), $column->getValuesNormalized()[0]);
+                $query->addValue($col->getExpressionObj()->toString(), $col->getValuesNormalized()[0]);
             }
         }
         
