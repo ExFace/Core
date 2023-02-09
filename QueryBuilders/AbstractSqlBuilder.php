@@ -550,7 +550,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $colKey = $qpart->getColumnKey();
                     $type = $qpart->getDataType();
                     for ($i = 0; $i < $rowCnt; $i++) {
-                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey], false, $tz);
+                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
                 case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
