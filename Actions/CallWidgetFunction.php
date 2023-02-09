@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Actions\iCallWidgetFunction;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Widgets\Button;
 
 /**
  * Activates a function of a select widget (see available functions in widget docs).
@@ -111,5 +112,59 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     {
         $this->widgetId = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getName()
+     */
+    public function getName()
+    {
+        $name = parent::getName();
+        if ($name == $this->translate('NAME') && $this->isButtonPress()) {
+            $this->name = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getCaption();
+        }
+        return $this->name;
+    }
+    
+    /**
+     * Returns if the call widget funtion is a button press
+     * 
+     * @return bool
+     */
+    protected function isButtonPress() : bool
+    {
+        return  $this->getFunctionName() == Button::FUNCTION_PRESS
+                && $this->isDefinedInWidget()
+                && $this->getWidget($this->getWidgetDefinedIn()->getPage()) instanceof Button;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getHint()
+     */
+    public function getHint() : ?string
+    {
+        $hint = parent::getHint();
+        if ($hint === null && $this->isButtonPress()) {
+            $this->hint = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getHint();
+        }
+        return $this->hint;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
+     */
+    public function getIcon()
+    {
+        $icon = parent::getIcon();
+        if ($icon === Icons::MOUSE_POINTER && $this->isButtonPress()) {
+            $this->icon = $this->getWidget($this->getWidgetDefinedIn()->getPage())->getIcon();
+        }
+        return $this->icon;
     }
 }
