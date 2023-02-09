@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -60,7 +68,9 @@
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Hash Passwords",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-07-14 11:33:05",
@@ -84,7 +94,9 @@
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting anonymous user",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

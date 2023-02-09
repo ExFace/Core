@@ -6,6 +6,19 @@ use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
 use exface\Core\Interfaces\DataSheets\DataMatchInterface;
 
 /**
+ * Default implementation of a row matcher to compare rows between two data sheets
+ * 
+ * A row of the compare-sheet is concidered a match if all values of the specified
+ * compare-columns match the values of the respective columns of the main sheet.
+ * 
+ * Both sheets MUST have all of the compare columns!
+ * 
+ * Additionally there are some parameters, that can be set after instantiation:
+ * 
+ * - `setIgnoreUidMatches(true)` will not concider a compared row a match if the
+ * UID values are the same
+ * - `setCompareCaseSensitive(true)` will perform a case sensitive comparison
+ * - `setMaxMatchesPerRow()` allows to 
  * 
  * @author Andrej Kabachnik
  *
@@ -48,6 +61,10 @@ class DataRowMatcher implements DataMatcherInterface
         return $this->mainSheet;
     }
     
+    /**
+     * 
+     * @return DataSheetInterface
+     */
     public function getCompareDataSheet() : DataSheetInterface
     {
         return $this->compareSheet;
@@ -63,33 +80,60 @@ class DataRowMatcher implements DataMatcherInterface
         return $this->name;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getIgnoreUidMatches() : bool
     {
         return $this->ignoreUidMatches;
     }
     
+    /**
+     * 
+     * @param bool $value
+     * @return DataRowMatcher
+     */
     public function setIgnoreUidMatches(bool $value) : DataRowMatcher
     {
         $this->ignoreUidMatches = $value;
         return $this;
     }
     
-    protected function getMaxMatcherPerRow() : ?int
+    /**
+     * 
+     * @return int|NULL
+     */
+    protected function getMaxMatchesPerRow() : ?int
     {
         return $this->maxMatcherPerRow;
     }
     
-    public function setMaxMatcherPerRow(int $value) : DataRowMatcher
+    /**
+     * 
+     * @param int $value
+     * @return DataRowMatcher
+     */
+    public function setMaxMatchesPerRow(int $value) : DataRowMatcher
     {
         $this->maxMatcherPerRow = $value;
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getStopAfterFirst() : bool
     {
         return $this->stopAfterFirst;
     }
     
+    /**
+     * 
+     * @param bool $value
+     * @return DataRowMatcher
+     */
     public function setStopAfterFirst(bool $value) : DataRowMatcher
     {
         $this->stopAfterFirst = $value;
@@ -166,11 +210,23 @@ class DataRowMatcher implements DataMatcherInterface
         return array_keys($this->getMatchesPerRow());
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMatcherInterface::hasMatches()
+     */
     public function hasMatches() : bool
     {
         return empty($this->getMatchesPerRow()) === false;
     }
     
+    /**
+     * 
+     * @param array $mainRows
+     * @param array $checkRows
+     * @param array $compareCols
+     * @return array
+     */
     protected function findMatches(array $mainRows, array $checkRows, array $compareCols) : array
     {
         $matches = [];
@@ -180,7 +236,7 @@ class DataRowMatcher implements DataMatcherInterface
         $caseSensitive = $this->getCompareCaseSensitive();
         $selfCompare = ($mainRows === $checkRows);
         $ignoreUidMatches = $this->getIgnoreUidMatches();
-        $MaxMatcherPerRow = $this->getMaxMatcherPerRow();
+        $maxMatchesPerRow = $this->getMaxMatchesPerRow();
         $stopAfterFirst = $this->getStopAfterFirst();
         
         // Extract and parse values relevant for the search. Do it once here in order to
@@ -268,7 +324,7 @@ class DataRowMatcher implements DataMatcherInterface
                     if ($stopAfterFirst) {
                         return $matches;
                     }
-                    if ($MaxMatcherPerRow === 1 || $MaxMatcherPerRow >= count($matches[$mainRowIdx])) {
+                    if ($maxMatchesPerRow === 1 || $maxMatchesPerRow >= count($matches[$mainRowIdx])) {
                         break;
                     }
                 }
