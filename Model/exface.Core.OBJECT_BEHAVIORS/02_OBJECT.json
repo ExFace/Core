@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-04-25 13:19:43",
-            "MODIFIED_ON": "2021-07-28 17:08:05",
+            "MODIFIED_ON": "2023-02-09 11:17:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e60ad7563429b089840050568905af",
@@ -112,6 +112,12 @@
                     },
                     {
                         "attribute_alias": "APP"
+                    },
+                    {
+                        "attribute_alias": "PRIORITY"
+                    },
+                    {
+                        "attribute_alias": "DISABLED_FLAG"
                     },
                     {
                         "attribute_alias": "DESCRIPTION",

@@ -148,9 +148,6 @@ abstract class AbstractBehavior implements BehaviorInterface
     /**
      * Set to TRUE to disabled this behavior
      * 
-     * @uxon-property disabled
-     * @xuon-type boolean
-     * 
      * @param bool $value
      * @return BehaviorInterface
      */
@@ -271,9 +268,6 @@ abstract class AbstractBehavior implements BehaviorInterface
     
     /**
      * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the same event.
-     *
-     * @uxon-property priority
-     * @uxon-type integer
      *
      * @param int $value
      * @return BehaviorInterface
