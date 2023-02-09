@@ -2012,7 +2012,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 . '1 = 0';
         }
         
-        if (is_null($value) || $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL){
+        if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL)){
             switch ($comparator) {
                 case EXF_COMPARATOR_EQUALS:
                 case EXF_COMPARATOR_IS:
@@ -2043,15 +2043,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
                 break;
             case EXF_COMPARATOR_IS_NOT:
-                $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->escapeString(strtoupper($value)) . "%'";
-                break;
             case EXF_COMPARATOR_IS:
             default:
-                $output = 'UPPER(' . $subject . ") LIKE '%" . $this->escapeString(strtoupper($value)) . "%'";
+                $like = $comparator === EXF_COMPARATOR_IS_NOT ? 'NOT LIKE' : 'LIKE';
+                $output = "UPPER({$subject}) $like ";
+                if ($valueIsSQL) {
+                    $output .= "CONCAT('%', {$value}, '%')";
+                } else {
+                    $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
+                }
         }
         return $output;
     }
     
+    /**
+     * 
+     * @param mixed $value
+     * @param DataTypeInterface $data_type
+     * @param string|NULL $sql_data_type
+     * @return string
+     */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         // IDEA some data type specific procession here
