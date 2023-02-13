@@ -81,6 +81,11 @@ RewriteRule ^[^/]*$ vendor/exface/Core/index.php [L,QSA]
 ")
             ->addContent('Core Security', "
 
+# Block direct access to PHP scripts
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} !vendor/exface/Core/index.php
+RewriteRule ^vendor/.*\.php$ - [F,L]
+
 # Block requests to config, cache, backup, etc.
 RewriteRule ^(config|backup|translations|logs)/.*$ - [F]
 # Block requests to system files (starting with a dot) in the data folder
