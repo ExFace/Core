@@ -63,7 +63,7 @@ class CoreApp extends App
 # API requests
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA]
+RewriteRule ^api/.*$ vendor/exface/Core/index.php [L,QSA,NC]
 
 # Force trailing slash on requests to the root folder of the workbench
 # E.g. me.com/exface -> me.com/exface/
@@ -83,13 +83,13 @@ RewriteRule ^[^/]*$ vendor/exface/Core/index.php [L,QSA]
 
 # Block direct access to PHP scripts
 RewriteCond %{REQUEST_FILENAME} -f
-RewriteCond %{REQUEST_FILENAME} !vendor/exface/Core/index.php
-RewriteRule ^vendor/.*\.php$ - [F,L]
+RewriteCond %{REQUEST_FILENAME} !vendor/exface/core/index.php [NC]
+RewriteRule ^vendor/.*\.php$ - [F,L,NC]
 
 # Block requests to config, cache, backup, etc.
-RewriteRule ^(config|backup|translations|logs)/.*$ - [F]
+RewriteRule ^(config|backup|translations|logs)/.*$ - [F,NC]
 # Block requests to system files (starting with a dot) in the data folder
-RewriteRule ^data/\..*$ - [F]
+RewriteRule ^data/\..*$ - [F,NC]
 
 ");
         $installer->addInstaller($htaccessInstaller);
