@@ -223,14 +223,13 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
         // action, page, object, etc. are send urlencoded and data as JSON
         $middleware[] = new JsonBodyParser();
         
-        $allowAnonymous = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPTASKFACADE.ALLOW_ANONYMOUS_ACCESS');
         $allowBasicAuth = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH');
-        if ($allowAnonymous === false || $allowBasicAuth === true) {
-            $extractors = $allowBasicAuth ? [ [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken'] ] : [];
+        if ($allowBasicAuth === true) {
             $middleware[] = new AuthenticationMiddleware(
-                $this, 
-                $extractors,
-                ! $allowAnonymous
+                $this,
+                [
+                    [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
+                ]
             );
         }
         

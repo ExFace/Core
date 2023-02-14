@@ -63,9 +63,17 @@ class DocsFacade extends AbstractHttpFacade
         $template->setBreadcrumbsRootName('Documentation');
         $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
         
-        return $handler->handle($request);
+        $response = $handler->handle($request);
+        foreach ($this->buildHeadersCommon() as $header => $val) {
+            $response = $response->withHeader($header, $val);
+        }
+        return $response;
     }
     
+    protected function buildHeadersCommon() : array
+    {
+        return array_filter($this->getConfig()->getOption('FACADES.DOCSFACADE.HEADERS.COMMON')->toArray());
+    }
     
     
     /**
