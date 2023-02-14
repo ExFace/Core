@@ -21,6 +21,11 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserDisabledError;
 use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\InternalError;
+use exface\Core\Widgets\Form;
 
 /**
  * Provides common base function for authenticators.
@@ -41,6 +46,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $id = null;
     
     private $userData = [];      
+    
+    private $userAuthData = [];
     
     private $lifetime = null;
     
@@ -233,14 +240,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function checkAuthenticatorDisabledForUsername(string $username) : AbstractAuthenticator
     {
-        $exface = $this->getWorkbench();
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
-        $dataSheet->getColumns()->addFromExpression('DISABLED_FLAG');
-        $filterGroup = ConditionGroupFactory::createEmpty($exface, EXF_LOGICAL_AND, $dataSheet->getMetaObject());
-        $filterGroup->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS);
-        $filterGroup->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
-        $dataSheet->getFilters()->addNestedGroup($filterGroup);
-        $dataSheet->dataRead();
+        $dataSheet = $this->getAuthenticatorData($username);
         if ($dataSheet->isEmpty() === true) {
            return $this;
         }
@@ -253,27 +253,65 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
+     * Returns a data sheet with the current user-authenticator configuration for the username AND this authenticator
+     * 
+     * NOTE: the $username here refers to the username in the authenticator configuration, not
+     * the user!
+     * 
+     * @param string $username
+     * @return DataSheetInterface
+     */
+    protected function getAuthenticatorData(string $username) : DataSheetInterface
+    {
+        if (null === $this->userAuthData[$username] ?? null) {
+            $exface = $this->getWorkbench();
+            $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
+            $dataSheet->getColumns()->addMultiple([
+                'DISABLED_FLAG',
+                'PROPERTIES_UXON'
+            ]);
+            $dataSheet->getFilters()
+                ->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS)
+                ->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            $dataSheet->dataRead();
+            $this->userAuthData[$username] = $dataSheet;
+        }
+        return $this->userAuthData[$username];
+    }
+    
+    /**
      * Writes/Updates log for successful login for this authenticator and given user and username.
      * 
      * @param UserInterface $user
      * @param string $username
      */
-    protected function logSuccessfulAuthentication(UserInterface $user, string $username) : AbstractAuthenticator
+    protected function logSuccessfulAuthentication(UserInterface $user, string $username, UxonObject $properties = null) : AbstractAuthenticator
     {
-        $exface = $this->getWorkbench();
-        $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER_AUTHENTICATOR');
-        $row = [];
-        $row['USER'] = $user->getUid();
-        $row['AUTHENTICATOR_USERNAME'] = $username;
-        $row['AUTHENTICATOR'] = $this->getId();
-        $row['LAST_AUTHENTICATED_ON'] = DateTimeDataType::now();
-        $dataSheet->addRow($row);
-        $dataSheet->dataCreate();
+        $dataSheet = $this->getAuthenticatorData($username);
+        $row = [
+            'USER' => $user->getUid(),
+            'AUTHENTICATOR_USERNAME' => $username,
+            'AUTHENTICATOR' => $this->getId(),
+            'LAST_AUTHENTICATED_ON' => DateTimeDataType::now()
+        ];
+        if ($properties !== null) {
+            $row['PROPERTIES_UXON'] = $properties->isEmpty() ? null : $properties->toJson();
+        }
+        if ($dataSheet->isEmpty()) {
+            $dataSheet->addRow($row);
+            $dataSheet->dataCreate(false);
+        } else {
+            foreach ($row as $col => $val) {
+                $dataSheet->setCellValue($col, 0, $val);
+            }
+            $dataSheet->dataUpdate();
+        }
+        
         return $this;
     }
     
     /**
-     * Returns data sheet with rows containing the data for user in the given token.
+     * Returns a data sheet with rows containing the data for user in the given token.
      *
      * @param WorkbenchInterface $exface
      * @param AuthenticationTokenInterface $token
@@ -384,5 +422,44 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $this->usernameReplaceChars = $value->toArray();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::createLoginWidget()
+     */
+    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    {
+        $loginForm = WidgetFactory::create($container->getPage(), 'Form', $container);
+        $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
+        $loginForm->setCaption($this->getName());
+        try {
+            $loginForm = $this->createLoginForm($loginForm);
+        } catch (\Throwable $e) {
+            if (! ($e instanceof ExceptionInterface)) {
+                $e = new InternalError($e->getMessage(), null, $e);
+            }
+            $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
+                'widget_type' => 'Message',
+                'type' => 'error',
+                'text' => 'Failed to initialize authenticator "' . $this->getName() . '": see log ID "' . $e->getId() . '" for details!'
+            ])));
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+        if ($loginForm->isEmpty() === false) {
+            $container->addForm($loginForm);
+        }
+        return $container;
+    }
+    
+    /**
+     * 
+     * @param Form $emptyForm
+     * @return Form
+     */
+    protected function createLoginForm(Form $emptyForm) : Form
+    {
+        return $emptyForm;
     }
 }
