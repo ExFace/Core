@@ -7,14 +7,12 @@ use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticati
 use Symfony\Component\Ldap\Ldap;
 use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DomainUsernamePasswordAuthToken;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Widgets\Form;
 
 /**
  * Performs authentication via the Symfony LdapBindAuthenticationProvider.
@@ -219,12 +217,12 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginForm()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    protected function createLoginForm(Form $emptyForm) : Form
     {
         $domains = $this->getDomains() ?? [];
-        $container->setWidgets(new UxonObject([
+        $emptyForm->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
@@ -246,18 +244,16 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             ]
         ]));
         
-        if ($container instanceof iLayoutWidgets) {
-            $container->setColumnsInGrid(1);
-        }
+        $emptyForm->setColumnsInGrid(1);
         
-        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
-            $container->addButton($container->createButton(new UxonObject([
+        if ($emptyForm->hasButtons() === false) {
+            $emptyForm->addButton($emptyForm->createButton(new UxonObject([
                 'action_alias' => 'exface.Core.Login',
                 'align' => EXF_ALIGN_OPPOSITE,
                 'visibility' => WidgetVisibilityDataType::PROMOTED
             ])));
         }
         
-        return $container;
+        return $emptyForm;
     }
 }

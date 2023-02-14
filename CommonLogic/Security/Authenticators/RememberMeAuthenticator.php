@@ -380,17 +380,12 @@ class RememberMeAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginWidget()
      */
     public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
     {
         return $container;
-    }
-    
-    protected function getSessionDataUsername() : ?string
-    {
-        
     }
 }

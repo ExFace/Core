@@ -4,17 +4,14 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DataConnectionUsernamePasswordAuthToken;
 use exface\Core\Factories\DataConnectionFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
-use exface\Core\Exceptions\UxonSyntaxError;
 use exface\Core\Exceptions\Security\AuthenticatorConfigError;
+use exface\Core\Widgets\Form;
 
 /**
  * Performs authentication via selected data connections.
@@ -194,11 +191,11 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginForm()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    protected function createLoginForm(Form $emptyForm) : Form
     {   
         $conAliases = $this->getConnectionAliases();
         $conNames = [];
@@ -214,7 +211,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             throw new AuthenticatorConfigError($this, 'Cannot hide data connection selector in authenticator "' . $this->getName() . '": multiple connections specified!');
         }
         
-        $container->setWidgets(new UxonObject([
+        $emptyForm->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DATACONNECTIONALIAS',
                 'widget_type' => 'InputSelect',
@@ -236,19 +233,17 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             ]
         ]));
         
-        if ($container instanceof iLayoutWidgets) {
-            $container->setColumnsInGrid(1);
-        }
+        $emptyForm->setColumnsInGrid(1);
         
-        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
-            $container->addButton($container->createButton(new UxonObject([
+        if ($emptyForm->hasButtons() === false) {
+            $emptyForm->addButton($emptyForm->createButton(new UxonObject([
                 'action_alias' => 'exface.Core.Login',
                 'align' => EXF_ALIGN_OPPOSITE,
                 'visibility' => WidgetVisibilityDataType::PROMOTED
             ])));
         }
         
-        return $container;
+        return $emptyForm;
     }
     
     /**

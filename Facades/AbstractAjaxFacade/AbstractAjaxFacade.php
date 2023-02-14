@@ -45,7 +45,6 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
@@ -65,6 +64,7 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 
 /**
  * 
@@ -597,12 +597,14 @@ HTML;
         }
         
         // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
-        if ($exception instanceof ExceptionInterface && $exception->getStatusCode() == 401) {
+        if ($exception instanceof ExceptionInterface && $status_code == 401) { 
             // Don't show the login-prompt if the request is a login-action itself. In this case,
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
             $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if (! $task || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))) {
+            if (! $task 
+            || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))
+            || $exception instanceof AuthenticationIncompleteError) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
                 $response = $this->createResponseUnauthorized($request, $exception, $page);
@@ -678,7 +680,7 @@ HTML;
             $this->buildHeadersForErrors()
         );
         
-        return new Response(401, $headers, $responseBody);
+        return new Response($exception instanceof AuthorizationExceptionInterface ? $exception->getStatusCode() : 401, $headers, $responseBody);
     }
     
     /**

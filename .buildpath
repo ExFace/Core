@@ -17,5 +17,6 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/guzzlehttp/guzzle/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/dragonmantank/cron-expression/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/phpoffice/phpspreadsheet/src"/>
+	<buildpathentry external="true" kind="lib" path="c:/wamp/www/exface/exface/vendor/robthree/twofactorauth/lib"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>

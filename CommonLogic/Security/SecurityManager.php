@@ -306,25 +306,7 @@ class SecurityManager implements SecurityManagerInterface
             if ($authenticator->isDisabled()) {
                 continue;
             }
-            $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
-            $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
-            try {
-                $authenticator->createLoginWidget($loginForm);
-            } catch (\Throwable $e) {
-                if (! ($e instanceof ExceptionInterface)) {
-                    $e = new InternalError($e->getMessage(), null, $e);
-                }
-                $loginForm->addWidget(WidgetFactory::createFromUxonInParent($loginForm, new UxonObject([
-                    'widget_type' => 'Message',
-                    'type' => 'error',
-                    'text' => 'Failed to initialize authenticator "' . $authenticator->getName() . '": see log ID "' . $e->getId() . '" for details!'
-                ])));
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
-            if ($loginForm->isEmpty() === false) {
-                $loginForm->setCaption($authenticator->getName());
-                $loginPrompt->addForm($loginForm);
-            }
+            $loginPrompt = $authenticator->createLoginWidget($loginPrompt);
         }
         
         return $container;
