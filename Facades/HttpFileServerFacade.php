@@ -22,6 +22,7 @@ use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -129,11 +130,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $contentType = $colContents->getDataType();
         $binary = null;
         $plain = null;
-        $headers = [
+        $headers = array_merge($this->buildHeadersCommon(), [
             'Expires' => 0,
             'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
             'Pragma' => 'public'
-        ];
+        ]);
         switch (true) {
             case $contentType instanceof BinaryDataType:
                 $binary = $colContents->getDataType()->convertToBinary($colContents->getValue(0));
@@ -183,6 +184,17 @@ class HttpFileServerFacade extends AbstractHttpFacade
     {
         $middleware = parent::getMiddleware();
         $middleware[] = new OneTimeLinkMiddleware($this, $this->getOtlUrlPathPart());
+        
+        $allowBasicAuth = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.ALLOW_HTTP_BASIC_AUTH');
+        if ($allowBasicAuth === true) {
+            $middleware[] = new AuthenticationMiddleware(
+                $this,
+                [
+                    [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
+                ]
+            );
+        }
+        
         return $middleware;
     }
     
@@ -383,5 +395,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function getOtlCachePool() : CacheInterface
     {
         return $this->getWorkbench()->getCache()->getPool($this->getOtlCacheName());
+    }
+    
+    protected function buildHeadersCommon() : array
+    {
+        return array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());
     }
 }
