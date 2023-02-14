@@ -143,6 +143,10 @@ class EncryptedDataType extends StringDataType
                 if (StringDataType::startsWith($data, $prefix)) {
                     $data = substr($data, strlen($prefix));
                 }
+            } else {
+                if (StringDataType::startsWith($data, self::ENCRYPTION_PREFIX_DEFAULT)) {
+                    $data = substr($data, strlen(self::ENCRYPTION_PREFIX_DEFAULT));
+                }
             }
             $decoded = sodium_base642bin($data, 1);
             $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
