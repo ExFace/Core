@@ -8,6 +8,7 @@ use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 
 /**
  * Configuration for resources (people, rooms, etc.) in calendar-related data widgets.
@@ -22,6 +23,10 @@ use exface\Core\Interfaces\Widgets\iHaveColorScale;
 class DataSchedulerResource implements WidgetPartInterface
 {
     use DataWidgetPartTrait;
+    
+    use iHaveColorScaleTrait {
+        getColorScale as getColorScaleViaTrait;
+    }
     
     private $uidString = null;
     
