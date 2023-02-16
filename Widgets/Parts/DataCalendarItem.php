@@ -279,7 +279,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * The color of each appointment can be set to an attribute alias, a `=Formula()` or a CSS color value.
      * 
      * @uxon-property color
-     * @uxon-type expression     * 
+     * @uxon-type metamodel:expression|color 
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
      */
