@@ -141,7 +141,7 @@ class EventManager implements EventManagerInterface
         $config = $this->getWorkbench()->getConfig();
         $listeners = $config->getOption('EVENTS.STATIC_LISTENERS')->toArray();
         
-        if ($listeners[$eventName] === null || ($prio = array_search($listener_callable, $listeners[$eventName])) === false) {
+        if ($listeners[$eventName] === null || ($prio = array_search($listener_callable, $listeners[$eventName], true)) === false) {
             return $this;
         }
         

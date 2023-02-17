@@ -2335,7 +2335,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     protected function getFullAlias($short_alias)
     {
-        $full_alias = array_search($short_alias, $this->short_aliases);
+        $full_alias = array_search($short_alias, $this->short_aliases, true);
         if ($full_alias === false) {
             $full_alias = $short_alias;
         }

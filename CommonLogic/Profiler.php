@@ -202,7 +202,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     protected function getLapId($subject) : int
     {
-        $lapId = array_search($subject, $this->lapIds);
+        $lapId = array_search($subject, $this->lapIds, true);
         if ($lapId === false) {
             $this->lapIds[] = $subject;
             $lapId = count($this->lapIds) - 1;
