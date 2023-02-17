@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * A query builder for Oracle SQL. 
@@ -470,7 +471,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         switch (true) {
-            case $data_type instanceof DateDataType:
+            case $data_type instanceof DateTimeDataType:
             case $data_type instanceof TimestampDataType:
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
@@ -479,6 +480,13 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
+                }
+                break;
+            case $data_type instanceof DateDataType:
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd')";
                 }
                 break;
             default: 
