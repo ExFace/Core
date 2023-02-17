@@ -7,7 +7,6 @@ use Psr\SimpleCache\CacheInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfBoundsException;
-use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
