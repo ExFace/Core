@@ -111,7 +111,7 @@ class PivotColumnGroup implements PivotColumnGroupInterface
      */
     public function getColumnIndex(DataColumnInterface $col) : int
     {
-        $idx = array_search($col, $this->valuesCols);
+        $idx = array_search($col, $this->valuesCols, true);
         if ($idx === false) {
             throw new UnexpectedValueException('Pivot values column "' . $col->getName() . '" not found!');
         }

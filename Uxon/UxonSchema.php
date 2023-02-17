@@ -574,7 +574,7 @@ class UxonSchema implements UxonSchemaInterface
         // Now insert forward relations _before_ the corresponding attribute: relation attributes rarely
         // get used directly, but rather as parts of a relation path.
         foreach ($value_relations as $val) {
-            $idx = array_search(rtrim($val, RelationPath::RELATION_SEPARATOR), $values);
+            $idx = array_search(rtrim($val, RelationPath::RELATION_SEPARATOR), $values, true);
             if ($idx !== false) {
                 array_splice($values, $idx, 0, [$val]);
             } else {

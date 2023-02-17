@@ -188,7 +188,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function search($value)
     {
-        return array_search($value, $this->array);
+        return array_search($value, $this->array, true);
     }
 
     /**
