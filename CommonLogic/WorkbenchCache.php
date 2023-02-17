@@ -85,19 +85,19 @@ class WorkbenchCache implements WorkbenchCacheInterface
      */
     public function clear()
     {
-        // Clear main cache pool
-        try {
-            $ok = $this->mainPool->clear();
-            foreach ($this->pools as $pool)
-            {
-                $ok = $pool->clear();
+        $ok = true;
+        
+        // Clear APCU cache if it is enabled
+        if ($this->workbench->getConfig()->getOption('CACHE.USE_APCU') === true) {
+            try {
+                $ok = apcu_clear_cache() === false ? false : $ok;
+            } catch (\Throwable $e){
+                $ok = false;
+                $this->workbench->getLogger()->logException($e);
             }
-        } catch (\Throwable $e) {
-            $ok = false;
-            $this->workbench->getLogger()->logException($e);
         }
         
-        // Empty cache dir
+        // Empty cache dir in any case
         try {
             $filemanager = $this->workbench->filemanager();
             $filemanager::emptyDir($filemanager->getPathToCacheFolder());
@@ -105,6 +105,18 @@ class WorkbenchCache implements WorkbenchCacheInterface
             $ok = false;
             $this->workbench->getLogger()->logException($e);
         }
+        
+        // Clear cache pools currently being used
+        try {
+            $ok = $this->mainPool->clear() === false ? false : $ok;
+            foreach ($this->pools as $pool) {
+                $ok = $pool->clear() === false ? false : $ok;
+            }
+        } catch (\Throwable $e) {
+            $ok = false;
+            $this->workbench->getLogger()->logException($e);
+        }
+        
         
         return $ok;
     }
