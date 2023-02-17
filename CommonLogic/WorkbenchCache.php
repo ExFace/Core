@@ -11,6 +11,7 @@ use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\Cache\Adapter\ApcuAdapter;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
@@ -155,10 +156,17 @@ class WorkbenchCache implements WorkbenchCacheInterface
      */
     public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null, bool $psr16 = true)
     {
-        if ($workbench->getConfig()->getOption('CACHE.ENABLED') === false) {
-            $psr6Cache = new ArrayAdapter();
-        } else {
-            $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
+        $config = $workbench->getConfig();
+        switch (true) {
+            case $config->getOption('CACHE.ENABLED') === false:
+                $psr6Cache = new ArrayAdapter();
+                break;
+            case $config->getOption('CACHE.USE_APCU') === true:
+                $psr6Cache = new ApcuAdapter($name ?? '_workbench', 0);
+                break;
+            default:
+                $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
+                break;
         }
         if ($psr16) {
             return new Psr16Cache($psr6Cache);
