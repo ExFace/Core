@@ -40,6 +40,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1046,7 +1047,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof NumberDataType:
                 $value = $data_type::isValueEmpty($value) === true ? 'NULL' : $value;
                 break;
-            case $data_type instanceof DateDataType:
+            case $data_type instanceof DateTimeDataType:
             case $data_type instanceof TimeDataType:
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
@@ -1054,6 +1055,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if (null !== $tz = $this->getTimeZone()) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
+                    $value = "'" . $this->escapeString($value) . "'";
+                }
+                break;
+            case $data_type instanceof DateDataType:
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
                     $value = "'" . $this->escapeString($value) . "'";
                 }
                 break;
