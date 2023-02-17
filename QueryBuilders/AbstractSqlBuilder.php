@@ -2002,6 +2002,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
                         default:
                             $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')';
+                            $valueIsSQL = true;
                             if (! empty($valueNullChecks)) {
                                 if ($comparator === ComparatorDataType::IN) {
                                     $value .= ' OR ' . implode(' OR ', $valueNullChecks);
@@ -2342,7 +2343,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     protected function getFullAlias($short_alias)
     {
-        $full_alias = array_search($short_alias, $this->short_aliases);
+        $full_alias = array_search($short_alias, $this->short_aliases, true);
         if ($full_alias === false) {
             $full_alias = $short_alias;
         }
