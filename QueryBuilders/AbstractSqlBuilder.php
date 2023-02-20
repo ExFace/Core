@@ -2081,6 +2081,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
                 return EXF_LOGICAL_NULL;
+            case $data_type instanceof JsonDataType:
+                $output =  "'" . $this->escapeString($value) . "'";
+                break;
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
