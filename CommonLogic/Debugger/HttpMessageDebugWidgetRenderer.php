@@ -19,6 +19,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
 {
+    const MAX_BODY_PRINT_SIZE = 1024*1024; // 1 mb in bytes
+    
+    const MAX_PARAM_PRINT_SIZE = 1024*10; // 10 kb in bytes 
+    
     private $request = null;
     
     private $requestTabCaption = null;
@@ -27,6 +31,13 @@ class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
     
     private $responseTabCaption = null;
     
+    /**
+     * 
+     * @param RequestInterface $psr7Request
+     * @param ResponseInterface $psr7Response
+     * @param string $requestTabCaption
+     * @param string $responseTabCaption
+     */
     public function __construct(RequestInterface $psr7Request, ResponseInterface $psr7Response = null, string $requestTabCaption = null, string $responseTabCaption = null)
     {
         $this->request = $psr7Request;
@@ -35,6 +46,11 @@ class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
         $this->responseTabCaption = $responseTabCaption;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $page = $debug_widget->getPage();
@@ -214,9 +230,6 @@ return $debug_widget;
             $bodySize = $message->getBody()->getSize();
             if ($bodySize === null || $bodySize === 0) {
                 return 'Message body is empty.';
-            }
-            if ($bodySize > 1048576) {
-                return 'Message body is too big to display.';
             } 
             
             $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
@@ -235,7 +248,18 @@ return $debug_widget;
 MD;
                     break;
                 case stripos($contentType, 'json') !== false:
-                    $prettified = JsonDataType::prettify($message->getBody()->__toString());
+                    $json = $message->getBody()->__toString();
+                    if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
+                        $jsonArray = JsonDataType::decodeJson($json);
+                        array_walk_recursive($jsonArray, function($val, $key){
+                            if (is_string($val) && mb_strlen($val) > self::MAX_PARAM_PRINT_SIZE) {
+                                return $this->prettifyTruncateValue($val);
+                            }
+                        });
+                        $prettified = JsonDataType::prettify($jsonArray);
+                    } else {
+                        $prettified = JsonDataType::prettify($json);
+                    }
                     $messageBody = <<<MD
                             
 ```json
@@ -244,6 +268,9 @@ MD;
 MD;
                     break;
                 case stripos($contentType, 'xml') !== false:
+                    if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
+                        return 'XML message body is too big to display: ' . $this->prettifySize($bodySize);
+                    }
                     $domxml = new \DOMDocument();
                     $domxml->preserveWhiteSpace = false;
                     $domxml->formatOutput = true;
@@ -256,6 +283,9 @@ MD;
 MD;
                     break;
                 case stripos($contentType, 'html') !== false:
+                    if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
+                        return 'HTML message body is too big to display: ' . $this->prettifySize($bodySize);
+                    }
                     $prettified = HtmlDataType::prettify($message->getBody()->__toString());
                     $messageBody = <<<MD
                             
@@ -294,9 +324,41 @@ MD;
         $params = explode('&', $urlencoded);
         $prettified = '';
         foreach ($params as $param) {
+            if (is_string($param)) {
+                if (mb_strlen($param) > self::MAX_PARAM_PRINT_SIZE) {
+                    $param = $this->prettifyTruncateValue($param);  
+                }
+            }
             $prettified .= ($prettified ? "\n&" : '') . urldecode($param);
         }
         return $prettified;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return string
+     */
+    protected function prettifyTruncateValue(string $value, int $length = 100) : string
+    {
+        return mb_substr($value, 0, $length) . '... (truncated value of ' . $this->prettifySize(mb_strlen($value)) . ')';
+    }
+    
+    /**
+     * 
+     * @param int $bytes
+     * @return string
+     */
+    protected function prettifySize(int $bytes) : string
+    {
+        switch (true) {
+            case $bytes > 1024 * 1024:
+                return round($bytes / 1024 / 1024, 1) . ' mb';
+            case $bytes > 1024:
+                return round($bytes / 1024, 1) . ' kb';
+            default:
+                return $bytes . ' b';
+        }
     }
     
     /**
