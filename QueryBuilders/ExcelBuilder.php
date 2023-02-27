@@ -17,6 +17,9 @@ use \PhpOffice\PhpSpreadsheet\Shared\Date;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\DataQueries\DataSourceFileInfo;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\InternalError;
+use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 
 /**
  * A query builder to access Excel files (or similar spreadsheets).
@@ -243,6 +246,9 @@ class ExcelBuilder extends FileContentsBuilder
                 try {
                     $parsed = $dataType::formatDateNormalized(Date::excelToDateTimeObject($value));
                 } catch (\Throwable $e) {
+                    if (! ($e instanceof ExceptionInterface)) {
+                        $e = new DataQueryFailedError($this, $e->getMessage(), null, $e);
+                    }
                     if ($nullOnError === true) {
                         $parsed = null;
                         $this->getWorkbench()->getLogger()->warning('Cannot parse excel value "' . $value . '" as date/time: ' . $e->getMessage(), [], $e);
