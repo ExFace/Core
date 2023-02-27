@@ -368,19 +368,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     const OPERATION_WRITE = 'write';
     
     // Config
-    private $reserved_words = array(
-        'SIZE',
-        'SELECT',
-        'FROM',
-        'AS',
-        'PARENT',
-        'ID',
-        'LEVEL',
-        'ORDER',
-        'GROUP',
-        'BINARY',
-        'OPTION'
-    );
+    
+    // Reserved (forbidden) words in SQL in general
+    // @see https://en.wikipedia.org/wiki/List_of_SQL_reserved_words
+    private $reserved_words = ['ALL', 'AS', 'CHECK', 'COLUMN', 'CREATE', 'DEFAULT', 'DISTINCT', 'ELSE', 'FOR', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IN', 'INTO', 'IS', 'LIKE', 'NOT', 'NULL', 'ON', 'OR', 'ORDER', 'SELECT', 'TABLE', 'THEN', 'TO', 'UNION', 'UNIQUE', 'WHERE', 'WITH'];
     
     // Aliases
     private $short_alias_remove_chars = array(
@@ -2326,7 +2317,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         if (isset($this->short_aliases[$full_alias])) {
             $short_alias = $this->short_aliases[$full_alias];
-        } elseif (strlen($full_alias) <= $this->getShortAliasMaxLength() && $this->getCleanAlias($full_alias) == $full_alias && ! in_array($full_alias, $this->getReservedWords())) {
+        } elseif (strlen($full_alias) <= $this->getShortAliasMaxLength() && $this->getCleanAlias($full_alias) == $full_alias && false === in_array(mb_strtoupper($full_alias), $this->getReservedWords())) {
             $short_alias = $full_alias;
         } else {
             $this->short_alias_index ++;
@@ -2337,14 +2328,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $short_alias;
     }
     
-    protected function getCleanAlias($alias)
+    /**
+     * 
+     * @param string $alias
+     * @return string
+     */
+    protected function getCleanAlias(string $alias) : string
     {
         $output = '';
         $output = str_replace($this->getShortAliasForbiddenChars(), '_', $alias);
         return $output;
     }
     
-    protected function getFullAlias($short_alias)
+    /**
+     * 
+     * @param string $short_alias
+     * @return string
+     */
+    protected function getFullAlias(string $short_alias) : string
     {
         $full_alias = array_search($short_alias, $this->short_aliases, true);
         if ($full_alias === false) {
