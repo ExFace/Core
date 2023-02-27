@@ -140,9 +140,9 @@ This will install the latest stable version and a typical minimum set of extras 
     "axenox/packagemanager": "dev-1.x-dev as 1.99",
     "exface/urldataconnector": "dev-1.x-dev as 1.99",
     "exface/jeasyuifacade": "dev-1.x-dev as 1.99",
-    "bower-asset/jeasyui": "1.4.3"
+    "bower-asset/jeasyui": "1.4.3",
     "exface/sapconnector": "dev-1.x-dev as 1.99",
-    "exface/ui5facade": "dev-1.x-dev as 1.99",
+    "exface/ui5facade": "dev-1.x-dev as 1.99"
   },
   "repositories": [
     {
