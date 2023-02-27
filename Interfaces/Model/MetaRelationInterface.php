@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
