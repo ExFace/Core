@@ -31,7 +31,7 @@ abstract class EntityListFactory extends AbstractUxonFactory
      * @param string $factory_class_name            
      * @return EntityList
      */
-    public static function createWithEntityFactory(Workbench $exface, $parent_object = null, $factory_class_name)
+    public static function createWithEntityFactory(Workbench $exface, $parent_object = null, $factory_class_name = null)
     {
         $result = static::createEmpty($exface, $parent_object);
         if ($factory_class_name) {
