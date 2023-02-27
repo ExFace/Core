@@ -65,7 +65,7 @@ class Relation implements MetaRelationInterface
         RelationCardinalityDataType $cardinality,
         string $uid,
         string $alias,
-        string $aliasModifier = '',
+        string $aliasModifier,
         MetaObjectInterface $leftObject,
         MetaAttributeInterface $leftKeyAttribute,
         string $rightObjectUid,

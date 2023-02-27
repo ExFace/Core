@@ -35,31 +35,7 @@ use exface\Core\Interfaces\iCanBeCopied;
  *
  */
 interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopied
-{
-    /**
-     * 
-     * @param Workbench $workbench
-     * @param RelationCardinalityDataType $cardinality
-     * @param string $uid
-     * @param string $alias
-     * @param string $aliasModifier
-     * @param string $name
-     * @param MetaObjectInterface $leftObject
-     * @param MetaAttributeInterface $leftKeyAttribute
-     * @param string $rightObjectUid
-     * @param string $rightObjectKeyAttributeUid
-     */
-    public function __construct(
-        Workbench $workbench, 
-        RelationCardinalityDataType $cardinality, 
-        string $uid, 
-        string $alias, 
-        string $aliasModifier = '', 
-        MetaObjectInterface $leftObject, 
-        MetaAttributeInterface $leftKeyAttribute, 
-        string $rightObjectUid, 
-        string $rightObjectKeyAttributeUid = null);
-    
+{    
     /**
      * Returns the unique id of the attribute, where the relation is defined.
      * 

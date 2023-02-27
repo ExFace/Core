@@ -442,7 +442,7 @@ class SqlModelLoader implements ModelLoaderInterface
                             $cardinality,
                             $row['oid'], // relation id
                             $row['rev_relation_alias'], // relation alias
-                            $row['attribute_alias'], // relation modifier: the alias of the right key attribute
+                            $row['attribute_alias'] ?? '', // relation modifier: the alias of the right key attribute
                             $object, // left object
                             $leftKeyAttr, // left key in the main object
                             $row['object_oid'], // right object UID
