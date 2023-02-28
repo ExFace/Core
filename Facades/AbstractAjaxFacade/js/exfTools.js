@@ -221,6 +221,8 @@
 				var sTime = undefined;
 				var oMoment = null;
 				var iYYYY, iMM, iDD;
+				var sHH, sMM, sSS;
+				var aTime;
 				var sDiffKey, sDiffExp, iDiffNumber;
 				
 				if (sDate === '' || sDate === null) {
@@ -235,11 +237,20 @@
 				}
 
 				// hh:mm:ss , Thh:mm:ss
-				if (!bParsed && (oMatches = /[T ](\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
+				if (!bParsed && (oMatches = /(\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
 					sTime = oMatches[1];
 				} else if (!bParsed && (oMatches = / (\d{2}:\d{2})/.exec(sDate)) != null) {
 				// hh:mm
 					sTime = oMatches[1];
+				}
+				if (sTime != undefined) {					
+					aTime = sTime.split(':');
+					sHH = aTime[0];
+					sMM = aTime[1];
+					sSS = aTime[2] !== undefined ? aTime[2] : '00';
+					sTime = 'T' + sHH + ':' + sMM + ':' + sSS;
+				} else {
+					sTime = 'T12:00:00';
 				}
 				
 				// dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
@@ -309,7 +320,16 @@
 				
 				// Ausgabe des geparsten Wertes
 				if (bParsed && bValid) {
-					return new Date(iYYYY + '-' + iMM + '-' + iDD + (sTime !== undefined ? ' ' + sTime : ''));
+					var sMM = iMM.toString();
+					if (sMM.length < 2) {
+						sMM = '0' + sMM;
+					}
+					var sDD = iDD.toString();
+					if (sDD.length < 2) {
+						sDD = '0' + sDD;
+					}
+					var sYYYY = iYYYY.toString();
+					return new Date(sYYYY + '-' + sMM + '-' + sDD + sTime);
 				}
 				// check for +/-?, digit?, expession in _mDateParseDefaultParams.lang?
 				oMatches = (new RegExp("^([+\-]?\\d{0,3})(" + _buildRegexString(oParserParams) + ")$", "i")).exec(sDate);
