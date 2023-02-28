@@ -6,8 +6,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
-use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -930,6 +928,7 @@ class MetaModelInstaller extends AbstractAppInstaller
                     $configUxon->setProperty('filter_context', $contextUxon);
                     $configCol->setValue($rowIdx, $configUxon->toJson());
                 }
+                $sheet->getColumns()->remove($contextCol);
             }
         }
         
