@@ -428,6 +428,21 @@ class DebugContext extends AbstractContext
                     'action_alias' => 'exface.Core.ClearCache'
                 ], [
                     'action_alias' => 'exface.Core.CleanUp'
+                ], [
+                    'caption' => 'JS Debugger',
+                    'action' => [
+                        'alias' => 'exface.Core.CustomFacadeScript',
+                        'script' => <<<JS
+(function () { 
+    var script = document.createElement('script'); 
+    script.src="vendor/npm-asset/eruda/eruda.js"; 
+    document.body.appendChild(script); 
+    script.onload = function () { 
+        eruda.init() 
+    } 
+})();
+JS
+                    ]
                 ]
             ]
         ]));
