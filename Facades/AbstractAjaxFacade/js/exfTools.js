@@ -321,14 +321,11 @@
 				// Ausgabe des geparsten Wertes
 				if (bParsed && bValid) {
 					var sMM = iMM.toString();
-					if (sMM.length < 2) {
-						sMM = '0' + sMM;
-					}
 					var sDD = iDD.toString();
-					if (sDD.length < 2) {
-						sDD = '0' + sDD;
-					}
 					var sYYYY = iYYYY.toString();
+					sMM = sMM.padStart(2, '0');
+					sDD = sDD.padStart(2, '0');
+					sYYYY = sYYYY.padStart(4, '0');
 					return new Date(sYYYY + '-' + sMM + '-' + sDD + sTime);
 				}
 				// check for +/-?, digit?, expession in _mDateParseDefaultParams.lang?
@@ -447,6 +444,8 @@
 		     * Examples:
 		     * - "11:00" -> 11:00:00
 		     * - "1100" -> 11:00:00
+			 * - "11" -> 11:00:00
+			 * - "1" -> 01:00:00
 		     * - "+1" -> current time + 1 hour
 		     * - "asdf" -> null
 		     * 
@@ -465,7 +464,7 @@
 		        var oMoment = null;
 		        var iMsPos, iMs;
 		        var iHH, iMM, iSS, sAmPm;
-		            
+
 		        if (sTime === '' || sTime === null || sTime == undefined) {
 					return null;
 				}
@@ -489,7 +488,11 @@
 					}
 				}
 		        
-		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
+				// HH, h
+				if (sTime.length <= 2 && sTime.match(/^\d+$/gm) && parseInt(sTime) < 24) {
+					return sTime.padStart(2, '0') + ':00:00';
+				}
+		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm, HHmmss, HHmm
 		        if (!bTimeParsed && (aMatches = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
 		        	iHH = Number(aMatches[1]);
 		            iMM = Number(aMatches[2]);
@@ -525,6 +528,7 @@
 		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
+					
 		            bTimeParsed = true;
 		            bTimeValid = true;
 		        }
