@@ -262,13 +262,13 @@ class SessionContextScope extends AbstractContextScope
         }
         
         $cookieName = $this->sessionGetName();
-        session_name($cookieName);
         $sessionId = $this->getSessionId();
         $log .= 'Cached id is "' . $sessionId . '"' . PHP_EOL;
         $sessionStartedPreviously = ($sessionId !== null);
         $started = null;
         
         if ($sessionStartedPreviously === false) {
+            session_name($cookieName);
             $cookieHandling = $this->isCookieHandlingEnabled();
             $log .= 'Cookie handler is ' . ($cookieHandling ? 'ON' : 'OFF') . PHP_EOL;
             
