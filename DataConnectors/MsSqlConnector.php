@@ -66,12 +66,13 @@ use exface\Core\CommonLogic\UxonObject;
  * IIS application pools. The configuration of the pool seems not important, but in the settings of the
  * virtual folder, you need to specify the user and password:
  * 
- * 1. Open IIS Manager
- * 2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
- * 3. Right click on `Default Web Site` and select `Add Virtual Directory`
- * 4. Fill out the form and press `Connect as...`
- * 5. Select `Specific user` and press `Set...` right next to it
- * 6. Type the user name with domain like `MYDOMAIN\User name` and that users current password
+ *  1. Open IIS Manager
+ *  2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+ *  3. Find the virtual directory, where the workbencnh is installed, beneath the selected web site
+ *  4. Select the virtual directory and press `Basic settings` on the right panel
+ *  5. Press `Connect as...`
+ *  6. Select `Specific user` and press `Set...` right next to it
+ *  7. Type the user name with domain like `MYDOMAIN\User name` and that users current password
  * 
  * The workbench must be installed within the folder above. If you need to change the password, select your
  * created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
