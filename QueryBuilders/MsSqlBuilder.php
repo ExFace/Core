@@ -420,17 +420,17 @@ class MsSqlBuilder extends AbstractSqlBuilder
     {
         $rows = parent::getReadResultRows($query);
         foreach ($this->getAttributes() as $qpart) {
-            $shortAlias = $this->getShortAlias($qpart->getColumnKey());
+            $colKey = $qpart->getColumnKey();
             $type = $qpart->getDataType();
             switch (true) {
                 case $type instanceof DateTimeDataType:
                 case $type instanceof DateDataType:
                     foreach ($rows as $nr => $row) {
-                        $val = $row[$shortAlias];
+                        $val = $row[$colKey];
                         if ($val instanceof \DateTime) {
                             $val = $type::formatDateNormalized($val);
+                            $rows[$nr][$qpart->getColumnKey()] = $val;
                         }
-                        $rows[$nr][$qpart->getColumnKey()] = $val;
                     }
                     break;
             }
