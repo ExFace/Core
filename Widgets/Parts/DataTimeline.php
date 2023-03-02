@@ -57,7 +57,7 @@ class DataTimeline implements WidgetPartInterface
      * Initial zoom level: hours, days, weeks or months
      * 
      * @uxon-property granularity
-     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months]
+     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months,years]
      * @uxon-default hour
      * 
      * @param string $value
