@@ -483,7 +483,6 @@ JS;
             return mValue;
         },
         validateAll: function() {
-            console.log('Validate all');
             var aData = this.getJExcel().getData() || [];
             var iDataCnt = aData.length;
             var oWidget = this;
