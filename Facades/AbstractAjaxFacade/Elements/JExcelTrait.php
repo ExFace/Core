@@ -424,7 +424,7 @@ JS;
             if (mInitVal === undefined || mInitVal === null) {
                 mInitVal = '';
             } else {
-                mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
+                //mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
             }
 
             return mInitVal.toString() != mValue.toString();
@@ -455,8 +455,15 @@ JS;
             }
             return fnValidator(mValue);
         },
-        validateCell: function (cell, iCol, iRow, mValue) {
-            var mValidationResult = this.validateValue(iCol, iRow, mValue);
+        validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
+            var mValidationResult;
+            var oCol;
+            bParseValue = bParseValue === undefined ? false : true;
+            if (bParseValue === true) {
+                oCol = this.getColumnModel(iCol);
+                mValue = oCol.parser ? oCol.parser(mValue) : mValue;
+            }
+            mValidationResult = this.validateValue(iCol, iRow, mValue);
 
             if (this.hasChanged(iCol, iRow, mValue)) {
                 $(cell).addClass('exf-spreadsheet-change');
@@ -476,17 +483,28 @@ JS;
             return mValue;
         },
         validateAll: function() {
+            console.log('Validate all');
             var aData = this.getJExcel().getData() || [];
             var iDataCnt = aData.length;
             var oWidget = this;
+            
             aData.forEach(function(aRow, iRowIdx) {
-                if (iRowIdx >= (iDataCnt - {$this->getMinSpareRows()})) {
-                    return;
-                }
+                var bRowEmpty = true;
+                var aCells = [];
                 aRow.forEach(function(mValue, iColIdx) {
+                    var mValidated;                    
                     var oCell = oWidget.getJExcel().getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1));
-                    oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue);
+                    aCells.push(oCell);
+                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
+                    if (mValidated !== '' && mValidated !== null && mValidated !== undefined) {
+                        bRowEmpty = false;
+                    }                   
                 });
+                if (bRowEmpty === true) {
+                    aCells.forEach(function(oCell) {
+                        $(oCell).removeClass('exf-spreadsheet-invalid');
+                    });
+                }
             });
         },
         refreshConditionalProperties: function() {
