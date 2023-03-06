@@ -1552,4 +1552,20 @@ JS;
             }
         }
     }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsValidator() : string
+    {
+        return <<<JS
+
+(function(jqExcel) {
+    jqExcel[0].exfWidget.validateAll();
+    return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
+})({$this->buildJsJqueryElement()})
+        
+JS;
+    }
 }
