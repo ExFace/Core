@@ -240,13 +240,13 @@ class TranslatableBehavior extends AbstractBehavior
         
         $editorUxon = $event->getDefaultEditorUxon();
         if (strcasecmp($editorUxon->getProperty('widget_type'), 'Dialog') !== 0) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
+            throw new BehaviorRuntimeError($this, 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
         }
         
         if ($this->isTranslationAppDeterminedByRelation()) {
             $appRel = $this->getRelationToTranslationApp();
             if (! ($appRel->getRightObject()->isExactly('exface.Core.APP') && $appRel->isForwardRelation())) {
-                throw new BehaviorConfigurationError($this->getObject(), 'Invalid `translation_app_determined_by_relation` specified in translatable dehavior of ' . $this->getObject()->getAliasWithNamespace() . ': the relation MUST point to the exface.Core.APP!');
+                throw new BehaviorConfigurationError($this, 'Invalid `translation_app_determined_by_relation` specified in translatable dehavior of ' . $this->getObject()->getAliasWithNamespace() . ': the relation MUST point to the exface.Core.APP!');
             }
             $appRelAlias = $appRel->getAlias();
         }
@@ -708,7 +708,7 @@ class TranslatableBehavior extends AbstractBehavior
         $lang = StringDataType::substringAfter($filename, '.', $filename, false, true);
         
         if (! $dataKey || ! $subfolder) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Invalid translation file name: "' . $path . '"!');
+            throw new BehaviorRuntimeError($this, 'Invalid translation file name: "' . $path . '"!');
         }
         
         $behavior = $this->findBehavior($subfolder);
@@ -825,7 +825,7 @@ class TranslatableBehavior extends AbstractBehavior
         $dataType = $attribute->getDataType();
         
         if (! $dataType instanceof UxonDataType) {
-            throw new BehaviorRuntimeError($attribute->getObject(), 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
+            throw new BehaviorRuntimeError($this, 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
         }
         
         $schemaName = $dataType->getSchema();
@@ -878,7 +878,7 @@ class TranslatableBehavior extends AbstractBehavior
         $relPath = $transRel->getRelationPath();
         
         if (! $relPath->getRelationFirst()->isReverseRelation()) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
+            throw new BehaviorRuntimeError($this, 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
         }
         
         $ds = DataSheetFactory::createFromObject($transRel->getRelationPath()->getEndObject());
@@ -916,10 +916,10 @@ class TranslatableBehavior extends AbstractBehavior
         $ds->dataRead();
         
         if ($ds->countRows() === 0) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
+            throw new BehaviorRuntimeError($this, 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
         }
         if ($ds->countRows() > 1) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Multiple translatable behaviors found for subfolder "' . $subfolder . '"!');
+            throw new BehaviorRuntimeError($this, 'Multiple translatable behaviors found for subfolder "' . $subfolder . '"!');
         }
         
         $obj = $this->getWorkbench()->model()->getObjectById($ds->getCellValue('OBJECT__UID', 0));
@@ -929,7 +929,7 @@ class TranslatableBehavior extends AbstractBehavior
             }
         }
         
-        throw new BehaviorRuntimeError($this->getObject(), 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
+        throw new BehaviorRuntimeError($this, 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
     }
     
     /**

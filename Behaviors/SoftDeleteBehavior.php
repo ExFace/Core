@@ -171,7 +171,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         if ($this->getObject()->hasAttribute($value) === true){
             $this->soft_delete_attribute_alias = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
+            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
         }
         return $this;
     }
@@ -185,7 +185,7 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         try {
             return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
         } catch (MetaAttributeNotFoundError $e) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
+            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
         }
     }
     

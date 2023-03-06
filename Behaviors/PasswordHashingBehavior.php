@@ -103,7 +103,7 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
             $type = $column->getDataType();
             if (! ($type instanceof PasswordDataType)) {
-                throw new BehaviorConfigurationError($this->getObject(), 'Cannot use PasswordHashingBehavior on attribute "' . $this->getPasswordAttributeAlias() . '": the attribute MUST have the data type "exface.Core.PasswordHash"!');
+                throw new BehaviorConfigurationError($this, 'Cannot use PasswordHashingBehavior on attribute "' . $this->getPasswordAttributeAlias() . '": the attribute MUST have the data type "exface.Core.PasswordHash"!');
             }
             foreach ($column->getValues(false) as $rowNr => $value) {
                 if ($type::isHash($value) === false && ! $type->isValueEmpty($value)) {

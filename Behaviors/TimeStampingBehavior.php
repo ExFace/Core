@@ -267,7 +267,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getCreatedOnAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedOnAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getCreatedOnAttributeAlias());
     }
@@ -289,7 +289,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getUpdatedOnAttribute() : ?MetaAttributeInterface
     {
         if (! $this->hasUpdatedOnAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getUpdatedOnAttributeAlias());
     }
@@ -534,7 +534,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                                 continue;
                             } else {
                                 // Very strange - should not happen :)
-                                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
+                                throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
                             }
                         }
                         
@@ -559,7 +559,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                             // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                             // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
                             // ausgegeben werden.
-                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
+                            throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
                         }
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
@@ -574,7 +574,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                     break;
                 // In all other cases throw an error - this should not happen actually, but just in case!
                 default:
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
+                    throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
             }
         }
         
@@ -675,7 +675,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getCreatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedByAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getCreatedByAttributeAlias());
     }
@@ -724,7 +724,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getUpdatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasUpdatedByAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getUpdatedByAttributeAlias());
     }

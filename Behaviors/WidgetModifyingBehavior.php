@@ -78,7 +78,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
         
         if ($this->addButtonsUxon !== null) {
             if (! $widget instanceof iHaveButtons) {
-                throw new BehaviorRuntimeError($this->getObject(), 'Cannot add buttons to widget ' . $widget->getId() . ' of page ' . $page->getAliasWithNamespace() . ': widget does not have buttons!');
+                throw new BehaviorRuntimeError($this, 'Cannot add buttons to widget ' . $widget->getId() . ' of page ' . $page->getAliasWithNamespace() . ': widget does not have buttons!');
             }
             foreach ($this->addButtonsUxon as $btnUxon) {
                 $widget->addButton($widget->createButton($btnUxon));

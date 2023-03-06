@@ -300,7 +300,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction) : DataSheetInterface
     {
         if (! $eventSheet->getMetaObject()->hasUidAttribute())  {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!');
+            throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!');
         }
         
         //copy the dataSheet and empty it
@@ -324,7 +324,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE);
             if (! empty($matches)) {
                 if (count($matches) > 1) {
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!');
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!');
                 }
                 $match = $matches[0] ?? null;
                 if($match->hasUid()) {
@@ -342,7 +342,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $updateSheet->addRow($row);
                     $rowsToRemove[] = $duplRowNo;
                 } else {
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!');
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!');
                 }
             }
             
@@ -419,7 +419,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         if (empty($missingAttrs) === false) {
             if ($eventSheet->hasUidColumn(true) === false) {
-                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
+                throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
             } 
             
             $eventRows = $eventSheet->getRows();
@@ -487,7 +487,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
                 if (! array_key_exists($col->getName(), $row)) {
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!');
+                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!');
                 }
                 $value = $row[$col->getName()];
                 
@@ -499,7 +499,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $eventSheet, // $dataSheet
                         null, // $message - empty to make exception autogenerate one
                         null, // $alias
-                        (new BehaviorRuntimeError($this->getObject(), 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!')), // $previous
+                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!')), // $previous
                         $col, // $column
                         $col->findEmptyRows() // $rowNumbers
                     );
@@ -605,7 +605,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     protected function getCompareAttributeAliases() : array
     {
         if (empty($this->compareAttributeAliases)) {
-            throw new BehaviorConfigurationError($this->getObject(), "No attributes were set in '{$this->getAlias()}' of the object '{$this->getObject()->getAlias()}' to determine if a dataset is a duplicate or not! Set atleast one attribute via the 'compare_attributes' uxon property!");
+            throw new BehaviorConfigurationError($this, "No attributes were set in '{$this->getAlias()}' of the object '{$this->getObject()->getAlias()}' to determine if a dataset is a duplicate or not! Set atleast one attribute via the 'compare_attributes' uxon property!");
         }
         return $this->compareAttributeAliases;
     }
@@ -663,7 +663,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (defined(__CLASS__ . '::ON_DUPLICATE_' . $value)) {
             $this->onDuplicateMultiRow = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
+            throw new BehaviorConfigurationError($this, 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
         }
         return $this;
     }
@@ -699,7 +699,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         if (defined(__CLASS__ . '::ON_DUPLICATE_' . $value)) {
             $this->onDuplicateSingleRow = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
+            throw new BehaviorConfigurationError($this, 'Invalid behavior on duplicates "' . $value . '". Only ERROR, IGNORE and UPDATE are allowed!', '6TA2Y6A');
         }
         return $this;
     }

@@ -218,7 +218,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
         if ($srcCol = $dataSheet->getColumns()->getByAttribute($this->getSourceAttribute())) {
             $srcValues = $srcCol->getValues();
         } else {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+            throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
         }
         
         // If namepacing is no, see where the namespaces had changed
@@ -229,7 +229,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
                 // If the namespace is taken from a direct attribute, check if that attribute changed
                 $nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr);
                 if (! $nsCol || $nsCol->hasEmptyValues()) {
-                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
+                    throw new BehaviorRuntimeError($this, $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
                 }
                 $nsValues = $nsCol->getValues(false);
                 if ($event instanceof OnBeforeUpdateDataEvent) {
@@ -270,7 +270,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
             // Now as we know, we will probably need to generating, double check if there is a source
             // value to generate from
             if ($srcVal === null || $srcVal === '') {    
-                throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+                throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
             }
             
             // If namespacing is on, get the current namespace and check if it has changed
@@ -323,7 +323,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
         $nsRelLeftKeyAttr = $nsRelPath->getRelationFirst()->getLeftKeyAttribute();
         $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsRelLeftKeyAttr);
         if (! $nsRelLeftCol) {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace key column "' . $nsRelLeftKeyAttr->getAliasWithRelationPath() . '"!');
+            throw new BehaviorRuntimeError($this, $this->getErrorText() . ': missing values in input data for namespace key column "' . $nsRelLeftKeyAttr->getAliasWithRelationPath() . '"!');
         }
         
         $nsRelLeftKeyVal = $nsRelLeftCol->getCellValue($rowNo);
