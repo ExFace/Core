@@ -471,8 +471,11 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public function addValues($attribute_alias, array $values, array $uids_for_values = [])
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
+        if (empty ($values)) {
+            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update operation");
+        }
         if (! empty($uids_for_values) && count($values) !== count($uids_for_values)) {
-            throw new QueryBuilderException('Invalid values passed for an update operation');
+            throw new QueryBuilderException("Invalid values passed for attribute \"{$attribute_alias}\" for an update operation");
         }
         $qpart->setValues($values);
         $qpart->setUids($uids_for_values);
