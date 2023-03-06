@@ -300,15 +300,17 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        $ignore = true;
-        foreach ($this->getOnlyIfAttributesChange() as $attrAlias) {
-            if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
-                $ignore = false;
-                break;
+        if (! empty($this->getOnlyIfAttributesChange())) {
+            $ignore = true;
+            foreach ($this->getOnlyIfAttributesChange() as $attrAlias) {
+                if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
+                    $ignore = false;
+                    break;
+                }
             }
-        }
-        if ($ignore === true) {
-            $this->ignoreDataSheets[] = $event->getDataSheet();
+            if ($ignore === true) {
+                $this->ignoreDataSheets[] = $event->getDataSheet();
+            }
         }
     }
     
