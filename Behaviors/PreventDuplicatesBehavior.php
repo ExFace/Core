@@ -446,22 +446,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         $matcher = new MultiMatcher($mainSheet);
         
+        // Extrat rows from event data, that are relevant for duplicate search
+        if ($this->hasCustomConditions()) {
+            $customConditionsFilters = ConditionGroupFactory::createForDataSheet($mainSheet, $this->getCompareWithConditions()->getOperator());
+            foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
+                if ($mainSheet->getColumns()->getByExpression($cond->getExpression())) {
+                    $customConditionsFilters->addCondition($cond);
+                }
+            }
+            $mainSheet = $mainSheet->extract($customConditionsFilters);
+        }
+        
         // See if there are duplicates within the current set of data
         if ($mainSheet->countRows() > 1) {
-            if ($this->hasCustomConditions()) {
-                $selfCheckSheet = DataSheetFactory::createFromObject($eventSheet->getMetaObject());
-                $selfCheckSheet->addRows($mainSheet->getRows());
-                $selfCheckFilters = ConditionGroupFactory::createForDataSheet($selfCheckSheet, $this->getCompareWithConditions()->getOperator());
-                foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
-                    if ($selfCheckSheet->getColumns()->getByExpression($cond->getExpression())) {
-                        $selfCheckFilters->addCondition($cond);
-                    }
-                }
-                $selfCheckSheet = $selfCheckSheet->extract($selfCheckFilters);
-            } else {
-                $selfCheckSheet = $mainSheet;
-            }
-            $selfMatcher = new DataRowMatcher($mainSheet, $selfCheckSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
+            $selfMatcher = new DataRowMatcher($mainSheet, $mainSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
             //$selfMatcher->setIgnoreUidMatches(true);
             $matcher->addMatcher($selfMatcher);
         }
