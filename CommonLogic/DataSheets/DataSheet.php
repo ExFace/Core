@@ -1048,7 +1048,10 @@ class DataSheet implements DataSheetInterface
                         }
                     }
                 }
-                $query->addValues($col->getExpressionObj()->toString(), $values, $uids);
+                // add values to query if not empty by now
+                if(!empty($values)) {
+                    $query->addValues($col->getExpressionObj()->toString(), $values, $uids);
+                }
             } else {
                 // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
                 // In this case all object matching the filter will get updated by this value
