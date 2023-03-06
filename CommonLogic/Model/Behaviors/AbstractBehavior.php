@@ -183,7 +183,7 @@ abstract class AbstractBehavior implements BehaviorInterface
         try {
             $this->unregisterEventListeners();
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this->getObject(), 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
+            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this, 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
         }
         $this->disabled = true;
         return $this;

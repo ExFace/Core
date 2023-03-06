@@ -3,9 +3,9 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Behaviors\StateMachineBehavior;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A special MenuButton, which displays a menu with state transitions from it's meta objects StateMachineBehavior.
@@ -36,7 +36,7 @@ class StateMenuButton extends MenuButton
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
         if ($menu->isEmpty()) {
             if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst())) {
-                throw new BehaviorConfigurationError('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
+                throw new WidgetConfigurationError($this, 'StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
             
             if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
