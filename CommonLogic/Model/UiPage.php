@@ -472,7 +472,7 @@ class UiPage implements UiPageInterface
         }
         $id .= $widget->getWidgetType();
         if ($group !== null) {
-            $id .= $group;
+            $id .= self::WIDGET_ID_SEPARATOR . $group;
         }
         if ($makeUnique === true) {
             $id = $this->makeWidgetIdUnique($id);
@@ -529,6 +529,10 @@ class UiPage implements UiPageInterface
      */
     public function removeWidgetById($widget_id)
     {
+        $widget = $this->widgets[$widget_id] ?? null;
+        if ($widget !== null) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnRemoveEvent($widget));
+        }
         unset($this->widgets[$widget_id]);
         return $this;
     }
@@ -549,9 +553,6 @@ class UiPage implements UiPageInterface
             }
         }
         $result = $this->removeWidgetById($widget->getId());
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnRemoveEvent($widget));
-        
         return $result;
     }
     
@@ -564,7 +565,6 @@ class UiPage implements UiPageInterface
     {
         foreach ($this->widgets as $cached_widget) {
             $this->removeWidgetById($cached_widget->getId());
-            $this->getWorkbench()->eventManager()->dispatch(new OnRemoveEvent($cached_widget));
         }
         $this->widgets = [];
         $this->widget_root = null;
