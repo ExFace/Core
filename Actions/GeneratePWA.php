@@ -9,6 +9,13 @@ use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\PWA\PWAInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
+use exface\Core\CommonLogic\Actions\ServiceParameter;
+use exface\Core\Interfaces\Tasks\HttpTaskInterface;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Selectors\PWASelector;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * 
@@ -16,7 +23,7 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
  * @author Andrej Kabachnik
  *
  */
-class GeneratePWA extends AbstractActionDeferred implements iModifyData
+class GeneratePWA extends AbstractActionDeferred implements iModifyData, iCanBeCalledFromCLI
 {
     /**
      * 
@@ -41,15 +48,42 @@ class GeneratePWA extends AbstractActionDeferred implements iModifyData
         return [$pwa];
     }
     
+    /**
+     * 
+     * @param TaskInterface $task
+     * @throws ActionInputMissingError
+     * @return PWAInterface
+     */
     protected function getPWA(TaskInterface $task) : PWAInterface
     {
-        $inputData = $this->getInputDataSheet($task);
-        $facadeClass = $inputData->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
-        $pwaUid = $inputData->getColumns()->get('UID')->getValue(0);
-        if (! $pwaUid || ! $facadeClass) {
-            throw new ActionInputMissingError($this, 'Cannot generat PWA: missing UID or facade selector!');
+        switch (true) {
+            case $task instanceof HttpTaskInterface:
+                $inputData = $this->getInputDataSheet($task);
+                $facadeClass = $inputData->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
+                $pwaUid = $inputData->getColumns()->get('UID')->getValue(0);
+                if (! $pwaUid || ! $facadeClass) {
+                    throw new ActionInputMissingError($this, 'Cannot generate PWA: missing UID or facade selector!');
+                }
+                $facade = FacadeFactory::createFromString($facadeClass, $this->getWorkbench());
+                break;
+            case $task instanceof CliTaskInterface:
+                $arg = $task->getCliArgument('selector');
+                $selector = new PWASelector($this->getWorkbench(), $arg);
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PWA');
+                $ds->getColumns()->addFromUidAttribute();
+                $ds->getColumns()->addMultiple([
+                    'PAGE_TEMPLATE__FACADE'
+                ]);
+                if ($selector->isUid()) {
+                    $ds->getFilters()->addConditionFromString('UID', $selector->toString(), ComparatorDataType::EQUALS);
+                } else {
+                    $ds->getFilters()->addConditionFromString('ALIAS_WITH_NS', $selector->toString(), ComparatorDataType::EQUALS);
+                }
+                $ds->dataRead();
+                $pwaUid = $ds->getUidColumn()->getValue(0);
+                $facadeClass = $ds->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
+                $facade = FacadeFactory::createFromString($facadeClass, $this->getWorkbench());
         }
-        $facade = FacadeFactory::createFromString($facadeClass, $this->getWorkbench());
         return $facade->getPWA($pwaUid);
     }
     
@@ -61,5 +95,29 @@ class GeneratePWA extends AbstractActionDeferred implements iModifyData
     protected function performDeferred(PWAInterface $pwa = null, DataTransactionInterface $transaction = null) : \Generator
     {
         yield from $pwa->generateModel();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeCalledFromCLI::getCliArguments()
+     */
+    public function getCliArguments(): array
+    {
+        return [
+            (new ServiceParameter($this))
+            ->setName('selector')
+            ->setDescription('UID or namespaced alias of the PWA to regenerate.')
+        ];
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeCalledFromCLI::getCliOptions()
+     */
+    public function getCliOptions(): array
+    {
+        return [];
     }
 }

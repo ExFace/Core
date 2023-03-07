@@ -13,7 +13,7 @@ interface iShowWidget extends iNavigate
      *
      * @throws ActionConfigurationError
      * 
-     * @return WidgetInterface
+     * @return WidgetInterface|NULL
      */
     public function getWidget();
 

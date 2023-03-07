@@ -1435,7 +1435,8 @@ SQL;
                 pt.facade_uxon,
                 (
                     {$groupConcat}
-                ) as group_oids
+                ) as group_oids,
+                (SELECT {$this->buildSqlUuidSelector('pwa.oid')} FROM exf_pwa pwa WHERE pwa.start_page_oid = p.oid AND pwa.active_flag = 1) AS pwa_oid
             FROM exf_page p 
                 LEFT JOIN exf_page_template pt ON p.page_template_oid = pt.oid
             WHERE " . $where
@@ -1490,6 +1491,10 @@ SQL;
             foreach (explode(',', $row['group_oids']) as $groupUid) {
                 $uiPage->addGroupSelector($groupUid);
             }
+        }
+        
+        if ($row['pwa_oid'] !== null) {
+            $uiPage->setPWASelector($row['pwa_oid']);
         }
        
         $this->pages_loaded[$uiPage->getUid()] = $uiPage;

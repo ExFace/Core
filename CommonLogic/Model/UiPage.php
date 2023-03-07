@@ -28,6 +28,8 @@ use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Events\Widget\OnUiPageInitializedEvent;
+use exface\Core\Interfaces\Selectors\PWASelectorInterface;
+use exface\Core\CommonLogic\Selectors\PWASelector;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -95,6 +97,8 @@ class UiPage implements UiPageInterface
     private $contents_uxon = null;
 
     private $aliasWithNamespace = null;
+    
+    private $pwaSelector = null;
 
     private $dirty = false;
 
@@ -1425,5 +1429,39 @@ class UiPage implements UiPageInterface
     public function isMenuHome() : bool
     {
         return $this->menuHome;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setPWASelector()
+     */
+    public function setPWASelector($selectorOrString) : UiPageInterface
+    {
+        $this->pwaSelector = $selectorOrString;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isPWA()
+     */
+    public function isPWA() : bool
+    {
+        return $this->pwaSelector !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getPWASelector()
+     */
+    public function getPWASelector() : ?PWASelectorInterface
+    {
+        if (is_string($this->pwaSelector)) {
+            $this->pwaSelector = new PWASelector($this->getWorkbench(), $this->pwaSelector);
+        }
+        return $this->pwaSelector;
     }
 }
