@@ -52,4 +52,18 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
         
         return $this->labels;
     }
+    
+    /**
+     * 
+     * @param array $exceptions
+     * @return array
+     */
+    public static function getStrategies(array $exceptions = []) : array
+    {
+        $all = array_keys(static::getValuesStatic());
+        if (! empty($exceptions)) {
+            return array_diff($all, $exceptions);
+        }
+        return $all;
+    }
 }

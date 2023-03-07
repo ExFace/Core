@@ -507,72 +507,8 @@ class App implements AppInterface
      * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
      */
     public function handle(TaskInterface $task): ResultInterface
-    {
-        if ($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-            if (! $task->hasMetaObject()) {
-                $task->setMetaObject($widget->getMetaObject());
-            }
-            
-            // If the task tigger is a button or similar, the action might be defined in that
-            // trigger widget. However, we can only use this definition, if the task does not
-            // have an action explicitly defined or that action is exactly the same as the
-            // one of the trigger widget.
-            if ($widget instanceof iTriggerAction) {
-                if (! $task->hasAction()) {
-                    $action = $widget->getAction();
-                } elseif ($widget->hasAction()) {
-                    // At this point, we know, that both, task and widget, have actions - so we
-                    // need to compare them.
-                    if ($task->getActionSelector()->isAlias() && strcasecmp($task->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
-                        // In most cases, the task action will be defined via
-                        // alias, so we can simply compare the alias without instantiating the action.
-                        $action = $widget->getAction();
-                    } else {
-                        // Otherwise we need to instantiate it first to get the alias.
-                        $task_action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
-                        $widget_action = $widget->getAction();
-                        switch (true) {
-                            // If the task tells us to perform the action of the widget, use the description in the
-                            // widget, because it is more detailed.
-                            case $task_action->isExactly($widget_action):
-                                $action = $widget->getAction();
-                                break;
-                                
-                            // If the widget triggers an action containing multiple sub-actions, see if one of them
-                            // matches the task action
-                            case $widget_action instanceof iCallOtherActions:
-                                $action = $widget_action->getActionToStart($task);
-                                if ($action !== null) {
-                                    break;
-                                }
-                                // If none match, continue with the default.
-                                
-                            // If the task is about another action (e.g. ReadPrefill on a button, that does ShowDialog),
-                            // Take the task action and inherit action settings related to the input data from the widget.
-                            default:
-                                $action = $task_action;
-                                if ($widget_action->hasInputDataPreset() === true) {
-                                    $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
-                                }
-                                if ($widget_action->hasInputMappers() === true) {
-                                    foreach ($widget_action->getInputMappers() as $mapper) {
-                                        $action->addInputMapper($mapper);
-                                    }
-                                }
-                                break;
-                        }
-                    }
-                    
-                }
-            }
-        }
-        
-        if (! isset($action)) {
-            $action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
-        }
-        
-        return $action->handle($task);
+    {        
+        return $task->getAction()->handle($task);
     }
     
     /**
