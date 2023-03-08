@@ -513,16 +513,51 @@ class StringDataType extends AbstractDataType
      */
     public static function splitLines(string $string) : array
     {
-        return preg_split("/\r\n|\n|\r/", $string);
+        return preg_split("/\R/u", $string);
     }
     
     /**
+     * Removes line breaks for the given string keeping words intact.
+     * 
+     * A simple replacement of linebreaks with empty strings or space is not enough
+     * because lines may contain spaces, tabs or other inivisble charaters at
+     * their ends. Need to replace them properly keeping words intact.
+     * 
+     * IDEA probably need to hanle hypenation here somehow...
      * 
      * @param string $string
      * @return string
      */
     public static function stripLineBreaks(string $string) : string
     {
-        return str_replace(["\r", "\n"], '', $string);
+        $lines = static::splitLines($string);
+        $result = '';
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $result .= ($result !== '' ? ' ' : '') . $line;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Replaces all line breaks in a string by the given value - e.g. for normalization
+     * 
+     * By default replaces everything with `PHP_EOL`. Use `"\r\n"` for `$replace` alternatively.
+     * 
+     * If you don't want to replace all Unicode newlines but only CRLF style ones, set 
+     * `$includeUnicodeLineBreaks` to `false`;
+     * 
+     * @param string $string
+     * @param string $replace
+     * @return string
+     */
+    public static function replaceLineBreaks(string $string, string $replace = PHP_EOL, bool $includeUnicodeLineBreaks = true) : string
+    {
+        $regex = $includeUnicodeLineBreaks ? '/\R/u' : '/(*BSR_ANYCRLF)\R/';
+        return preg_replace($regex, $replace, $string);
     }
 }
