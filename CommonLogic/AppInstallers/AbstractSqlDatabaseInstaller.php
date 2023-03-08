@@ -13,6 +13,7 @@ use exface\Core\Exceptions\DataSources\DataSourceHasNoConnectionError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -765,9 +766,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
      * @throws \Throwable
      * @return array
      */
-    protected function runSqlMultiStatementScript (SqlDataConnectorInterface $connection, string $script, bool $wrapInTransaction = false) : array
+    protected function runSqlMultiStatementScript(SqlDataConnectorInterface $connection, string $script, bool $wrapInTransaction = false) : array
     {
-        $result = [];
+        $results = [];
         try {
             if ($wrapInTransaction === true) {
                 $connection->transactionStart();
@@ -778,24 +779,28 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
                 }
                 foreach (preg_split($delim, $script) as $statement) {
                     if ($statement) {
-                        $result[] = $connection->runSql($statement);
+                        $results[] = $connection->runSql($statement, true);
                     }
                 }
             } else {
-                $result[] = $connection->runSql($script, true);
+                $results[] = $connection->runSql($script, true);
             }
             
             if ($wrapInTransaction === true) {
                 $connection->transactionCommit();
             }
         } catch (\Throwable $e) {
+            foreach ($results as $query) {
+                $query->freeResult();
+            }
+            
             if ($wrapInTransaction === true) {
                 $connection->transactionRollback();
             }
             throw $e;
         }
         
-        return $result;
+        return $results;
     }
     
     /**
@@ -811,14 +816,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             if (empty($resultArray)) {
                 $result = "No result for SQL Statement given!";
             } else {
-                $result = json_encode($query->getResultArray());
+                $result = $resultArray;
             }
             $json[] = [
                 "SQL" => $query->getSql(),
                 "Result" => $result
             ];
         }
-        return json_encode($json);
+        return JsonDataType::encodeJson($json, true);
     }
     
     /**

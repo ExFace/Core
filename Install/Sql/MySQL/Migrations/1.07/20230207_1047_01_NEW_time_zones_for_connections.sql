@@ -1,4 +1,5 @@
 -- UP
+-- BATCH-DELIMITER ----------------
 
 INSERT IGNORE INTO `exf_data_type` (
 	`oid`,
@@ -32,6 +33,8 @@ INSERT IGNORE INTO `exf_data_type` (
 	0x31000000000000000000000000000000
 );
 
+----------------
+
 set @version_check := IF(SUBSTRING_INDEX(VERSION(), '.', 3) > IF(POSITION('-MariaDB' IN VERSION()) = 0, '5.7.8', '10.5.7'), 1, 0) ;
 set @sqlstmt := if(@version_check>0,'UPDATE exf_data_connection 
 	SET data_connector_config = JSON_SET(data_connector_config, ''$.filter_context'', CAST(filter_context_uxon AS JSON)) 
@@ -39,6 +42,9 @@ set @sqlstmt := if(@version_check>0,'UPDATE exf_data_connection
 		AND filter_context_uxon <> ''''', 'select ''JSON functions not available in current DB version''');
 prepare stmt from @sqlstmt;
 execute stmt;
+DEALLOCATE PREPARE stmt;
+
+----------------
 		
 ALTER TABLE `exf_data_connection`
 	ADD COLUMN `time_zone` VARCHAR(50) NULL DEFAULT NULL AFTER `data_connector_config`,

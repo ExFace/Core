@@ -12,6 +12,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * 
@@ -25,6 +26,12 @@ interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUx
      * @return ActionSelectorInterface
      */
     public function getActionSelector() : ActionSelectorInterface;
+    
+    /**
+     * 
+     * @return ActionInterface
+     */
+    public function getAction() : ActionInterface;
     
     /***
      * 

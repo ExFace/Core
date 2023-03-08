@@ -60,9 +60,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                     $connection->setDbase('');
                     $connection->connect();
                     $database_create = "CREATE DATABASE {$dbName} CHARACTER SET utf8 COLLATE utf8_general_ci";
-                    $connection->runSql($database_create);
+                    $connection->runSql($database_create)->freeResult();
                     $database_use = "USE {$dbName};";
-                    $connection->runSql($database_use);
+                    $connection->runSql($database_use)->freeResult();
                     $connection->disconnect();
                     $connection->setDbase($dbName);
                     $msg = 'Database ' . $dbName . ' created! ';
@@ -105,7 +105,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     {
         $this->ensureMigrationsTableExists($connection);        
         $sql = $this->buildSqlSelectMigrationsFromDb();
-        $migrs_db = $connection->runSql($sql)->getResultArray();
+        $query = $connection->runSql($sql);
+        $migrs_db = $query->getResultArray();
+        $query->freeResult();
         $migrs = array();
         if (empty($migrs_db)) {
             return $migrs;
@@ -131,9 +133,12 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $connection->transactionStart();
             $up_result = $this->runSqlMultiStatementScript($connection, $migration->getUpScript(), false);
             $up_result_string = $this->stringifyQueryResults($up_result);
+            foreach ($up_result as $query) {
+                $query->freeResult();
+            }
             $time = new \DateTime();
             $sqlMigrationInsert = $this->buildSqlMigrationUpInsert($migration, $up_result_string, $time);
-            $connection->runSql($sqlMigrationInsert);
+            $connection->runSql($sqlMigrationInsert)->freeResult();
             $connection->transactionCommit();
             $migration->setUp(DateTimeDataType::formatDateNormalized($time), $up_result_string);
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ': script UP executed successfully ');
@@ -160,10 +165,13 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         }
         try {
             $connection->transactionStart();
-            $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript(), false);
+            $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript());
             $down_result_string = $this->stringifyQueryResults($down_result);
+            foreach ($down_result as $query) {
+                $query->freeResult();
+            }
             $sql_script = $this->buildSqlMigrationDownUpdate($migration, $down_result_string, $time);
-            $connection->runSql($sql_script);
+            $connection->runSql($sql_script)->freeResult();
             $connection->transactionCommit();
             $migration->setDown(DateTimeDataType::formatDateNormalized($time), $down_result_string);
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' DOWN script executed successfully ');
@@ -199,11 +207,21 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             }
             
             $connection->transactionStart();
-            $connection->runSql($sql_script);
+            $connection->runSql($sql_script)->freeResult();
             $connection->transactionCommit();
             
         } catch (\Throwable $e) {
-            $connection->transactionRollback();
+            try {
+                $connection->transactionRollback();
+            } catch (\Throwable $eRollback) {
+                // Commands out of sync will prevent any further interaction with the DB, so we just reset
+                // the connection here, which should also rollback automatically.
+                if (stripos($eRollback->getMessage(), 'Commands out of sync') !== false) {
+                    $this->getDataConnection()->disconnect();
+                    $this->getDataConnection()->connect();
+                }
+                $this->getWorkbench()->getLogger()->logException($eRollback);
+            }
             $this->getWorkbench()->getLogger()
                 ->logException($exception)
                 ->logException($e);
@@ -244,7 +262,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         // already existing installations will be updated
         return <<<SQL
 
--- BATCH-DELIMITER /;\R/
+-- BATCH-DELIMITER ----------------
 
 -- creation of migrations table       
 CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
@@ -263,6 +281,7 @@ CREATE TABLE IF NOT EXISTS `{$this->getMigrationsTableName()}` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
+----------------
 -- update to add `failed_flag`, `failed_message` and `skip_flag` columns
 SELECT count(*)
 INTO @exist
@@ -282,6 +301,7 @@ prepare stmt from @query;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+----------------
 -- update to add `log_id` column
 SELECT count(*)
 INTO @exist

@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
@@ -20,6 +21,9 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
 
 /**
  * A generic task for objects, actions, pages, widgets and input/prefill data
@@ -50,6 +54,8 @@ class GenericTask implements TaskInterface
     private $objectSelector = null;
     
     private $actionSelector = null;
+    
+    private $action = null;
     
     private $originWidget = null;
     
@@ -205,12 +211,91 @@ class GenericTask implements TaskInterface
      */
     public function setActionSelector($selectorOrString): TaskInterface
     {
+        $this->action = null;
         if ($selectorOrString instanceof ActionSelectorInterface) {
             $this->actionSelector = $selectorOrString;
         } else {
             $this->actionSelector = new ActionSelector($this->getWorkbench(), $selectorOrString);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getAction()
+     */
+    public function getAction() : ActionInterface
+    {
+        if ($this->action === null) {
+            if ($this->isTriggeredByWidget()) {
+                $widget = $this->getWidgetTriggeredBy();
+                if (! $this->hasMetaObject()) {
+                    $this->setMetaObject($widget->getMetaObject());
+                }
+                
+                // If the task tigger is a button or similar, the action might be defined in that
+                // trigger widget. However, we can only use this definition, if the task does not
+                // have an action explicitly defined or that action is exactly the same as the
+                // one of the trigger widget.
+                if ($widget instanceof iTriggerAction) {
+                    if (! $this->hasAction()) {
+                        $action = $widget->getAction();
+                    } elseif ($widget->hasAction()) {
+                        // At this point, we know, that both, task and widget, have actions - so we
+                        // need to compare them.
+                        if ($this->getActionSelector()->isAlias() && strcasecmp($this->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
+                            // In most cases, the task action will be defined via
+                            // alias, so we can simply compare the alias without instantiating the action.
+                            $action = $widget->getAction();
+                        } else {
+                            // Otherwise we need to instantiate it first to get the alias.
+                            $task_action = ActionFactory::create($this->getActionSelector(), ($widget ? $widget : null));
+                            $widget_action = $widget->getAction();
+                            switch (true) {
+                                // If the task tells us to perform the action of the widget, use the description in the
+                                // widget, because it is more detailed.
+                                case $task_action->isExactly($widget_action):
+                                    $action = $widget->getAction();
+                                    break;
+                                    
+                                    // If the widget triggers an action containing multiple sub-actions, see if one of them
+                                    // matches the task action
+                                case $widget_action instanceof iCallOtherActions:
+                                    $action = $widget_action->getActionToStart($this);
+                                    if ($action !== null) {
+                                        break;
+                                    }
+                                    // If none match, continue with the default.
+                                    
+                                    // If the task is about another action (e.g. ReadPrefill on a button, that does ShowDialog),
+                                    // Take the task action and inherit action settings related to the input data from the widget.
+                                default:
+                                    $action = $task_action;
+                                    if ($widget_action->hasInputDataPreset() === true) {
+                                        $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
+                                    }
+                                    if ($widget_action->hasInputMappers() === true) {
+                                        foreach ($widget_action->getInputMappers() as $mapper) {
+                                            $action->addInputMapper($mapper);
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            
+            if (! isset($action)) {
+                $action = ActionFactory::create($this->getActionSelector(), ($widget ? $widget : null));
+            }
+            
+            $this->action = $action;
+        }
+        
+        return $this->action;
     }
 
     /**

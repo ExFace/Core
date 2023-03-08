@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-01-02 08:45:35",
-            "MODIFIED_ON": "2023-01-03 16:58:48",
+            "MODIFIED_ON": "2023-03-07 16:59:25",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eda34a71852896a34a025041000001",
@@ -114,6 +114,9 @@
                                         "object_alias": "exface.Core.PWA_ACTION",
                                         "height": "max",
                                         "width": "100%",
+                                        "row_grouper": {
+                                            "group_by_attribute_alias": "PAGE__LABEL"
+                                        },
                                         "filters": [
                                             {
                                                 "attribute_alias": "PWA_DATASET",

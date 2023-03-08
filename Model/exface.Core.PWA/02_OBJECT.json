@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-12-27 17:34:13",
-            "MODIFIED_ON": "2023-01-03 16:51:04",
+            "MODIFIED_ON": "2023-03-07 17:00:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edbb694cebd4babb69747827435ce5",
@@ -190,6 +190,13 @@
                                             },
                                             {
                                                 "attribute_alias": "PAGE__LABEL"
+                                            },
+                                            {
+                                                "attribute_alias": "TRIGGER_WIDGET_ID",
+                                                "input_widget": {
+                                                    "widget_type": "Input",
+                                                    "height": 1
+                                                }
                                             }
                                         ],
                                         "row_grouper": {
@@ -326,6 +333,12 @@
                                         "columns": [
                                             {
                                                 "attribute_alias": "DESCRIPTION"
+                                            },
+                                            {
+                                                "attribute_alias": "OFFLINE_STRATEGY"
+                                            },
+                                            {
+                                                "attribute_alias": "ROWS_AT_GENERATION_TIME"
                                             },
                                             {
                                                 "attribute_alias": "PWA_ACTION__UID:COUNT",

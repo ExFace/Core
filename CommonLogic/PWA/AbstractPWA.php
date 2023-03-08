@@ -24,22 +24,26 @@ use exface\Core\Widgets\Data;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Widgets\Dialog;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Actions\iShowWidget;
 
 abstract class AbstractPWA implements PWAInterface
 {
     use ImportUxonObjectTrait;
+    
+    const KEY_ACTION = 'action';
+    const KEY_WIDGET = 'widget';
+    const KEY_UID = 'UID';
+    const KEY_DATASET = 'dataset';
+    const KEY_OFFLINE_STRATEGY = 'offline strategy';
     
     private $workbench = null;
     
     private $routes = [];
     
     private $actions = [];
-    
-    private $actionsWidgets = [];
-    
-    private $actionsModelUIDs = [];
-    
-    private $actionsDatasets = [];
     
     private $dataSets = [];
     
@@ -50,6 +54,8 @@ abstract class AbstractPWA implements PWAInterface
     private $facade = null;
     
     private $startPage = null;
+    
+    private $modelLoadedForStrategies = null;
     
     public function __construct(PWASelectorInterface $selector, FacadeInterface $facade)
     {
@@ -89,7 +95,7 @@ abstract class AbstractPWA implements PWAInterface
      * 
      * @return PWARouteInterface[]
      */
-    protected function getRoutes() : array
+    public function getRoutes() : array
     {
         return $this->routes;
     }
@@ -103,7 +109,9 @@ abstract class AbstractPWA implements PWAInterface
     {
         $this->routes[] = $route;
         $action = $route->getAction();
-        $this->addAction($action, $route->getWidget(), true);
+        if ($action !== null) {
+            $this->addAction($action, $route->getWidget());
+        }
         return $this;
     }
     
@@ -111,9 +119,38 @@ abstract class AbstractPWA implements PWAInterface
      * 
      * @return ActionInterface[]
      */
-    protected function getActions() : array
+    public function getActions() : array
     {
-        return $this->actions;
+        $actions = [];
+        foreach ($this->getActionCache() as $a) {
+            $actions[] = $a[self::KEY_ACTION];
+        }
+        return $actions;
+    }
+    
+    /**
+     * 
+     * @param string $uid
+     * @return ActionInterface|NULL
+     */
+    protected function getActionByPWAModelUID(string $uid) : ?ActionInterface
+    {
+        foreach ($this->getActionCache() as $a) {
+            if (strcasecmp($a[self::KEY_UID] ?? '', $uid) === 0) {
+                return $a[self::KEY_ACTION];
+            }
+        }
+        return null;
+    }
+    
+    protected function getActionIndex(ActionInterface $action) : ?int
+    {
+        foreach ($this->getActionCache() as $i => $a) {
+            if ($a[self::KEY_ACTION] === $action) {
+                return $i;
+            }
+        }
+        return null;
     }
     
     /**
@@ -121,33 +158,80 @@ abstract class AbstractPWA implements PWAInterface
      * @param PWARouteInterface $action
      * @return PWAInterface
      */
-    protected function addAction(ActionInterface $action, WidgetInterface $triggerWidget) : int
+    protected function addAction(ActionInterface $action, WidgetInterface $triggerWidget, string $modelUID = null) : int
     {
-        $actionKey = array_search($action, $this->actions, true);
-        if ($actionKey === false) {
-            $this->actions[] = $action;
-            $actionKey = array_key_last($this->actions);
-            $this->actionsWidgets[$actionKey] = $triggerWidget;
+        $idx = $this->getActionIndex($action);
+        if ($idx === null) {
+            $this->actions[] = [
+                self::KEY_ACTION => $action,
+                self::KEY_WIDGET => $triggerWidget,
+                self::KEY_UID => $modelUID,
+                self::KEY_OFFLINE_STRATEGY => $this->findOfflineStrategy($action, $triggerWidget),
+                self::KEY_DATASET => null
+            ];
+            $idx = array_key_last($this->actions);
         }
-        return $actionKey;
+        return $idx;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getActionCache() : array
+    {
+        return $this->actions;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param string $itemKey
+     * @return null|array|ActionInterface|WidgetInterface|PWADatasetInterface
+     */
+    protected function getActionCacheItem(ActionInterface $action, string $itemKey = null)
+    {
+        foreach ($this->getActionCache() as $a) {
+            if ($a[self::KEY_ACTION] === $action) {
+                if ($itemKey !== null) {
+                    return $a[$itemKey] ?? null;
+                } else {
+                    return $a;
+                }
+            } 
+        }
+        return null;
+    }
+    
+    protected function setActionCacheItem(ActionInterface $action, string $itemKey, $item) : PWAInterface
+    {
+        foreach ($this->getActionCache() as $i => $a) {
+            if ($a[self::KEY_ACTION] === $action) {
+                $this->actions[$i][$itemKey] = $item;
+                return $this;
+            }
+        }
+        throw new UnexpectedValueException('Cannot add ' . $itemKey . ' to PWA action: action ' . $action->getAliasWithNamespace() . ' not yet included');
     }
     
     protected function getActionDataSet(ActionInterface $action) : ?PWADatasetInterface
     {
-        $actionKey = array_search($action, $this->actions, true);
-        return $this->actionsDatasets[$actionKey] ?? null;
+        return $this->getActionCacheItem($action, self::KEY_DATASET);
     }
     
     protected function getActionWidget(ActionInterface $action) : WidgetInterface
     {
-        $actionKey = array_search($action, $this->actions, true);
-        return $this->actionsWidgets[$actionKey];
+        return $this->getActionCacheItem($action, self::KEY_WIDGET);
     }
     
     protected function getActionPWAModelUID(ActionInterface $action) : ?string
     {
-        $actionKey = array_search($action, $this->actions, true);
-        return $this->actionsModelUIDs[$actionKey];
+        return $this->getActionCacheItem($action, self::KEY_UID);
+    }
+    
+    public function getActionOfflineStrategy(ActionInterface $action) : string
+    {
+        return $this->getActionCacheItem($action, self::KEY_OFFLINE_STRATEGY);
     }
     
     protected function getDatasetPWAModelUID(PWADatasetInterface $set) : ?string
@@ -173,8 +257,7 @@ abstract class AbstractPWA implements PWAInterface
             $this->dataSets[] = $set;
         }
         
-        $actionKey = $this->addAction($action, $widget);
-        $this->actionsDatasets[$actionKey] = $set;
+        $this->setActionCacheItem($action, self::KEY_DATASET, $set);
         
         $setSheet = $set->getDataSheet();
         $setCols = $setSheet->getColumns();
@@ -220,21 +303,30 @@ abstract class AbstractPWA implements PWAInterface
      */
     protected function saveModel(DataTransactionInterface $transaction) : \Generator
     {
+        // Data sets
         $dsDatasets = $this->getDataForDatasets();
         $dsDatasets->removeRows();
         foreach ($this->getDatasets() as $set) {
+            try {
+                $rowCnt = $set->getDataSheet()->countRowsInDataSource();
+            } catch (\Throwable $e) {
+                $rowCnt = null;
+                $this->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot estimate size of offline data set: ' . $e->getMessage(), null, $e));
+            }
             $dsDatasets->addRow([
                 'PWA' => $this->getUid(),
                 'DESCRIPTION' => $this->getDescriptionOf($set),
                 'OBJECT' => $set->getMetaObject()->getId(),
                 'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson(),
-                'USER_DEFINED_FLAG' => 0
-            ]);
+                'USER_DEFINED_FLAG' => 0,
+                'ROWS_AT_GENERATION_TIME' => $rowCnt
+            ], false, false);
         }
-        yield 'Generated ' . $dsDatasets->countRows() . ' actions' . PHP_EOL;
+        yield 'Generated ' . $dsDatasets->countRows() . ' offline data sets' . PHP_EOL;
         $dsDatasets->dataReplaceByFilters($transaction);
         $this->dataSetsModelUIDs = $dsDatasets->getUidColumn()->getValues();
         
+        // Actions
         $dsActions = $this->getDataForActions();
         $dsActions->removeRows();
         foreach ($this->getActions() as $action) {
@@ -247,13 +339,17 @@ abstract class AbstractPWA implements PWAInterface
                 'DESCRIPTION' => $this->getDescriptionOf($action),
                 'OFFLINE_STRATEGY' => $this->getActionOfflineStrategy($action),
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
+                'OBJECT' => $action->getMetaObject()->getId(),
                 'PWA_DATASET' => null !== ($set = $this->getActionDataSet($action)) ? $this->getDatasetPWAModelUID($set) : null
-            ]);
+            ], false, false);
         }
         yield 'Generated ' . $dsActions->countRows() . ' actions' . PHP_EOL;
         $dsActions->dataReplaceByFilters($transaction);
-        $this->actionsModelUIDs = $dsActions->getUidColumn()->getValues();
+        foreach ($dsActions->getUidColumn()->getValues() as $i => $uid) {
+            $this->actions[$i][self::KEY_UID] = $uid;
+        }
         
+        // Routes
         $dsRoutes = $this->getDataForRoutes();
         $newRoutes = [];
         $urlCol = $dsRoutes->getColumns()->get('URL');
@@ -271,7 +367,7 @@ abstract class AbstractPWA implements PWAInterface
                 'URL' => $route->getUrl(),
                 'DESCRIPTION' => $this->getDescriptionOf($route),
                 'USER_DEFINED_FLAG' => 0
-            ]);
+            ], false, false);
         }
         yield 'Generated ' . count($newRoutes) . ' routes' . PHP_EOL;
         $deletedRoutes = array_diff($oldRoutes, $newRoutes);
@@ -282,21 +378,80 @@ abstract class AbstractPWA implements PWAInterface
     
     protected abstract function generateModelForWidget(WidgetInterface $widget, int $linkDepth = 100) : \Generator;
     
-    protected abstract function getActionOfflineStrategy(ActionInterface $action) : string;
+    protected abstract function findOfflineStrategy(ActionInterface $action, WidgetInterface $triggerWidget) : string;
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWAInterface::loadModel()
+     */
+    public function loadModel(array $offlineStrategies = []) : PWAInterface
+    {
+        $this->modelLoadedForStrategies = $offlineStrategies;
+        
+        // Load actions
+        $ds = $this->getDataForActions($offlineStrategies);
+        foreach ($ds->getRows() as $row) {
+            $task = new HttpTask($this->getWorkbench());
+            $task->setActionSelector($row['ACTION_ALIAS']);
+            $task->setPageSelector($row['PAGE']);
+            $task->setWidgetIdTriggeredBy($row['TRIGGER_WIDGET_ID']);
+            $task->setMetaObjectSelector($row['OBJECT']);
+            $action = $task->getAction();
+            $this->addAction($action, $task->getWidgetTriggeredBy(), $row['UID']);
+        }
+        
+        // Load routes
+        $ds = $this->getDataForRoutes($offlineStrategies, ['PWA_ACTION__PAGE', 'PWA_ACTION__TRIGGER_WIDGET_ID']);
+        foreach ($ds->getRows() as $row) {
+            /*
+             $action = $this->getActionByPWAModelUID($row['PWA_ACTION']);
+             if ($action instanceof iShowWidget) {
+             $page = UiPageFactory::createFromModel($this->getWorkbench(), $row['PWA_ACTION__PAGE']);
+             if (null === $widget = $action->getWidget()) {
+             $widget = $page->getWidget($row['PWA_ACTION__TRIGGER_WIDGET_ID']);
+             }
+             } else {
+             throw new RuntimeException('Failed to load route ' . $row['DESCRIPTION'] . ': action not found!');
+             }
+             $this->addRoute(new PWARoute($this, $row['URL'], $widget, $action));*/
+            $this->addRoute(new PWARoute($this, $row['URL']));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWAInterface::isModelLoaded()
+     */
+    public function isModelLoaded() : bool
+    {
+        return $this->modelLoadedForStrategies !== null;
+    }
+    
+    /**
+     * 
+     * @param array $offlineStrategies
+     * @param array $extraAttributes
      * @return DataSheetInterface
      */
-    protected function getDataForRoutes() : DataSheetInterface
+    protected function getDataForRoutes(array $offlineStrategies = [], array $extraAttributes = []) : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_ROUTE');
         $ds = DataSheetFactory::createFromObject($obj);
         $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
+        if (! empty($extraAttributes)) {
+            $ds->getColumns()->addMultiple($extraAttributes);
+        }
         if ($this->selector->isUid()) {
             $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
         } else {
             $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+        }
+        if (! empty($offlineStrategies)) {
+            $ds->getFilters()->addConditionFromValueArray('PWA_ACTION__OFFLINE_STRATEGY', $offlineStrategies);
         }
         $ds->dataRead();
         return $ds;
@@ -304,9 +459,10 @@ abstract class AbstractPWA implements PWAInterface
     
     /**
      * 
+     * @param array $offlineStrategies
      * @return DataSheetInterface
      */
-    protected function getDataForActions() : DataSheetInterface
+    protected function getDataForActions(array $offlineStrategies = []) : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_ACTION');
         $ds = DataSheetFactory::createFromObject($obj);
@@ -316,15 +472,19 @@ abstract class AbstractPWA implements PWAInterface
         } else {
             $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
+        if (! empty($offlineStrategies)) {
+            $ds->getFilters()->addConditionFromValueArray('OFFLINE_STRATEGY', $offlineStrategies);
+        }
         $ds->dataRead();
         return $ds;
     }
     
     /**
      * 
+     * @param array $offlineStrategies
      * @return DataSheetInterface
      */
-    protected function getDataForDatasets() : DataSheetInterface
+    protected function getDataForDatasets(array $offlineStrategies = []) : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_DATASET');
         $ds = DataSheetFactory::createFromObject($obj);
@@ -334,6 +494,10 @@ abstract class AbstractPWA implements PWAInterface
         } else {
             $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
+        /* TODO
+        if (! empty($offlineStrategies)) {
+            $ds->getFilters()->addConditionFromValueArray('OFFLINE_STRATEGY', $offlineStrategies);
+        }*/
         $ds->dataRead();
         return $ds;
     }
@@ -342,7 +506,7 @@ abstract class AbstractPWA implements PWAInterface
      * 
      * @return DataSheetInterface
      */
-    protected function getDataForPWA() : DataSheetInterface
+    protected function getDataForPWA(array $offlineStrategies = []) : DataSheetInterface
     {
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
         $ds = DataSheetFactory::createFromObject($obj);
@@ -385,7 +549,11 @@ abstract class AbstractPWA implements PWAInterface
                 
                 return ($inputWidget ? $this->getDescriptionOfWidget($inputWidget) : $triggerWidget->getWidgetType()) . ' > ' . $triggerName;
             case $subject instanceof PWARouteInterface:
-                return $this->getDescriptionOf($subject->getAction());
+                if (null !== $action = $subject->getAction()) {
+                    return $this->getDescriptionOf($action);
+                } else {
+                    return $subject->getURL();
+                }
             case $subject instanceof PWADatasetInterface:
                 $descr = $subject->getMetaObject()->getName() . ' [' . $subject->getMetaObject()->getAliasWithNamespace() . ']';
                 $ds = $subject->getDataSheet();
@@ -437,7 +605,7 @@ abstract class AbstractPWA implements PWAInterface
      * 
      * @return UiMenuItemInterface[]
      */
-    protected function getMenuRoots() : array
+    public function getMenuRoots() : array
     {
         return [$this->getStartPage()];
     }
