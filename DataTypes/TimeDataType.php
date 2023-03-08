@@ -327,7 +327,7 @@ class TimeDataType extends AbstractDataType
      * @param bool $returnPhpDate
      * @return string|\DateTimeInterface|NULL
      */
-    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone) : string
+    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone)
     {
         if ($time === null || $time === '') {
             return null;
