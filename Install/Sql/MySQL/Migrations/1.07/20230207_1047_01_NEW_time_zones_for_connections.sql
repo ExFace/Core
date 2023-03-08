@@ -42,6 +42,7 @@ set @sqlstmt := if(@version_check>0,'UPDATE exf_data_connection
 		AND filter_context_uxon <> ''''', 'select ''JSON functions not available in current DB version''');
 prepare stmt from @sqlstmt;
 execute stmt;
+DEALLOCATE PREPARE stmt;
 
 ----------------
 		
