@@ -29,6 +29,8 @@ class MySqlConnector extends AbstractSqlConnector
     private $affectedRows = null;
     
     private $socket = null;
+    
+    private $multiqueryResults = null;
 
     /**
      *
@@ -108,18 +110,21 @@ class MySqlConnector extends AbstractSqlConnector
         $this->affectedRows = null;
         try {
             if ($query->isMultipleStatements()) {
+                $this->multiqueryResults = [];
                 if (mysqli_multi_query($conn, $query->getSql())) {
                     $idx = 0;
                     do {
                         $idx++;
+                        $this->multiqueryResults[$idx] = [];
                         $this->affectedRows += mysqli_affected_rows($conn);
-                        $result = mysqli_use_result($conn);
+                        $result = mysqli_store_result($conn);
+                        $this->multiqueryResults[$idx] = mysqli_fetch_assoc($result);
                         if (mysqli_more_results($conn)) {
-                            //mysqli_free_result($result);
+                            mysqli_free_result($result);
                         } else {
                             break;
                         }
-                        if(!mysqli_next_result($conn) || mysqli_errno($conn)) {
+                        if(! mysqli_next_result($conn) || mysqli_errno($conn)) {
                             throw $this->createQueryError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
                         }
                     } while (true);
@@ -169,16 +174,31 @@ class MySqlConnector extends AbstractSqlConnector
      */
     public function makeArray(SqlDataQuery $query)
     {
-        $rs = $query->getResultResource();
-        if (! ($rs instanceof \mysqli_result))
-            return array();
-        $array = array();
-        while ($row = mysqli_fetch_assoc($rs)) {
-            $array[] = $row;
+        $array = [];
+        if ($query->isMultipleStatements() && ! empty($this->multiqueryResults)) {
+            // For multi-query results return the last non-empty result
+            foreach (array_reverse($this->multiqueryResults) as $rows) {
+                if (! empty($rows)) {
+                    return $rows;
+                }
+            }
+        } else {
+            $rs = $query->getResultResource();
+            if (! ($rs instanceof \mysqli_result)) {
+                return [];
+            }
+            while ($row = mysqli_fetch_assoc($rs)) {
+                $array[] = $row;
+            }
         }
         return $array;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getInsertId()
+     */
     public function getInsertId(SqlDataQuery $query)
     {
         try {
@@ -188,6 +208,11 @@ class MySqlConnector extends AbstractSqlConnector
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getAffectedRowsCount()
+     */
     public function getAffectedRowsCount(SqlDataQuery $query)
     {
         if ($this->affectedRows !== null) {
@@ -213,6 +238,11 @@ class MySqlConnector extends AbstractSqlConnector
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionStart()
+     */
     public function transactionStart()
     {
         if (! $this->transactionIsStarted()) {
@@ -231,6 +261,11 @@ class MySqlConnector extends AbstractSqlConnector
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionCommit()
+     */
     public function transactionCommit()
     {
         // Do nothing if the autocommit option is set for this connection
@@ -247,6 +282,11 @@ class MySqlConnector extends AbstractSqlConnector
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionRollback()
+     */
     public function transactionRollback()
     {
         // Throw error if trying to rollback a transaction with autocommit enabled
@@ -263,6 +303,11 @@ class MySqlConnector extends AbstractSqlConnector
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::freeResult()
+     */
     public function freeResult(SqlDataQuery $query)
     {
         if ($query->getResultResource() instanceof \mysqli_result) {
