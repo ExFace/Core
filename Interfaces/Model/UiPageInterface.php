@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -380,4 +381,23 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iC
      * @return bool
      */
     public function isMenuHome() : bool;
+    
+    /**
+     * 
+     * @param string|PWASelectorInterface $selectorOrString
+     * @return UiPageInterface
+     */
+    public function setPWASelector($selectorOrString) : UiPageInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isPWA() : bool;
+    
+    /**
+     * 
+     * @return PWASelectorInterface|NULL
+     */
+    public function getPWASelector() : ?PWASelectorInterface;
 }

@@ -16,7 +16,11 @@ interface PWARouteInterface extends iCanBeConvertedToUxon
 {
     public function getPWA() : PWAInterface;
     
-    public function getWidget() : WidgetInterface;
+    /**
+     * 
+     * @return WidgetInterface|NULL
+     */
+    public function getWidget() : ?WidgetInterface;
     
     /**
      * 
@@ -31,4 +35,6 @@ interface PWARouteInterface extends iCanBeConvertedToUxon
     public function getTriggerWidget() : ?iTriggerAction;
     
     public function getTriggerInputWidget() : ?WidgetInterface;
+    
+    public function getOfflineStrategy() : string;
 }

@@ -10,8 +10,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Actions\ShowWidget;
-use exface\Core\Factories\ActionFactory;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 
 class PWARoute implements PWARouteInterface
 {
@@ -25,11 +24,12 @@ class PWARoute implements PWARouteInterface
     
     private $action = null;
     
-    public function __construct(PWAInterface $pwa, string $url, WidgetInterface $widget)
+    public function __construct(PWAInterface $pwa, string $url, WidgetInterface $widget = null, ActionInterface $showingAction = null)
     {
         $this->pwa = $pwa;
         $this->widget = $widget;
         $this->url = $url;
+        $this->action = $showingAction;
     }
     
     public function exportUxonObject()
@@ -53,7 +53,7 @@ class PWARoute implements PWARouteInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\PWA\PWARouteInterface::getWidget()
      */
-    public function getWidget() : WidgetInterface
+    public function getWidget() : ?WidgetInterface
     {
         return $this->widget;
     }
@@ -71,10 +71,6 @@ class PWARoute implements PWARouteInterface
         
         if (null !== $triggerWidget = $this->getTriggerWidget()) {
             return $triggerWidget->getAction();
-        }
-        
-        if ($this->getWidget()->hasParent() === false) {
-            $this->action = ActionFactory::createFromString($this->getPWA()->getWorkbench(), ShowWidget::class, $this->getWidget());
         }
         
         return $this->action;
@@ -108,7 +104,7 @@ class PWARoute implements PWARouteInterface
     public function getTriggerWidget() : ?iTriggerAction
     {
         $routeWidget = $this->getWidget();
-        if ($routeWidget->hasParent()) {
+        if ($routeWidget !== null && $routeWidget->hasParent()) {
             $triggerWidget = $routeWidget->getParent();
             if ($triggerWidget instanceof iTriggerAction) {
                 return $triggerWidget;
@@ -130,5 +126,13 @@ class PWARoute implements PWARouteInterface
             }
         }
         return null;
+    }
+    
+    public function getOfflineStrategy() : string
+    {
+        if (null === $action = $this->getAction()) {
+            return OfflineStrategyDataType::PRESYNC;
+        }
+        return $this->pwa->getActionOfflineStrategy($action);
     }
 }

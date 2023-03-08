@@ -59,6 +59,8 @@
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
 	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Duplikate ignoriert!",
 	
+	"ACTION.GENERATEPWA.NAME": "PWA-Modell generieren",
+	
 	"ACTION.GENERIC.ADD": "Hinzufügen",
 	"ACTION.GENERIC.REMOVE": "Entfernen",
 	"ACTION.GENERIC.OPEN": "Öffnen",
