@@ -168,7 +168,7 @@ return $filename;
     public function uninstall() : \Iterator
     {
         $this->uninstallFromConfig($this->getApp(), $this->getConfig());        
-        return 'ServiceWorker configuration removed';
+        yield 'ServiceWorker configuration removed';
     }
 
     /**
@@ -179,7 +179,7 @@ return $filename;
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        return '';
+        yield 'ServiceWorker backup not required';
     }
     
     /**
