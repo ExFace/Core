@@ -306,7 +306,7 @@ class TimeDataType extends AbstractDataType
         } else {
             $tz = null;
         }
-        return new \DateTime('1970-01-01 ' . static::cast($timeString), $tz);
+        return new \DateTime(static::cast($timeString), $tz);
     }
     
     /**
