@@ -101,14 +101,22 @@ class DateDataType extends AbstractDataType
                     break;
             }        
             
-            if ($parsedString !== null && $returnPhpDate === false && $fromTimeZone === null) {
-                return $parsedString; 
+            // If it was relative format, use it
+            if ($parsedString !== null) {
+                // ... either directly
+                if ($returnPhpDate === false && $fromTimeZone === null) {
+                    return $parsedString; 
+                } 
+                // ... or as a "definitely parseable" string
+                else {
+                    $string = $parsedString;
+                }
             }
         }
         
         try {
             $tz = $fromTimeZone !== null ? new \DateTimeZone($fromTimeZone) : null;
-            $dateTime = new \DateTime($string, $tz);
+            $dateTime = new \DateTime($string);
         } catch (\Exception $e) {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
