@@ -7,8 +7,6 @@ use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
-use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
-use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
@@ -26,6 +24,10 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\Events\Communication\OnMessageRoutedEvent;
 use exface\Core\Events\Communication\OnMessageSentEvent;
 use exface\Core\Interfaces\Events\CommunicationMessageEventInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Events\BehaviorEventInterface;
+use exface\Core\DataTypes\PhpClassDataType;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -185,6 +187,16 @@ class Tracer extends Profiler
             'stopCommunication'
         ]);
         
+        // Behaviors
+        $event_manager->addListener(OnBeforeBehaviorAppliedEvent::getEventName(), [
+            $this,
+            'startBehavior'
+        ]);
+        $event_manager->addListener(OnBehaviorAppliedEvent::getEventName(), [
+            $this,
+            'stopBehavior'
+        ]);
+        
         // Performance summary
         $event_manager->addListener(OnBeforeStopEvent::getEventName(), [
             $this,
@@ -233,6 +245,9 @@ class Tracer extends Profiler
                 break;
             case $event instanceof CommunicationMessageEventInterface:
                 $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
+                break;
+            case $event instanceof BehaviorEventInterface:
+                $name = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . ' of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';
                 break;
             default:
                 $name = 'Event ' . StringDataType::substringAfter($event::getEventName(), '.', $event::getEventName(), false, true);
@@ -334,14 +349,45 @@ class Tracer extends Profiler
     public function stopCommunication(OnMessageSentEvent $event)
     {
         try {
-            $ms = $this->stop($event);
-            $name = $this->getLapName($event);
+            $ms = $this->stop($event->getMessage());
+            $name = $this->getLapName($event->getMessage());
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
             } else {
                 $duration = '';
             }
             $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $event->getReceipt());
+        } catch (\Throwable $e){
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+    }
+    
+    /**
+     *
+     * @param OnBeforeBehaviorAppliedEvent $event
+     * @return void
+     */
+    public function startBehavior(OnBeforeBehaviorAppliedEvent $event)
+    {
+        $this->start($event->getBehavior(), $this->getLapName($event), 'behavior');
+    }
+    
+    /**
+     *
+     * @param OnBehaviorAppliedEvent $event
+     * @reuturn void
+     */
+    public function stopBehavior(OnBehaviorAppliedEvent $event)
+    {
+        try {
+            $ms = $this->stop($event->getBehavior());
+            $name = $this->getLapName($event);
+            if ($ms !== null) {
+                $duration = ' (' . $ms . ' ms)';
+            } else {
+                $duration = '';
+            }
+            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $event->getLogbook());
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }

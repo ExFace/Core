@@ -239,7 +239,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         $startTime = $this->getStartTime();
         $endTime = $this->getEndTime();
         $totalDur = round($endTime - $startTime, $this->msDecimals);
-        $minWidth = '5px';
+        $minWidth = '1px';
         $milestoneSymbol = '&loz;';
         $emptySymbol = '&nbsp;';
         
