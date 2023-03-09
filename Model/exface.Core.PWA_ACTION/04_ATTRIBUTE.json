@@ -757,7 +757,7 @@
         },
         {
             "CREATED_ON": "2023-03-07 17:44:31",
-            "MODIFIED_ON": "2023-03-07 17:45:05",
+            "MODIFIED_ON": "2023-03-09 18:11:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edae645660dad8ae64025041000001",
@@ -778,7 +778,7 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
-            "ALIAS": "trigger_widget_hash",
+            "ALIAS": "TRIGGER_WIDGET_HASH",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "trigger_widget_hash",
             "OBJECT": "0x11edb7f01fb8f144b7f0747827435ce5",

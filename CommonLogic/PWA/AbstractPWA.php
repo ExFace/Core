@@ -27,7 +27,6 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Actions\iShowWidget;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -337,7 +336,7 @@ abstract class AbstractPWA implements PWAInterface
                 'TRIGGER_WIDGET_ID' => $widget ? $widget->getId() : null,
                 'TRIGGER_WIDGET_TYPE' => $widget ? $widget->getWidgetType() : null,
                 'DESCRIPTION' => $this->getDescriptionOf($action),
-                'OFFLINE_STRATEGY' => $this->getActionOfflineStrategy($action),
+                'OFFLINE_STRATEGY_IN_FACADE' => $this->getActionOfflineStrategy($action),
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
                 'OBJECT' => $action->getMetaObject()->getId(),
                 'PWA_DATASET' => null !== ($set = $this->getActionDataSet($action)) ? $this->getDatasetPWAModelUID($set) : null
