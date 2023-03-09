@@ -13,8 +13,7 @@ use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\DataTypes\PhpClassDataType;
 
 /**
  *
@@ -41,12 +40,6 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $appSelectorOrString = null;
     
     private $priority = null;
-    
-    /**
-     * 
-     * @var BehaviorLogBook[]
-     */
-    private $logBooks = [];
 
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
@@ -287,19 +280,11 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
     
     /**
-     *
-     * @param EventInterface $event
-     * @return BehaviorLogBook
+     * 
+     * @return string
      */
-    protected function getLogBook(EventInterface $event) : BehaviorLogBook
+    public function __toString() : string
     {
-        foreach ($this->logBooks as $lb) {
-            if ($lb->getEvent() === $event) {
-                return $lb;
-            }
-        }
-        $lb = new BehaviorLogBook('Behavior', $this, $event);
-        $this->logBooks[] = $lb;
-        return $lb;
+        return PhpClassDataType::findClassNameWithoutNamespace($this);
     }
 }
