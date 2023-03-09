@@ -16,7 +16,7 @@ use exface\Core\Factories\DataTypeFactory;
  *
  * - `=DateTime('25.03.2020 21:00:55')` = 2020-03-25 21:00:55
  * - `=DateTime('1585090800')` = 2020-03-25 00:00:00
- * - `=DateTime('1585090800', 'dd.MM.yyyy HH:mm:ss)` = 25.03.2020 00:00:00
+ * - `=DateTime('1585090800', 'dd.MM.yyyy HH:mm:ss')` = 25.03.2020 00:00:00
  * - `=DateTime('2020-03-25 21:00:55', 'yyyyMMddHHmmss')` = 20200325210055
  * 
  * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
@@ -35,7 +35,7 @@ class DateTime extends Date
     {
         switch (true) {
             case $returnFormat === null:
-                $returnFormat = DateTimeDataType::DATE_ICU_FORMAT_INTERNAL;
+                $returnFormat = DateTimeDataType::DATETIME_ICU_FORMAT_INTERNAL;
                 break;
             case $returnFormat === 'locale':
                 $returnFormat = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');

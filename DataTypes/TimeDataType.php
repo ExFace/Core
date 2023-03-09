@@ -306,7 +306,7 @@ class TimeDataType extends AbstractDataType
         } else {
             $tz = null;
         }
-        return new \DateTime('1970-01-01 ' . static::cast($timeString), $tz);
+        return new \DateTime(static::cast($timeString), $tz);
     }
     
     /**
@@ -327,7 +327,7 @@ class TimeDataType extends AbstractDataType
      * @param bool $returnPhpDate
      * @return string|\DateTimeInterface|NULL
      */
-    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone) : string
+    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone)
     {
         if ($time === null || $time === '') {
             return null;
