@@ -8,11 +8,11 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     /**
      * 
      * @param string $text
-     * @param int $indent
+     * @param int|null $indent
      * @param string|int $section
      * @return LogBookInterface
      */
-    public function addLine(string $text, int $indent = 0, $section = null) : LogBookInterface;
+    public function addLine(string $text, int $indent = null, $section = null) : LogBookInterface;
     
     /**
      * 
@@ -41,6 +41,13 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function removeSection(string $title) : LogBookInterface;
+    
+    /**
+     * 
+     * @param int $zeroOrMore
+     * @return LogBookInterface
+     */
+    public function setIndentActive(int $zeroOrMore) : LogBookInterface;
     
     /**
      * 

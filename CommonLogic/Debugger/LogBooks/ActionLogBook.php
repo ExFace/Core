@@ -75,7 +75,7 @@ class ActionLogBook implements DataLogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLine()
      */
-    public function addLine(string $text, int $indent = 0, $section = null): LogBookInterface
+    public function addLine(string $text, int $indent = null, $section = null): LogBookInterface
     {
         $this->logBook->addLine($text, $indent, $section);
         return $this;
@@ -213,5 +213,26 @@ class ActionLogBook implements DataLogBookInterface
     public function getId(): string
     {
         return $this->logBook->getId();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\DataLogBookInterface::getDataSheets()
+     */
+    public function getDataSheets(): array
+    {
+        return $this->logBook->getDataSheets();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::setIndentActive()
+     */
+    public function setIndentActive(int $zeroOrMore) : LogBookInterface
+    {
+        $this->logBook->setIndentActive($zeroOrMore);
+        return $this;
     }
 }
