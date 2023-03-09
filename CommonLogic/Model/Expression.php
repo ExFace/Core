@@ -748,7 +748,14 @@ class Expression implements ExpressionInterface
         
         switch ($quote) {
             case '"':
-                return json_decode($quotedString);
+                // Try unqote via json_decode
+                $unquoted = json_decode($quotedString);
+                if ($unquoted !== null) {
+                    return $unquoted;
+                }
+                // If it does not work (= $quotedString is not a valid JSON string), leav it as-is
+                // For example, this might be due to the string being multiple quoted strings: `"..." "..."`
+                break;
             case "'":
                 return trim(str_replace("\\'", "'", $quotedString), "'");
         }
