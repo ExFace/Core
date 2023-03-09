@@ -118,14 +118,24 @@ class MySqlConnector extends AbstractSqlConnector
                         $this->multiqueryResults[$idx] = [];
                         $this->affectedRows += mysqli_affected_rows($conn);
                         $result = mysqli_store_result($conn);
-                        $this->multiqueryResults[$idx] = mysqli_fetch_assoc($result);
+                        if ($result) {
+                            $this->multiqueryResults[$idx] = mysqli_fetch_assoc($result);
+                        } elseif (mysqli_errno($conn)) {
+                            throw $this->createQueryError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
+                        }
                         if (mysqli_more_results($conn)) {
-                            mysqli_free_result($result);
+                            // Free the memory of the current result if it is not emtpy
+                            // Note, an empty result here might come for a query that does not
+                            // do anything and does not neccessarily indicate an error!
+                            if ($result) {
+                                mysqli_free_result($result);
+                            }
+                            
+                            if(! mysqli_next_result($conn)) {
+                                throw $this->createQueryError($query, 'Failed to get next SQL result in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
+                            }
                         } else {
                             break;
-                        }
-                        if(! mysqli_next_result($conn) || mysqli_errno($conn)) {
-                            throw $this->createQueryError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
                         }
                     } while (true);
                 }
