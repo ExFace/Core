@@ -17,6 +17,9 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -237,40 +240,58 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
+        $logbook = new DataLogBook($this->__toString());
+        $logbook->addDataSheet('Input data', $data_sheet);
+        $logbook->addLine('Reacting to event "' . $event::getEventName() . '" with input data for object ' . $data_sheet->getMetaObject()->__toString());
+        $logbook->setIndentActive(1);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
         if (in_array($data_sheet, $this->ignoreDataSheets, true)) {
-            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_attributes_change`', [], $data_sheet);
+            $logbook->addLine('**Skipped** because of `only_if_attributes_change`');
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         
+        $logbook->addLine('Option `event_prevent_default` is `' . $this->getEventPreventDefault() . '`');
         if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_ALWAYS) {
+            $logbook->addLine('Events default logic will be prevented');
             $event->preventDefault();
         }
         
         try {
             if ($this->hasRestrictionConditions()) {
+                $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
                 if ($data_sheet->isEmpty()) {
-                    $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `only_if_data_matches_conditions`', [], $data_sheet);
+                    $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
+                    $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
                     return;
                 }
             }
             
             if ($action = $this->getAction()) {
+                $logbook->addSection('Running action ' . $action->getAliasWithNamespace());
                 if ($event instanceof TaskEventInterface) {
+                    $logbook->addLine('Getting task for event and replacing the task data with the input data of the behavior');
                     $task = $event->getTask();
                     $task->setInputData($data_sheet);
                 } else {
                     // We never have an input widget here, so tell the action it won't get one
                     // and let it deal with it.
+                    $logbook->addLine('Creating a new task because the event has no task attached');
                     $action->setInputTriggerWidgetRequired(false);
                     $task = TaskFactory::createFromDataSheet($data_sheet);
                 }
                 if ($event instanceof DataTransactionEventInterface) {
+                    $logbook->addLine('Getting the transaction from the event');
                     $action->handle($task, $event->getTransaction());
                 } else {
+                    $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
+                    $logbook->addLine('**Performing action**');
                     $action->handle($task);
                 }
                 if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_IF_ACTION_CALLED) {
+                    $logbook->addLine('Events default logic will be prevented');
                     $event->preventDefault();
                 }
             }
@@ -278,6 +299,8 @@ class CallActionBehavior extends AbstractBehavior
             if ($this->isErrorIfActionFails()) {
                 throw $e;
             } 
+            $logbook->addLine('**Failed** silently (silenced by `error_if_action_fails`): ' . $e->getMessage());
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             $this->getWorkbench()->getLogger()->logException($e);
         }
     }
