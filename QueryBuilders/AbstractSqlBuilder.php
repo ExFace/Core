@@ -538,6 +538,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         unset ($rows[$nr][$colKey]);
                     }
                     break;
+                case $tz !== null && ($type = $qpart->getDataType()) instanceof TimeDataType:
+                    $colKey = $qpart->getColumnKey();
+                    $type = $qpart->getDataType();
+                    for ($i = 0; $i < $rowCnt; $i++) {
+                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey]);
+                        $rows[$i][$colKey] = $type::convertTimeZone($rows[$i][$colKey], $tz, $type::getTimeZoneDefault($this->getWorkbench()));
+                    }
+                    break;
                 case $tz !== null && ($type = $qpart->getDataType()) instanceof DateDataType:
                     $colKey = $qpart->getColumnKey();
                     $type = $qpart->getDataType();
