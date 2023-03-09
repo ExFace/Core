@@ -1,71 +1,32 @@
 <?php
 namespace exface\Core\Events\Behavior;
 
-use exface\Core\Events\AbstractEvent;
-use exface\Core\Interfaces\Events\BehaviorEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\Interfaces\Events\MetaObjectEventInterface;
 
 /**
- * Event fired when once a behavior applied its logic
+ * Event fired when after a behavior applied its logic
  * 
  * @author Andrej Kabachnik
  *
  */
-class OnBehaviorAppliedEvent extends AbstractEvent implements BehaviorEventInterface, MetaObjectEventInterface
+class OnBehaviorAppliedEvent extends OnBeforeBehaviorAppliedEvent
 {
-    private $behavior = null;
+    private $dataChanged = false;
     
-    private $processedEvent = null;
-    
-    /**
-     * 
-     * @param BehaviorInterface $behavior
-     * @param EventInterface $processedEvent
-     */
-    public function __construct(BehaviorInterface $behavior, EventInterface $processedEvent = null)
+    public function __construct(BehaviorInterface $behavior, EventInterface $processedEvent = null, LogBookInterface $logbook = null, $dataChanged = false)
     {
-        $this->behavior = $behavior;
-        $this->processedEvent = $processedEvent;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Events\BehaviorEventInterface::getBehavior()
-     */
-    public function getBehavior() : BehaviorInterface
-    {
-        return $this->behavior;
+        parent::__construct($behavior, $processedEvent, $logbook);
+        $this->dataChanged = $dataChanged;
     }
     
     /**
      * 
-     * @return EventInterface
+     * @return bool
      */
-    public function getEventProcessed() : EventInterface
+    public function isDataModified() : bool
     {
-        return $this->processedEvent;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->behavior->getWorkbench();
-    }
-    
-    /**
-     * 
-     * @return MetaObjectInterface
-     */
-    public function getObject(): MetaObjectInterface
-    {
-        return $this->behavior->getObject();
+        return $this->dataChanged;
     }
 }
