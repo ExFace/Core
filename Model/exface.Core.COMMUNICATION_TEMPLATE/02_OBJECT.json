@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-09-19 13:19:21",
-            "MODIFIED_ON": "2023-01-24 17:16:28",
+            "MODIFIED_ON": "2023-03-09 15:56:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ed830be97308e4830b025041000001",
@@ -122,7 +122,7 @@
                                             "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
                                             "columns": [
                                                 {
-                                                    "attribute_group_alias": "~VISIBLE"
+                                                    "attribute_group_alias": "~DEFAULT_DISPLAY"
                                                 },
                                                 {
                                                     "attribute_alias": "MESSAGE_PROTOTYPE",
