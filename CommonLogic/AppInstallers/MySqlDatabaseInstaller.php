@@ -392,7 +392,7 @@ UPDATE {$this->getMigrationsTableName()}
 SET
     up_datetime={$this->escapeSqlDateTimeValue($time)},
     up_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getUpScript()))}',
-    up_result='',
+    up_result=NULL,
     down_datetime=NULL,
     down_script='{$this->escapeSqlStringValue(StringDataType::encodeUTF8($migration->getDownScript()))}',
     down_result=NULL,
