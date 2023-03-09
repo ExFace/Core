@@ -450,7 +450,7 @@ JS;
         },
         validateValue: function(iCol, iRow, mValue) {
             var fnValidator = this.getColumnModel(iCol).validator;
-            if (fnValidator === null) {
+            if (fnValidator === null || fnValidator === undefined) {
                 return true;
             }
             return fnValidator(mValue);
