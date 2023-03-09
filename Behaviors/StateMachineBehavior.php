@@ -288,7 +288,7 @@ class StateMachineBehavior extends AbstractBehavior
     public function getStateAttributeAlias()
     {
         if (is_null($this->state_attribute_alias)) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Cannot initialize StateMachineBehavior for "' . $this->getObject()->getAliasWithNamespace() . '": state_attribute_alias not set in behavior configuration!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Cannot initialize StateMachineBehavior for "' . $this->getObject()->getAliasWithNamespace() . '": state_attribute_alias not set in behavior configuration!', '6TG2ZFI');
         }
         return $this->state_attribute_alias;
     }
@@ -353,7 +353,7 @@ class StateMachineBehavior extends AbstractBehavior
         } elseif (is_int($value) || is_string($value)) {
             $this->default_state = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setDefaultState() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setDefaultState() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
         }
         
         return $this;
@@ -371,7 +371,7 @@ class StateMachineBehavior extends AbstractBehavior
             if (count($states = $this->getStates()) > 0) {
                 $this->default_state = reset($states)->getStateId();
             } else {
-                throw new BehaviorConfigurationError($this->getObject(), 'The default state cannot be determined for "' . $this->getObject()->getAliasWithNamespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
+                throw new BehaviorConfigurationError($this, 'The default state cannot be determined for "' . $this->getObject()->getAliasWithNamespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
             }
         }
         return $this->default_state;
@@ -448,7 +448,7 @@ class StateMachineBehavior extends AbstractBehavior
         } elseif (is_array($value)) {
             $this->states = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
         
         $this->stateIndex = array_keys($this->states);
@@ -476,14 +476,14 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $state = $this->states[$state_id];
         if ($state === null) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Unknown state machine state "' . $state_id . '" for object ' . $this->getObject()->__toString() . '!');
+            throw new BehaviorRuntimeError($this, 'Unknown state machine state "' . $state_id . '" for object ' . $this->getObject()->__toString() . '!');
         }
         return $state;
     }
     
     /**
      * 
-     * @param unknown $state_id
+     * @param mixed $state_id
      * @return bool
      */
     public function hasState($state_id) : bool
@@ -589,7 +589,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         // Throw an error if the current state is not in the state machine definition!
         if ($current_state && ! $this->getState($current_state)) {
-            throw new BehaviorRuntimeError($thisObj, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
+            throw new BehaviorRuntimeError($this, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
         }
         
         $state = $this->getState($current_state);
@@ -659,7 +659,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         $stateCol = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute());
         if (! $stateCol) {
-            throw new BehaviorRuntimeError($thisObj, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
+            throw new BehaviorRuntimeError($this, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
         }
         
         foreach ($states as $state) {

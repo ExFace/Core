@@ -226,7 +226,7 @@ class CallActionBehavior extends AbstractBehavior
         }
         
         if (! $event instanceof DataSheetEventInterface) {
-            throw new BehaviorConfigurationError($this->getObject(), 'The CallActionBehavior cannot be triggered by event "' . $event->getAliasWithNamespace() . '": currently only data sheet events supported!');
+            throw new BehaviorConfigurationError($this, 'The CallActionBehavior cannot be triggered by event "' . $event->getAliasWithNamespace() . '": currently only data sheet events supported!');
         }
         
         $data_sheet = $event->getDataSheet();

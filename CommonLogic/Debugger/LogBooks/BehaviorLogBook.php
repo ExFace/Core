@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
-use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\DataLogBookInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
@@ -11,12 +10,14 @@ use exface\Core\Widgets\Tabs;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 
-class ActionLogBook implements DataLogBookInterface
+class BehaviorLogBook implements DataLogBookInterface
 {
-    private $task = null;
+    private $event = null;
     
-    private $action = null;
+    private $behavior = null;
     
     private $logBook = null;
     
@@ -27,28 +28,28 @@ class ActionLogBook implements DataLogBookInterface
     /**
      * 
      * @param string $title
-     * @param ActionInterface $action
-     * @param TaskInterface $task
+     * @param ActionInterface $behavior
+     * @param EventInterface $event
      * @param string $defaultSection
      */
-    public function __construct(string $title, ActionInterface $action, TaskInterface $task, string $defaultSection = '')
+    public function __construct(string $title, BehaviorInterface $behavior, EventInterface $event, string $defaultSection = '')
     {
-        $this->task = $task;
-        $this->action = $action;
+        $this->event = $event;
+        $this->behavior = $behavior;
         if ($defaultSection === '') {
-            $defaultSection = 'Action ' . $action->getAliasWithNamespace();
+            $defaultSection = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($this);
         }
         $this->logBook = new DataLogBook($title, $defaultSection);
-        $this->logBook->addLine('Prototype class: ' . get_class($action));
+        $this->logBook->addLine('Prototype class: ' . get_class($behavior));
     }
     
     /**
      * 
-     * @return TaskInterface
+     * @return EventInterface
      */
-    public function getTask() : TaskInterface
+    public function getEvent() : EventInterface
     {
-        return $this->task;
+        return $this->event;
     }
     
     /**
@@ -75,7 +76,7 @@ class ActionLogBook implements DataLogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLine()
      */
-    public function addLine(string $text, int $indent = null, $section = null): LogBookInterface
+    public function addLine(string $text, int $indent = 0, $section = null): LogBookInterface
     {
         $this->logBook->addLine($text, $indent, $section);
         return $this;
@@ -92,16 +93,16 @@ class ActionLogBook implements DataLogBookInterface
         $tabs = $debug_widget->getWidgetFirst()->getWidgetFirst();
         if ($tabs instanceof Tabs) {
             $tab = $tabs->createTab();
-            $tab->setCaption('Action config');
+            $tab->setCaption('Behavior config');
             $tabs->addTab($tab);
             $tab->addWidget(WidgetFactory::createFromUxonInParent($tabs, new UxonObject([
                 'widget_type' => 'InputUxon',
                 'width' => 'max',
                 'height' => '100%',
-                'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this->action)),
+                'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this->behavior)),
                 'hide_caption' => true,
-                'value' => $this->action->exportUxonObject()->toJson(true),
-                'root_prototype' => '\\' . get_class($this->action)
+                'value' => $this->behavior->exportUxonObject()->toJson(true),
+                'root_prototype' => '\\' . get_class($this->behavior)
             ])));
         }
         return $debug_widget;
@@ -178,9 +179,9 @@ class ActionLogBook implements DataLogBookInterface
      * 
      * @param string $mermaid
      * @param string $placeInSection
-     * @return ActionLogBook
+     * @return BehaviorLogBook
      */
-    public function setFlowDiagram(string $mermaid) : ActionLogBook
+    public function setFlowDiagram(string $mermaid) : BehaviorLogBook
     {
         $this->flowDiagram = $mermaid;
         $this->logBook->addCodeBlock($mermaid, 'mermaid', 1);
@@ -213,26 +214,5 @@ class ActionLogBook implements DataLogBookInterface
     public function getId(): string
     {
         return $this->logBook->getId();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Debug\DataLogBookInterface::getDataSheets()
-     */
-    public function getDataSheets(): array
-    {
-        return $this->logBook->getDataSheets();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Debug\LogBookInterface::setIndentActive()
-     */
-    public function setIndentActive(int $zeroOrMore) : LogBookInterface
-    {
-        $this->logBook->setIndentActive($zeroOrMore);
-        return $this;
     }
 }

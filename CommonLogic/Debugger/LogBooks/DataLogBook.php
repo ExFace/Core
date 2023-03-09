@@ -49,5 +49,15 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
     {
         $this->dataSheets[$title] = $dataSheet;
         return $this;
-    } 
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\DataLogBookInterface::getDataSheets()
+     */
+    public function getDataSheets(): array
+    {
+        return $this->dataSheets;
+    }
 }

@@ -20,6 +20,8 @@ class MarkdownLogBook implements LogBookInterface
     
     private $currentSection = null;
     
+    private $currentIndent = 0;
+    
     /**
      * 
      * @param string $title
@@ -37,9 +39,9 @@ class MarkdownLogBook implements LogBookInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addLine()
      */
-    public function addLine(string $text, int $indent = 0, $section = null): LogBookInterface
+    public function addLine(string $text, int $indent = null, $section = null): LogBookInterface
     {
-        $this->lines[$this->getSectionKey($section)][] = ['indent' => $indent, 'text' => $text];
+        $this->lines[$this->getSectionKey($section)][] = ['indent' => $this->currentIndent + ($indent ?? 0), 'text' => $text];
         return $this;
     }
     
@@ -201,9 +203,15 @@ class MarkdownLogBook implements LogBookInterface
             return '';
         }
         $str = '';
-        for ($i = 0; $i < $indent; $i++) {
+        for ($i = 1; $i < $indent; $i++) {
             $str .= self::INDENT;
         }
         return $str . '- ';
+    }
+    
+    public function setIndentActive(int $zeroOrMore) : LogBookInterface
+    {
+        $this->currentIndent = $zeroOrMore;
+        return $this;
     }
 }
