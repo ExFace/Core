@@ -14,6 +14,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -386,7 +387,12 @@ class StateMachineState implements iHaveIcon
             try {
                 $this->name = $this->evaluatePropertyExpression($this->name);
             } catch (RuntimeException $e) {
-                throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!', $e->getAlias(), $e);
+                $behavior = $this->getStateMachine()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
+                if ($behavior) {
+                    throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!', $e->getAlias(), $e);
+                } else {
+                    throw $e;
+                }
             }
         }
         return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;

@@ -13,6 +13,7 @@ use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\DataTypes\PhpClassDataType;
 
 /**
  *
@@ -175,7 +176,7 @@ abstract class AbstractBehavior implements BehaviorInterface
         try {
             $this->unregisterEventListeners();
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this->getObject(), 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
+            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this, 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
         }
         $this->disabled = true;
         return $this;
@@ -276,5 +277,14 @@ abstract class AbstractBehavior implements BehaviorInterface
     {
         $this->priority = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return PhpClassDataType::findClassNameWithoutNamespace($this);
     }
 }

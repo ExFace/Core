@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * Configuration object to translate related data in the dictionary of a head object.
@@ -150,7 +151,12 @@ class TranslatableRelation implements iCanBeConvertedToUxon
                 $relPath = $thisRelPath;
             } else {
                 if ($thisRelPath !== $relPath) {
-                    throw new BehaviorConfigurationError($this->getObject(), 'Invalid configuration for translatable relation: only attributes of a single related object allowed!');
+                    $behavior = $this->getObject()->getBehaviors()->getByPrototypeClass(TranslatableBehavior::class)->getFirst();
+                    if ($behavior) {
+                        throw new BehaviorConfigurationError($behavior, 'Invalid configuration for translatable relation: only attributes of a single related object allowed!');
+                    } else {
+                        throw new MetaObjectModelError($this->getObject(), 'Cannot find TranslatableBehavior for object ' . $this->getObject()->__toString() . '!');
+                    }
                 }
             }
         }

@@ -19,6 +19,8 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
@@ -211,14 +213,16 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
      */
     protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol, DataSheetEventInterface $event) : DataSheetInterface
     {
+        $logbook = new DataLogBook($this->__toString());
         if (! $this->hasNamespace() && ! $targetCol->hasEmptyValues()) {
             return $dataSheet;
         }
         
+        $logbook->addDataSheet('Data', $dataSheet);
         if ($srcCol = $dataSheet->getColumns()->getByAttribute($this->getSourceAttribute())) {
             $srcValues = $srcCol->getValues();
         } else {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+            throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute ' . $this->getSourceAttribute()->__toString() . ': no input data found for source attribute found!', null, null, $logbook);
         }
         
         // If namepacing is no, see where the namespaces had changed
@@ -229,7 +233,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
                 // If the namespace is taken from a direct attribute, check if that attribute changed
                 $nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr);
                 if (! $nsCol || $nsCol->hasEmptyValues()) {
-                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
+                    throw new BehaviorRuntimeError($this, $this->getErrorText() . ': missing values in input data for namespace column ' . $this->getNamespaceAttribute()->__toString() . '!', null, null, $logbook);
                 }
                 $nsValues = $nsCol->getValues(false);
                 if ($event instanceof OnBeforeUpdateDataEvent) {
@@ -270,7 +274,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
             // Now as we know, we will probably need to generating, double check if there is a source
             // value to generate from
             if ($srcVal === null || $srcVal === '') {    
-                throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+                throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->__toString() . '": no input data found for source attribute found!', null, null, $logbook);
             }
             
             // If namespacing is on, get the current namespace and check if it has changed
@@ -278,7 +282,11 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
                 if ($nsValues !== null) {
                     $namespace = $nsValues[$rowNo];
                 } else {
-                    $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
+                    try {
+                        $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
+                    } catch (\Throwable $e) {
+                        throw new BehaviorRuntimeError($this, $this->getErrorText() . ': ' . $e->getMessage(), null, $e, $logbook);
+                    }
                 }
                 
                 //if ($namespace === null || $namespace === '' || $hasAliasWithNamespace)
@@ -323,7 +331,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
         $nsRelLeftKeyAttr = $nsRelPath->getRelationFirst()->getLeftKeyAttribute();
         $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsRelLeftKeyAttr);
         if (! $nsRelLeftCol) {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace key column "' . $nsRelLeftKeyAttr->getAliasWithRelationPath() . '"!');
+            throw new DataSheetColumnNotFoundError($dataSheet, 'Missing values for namespace key column ' . $nsRelLeftKeyAttr->__toString() . '!');
         }
         
         $nsRelLeftKeyVal = $nsRelLeftCol->getCellValue($rowNo);

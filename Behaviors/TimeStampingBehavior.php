@@ -22,6 +22,10 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -267,7 +271,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getCreatedOnAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedOnAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `created_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getCreatedOnAttributeAlias());
     }
@@ -289,7 +293,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getUpdatedOnAttribute() : ?MetaAttributeInterface
     {
         if (! $this->hasUpdatedOnAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `updated_on_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getUpdatedOnAttributeAlias());
     }
@@ -464,20 +468,33 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             return;
         }
         
+        $logbook = new DataLogBook($this->__toString());
+        $logbook->addDataSheet('Input data', $data_sheet);
+        $logbook->addLine('Received input data with ' . $data_sheet->getMetaObject()->__toString());
+        $logbook->setIndentActive(1);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
         // Check if the updated_on column is present in the sheet
         /* @var $update_times string[] array with an updated-on for every row number in the original data sheet */
         $update_times = [];
         switch (true) {
             case $updated_column = $data_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
                 $update_times = $updated_column->getValues();
+                $logbook->addLine('Column "' . $updated_column->getName() . '" found with ' . count($update_times) . ' values');
                 break;
             case $data_sheet instanceof DataSheetSubsheetInterface && $this->getCheckForConflictsNotMandatoryForSubsheets():
                 // If we have a subsheet without it's own updated-on column, see if the parent sheet has one
+                $logbook->addLine('Subsheet detected');
                 $parentSheet = $data_sheet->getParentSheet();
+                $logbook->addDataSheet('Subsheet parent data', $parentSheet);
                 $parentObj = $parentSheet->getMetaObject();
+                $logbook->addLine('Parent object is ' . $parentObj->__toString(), 1);
                 foreach ($parentObj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $parentBeh) {
                     /* @var $parentBeh \exface\Core\Behaviors\TimeStampingBehavior */
+                    $logbook->addLine('Parent behavior ' . $parentBeh->__toString(), 1);
                     if ($parentBeh->hasUpdatedOnAttribute() && $parentBeh->getCheckForConflictsOnUpdate() === true) {
+                        $logbook->addLine('Parent behavior has `updated_on_attribute` and checks for conflicts on update - everything is fine');
                         return;
                     }
                     
@@ -498,11 +515,13 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
         }
         $update_cnt = count($update_times);
+        $logbook->addLine('Input data has ' . $update_cnt . ' rows.');
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
         $current_action = $this->getCurrentAction();
         if ($current_action instanceof iUndoActions) {
+            $logbook->addLine('Undo-action detected: skipping conflict check!');
             // FIXME To check for conflicts when performing and undo, we need to see, if the timestamp changed
             // since the undone action had been performed. The current problem is, however, that we do not store
             // the resulting data sheet of actions in the action history. So for now, undo will work without any
@@ -510,9 +529,11 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             // is very small. Still, this really needs to be fixed!
         } else {
             // Check the current update timestamp in the data source
-            $check_sheet = $this->readCurrentData($data_sheet);
+            $check_sheet = $this->readCurrentData($data_sheet, $logbook);
+            $logbook->addSection('Comparing timestamps');
             $check_column = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
             $check_cnt = count($check_column->getValues());
+            $logbook->addLine('Found ' . $check_cnt . ' update time values', 1);
             
             // There are different types of updates to handle differently
             switch (true) {
@@ -522,10 +543,16 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 // Same could apply to a mass-update via filters if no current rows found - but that is not an issues
                 // since it would not actually do anything (2)
                 case $check_cnt < $update_cnt && $event->getCreateIfUidNotFound():
+                    if ($check_cnt === $update_cnt) {
+                        $logbook->addLine('Check mode: regular update line-by-line', 1);
+                    } else {
+                        $logbook->addLine('Check mode: update via UID with create-if-no-UID (because number of rows is different and create-if-no-UID is on', 1);
+                    }
+                    $uidCol = $data_sheet->getUidColumn();
                     foreach ($update_times as $data_sheet_row_nr => $updated_val) {
-                        $data_sheet_uid = $data_sheet->getUidColumn()->getCellValue($data_sheet_row_nr);
+                        $rowUid = $uidCol->getCellValue($data_sheet_row_nr);
                         // If no UID is found in the original data
-                        if (empty($data_sheet_uid)) {
+                        if (empty($rowUid)) {
                             if ($event->getCreateIfUidNotFound()) {
                                 // see case (1) above
                                 continue;
@@ -534,32 +561,34 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                                 continue;
                             } else {
                                 // Very strange - should not happen :)
-                                throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
+                                throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
                             }
                         }
                         
                         // If we have a UID, look for conflicts!
-                        $check_sheet_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet_uid);
+                        $check_sheet_row_nr = $check_sheet->getUidColumn()->findRowByValue($rowUid);
                         $check_val = $check_column->getCellValue($check_sheet_row_nr);
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
                         if ($updated_date != $check_date) {
                             $conflict_rows[] = $data_sheet_row_nr;
+                            $logbook->addLine("**Conflict** found: input row {$data_sheet_row_nr} ({$updated_val}) <=> check row {$check_sheet_row_nr} ({$check_val})", 2);
                         }
                     }
                     break;
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate via Knopf, mehrerer Objekte ueber Knopf mit Filtern
                 case $check_cnt > 1 && $update_cnt == 1:
+                    $logbook->addLine('Check mode: update by filters (single input row and multiple check rows)', 1);
                     $updated_val = $update_times[0];
                     $check_val = $check_column->aggregate(AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
-                    
+                    $logbook->addLine('Comparing input time ' . $updated_val . ' with max. update time of affected rows: ' . $check_val, 1);
                     try {
                         if (! $data_sheet->hasUidColumn() || empty($data_sheet->getUidColumn()->getValues()[0])) {
                             // Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
                             // ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
                             // Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
                             // ausgegeben werden.
-                            throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
+                            throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
                         }
                         $updated_date = new \DateTime($updated_val);
                         $check_date = new \DateTime($check_val);
@@ -569,14 +598,23 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                     }
                     
                     if ($updated_date != $check_date) {
-                        $conflict_rows = array_keys($check_column->getValues(), $check_val);
+                        $conflict_rows = [];
+                        foreach ($check_column->getValues() as $check_sheet_row_nr => $check_val) {
+                            $check_date = new \DateTime($check_val);
+                            if ($updated_date != $check_date) {
+                                $conflict_rows[] = $data_sheet_row_nr;
+                                $logbook->addLine("**Conflict** found: input row 0 ({$updated_val}) <=> check row {$check_sheet_row_nr} ({$check_val})", 2);
+                            }
+                        }
                     }
                     break;
                 // In all other cases throw an error - this should not happen actually, but just in case!
                 default:
-                    throw new BehaviorRuntimeError($this->getObject(), 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
+                    throw new BehaviorRuntimeError($this, 'Cannot check for concurrent writes: row count mismatch!', '6T6I04D');
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
         
         if (empty($conflict_rows) === false) {
             $data_sheet->dataMarkInvalid();
@@ -596,36 +634,49 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 $reason = count($conflict_rows) === 1 ? 'the object' : count($conflict_rows) . ' objects'; 
             }
             $reason .= ' changed in the meantime!';
-            throw new ConcurrentWriteError($data_sheet, 'Cannot update ' . $data_sheet->getMetaObject()->getName() . ' (' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '): ' . $reason);
+            throw new ConcurrentWriteError($this, 'Cannot update ' . $data_sheet->getMetaObject()->__toString() . ': ' . $reason, null, null, $logbook, $data_sheet);
+        } else {
+            $logbook->addLine('No conflicts found');
         }
     }
     
     /**
      * 
      * @param DataSheetInterface $originalSheet
+     * @param LogBookInterface $logbook
      * @return DataSheetInterface
      */
-    protected function readCurrentData(DataSheetInterface $originalSheet) : DataSheetInterface
+    protected function readCurrentData(DataSheetInterface $originalSheet, LogBookInterface $logbook) : DataSheetInterface
     {
+        $logbook->addSection('Loading potential conflicts');
         $check_sheet = $originalSheet->copy()->removeRows();
         // Only read current data if there are UIDs or filters in the original sheet!
         // Otherwise it would read ALL data which is useless.
-        if ($originalSheet->hasUidColumn(true) === true) {
-            $check_sheet->getFilters()->addConditionFromColumnValues($originalSheet->getUidColumn());
-        } elseif ($originalSheet->getFilters()->isEmpty() === false) {
-            // If there are no UIDs, but filters and a single row, this is a mass-update sheet.
-            // In this case, we need to get the maximum of the update-times of the affected data items
-            // and compare that to the time in the input data (in `onUpdateCheckForConflicts()`). 
-            // FIXME what about the other columns? Read them too? With default aggregators?!
-            if ($originalSheet->countRows() === 1 && $updCol = $originalSheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
-                $maxSheet = DataSheetFactory::createFromObject($check_sheet->getMetaObject());
-                $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), AggregatorFunctionsDataType::MAX));
-                $maxSheet->setFilters($check_sheet->getFilters()->copy());
-                $maxSheet->dataRead();
-                $updCol->setValue(0, $maxCol->getValue(0));
-            }
-        } else {
-            return $check_sheet;
+        switch (true) {
+            case $originalSheet->hasUidColumn(true) === true:
+                $logbook->addLine('Input data has UID column: using UID values as filters');
+                $check_sheet->getFilters()->addConditionFromColumnValues($originalSheet->getUidColumn());
+                break;
+            case $originalSheet->getFilters()->isEmpty() === false:
+                $logbook->addLine('Input data has NO UID column, but filters');
+                // If there are no UIDs, but filters and a single row, this is a mass-update sheet.
+                // In this case, we need to get the maximum of the update-times of the affected data items
+                // and compare that to the time in the input data (in `onUpdateCheckForConflicts()`). 
+                // FIXME what about the other columns? Read them too? With default aggregators?!
+                if ($originalSheet->countRows() === 1 && $updCol = $originalSheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
+                    $logbook->addLine('Input data has a single row and a column with update timestamps - must be a mass-update');
+                    $maxSheet = DataSheetFactory::createFromObject($check_sheet->getMetaObject());
+                    $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), AggregatorFunctionsDataType::MAX));
+                    $maxSheet->setFilters($check_sheet->getFilters()->copy());
+                    $maxSheet->dataRead();
+                    $logbook->addLine('Reading max. update timestamp for data source using the filters from the input data: "' . $maxCol->getValue(0) . '"');
+                    $updCol->setValue(0, $maxCol->getValue(0));
+                }
+                break;
+            default:
+                $logbook->addLine('Input data has NO UID column and NO filters - cannot read any check data!');
+                $logbook->addDataSheet('Check data', $check_sheet);
+                return $check_sheet;
         }
         
         // Remove nested sheet columns
@@ -637,6 +688,8 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
         }
         
         $check_sheet->dataRead();
+        $logbook->addLine('Found ' . $check_sheet->countRows() . ' rows in data source');
+        $logbook->addDataSheet('Check data', $check_sheet);
         return $check_sheet;
     }
     
@@ -675,7 +728,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getCreatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasCreatedByAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `created_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getCreatedByAttributeAlias());
     }
@@ -724,7 +777,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     public function getUpdatedByAttribute() : MetaAttributeInterface
     {
         if (! $this->hasUpdatedByAttribute()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
+            throw new BehaviorConfigurationError($this, 'Property `updated_by_attribute_alias` not set for TimestampingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '"!');
         }
         return $this->getObject()->getAttribute($this->getUpdatedByAttributeAlias());
     }

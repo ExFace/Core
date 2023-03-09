@@ -1,35 +1,46 @@
 <?php
 namespace exface\Core\Exceptions\Behaviors;
 
-use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Exceptions\Model\MetaObjectExceptionTrait;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Widgets\DebugMessage;
 
 /**
- * Exception thrown if a behavior experiences an error at runtime (e.g.
- * not detectable at compile time).
+ * Exception thrown if a behavior experiences an error at runtime (e.g. not detectable at compile time).
  *
  * @author Andrej Kabachnik
  *        
  */
-class BehaviorRuntimeError extends RuntimeException
+class BehaviorRuntimeError extends AbstractBehaviorException
 {
+    private $logbook = null;
     
-    use MetaObjectExceptionTrait;
-
-    /**
-     *
-     * @param MetaObjectInterface $meta_object            
-     * @param string $message            
-     * @param string $alias            
-     * @param \Throwable $previous            
-     */
-    public function __construct(MetaObjectInterface $meta_object, $message, $alias = null, $previous = null)
+    public function __construct(BehaviorInterface $behavior, $message, $alias = null, $previous = null, LogBookInterface $logbook = null)
     {
-        parent::__construct($message, null, $previous);
-        $this->setAlias($alias);
-        $this->setMetaObject($meta_object);
+        parent::__construct($behavior, $message, null, $previous);
+        $this->logbook = $logbook;
+    }
+    
+    /**
+     * 
+     * @return LogBookInterface|NULL
+     */
+    public function getLogbook() : ?LogBookInterface
+    {
+        return $this->logbook;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $error_message)
+    {
+        $error_message = parent::createDebugWidget($error_message);
+        if ($logbook = $this->getLogbook()) {
+            return $logbook->createDebugWidget($error_message);
+        }
+        return $error_message;
     }
 }
-?>
