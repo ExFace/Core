@@ -182,7 +182,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
-        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
@@ -259,7 +259,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         } 
         
-        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
