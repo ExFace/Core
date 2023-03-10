@@ -59,6 +59,14 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     
     /**
      * 
+     * @param \Throwable $e
+     * @param int $indent
+     * @return LogBookInterface
+     */
+    public function addException(\Throwable $e, int $indent = null) : LogBookInterface;
+    
+    /**
+     * 
      * @return string
      */
     public function getId() : string;
