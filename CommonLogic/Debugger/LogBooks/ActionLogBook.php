@@ -31,14 +31,12 @@ class ActionLogBook implements DataLogBookInterface
      * @param TaskInterface $task
      * @param string $defaultSection
      */
-    public function __construct(string $title, ActionInterface $action, TaskInterface $task, string $defaultSection = '')
+    public function __construct(string $title, ActionInterface $action, TaskInterface $task)
     {
         $this->task = $task;
         $this->action = $action;
-        if ($defaultSection === '') {
-            $defaultSection = 'Action ' . $action->getAliasWithNamespace();
-        }
-        $this->logBook = new DataLogBook($title, $defaultSection);
+        $this->logBook = new DataLogBook($title);
+        $this->logBook->addSection('Action ' . $action->getAliasWithNamespace());
         $this->logBook->addLine('Prototype class: ' . get_class($action));
     }
     

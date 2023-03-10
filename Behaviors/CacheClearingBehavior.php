@@ -7,6 +7,8 @@ use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * This behavior clears the workbench cache every time data of the object is
@@ -60,9 +62,12 @@ class CacheClearingBehavior extends AbstractBehavior
      */
     public function handleEvent(DataSheetEventInterface $event)
     {
-        if ($event->getDataSheet()->getMetaObject()->is($this->getObject())) {
-            $event->getWorkbench()->getCache()->clear();
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+            return;
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this));
+        $event->getWorkbench()->getCache()->clear();
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this));
     }
-
 }

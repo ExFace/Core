@@ -8,6 +8,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Replaces the default delete-operation by setting a "deleted"-attribute to a special value.
@@ -101,6 +103,8 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         if (! $eventData->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
         // prevent deletion of the main object, but dont prevent the cascading deletion
         $event->preventDelete(false);
@@ -143,7 +147,8 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
         if ($eventData->isEmpty() === false && $deletedColInEventData = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute())){
             $deletedColInEventData->setValueOnAllRows($this->getSoftDeleteValue());
         }
-
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
         return;
     }
     

@@ -7,6 +7,8 @@ use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -70,6 +72,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         if ($this->widgetId === null) {
             $widget = $page->getWidgetRoot();
         } else {
@@ -84,6 +88,9 @@ class WidgetModifyingBehavior extends AbstractBehavior
                 $widget->addButton($widget->createButton($btnUxon));
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**

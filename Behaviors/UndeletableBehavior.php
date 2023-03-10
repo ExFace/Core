@@ -9,6 +9,8 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
@@ -149,6 +151,8 @@ class UndeletableBehavior extends AbstractBehavior
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         $dataSheet = $eventDataSheet->copy();
         
         // add column to input data if not exists
@@ -267,6 +271,9 @@ class UndeletableBehavior extends AbstractBehavior
             
             throw (new DataSheetDeleteForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true);    
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**

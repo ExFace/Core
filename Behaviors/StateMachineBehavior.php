@@ -29,6 +29,8 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\BehaviorFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -583,6 +585,8 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         if (! ($prefill_data = $widget->getPrefillData()) || ! $prefill_data->getMetaObject()->isExactly($thisObj) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
             $current_state = $this->getDefaultStateId();
         }
@@ -624,6 +628,9 @@ class StateMachineBehavior extends AbstractBehavior
                 }
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**
@@ -657,6 +664,8 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         $stateCol = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute());
         if (! $stateCol) {
             throw new BehaviorRuntimeError($this, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
@@ -672,6 +681,7 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
         return;
     }
 
@@ -702,6 +712,8 @@ class StateMachineBehavior extends AbstractBehavior
         if (! $data_sheet->getMetaObject()->isExactly($thisObj)) {
             return;
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
         if ($this->hasTransitionRestrictions()) {
             
@@ -792,6 +804,9 @@ class StateMachineBehavior extends AbstractBehavior
                 }
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**

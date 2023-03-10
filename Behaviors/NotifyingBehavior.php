@@ -20,8 +20,11 @@ use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 use exface\Core\Communication\Messages\Envelope;
-use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Creates user-notifications on certain events and conditions.
@@ -335,18 +338,25 @@ class NotifyingBehavior extends AbstractBehavior
             return;
         }
         
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->setIndentActive(1);
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
         // Ignore action-events if 
         // - the behavior is targeting a specific action and that is NOT the event-action
         // - or the behavior is targeting an action event regardless of the action, but the actions object does not match
         if ($event instanceof ActionEventInterface) {
+            $action = $event->getAction();
+            $logbook->addLine('Event action is ' . $action->getName() . ' (' . $action->getAliasWithNamespace() . ') for object ' . $action->getMetaObject()->__toString());
             if ($this->getNotifyOnActionAlias() !== null){
                 if (! $event->getAction()->isExactly($this->getNotifyOnActionAlias())) {
-                    $this->isNotificationInProgress = false;
+                    $this->skipEvent('**Skipping** event because of `notify_on_action_alias:' . $this->getNotifyOnActionAlias() .'`', $event, $logbook);
                     return;
                 }
             } else {
                 if (! $event->getAction()->getMetaObject()->isExactly($this->getObject())) {
-                    $this->isNotificationInProgress = false;
+                    $this->skipEvent('**Skipping** event because action object does not match event object', $event, $logbook);
                     return;
                 }
             }
@@ -360,7 +370,7 @@ class NotifyingBehavior extends AbstractBehavior
                 $this->setNotifyAfterAllActionsComplete(false);
                 $this->onEventNotify($event);
             });
-            $this->isNotificationInProgress = false;
+            $this->skipEvent('**Delegating** to `OnBeforeStop` event because of `notify_after_all_actions_complete:true`', $event, $logbook);
             return;
         }
         
@@ -373,6 +383,7 @@ class NotifyingBehavior extends AbstractBehavior
             // For data-events, use their data obviously
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
+                $logbook->addLine('Received data for ' . $dataSheet->getMetaObject()->__toString() . ' from data-event');
                 break;
             // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
             // e.g. notify_on_action on object XYZ obviously means "if action performed upon object XYZ", not "if action produces
@@ -382,26 +393,26 @@ class NotifyingBehavior extends AbstractBehavior
                 // Maybe add additional placeholders to $phResolvers for `input_data:` and `result_data`? But the $phResolvers are
                 // currently applied to the entire config, not each data row... -> allow two additional arrays?
                 $dataSheet = $event->getActionInputData();
+                $logbook->addLine('Received data for ' . $dataSheet->getMetaObject()->__toString() . ' from action-event');
                 break;          
         }
+        $logbook->addDataSheet('Data for messages', $dataSheet);
         
         // Don't send anything if the event has data restrictions, but no data!
         if (! $dataSheet && ($this->hasRestrictionConditions() || $this->hasRestrictionOnAttributeChange())) {
-            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because `notify_if_data_matches_conditions` or `notify_if_attributes_change` is set, but the event "' . $event->getAliasWithNamespace() . '" does not contain any data!', [], $dataSheet);
-            $this->isNotificationInProgress = false;
+            $this->skipEvent('**Skipping** event because of `notify_if_attributes_change` or `notify_if_data_matches_conditions` are set, but the event does not provide any data', $event, $logbook);
             return;
         }
         
         // Ignore the event if the data is based on another object
         if ($dataSheet && ! $dataSheet->getMetaObject()->isExactly($this->getObject())) {
-            $this->isNotificationInProgress = false;
+            $this->skipEvent('**Skipping** event because data object does not match behavior object', $event, $logbook);
             return;
         }
         
         // Ignore the event if its data was already processed and set to be ignored (e.g. required change did not happen)
         if ($dataSheet && in_array($dataSheet, $this->ignoreDataSheets, true)) {
-            $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_attributes_change`', [], $dataSheet);
-            $this->isNotificationInProgress = false;
+            $this->skipEvent('**Skipping** event because data was already processed and set to be ignored (e.g. required change did not happen)', $event, $logbook);
             return;
         }
         
@@ -409,25 +420,29 @@ class NotifyingBehavior extends AbstractBehavior
         if ($dataSheet && $this->hasRestrictionConditions()) {
             $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
             if ($dataSheet->isEmpty()) {
-                $this->getWorkbench()->getLogger()->debug('Behavior ' . $this->getAlias() . ' skipped for object ' . $this->getObject()->__toString() . ' because of `notify_if_data_matches_conditions`', [], $dataSheet);
-                $this->isNotificationInProgress = false;
+                $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
                 return;
             }
         }        
         
         // If everything is OK, generate UXON envelopes for the messages and send them
+        $logbook->addSection('Sending notifications');
         $communicator = $this->getWorkbench()->getCommunicator();
         $e = null;
         if ($this->messageUxons !== null) {
             try {
                 $envelopes = $this->getMessageEnvelopes($this->messageUxons, $dataSheet, $phResolvers);
+                $logbook->addLine('Prepared ' . count($envelopes) . ' envelopes');
             } catch (\Throwable $e) {
+                $logbook->addException($e);
                 $this->handleError($e);
             }
             foreach ($envelopes as $envelope) {
                 try {
+                    $logbook->addLine('Sending ' . $envelope->getChannelSelector());
                     $communicator->send($envelope);
                 } catch (\Throwable $e) {
+                    $logbook->addException($e);
                     $this->handleError($e, $envelope);
                 }
             }
@@ -438,6 +453,15 @@ class NotifyingBehavior extends AbstractBehavior
         if ($e === null || $this->getPreventRecursion() === false) {
             $this->isNotificationInProgress = false;
         }
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+        return;
+    }
+    
+    protected function skipEvent(string $reason, EventInterface $event, LogBookInterface $logbook)
+    {
+        $logbook->addLine($reason);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+        $this->isNotificationInProgress = false;
         return;
     }
     

@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Debug\DataLogBookInterface;
 
 class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
 {
+    const MAX_DATA_ROWS = 40;
+    
     private $dataSheets = [];
 
     /**
@@ -33,7 +35,17 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
         $innerTabs->getWidgetFirst()->setCaption('Logbook');
         
         foreach ($this->dataSheets as $name => $sheet) {
-            $sheet->createDebugWidget($innerTabs);
+            if ($sheet->countRows() > self::MAX_DATA_ROWS) {
+                $truncated = $sheet->copy()->removeRows();
+                $name .= ' (first ' . self::MAX_DATA_ROWS . ' of ' . $sheet->countRows() . ' rows)';
+                foreach ($sheet->getRows() as $i => $row) {
+                    $truncated->addRow($row, false, false, $i);
+                }
+                $innerTabs = $sheet->createDebugWidget($innerTabs);
+            } else {
+                $name .= ' (' . $sheet->countRows() . ' rows)';
+                $innerTabs = $sheet->createDebugWidget($innerTabs);
+            }
             $innerTabs->getWidget(($innerTabs->countWidgets()-1))->setCaption($name);
         }
         

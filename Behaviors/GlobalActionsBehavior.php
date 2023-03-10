@@ -7,6 +7,8 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\Widget\OnGlobalActionsAddedEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Adds custom global actions for this object - similar to Excel export, favorites, etc.
@@ -79,6 +81,8 @@ class GlobalActionsBehavior extends AbstractBehavior
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         foreach ($this->getButtonsUxon() as $uxon) {
             $btn = $btnGrp->createButton($uxon);
             if (! $uxon->hasProperty('visibility') && ! $btn->isHidden()) {
@@ -88,6 +92,7 @@ class GlobalActionsBehavior extends AbstractBehavior
         }
         
         $this->widgetsProcessed[] = $btnGrp;
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
     
     /**
