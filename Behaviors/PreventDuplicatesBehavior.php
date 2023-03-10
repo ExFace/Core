@@ -20,6 +20,10 @@ use exface\Core\CommonLogic\DataSheets\Matcher\MultiMatcher;
 use exface\Core\Interfaces\DataSheets\DataMatcherInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Behavior to prevent a creation of a duplicate dataset on create or update Operations.
@@ -178,30 +182,40 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         }
         
+        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $logbook->setIndentActive(1);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
         $mode = $this->getMode($eventSheet);
-        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, true);
+        $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->addLine('Running in `' . $mode . '` mode');
+        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, $logbook, true);
         
         if (! $matcher->hasMatches()) {
+            $logbook->addLine('No duplicates found');
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         
         switch ($mode) {
             case self::ON_DUPLICATE_IGNORE:
-                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher);
+                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
                 break;
             case self::ON_DUPLICATE_UPDATE:
-                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction());
+                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
                 break;
             case self::ON_DUPLICATE_ERROR:
             default:
-                throw $this->createDuplicatesError($eventSheet, $matcher);
+                throw $this->createDuplicatesError($eventSheet, $matcher, $logbook);
                 
         }
         
         if ($eventSheet->isEmpty()) {
+            $logbook->addLine('No rows left in original data, preventing default event logic!');
             $event->preventCreate();
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
         return; 
     }
     
@@ -245,17 +259,25 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             return;
         } 
         
+        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $logbook->setIndentActive(1);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
         $mode = $this->getMode($eventSheet);
-        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, false);
+        $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
+        $logbook->addLine('Running in `' . $mode . '` mode');
+        $matcher = $this->getDuplicatesMatcher($eventSheet, $mode, $logbook, false);
         
         if (! $matcher->hasMatches()) {
+            $logbook->addLine('No duplicates found');
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
         }
         
         switch ($mode) {
                 // This should never be reached, as the exceptions will be thrown earlier
             case self::ON_DUPLICATE_IGNORE:
-                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher);
+                $eventSheet = $this->ignoreDuplicates($eventSheet, $matcher, $logbook);
                 break;
             case self::ON_DUPLICATE_UPDATE:
                 // When updating with on_duplicate_xxx_update, exact UID-matches must be ignored. Otherwise
@@ -263,18 +285,20 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                 // - create finds duplicate and orders and update inheriting the duplicates UID
                 // - the following update will check AGAIN, find the same duplicate, order another
                 // update, and so on.
-                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), true);
+                $eventSheet = $this->updateDuplicates($eventSheet, $matcher, $event->getTransaction(), $logbook);
                 break;
             case self::ON_DUPLICATE_ERROR:
             default:
-                throw $this->createDuplicatesError($eventSheet, $matcher);
+                throw $this->createDuplicatesError($eventSheet, $matcher, $logbook);
                 
         }
         
         if ($eventSheet->isEmpty()) {
+            $logbook->addLine('No rows left in original data, preventing default event logic!');
             $event->preventUpdate();
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
         return; 
     }
     
@@ -297,8 +321,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @throws BehaviorRuntimeError
      * @return DataSheetInterface
      */
-    protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction) : DataSheetInterface
+    protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction, BehaviorLogBook $logbook) : DataSheetInterface
     {
+        $logbook->addSection('Updating duplicates');
         if (! $eventSheet->getMetaObject()->hasUidAttribute())  {
             throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!');
         }
@@ -311,6 +336,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $uidColName = $uidCol->getName();
         }
         $duplRowNos = $matcher->getMatchedRowIndexes();
+        $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: ' . implode(', ', $duplRowNos));
         $rowsToRemove = [];
         foreach ($duplRowNos as $duplRowNo) {
             // Don't bother about rows, that need to be removed anyway
@@ -355,20 +381,27 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         if (! empty($rowsToRemove)) {
-            $eventSheet->removeRows(array_unique($rowsToRemove));
+            $rowsToRemove = array_unique($rowsToRemove);
+            $eventSheet->removeRows($rowsToRemove);
+            $logbook->addLine('Removed ' . count($rowsToRemove) . ' rows from original data: ' . implode(', ', $rowsToRemove));
+        } else {
+            $logbook->addLine('No rows to remove');
         }
         
         if (! $updateSheet->isEmpty()) {
             $this->ignoreDataSheets[] = $updateSheet;
+            $logbook->addLine('Updating ' . $updateSheet->countRows() . ' rows instead of original operation');
             $updateSheet->dataUpdate(false, $transaction);
         }
         
         return $eventSheet;
     }
     
-    protected function ignoreDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher) : DataSheetInterface
+    protected function ignoreDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, BehaviorLogBook $logbook) : DataSheetInterface
     {
+        $logbook->addSection('Ignoring duplicates');
         $duplRowNos = $matcher->getMatchedRowIndexes();
+        $logbook->addLine('Found duplicates for ' . count($duplRowNos) . ' rows: ' . implode(', ', $duplRowNos));
         $rowsToRemove = [];
         foreach ($duplRowNos as $duplRowNo) {
             // Don't bother about rows, that need to be removed anyway
@@ -391,8 +424,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         if (! empty($rowsToRemove)) {
-            $eventSheet->removeRows(array_unique($rowsToRemove));
+            $rowsToRemove = array_unique($rowsToRemove);
+            $eventSheet->removeRows($rowsToRemove);
+            $logbook->addLine('Removed ' . count($rowsToRemove) . ' rows: ' . implode(', ', $rowsToRemove));
+        } else {
+            $logbook->addLine('No rows to remove');
         }
+        
         return $eventSheet;
     }
     
@@ -401,13 +439,15 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @param DataSheetInterface $eventSheet
      * @return DataMatcherInterface
      */
-    protected function getDuplicatesMatcher(DataSheetInterface $eventSheet, string $mode, bool $treatUidMatchesAsDuplicates = true) : DataMatcherInterface
+    protected function getDuplicatesMatcher(DataSheetInterface $eventSheet, string $mode, BehaviorLogBook $logbook, bool $treatUidMatchesAsDuplicates = true) : DataMatcherInterface
     {   
         $eventDataCols = $eventSheet->getColumns();
+        $logbook->addSection('Searching for potential duplicates');
         
         $compareCols = [];
         $missingCols = [];
         $missingAttrs = [];
+        $logbook->addLine('Will compare these attributes: ' . implode(', ', $this->getCompareAttributeAliases()));
         foreach ($this->getCompareAttributeAliases() as $attrAlias) {
             $attr = $this->getObject()->getAttribute($attrAlias);
             if ($col = $eventDataCols->getByAttribute($attr)) {
@@ -418,7 +458,9 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         }
         
         if (empty($missingAttrs) === false) {
+            $logbook->addLine('Missing attributes in original data:');
             if ($eventSheet->hasUidColumn(true) === false) {
+                $logbook->addLine('Cannot read missing attributes because data has no UIDs!');
                 throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
             } 
             
@@ -427,9 +469,11 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $missingAttrSheet->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn());
             $missingCols = [];
             foreach ($missingAttrs as $attr) {
+                $logbook->addLine($attr->getAliasWithRelationPath(), 1);
                 $missingCols[] = $missingAttrSheet->getColumns()->addFromAttribute($attr);
             }
             $missingAttrSheet->dataRead();
+            $logbook->addLine('Read ' . $missingAttrSheet->countRows() . ' rows to get values of missing attributes', 1);
             
             $uidColName = $eventSheet->getUidColumnName();
             foreach ($eventRows as $rowNo => $row) {
@@ -441,12 +485,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $mainSheet = $eventSheet->copy()->removeRows()->addRows($eventRows);
             $compareCols = array_merge($compareCols, $missingCols);
         } else {
+            $logbook->addLine('All required columns found in original data');
             $mainSheet = $eventSheet;
         }
         
         $matcher = new MultiMatcher($mainSheet);
         
-        // Extrat rows from event data, that are relevant for duplicate search
+        // Extract rows from event data, that are relevant for duplicate search
         if ($this->hasCustomConditions()) {
             $customConditionsFilters = ConditionGroupFactory::createForDataSheet($mainSheet, $this->getCompareWithConditions()->getOperator());
             foreach ($this->getCompareWithConditions()->getConditions() as $cond) {
@@ -454,14 +499,28 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $customConditionsFilters->addCondition($cond);
                 }
             }
+            $logbook->addLine('Removing non-relevant data via `compare_with_conditions`: ' . $customConditionsFilters->__toString());
             $mainSheet = $mainSheet->extract($customConditionsFilters);
+        } else {
+            $logbook->addLine('Will search for duplicates for all rows, no filtering required');
         }
         
+        $logbook->addDataSheet('Data to compare', $mainSheet);
+        
         // See if there are duplicates within the current set of data
-        if ($mainSheet->countRows() > 1) {
-            $selfMatcher = new DataRowMatcher($mainSheet, $mainSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
-            //$selfMatcher->setIgnoreUidMatches(true);
-            $matcher->addMatcher($selfMatcher);
+        switch ($mainSheet->countRows()) {
+            case 0:
+                $logbook->addLine('Data to compare is empty - no need to search for duplicates');
+                return $matcher;
+            case 1:
+                $logbook->addLine('1 row requires duplicates check - will search for duplicates in data source only');
+                break;
+            default:
+                $logbook->addLine($mainSheet->countRows() . ' rows require duplicates check - will search for duplicates among these rows and in data source');
+                $selfMatcher = new DataRowMatcher($mainSheet, $mainSheet, $compareCols, self::LOCATED_IN_EVENT_DATA);
+                //$selfMatcher->setIgnoreUidMatches(true);
+                $matcher->addMatcher($selfMatcher);
+                break;
         }
         
         // Create a data sheet to search for possible duplicates
@@ -511,8 +570,13 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         // Read the data with the applied filters
         $checkSheet->dataRead();
         
+        $logbook->addDataSheet('Data in data source', $checkSheet);
+        
         if ($checkSheet->isEmpty()) {
+            $logbook->addLine('No potential duplicates found in data source');
             return $matcher;
+        } else {
+            $logbook->addLine($checkSheet->countRows() . ' potential duplicates found in data source according to the computed filters');
         }
         
         $dataSourceMatcher = new DataRowMatcher($mainSheet, $checkSheet, $compareCols, self::LOCATED_IN_DATA_SOURCE);
@@ -530,28 +594,28 @@ class PreventDuplicatesBehavior extends AbstractBehavior
      * @param array[] $matcher
      * @return DataSheetDuplicatesError
      */
-    protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher) : DataSheetDuplicatesError
+    protected function createDuplicatesError(DataSheetInterface $dataSheet, DataMatcherInterface $matcher, BehaviorLogBook $logbook) : DataSheetDuplicatesError
     {
+        $logbook->addLine('Sending an error about the duplicates');
         $object = $dataSheet->getMetaObject();
         $labelAttributeAlias = $object->getLabelAttributeAlias();
         $rows = $dataSheet->getRows();
         $errorRowDescriptor = '';
         $errorMessage = '';
         $duplValues = [];
-        foreach ($matcher->getMatchedRowIndexes() as $duplRowNo) {
+        $duplRowNos = $matcher->getMatchedRowIndexes();
+        foreach ($duplRowNos as $duplRowNo) {
             $row = $rows[$duplRowNo];
+            $value = strval($duplRowNo + 1);
             if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
-                $duplValues[] = "'{$row[$labelAttributeAlias]}'";
-            } else {
-                $duplValues[] = strval($duplRowNo + 1);
-            }
+                $value .= " ({$row[$labelAttributeAlias]})";
+            } 
+            $duplValues[] = $value;
         }
         //remove duplicate values that were added by using the LabelAttributeAlias to create error values
         $duplValues = array_unique($duplValues);
-        foreach ($duplValues as $value) {
-            $errorRowDescriptor .= $value . ', ';
-        }
-        $errorRowDescriptor = substr($errorRowDescriptor, 0, -2);
+        $errorRowDescriptor = implode(', ', $duplValues);
+        $logbook->addLine('Found duplicates for ' . count($duplValues) . ' rows: ' . implode(', ', $duplRowNos));
         
         try {
             $customErrorText = $this->getDuplicateErrorText();

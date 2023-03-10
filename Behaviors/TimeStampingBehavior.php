@@ -22,10 +22,10 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
-use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Tracks time and users that created/changed objects and prevents concurrent writes comparing the update-times.
@@ -468,7 +468,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             return;
         }
         
-        $logbook = new DataLogBook($this->__toString());
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addDataSheet('Input data', $data_sheet);
         $logbook->addLine('Received input data with ' . $data_sheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);

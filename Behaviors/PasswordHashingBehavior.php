@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\DataTypes\PasswordDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * This behavior will hash password attribute values when data is created or updated.
@@ -46,8 +48,8 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
         // Give the event handlers a hight priority to make sure, the passwords are encoded before
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
-        ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], $this->getPriority())
-        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'], $this->getPriority());
+        ->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleDataEvent'], $this->getPriority())
+        ->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleDataEvent'], $this->getPriority());
         return $this;
     }
     
@@ -61,8 +63,8 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
         // Give the event handlers a hight priority to make sure, the passwords are encoded before
         // any other behaviors get their hands on the data!
         $this->getWorkbench()->eventManager()
-        ->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnCreateEvent'])
-        ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnCreateEvent']);
+        ->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleDataEvent'])
+        ->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleDataEvent']);
         return $this;
     }
     
@@ -81,7 +83,7 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
      * @param DataSheetEventInterface $event
      * @throws BehaviorConfigurationError
      */
-    public function handleOnCreateEvent(DataSheetEventInterface $event) 
+    public function handleDataEvent(DataSheetEventInterface $event) 
     {
         if ($this->isDisabled()) {
             return;
@@ -99,6 +101,8 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
             return;
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         // Check if the updated_on column is present in the sheet
         if ($column = $data_sheet->getColumns()->getByAttribute($this->getPasswordAttribute())) {
             $type = $column->getDataType();
@@ -111,6 +115,8 @@ class PasswordHashingBehavior extends AbstractBehavior implements DataModifyingB
                 }
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
         return;
     }
 

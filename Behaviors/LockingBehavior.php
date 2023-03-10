@@ -24,6 +24,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\Interfaces\Actions\iCreateData;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 
 /**
  * This behavior locks it's object by calling configurable lock and unlock actions.
@@ -148,7 +149,11 @@ class LockingBehavior extends AbstractBehavior
             return;
         }
         
+        // TODO add logbook explaining, what the behavior does
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         if ($this->unlockOnEditorClose($action, $task, $event->getTransaction()) !== null) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
             return;
         }
         
@@ -168,6 +173,8 @@ class LockingBehavior extends AbstractBehavior
                 $this->lockOnEditorInit($widget, $sheet, $event->getTransaction());
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
     }
     
     protected function unlockOnEditorClose(ActionInterface $action, TaskInterface $task, DataTransactionInterface $transaction) : ?ResultInterface

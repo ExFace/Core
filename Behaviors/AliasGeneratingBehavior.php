@@ -19,8 +19,10 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
-use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
@@ -213,8 +215,10 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
      */
     protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol, DataSheetEventInterface $event) : DataSheetInterface
     {
-        $logbook = new DataLogBook($this->__toString());
+        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, null, $logbook));
         if (! $this->hasNamespace() && ! $targetCol->hasEmptyValues()) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, null, $logbook));
             return $dataSheet;
         }
         
@@ -312,6 +316,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
             }
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, null, $logbook));
         return $dataSheet;
     }
     

@@ -28,10 +28,9 @@ class MarkdownLogBook implements LogBookInterface
      * @param string $defaultSection
      * @param bool $enableMermaidDiagrams
      */
-    public function __construct(string $title, string $defaultSection = '')
+    public function __construct(string $title)
     {
         $this->title = $title;
-        $this->addSection($defaultSection);
     }
     
     /**

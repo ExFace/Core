@@ -17,9 +17,9 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
@@ -240,9 +240,9 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        $logbook = new DataLogBook($this->__toString());
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addDataSheet('Input data', $data_sheet);
-        $logbook->addLine('Reacting to event "' . $event::getEventName() . '" with input data for object ' . $data_sheet->getMetaObject()->__toString());
+        $logbook->addLine('Found input data for object ' . $data_sheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
