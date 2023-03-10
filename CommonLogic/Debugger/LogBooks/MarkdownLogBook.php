@@ -214,4 +214,14 @@ class MarkdownLogBook implements LogBookInterface
         $this->currentIndent = $zeroOrMore;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addException()
+     */
+    public function addException(\Throwable $e, int $indent = null) : LogBookInterface
+    {
+        $this->addLine('**Exception** ' . $e->getMessage() . ' in '. $e->getFile() . ' on line ' . $e->getLine(), $indent);
+    }
 }

@@ -235,4 +235,15 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->setIndentActive($zeroOrMore);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addException()
+     */
+    public function addException(\Throwable $e, int $indent = null) : LogBookInterface
+    {
+        $this->logBook->addException($e, $indent);
+        return $this;
+    }
 }
