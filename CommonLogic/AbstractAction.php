@@ -350,9 +350,9 @@ abstract class AbstractAction implements ActionInterface
         
         $logbook = $this->getLogBook($task);
         $logbook->addSection('Output mapper');
+        $logbook->setIndentActive(1);
         if ($result instanceof ResultData) {
             $logbook->addDataSheet('Output data', $result->getData());
-            $logbook->addSection('Output mapper');
             if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
                 $result->setData($mapper->map($result->getData(), null, $logbook));
                 $logbook->addDataSheet('Output data (mapped)', $result->getData());
@@ -362,6 +362,7 @@ abstract class AbstractAction implements ActionInterface
         } else {
             $logbook->addLine('Result has no data - nothing to map.');
         }
+        $logbook->setIndentActive(0);
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
         $this->performAfter($result, $transaction);
@@ -1124,6 +1125,9 @@ abstract class AbstractAction implements ActionInterface
         // Apply the input mappers
         $logbook->removeSection('Input mapper');
         $logbook->addSection('Input mapper');
+        $logbook->setIndentActive(1);
+        $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
+        
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
             $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
@@ -1132,6 +1136,7 @@ abstract class AbstractAction implements ActionInterface
             $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
         $logbook->addDataSheet('Final input data', $inputData);
+        $logbook->setIndentActive(0);
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
