@@ -93,6 +93,8 @@ class CallActionBehavior extends AbstractBehavior
     private $onlyIfDataMatchesConditionGroupUxon = null;
     
     private $ignoreDataSheets = [];
+	
+	private $ignoreLogbooks = [];
     
     private $onFailError = true;
     
@@ -245,8 +247,14 @@ class CallActionBehavior extends AbstractBehavior
         if (! $data_sheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+		
+		$ignoreKey = array_search($data_sheet, $this->ignoreDataSheets, true);
+		if ($ignoreKey !== false && null !== $logbook = ($this->ignoreLogbooks[$ignoreKey] ?? null)) {
+			$logbook->addSection('Proceeding with event' . $event::getEventName());
+		} else {
+			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+		}
         
-        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->addDataSheet('Input data', $data_sheet);
         $logbook->addLine('Found input data for object ' . $data_sheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
@@ -341,15 +349,20 @@ class CallActionBehavior extends AbstractBehavior
         }
         
         if (! empty($this->getOnlyIfAttributesChange())) {
+			$logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+			$logbook->setIndentActive(1);
+			$logbook->addLine('Checking `only_if_attributes_change`: ' . implode(', ', $this->getOnlyIfAttributesChange()));
             $ignore = true;
             foreach ($this->getOnlyIfAttributesChange() as $attrAlias) {
                 if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
                     $ignore = false;
+					$logbook->addLine('Detected change in column "' . $attrAlias . '"', 1);
                     break;
                 }
             }
             if ($ignore === true) {
                 $this->ignoreDataSheets[] = $event->getDataSheet();
+				$this->ignoreLogbooks[] = $logbook;
             }
         }
     }
