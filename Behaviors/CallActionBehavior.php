@@ -96,6 +96,8 @@ class CallActionBehavior extends AbstractBehavior
     
     private $onFailError = true;
     
+    private $isHandling = false;
+    
     /**
      *
      * {@inheritDoc}
@@ -228,6 +230,10 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
+        if ($this->isHandling === true) {
+            return;
+        }
+        
         if (! $event instanceof DataSheetEventInterface) {
             throw new BehaviorConfigurationError($this, 'The CallActionBehavior cannot be triggered by event "' . $event->getAliasWithNamespace() . '": currently only data sheet events supported!');
         }
@@ -259,6 +265,7 @@ class CallActionBehavior extends AbstractBehavior
         }
         
         try {
+            // See if relevant
             if ($this->hasRestrictionConditions()) {
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $data_sheet = $data_sheet->extract($this->getOnlyIfDataMatchesConditions(), true);
@@ -269,6 +276,7 @@ class CallActionBehavior extends AbstractBehavior
                 }
             }
             
+            // Now handle the action
             if ($action = $this->getAction()) {
                 $logbook->addSection('Running action ' . $action->getAliasWithNamespace());
                 if ($event instanceof TaskEventInterface) {
@@ -282,13 +290,18 @@ class CallActionBehavior extends AbstractBehavior
                     $action->setInputTriggerWidgetRequired(false);
                     $task = TaskFactory::createFromDataSheet($data_sheet);
                 }
+                
                 if ($event instanceof DataTransactionEventInterface) {
                     $logbook->addLine('Getting the transaction from the event');
+                    $this->isHandling = true;
                     $action->handle($task, $event->getTransaction());
+                    $this->isHandling = false;
                 } else {
                     $logbook->addLine('Event has no transaction, so the action will be performed inside a separate transaction');
                     $logbook->addLine('**Performing action**');
+                    $this->isHandling = true;
                     $action->handle($task);
+                    $this->isHandling = false;
                 }
                 if ($this->getEventPreventDefault() === self::PREVENT_DEFAULT_IF_ACTION_CALLED) {
                     $logbook->addLine('Events default logic will be prevented');
@@ -314,6 +327,10 @@ class CallActionBehavior extends AbstractBehavior
     public function onBeforeUpdateCheckChange(OnBeforeUpdateDataEvent $event)
     {
         if ($this->isDisabled()) {
+            return;
+        }
+        
+        if ($this->isHandling === true) {
             return;
         }
         
