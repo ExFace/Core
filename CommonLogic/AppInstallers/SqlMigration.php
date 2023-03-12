@@ -166,9 +166,18 @@ class SqlMigration
      *
      * @return string
      */
-    public function getDownScript(): string
+    public function getDownScript() : string
     {
         return $this->down_script;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasDownScript() : bool
+    {
+        return $this->down_script !== null && $this->down_script !== '';
     }
 
     /**
