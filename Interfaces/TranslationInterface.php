@@ -23,15 +23,6 @@ interface TranslationInterface
      * @return string
      */
     public function translate(string $message_id, array $placeholder_values = null, $plural_number = null, string $domain = null, string $fallback = null) : string;
-
-    /**
-     * 
-     * @param UxonObject $uxon
-     * @param string $domain
-     * @param string $namespace
-     * @return UxonObject
-     */
-    public function translateUxonProperties(UxonObject $uxon, string $domain, string $namespace) : UxonObject;
     
     /**
      *

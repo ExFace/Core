@@ -30,6 +30,7 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -187,7 +188,7 @@ class UiPage implements UiPageInterface
                 if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
                     $uxon = UxonObject::fromAnything($contents);
                     if ($this->hasApp()) {
-                        $this->getApp()->getTranslator()->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
+                        (new UxonTranslator($this->getApp()->getTranslator()))->translateUxonProperties($uxon, 'Pages/' . $this->getAliasWithNamespace(), 'CONTENT');
                     }
                 } else {
                     $uxon = new UxonObject();

@@ -35,9 +35,10 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\CommonLogic\Translation\TranslationsArray;
 
 /**
- * Basic ExFace widget
+ * Base class for facade elements in AJAX facades using jQuery
  *
  * @author Andrej Kabachnik
  *        
@@ -142,6 +143,8 @@ abstract class AbstractWidget implements WidgetInterface
     private $parentByType = [];
     
     private $facadeOptions = null;
+    
+    private $customTranslations = null;
     
     /**
      * @var string|UxonObject
@@ -1485,5 +1488,47 @@ abstract class AbstractWidget implements WidgetInterface
     {
         $constName = 'static::FUNCTION_' . strtoupper($functionName);
         return defined($constName);
+    }
+    
+    /**
+     * Overrides certian translation keys for this widget. 
+     * 
+     * This allows to customize translations if they do not really fit in a certain use case.
+     * 
+     * @uxon-property translations
+     * @uxon-type object
+     * @uxon-template {"// laguage - e.g. `en`": {"SOME.TRANSLATION.KEY.HERE": "Custom translation here"}}
+     * 
+     * @param UxonObject $langsAndKeys
+     * @return AbstractWidget
+     */
+    protected function setTranslations(UxonObject $langsAndKeys) : AbstractWidget
+    {
+        $this->customTranslations = UxonObject::fromArray($langsAndKeys->toArray(CASE_UPPER));
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $lang
+     * @param string $message_id
+     * @param array $placeholders
+     * @param number $number_for_plurification
+     * @return string|NULL
+     */
+    public function getTranslationCustomization(string $lang, string $message_id, array $placeholders = null, $number_for_plurification = null) : ?string
+    {
+        if ($this->customTranslations === null) {
+            return null;
+        }
+        $dictUxon = $this->customTranslations->getProperty(mb_strtoupper($lang));
+        if (null === $dictUxon) {
+            return null;
+        }
+        if (! $dictUxon->hasProperty($message_id)) {
+            return null;
+        }
+        $translator = new TranslationsArray($lang, $dictUxon->toArray());
+        return $translator->translate($message_id, $placeholders, $number_for_plurification);
     }
 }

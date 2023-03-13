@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
@@ -806,9 +805,10 @@ JS;
     /**
      * Returns the translation string for the given message id.
      *
-     * This is a shortcut for calling $this->getFacade()->getApp()->getTranslator()->translate().
+     * Checks, if the widget has a custom translation for the key in `translations`, and calls 
+     * `$this->getFacade()->getApp()->getTranslator()->translate()` otherwise.
      *
-     * @see Translation::translate()
+     * @see \exface\Core\CommonLogic\Translation\Translation::translate()
      *
      * @param string $message_id            
      * @param array $placeholders            
@@ -818,7 +818,9 @@ JS;
     public function translate($message_id, array $placeholders = array(), $number_for_plurification = null)
     {
         $message_id = trim($message_id);
-        return $this->getFacade()->getApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
+        $translator = $this->getFacade()->getApp()->getTranslator();
+        $customText = $this->getWidget()->getTranslationCustomization($translator->getLanguage(), $message_id, $placeholders, $number_for_plurification);
+        return $customText ?? $translator->translate($message_id, $placeholders, $number_for_plurification);
     }
 
     /**
