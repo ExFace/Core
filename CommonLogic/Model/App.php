@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -10,13 +9,12 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\CommonLogic\Translation;
+use exface\Core\CommonLogic\Translation\AppTranslation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
@@ -46,9 +44,6 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
-use exface\Core\Interfaces\Actions\iCallOtherActions;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -436,11 +431,11 @@ class App implements AppInterface
         ];
         
         if ($locale !== null) {
-            return new Translation($this, $locale, $fallbackLocales);
+            return new AppTranslation($locale, $this, $fallbackLocales);
         } 
         
         if ($this->translator === null) {
-            $this->translator = new Translation($this, $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $fallbackLocales); 
+            $this->translator = new AppTranslation($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $this, $fallbackLocales); 
         }
         
         return $this->translator;

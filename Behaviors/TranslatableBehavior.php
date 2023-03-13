@@ -24,7 +24,7 @@ use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\Translation;
+use exface\Core\CommonLogic\Translation\Translation;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
@@ -35,6 +35,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Events\Model\OnMessageLoadedEvent;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -478,7 +479,9 @@ class TranslatableBehavior extends AbstractBehavior
         $menuItem->setIntro($translator->translate('INTRO', null, null, $domain, $menuItem->getIntro()));
         
         if ($menuItem instanceof UiPageInterface) {
-            $menuItem->setContents($translator->translateUxonProperties(UxonObject::fromAnything($menuItem->getContents()), $domain, 'CONTENT'));
+            $uxonTranslator = new UxonTranslator($translator);
+            $uxon = UxonObject::fromAnything($menuItem->getContents());
+            $menuItem->setContents($uxonTranslator->translateUxonProperties($uxon, $domain, 'CONTENT'));
         }
 
         return;
@@ -531,7 +534,8 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         $uxon = $event->getUxon();
-        $translated = $translator->translateUxonProperties($uxon, $domain, 'CONFIG_UXON');
+        $uxonTranslator = new UxonTranslator($translator);
+        $translated = $uxonTranslator->translateUxonProperties($uxon, $domain, 'CONFIG_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
@@ -586,7 +590,8 @@ class TranslatableBehavior extends AbstractBehavior
     {
         $object = $event->getObject();
         $uxon = $event->getDefaultEditorUxon();
-        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
+        $uxonTranslator = new UxonTranslator($object->getApp()->getTranslator());
+        $translated = $uxonTranslator->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
