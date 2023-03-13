@@ -10,11 +10,16 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * Registeres a CLI facade command as scheduled task in the current operating system.
  * 
+ * Can be disabled in the configuration of the app by adding the option
+ * `"INSTALLER.SCHEDULERINSTALLER.DISABLED": true`.
+ * 
  * @author Andrej Kabachnik
  *        
  */
 class SchedulerInstaller extends AbstractAppInstaller
 {
+    const CONFIG_OPTION_DISABLED = 'INSTALLER.SCHEDULERINSTALLER.DISABLED';
+    
     private $tasks;
     
     public function backup(string $absolute_path) : \Iterator
@@ -30,6 +35,10 @@ class SchedulerInstaller extends AbstractAppInstaller
     public function install(string $source_absolute_path): \Iterator
     {
         $indent = $this->getOutputIndentation();
+        if ($this->getApp()->getConfig()->hasOption(self::CONFIG_OPTION_DISABLED) && $this->getApp()->getConfig()->getOption(self::CONFIG_OPTION_DISABLED)) {
+            yield 'Scheduled tasks installer disabled';
+            return;
+        } 
         foreach ($this->tasks as $name => $args) {
             try {
                 $this->registerScheduledTask($name, $args['command'], $args['intervalInMinutes'], $args['overwrite']);
