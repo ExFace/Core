@@ -87,7 +87,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
         $ok = true;
         
         // Clear APCU cache if it is enabled
-        if ($this->workbench->getConfig()->getOption('CACHE.USE_APCU') === true) {
+        if ($this->workbench->getConfig()->getOption('CACHE.USE_APCU') === true && $this::isAPCUAvailable()) {
             try {
                 $ok = apcu_clear_cache() === false ? false : $ok;
             } catch (\Throwable $e){
@@ -172,7 +172,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
             case $config->getOption('CACHE.ENABLED') === false:
                 $psr6Cache = new ArrayAdapter();
                 break;
-            case $config->getOption('CACHE.USE_APCU') === true:
+            case $config->getOption('CACHE.USE_APCU') === true && static::isAPCUAvailable():
                 $psr6Cache = new ApcuAdapter($name ?? '_workbench', 0);
                 break;
             default:
@@ -250,5 +250,14 @@ class WorkbenchCache implements WorkbenchCacheInterface
     public function isDisabled() : bool
     {
         return $this->getWorkbench()->getConfig()->getOption('CACHE.ENABLED') === false;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected static function isAPCUAvailable() : bool
+    {
+        return function_exists('apcu_clear_cache');
     }
 }
