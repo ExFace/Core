@@ -348,7 +348,7 @@ class NotifyingBehavior extends AbstractBehavior
         // - or the behavior is targeting an action event regardless of the action, but the actions object does not match
         if ($event instanceof ActionEventInterface) {
             $action = $event->getAction();
-            $logbook->addLine('Event action is ' . $action->getName() . ' (' . $action->getAliasWithNamespace() . ') for object ' . $action->getMetaObject()->__toString());
+            $logbook->addLine('Event action is ' . $action->getName() . ' (' . $action->getAliasWithNamespace() . ')');
             if ($this->getNotifyOnActionAlias() !== null){
                 if (! $event->getAction()->isExactly($this->getNotifyOnActionAlias())) {
                     $this->skipEvent('**Skipping** event because of `notify_on_action_alias:' . $this->getNotifyOnActionAlias() .'`', $event, $logbook);
