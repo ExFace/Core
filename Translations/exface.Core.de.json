@@ -28,7 +28,8 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Kein Schreibzugriff auf Datenquelle erlaubt!",
 
 	"ACTION.CLEARCACHE.NAME": "Cache leeren",
-	"ACTION.CLEARCACHE.RESULT": "Cache geleert!",
+	"ACTION.CLEARCACHE.RESULT": "Cache geleert.",
+	"ACTION.CLEARCACHE.RESULT_OPCACHE": "OPcache zurückgesetzt.",
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",

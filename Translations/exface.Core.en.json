@@ -28,7 +28,8 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Editing prohibited by data source settings!",
 	
 	"ACTION.CLEARCACHE.NAME": "Clear Cache",
-	"ACTION.CLEARCACHE.RESULT": "Cache cleared!",
+	"ACTION.CLEARCACHE.RESULT": "Cache cleared.",
+	"ACTION.CLEARCACHE.RESULT_OPCACHE": "OPcache reset.",
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
 	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download ready. If it does not start automatically, click <a href=\"%url%\" download>here</a>.",

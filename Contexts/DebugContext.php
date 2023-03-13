@@ -425,7 +425,10 @@ class DebugContext extends AbstractContext
                         ]
                     ]
                 ], [
-                    'action_alias' => 'exface.Core.ClearCache'
+                    'action' => [
+                        'alias' => 'exface.Core.ClearCache',
+                        'clear_opcache' => true
+                    ]
                 ], [
                     'action_alias' => 'exface.Core.CleanUp'
                 ], [
