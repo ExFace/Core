@@ -320,7 +320,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      *
      * @return UxonObject
      */
-    public function getDataAddressProperties();
+    public function getDataAddressProperties() : UxonObject;
     
     /**
      * Returns the value of a data source specific object property specified by it's id

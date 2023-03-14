@@ -306,7 +306,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
      */
-    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
          * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
@@ -315,13 +315,16 @@ class MySqlBuilder extends AbstractSqlBuilder
          */
         if ($data_type instanceof DateDataType) {
             try {
-                $data_type->parse($value);                
+                $data_type->parse($value);  
+                if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
+                    $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                }
                 $output = "{ts '" . $value . "'}";
             } catch (DataTypeValidationError $e) {
                 $output = $this->escapeString($value);
             }
         } else {
-            $output = parent::prepareWhereValue($value, $data_type, $sql_data_type);
+            $output = parent::prepareWhereValue($value, $data_type, $dataAddressProps);
         }
         return $output;
     }
@@ -331,10 +334,11 @@ class MySqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
+        $sql_data_type = $dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? null;
         if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
-            $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
+            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
             switch ($data_type->getEncoding()) {
                 case BinaryDataType::ENCODING_BASE64:
                     return "FROM_BASE64(" . $value . ")";
@@ -354,7 +358,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             }
         }
         
-        return parent::prepareInputValue($value, $data_type, $sql_data_type);
+        return parent::prepareInputValue($value, $data_type, $dataAddressProps);
     }
 
     /**

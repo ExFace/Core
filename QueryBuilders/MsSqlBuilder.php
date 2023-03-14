@@ -584,7 +584,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         switch (true) {
             case $data_type instanceof StringDataType:
@@ -598,7 +598,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             default:
-                $value = parent::prepareInputValue($value, $data_type);;
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
         }
         return $value;
     }

@@ -466,7 +466,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         switch (true) {
             case $data_type instanceof DateTimeDataType:
@@ -474,7 +474,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    if (null !== $tz = $this->getTimeZone()) {
+                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
@@ -488,7 +488,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             default: 
-                $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
         }
         return $value;
     }
@@ -537,7 +537,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $columns[$column] = $column;
             $custom_insert_sql = $qpart->getDataAddressProperty(static::DAP_SQL_INSERT);
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE));
+                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperties()->toArray());
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     $values[$row][$column] = str_replace(array(

@@ -852,9 +852,9 @@ class MetaObject implements MetaObjectInterface
      *
      * @return UxonObject
      */
-    public function getDataAddressProperties()
+    public function getDataAddressProperties() : UxonObject
     {
-        if (is_null($this->data_address_properties)) {
+        if (null === $this->data_address_properties) {
             $this->data_address_properties = new UxonObject();
         }
         return $this->data_address_properties;

@@ -318,7 +318,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      *
      * @return \exface\Core\CommonLogic\UxonObject
      */
-    public function getDataAddressProperties();
+    public function getDataAddressProperties() : UxonObject;
     
     /**
      *

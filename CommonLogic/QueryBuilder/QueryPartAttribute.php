@@ -104,6 +104,15 @@ class QueryPartAttribute extends QueryPart
         }
         return $this->getAttribute()->getDataAddressProperty($property_key);
     }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getDataAddressProperties() : array
+    {
+        return $this->getAttribute()->getDataAddressProperties()->toArray();
+    }
 
     /**
      * Overrides a data address property for this query part (not affecting the underlying attribute).
