@@ -123,5 +123,14 @@ class WidgetDimension
         else
             return false;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isAuto() : bool
+    {
+        return is_string($this->value) && strcasecmp($this->value, 'auto') === 0;
+    }
 }
 ?>
