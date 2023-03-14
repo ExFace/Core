@@ -116,7 +116,7 @@ class DateDataType extends AbstractDataType
         
         try {
             $tz = $fromTimeZone !== null ? new \DateTimeZone($fromTimeZone) : null;
-            $dateTime = new \DateTime($string);
+            $dateTime = new \DateTime($string, $tz);
         } catch (\Exception $e) {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
