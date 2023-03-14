@@ -606,9 +606,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function getTimeZoneInSQL(string $tzWorkbench, string $tzConnection = null, string $tzColumn = null) : ?string
     {
         switch (true) {
-            case $tzColumn !== null && strcasecmp($tzColumn, $tzWorkbench) !== 0:
+            case $tzColumn !== null:
+                if (strcasecmp($tzColumn, $tzWorkbench) === 0) {
+                    return null;
+                }
                 return $tzColumn;
-            case $tzConnection !== null && strcasecmp($tzConnection, $tzWorkbench) !== 0: 
+            case $tzConnection !== null: 
+                if (strcasecmp($tzConnection, $tzWorkbench) === 0) {
+                    return null;
+                }
                 return $tzConnection;
         }
         return null;
