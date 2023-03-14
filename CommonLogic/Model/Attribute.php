@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -675,8 +674,11 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataAddressProperties()
      */
-    public function getDataAddressProperties()
+    public function getDataAddressProperties() : UxonObject
     {
+        if (null === $this->data_address_properties) {
+            $this->data_address_properties = new UxonObject();
+        }
         return $this->data_address_properties;
     }
 

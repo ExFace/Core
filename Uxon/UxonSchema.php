@@ -19,6 +19,7 @@ use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\WorkbenchCache;
+use exface\Core\DataTypes\TimeZoneDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -35,6 +36,7 @@ use exface\Core\CommonLogic\WorkbenchCache;
  * - icon
  * - color
  * - uri
+ * - timezone
  * - metamodel:app
  * - metamodel:expression
  * - metamodel:object
@@ -398,6 +400,9 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($type, 'boolean') === 0:
                 $options = ['true', 'false'];
+                break;
+            case strcasecmp($type, 'timezone') === 0:
+                $options = TimeZoneDataType::getKeysStatic();
                 break;
             case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);

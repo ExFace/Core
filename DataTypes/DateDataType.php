@@ -660,7 +660,7 @@ class DateDataType extends AbstractDataType
      * If set, the value will be displayed in the specified timezone
      * 
      * @uxon-property format_to_time_zone
-     * @uxon-type string
+     * @uxon-type timezone
      * 
      * @param string $value
      * @return DateDataType

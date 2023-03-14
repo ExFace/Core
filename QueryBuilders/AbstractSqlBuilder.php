@@ -166,6 +166,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     const DAP_SQL_DATA_TYPE = 'SQL_DATA_TYPE';
     
     /**
+     * Defines a custom time zone for a datetime or time column if it differs from the connection setting
+     * 
+     * When reading from such a column, the workbench will convert the value to the server time
+     * zone if the time zones differ. When writing, it will do the opposite. If no `SQL_TIME_ZONE`
+     * is set, the time zone of the data connection will be used.
+     *
+     * @uxon-property SQL_TIME_ZONE
+     * @uxon-target attribute
+     * @uxon-type timezone
+     */
+    const DAP_SQL_TIME_ZONE = 'SQL_TIME_ZONE';
+    
+    /**
      * Custom SQL SELECT clause for this attribute. 
      * 
      * It replaces the entire select generator and will be used as-is except for replacing placeholders. 
@@ -509,7 +522,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $rows = $query->getResultArray()) {  
             return [];
         }
-        $tz = $query->getTimeZone();
         
         // TODO filter away the EXFRN column!
         foreach ($this->short_aliases as $short_alias) {
@@ -528,9 +540,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $rows[$nr][$full_alias] = $this->decodeBinary($row[$full_alias]);
             }
         }
-        
+        $tzWorkbench = DateTimeDataType::getTimeZoneDefault($this->getWorkbench());
+        $tzQuery = $query->getTimeZone();
         $rowCnt = count($rows);
         foreach ($this->getAttributes() as $qpart) {
+            $dataType = $qpart->getDataType();
             switch (true) {
                 case ($qpart instanceof QueryPartSelect) && $qpart->isExcludedFromResult() === true:
                     $colKey = $qpart->getColumnKey();
@@ -538,19 +552,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         unset ($rows[$nr][$colKey]);
                     }
                     break;
-                case $tz !== null && ($type = $qpart->getDataType()) instanceof TimeDataType:
+                case $dataType instanceof TimeDataType && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
                     $colKey = $qpart->getColumnKey();
-                    $type = $qpart->getDataType();
                     for ($i = 0; $i < $rowCnt; $i++) {
-                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey]);
-                        $rows[$i][$colKey] = $type::convertTimeZone($rows[$i][$colKey], $tz, $type::getTimeZoneDefault($this->getWorkbench()));
+                        $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey]);
+                        $rows[$i][$colKey] = $dataType::convertTimeZone($rows[$i][$colKey], $tz, $tzWorkbench);
                     }
                     break;
-                case $tz !== null && ($type = $qpart->getDataType()) instanceof DateDataType:
+                case $dataType instanceof DateTimeDataType && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
                     $colKey = $qpart->getColumnKey();
-                    $type = $qpart->getDataType();
                     for ($i = 0; $i < $rowCnt; $i++) {
-                        $rows[$i][$colKey] = $type::cast($rows[$i][$colKey], false, $tz, false);
+                        $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
                 case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
@@ -578,6 +590,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return $rows;
+    }
+    
+    /**
+     * Returns the time zone to be used in an SQL statement depending to the time zone settings of the server, the data
+     * connection an eventually the data address property `SQL_TIME_ZONE` of an attribute.
+     * 
+     * Returns NULL if no time zone conversion is neccessary
+     * 
+     * @param string $tzWorkbench
+     * @param string|NULL $tzConnection
+     * @param string|NULL $tzColumn
+     * @return string|NULL
+     */
+    protected function getTimeZoneInSQL(string $tzWorkbench, string $tzConnection = null, string $tzColumn = null) : ?string
+    {
+        switch (true) {
+            case $tzColumn !== null && strcasecmp($tzColumn, $tzWorkbench) !== 0:
+                return $tzColumn;
+            case $tzConnection !== null && strcasecmp($tzConnection, $tzWorkbench) !== 0: 
+                return $tzConnection;
+        }
+        return null;
     }
     
     /**
@@ -658,7 +692,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $columns[$column] = $column;
             foreach ($qpart->getValues() as $row => $value) {
                 try {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
+                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row . ' of CREATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . StringDataType::truncate($value, 100, false), null, $e);
                 }
@@ -701,14 +735,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($uidBeforeEach) {
                     $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
                         '~alias' => $mainObj->getAlias(),
-                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperties()->toArray())
                     ]);
                 }
                 $uidAfterEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
                 if ($uidAfterEach) {
                     $uidAfterEach = StringDataType::replacePlaceholders($uidAfterEach, [
                         '~alias' => $mainObj->getAlias(),
-                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                        '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uidAttr->getDataAddressProperties()->toArray())
                     ]);
                 }
             }
@@ -738,7 +772,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($uid_qpart && $uid_qpart->hasValues() === false && $uidCustomSqlInsert) {
             $uidCustomSqlInsert = StringDataType::replacePlaceholders($uidCustomSqlInsert, [
                 '~alias' => $mainObj->getAlias(),
-                '~value' => $this->prepareInputValue('', $uidAttr->getDataType(), $uid_qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE))
+                '~value' => $this->prepareInputValue('', $uid_qpart->getDataType(), $uid_qpart->getDataAddressProperties())
             ]);
             
             $columns[$uidAddress] = $uidAddress;
@@ -892,7 +926,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if (count($qpart->getValues()) == 1 && (! $qpart->hasUids() || '' === $qpart->getUids()[array_keys($qpart->getValues())[0] ?? null] ?? '')) {
                 $values = $qpart->getValues();
                 try {
-                    $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
+                    $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $qpart->getDataAddressProperties());
                 } catch (\Throwable $e) {
                     throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row 0 of UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                 }
@@ -912,7 +946,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
                     try {
-                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE));
+                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $qpart->getDataAddressProperties());
                     } catch (\Throwable $e) {
                         throw new QueryBuilderException('Invalid value for "' . $qpart->getAlias() . '" on row ' . $row_nr . ' of SQL UPDATE query for "' . $this->getMainObject()->getAliasWithNamespace() . '": ' . $value, null, $e);
                     }
@@ -1023,7 +1057,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $sql_data_type
      * @return string
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         $value = $data_type->parse($value);
         switch (true) {
@@ -1051,7 +1085,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    if (null !== $tz = $this->getTimeZone()) {
+                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[self::DAP_SQL_TIME_ZONE] ?? null)) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "'" . $this->escapeString($value) . "'";
@@ -1466,7 +1500,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql, $if_comp, $if_val, $qpart->getAttribute()->getDataType(), $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $qpart->getValueListDelimiter()). " THEN 1 ELSE 0 END)";
+                $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($sql, $if_comp, $if_val, $qpart->getAttribute()->getDataType(), $qpart->getDataAddressProperties(), $qpart->getValueListDelimiter()). " THEN 1 ELSE 0 END)";
                 break;
             default:
                 break;
@@ -1751,7 +1785,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $select;
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $delimiter, $qpart->isValueDataAddress());
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $qpart->getDataAddressProperties(), $delimiter, $qpart->isValueDataAddress());
         }
         
         return $output;
@@ -1899,7 +1933,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty(self::DAP_SQL_DATA_TYPE), $delimiter, $qpart->isValueDataAddress());
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $qpart->getDataAddressProperties(), $delimiter, $qpart->isValueDataAddress());
         }
         return $output;
     }
@@ -1932,12 +1966,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $comparator one of the EXF_COMPARATOR_xxx constants
      * @param string $value value or SQL expression to compare to
      * @param DataTypeInterface $data_type
-     * @param string $sql_data_type value of SQL_DATA_TYPE data source setting
+     * @param string[] $dataAddressProps
      * @param string $value_list_delimiter delimiter used to separate concatenated lists of values
      * @param bool $valueIsSQL
      * @return string
      */
-    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR, bool $valueIsSQL = false)
+    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, array $dataAddressProps = [], $value_list_delimiter = EXF_LIST_SEPARATOR, bool $valueIsSQL = false)
     {
         // Check if the value is of valid type.
         try {
@@ -1978,7 +2012,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             continue;
                         }
                         // Normalize non-empty values
-                        $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                        $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
                     }
                     
                     switch (true) {
@@ -2020,7 +2054,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 . '1 = 0';
         }
         
-        if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL)){
+        if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type, $dataAddressProps) === EXF_LOGICAL_NULL)){
             switch ($comparator) {
                 case EXF_COMPARATOR_EQUALS:
                 case EXF_COMPARATOR_IS:
@@ -2039,16 +2073,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
             case EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
+                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
             case EXF_COMPARATOR_EQUALS_NOT:
-                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
+                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
             case EXF_COMPARATOR_GREATER_THAN:
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $sql_data_type));
+                $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
             case EXF_COMPARATOR_IS_NOT:
             case EXF_COMPARATOR_IS:
@@ -2068,10 +2102,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * @param mixed $value
      * @param DataTypeInterface $data_type
-     * @param string|NULL $sql_data_type
+     * @param string[] $dataAddressProps
      * @return string
      */
-    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         // IDEA some data type specific procession here
         switch (true) {
@@ -2086,7 +2120,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $output = $this->prepareInputValue($value, $data_type, $sql_data_type);
+                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps);
                 break;
             default:
                 $output = $this->escapeString($value);
