@@ -22,7 +22,6 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
-use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
@@ -325,7 +324,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
     {
         $logbook->addSection('Updating duplicates');
         if (! $eventSheet->getMetaObject()->hasUidAttribute())  {
-            throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!');
+            throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': object has no UID column!', null, null, $logbook);
         }
         
         //copy the dataSheet and empty it
@@ -350,7 +349,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $matches = $matcher->getMatchesForRow($duplRowNo, self::LOCATED_IN_DATA_SOURCE);
             if (! empty($matches)) {
                 if (count($matches) > 1) {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!');
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': multiple duplicates found in data source!', null, null, $logbook);
                 }
                 $match = $matches[0] ?? null;
                 if($match->hasUid()) {
@@ -368,7 +367,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                     $updateSheet->addRow($row);
                     $rowsToRemove[] = $duplRowNo;
                 } else {
-                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!');
+                    throw new BehaviorRuntimeError($this, 'Cannot update duplicates of ' . $this->getObject()->__toString() . ': a duplicate was found, but it has no UID, so it cannot be updated!', null, null, $logbook);
                 }
             }
             
@@ -461,7 +460,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $logbook->addLine('Missing attributes in original data:');
             if ($eventSheet->hasUidColumn(true) === false) {
                 $logbook->addLine('Cannot read missing attributes because data has no UIDs!');
-                throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!');
+                throw new BehaviorRuntimeError($this, 'Cannot check for duplicates of ' . $this->getObject()->getName() . '" (alias ' . $this->getObject()->getAliasWithNamespace() . '): not enough data!', '7PNKJ50', null, $logbook);
             } 
             
             $eventRows = $eventSheet->getRows();
@@ -544,7 +543,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
                 if (! array_key_exists($col->getName(), $row)) {
-                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!');
+                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!', null, null, $logbook);
                 }
                 $value = $row[$col->getName()];
                 
@@ -556,7 +555,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $eventSheet, // $dataSheet
                         null, // $message - empty to make exception autogenerate one
                         null, // $alias
-                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!')), // $previous
+                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!', null, null, $logbook)), // $previous
                         $col, // $column
                         $col->findEmptyRows() // $rowNumbers
                     );
