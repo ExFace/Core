@@ -8,6 +8,8 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * 
@@ -51,4 +53,8 @@ interface PWAInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxo
     public function loadModel(array $offlineStrategies = []) : PWAInterface;
     
     public function isModelLoaded() : bool;
+    
+    public function getBuildCache(string $filename, UserImpersonationInterface $userOrToken) : DataSheetInterface;
+    
+    public function setBuildCache(string $filename, string $content, string $mimetype, UserImpersonationInterface $userOrToken) : DataSheetInterface;
 }

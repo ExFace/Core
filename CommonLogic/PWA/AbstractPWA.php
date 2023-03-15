@@ -27,6 +27,8 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\UserImpersonationInterface;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -373,6 +375,16 @@ abstract class AbstractPWA implements PWAInterface
         // TODO remove routes if they are not user defined
         
         $dsRoutes->dataReplaceByFilters($transaction);
+        
+        // Remove builds
+        $dsBuilds = $this->getDataForBuilds();
+        $cntBuilds = $dsBuilds->dataDelete($transaction);
+        yield 'Removed ' . $cntBuilds . ' cached builds' . PHP_EOL;
+        
+        // Update PWA
+        $dsPWA = $this->getDataForPWA();
+        $dsPWA->setCellValue('GENERATED_ON', 0, DateTimeDataType::now());
+        $dsPWA->dataUpdate(false, $transaction);
     }
     
     protected abstract function generateModelForWidget(WidgetInterface $widget, int $linkDepth = 100) : \Generator;
@@ -457,6 +469,47 @@ abstract class AbstractPWA implements PWAInterface
     }
     
     /**
+     *
+     * @param array $offlineStrategies
+     * @param array $extraAttributes
+     * @return DataSheetInterface
+     */
+    protected function getDataForBuilds() : DataSheetInterface
+    {
+        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA_BUILD');
+        $ds = DataSheetFactory::createFromObject($obj);
+        $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
+        $ds->getColumns()->removeByKey('CONTENT');
+        if ($this->selector->isUid()) {
+            $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
+        } else {
+            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+        }
+        $ds->dataRead();
+        return $ds;
+    }
+    
+    /**
+     *
+     * @param array $offlineStrategies
+     * @param array $extraAttributes
+     * @return DataSheetInterface
+     */
+    protected function getDataForPWA() : DataSheetInterface
+    {
+        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
+        $ds = DataSheetFactory::createFromObject($obj);
+        $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
+        if ($this->selector->isUid()) {
+            $ds->getFilters()->addConditionFromString('UID', $this->selector->toString(), ComparatorDataType::EQUALS);
+        } else {
+            $ds->getFilters()->addConditionFromString('ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+        }
+        $ds->dataRead();
+        return $ds;
+    }
+    
+    /**
      * 
      * @param array $offlineStrategies
      * @return DataSheetInterface
@@ -497,24 +550,6 @@ abstract class AbstractPWA implements PWAInterface
         if (! empty($offlineStrategies)) {
             $ds->getFilters()->addConditionFromValueArray('OFFLINE_STRATEGY', $offlineStrategies);
         }*/
-        $ds->dataRead();
-        return $ds;
-    }
-    
-    /**
-     * 
-     * @return DataSheetInterface
-     */
-    protected function getDataForPWA(array $offlineStrategies = []) : DataSheetInterface
-    {
-        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
-        $ds = DataSheetFactory::createFromObject($obj);
-        $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
-        if ($this->selector->isUid()) {
-            $ds->getFilters()->addConditionFromAttribute($obj->getUidAttribute(), $this->selector->toString(), ComparatorDataType::EQUALS);
-        } else {
-            $ds->getFilters()->addConditionFromString('ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
-        }
         $ds->dataRead();
         return $ds;
     }
@@ -646,5 +681,45 @@ abstract class AbstractPWA implements PWAInterface
     public function isAvailableOfflineUnpublished() : bool
     {
         return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_UNPUBLISHED_FLAG', 0);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWAInterface::getBuildCache()
+     */
+    public function getBuildCache(string $filename, UserImpersonationInterface $userOrToken) : DataSheetInterface
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PWA_BUILD');
+        $ds->getFilters()->addConditionFromString('PWA', $this->getUid(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('FILENAME', $filename, ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('USERNAME', $userOrToken->getUsername(), ComparatorDataType::EQUALS);
+        $ds->getColumns()->addMultiple([
+            'CONTENT',
+            'MIMETYPE',
+            'FILENAME'
+        ]);
+        $ds->dataRead();
+        return $ds;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWAInterface::setBuildCache()
+     */
+    public function setBuildCache(string $filename, string $content, string $mimetype, UserImpersonationInterface $userOrToken) : DataSheetInterface
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PWA_BUILD');
+        $ds->addRow([
+            'FILENAME' => $filename,
+            'MIMETYPE' => $mimetype,
+            'PWA' => $this->getUid(),
+            'CONTENT' => $content,
+            'SIZE' => mb_strlen($content),
+            'USERNAME' => $userOrToken->getUsername()
+        ]);
+        $ds->dataCreate();
+        return $ds;
     }
 }
