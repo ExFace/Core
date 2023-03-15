@@ -166,7 +166,10 @@ class LdapAuthenticator extends AbstractAuthenticator
                 throw new InvalidArgumentException('Cannot initialize LDAP authenticator: cannot set LDAP option "' . $opt . '" to "' . $val . '"!');
             }
         }
-        
+        $pwd = trim($token->getPassword());
+        if ($pwd === null || $pwd === '' || preg_match('/\x00/',$pwd) === 1 || empty($pwd)) {
+            throw new AuthenticationFailedError($this, 'Authentication failed, empty password not allowed!', '7AL3J9X');
+        }
         // anmelden am ldap server
         $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
         if (! $ldapbind) {
@@ -218,6 +221,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         $ldapresult = ldap_search($ldapconn, $baseDn, "(&(objectClass=user)(sAMAccountName={$token->getUsername()}))", $attributes);
         if ($ldapresult === false) {
             $this->getWorkbench()->getLogger()->logException(new RuntimeException(ldap_error($ldapconn), ldap_errno($ldapconn)));
+            return [];
         }
         $entryArray = ldap_get_entries($ldapconn, $ldapresult);
         $surname = null;
