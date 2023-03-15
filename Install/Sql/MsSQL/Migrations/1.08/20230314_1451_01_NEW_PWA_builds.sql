@@ -10,15 +10,17 @@ CREATE TABLE dbo.exf_pwa_build (
   pwa_oid binary(16) NOT NULL,
   filename nvarchar(100) NOT NULL,
   size int NOT NULL,
-  content longtext NOT NULL,
+  content nvarchar(MAX) NOT NULL,
   mimetype nvarchar(100) NOT NULL,
   username nvarchar(100) DEFAULT NULL,
   CONSTRAINT [PK_exf_pwa_build] PRIMARY KEY CLUSTERED (oid)
 );
+GO;
 
 ALTER TABLE dbo.exf_pwa
 	ADD generated_on datetime NULL,
 		regenerate_after datetime NULL;
+GO;
 
 UPDATE dbo.exf_pwa SET generated_on = modified_on;
 	
