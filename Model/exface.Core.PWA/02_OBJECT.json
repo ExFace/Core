@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-12-27 17:34:13",
-            "MODIFIED_ON": "2023-03-07 17:00:50",
+            "MODIFIED_ON": "2023-03-14 15:26:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edbb694cebd4babb69747827435ce5",
@@ -353,6 +353,46 @@
                                             {
                                                 "attribute_alias": "OBJECT__NAME",
                                                 "direction": "asc"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                                                "bind_to_double_click": true
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Files",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.PWA_BUILD",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "PWA",
+                                                "comparator": "==",
+                                                "required": true,
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "FILENAME"
+                                            },
+                                            {
+                                                "attribute_alias": "SIZE"
+                                            },
+                                            {
+                                                "attribute_alias": "CREATED_ON"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "SIZE",
+                                                "direction": "desc"
                                             }
                                         ],
                                         "buttons": [
