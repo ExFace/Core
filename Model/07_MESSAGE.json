@@ -2374,6 +2374,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2023-03-15 10:28:11",
+            "MODIFIED_ON": "2023-03-15 10:28:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8393b55d95be8393025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7PNKJ50",
+            "TITLE": "Cannot check for duplicates: not enough data",
+            "DESCRIPTION": "This is error occurs when the `PreventDuplicatesBehvavior` attempts to check for duplicates in data, where some of the columns to compare are missing and there is no way to read them on-the-fly.\n\nNormally, if some of the `compare_attributes` are missing, the behavior will attempt to read them from the data source. However, this only works if each row has a UID and that UID is present in the data. In particular, it will not work for create-operations as there is simply nothing to read then.\n\nThe simplest solution would be to ensure, that the data handled by the behavior always has the required columns. Add them as `InputHidden` widgets to the UI or use an `input_mapper` for the action, that performs the operation.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
