@@ -7,8 +7,11 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\PWA\PWADatasetInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Behaviors\TimeStampingBehavior;
+use exface\Core\DataTypes\ComparatorDataType;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -16,16 +19,17 @@ class PWADataset implements PWADatasetInterface
     
     private $pwa = null;
     
-    private $metaObject = null;
-    
     private $dataSheet = null;
     
     private $actions =  [];
     
-    public function __construct(PWAInterface $pwa, MetaObjectInterface $object)
+    private $uid = null;
+    
+    public function __construct(PWAInterface $pwa, DataSheetInterface $dataSheet, string $uid = null)
     {
         $this->pwa = $pwa;
-        $this->metaObject = $object;
+        $this->dataSheet = $dataSheet;
+        $this->uid = $uid;
     }
     
     public function exportUxonObject()
@@ -46,15 +50,32 @@ class PWADataset implements PWADatasetInterface
     
     public function getDataSheet(): DataSheetInterface
     {
-        if ($this->dataSheet === null) {
-            $this->dataSheet = DataSheetFactory::createFromObject($this->getMetaObject());
-        }
         return $this->dataSheet;
+    }
+    
+    public function includeData(DataSheetInterface $anotherSheet) : PWADatasetInterface
+    {
+        if (! $this->getDataSheet()->getMetaObject()->isExactly($anotherSheet->getMetaObject())) {
+            throw new RuntimeException('Cannot include data in offline data set: object mismatch!');
+        }
+        
+        $setSheet = $this->getDataSheet();
+        $setCols = $setSheet->getColumns();
+        foreach ($anotherSheet->getColumns() as $col) {
+            if (! $setCols->getByExpression($col->getExpressionObj())) {
+                $setCols->addFromExpression($col->getExpressionObj());
+            }
+        }
+        foreach ($anotherSheet->getFilters()->getConditionsRecursive() as $cond) {
+            $setSheet->getColumns()->addFromExpression($cond->getExpression());
+        }
+        
+        return $this;
     }
 
     public function getMetaObject(): MetaObjectInterface
     {
-        return $this->metaObject;
+        return $this->dataSheet->getMetaObject();
     }
     
     public function addAction(ActionInterface $action) : PWADatasetInterface
@@ -70,5 +91,78 @@ class PWADataset implements PWADatasetInterface
     public function getActions() : array
     {
         return $this->actions;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getUid()
+     */
+    public function getUid() : ?string
+    {
+        return $this->uid;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::setUid()
+     */
+    public function setUid(string $uid) : PWADatasetInterface
+    {
+        $this->uid = $uid;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::estimateRows()
+     */
+    public function estimateRows() : ?int
+    {
+        return $this->getDataSheet()->copy()->countRowsInDataSource();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::readData()
+     */
+    public function readData(int $limit = null, int $offset = null, string $incrementValue = null) : DataSheetInterface
+    {
+        $ds = $this->getDataSheet()->copy();
+        
+        if ($incrementValue !== null && null !== $incrementAttr = $this->getIncrementAttribute()) {
+            $ds->getFilters()->addConditionFromAttribute($incrementAttr, $incrementValue, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+        }
+        
+        $ds->dataRead($limit, $offset);
+        return $ds;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::isIncremental()
+     */
+    public function isIncremental() : bool
+    {
+        return $this->findIncrementAttribute() !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getIncrementAttribute()
+     */
+    public function getIncrementAttribute() : ?MetaAttributeInterface
+    {
+        $obj = $this->getMetaObject();
+        $tsBehavior = $obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class)->getFirst();
+        if ($tsBehavior === null) {
+            return null;
+        }
+        return $tsBehavior->getUpdatedOnAttribute();
     }
 }

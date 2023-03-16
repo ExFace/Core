@@ -262,9 +262,9 @@ return $filename;
 self.addEventListener('sync', function(event) {
     if (event.tag === 'OfflineActionSync') {
 		event.waitUntil(
-			exfPreloader.getActionQueueIds('offline')
+			exfPWA.getActionQueueIds('offline')
 			.then(function(ids){
-				return exfPreloader.syncActionAll(ids)
+				return exfPWA.syncActionAll(ids)
 			})
 			.then(function(){
 				self.clients.matchAll()

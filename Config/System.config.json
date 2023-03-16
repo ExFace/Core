@@ -127,12 +127,18 @@
 			"cacheName": "image-cache",
     		"maxEntries": 50,
     		"maxAgeSeconds": 604800
+		},
+		"PWA API": {
+			"description": "Dont cache calls to the PWA API",
+			"matcher": "/.*\\/api\\/pwa\\/.*/i",
+			"strategy": "workbox.strategies.NetworkOnly"
 		}
+    	
 	},
 	"FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS": [
 		"npm-asset/dexie/dist/dexie.min.js",
     	"exface/Core/Facades/AbstractPWAFacade/sw_tools.js",
-    	"exface/Core/Facades/AbstractPWAFacade/exf_preloader.js"
+    	"exface/Core/Facades/AbstractPWAFacade/exfPWA.js"
     ],
     
     "FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
@@ -142,6 +148,17 @@
 		"Access-Control-Allow-Origin": "",
 		"Access-Control-Allow-Credentials": "true",
 		"Access-Control-Allow-Methods": "POST",
+		"Access-Control-Allow-Headers": "",
+		"Access-Control-Expose-Headers": "",
+		"Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": 0
+	},
+	
+    "FACADES.PWAAPIFACADE.HEADERS.COMMON": {
+		"Access-Control-Allow-Origin": "",
+		"Access-Control-Allow-Credentials": "false",
+		"Access-Control-Allow-Methods": "GET, POST",
 		"Access-Control-Allow-Headers": "",
 		"Access-Control-Expose-Headers": "",
 		"Cache-Control": "no-cache, no-store, must-revalidate",
