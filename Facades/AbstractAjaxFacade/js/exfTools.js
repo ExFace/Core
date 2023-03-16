@@ -665,21 +665,53 @@
 			 */
 			filterRows: function(aRows, oConditionGroup) {
 				var aConditions = oConditionGroup.conditions || [];
-				var sOperator = oConditionGroup.operator;
+				var aNestedGroups = oConditionGroup.nested_groups || [];
+				var sOperator = oConditionGroup.operator || 'AND';
 				var aRowsFiltered = [];
 				var oSelf = this;
 				aRows.forEach(function(oRow){
 					var oCondition;
+					var sColName;
 					var bRowResult = null;
 					var bConditionResult = null;
 					
 					for (var iC = 0; iC < aConditions.length; iC++) {
 						oCondition = aConditions[iC];
+						sColName = oCondition.columnName || oCondition.expression;
 				        bConditionResult = oSelf.compareValues(
-							(oRow[oCondition.columnName] || null), 
+							(oRow[sColName] || null), 
 							oCondition.value,
-							oCondition.comparator
+							(oCondition.comparator || '=')
 						);
+				        if (sOperator === 'AND') {
+							if (bConditionResult === false) {
+								bRowResult = false;
+								break;
+							} else {
+								bRowResult = true;
+							}
+						} else if (sOperator === 'OR') {
+							if (bConditionResult === true) {
+								bRowResult = true;
+								break;
+							} else {
+								bRowResult = false;
+							}
+						} else {
+							throw 'Unknown logical operator ' + sOperator + ' used!';
+						}
+					}
+					
+					if (bRowResult === false && sOperator === 'AND') {
+						return;
+					}
+					if (bRowResult === true && sOperator === 'OR') {
+						aRowsFiltered.push(oRow);
+						return;
+					}
+					
+					for (var iCG = 0; iCG < aNestedGroups.length; iCG++) {
+				        bConditionResult = oSelf.filterRows([oRow], aNestedGroups[iCG]).length === 1;
 				        if (sOperator === 'AND') {
 							if (bConditionResult === false) {
 								bRowResult = false;
@@ -704,8 +736,6 @@
 					}
 					
 			    });
-			    
-			    // TODO Add nested condition groups here with recursive method calls and merging
 			    
 			    return aRowsFiltered;
 			},
