@@ -1488,6 +1488,20 @@ JS;
      */
     protected function buildJsHeatmapChart(HeatmapChartSeries $series) : string
     {
+        $show = "show: true,";
+        if ($series->getShowValues() === false) {
+            $show = "show: false,";
+        }
+        
+        $borders = '';
+        if ($series->getShowBorders()) {
+            $borders = <<<JS
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 1)'
+
+JS;
+        }
+        
         return  <<<JS
         
         {
@@ -1496,7 +1510,7 @@ JS;
             type: 'heatmap',
             label: {
                 normal: {
-                    show: true,
+                    {$show}
                     formatter: function(param){
                         if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
                             return 'N/A';
@@ -1511,6 +1525,9 @@ JS;
                     shadowBlur: 10,
                     shadowColor: 'rgba(0, 0, 0, 0.5)'
                 }
+            },
+            itemStyle: {
+                {$borders}
             },
             coordinateSystem: 'cartesian2d',
             encode: {
@@ -1684,7 +1701,8 @@ JS;
         }
         
         if ($axis->hasRotatedLabel() === true) {
-            $rotate = 'rotate: 45,';
+            $rotateValue = $axis->getRotateLabelsDegree();
+            $rotate = "rotate: {$rotateValue},";
         } else {
             $rotate = '';
         }
@@ -2158,9 +2176,16 @@ JS;
                 $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
                 //for axes that have rotated label gap has to be calculated differently
                 if ($axis->hasRotatedLabel() === true) {
-                    //rotation is 45 degress, therefore the gap should be the square root of
-                    //2 times the square of the text length
-                    $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';
+                    $degree = $axis->getRotateLabelsDegree();
+                    if (abs($degree) === 45) {
+                        //rotation is 45 degress, therefore the gap should be the square root of
+                        //2 times the square of the text length
+                        $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';                        
+                    } else {
+                        //rotation should be 90 degress,
+                        //therefore the gap should be the text length
+                        $gap = 'canvasCtxt.measureText(val).width';
+                    }
                 }
             } else {
                 //$gap = 'len * (8 - Math.floor(len / 16))';
