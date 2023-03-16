@@ -28,7 +28,8 @@ trait JqueryContextBarAjaxTrait {
                     'color' => $context->getColor(),
                     'hint' => $btn->getHint(),
                     'indicator' => ! is_null($context->getIndicator()) ? $widget->getContextForButton($btn)->getIndicator() : '',
-                    'bar_widget_id' => $btn->getId()
+                    'bar_widget_id' => $btn->getId(),
+                    'context_alias' => $context->getAliasWithNamespace()
                 ];
             }
         } catch (\Throwable $e){
