@@ -14,6 +14,7 @@ use exface\Core\CommonLogic\AppInstallers\FileContentInstaller;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\HttpTaskFacade;
 use exface\Core\CommonLogic\AppInstallers\SchedulerInstaller;
+use exface\Core\Facades\PWAapiFacade;
 
 class CoreApp extends App
 {
@@ -145,6 +146,11 @@ Disallow: /
         // HttpTask facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(HttpTaskFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        
+        // PWA API facade
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(PWAapiFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         // Server installer (e.g. for Microsoft IIS)
