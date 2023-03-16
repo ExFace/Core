@@ -61,7 +61,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     private $gridArea = null;
     
-    private $rotate_labels = false;
+    private $rotate_labels_degrees = null;
     
     private $ticks_for_every_value = null;
 
@@ -214,7 +214,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     }
     
     /**
-     * Set this parameter if you want the axis label be rotated. Only works for x-axes.
+     * Set this parameter if you want the axis label be rotated by 45 degrees. Only works for x-axes.
      * 
      * @uxon-property rotate_labels
      * @uxon-type bool
@@ -225,8 +225,43 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function setRotateLabels(bool $bool) : ChartAxis
     {
-        $this->rotate_labels = $bool;
+        if ($bool === false) {
+            $this->rotate_labels_degrees = null;
+            return $this;
+        }
+        if ($this->rotate_labels_degrees === null) {
+            $this->setRotateLabelsDegrees(45);
+        }
         return $this;
+    }
+    
+    /**
+     * Set this parameter if you want the axis label be rotated by 45 degree. Only works for x-axes.
+     *
+     * @uxon-property rotate_labels_degrees
+     * @uxon-type [45,90,-45,-90]
+     *
+     *
+     * @param int
+     * @return ChartAxis
+     */
+    public function setRotateLabelsDegrees(int $degrees) : ChartAxis
+    {
+        $this->rotate_labels_degrees = $degrees;
+        return $this;
+    }
+    
+    /**
+     * Returns how many degree axis lables should get rotated.
+     * @return string
+     */
+    public function getRotateLabelsDegree() : string
+    {
+        $degrees = $this->rotate_labels_degrees;
+        if (abs($degrees) !== 45 && abs($degrees) !== 90) {
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid chart axis label rotation "' . $degrees . '". Only the values 45, 90, -45 or -90 are allowed!', '6TA2Y6A');
+        }
+        return $degrees;
     }
     
     /**
@@ -239,7 +274,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         if ($this->getDimension() === Chart::AXIS_Y) {
             return false;
         }
-        return $this->rotate_labels;
+        return $this->rotate_labels_degrees !== null;
     }
 
     /**

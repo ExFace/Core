@@ -14,6 +14,59 @@ class HeatmapChartSeries extends ChartSeries implements iHaveVisualMapChartPart
     
     private $visualMap = null;
     
+    private $showValues = null;
+    
+    private $showBorders = null;
+    
+    
+    /**
+     * Set to FALSE to hide the values inside a heatmap.
+     *
+     * @uxon-property show_values
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setShowValues(bool $trueOrFalse) : HeatmapChartSeries
+    {
+        $this->showValues = $trueOrFalse;
+        return $this;
+    }
+    
+    public function getShowValues() : bool
+    {
+        if ($this->showValues === null) {
+            return true;
+        }
+        return $this->showValues;
+    }
+    
+    /**
+     * Set to true to show borders around values inside a heatmap.
+     *
+     * @uxon-property show_borders
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ChartAxis
+     */
+    public function setShowBorders(bool $trueOrFalse) : HeatmapChartSeries
+    {
+        $this->showBorders = $trueOrFalse;
+        return $this;
+    }
+    
+    public function getShowBorders() : bool
+    {
+        if ($this->showBorders === null) {
+            return false;
+        }
+        return $this->showBorders;
+    }
+    
     /**
      * 
      * {@inheritDoc}
