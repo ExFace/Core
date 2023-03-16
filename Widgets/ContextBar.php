@@ -95,7 +95,7 @@ class ContextBar extends Toolbar
         $contextManager = $this->getWorkbench()->getContext();
         foreach ($context_uxon_objects as $uxon){
             $visibility = strtolower($uxon->getProperty('visibility'));
-            if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
+            if ($visibility === ContextInterface::CONTEXT_BAR_DISABED){
                 continue;
             }
             $uxon->unsetProperty('visibility');
@@ -104,6 +104,9 @@ class ContextBar extends Toolbar
                 $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
                 $uxon->unsetProperty('context_alias');
+                if ($visibility) {
+                    $context->setVisibility($visibility);
+                }
                 
                 if (! $uxon->isEmpty()) {
                     $context->importUxonObject($uxon);
@@ -125,7 +128,7 @@ class ContextBar extends Toolbar
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
                         break;
                     case ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS:
-                        $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
+                        $btn->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
                         break;
                     default:
                         if (! defined('\\exface\\Core\\Interfaces\\Contexts\\ContextInterface::CONTEXT_BAR_' . mb_strtoupper($visibility))) {
