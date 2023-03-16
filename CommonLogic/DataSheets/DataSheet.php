@@ -2439,7 +2439,7 @@ class DataSheet implements DataSheetInterface
         return $this->is_fresh;
     }
 
-    public function getRowsLimit()
+    public function getRowsLimit() : ?int
     {
         return $this->rows_on_page;
     }
@@ -2448,17 +2448,17 @@ class DataSheet implements DataSheetInterface
      * Max. number of rows to read (all if not set explicitly)
      * 
      * @uxon-property rows_limit
-     * @uxon-type integer
+     * @uxon-type int|null
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowsLimit()
      */
-    public function setRowsLimit($value)
+    public function setRowsLimit($value) : DataSheetInterface
     {
         $this->rows_on_page = $value;
         return $this;
     }
 
-    public function getRowsOffset()
+    public function getRowsOffset() : int
     {
         return $this->row_offset;
     }
@@ -2471,7 +2471,7 @@ class DataSheet implements DataSheetInterface
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowsOffset()
      */
-    public function setRowsOffset($value)
+    public function setRowsOffset(int $value) : DataSheetInterface
     {
         $this->row_offset = $value;
         return $this;

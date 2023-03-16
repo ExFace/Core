@@ -608,13 +608,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function isPaged() : bool;
 
-    public function getRowsLimit();
+    public function getRowsLimit() : ?int;
 
-    public function setRowsLimit($value);
+    public function setRowsLimit($value) : DataSheetInterface;
 
-    public function getRowsOffset();
+    public function getRowsOffset() : int;
 
-    public function setRowsOffset($value);
+    public function setRowsOffset(int $value) : DataSheetInterface;
 
     /**
      * Merges the current data sheet with another one.
