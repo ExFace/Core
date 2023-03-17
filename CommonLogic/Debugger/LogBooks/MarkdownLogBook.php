@@ -222,5 +222,6 @@ class MarkdownLogBook implements LogBookInterface
     public function addException(\Throwable $e, int $indent = null) : LogBookInterface
     {
         $this->addLine('**Exception** ' . $e->getMessage() . ' in '. $e->getFile() . ' on line ' . $e->getLine(), $indent);
+        return $this;
     }
 }
