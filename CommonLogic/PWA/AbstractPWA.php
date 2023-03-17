@@ -29,6 +29,8 @@ use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\UserImpersonationInterface;
+use exface\Core\Exceptions\PWA\PWADatasetNotFoundError;
+use exface\Core\Interfaces\Widgets\iHaveFilters;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -57,6 +59,8 @@ abstract class AbstractPWA implements PWAInterface
     private $startPage = null;
     
     private $modelLoadedForStrategies = null;
+    
+    private $dsPWA = null;
     
     public function __construct(PWASelectorInterface $selector, FacadeInterface $facade)
     {
@@ -235,12 +239,6 @@ abstract class AbstractPWA implements PWAInterface
         return $this->getActionCacheItem($action, self::KEY_OFFLINE_STRATEGY);
     }
     
-    protected function getDatasetPWAModelUID(PWADatasetInterface $set) : ?string
-    {
-        $key = array_search($set, $this->dataSets, true);
-        return $this->dataSetsModelUIDs[$key];
-    }
-    
     /**
      * 
      * @return PWADatasetInterface[]
@@ -250,24 +248,45 @@ abstract class AbstractPWA implements PWAInterface
         return $this->dataSets;        
     }
     
+    public function getDataset(string $uid) : PWADatasetInterface
+    {
+        foreach ($this->getDatasets() as $set) {
+            if ($set->getUid() === $uid) {
+                return $set;
+            }
+        }
+        throw new PWADatasetNotFoundError('Data set with UID "' . $uid . '" not found in PWA "' . $this->getUid() . '"');
+    }
+    
     public function addData(DataSheetInterface $dataSheet, ActionInterface $action, WidgetInterface $widget) : PWADatasetInterface
     {
         $set = $this->findDataSet($dataSheet);
         if ($set === null) {
-            $set = new PWADataset($this, $dataSheet->getMetaObject());
+            $set = new PWADataset($this, $dataSheet->copy()->setRowsLimit(null)->setRowsOffset(0));
             $this->dataSets[] = $set;
+        } else {
+            $set->includeData($dataSheet);
+        }
+        
+        $setSheet = $set->getDataSheet();
+        if ($widget instanceof iHaveFilters) {
+            foreach ($widget->getFilters() as $filter) {
+                if ($filter->isBoundToAttribute()) {
+                    if (! $setSheet->getColumns()->getByAttribute($filter->getAttribute())) {
+                        $setSheet->getColumns()->addFromAttribute($filter->getAttribute(), true);
+                    }
+                }
+            }
         }
         
         $this->setActionCacheItem($action, self::KEY_DATASET, $set);
-        
-        $setSheet = $set->getDataSheet();
-        $setCols = $setSheet->getColumns();
-        foreach ($dataSheet->getColumns() as $col) {
-            if (! $setCols->getByExpression($col->getExpressionObj())) {
-                $setCols->addFromExpression($col->getExpressionObj());
-            }
-        }
         return $set;
+    }
+    
+    public function addDataSet(PWADatasetInterface $dataSet) : PWAInterface
+    {
+        $this->dataSets[] = $dataSet;
+        return $this;
     }
     
     public function findDataSet(DataSheetInterface $dataSheet) : ?PWADatasetInterface
@@ -306,26 +325,35 @@ abstract class AbstractPWA implements PWAInterface
     {
         // Data sets
         $dsDatasets = $this->getDataForDatasets();
-        $dsDatasets->removeRows();
+        $newDataSets = $dsDatasets->copy()->removeRows();
         foreach ($this->getDatasets() as $set) {
+            $dataSheetJson = $set->getDataSheet()->exportUxonObject()->toJson();
+            if (false !== $rowIdx = $dsDatasets->getColumns()->get('DATA_SHEET_UXON')->findRowByValue($dataSheetJson)) {
+                $row = $dsDatasets->getRow($rowIdx);
+            } else {
+                $row = [];
+            }
             try {
-                $rowCnt = $set->getDataSheet()->countRowsInDataSource();
+                $rowCnt = $set->estimateRows();
             } catch (\Throwable $e) {
                 $rowCnt = null;
                 $this->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot estimate size of offline data set: ' . $e->getMessage(), null, $e));
             }
-            $dsDatasets->addRow([
+            $newDataSets->addRow(array_merge($row, [
                 'PWA' => $this->getUid(),
                 'DESCRIPTION' => $this->getDescriptionOf($set),
                 'OBJECT' => $set->getMetaObject()->getId(),
-                'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson(),
+                'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson($dataSheetJson),
                 'USER_DEFINED_FLAG' => 0,
                 'ROWS_AT_GENERATION_TIME' => $rowCnt
-            ], false, false);
+            ]), false, false);
         }
         yield 'Generated ' . $dsDatasets->countRows() . ' offline data sets' . PHP_EOL;
-        $dsDatasets->dataReplaceByFilters($transaction);
-        $this->dataSetsModelUIDs = $dsDatasets->getUidColumn()->getValues();
+        $newDataSets->dataReplaceByFilters($transaction);
+        $uids = $dsDatasets->getUidColumn()->getValues();
+        foreach ($this->getDatasets() as $i => $set) {
+            $set->setUid($uids[$i]);
+        }
         
         // Actions
         $dsActions = $this->getDataForActions();
@@ -341,7 +369,7 @@ abstract class AbstractPWA implements PWAInterface
                 'OFFLINE_STRATEGY_IN_FACADE' => $this->getActionOfflineStrategy($action),
                 'ACTION_ALIAS' => $action->getAliasWithNamespace(),
                 'OBJECT' => $action->getMetaObject()->getId(),
-                'PWA_DATASET' => null !== ($set = $this->getActionDataSet($action)) ? $this->getDatasetPWAModelUID($set) : null
+                'PWA_DATASET' => null !== ($set = $this->getActionDataSet($action)) ? $set->getUid() : null
             ], false, false);
         }
         yield 'Generated ' . $dsActions->countRows() . ' actions' . PHP_EOL;
@@ -429,6 +457,12 @@ abstract class AbstractPWA implements PWAInterface
             $this->addRoute(new PWARoute($this, $row['URL']));
         }
         
+        // Load data sets
+        $ds = $this->getDataForDatasets($offlineStrategies);
+        foreach ($ds->getRows() as $row) {
+            $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), UxonObject::fromJson($row['DATA_SHEET_UXON']));
+            $this->addDataSet(new PWADataset($this, $dataSheet, $row['UID']));
+        }
         return $this;
     }
     
@@ -459,7 +493,7 @@ abstract class AbstractPWA implements PWAInterface
         if ($this->selector->isUid()) {
             $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
         } else {
-            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('PWA__ALIAS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
         if (! empty($offlineStrategies)) {
             $ds->getFilters()->addConditionFromValueArray('PWA_ACTION__OFFLINE_STRATEGY', $offlineStrategies);
@@ -483,7 +517,7 @@ abstract class AbstractPWA implements PWAInterface
         if ($this->selector->isUid()) {
             $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
         } else {
-            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('PWA__ALIAS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
         $ds->dataRead();
         return $ds;
@@ -497,16 +531,19 @@ abstract class AbstractPWA implements PWAInterface
      */
     protected function getDataForPWA() : DataSheetInterface
     {
-        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
-        $ds = DataSheetFactory::createFromObject($obj);
-        $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
-        if ($this->selector->isUid()) {
-            $ds->getFilters()->addConditionFromString('UID', $this->selector->toString(), ComparatorDataType::EQUALS);
-        } else {
-            $ds->getFilters()->addConditionFromString('ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+        if ($this->dsPWA === null) {
+            $obj = MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.PWA');
+            $ds = DataSheetFactory::createFromObject($obj);
+            $ds->getColumns()->addFromAttributeGroup($obj->getAttributeGroup('~ALL'));
+            if ($this->selector->isUid()) {
+                $ds->getFilters()->addConditionFromString('UID', $this->selector->toString(), ComparatorDataType::EQUALS);
+            } else {
+                $ds->getFilters()->addConditionFromString('ALIAS', $this->selector->toString(), ComparatorDataType::EQUALS);
+            }
+            $ds->dataRead();
+            $this->dsPWA = $ds;
         }
-        $ds->dataRead();
-        return $ds;
+        return $this->dsPWA;
     }
     
     /**
@@ -522,7 +559,7 @@ abstract class AbstractPWA implements PWAInterface
         if ($this->selector->isUid()) {
             $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
         } else {
-            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('PWA__ALIAS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
         if (! empty($offlineStrategies)) {
             $ds->getFilters()->addConditionFromValueArray('OFFLINE_STRATEGY', $offlineStrategies);
@@ -544,7 +581,7 @@ abstract class AbstractPWA implements PWAInterface
         if ($this->selector->isUid()) {
             $ds->getFilters()->addConditionFromString('PWA', $this->selector->toString(), ComparatorDataType::EQUALS);
         } else {
-            $ds->getFilters()->addConditionFromString('PWA__ALIAS_WITH_NS', $this->selector->toString(), ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('PWA__ALIAS', $this->selector->toString(), ComparatorDataType::EQUALS);
         }
         /* TODO
         if (! empty($offlineStrategies)) {
@@ -721,5 +758,15 @@ abstract class AbstractPWA implements PWAInterface
         ]);
         $ds->dataCreate();
         return $ds;
+    }
+    
+    public function getName() : string
+    {
+        return $this->getDataForPWA()->getCellValue('NAME', 0);
+    }
+    
+    public function getURL() : string
+    {
+        return $this->getDataForPWA()->getCellValue('URL', 0);
     }
 }
