@@ -16,6 +16,8 @@ use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\PWAFactory;
+use exface\Core\Exceptions\Actions\ActionInputError;
 
 /**
  * 
@@ -65,26 +67,12 @@ class GeneratePWA extends AbstractActionDeferred implements iModifyData, iCanBeC
                     throw new ActionInputMissingError($this, 'Cannot generate PWA: missing UID or facade selector!');
                 }
                 $facade = FacadeFactory::createFromString($facadeClass, $this->getWorkbench());
-                break;
+                return $facade->getPWA($pwaUid);
             case $task instanceof CliTaskInterface:
                 $arg = $task->getCliArgument('selector');
-                $selector = new PWASelector($this->getWorkbench(), $arg);
-                $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PWA');
-                $ds->getColumns()->addFromUidAttribute();
-                $ds->getColumns()->addMultiple([
-                    'PAGE_TEMPLATE__FACADE'
-                ]);
-                if ($selector->isUid()) {
-                    $ds->getFilters()->addConditionFromString('UID', $selector->toString(), ComparatorDataType::EQUALS);
-                } else {
-                    $ds->getFilters()->addConditionFromString('ALIAS_WITH_NS', $selector->toString(), ComparatorDataType::EQUALS);
-                }
-                $ds->dataRead();
-                $pwaUid = $ds->getUidColumn()->getValue(0);
-                $facadeClass = $ds->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
-                $facade = FacadeFactory::createFromString($facadeClass, $this->getWorkbench());
+                return PWAFactory::createFromString($this->getWorkbench(), $arg);
         }
-        return $facade->getPWA($pwaUid);
+        throw new ActionInputError($this, 'No PWA selector provided');
     }
     
     /**
