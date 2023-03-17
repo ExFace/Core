@@ -52,6 +52,11 @@ const exfPWA = {};
 	
 	var _deviceId;
 	
+	_pwa.data = {};
+	_pwa.errors = {};
+	_pwa.model = {};
+	_pwa.actionQueue = {};
+	
 	(function() {
 		_deviceIdTable.toArray()
 		.then(function(data) {
@@ -67,21 +72,21 @@ const exfPWA = {};
 	/**
 	 * @return {bool}
 	 */
-	this.isAvailable = function() {
+	_pwa.isAvailable = function() {
 		return _error === null;
 	}
 	
 	/**
 	 * @return {string}
 	 */
-	this.getDeviceId = function() {
+	_pwa.getDeviceId = function() {
 		return _deviceId;
 	}
 	
 	/**
 	 * @return void
 	 */
-	this.setTopics = function(aTopics) {
+	_pwa.actionQueue.setTopics = function(aTopics) {
 		_topics = aTopics;
 		return;
 	}
@@ -89,11 +94,11 @@ const exfPWA = {};
 	/**
 	 * @return {string[]}
 	 */
-	this.getTopics = function() {
+	_pwa.actionQueue.getTopics = function() {
 		return _topics;
 	}
 	
-	this.addPWA = function(sUrl) {
+	_pwa.model.addPWA = function(sUrl) {
 		console.log('add PWA to sync ', sUrl);
 		if (_error) {
 			return Promise.resolve(null);
@@ -116,14 +121,14 @@ const exfPWA = {};
 			}
 		})
 		.then(function(oPWA){
-			return _pwa.syncModel(oPWA.url);
+			return _pwa.model.sync(oPWA.url);
 		});
 	}
 	
 	/**
 	 * @return {promise}
 	 */
-	this.getOfflineData = function(oQuery) {
+	_pwa.data.get = function(oQuery) {
 		if (_error === false) {
 			return Promise.resolve();
 		}
@@ -148,13 +153,13 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.syncAll = async function(fnCallback) {
+	_pwa.syncAll = async function(fnCallback) {
 		var deferreds = [];
 		var data = await _dataTable.toArray();		
 		data.forEach(function(oDataSet){
 			deferreds.push(
 		    	_pwa
-		    	.syncData(oDataSet.uid)
+		    	.data.sync(oDataSet.uid)
 		    );
 		});
 		// Can't pass a literal array, so use apply.
@@ -165,7 +170,7 @@ const exfPWA = {};
 				return;
 			}
 			//delete all actions with status "synced" from actionQueue
-			_pwa.getActionQueueData('synced')
+			_pwa.actionQueue.get('synced')
 			.then(function(data) {
 				data.forEach(function(item) {
 					_actionsTable.delete(item.id);
@@ -174,7 +179,7 @@ const exfPWA = {};
 		});
 	};
 	
-	this.syncModel = function(sPwaUrl) {
+	_pwa.model.sync = function(sPwaUrl) {
 		return _modelTable
 		.get(sPwaUrl)
 		.then(function(oRow) {
@@ -206,13 +211,13 @@ const exfPWA = {};
 				return Promise
 				.all(aPromises)
 				.then(function(){
-					return _pwa.syncDataAll(oPWA.uid);
+					return _pwa.data.syncAll(oPWA.uid);
 				});
 			})
 		})
 	}
 	
-	this.syncDataAll = function(sPwaUid) {
+	_pwa.data.syncAll = function(sPwaUid) {
 		_dataTable
 		.filter(function(oDataSet){
 			return oDataSet.pwa_uid === sPwaUid;
@@ -220,13 +225,13 @@ const exfPWA = {};
 		.toArray(function(aSets){
 			aPromises = [];
 			aSets.forEach(function(oDataSet) {
-				aPromises.push(_pwa.syncData(oDataSet.uid));
+				aPromises.push(_pwa.data.sync(oDataSet.uid));
 			});
 			return Promise.all(aPromises);
 		})
 	}
 	
-	this.syncData = function (sDataSetUid) {
+	_pwa.data.sync = function (sDataSetUid) {
 		var oDataSet;
 		return _dataTable
 		.get(sDataSetUid)
@@ -253,7 +258,7 @@ const exfPWA = {};
 	/**
 	 * @return {object[]}
 	 */
-	this.mergeRows = function (aOldRows, aNewRows, sUidAlias) {
+	_pwa.data.mergeRows = function (aOldRows, aNewRows, sUidAlias) {
 		for (var i = 0; i < aNewRows.length; i++) {
 			var rowUpdated = false;
 			for (var j = 0; j < aOldRows.length; j++) {
@@ -274,7 +279,7 @@ const exfPWA = {};
 	/**
 	 * @return {promise|null}
 	 */
-	this.syncImages = function (aUrls, sCacheName = 'image-cache') {
+	_pwa.data.syncImages = function (aUrls, sCacheName = 'image-cache') {
 		if (typeof window !== 'undefined') {
 			var cachesApi = window.caches;
 		} else {
@@ -323,7 +328,7 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.reset = function() {
+	_pwa.reset = function() {
 		if (_error) {
 			return Promise.resolve(null);
 		}
@@ -335,7 +340,7 @@ const exfPWA = {};
 			.toArray()
 			.then(function(aRows) {
 				aRows.forEach(function(oPWA){
-					aPromises.push(_pwa.syncModel(oPWA.url));
+					aPromises.push(_pwa.model.sync(oPWA.url));
 				});
 				return Promise.all(aPromises);
 			});
@@ -359,11 +364,11 @@ const exfPWA = {};
 	 * 		  }>} 		[aEffects]
 	 * @return Promise
 	 */
-	this.addAction = function(offlineAction, objectAlias, sActionName, sObjectName, aEffects) {
+	_pwa.actionQueue.add = function(offlineAction, objectAlias, sActionName, sObjectName, aEffects) {
 		if (_error) {
 			return Promise.resolve(null);
 		}
-		var topics = _pwa.getTopics();
+		var topics = _pwa.actionQueue.getTopics();
 		offlineAction.url = 'api/task/' + topics.join('/');
 		var xRequestId = _pwa.createUniqueId();
 		var date = (+ new Date());
@@ -405,7 +410,7 @@ const exfPWA = {};
 	 * @param {function} [sObjectAlias]
 	 * @return {promise}
 	 */
-	this.getActionQueueData = function(sStatus, sObjectAlias, fnRowFilter) {
+	_pwa.actionQueue.get = function(sStatus, sObjectAlias, fnRowFilter) {
 		if (_error) {
 			return Promise.resolve([]);
 		}
@@ -414,7 +419,7 @@ const exfPWA = {};
 			var data = [];
 			dbContent.forEach(function(element) {
 				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
-				element = _pwa.updateProccessingState(element);
+				element = _pwa.actionQueue.updateState(element);
 				
 				if (sStatus && element.status != sStatus) {
 					return;
@@ -448,7 +453,7 @@ const exfPWA = {};
 	/**
 	 * Returns the effects of different actions on the given object alias.
 	 * 
-	 * Each effect is an object as provided in addAction() with one additional property:
+	 * Each effect is an object as provided in action.add() with one additional property:
 	 * `offline_queue_item` containing the entire action item the effect belongs to.
 	 * 
 	 * @param {String} [sEffectedObjectAlias]
@@ -462,7 +467,7 @@ const exfPWA = {};
 	 * 			offline_queue_item: Object
 	 * 		  }>}
 	 */
-	this.getOfflineActionsEffects = async function(sEffectedObjectAlias) {
+	_pwa.actionQueue.getEffects = async function(sEffectedObjectAlias) {
 		if (_error) {
 			return [];
 		}
@@ -491,7 +496,7 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.getActionQueueIds = function(filter) {
+	_pwa.actionQueue.getIds = function(filter) {
 		if (_error) {
 			return Promise.resolve([]);
 		}
@@ -500,7 +505,7 @@ const exfPWA = {};
 			var ids = [];
 			dbContent.forEach(function(element) {
 				//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
-				element = _pwa.updateProccessingState(element);
+				element = _pwa.actionQueue.updateState(element);
 				
 				if (element.status != filter) {
 					return;
@@ -511,7 +516,7 @@ const exfPWA = {};
 			return ids;
 		})
 		.catch(function(error) {
-			return [];
+			return Promise.resolve([]);
 		})
 	};
 	
@@ -520,7 +525,7 @@ const exfPWA = {};
 	 * @param {object} element
 	 * @return {object}
 	 */
-	this.updateProccessingState = function(element) {
+	_pwa.actionQueue.updateState = function(element) {
 		if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < (+ new Date())) {
 			element.status = 'offline';		
 			_actionsTable.update(element.id, element);
@@ -531,17 +536,17 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.syncActionAll = async function(selectedIds) {
+	_pwa.actionQueue.syncIds = async function(selectedIds) {
 		var result = true;
 		var id = null;
 		for (var i = 0; i < selectedIds.length; i++) {
 			var id = selectedIds[i];		
-			var result = await _pwa.syncAction(id);
+			var result = await _pwa.actionQueue.sync(id);
 			if (result === false) {
 				break;
 			}
 		}
-		await _pwa.updateOfflineData();
+		await _pwa.data.syncAffectedByActions();
 		if (result === false) {
 			return Promise.reject("Syncing failed at action with id: " + id + ". Syncing aborted!");
 		}
@@ -551,7 +556,7 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.syncAction = async function(id) {
+	_pwa.actionQueue.sync = async function(id) {
 		var element = await _actionsTable.get(id);
 		if (element === undefined) {
 			return false
@@ -643,10 +648,10 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.deleteActionAll = function(selectedIds) {
+	_pwa.actionQueue.deleteAll = function(selectedIds) {
 		var promises = [];
 		selectedIds.forEach(function(id){
-			promises.push(_pwa.deleteAction(id));
+			promises.push(_pwa.actionQueue.delete(id));
 		});
 		return Promise.all(promises);
 	};
@@ -654,35 +659,35 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.deleteAction = function(id) {
+	_pwa.actionQueue.delete = function(id) {
 		return _actionsTable.delete(id)
 	}
 	
 	/**
 	 * @return {Dexie.Table}
 	 */
-	this.getActionsTable = function() {
+	_pwa.actionQueue.getTable = function() {
 		return _actionsTable;
 	}
 	
 	/**
 	 * @return {Dexie.Table}
 	 */
-	this.getOfflineDataTable = function() {
+	_pwa.data.getTable = function() {
 		return _dataTable;
 	}
 	
 	/**
 	 * @return {Dexie.Table}
 	 */
-	this.getOfflineModelTable = function() {
+	_pwa.getOfflineModelTable = function() {
 		return _modelTable;
 	}
 	
 	/**
 	 * @return {string}
 	 */
-	this.createUniqueId = function (a = "", b = false) {
+	_pwa.createUniqueId = function (a = "", b = false) {
 	    const c = Date.now()/1000;
 	    let d = c.toString(16).split(".").join("");
 	    while(d.length < 14) d += "0";
@@ -697,11 +702,11 @@ const exfPWA = {};
 	/**
 	 * @return {promise}
 	 */
-	this.updateOfflineData = async function() {
-		var aDataSets = await _offlinedTable.toArray();
+	_pwa.data.syncAffectedByActions = async function() {
+		var aDataSets = await _dataTable.toArray();
 		var promises = []
 		aDataSets.forEach(async function(oDataSet) {
-			var syncedActions = await _pwa.getActionQueueData('synced', oDataSet.object);
+			var syncedActions = await _pwa.actionQueue.get('synced', oDataSet.object);
 			if (syncedActions.length === 0) {
 				return;
 			}
@@ -734,7 +739,7 @@ const exfPWA = {};
 		})
 		
 		//after preloads are updated, delete all actions with status 'synced' from the IndexedDB
-		var syncedIds = await _pwa.getActionQueueIds('synced');
+		var syncedIds = await _pwa.actionQueue.getIds('synced');
 		syncedIds.forEach(function(id){
 			promises.push(
 				_actionsTable.delete(id)
@@ -746,12 +751,12 @@ const exfPWA = {};
 	/**
 	 * @return {object}
 	 */
-	this.loadErrorData = function() {
+	_pwa.errors.sync = function() {
 		if (_error) {
 			return Promise.resolve({});
 		}
 		
-		return fetch('api/pwa/errors/' + this.getDeviceId(), {
+		return fetch('api/pwa/errors/' + _pwa.getDeviceId(), {
 			method: 'GET'
 		})
 		.then(function(response){
@@ -773,8 +778,8 @@ const exfPWA = {};
 	 * @param {string[]} aIds
 	 * @return {object[]} 
 	 */
-	this.getActionsData = function(aMessageIds) {
-		return _pwa.getActionQueueData('offline')
+	_pwa.actionQueue.getByIds = function(aMessageIds) {
+		return _pwa.actionQueue.get('offline')
 		.then(function(actionsData) {
 			var data = {deviceId: _pwa.getDeviceId()};
 			var selectedActions = [];
@@ -792,7 +797,7 @@ const exfPWA = {};
 	/**
 	 * @return void
 	 */
-	this.download = function (data, filename, type) {
+	_pwa.download = function (data, filename, type) {
 	    var file = new Blob([data], {type: type});
 	    if (window.navigator.msSaveOrOpenBlob) // IE10+
 	        window.navigator.msSaveOrOpenBlob(file, filename);
