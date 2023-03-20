@@ -596,7 +596,7 @@ class Expression implements ExpressionInterface
      */
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface
     {
-        if (($link = $this->widgetLinks[$sourceWidget->getId()]) !== null) {
+        if (null !== $link = ($this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()] ?? [])[$sourceWidget->getId()] ?? null) {
             return $link;
         }
         
@@ -605,7 +605,7 @@ class Expression implements ExpressionInterface
         }
         
         $link = WidgetLinkFactory::createFromWidget($sourceWidget, $this->widgetLinkString);
-        $this->widgetLinks[$sourceWidget->getId()] = $link;
+        $this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()][$sourceWidget->getId()] = $link;
         return $link;
     }
 
