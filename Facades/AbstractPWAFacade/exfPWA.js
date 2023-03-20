@@ -369,6 +369,7 @@ self.addEventListener('sync', function(event) {
 		
 			/**
 			 * If element is in proccessing state and last sync attempt was more than 5 minutes ago, change it's state to 'offline'
+			 *
 			 * @param {object} element
 			 * @return {object}
 			 */
@@ -381,6 +382,9 @@ self.addEventListener('sync', function(event) {
 			},
 		
 			/**
+			 * Synchronizes queue ites with provided ids
+			 * 
+			 * @param {array}
 			 * @return {promise}
 			 */
 			syncIds : async function(selectedIds) {
@@ -398,6 +402,20 @@ self.addEventListener('sync', function(event) {
 					return Promise.reject("Syncing failed at action with id: " + id + ". Syncing aborted!");
 				}
 				return Promise.resolve('Success');
+			},
+			
+			/**
+			 * Synchronize actions performed offline since the last sync (those still in stats "offline")
+			 *
+			 * @return {promise}
+			 */
+			syncOffline : function() {
+				return _pwa
+				.actionQueue
+				.getIds('offline')
+				.then(function(ids){
+					return _pwa.actionQueue.syncIds(ids)
+				})
 			},
 		
 			/**
