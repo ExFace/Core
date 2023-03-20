@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Actions\CallAction;
+use exface\Core\DataTypes\OfflineStrategyDataType;
 
 /**
  * 
@@ -260,45 +261,86 @@ JS;
      */
     public function buildJsClickFunction(ActionInterface $action = null, string $jsRequestData = null)
     {
-        $widget = $this->getWidget();
-        $input_element = $this->getInputElement();
-        $action = $action ?? $widget->getAction();
+        $action = $action ?? $this->getWidget()->getAction();
         
-        if ($action && $jsRequestData === null) {
+        if ($jsRequestData === null && $action !== null) {
             $jsRequestData = 'requestData';
-            $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $input_element, $jsRequestData);
+            $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), $jsRequestData);
         }
         
         switch (true) {
+            // Buttons without an action don't do anything
             case ! $action:
-                return $this->buildJsClickNoAction();
+                $js = $this->buildJsClickNoAction(); break;
+            // CallAction needs som extra logic because its action is different depending on the input data
+            case $action instanceof CallAction:
+                $js = $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData); break;
+            // Action chains and other action proxies
             case $action instanceof iCallOtherActions:
-                if ($action instanceof CallAction) {
-                    return $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData);
-                } else {
-                    return $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData);
-                }
+                $js = $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData); break;
+            // Refresh input or other widget - don't need input data here
             case $action instanceof RefreshWidget:
-                return $this->buildJsClickRefreshWidget($action);
+                $js = $this->buildJsClickRefreshWidget($action); break;
+            // Run custom JS - don't need input data here
             case $action instanceof iRunFacadeScript:
-                return $this->buildJsClickRunFacadeScript($action);
+                $js = $this->buildJsClickRunFacadeScript($action); break;
+            // Show Dialog
             case $action instanceof iShowDialog:
-                return $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData);
+                $js = $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData); break;
+            // Navigate to URL
             case $action instanceof iShowUrl:
-                return $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData);
+                $js = $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData); break;
+            // Other show-widget actions (not simple navigating)
             case $action instanceof iShowWidget:
-                return $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData);
+                $js = $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData); break;
+            // Back-button - don't need input data here
             case $action instanceof GoBack:
-                return $this->buildJsClickGoBack($action);
+                $js = $this->buildJsClickGoBack($action); break;
+            // Send data to widget
             case $action instanceof SendToWidget:
-                return $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData);
+                $js = $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData); break;
+            // Reset input or other widget - don't need input data here
             case $action instanceof ResetWidget:
-                return $this->buildJsResetWidgets();
+                $js = $this->buildJsResetWidgets(); break;
+            // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
-                return $this->buildJsClickCallWidgetFunction($action);
+                $js = $this->buildJsClickCallWidgetFunction($action); break;
+            // Send all other acitons to the server
             default: 
-                return $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData);
+                $js = $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData); break;
         }
+        
+        // In any case, wrap some offline-logic around the action
+        if ($action !== null) {
+            $js = $this->buildJsClickOfflineWrapper($action, $js);
+        }
+        
+        return $js;
+    }
+    
+    /**
+     * Executes the provided $regularJs snippet depending of the offline strategy of the $action. 
+     * 
+     * If the action is configured to be skipped offline, $ifNotExcecutedJs will be run instead.
+     * 
+     * @param ActionInterface $action
+     * @param string $regularJs
+     * @param string $ifNotExecutedJs
+     * @return string
+     */
+    protected function buildJsClickOfflineWrapper(ActionInterface $action, string $regularJs, string $ifNotExecutedJs = '') : string
+    {
+        if ($action->getOfflineStrategy() === OfflineStrategyDataType::SKIP) {
+            $regularJs = <<<JS
+            
+            if(navigator.onLine !== false) {
+                $regularJs
+            } else {
+                $ifNotExecutedJs
+            }
+JS;
+        }
+        return $regularJs;
     }
     
     /**
@@ -370,25 +412,33 @@ JS;
             return $this->buildJsClickCallServerAction($action, $jsRequestData);
         }
         
+        // Render JS for the chain
+        // Starting with the front-end-actions BEFORE the first server-action
         $js = '';
         for ($i = 0; $i < $firstServerActionIdx; $i++) {
             $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
         }
+        // Now prepare the front-end-actions AFTER the last server-action and save their
+        // code into $onSuccess in order to perform it after the server request
         $onSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
             $onSuccess .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
         }
         
+        // TODO Multiple server actions in the middle are not supported yet
         if ($firstServerActionIdx !== $lastServerActionIdx) {
             throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): action chains with mixed front- and back-end actions can only contain a single back-end action!');
         }
         
+        // TODO Show-widget actions in chains not supported yet
         $serverAction = $steps[$firstServerActionIdx];
         if ($serverAction instanceof iShowWidget) {
             throw new FacadeRuntimeError('Cannot use actions that render widgets in mixed action chains!');
         }
         
-        $js .= $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess);
+        // Now send the server-action stuff to the server and do the remaining JS-part of the chain
+        // after a successful response was received.
+        $js .= 'console.log("chain");' . $this->buildJsClickOfflineWrapper($steps[$firstServerActionIdx], $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
         
         return $js;
     }
