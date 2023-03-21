@@ -71,12 +71,27 @@ abstract class AbstractPWA implements PWAInterface
     
     public function generateModel(DataTransactionInterface $transaction = null) : \Generator
     {
-        $transaction = $transaction ?? $this->getWorkbench()->data()->startTransaction();
+        if ($transaction === null) {
+            $transaction = $this->getWorkbench()->data()->startTransaction();
+            $commit = true;
+        } else {
+            $commit = false;
+        }
         $this->routes = [];
         $this->dataSets = [];
+        
         yield from $this->generateModelForWidget($this->getStartPage()->getWidgetRoot());
-        yield from $this->saveModel($transaction);
-        $transaction->commit();
+        $resultMsg = '';
+        foreach ($this->saveModel($transaction) as $msg) {
+            $resultMsg .= $msg;
+            yield $msg;
+        }
+        
+        if ($commit) {
+            $transaction->commit();
+        }
+        
+        return $resultMsg;
     }
         
     public function getStartPage() : UiPageInterface
