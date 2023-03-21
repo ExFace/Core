@@ -31,6 +31,9 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Exceptions\PWA\PWADatasetNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -50,11 +53,11 @@ abstract class AbstractPWA implements PWAInterface
     
     private $dataSets = [];
     
-    private $dataSetsModelUIDs = [];
-    
     private $selector = null;
     
     private $facade = null;
+    
+    private $startPageSelector = null;
     
     private $startPage = null;
     
@@ -79,6 +82,7 @@ abstract class AbstractPWA implements PWAInterface
         }
         $this->routes = [];
         $this->dataSets = [];
+        $this->actions = [];
         
         yield from $this->generateModelForWidget($this->getStartPage()->getWidgetRoot());
         $resultMsg = '';
@@ -93,11 +97,24 @@ abstract class AbstractPWA implements PWAInterface
         
         return $resultMsg;
     }
-        
+    
+    public function getStartPageSelector() : UiPageSelectorInterface
+    {
+        if ($this->startPageSelector === null) {
+            $this->startPageSelector = new UiPageSelector($this->getWorkbench(), $this->getDataForPWA()->getCellValue('START_PAGE', 0));
+        }
+        return $this->startPageSelector;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWAInterface::getStartPage()
+     */
     public function getStartPage() : UiPageInterface
     {
         if ($this->startPage === null) {
-            $this->startPage = UiPageFactory::createFromModel($this->getWorkbench(), $this->getDataForPWA()->getColumns()->get('START_PAGE')->getValue(0));
+            $this->startPage = UiPageFactory::createFromModel($this->getWorkbench(), $this->getStartPageSelector());
         }
         return $this->startPage;
     }
@@ -428,6 +445,8 @@ abstract class AbstractPWA implements PWAInterface
     {
         $this->modelLoadedForStrategies = $offlineStrategies;
         
+        $this->checkAuthorization($this->getWorkbench()->getSecurity()->getAuthenticatedToken());
+        
         // Load actions
         $ds = $this->getDataForActions($offlineStrategies);
         foreach ($ds->getRows() as $row) {
@@ -443,17 +462,6 @@ abstract class AbstractPWA implements PWAInterface
         // Load routes
         $ds = $this->getDataForRoutes($offlineStrategies, ['PWA_ACTION__PAGE', 'PWA_ACTION__TRIGGER_WIDGET_ID']);
         foreach ($ds->getRows() as $row) {
-            /*
-             $action = $this->getActionByPWAModelUID($row['PWA_ACTION']);
-             if ($action instanceof iShowWidget) {
-             $page = UiPageFactory::createFromModel($this->getWorkbench(), $row['PWA_ACTION__PAGE']);
-             if (null === $widget = $action->getWidget()) {
-             $widget = $page->getWidget($row['PWA_ACTION__TRIGGER_WIDGET_ID']);
-             }
-             } else {
-             throw new RuntimeException('Failed to load route ' . $row['DESCRIPTION'] . ': action not found!');
-             }
-             $this->addRoute(new PWARoute($this, $row['URL'], $widget, $action));*/
             $this->addRoute(new PWARoute($this, $row['URL']));
         }
         
@@ -463,6 +471,13 @@ abstract class AbstractPWA implements PWAInterface
             $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), UxonObject::fromJson($row['DATA_SHEET_UXON']));
             $this->addDataSet(new PWADataset($this, $dataSheet, $row['UID']));
         }
+        return $this;
+    }
+    
+    protected function checkAuthorization(UserImpersonationInterface $userOrToken) : PWAInterface
+    {
+        $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
+        $pageAP->authorize($this->getStartPage(), $userOrToken);
         return $this;
     }
     
@@ -544,6 +559,13 @@ abstract class AbstractPWA implements PWAInterface
             $this->dsPWA = $ds;
         }
         return $this->dsPWA;
+    }
+    
+    protected function clearCache() : PWAInterface
+    {
+        $this->startPage = null;
+        $this->startPageSelector = null;
+        return $this;
     }
     
     /**
