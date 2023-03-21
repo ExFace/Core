@@ -53,6 +53,27 @@ class PWADataset implements PWADatasetInterface
         return $this->dataSheet;
     }
     
+    public function canInclude(DataSheetInterface $dataSheet) : bool
+    {
+        if (! $this->getMetaObject()->isExactly($dataSheet->getMetaObject())) {
+            return false;
+        }
+        $thisSheet = $this->getDataSheet();
+        if ($thisSheet->hasAggregations() && $dataSheet->hasAggregations()) {
+            foreach ($dataSheet->hasAggregations() as $a => $aggr) {
+                if ($thisSheet->getAggregations()->get($a)->getAttributeAlias() !== $aggr->getAttributeAlias()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if ($thisSheet->hasAggregateAll() !== $dataSheet->hasAggregateAll()) {
+            return false;
+        }
+        // TODO compare filters too!!!
+        return true;
+    }
+    
     public function includeData(DataSheetInterface $anotherSheet) : PWADatasetInterface
     {
         if (! $this->getDataSheet()->getMetaObject()->isExactly($anotherSheet->getMetaObject())) {
@@ -121,7 +142,7 @@ class PWADataset implements PWADatasetInterface
      */
     public function estimateRows() : ?int
     {
-        return $this->getDataSheet()->copy()->countRowsInDataSource();
+        return $this->getDataSheet()->copy()->setAutoCount(true)->countRowsInDataSource();
     }
     
     /**

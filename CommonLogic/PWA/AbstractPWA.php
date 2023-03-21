@@ -291,27 +291,12 @@ abstract class AbstractPWA implements PWAInterface
     
     public function findDataSet(DataSheetInterface $dataSheet) : ?PWADatasetInterface
     {
-        $obj = $dataSheet->getMetaObject();
         $match = null;
         foreach ($this->getDatasets() as $set) {
-            if (! $set->getMetaObject()->is($obj)) {
-                continue;
+            if ($set->canInclude($dataSheet) === true) {
+                $match = $set;
+                break;
             }
-            $setSheet = $set->getDataSheet();
-            if ($setSheet->hasAggregations() && $dataSheet->hasAggregations()) {
-                foreach ($dataSheet->hasAggregations() as $a => $aggr) {
-                    if ($setSheet->getAggregations()->get($a)->getAttributeAlias() !== $aggr->getAttributeAlias()) {
-                        continue 2;
-                    }
-                }
-                return $set;
-            }
-            if ($setSheet->hasAggregateAll() !== $dataSheet->hasAggregateAll()) {
-                continue;
-            }
-            // TODO compare filters too!!!
-            $match = $set;
-            break;
         }
         return $match;
     }
@@ -348,9 +333,9 @@ abstract class AbstractPWA implements PWAInterface
                 'ROWS_AT_GENERATION_TIME' => $rowCnt
             ]), false, false);
         }
-        yield 'Generated ' . $dsDatasets->countRows() . ' offline data sets' . PHP_EOL;
+        yield 'Generated ' . $newDataSets->countRows() . ' offline data sets' . PHP_EOL;
         $newDataSets->dataReplaceByFilters($transaction);
-        $uids = $dsDatasets->getUidColumn()->getValues();
+        $uids = $newDataSets->getUidColumn()->getValues();
         foreach ($this->getDatasets() as $i => $set) {
             $set->setUid($uids[$i]);
         }
