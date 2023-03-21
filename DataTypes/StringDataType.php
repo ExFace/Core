@@ -560,4 +560,15 @@ class StringDataType extends AbstractDataType
         $regex = $includeUnicodeLineBreaks ? '/\R/u' : '/(*BSR_ANYCRLF)\R/';
         return preg_replace($regex, $replace, $string);
     }
+    
+    /**
+     * 
+     * @param string $string
+     * @param string $indent
+     * @return string
+     */
+    public static function indent(string $string, $indent = '  ') : string
+    {
+        return $indent .= preg_replace('/(\\R)(.*)/', '\\1' . preg_quote($indent, '/') . '\\2', $string);
+    }
 }

@@ -47,7 +47,7 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
      * @param string $sorterAttribute
      * @return DataSheetInterface
      */
-    protected function createModelDataSheet(string $objectSelector, string $appRelationAttribute, string $sorterAttribute) : DataSheetInterface
+    protected function createModelDataSheet(string $objectSelector, string $appRelationAttribute, string $sorterAttribute, array $excludeAttributeAliases = []) : DataSheetInterface
     {
         // If the app is not installed yet, we don't know it's UID,
         // but we also don't need it for this case - so just let it
@@ -64,7 +64,12 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
         $additionalSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
         $additionalSheet->getFilters()->addConditionFromString($appRelationAttribute, $this->appUid, ComparatorDataType::EQUALS);
         $additionalSheet->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
-        $additionalSheet->getColumns()->addFromAttributeGroup($additionalSheet->getMetaObject()->getAttributeGroup('~WRITABLE'));
+        foreach ($additionalSheet->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
+            if (in_array($attr->getAlias(), $excludeAttributeAliases)){
+                continue;
+            }
+            $additionalSheet->getColumns()->addFromExpression($attr->getAlias());
+        }
         return $additionalSheet;
     }
     
