@@ -65,6 +65,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * 
@@ -90,6 +91,8 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     private $pageTemplateFilePath = null;
     
     private $sematic_colors = [];
+    
+    private $fileVersionHash = null;
     
     public function __construct(FacadeSelectorInterface $selector)
     {
@@ -664,7 +667,7 @@ HTML;
         try {
             $loginPrompt = LoginPrompt::createFromException($page, $exception);
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
             return null;
         }
         
@@ -788,6 +791,11 @@ HTML;
         } else {
             return $this->buildUrlToVendorFile($path);
         }
+    }
+    
+    public function getFileVersionHash(string $filename = null) : string
+    {
+        return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install'));
     }
     
     /**

@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataTypes\UrlDataType;
 
 /**
  * This installer can be used to add code for a specific facade to the central PWA ServiceWorker.
@@ -37,6 +36,8 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     
     private $disabled = false;
     
+    private $version = null;
+    
     /**
      * 
      * @param SelectorInterface $selectorToInstall
@@ -55,9 +56,15 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      * 
      * @return ServiceWorkerInstaller
      */
-    public static function fromConfig(SelectorInterface $selectorToInstall, ConfigurationInterface $config) : ServiceWorkerInstaller
+    public static function fromConfig(SelectorInterface $selectorToInstall, ConfigurationInterface $config, string $version = null) : ServiceWorkerInstaller
     {
         $builder = new ServiceWorkerBuilder('vendor');
+        $installer = new self($selectorToInstall, $builder);
+
+        if ($version !== null) {
+            $installer->setVersion($version);
+            $builder->setEtag($version);
+        }
         
         foreach ($config->getOption('INSTALLER.SERVICEWORKER.ROUTES') as $id => $uxon) {
             $builder->addRouteFromUxon($id, $uxon);
@@ -68,8 +75,6 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
                 $builder->addImport($path);
             }
         }
-        
-        $installer = new self($selectorToInstall, $builder);
         
         if ($config->hasOption('INSTALLER.SERVICEWORKER.DISABLED')) {
             $installer->setDisabled($config->getOption('INSTALLER.SERVICEWORKER.DISABLED'));
@@ -110,17 +115,24 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
                 $builder->addImport($path);
             }
         }
+        if ($config->hasOption('_VERSION')) {
+            $builder->setEtag($config->getOption('_VERSION'));
+        }
         // Add core code first
         if ($config->hasOption('EXFACE.CORE')) {
             $builder->addCustomCode($config->getOption('EXFACE.CORE'), 'EXFACE.CORE');
         }
         // Now add all the other apps
         foreach ($config->exportUxonObject() as $appAlias => $code) {
-            if ($appAlias !== '_IMPORTS' && $appAlias !== 'EXFACE.CORE') {
-                $builder->addCustomCode($code, $appAlias);
+            if (mb_substr($appAlias, 0, 1) === '_') {
+                continue;
             }
+            if ($appAlias === 'EXFACE.CORE') {
+                continue;
+            }
+            $builder->addCustomCode($code, $appAlias);
         }
-        
+
         try {
             $path = $this->saveServiceWorker($builder->buildJsLogic(), $builder->buildJsImports());
             $result = 'ServiceWorker "' . $path . '" generated.';
@@ -251,6 +263,7 @@ return $filename;
     {
         $builder = new ServiceWorkerBuilder('vendor', $this->buildUrlToWorkbox());
         $workbenchConfig = $this->getWorkbench()->getConfig();
+        
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $msgSyncedJs = json_encode($translator->translate('OFFLINE.ACTIONS.SYNC_COMPLETE'));
         $msgSyncFailedJs = json_encode($translator->translate('OFFLINE.ACTIONS.SYNC_FAILED'));
@@ -291,13 +304,19 @@ JS;
         $builder->addCustomCode($js, 'Handle OfflineActionSync Event');
         $config->setOption($this->getWorkbench()->getCoreApp()->getAliasWithNamespace(), $builder->buildJsLogic(), $this->getConfigScope());
         
-        try {
+        // Add _IMPORTS
+        if ($config->hasOption('_IMPORTS')) {
             $currentImports = $config->getOption('_IMPORTS')->toArray();
-        } catch (ConfigOptionNotFoundError $e) {
+        } else {
             $currentImports = [];
         }
         $imports = array_merge($currentImports, $workbenchConfig->getOption('FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_COMMON_IMPORTS')->toArray());
         $config->setOption('_IMPORTS', array_unique($imports), $this->getConfigScope());
+        
+        // Add _VERSION
+        if ($this->getVersion() !== null && (! $config->hasOption('_VERSION') || $config->getOption('_VERSION') < $this->getVersion())) {
+            $config->setOption('_VERSION', $this->getVersion(), $this->getConfigScope());
+        }
         
         return $config;
     }
@@ -325,5 +344,26 @@ JS;
     public function buildUrlToServiceWorker() : string
     {
         return $this->getWorkbench()->getConfig()->getOption("FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME");
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getVersion() : ?string
+    {
+        return $this->version;
+    }
+    
+    /**
+     * The version of the service worker will be used to control browser cache - a new version will ensure cache refresh
+     * 
+     * @param string $value
+     * @return ServiceWorkerInstaller
+     */
+    public function setVersion(string $value) : ServiceWorkerInstaller
+    {
+        $this->version = $value;
+        return $this;
     }
 }
