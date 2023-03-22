@@ -12,6 +12,10 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  * 
  * Technically this resolver calls the getter method of the property - e.g.
  * `~facade:theme` is resolved by calling `getTheme()` on the facade.
+ * 
+ * Common placeholders:
+ * - `~facade:theme`
+ * - `~facade:file_version_hash`
  *
  * @author Andrej Kabachnik
  */
