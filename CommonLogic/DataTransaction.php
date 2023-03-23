@@ -154,8 +154,9 @@ class DataTransaction implements DataTransactionInterface
         
         // See if the connection is already registered in this transaction
         $existing_connection = null;
-        foreach ($this->getDataConnections() as $existing_connection) {
-            if ($existing_connection === $connection) {
+        foreach ($this->getDataConnections() as $c) {
+            if ($c === $connection) {
+                $existing_connection = $c;
                 break;
             } 
         }
@@ -163,10 +164,12 @@ class DataTransaction implements DataTransactionInterface
         // If this is a new connection, start a transaction there and add it to this DataTransaction.
         // Otherwise make sure, there is a transaction started in the existing connection.
         if (! $existing_connection) {
-            try {
-                $connection->transactionStart();
-            } catch (ErrorExceptionInterface $e) {
-                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
+            if (! $connection->transactionIsStarted()) {
+                try {
+                    $connection->transactionStart();
+                } catch (ErrorExceptionInterface $e) {
+                    throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
+                }
             }
             $this->connections[] = $connection;
         } elseif (! $existing_connection->transactionIsStarted()) {
