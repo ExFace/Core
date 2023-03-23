@@ -34,7 +34,19 @@ use exface\Core\DataTypes\ComparatorDataType;
  */
 class MsSqlBuilder extends AbstractSqlBuilder
 {
+    /**
+     * Set to TRUE to add `(nolock)` in SELECT queries based on this object (also affects all JOINs!)
+     *
+     * @uxon-property SQL_SELECT_WITH_NOLOCK
+     * @uxon-target object
+     * @uxon-type bool
+     * @uxon-default false
+     */
+    const DAP_SQL_SELECT_WITH_NOLOCK = 'SQL_SELECT_WITH_NOLOCK';
+    
     const MAX_BUILD_RUNS = 5;
+    
+    private $selectWithNoLock = null;
     
     /**
      *
@@ -610,6 +622,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlAsForTables(string $alias) : string
     {
+        if ($this->getMainObject()->getDataAddressProperty('SQL_SELECT_WITH_NOLOCK') === true) {
+            return ' (nolock) AS ' . $alias;
+        }
         return ' AS ' . $alias;
     }
     
