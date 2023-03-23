@@ -5276,6 +5276,35 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2023-03-23 20:30:27",
+            "MODIFIED_ON": "2023-03-23 20:30:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edb6602b296beeb660025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Console output dialog for CLI action",
+            "DESCRIPTION": "Opens a readonly console window and executes a CLI action",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "icon": "fa fa-terminal",
+                "widget": {
+                    "widgets": [
+                        {
+                            "disabled": true,
+                            "widget_type": "Console",
+                            "start_commands": [
+                                "action exface.Core.ClearCache"
+                            ],
+                            "working_directory_path": "vendor\/bin"
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
