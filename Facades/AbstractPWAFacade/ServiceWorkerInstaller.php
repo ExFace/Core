@@ -63,7 +63,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
 
         if ($version !== null) {
             $installer->setVersion($version);
-            $builder->setEtag($version);
+            $builder->setUrlCacheHash($version);
         }
         
         foreach ($config->getOption('INSTALLER.SERVICEWORKER.ROUTES') as $id => $uxon) {
@@ -116,7 +116,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
             }
         }
         if ($config->hasOption('_VERSION')) {
-            $builder->setEtag($config->getOption('_VERSION'));
+            $builder->setUrlCacheHash($config->getOption('_VERSION'));
         }
         // Add core code first
         if ($config->hasOption('EXFACE.CORE')) {
