@@ -205,6 +205,12 @@ SQL;
      */
     protected function escapeSqlDateTimeValue(\DateTime $time) : string
     {
-        return "CAST('" . DateTimeDataType::formatDateNormalized($time) . "' AS DATETIME)";
+        // There have been issues with dates when logging migration success/failure on different SQL Server instances
+        // This option only seems to work if SQL Server language is "en"
+        // return "CAST('" . DateTimeDataType::formatDateNormalized($time) . "' AS DATETIME)";
+        // This one worked for "de"
+        // return "CONVERT(datetime, '" . DateTimeDataType::formatDateNormalized($time) . "', 121)";
+        // This is what the MsSqlBuilder seems to use anyhow
+        return "'" . DateTimeDataType::formatDateNormalized($time) . "'";
     }
 }
