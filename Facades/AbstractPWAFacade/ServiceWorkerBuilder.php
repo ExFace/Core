@@ -210,7 +210,11 @@ JS;
         return $this->imports;
     }
     
-    protected function getUrlCacheHash() : string
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getUrlCacheHash() : ?string
     {
         return $this->urlCacheHash;
     }
