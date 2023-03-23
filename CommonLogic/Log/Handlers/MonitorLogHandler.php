@@ -11,6 +11,7 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\LogLevelDataType;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\CommonLogic\Log\Processors\DebugWidgetProcessor;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Logs entries with the configured log level or above to the exface.Core.MONITOR_ERROR object. 
@@ -27,6 +28,10 @@ class MonitorLogHandler implements LogHandlerInterface
     private $minLogLevel;
     
     private $workbench;
+    
+    private $busy = false;
+    
+    private $failed = false;
     
     /**
      * 
@@ -52,19 +57,35 @@ class MonitorLogHandler implements LogHandlerInterface
         if (LogLevelDataType::compareLogLevels($level, $this->minLogLevel) < 0) {
             return;
         }
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.MONITOR_ERROR');      
-        $ds->addRow([
-            'LOG_ID' => $context["id"],
-            'REQUEST_ID' => $this->workbench->getContext()->getScopeRequest()->getScopeId(),
-            'ERROR_LEVEL' => $level,
-            'MESSAGE' => $message,
-            'ERROR_WIDGET' => $this->getDebugWidgetJson($sender),
-            'USER' => $this->workbench->getSecurity()->getAuthenticatedUser()->getUid(),
-            'DATE' => DateDataType::now()
-        ]);
-        $ds->dataCreate();
-        $this->monitor->addLogIdToLastRowObject($ds->getUidColumn()->getValue(0));
+        // Prevent recursion if something is wrong with the monitor itself or with the metamodel
+        if ($this->busy === true || $this->failed === true) {
+            return;
+        }
+        // Don't try to monitor anything while the workbench is being installed
+        if ($this->workbench->isInstalled() === false) {
+            return;
+        }
         
+        $this->busy = true;
+        try {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.MONITOR_ERROR');      
+            $ds->addRow([
+                'LOG_ID' => $context["id"],
+                'REQUEST_ID' => $this->workbench->getContext()->getScopeRequest()->getScopeId(),
+                'ERROR_LEVEL' => $level,
+                'MESSAGE' => $message,
+                'ERROR_WIDGET' => $this->getDebugWidgetJson($sender),
+                'USER' => $this->workbench->getSecurity()->getAuthenticatedUser()->getUid(),
+                'DATE' => DateDataType::now()
+            ]);
+            $ds->dataCreate();
+            $this->monitor->addLogIdToLastRowObject($ds->getUidColumn()->getValue(0));
+        } catch (\Throwable $e) {
+            $this->failed = true;
+            throw new RuntimeException('Failed to log error to monitor. ' . $e->getMessage() . '. Turning off error monitor for this request!', null, $e);
+        }
+        
+        $this->busy = false;
         return;
     }
     

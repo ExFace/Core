@@ -62,6 +62,11 @@ class Monitor extends Profiler
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');
         
+        // Do not monitor anything while installing the workbench
+        if ($workbench->isInstalled() === false) {
+            return;
+        }
+        
         $self->registerEventListeners();
         if ($self->errorsEnabled) {
             $self->registerLogHandler();
