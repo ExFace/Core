@@ -35,7 +35,17 @@ use exface\Core\DataTypes\ComparatorDataType;
 class MsSqlBuilder extends AbstractSqlBuilder
 {
     /**
-     * Set to TRUE to add `(nolock)` in SELECT queries based on this object (also affects all JOINs!)
+     * Set to TRUE to add `WITH (NOLOCK)` in SELECT queries based on this object (also affects all JOINs!)
+     * 
+     * Be careful to only use `WITH (NOLOCK)` in SELECT statements on tables that have a clustered index.
+     * `WITH(NOLOCK)` is often exploited as a magic way to speed up database read transactions. The result 
+     * set can contain rows that have not yet been committed, that are often later rolled back. If `WITH(NOLOCK)` 
+     * is applied to a table that has a non-clustered index, then row-indexes can be changed by other transactions 
+     * as the row data is being streamed into the result-table. This means that the result-set can be missing rows 
+     * or display the same row multiple times.
+     * 
+     * If transaction isolation level is set to `READ COMMITTED`, it adds an additional issue where data is 
+     * corrupted within a single column where multiple users change the same cell simultaneously.
      *
      * @uxon-property SQL_SELECT_WITH_NOLOCK
      * @uxon-target object
@@ -623,7 +633,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlAsForTables(string $alias) : string
     {
         if ($this->getMainObject()->getDataAddressProperty('SQL_SELECT_WITH_NOLOCK') === true) {
-            return ' (nolock) AS ' . $alias;
+            return ' WITH (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
     }
