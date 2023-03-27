@@ -26,6 +26,9 @@ use exface\Core\Widgets\Input;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
+use exface\Core\DataTypes\TextDataType;
+use exface\Core\Widgets\InputText;
+use exface\Core\Widgets\Text;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -949,6 +952,11 @@ JS;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
                 $type = "checkbox";
+                break;
+            case $cellWidget instanceof InputText:
+            case $cellWidget instanceof Text:
+                $type = "text";
+                $options = 'wordWrap: true,';
                 break;
             case $cellWidget instanceof InputSelect:
                 $type = 'autocomplete';
