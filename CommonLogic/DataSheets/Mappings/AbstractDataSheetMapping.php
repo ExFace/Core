@@ -1,10 +1,11 @@
 <?php
-namespace exface\Core\CommonLogic\DataSheets;
+namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Uxon\DataSheetMapperSchema;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 
 /**
  * Base for built-in data mappers with a common constructor and other basic stuff.
@@ -22,9 +23,10 @@ abstract class AbstractDataSheetMapping implements DataMappingInterface
     
     /**
      * 
-     * @param DataSheetMapper $mapper
+     * @param DataSheetMapperInterface $mapper
+     * @param UxonObject $uxon
      */
-    public function __construct(DataSheetMapper $mapper, UxonObject $uxon = null)
+    public function __construct(DataSheetMapperInterface $mapper, UxonObject $uxon = null)
     {
         $this->mapper = $mapper;
         $this->uxon = $uxon;

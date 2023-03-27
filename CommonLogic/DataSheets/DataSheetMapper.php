@@ -17,6 +17,15 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\DataSheets\DataMapperRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\CommonLogic\DataSheets\Mappings\ActionToColumnMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToFilterMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToColumnMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataJoinMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataToSubsheetMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataUnpivotMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -543,7 +552,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Map column expressions of the from-sheet to new columns of the to-sheet.
      * 
      * @uxon-property mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\AbstractDataSheetMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\AbstractDataSheetMapping[]
      * @uxon-template [{"class": "", "": ""}]
      * 
      * @param UxonObject $uxonArray
@@ -567,7 +576,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Map column expressions of the from-sheet to new columns of the to-sheet.
      * 
      * @uxon-property column_to_column_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnMapping[]
      * @uxon-template [{"from": "", "to": ""}]
      * 
      * @param UxonObject $uxon
@@ -594,7 +603,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Creates filters from the values of a column
      * 
      * @uxon-property column_to_filter_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnToFilterMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToFilterMapping[]
      * @uxon-template [{"from": "", "to": "", "comparator": "="}]
      * 
      * @param UxonObject $uxon
@@ -612,7 +621,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Create columns from the values of filters
      *
      * @uxon-property filter_to_column_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataFilterToColumnMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToColumnMapping[]
      * @uxon-template [{"from": "", "from_comparator": "", "to": "", "to_single_row": false}]
      *
      * @param UxonObject $uxon
@@ -630,7 +639,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Join other data similarly to left/right JOINs in SQL
      *
      * @uxon-property joins
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataJoinMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataJoinMapping[]
      * @uxon-template [{"join":"left","join_input_data_on_attribute":"","join_data_sheet_on_attribute":"","data_sheet":{"object_alias":"","columns":[{"attribute_alias":""}],"filters":[{"operator":"AND","conditions":[{"expression":"","comparator":"==","value":""}]}]}}]
      *
      * @param UxonObject $uxon
@@ -648,7 +657,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Join other data similarly to left/right JOINs in SQL
      *
      * @uxon-property action_to_column_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\ActionToColumnMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\ActionToColumnMapping[]
      * @uxon-template [{"from": "", "to": "", "action": {"alias": ""}}]
      *
      * @param UxonObject $uxon
@@ -692,7 +701,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * ```
      *
      * @uxon-property data_to_subsheet_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataToSubsheetMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataToSubsheetMapping[]
      * @uxon-template [{"subsheet_relation_path": "", "subsheet_mapper": {"column_to_column_mappings": [{"from": "", "to": ""}]}}]
      *
      * @param UxonObject $uxon
@@ -710,7 +719,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Transform selected columns of the from-sheet to rows in the to-sheet (resulting in two columns - labels and values)
      * 
      * @uxon-property unpivot_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataUnpivotMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataUnpivotMapping[]
      * @uxon-template [{"from_columns": [""], "to_labels_column": "", "to_values_column": ""}]
      * 
      * @param UxonObject $uxon
@@ -728,7 +737,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Apply a mapper to a column with subsheets - that is to each subsheet
      *
      * @uxon-property subsheet_mappings
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\SubsheetMapping[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping[]
      * @uxon-template [{"from_subsheet_relation_path": "", "to_subsheet_relation_path": "", "subsheet_mapper": {"column_to_column_mappings": [{"from": "", "to": ""}]}}]
      *
      * @param UxonObject $uxon
@@ -746,7 +755,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * Remove rows, that do not match a condition group
      *
      * @uxon-property row_filter
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\RowFilterMapping
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping
      * @uxon-template {"mode": "keep_matches_only", "filter": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
      *
      * @param UxonObject $uxon
