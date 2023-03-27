@@ -38,6 +38,11 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook = new DataLogBook($title);
         $this->logBook->addSection('Action ' . $action->getAliasWithNamespace());
         $this->logBook->addLine('Prototype class: ' . get_class($action));
+        try {
+            $this->logBook->addLine('Action object: ' . $action->getMetaObject()->__toString());
+        } catch (\Throwable $e) {
+            // Ignore actions without an object
+        }
     }
     
     /**
