@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic\DataSheets;
+namespace exface\Core\CommonLogic\DataSheets\Mappings;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
