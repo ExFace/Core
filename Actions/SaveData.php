@@ -273,8 +273,13 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $sheet = parent::getInputDataSheet($task);
         
         if ($this->isIgnoringRowsIfEmpty()) {
+            $lb = $this->getLogBook($task);
+            $lb->addSection('Removing empty rows');
+            $lb->setIndentActive(1);
             $exceptCols = $this->getIgnoreRowsIfEmptyExceptColumnNames();
             if ($exceptCols !== null) {
+                $lb->addLine('Removing rows if empty except for columns "' . implode('", "', $exceptCols) . '"');
+                $rowIdxRemoved = [];
                 for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
                     $row = $sheet->getRow($i);
                     foreach ($row as $colName => $val) {
@@ -285,11 +290,19 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
                             continue 2;
                         }
                     }
+                    $rowIdxRemoved[] = $i;
                     $sheet->removeRow($i);
+                }
+                if (empty($rowIdxRemoved)) {
+                    $lb->addLine('Removed rows ' . implode(', ', $rowIdxRemoved), 1);
+                } else {
+                    $lb->addLine('No rows removed', 1);
                 }
             }
             $cols = $this->getIgnoreRowsIfEmptyColumnNames();
             if ($cols !== null) {
+                $lb->addLine('Removing rows if at least one of these columns empty: "' . implode('", "', $cols) . '"');
+                $rowIdxRemoved = [];
                 for ($i = ($sheet->countRows()-1); $i >= 0; $i--) {
                     $row = $sheet->getRow($i);
                     foreach ($row as $colName => $val) {
@@ -300,7 +313,13 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
                             continue 2;
                         }
                     }
+                    $rowIdxRemoved[] = $i;
                     $sheet->removeRow($i);
+                }
+                if (empty($rowIdxRemoved)) {
+                    $lb->addLine('Removed rows ' . implode(', ', $rowIdxRemoved), 1);
+                } else {
+                    $lb->addLine('No rows removed', 1);
                 }
             }
         }
