@@ -31,12 +31,17 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * - `column_to_column_mappings` transfer values from columns of the from-sheet to columns
  * in the to-sheet. Their `from` expression can also be a calculation allowing to change
  * values within the mapping (e.g. `=(version + 1)` or even use static calculation like `=Now()`.
- * - `data_to_subsheet_mappings` allow to create subsheets in the to-sheet from values of the from-sheet
  * - `column_to_filter_mappings` create filters in the to-sheet from values of from-heet columns.
  * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
+ * - `data_to_subsheet_mappings` allow to create subsheets in the to-sheet from values of the from-sheet
+ * - `subsheet_mappings` apply mappers to subsheets contained in the cells of nested data columns
  * - `joins` can join arbitrary data in a way similar to SQL JOINs
+ * - `unpivot_mappings` Transform selected columns of the from-sheet to rows in the to-sheet (resulting 
+ * in two columns - labels and values)
  * - `action_to_column_mappings` will perform an action on the from-sheet and map data from
  * the actions result to the to-sheet
+ * - `row_filter` allows to remove rows either from the to-sheet or even from the from-sheet in
+ * order to exclude them from subsequent mappings
  * 
  * ## Order of execution
  * 
@@ -742,7 +747,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      *
      * @uxon-property row_filter
      * @uxon-type \exface\Core\CommonLogic\DataSheets\RowFilterMapping
-     * @uxon-template {"condition_group": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
+     * @uxon-template {"mode": "keep_matches_only", "filter": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
