@@ -13,7 +13,7 @@ use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 
 /**
- * Joins any data to the to-sheet of the mapping using left or right JOINs similar to SQL.
+ * Puts values of selected column in a subsheet, mapping a large flat data sheet ot a smaller one with subsheets in each row
  * 
  * ## Examples
  * 
