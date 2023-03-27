@@ -719,6 +719,40 @@ class DataSheetMapper implements DataSheetMapperInterface
         return $this;
     }
     
+    /**
+     * Apply a mapper to a column with subsheets - that is to each subsheet
+     *
+     * @uxon-property subsheet_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\SubsheetMapping[]
+     * @uxon-template [{"from_subsheet_relation_path": "", "to_subsheet_relation_path": "", "subsheet_mapper": {"column_to_column_mappings": [{"from": "", "to": ""}]}}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setSubsheetMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new SubsheetMapping($this, $prop));
+        }
+        return $this;
+    }
+    
+    /**
+     * Remove rows, that do not match a condition group
+     *
+     * @uxon-property row_filter
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\RowFilterMapping
+     * @uxon-template {"condition_group": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setRowFilter(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        $this->addMapping(new RowFilterMapping($this, $uxon));
+        return $this;
+    }
+    
    /**
     * 
     * {@inheritDoc}
