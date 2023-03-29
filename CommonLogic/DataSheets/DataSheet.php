@@ -1184,11 +1184,17 @@ class DataSheet implements DataSheetInterface
                     // NOTE: the read data might also contain other system colums!
                     $nestedUidColName = $nestedUidSheet->getUidColumnName();
                     foreach ($nestedUidSheet->getRows() as $nestedUidRow) {
+                        $nestedUid = $nestedUidRow[$nestedUidColName];
+                        // Ignore empty UIDs. This has been the case, when the child object has an SQL_READ_FROM
+                        // property that is a view listing all possible values without UIDs. This approach can
+                        // be used to create checklists.
+                        if ($nestedUid === null || $nestedUid === '') {
+                            continue;
+                        }
                         // Now find rows in the original nested sheet, that have the same values
                         // as this rows of the read sheet and give them the UID of this freshly read row.
                         // To do this we strip off everything from the row, that is not present in
                         // the original sheet and the UID value of course too.
-                        $nestedUid = $nestedUidRow[$nestedUidColName];
                         unset($nestedUidRow[$nestedUidColName]);
                         foreach (array_keys($nestedUidRow) as $cn) {
                             if (! $nestedSheet->getColumns()->get($cn)) {
