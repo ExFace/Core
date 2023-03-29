@@ -41,7 +41,7 @@ use exface\Core\Factories\ConditionFactory;
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
     use ImportUxonObjectTrait {
-		importUxonObject as importUxonObjectDefault;
+		importUxonObject as importUxonViaTrait;
 	}
 	use MetaModelPrototypeTrait;
 
@@ -66,6 +66,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     private $timeZone = null;
     
     private $filterContextUxon = null;
+    
+    private $uxon = null;
     
     /**
      *
@@ -196,7 +198,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function exportUxonObject()
     {
-        return new UxonObject();
+        return $this->uxon ?? new UxonObject();
     }
 
     /**
@@ -208,7 +210,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function importUxonObject(UxonObject $uxon)
     {
         try {
-            return $this->importUxonObjectDefault($uxon);
+            $this->uxon = $uxon;
+            return $this->importUxonViaTrait($uxon);
         } catch (UxonMapError $e) {
             throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: ' . $e->getMessage(), '6T4F41P', $e);
         }
