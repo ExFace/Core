@@ -27,6 +27,26 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
     use iShowMessageListTrait;
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::getMessageList()
+     */
+    public function getMessageList() : MessageList
+    {
+        if ($this->messageList === null) {
+            $this->messageList = WidgetFactory::create($this->getPage(), 'MessageList', $this);
+            if ($this->getWorkbench()->getConfig()->hasOption("LOGIN.PROMPT.MESSAGES")) {
+                $uxon = $this->getWorkbench()->getConfig()->getOption("LOGIN.PROMPT.MESSAGES");
+                if ($uxon) {
+                    $this->setMessages($uxon);
+                }
+            }
+            
+        }
+        return $this->messageList;
+    }
+    
+    /**
      * Returns the panels of the Split.
      * Technically it is an alias for Split::getWidgets() for better readability.
      *

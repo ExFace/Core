@@ -39,6 +39,8 @@
     "LOG.MAX_DAYS_TO_KEEP": "14",
     "LOG.PERSIST_LOG_LEVEL": "critical",
     "LOG.PASSTHROUGH_LOG_LEVEL": "error",
+
+	"LOGIN.PROMPT.MESSAGES": [],
     
     "MONITOR.ENABLED": true,
     "MONITOR.ACTIONS.ENABLED": false,
