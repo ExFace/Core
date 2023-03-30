@@ -1361,4 +1361,29 @@ class Data
     {
         return '\\' . DataFooter::class;
     }
+    
+    /**
+     * Returns an array of data column names, that should be expected in data produced by this widget
+     *
+     * Not all columns produce action-relevant data. This method filters away read-only columns. 
+     * 
+     * System columns are included even if they are not explicitly listed as columns, because they
+     * are expected to be present in all action calls
+     * 
+     * @return string[]
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $colNames = [];
+        foreach ($this->getColumns() as $col) {
+            if ($col->isReadonly()) {
+                continue;
+            }
+            $colNames[] = $col->getDataColumnName();
+        }
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
+            $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
+        }
+        return array_unique($colNames);
+    }
 }
