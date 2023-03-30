@@ -26,7 +26,6 @@ use exface\Core\Widgets\Input;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
-use exface\Core\DataTypes\TextDataType;
 use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
 
@@ -1231,6 +1230,9 @@ JS;
         $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
+        // Determine the columns we need in the actions data
+        $colNamesList = implode(',', $widget->getActionDataColumnNames());
+        
         switch (true) {
             // If there is no action or the action 
             case $action === null:
@@ -1240,7 +1242,7 @@ JS;
                 $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: {$rows}
+        rows: aRows
     }
     
 JS;
@@ -1274,7 +1276,7 @@ JS;
             {
                 '{$relAlias}': function(){
                     var oData = {$configurator_element->buildJsDataGetter()};
-                    oData.rows = {$rows}
+                    oData.rows = aRows
                     return oData;
                 }()
             }
@@ -1297,7 +1299,7 @@ JS;
                 $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: ({$rows} || []).filter(function(oRow, i){
+        rows: (aRows || []).filter(function(oRow, i){
             return {$this->buildJsJqueryElement()}.jexcel('getSelectedRows', true).indexOf(i) >= 0;
         })
     }
@@ -1305,7 +1307,17 @@ JS;
 JS;         
         }
             
-        return "function(){ {$this->buildJsFixedFootersSpread()}; return {$data} }()";
+        return <<<JS
+        (function(){ 
+            var aRows = {$rows};
+            // Remove any keys, that are not in the columns of the widget
+            aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
+
+            {$this->buildJsFixedFootersSpread()}; 
+
+            return {$data} 
+        })()
+JS;
     }
      
     /**
