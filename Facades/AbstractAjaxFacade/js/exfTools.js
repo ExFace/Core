@@ -741,7 +741,7 @@
 						}
 					}
 					
-					if (bRowResult === true) {
+					if (bRowResult === true || bRowResult === null) {
 						aRowsFiltered.push(oRow);
 					}
 					
