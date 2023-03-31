@@ -14,6 +14,7 @@ trait SyncRolesWithTokenTrait
     
     protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token)
     {
+        
         if($this->hasSyncRoles() === false){
             return;
         }
