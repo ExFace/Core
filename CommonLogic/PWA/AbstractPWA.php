@@ -34,6 +34,7 @@ use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
+use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -299,7 +300,25 @@ abstract class AbstractPWA implements PWAInterface
         } else {
             $set->includeData($dataSheet);
         }
+
+        // If at any later time there is a widget link created to the current widget, 
+        // make sure, the data required for the link is there
+        // NOTE: ssing the $widget itself in the callback did not work. For some reason, 
+        // this results in an infinite loop. This is why we use page UID and widget id here.
+        $widgetId = $widget->getId();
+        $pageId = $widget->getPage()->getUid();
+        $this->getWorkbench()->eventManager()->addListener(OnWidgetLinkedEvent::getEventName(), function(OnWidgetLinkedEvent $event) use ($set, $widgetId, $pageId) {
+            $link = $event->getWidgetLink();
+            if ($link->getTargetWidgetId() === $widgetId && $link->getTargetPage()->getUid() === $pageId && null !== $colName = $link->getTargetColumnId()) {
+                $setSheet = $set->getDataSheet();
+                if (! $setSheet->getColumns()->get($colName)) {
+                    $setSheet->getColumns()->addFromExpression($colName);
+                }
+            }
+        });
         
+        // If the widget has filters, make sure they work offline. This means, we need the 
+        // corresponding data in the offline data set.
         $setSheet = $set->getDataSheet();
         if ($widget instanceof iHaveFilters) {
             foreach ($widget->getFilters() as $filter) {
