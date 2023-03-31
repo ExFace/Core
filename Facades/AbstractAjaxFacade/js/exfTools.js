@@ -179,7 +179,7 @@
 		return true;
 	}
 	
-	return {		
+	var exfTools = {		
 		/**
 		 * Working with date strings and objects
 		 * 
@@ -587,6 +587,9 @@
 				// will transform it to an empty string because 0 is a falsly value.
 				mLeft = mLeft === 0 ? '0' : mLeft;
 				mRight = mRight === 0 ? '0' : mRight;
+				// Handle `NULL` strings used in metamodel
+				mLeft = exfTools.string.isString(mLeft) && mLeft.toUpperCase() === 'NULL' ? null : mLeft;
+				mRight = exfTools.string.isString(mRight) && mRight.toUpperCase() === 'NULL' ? null : mRight;
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
 					if (parseFloat(mLeft) !== NaN) {
 						mLeft = parseFloat(mLeft);
@@ -669,6 +672,10 @@
 				var sOperator = oConditionGroup.operator || 'AND';
 				var aRowsFiltered = [];
 				var oSelf = this;
+				var bIgnoreEmptyRightVals = oConditionGroup.ignore_empty_values;
+				if (bIgnoreEmptyRightVals === undefined) {
+					bIgnoreEmptyRightVals = false;
+				}
 				aRows.forEach(function(oRow){
 					var oCondition;
 					var sColName;
@@ -677,9 +684,12 @@
 					
 					for (var iC = 0; iC < aConditions.length; iC++) {
 						oCondition = aConditions[iC];
+						if (bIgnoreEmptyRightVals === true && (oCondition.value === '' || oCondition.value === null || oCondition.value === undefined)) {
+							continue;
+						}
 						sColName = oCondition.columnName || oCondition.expression;
 				        bConditionResult = oSelf.compareValues(
-							(oRow[sColName] || null), 
+							oRow[sColName] === undefined ? null : oRow[sColName], 
 							oCondition.value,
 							(oCondition.comparator || '=')
 						);
@@ -836,8 +846,19 @@
 			nl2br: function(str, breakTag) {
 				breakTag = breakTag || '<br>';
 	  			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
-			}
+			},
 			
+			/**
+			 * Checks if the given value is a string
+			 * @param {mixed} [val]
+			 * 
+			 * @returns {bool}
+			 */
+			isString: function(val) {
+				return (typeof val === 'string' || val instanceof String);
+			}
 		}
 	}
+	
+	return exfTools;
 })));
