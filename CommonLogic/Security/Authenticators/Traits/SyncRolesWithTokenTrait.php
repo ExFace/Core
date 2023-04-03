@@ -12,16 +12,18 @@ trait SyncRolesWithTokenTrait
 {   
     private $syncRoles = false;
     
+    /**
+     * 
+     * @param UserInterface $user
+     * @param AuthenticationTokenInterface $token
+     */
     protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token)
     {
-        
         if($this->hasSyncRoles() === false){
             return;
         }
-        
         $externalRolesData = $this->getExternalRolesData($token);
         $transaction = $this->getWorkbench()->data()->startTransaction();
-        
         $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
         $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
         $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
@@ -35,13 +37,17 @@ trait SyncRolesWithTokenTrait
                 ]);
             }
         }
-        
         if($newRolesSheet->countRows() !== 0){
             $newRolesSheet->dataCreate(false, $transaction);
         }
         $transaction->commit();
     }
     
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return DataSheetInterface
+     */
     protected function getExternalRolesData(AuthenticationTokenInterface $token) : DataSheetInterface
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
@@ -60,6 +66,11 @@ trait SyncRolesWithTokenTrait
         return $ds;
     }
     
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return array
+     */
     abstract protected function getExternalRolesFromToken(AuthenticationTokenInterface $token) : array;
     
     /**
@@ -78,6 +89,10 @@ trait SyncRolesWithTokenTrait
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasSyncRoles() : bool
     {
         return $this->syncRoles;
