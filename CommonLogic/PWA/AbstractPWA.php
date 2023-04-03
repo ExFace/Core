@@ -35,6 +35,10 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Interfaces\Actions\iPrefillWidget;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Widgets\Parts\PrefillModel;
+use exface\Core\CommonLogic\Tasks\GenericTask;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -323,8 +327,14 @@ abstract class AbstractPWA implements PWAInterface
         if ($widget instanceof iHaveFilters) {
             foreach ($widget->getFilters() as $filter) {
                 if ($filter->isBoundToAttribute()) {
-                    if (! $setSheet->getColumns()->getByAttribute($filter->getAttribute())) {
-                        $setSheet->getColumns()->addFromAttribute($filter->getAttribute(), true);
+                    $filterAttr = $filter->getAttribute();
+                    /* TODO can't really filter over reverse relation offline - only if 
+                     * it is still a single value. How to take there offline? Use an aggregator?
+                    if ($filterAttr->getRelationPath()->containsReverseRelations()) {
+                        continue;
+                    }*/
+                    if (! $setSheet->getColumns()->getByAttribute($filterAttr)) {
+                        $setSheet->getColumns()->addFromAttribute($filterAttr, true);
                     }
                 }
             }
@@ -332,6 +342,27 @@ abstract class AbstractPWA implements PWAInterface
         
         $this->setActionCacheItem($action, self::KEY_DATASET, $set);
         return $set;
+    }
+    
+    public function addDataForPrefill(WidgetInterface $widgetToPrefill, ActionInterface $actionRequiringPrefill)
+    {
+        $prefillData = $widgetToPrefill->prepareDataSheetToPrefill();
+        $dataSet = $this->addData($prefillData, $actionRequiringPrefill, $widgetToPrefill);
+        
+        if ($actionRequiringPrefill instanceof iShowWidget) {
+            $prefillModel = new PrefillModel($widgetToPrefill);
+            $prefillModel->addBindingsFromAction($actionRequiringPrefill);
+            $setCols = $dataSet->getDataSheet()->getColumns();
+            foreach ($prefillModel->getBindings() as $pointer) {
+                if ($pointer->isColumn()) {
+                    if (! $setCols->getByExpression($pointer->getColumn()->getName())) {
+                        $setCols->addFromExpression($pointer->getColumn()->getExpressionObj(), $pointer->getColumn()->getName());
+                    }
+                }
+            }
+        }
+        
+        return $dataSet;
     }
     
     public function addDataSet(PWADatasetInterface $dataSet) : PWAInterface

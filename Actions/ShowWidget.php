@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
@@ -19,6 +20,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Actions\Traits\iPrefillWidgetTrait;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Factories\ActionFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -341,5 +343,17 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     protected function isWidgetInstantiated() : bool
     {
         return $this->widget !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillAction()
+     */
+    public function getPrefillAction(): ActionInterface
+    {
+        $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : $this->getWidget();
+        $action = ActionFactory::createFromString($this->getWorkbench(), ReadPrefill::class, $triggerWidget);
+        return $action;
     }
 }

@@ -36,4 +36,11 @@ interface iShowWidget extends iNavigate
      * @return string
      */
     public function getDefaultWidgetType() : ?string;
+    
+    /**
+     * Returns the action to read prefill data for the widget.
+     * 
+     * @return ActionInterface
+     */
+    public function getPrefillAction() : ActionInterface;
 }
