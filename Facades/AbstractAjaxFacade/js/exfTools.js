@@ -660,10 +660,15 @@
 			/**
 			 * Filter data rows using a condition group
 			 * 
-			 * @param {array} [aRows] - e.g. [{UID: 22, NAME: "Something"}, {UID: 23, NAME: "Another"}]
-			 * @param {object} [oConditionGroup] - e.g. {columnName: "UID", value: 22, comparator: "=="}
+			 * @param {Array.<Object>} [aRows] - e.g. [{UID: 22, NAME: "Something"}, {UID: 23, NAME: "Another"}]
+			 * @param {{
+				operator: string, 
+				ignore_empty_values: boolean,
+				conditions: Array.<{columnName: string, value: any, comparator: string}>
+				nested_groups: Array
+				}} [oConditionGroup] - e.g. {columnName: "UID", value: 22, comparator: "=="}
 			 * 
-			 * @returns {array}
+			 * @returns {Array.<Object>}
 			 * 
 			 */
 			filterRows: function(aRows, oConditionGroup) {
@@ -749,6 +754,33 @@
 			    
 			    return aRowsFiltered;
 			},
+			
+			/**
+			 * Sorts rows using an array of sorter objects
+			 * 
+			 * @param {Array.<Object>} aRows
+			 * @param {Array.<{columnName: string, direction: string}>} aSorters
+			 */
+			sortRows: function(aRows, aSorters) {
+				if (! aSorters || aSorters === []) {
+					return aRows;
+				}
+				aRows.sort(function(a, b) {
+					for (let i = 0; i < aSorters.length; i++) {
+					    const oSorter = aSorters[i];
+					    const sCol = oSorter.columnName;
+					    const sDir = oSorter.direction.toLowerCase() === 'asc' ? 1 : -1;
+					
+					    if (a[sCol] < b[sCol]) {
+				      		return -1 * sDir;
+					    } else if (a[sCol] > b[sCol]) {
+			      			return 1 * sDir;
+					    }
+				  	}
+				 	return 0;
+				});
+				return aRows;
+			}
 		},
 		
 		/**
