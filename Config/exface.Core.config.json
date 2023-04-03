@@ -27,7 +27,8 @@
 				"menu_items": {
 					"App docs": "api/docs/",
 					"App-desiner tutorial": "api/docs/exface/Core/Docs/Tutorials/BookClub_walkthrough/index.md",
-					"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md" 
+					"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md", 
+					"Licenses": "Licenses.md" 
 				}
            	},
            	{
