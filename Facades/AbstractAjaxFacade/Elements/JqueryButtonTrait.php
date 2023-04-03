@@ -483,9 +483,10 @@ JS;
      * ```
      * 
      * @param ActionInterface $action
+     * @param bool $returnEventParamsOnly
      * @return string
      */
-    public function buildJsTriggerActionEffects(ActionInterface $action) : string
+    public function buildJsTriggerActionEffects(ActionInterface $action, bool $returnEventParamsOnly = false) : string
     {
         $effects = $action->getEffects();
         $widget = $this->getWidget();
@@ -506,17 +507,25 @@ JS;
         }
         
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        $eventParamsJs = <<<JS
+
+                    [{
+                        trigger_widget_id: "{$this->getId()}",
+                        action_alias: "{$action->getAliasWithNamespace()}",
+                        effects: [ $effectsJs ],
+                        refresh_widgets: [ $refreshIds ],
+                        refresh_not_widgets: [ $refreshNotIds ],
+                    }]
+JS;
+        if ($returnEventParamsOnly === true) {
+            return $eventParamsJs;
+        }
+        
         return <<<JS
 
                 {$this->buildJsResetWidgets()}
                 
-                $(document).trigger("$actionperformed", [{
-                    trigger_widget_id: "{$this->getId()}",
-                    action_alias: "{$action->getAliasWithNamespace()}",
-                    effects: [ $effectsJs ],
-                    refresh_widgets: [ $refreshIds ],
-                    refresh_not_widgets: [ $refreshNotIds ],
-                }]);
+                $(document).trigger("$actionperformed", $eventParamsJs);
                 
                 {$this->buildJsOnSuccessScript()}
 JS;

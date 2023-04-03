@@ -208,7 +208,8 @@ self.addEventListener('sync', function(event) {
 			 * 			effected_object_uid: String
 			 * 			effected_object_key_alias: String 
 			 * 			key_column: String, 
-			 * 			key_values: Array
+			 * 			key_values: Array,
+			 *          event_params: Array
 			 * 		  }>} 		[aEffects]
 			 * @return Promise
 			 */
@@ -217,13 +218,13 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve(null);
 				}
 				var topics = _pwa.actionQueue.getTopics();
-				var date = (+ new Date());
+				var sDate = (+ new Date());
 				var data = {
 					id: _pwa.createUniqueId(),
 					object: objectAlias,
 					action: offlineAction.data.action,
 					request: offlineAction,
-					triggered: offlineAction.data.assignedOn,
+					triggered: new Date(sDate).toLocaleString(),
 					status: 'offline',
 					tries: 0,
 					synced: 'not synced',
@@ -232,7 +233,7 @@ self.addEventListener('sync', function(event) {
 					effects: (aEffects || [])
 				};
 				offlineAction.url = 'api/task/' + topics.join('/');
-				offlineAction.data.assignedOn = new Date(date).toLocaleString()
+				offlineAction.data.assignedOn = sDate;
 				if (offlineAction.headers) {
 					data.headers = offlineAction.headers
 				}
@@ -777,48 +778,53 @@ self.addEventListener('sync', function(event) {
 			 */
 			syncAffectedByActions : async function() {
 				var aDataSets = await _dataTable.toArray();
-				var promises = []
+				var aPromises = [];
+				console.log('Sync offline data affected by actions');
 				aDataSets.forEach(async function(oDataSet) {
-					var syncedActions = await _pwa.actionQueue.get('synced', oDataSet.object);
-					if (syncedActions.length === 0) {
+					var aActionsSynced = await _pwa.actionQueue.get('synced', oDataSet.object_alias);
+					var sUidCol = oDataSet.uid_column_name;
+					var aUids = [];
+					if (aActionsSynced.length === 0) {
 						return;
 					}
-					var uidAlias = oDataSet.uidAlias;
-					if (!uidAlias) {
+					if (! sUidCol) {
 						return;
 					}
-					var uidValues = [];
-					syncedActions.forEach(function(action) {
-						if (!(action.request && action.request.data && action.request.data.data && action.request.data.data.rows)) {
+					aActionsSynced.forEach(function(oAction) {
+						if (!(oAction.request && oAction.request.data && oAction.request.data.data && oAction.request.data.data.rows)) {
 							return;
 						}
-						action.request.data.data.rows.forEach(function(row) {
-							uidValues.push(row[uidAlias]);
+						oAction.request.data.data.rows.forEach(function(row) {
+							aUids.push(row[sUidCol]);
 						})								
-					})			
-					promises.push(
-						_pwa.sync(oDataSet, true, uidValues)
+					});
+					console.log('Sync offline data due to effect on object ', oDataSet.object_alias);			
+					aPromises.push(
+						_pwa.data.sync(oDataSet.uid)
 						.catch (function(error){
 							console.error(error);
 						})
-						/*.then(function() {
-							syncedActions.forEach(function(action) {
-								_actionsTable.delete(action.id);
-							})
-						}, function(error){
-							console.error(error);
-						})*/
+						.then(function(){
+							aActionsSynced.forEach(function(oAction){
+								oAction.effects.forEach(function(oEffect){
+									if (oEffect.event_params && oEffect.event_params.length > 0) {
+										$(document).trigger("actionperformed", oEffect.event_params);
+									}
+								});
+							});
+							return Promise.resolve();
+						})
 					)		
-				})
+				});
 				
 				//after preloads are updated, delete all actions with status 'synced' from the IndexedDB
 				var syncedIds = await _pwa.actionQueue.getIds('synced');
 				syncedIds.forEach(function(id){
-					promises.push(
+					aPromises.push(
 						_actionsTable.delete(id)
 					)
 				})
-				return Promise.all(promises);		
+				return Promise.all(aPromises);		
 			},
 		
 		}, // EOF data
