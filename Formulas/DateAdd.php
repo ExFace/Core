@@ -36,9 +36,9 @@ class DateAdd extends Formula
      * @param string $period
      * @return string
      */
-    public function run($dateTimeString = null, int $number, string $period = 'D')
+    public function run($dateTimeString = null, int $number = 0, string $period = 'D')
     {
-        return DateTimeDataType::add($dateTimeString, $number, $period);
+        return DateTimeDataType::addInterval($dateTimeString, $number, $period);
     }
     
     /**
