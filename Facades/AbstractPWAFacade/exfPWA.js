@@ -281,6 +281,9 @@ self.addEventListener('sync', function(event) {
 						.catch(err => console.error("Error registering background sync", err))
 					}
 				})
+				.then(function(){
+					return _pwa.data.applyAction(oQueueItem, sOfflineDataEffect);
+				})
 			},
 		
 			/**
@@ -374,6 +377,17 @@ self.addEventListener('sync', function(event) {
 					})
 				})
 				return aEffects;
+			},
+			
+			/**
+			 * Returns the array of data rows from a give action queue item
+			 * 
+			 */
+			getRequestDataRows(oQueueItem) {
+				if (! (oQueueItem.request && oQueueItem.request.data && oQueueItem.request.data.data && oQueueItem.request.data.data.rows)) {
+					return [];
+				}
+				return oQueueItem.request.data.data.rows;
 			},
 		
 			/**
@@ -580,15 +594,13 @@ self.addEventListener('sync', function(event) {
 			getByIds : function(aMessageIds) {
 				return _pwa.actionQueue.get('offline')
 				.then(function(actionsData) {
-					var data = {deviceId: _pwa.getDeviceId()};
 					var selectedActions = [];
 					actionsData.forEach(function(action) {
 						if (aMessageIds.includes(action.id)) {
 							selectedActions.push(action);
 						}
 					})
-					data.actions = selectedActions;
-					return data;
+					return Promise.resolve(selectedActions);
 				})
 			},
 		}, // EOF actionQueue
@@ -704,6 +716,41 @@ self.addEventListener('sync', function(event) {
 					}
 				}
 			},
+			
+			getRowsAddedOffline : function(oDataSet) {
+				return oDataSet.rows_added_offline || [];
+			},
+			
+			cleanupRowsAddedOffline : function (oDataSet) {
+				var aQIds = [];
+				var aRows = oDataSet.rows_added_offline;
+				var aRowsNew = [];
+				console.log('cleaning offline additions', aRows);
+				if (aRows === undefined || aRows.length === 0) {
+					return Promise.resolve();
+				}
+				aRows.forEach(function(oRow){
+					aQIds = aQIds.concat(oRow._actionQueueIds);
+				});
+				return _pwa.actionQueue
+				.getByIds(aQIds)
+				.then(function(aQItems) {
+					aQIds.forEach(function(sQId, i){
+						if (aQItems.filter(function(oQItem){ return oQItem.id === sQId; }).length !== 0) {
+							aRowsNew.push(aRows[i]);
+						}
+					});
+					if (aRowsNew.length !== aRows.length) {
+						oDataSet.rows_added_offline = aRowsNew;
+						return _dataTable
+						.update(oDataSet.uid, oDataSet)
+						.then(function(){
+							return Promise.resolve(oDataSet);
+						})
+					}
+					return Promise.resolve(oDataSet);
+				})
+			},
 		
 			syncAll : function(sPwaUid) {
 				_dataTable
@@ -715,6 +762,7 @@ self.addEventListener('sync', function(event) {
 					aSets.forEach(function(oDataSet) {
 						aPromises.push(_pwa.data.sync(oDataSet.uid));
 					});
+					
 					return Promise.all(aPromises);
 				})
 			},
@@ -740,8 +788,109 @@ self.addEventListener('sync', function(event) {
 					oDataSet.sync_last = (+ new Date());
 					// TODO merge rows in case of incremental updates instead of overwriting them
 					_merge(oDataSet, oDataUpdate);
-					return _dataTable.update(oDataSet.uid, oDataSet);
+					return _dataTable
+					.update(oDataSet.uid, oDataSet)
+					.then(function(){
+						return Promise.resolve(oDataSet);
+					});
 				})
+				.then(function(oDataSet){
+					return _pwa.data.cleanupRowsAddedOffline(oDataSet);
+				})
+			},
+			
+			/**
+			 * Attempts to update offline data to include changes made by an offline action
+			 * 
+			 * @param {{
+					id: String,
+					object: String,
+					action: String,
+					request: <Object>,
+					triggered: String,
+					status: String,
+					tries: Int,
+					synced: String,
+					action_name: String,
+					object_name: String,
+					effects: Array
+				}} oQItem
+			 */
+			applyAction : function(oQItem, sOfflineDataEffect) {
+				var aRows = _pwa.actionQueue.getRequestDataRows(oQItem);
+				if (aRows.length === 0) {
+					return Promise.resolve();
+				}
+				
+				switch (sOfflineDataEffect) {
+					case 'none':
+					case null:
+					case undefined:
+						return Promise.resolve();
+					case 'copy':
+					case 'create': 
+						return _pwa.data
+						.get(oQItem.object)
+						.then(function(oDataSet){
+							if (oDataSet === undefined) {
+								return Promise.resolve();
+							}
+							if (oDataSet.rows_added_offline === undefined) {
+								oDataSet.rows_added_offline = [];
+							}
+							aRows.forEach(function(oRow) {
+								oRow = _merge({}, oRow);
+								if (oDataSet.uid_column_name) {
+									oRow[oDataSet.uid_column_name] = (oDataSet.rows_added_offline.length + 1) * (-1);
+								}
+								if (oRow._actionQueueIds === undefined) {
+									oRow._actionQueueIds = [oQItem.id];
+								} else {
+									oRow._actionQueueIds.push(oQItem.id);
+								}
+								oDataSet.rows_added_offline.push(oRow);
+							});
+							return _dataTable.update(oDataSet.uid, oDataSet);
+						})
+					case 'update':
+						return _pwa.data
+						.get(oQItem.object)
+						.then(function(oDataSet){
+							var aActionRows = _pwa.actionQueue.getRequestDataRows(oQItem);
+							var iChanges = 0;
+							if (oDataSet === undefined || aActionRows.length === 0) {
+								return Promise.resolve();
+							}
+							if (! oDataSet.uid_column_name) {
+								return Promise.resolve();
+							}
+							aActionRows.forEach(function(oActRow) {
+								var aSyncedMatches = (oDataSet.rows || [])
+								.filter(function(oRow){
+									return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
+								})
+								var aUnsyncedMatches = (oDataSet.rows_added_offline || [])
+								.filter(function(oRow){
+									return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
+								});
+								
+								aSyncedMatches.concat(aUnsyncedMatches)
+								.forEach(function(oOfflineRow, i){
+									for (var k in oActRow) {
+										if (! k.includes('__')) {
+											oOfflineRow[k] = oActRow[k];
+										}
+									}
+									iChanges++;
+									console.log('Updated row ', oActRow);
+								});
+							});
+							if (iChanges > 0) {
+								return _dataTable.update(oDataSet.uid, oDataSet);
+							}
+							return Promise.resolve();
+						})
+				}
 			},
 		
 			/**
@@ -854,10 +1003,10 @@ self.addEventListener('sync', function(event) {
 							aActionsSynced.forEach(function(oAction){
 								oAction.effects.forEach(function(oEffect){
 									if (oEffect.event_params && oEffect.event_params.length > 0) {
-										if (typeof $ !== undefined) {
+										try {
 											$(document).trigger("actionperformed", oEffect.event_params);
-										} else {
-											console.log('Skipping offline action sync effects: jQuery not loaded');
+										} catch (e) {
+											console.log('Skipping offline action sync effects: ', e);
 										}
 									}
 								});
@@ -870,10 +1019,8 @@ self.addEventListener('sync', function(event) {
 				// after preloads are updated, delete all actions with status 'synced' from the IndexedDB
 				var syncedIds = await _pwa.actionQueue.getIds('synced');
 				syncedIds.forEach(function(id){
-					aPromises.push(
-						_actionsTable.delete(id)
-					)
-				})
+					aPromises.push(_pwa.actionQueue.delete(id));
+				});
 				return Promise.all(aPromises);		
 			},
 		
