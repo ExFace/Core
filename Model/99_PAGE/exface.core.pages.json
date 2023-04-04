@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-29 11:42:56",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-05-09 10:49:12",
+    "modified_on": "2023-04-04 17:44:57",
     "contents": {
         "object_alias": "exface.Core.PAGE",
         "widget_type": "DataTree",
@@ -156,42 +156,7 @@
                 }
             },
             {
-                "caption": "Show URL",
-                "icon": "qrcode",
-                "action": {
-                    "alias": "exface.Core.ShowDialog",
-                    "widget": {
-                        "widget_type": "Dialog",
-                        "width": 1,
-                        "columns_in_grid": 1,
-                        "height": "auto",
-                        "maximized": false,
-                        "widgets": [
-                            {
-                                "widget_type": "TextHeading",
-                                "align": "center",
-                                "attribute_alias": "NAME",
-                                "hide_caption": true
-                            },
-                            {
-                                "widget_type": "QrCode",
-                                "attribute_alias": "URL",
-                                "hide_caption": true
-                            },
-                            {
-                                "attribute_alias": "URL",
-                                "widget_type": "Text",
-                                "align": "center",
-                                "hide_caption": true
-                            }
-                        ],
-                        "buttons": [
-                            {
-                                "action_alias": ""
-                            }
-                        ]
-                    }
-                }
+                "action_alias": "exface.Core.ShowPageQrCode"
             },
             {
                 "action_alias": "exface.Core.RestorePageMenuPosition"

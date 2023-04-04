@@ -355,6 +355,55 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2023-04-04 17:44:05",
+            "MODIFIED_ON": "2023-04-04 17:45:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed9173882b121e9173025041000001",
+            "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowPageQrCode",
+            "NAME": "Show URL",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "alias": "exface.Core.ShowDialog",
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "exface.Core.PAGE",
+                "icon": "qrcode",
+                "widget": {
+                    "widget_type": "Dialog",
+                    "object_alias": "exface.Core.PAGE",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "height": "auto",
+                    "maximized": false,
+                    "widgets": [
+                        {
+                            "widget_type": "TextHeading",
+                            "align": "center",
+                            "attribute_alias": "NAME",
+                            "hide_caption": true
+                        },
+                        {
+                            "widget_type": "QrCode",
+                            "attribute_alias": "URL",
+                            "hide_caption": true
+                        },
+                        {
+                            "attribute_alias": "URL",
+                            "widget_type": "Text",
+                            "align": "center",
+                            "hide_caption": true
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
