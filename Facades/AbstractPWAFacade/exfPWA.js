@@ -466,6 +466,12 @@ self.addEventListener('sync', function(event) {
 				.then(function(ids){
 					return _pwa.actionQueue.syncIds(ids)
 				})
+				// TODO do not sync all every time - instead improve action effects to sync only
+				// data sets, that might have bee effected. E.g. need to sync subsheet objects
+				// if action had subsheets
+				.then(function(){
+					return _pwa.data.syncAll();
+				})
 			},
 		
 			/**
@@ -753,18 +759,30 @@ self.addEventListener('sync', function(event) {
 			},
 		
 			syncAll : function(sPwaUid) {
-				_dataTable
-				.filter(function(oDataSet){
-					return oDataSet.pwa_uid === sPwaUid;
-				})
-				.toArray(function(aSets){
-					aPromises = [];
-					aSets.forEach(function(oDataSet) {
-						aPromises.push(_pwa.data.sync(oDataSet.uid));
+				if (sPwaUid !== undefined) {
+					_dataTable
+					.filter(function(oDataSet){
+						return oDataSet.pwa_uid === sPwaUid;
+					})
+					.toArray(function(aSets){
+						aPromises = [];
+						aSets.forEach(function(oDataSet) {
+							aPromises.push(_pwa.data.sync(oDataSet.uid));
+						});
+						
+						return Promise.all(aPromises);
 					});
-					
-					return Promise.all(aPromises);
-				})
+				} else {
+					_dataTable
+					.toArray(function(aSets){
+						aPromises = [];
+						aSets.forEach(function(oDataSet) {
+							aPromises.push(_pwa.data.sync(oDataSet.uid));
+						});
+						
+						return Promise.all(aPromises);
+					});
+				} 
 			},
 		
 			sync : function (sDataSetUid) {
@@ -1021,6 +1039,7 @@ self.addEventListener('sync', function(event) {
 				syncedIds.forEach(function(id){
 					aPromises.push(_pwa.actionQueue.delete(id));
 				});
+				
 				return Promise.all(aPromises);		
 			},
 		
