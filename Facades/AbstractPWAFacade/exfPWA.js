@@ -20,10 +20,10 @@ self.addEventListener('sync', function(event) {
  *
  */
  ;(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(global.Dexie) :
-    typeof define === 'function' && define.amd ? define(factory(global.Dexie)) :
-    global.exfPWA = factory(global.Dexie)
-}(this, (function (Dexie) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(global.Dexie, global.$) :
+    typeof define === 'function' && define.amd ? define(factory(global.Dexie, global.$)) :
+    global.exfPWA = factory(global.Dexie, global.$)
+}(this, (function (Dexie, $) {
 	
 	var _error = null;
 		
@@ -65,6 +65,24 @@ self.addEventListener('sync', function(event) {
 			}
 		})
 	})();
+	
+	var _merge = function mergeObjects(target, ...sources) {
+		// The last argument may be an array containing excludes
+		// Restore it if it is not an array!
+		var aIgnoredProps = sources.pop();
+		if (! Array.isArray(aIgnoredProps)) {
+			sources.push(aIgnoredProps);
+			aIgnoredProps = [];
+		}
+		sources.forEach((source) => {
+			Object.keys(source).forEach((key) => {
+				if (!aIgnoredProps.includes(key)) {
+					target[key] = source[key];
+				}
+			});
+		});
+		return target;
+	}
 	
 	var _pwa = {
 		
@@ -213,13 +231,13 @@ self.addEventListener('sync', function(event) {
 			 * 		  }>} 		[aEffects]
 			 * @return Promise
 			 */
-			add : function(offlineAction, objectAlias, sActionName, sObjectName, aEffects) {
+			add : function(offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect) {
 				if (_error) {
 					return Promise.resolve(null);
 				}
 				var topics = _pwa.actionQueue.getTopics();
 				var sDate = (+ new Date());
-				var data = {
+				var oQueueItem = {
 					id: _pwa.createUniqueId(),
 					object: objectAlias,
 					action: offlineAction.data.action,
@@ -235,9 +253,9 @@ self.addEventListener('sync', function(event) {
 				offlineAction.url = 'api/task/' + topics.join('/');
 				offlineAction.data.assignedOn = sDate;
 				if (offlineAction.headers) {
-					data.headers = offlineAction.headers
+					oQueueItem.headers = offlineAction.headers
 				}
-				return _actionsTable.put(data)
+				return _actionsTable.put(oQueueItem)
 				.then(function(){
 					if (navigator.serviceWorker) {
 						navigator.serviceWorker.ready
@@ -245,7 +263,17 @@ self.addEventListener('sync', function(event) {
 						//.then(() => console.log("Registered background sync"))
 						.catch(err => console.error("Error registering background sync", err))
 					}
-				});
+				})/*
+				.then(function(){
+					return _pwa.data.get(oQueueItem.object);
+				})
+				.then(function(oDataSet){
+					if (oDataSet === undefined) {
+						return Promise.resolve();
+					}
+					oDataSet.push(oQueueItem.)
+					_dataTable.update(oDataSet.uid, oDataSet);
+				});*/
 			},
 		
 			/**
@@ -586,7 +614,15 @@ self.addEventListener('sync', function(event) {
 				});
 			},
 			
-			sync : function(sPwaUrl) {
+			/**
+			 * Sync the PWA model and its offline data sets (optional) with the facade
+			 * 
+			 * @param {string} [sPwaUrl]
+			 * @param {boolean} [bSyncOfflineData]
+			 * @return {Promise}
+			 */
+			sync : function(sPwaUrl, bSyncOfflineData) {
+				bSyncOfflineData = bSyncOfflineData === undefined ? true : bSyncOfflineData;
 				return _modelTable
 				.get(sPwaUrl)
 				.then(function(oRow) {
@@ -598,7 +634,7 @@ self.addEventListener('sync', function(event) {
 					.then(function(oModel){
 						var aPromises = [];
 						oPWA.sync_last = (+ new Date());
-						$.extend(oPWA, oModel);
+						_merge(oPWA, oModel);
 						aPromises.push(_modelTable.update(sPwaUrl, oPWA));
 						oPWA.data_sets.forEach(function(oDataSet){
 							oDataSet.pwa_uid = oPWA.uid;
@@ -609,7 +645,7 @@ self.addEventListener('sync', function(event) {
 									if (oRow === undefined) {
 										return _dataTable.put(oDataSet);
 									} else {
-										oDataSet = $.extend({}, oRow, oDataSet);
+										oDataSet = _merge({}, oRow, oDataSet);
 										return _dataTable.update(oDataSet.uid, oDataSet);
 									}
 								})
@@ -618,7 +654,11 @@ self.addEventListener('sync', function(event) {
 						return Promise
 						.all(aPromises)
 						.then(function(){
-							return _pwa.data.syncAll(oPWA.uid);
+							if (bSyncOfflineData) {
+								return _pwa.data.syncAll(oPWA.uid);
+							} else {
+								return Promise.resolve();
+							}
 						});
 					})
 				})
@@ -691,7 +731,8 @@ self.addEventListener('sync', function(event) {
 						return _dataTable.delete(oDataUpdate.uid);
 					}
 					oDataSet.sync_last = (+ new Date());
-					$.extend(oDataSet, oDataUpdate);
+					// TODO merge rows in case of incremental updates instead of overwriting them
+					_merge(oDataSet, oDataUpdate);
 					return _dataTable.update(oDataSet.uid, oDataSet);
 				})
 			},
@@ -779,7 +820,6 @@ self.addEventListener('sync', function(event) {
 			syncAffectedByActions : async function() {
 				var aDataSets = await _dataTable.toArray();
 				var aPromises = [];
-				console.log('Sync offline data affected by actions');
 				aDataSets.forEach(async function(oDataSet) {
 					var aActionsSynced = await _pwa.actionQueue.get('synced', oDataSet.object_alias);
 					var sUidCol = oDataSet.uid_column_name;
@@ -797,8 +837,7 @@ self.addEventListener('sync', function(event) {
 						oAction.request.data.data.rows.forEach(function(row) {
 							aUids.push(row[sUidCol]);
 						})								
-					});
-					console.log('Sync offline data due to effect on object ', oDataSet.object_alias);			
+					});		
 					aPromises.push(
 						_pwa.data.sync(oDataSet.uid)
 						.catch (function(error){
@@ -808,7 +847,11 @@ self.addEventListener('sync', function(event) {
 							aActionsSynced.forEach(function(oAction){
 								oAction.effects.forEach(function(oEffect){
 									if (oEffect.event_params && oEffect.event_params.length > 0) {
-										$(document).trigger("actionperformed", oEffect.event_params);
+										if (typeof $ !== undefined) {
+											$(document).trigger("actionperformed", oEffect.event_params);
+										} else {
+											console.log('Skipping offline action sync effects: jQuery not loaded');
+										}
 									}
 								});
 							});
@@ -817,7 +860,7 @@ self.addEventListener('sync', function(event) {
 					)		
 				});
 				
-				//after preloads are updated, delete all actions with status 'synced' from the IndexedDB
+				// after preloads are updated, delete all actions with status 'synced' from the IndexedDB
 				var syncedIds = await _pwa.actionQueue.getIds('synced');
 				syncedIds.forEach(function(id){
 					aPromises.push(
