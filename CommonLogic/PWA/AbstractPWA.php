@@ -480,6 +480,8 @@ abstract class AbstractPWA implements PWAInterface
         $dsPWA = $this->getDataForPWA();
         $dsPWA->setCellValue('GENERATED_ON', 0, DateTimeDataType::now());
         $dsPWA->dataUpdate(false, $transaction);
+        
+        yield 'DONE generating PWA "' . $this->getURL() . '"';
     }
     
     protected abstract function generateModelForWidget(WidgetInterface $widget, int $linkDepth = 100) : \Generator;
