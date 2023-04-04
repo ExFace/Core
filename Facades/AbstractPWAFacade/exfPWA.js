@@ -281,9 +281,6 @@ self.addEventListener('sync', function(event) {
 						.catch(err => console.error("Error registering background sync", err))
 					}
 				})
-				.then(function(){
-					return _pwa.data.applyAction(oQueueItem, sOfflineDataEffect);
-				})
 			},
 		
 			/**
