@@ -425,17 +425,23 @@ JS;
                     throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
                 }
                 
+                // Determine the columns we need in the actions data
+                $colNamesList = implode(',', $widget->getActionDataColumnNames());
+                
                 return <<<JS
-    {
+(function(){
+    var oData = ($('#{$this->getIdOfSlick()}').data('_exfData') || {});
+    // Remove any keys, that are not in the columns of the widget
+    oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
+
+    return {
         oId: '{$dataObj->getId()}',
         rows: [
             {
                 '{$relAlias}': $.extend(
                     {}, 
-                    {
-                        "oId": "{$widget->getMetaObject()->getId()}"
-                    }, 
-                    ($('#{$this->getIdOfSlick()}').data('_exfData') || {})
+                    {"oId": "{$widget->getMetaObject()->getId()}"}, 
+                    oData
                 )
             }
         ],
@@ -443,7 +449,7 @@ JS;
         
         ]
     }
-    
+})()
 JS;
             break;
         }
@@ -456,6 +462,8 @@ JS;
     jqCarousel.find('.imagecarousel-item.selected').each(function(i, jqItem){
         aSelectedRows.push(aAllRows[$(jqItem).index()]);
     });
+    // Remove any keys, that are not in the columns of the widget
+    aSelectedRows = aSelectedRows.map(({ $colNamesList }) => ({ $colNamesList }));
     return {
         oId: '{$widget->getMetaObject()->getId()}',
         rows: aSelectedRows

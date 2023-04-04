@@ -697,4 +697,30 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
         $this->guessColumns();
         return parent::prepareDataSheetToRead($dataSheet);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getActionDataColumnNames()
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $this->guessColumns();
+        $cols = parent::getActionDataColumnNames();
+        if ($this->isUploadEnabled()) {
+            $uploader = $this->getUploader();
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
+            if ($uploader->hasFileModificationTimeAttribute()) {
+                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileModificationTimeAttribute()->getAliasWithRelationPath());
+            }
+            if ($uploader->hasFileSizeAttribute()) {
+                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileSizeAttribute()->getAliasWithRelationPath());
+            }
+            if ($uploader->hasFileMimeTypeAttribute()) {
+                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath());
+            }
+        }
+        return array_unique($cols);
+    }
 }
