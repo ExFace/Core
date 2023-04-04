@@ -84,6 +84,23 @@ self.addEventListener('sync', function(event) {
 		return target;
 	}
 	
+	var _date = {
+		now : function() {
+			return _date.normalize(new Date());
+		},
+		timestamp: function() {
+			return Date.now();
+		},
+		normalize : function(d) {
+			var fnPad = function (n, width, z) {
+				z = z || '0';
+				n = n + '';
+				return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+			}
+			return d.getFullYear()  + "-" + fnPad((d.getMonth()+1), 2) + "-" + fnPad(d.getDate(), 2) + " " + fnPad(d.getHours(), 2) + ":" + fnPad(d.getMinutes(), 2);
+		}
+	};
+	
 	var _pwa = {
 		
 		/**
@@ -104,7 +121,7 @@ self.addEventListener('sync', function(event) {
 		 * @return {string}
 		 */
 		createUniqueId : function (a = "", b = false) {
-		    const c = Date.now()/1000;
+		    const c = _date.timestamp()/1000;
 		    let d = c.toString(16).split(".").join("");
 		    while(d.length < 14) d += "0";
 		    let e = "";
@@ -236,13 +253,13 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve(null);
 				}
 				var topics = _pwa.actionQueue.getTopics();
-				var sDate = (+ new Date());
+				var sDate = _date.now();
 				var oQueueItem = {
 					id: _pwa.createUniqueId(),
 					object: objectAlias,
 					action: offlineAction.data.action,
 					request: offlineAction,
-					triggered: new Date(sDate).toLocaleString(),
+					triggered: sDate,
 					status: 'offline',
 					tries: 0,
 					synced: 'not synced',
@@ -263,17 +280,10 @@ self.addEventListener('sync', function(event) {
 						//.then(() => console.log("Registered background sync"))
 						.catch(err => console.error("Error registering background sync", err))
 					}
-				})/*
-				.then(function(){
-					return _pwa.data.get(oQueueItem.object);
 				})
-				.then(function(oDataSet){
-					if (oDataSet === undefined) {
-						return Promise.resolve();
-					}
-					oDataSet.push(oQueueItem.)
-					_dataTable.update(oDataSet.uid, oDataSet);
-				});*/
+				.then(function(){
+					return _pwa.data.applyAction(oQueueItem, sOfflineDataEffect);
+				})
 			},
 		
 			/**
@@ -403,7 +413,7 @@ self.addEventListener('sync', function(event) {
 			 * @return {object}
 			 */
 			updateState : function(element) {
-				if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < (+ new Date())) {
+				if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < _date.timestamp()) {
 					element.status = 'offline';		
 					_actionsTable.update(element.id, element);
 				}
@@ -460,13 +470,13 @@ self.addEventListener('sync', function(event) {
 					return true
 				}
 				//if item is in the proccess of syncing or the last try is fewer than 5 minutes ago and still ongoing, skip it
-				if (element.status === 'proccessing' && element.lastSync !== undefined && element.lastSyncAttempt + 3000 > (+ new Date())) {
+				if (element.status === 'proccessing' && element.lastSync !== undefined && element.lastSyncAttempt + 3000 > _date.timestamp()) {
 					return true
 				}
 				
 				// update Element so it has the processing state, therefor no other sync Attempt tries to sync it aswell.
 				var updatedElement = {
-						lastSyncAttempt: (+ new Date()),
+						lastSyncAttempt: _date.timestamp(),
 						status: 'proccessing',
 						tries: element.tries + 1
 				};		
