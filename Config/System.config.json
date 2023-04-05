@@ -117,13 +117,13 @@
 		},
 		"Static JS, CSS, fonts from vendor folder": {
 			"description": "Cache static assets. Use cache only if offlie",
-			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2)/i",
+			"matcher": "/vendor\\/.*(\\.js|\\.css|\\.woff2?|\\.otf|\\.ttf|\\.eot)/i",
 			"strategy": "workbox.strategies.NetworkFirst",
 			"cacheName": "asset-cache",
     		"maxAgeSeconds": 604800
 		},
 		"Images": {
-			"description": "Cache images. Use cache, but update in the background.",
+			"description": "Cache image files accessed directly. Use cache, but update in the background.",
 			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
 			"strategy": "workbox.strategies.StaleWhileRevalidate",
 			"cacheName": "image-cache",
