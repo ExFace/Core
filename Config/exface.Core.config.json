@@ -1,71 +1,71 @@
 {
-	"CONTEXTS.FILTERCONTEXT.DISCARD_AFTER_MINUTES": 1440,
-	"FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
-    "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
-    "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
-    
-    "LIBS.MERMAID.JS": "bower-asset/mermaid/dist/mermaid.js",
-	
-	"WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED": false,
-	
-	"WIDGET.CONTEXTBAR": {
-	   "contexts": [
-	       	{
-				"context_scope": "User",
-				"context_alias": "exface.Core.UserContext",
-				"visibility": "show_allways"
-			},
-           	{
-				"context_scope": "User",
-				"context_alias": "exface.Core.NotificationContext",
-				"visibility": "show_allways"
-			},
-          	{
-				"context_scope": "Installation",
-				"context_alias": "exface.Core.DocsContext",
-				"visibility": "show_allways",
-				"menu_items": {
-					"App docs": "api/docs/",
-					"App-desiner tutorial": "api/docs/exface/Core/Docs/Tutorials/BookClub_walkthrough/index.md",
-					"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md", 
-					"Licenses": "Licenses.md" 
-				}
-           	},
-           	{
-				"context_scope": "User",
-				"context_alias": "exface.Core.FavoritesContext",
-				"visibility": "show_allways"
-	       	},
-	       	{
-				"context_scope": "Session",
-				"context_alias": "exface.Core.ObjectBasketContext",
-				"visibility": "show_allways"
-           	},
-           	{
-				"context_scope": "Window",
-				"context_alias": "exface.Core.DebugContext",
-				"visibility": "show_allways"
-           	},
-           	{
-				"context_scope": "User",
-				"context_alias": "exface.Core.PWAContext",
-				"visibility": "show_allways"
-           	}
-	   	]
-	},
-	
-	"WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [
-	    {
-	        "alias": "exface.Core.ObjectBasketAdd"
-	    },
-	    {
-	        "alias": "exface.Core.FavoritesAdd"
-	    },
-		{
-		    "alias": "exface.Core.ExportXLSX"
-		},
-		{
-		    "alias": "exface.Core.ExportCSV"
-		}
-	]
+  "CONTEXTS.FILTERCONTEXT.DISCARD_AFTER_MINUTES": 1440,
+  "FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
+  "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES": "Input",
+  "FACADES.DEFAULT_WIDGET_FOR_RELATIONS": "InputComboTable",
+
+  "LIBS.MERMAID.JS": "bower-asset/mermaid/dist/mermaid.js",
+
+  "WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED": false,
+
+  "WIDGET.CONTEXTBAR": {
+    "contexts": [
+      {
+        "context_scope": "User",
+        "context_alias": "exface.Core.UserContext",
+        "visibility": "show_allways"
+      },
+      {
+        "context_scope": "User",
+        "context_alias": "exface.Core.NotificationContext",
+        "visibility": "show_allways"
+      },
+      {
+        "context_scope": "Installation",
+        "context_alias": "exface.Core.DocsContext",
+        "visibility": "show_allways",
+        "menu_items": {
+          "App docs": "api/docs/",
+          "App-desiner tutorial": "api/docs/exface/Core/Docs/Tutorials/BookClub_walkthrough/index.md",
+          "Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md",
+          "Licenses": "api/docs/Licenses.md"
+        }
+      },
+      {
+        "context_scope": "User",
+        "context_alias": "exface.Core.FavoritesContext",
+        "visibility": "show_allways"
+      },
+      {
+        "context_scope": "Session",
+        "context_alias": "exface.Core.ObjectBasketContext",
+        "visibility": "show_allways"
+      },
+      {
+        "context_scope": "Window",
+        "context_alias": "exface.Core.DebugContext",
+        "visibility": "show_allways"
+      },
+      {
+        "context_scope": "User",
+        "context_alias": "exface.Core.PWAContext",
+        "visibility": "show_allways"
+      }
+    ]
+  },
+
+  "WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [
+    {
+      "alias": "exface.Core.ObjectBasketAdd"
+    },
+    {
+      "alias": "exface.Core.FavoritesAdd"
+    },
+    {
+      "alias": "exface.Core.ExportXLSX"
+    },
+    {
+      "alias": "exface.Core.ExportCSV"
+    }
+  ]
 }
