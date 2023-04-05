@@ -602,4 +602,18 @@ class FileList extends DataTable
         }
         return false;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getActionDataColumnNames()
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $cols = parent::getActionDataColumnNames();
+        if ($this->isUploadEnabled()) {
+            $cols = array_merge($cols, $this->getUploader()->getActionDataColumnNames());
+        }
+        return array_unique($cols);
+    }
 }

@@ -708,18 +708,7 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
         $this->guessColumns();
         $cols = parent::getActionDataColumnNames();
         if ($this->isUploadEnabled()) {
-            $uploader = $this->getUploader();
-            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
-            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
-            if ($uploader->hasFileModificationTimeAttribute()) {
-                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileModificationTimeAttribute()->getAliasWithRelationPath());
-            }
-            if ($uploader->hasFileSizeAttribute()) {
-                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileSizeAttribute()->getAliasWithRelationPath());
-            }
-            if ($uploader->hasFileMimeTypeAttribute()) {
-                $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($uploader->getFileMimeTypeAttribute()->getAliasWithRelationPath());
-            }
+            $cols = array_merge($cols, $this->getUploader()->getActionDataColumnNames());
         }
         return array_unique($cols);
     }
