@@ -124,7 +124,7 @@
 		},
 		"Images": {
 			"description": "Cache image files accessed directly. Use cache, but update in the background.",
-			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
+			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg|ico)$/i",
 			"strategy": "workbox.strategies.StaleWhileRevalidate",
 			"cacheName": "image-cache",
     		"maxEntries": 250,
