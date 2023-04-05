@@ -611,4 +611,33 @@ class Uploader implements WidgetPartInterface
             }
         }
     }
+    
+    /**
+     * Returns an array of data column names, that are expected to be added to action data by the uploader.
+     * 
+     * Note: the widget using the uploader does not neccessarily "know" about these columns: for example,
+     * an ImageGallery will not need the file contents column or the file size column - these are only
+     * added by the uploader.
+     * 
+     * @see \exface\Core\Widgets\Data::getActionDataColumnNames()
+     * 
+     * @return string[]
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $cols = [];
+        $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileContentAttribute()->getAliasWithRelationPath());
+        $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFilenameAttribute()->getAliasWithRelationPath());
+        if ($this->hasFileModificationTimeAttribute()) {
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileModificationTimeAttribute()->getAliasWithRelationPath());
+        }
+        if ($this->hasFileSizeAttribute()) {
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileSizeAttribute()->getAliasWithRelationPath());
+        }
+        if ($this->hasFileMimeTypeAttribute()) {
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileMimeTypeAttribute()->getAliasWithRelationPath());
+        }
+            
+        return $cols;
+    }
 }
