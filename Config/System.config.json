@@ -122,12 +122,20 @@
 			"cacheName": "asset-cache",
     		"maxAgeSeconds": 604800
 		},
-		"images": {
+		"Images": {
 			"description": "Cache images. Use cache, but update in the background.",
 			"matcher": "/.*\\.(?:png|gif|jpg|jpeg|svg)$/i",
 			"strategy": "workbox.strategies.StaleWhileRevalidate",
 			"cacheName": "image-cache",
-    		"maxEntries": 50,
+    		"maxEntries": 250,
+    		"maxAgeSeconds": 604800
+		},
+		"File server facade": {
+			"description": "Cache images and files provided by the HttpFileServerFacade. Use cache, but update in the background.",
+			"matcher": "/.*\\/api\\/files\\/.*/i",
+			"strategy": "workbox.strategies.StaleWhileRevalidate",
+			"cacheName": "image-cache",
+    		"maxEntries": 250,
     		"maxAgeSeconds": 604800
 		},
 		"PWA API": {
