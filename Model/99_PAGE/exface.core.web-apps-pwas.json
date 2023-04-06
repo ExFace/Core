@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2022-12-27 17:43:01",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2023-04-04 18:14:10",
+    "modified_on": "2023-04-05 10:34:19",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.PWA",
@@ -37,6 +37,11 @@
                 "attribute_alias": "GENERATED_ON"
             },
             {
+                "attribute_alias": "PWA_BUILD__UID:COUNT",
+                "caption": "Downloads",
+                "hint": "Number of dowloads of the current version"
+            },
+            {
                 "attribute_alias": "APP__ALIAS"
             },
             {
@@ -55,7 +60,12 @@
                 "attribute_alias": "PAGE_TEMPLATE__LABEL"
             },
             {
-                "attribute_alias": "PAGE_TEMPLATE__FACADE"
+                "attribute_alias": "PAGE_TEMPLATE__FACADE",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "START_PAGE__ALIAS",
+                "hidden": true
             }
         ],
         "sorters": [
@@ -74,16 +84,11 @@
             },
             {
                 "action": {
-                    "alias": "exface.Core.GoToPageUrl",
-                    "input_mapper": {
-                        "column_to_column_mappings": [
-                            {
-                                "from": "START_PAGE",
-                                "to": "UID"
-                            }
-                        ]
-                    }
-                }
+                    "alias": "exface.core.GoToUrl",
+                    "url": "[#START_PAGE__ALIAS#].html",
+                    "open_in_new_window": true
+                },
+                "caption": "Launch app"
             },
             {
                 "action": {
