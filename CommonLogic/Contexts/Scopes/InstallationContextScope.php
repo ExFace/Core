@@ -193,7 +193,7 @@ class InstallationContextScope extends AbstractContextScope
      */
     public function getVariable(string $name, string $namespace = null)
     {
-        return $this->getContextsUxon()->getProperty('_' . ($namespace !== null ? $namespace . '_' : '') . $name);
+        return $this->getContextsUxon()->getProperty($this->getVarName($name, $namespace));
     }
     
     /**
