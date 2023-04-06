@@ -697,7 +697,7 @@
         },
         {
             "CREATED_ON": "2022-12-02 08:34:26",
-            "MODIFIED_ON": "2022-12-02 09:46:00",
+            "MODIFIED_ON": "2023-04-06 14:24:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11edbb42c0a22a6cbb42025041000001",
@@ -710,7 +710,7 @@
             "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
             "TARGET_OBJECT": "",
             "CONDITION_UXON": {
-                "url_path_pattern": "@\/offline\/?$@i"
+                "url_path_pattern": "@\/offline\/.*@i"
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
