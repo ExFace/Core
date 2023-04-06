@@ -140,8 +140,9 @@ class UxonObject implements \IteratorAggregate
     {
         $val = $this->array[$name] ?? null;
         if (is_array($val) === true) {
-            if (null === $child = $this->childUxons[$name] ?? null) {
-                $this->childUxons[$name] = $child = new self($val);
+            $child = $this->childUxons[$name] ?? null;
+            if (null === $child) {
+                $child = $this->childUxons[$name] = new self($val);
             } 
             return $child;
         }
@@ -215,11 +216,19 @@ class UxonObject implements \IteratorAggregate
      */
     public function setProperty($property_name, $scalar_or_uxon)
     {
-        $this->array[$property_name] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[$property_name] = $this->normalizeValue($scalar_or_uxon);
+        if (array_key_exists($property_name, $this->childUxons)) {
+            unset($this->childUxons[$property_name]);
+        }
         return $this;
     }
     
-    protected function sanitizePropertyValue($scalar_or_uxon)
+    /**
+     * 
+     * @param mixed $scalar_or_uxon
+     * @return string|number|bool|array
+     */
+    protected function normalizeValue($scalar_or_uxon)
     {
         return $scalar_or_uxon instanceof UxonObject ? $scalar_or_uxon->toArray() : $scalar_or_uxon;
     }
@@ -238,13 +247,18 @@ class UxonObject implements \IteratorAggregate
         } elseif (is_scalar($this->array[$property_name])){
             throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
         }
-        $this->array[$property_name][] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[$property_name][] = $this->normalizeValue($scalar_or_uxon);
+        
+        if (array_key_exists($property_name, $this->childUxons)) {
+            unset($this->childUxons[$property_name]);
+        }
+        
         return $this;
     }
     
     public function append($scalar_or_uxon)
     {
-        $this->array[] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[] = $this->normalizeValue($scalar_or_uxon);
         return $this;
     }
     
@@ -298,6 +312,9 @@ class UxonObject implements \IteratorAggregate
     public function unsetProperty($name)
     {
         unset($this->array[$name]);
+        if (array_key_exists($name, $this->childUxons)) {
+            unset($this->childUxons[$name]);
+        }
         return $this;
     }
 
