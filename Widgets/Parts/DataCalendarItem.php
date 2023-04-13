@@ -23,6 +23,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     
     use iHaveColorScaleTrait {
         getColorScale as getColorScaleViaTrait;
+        hasColorScale as hasColorScaleViaTrait;
     }
     
     private $startTimeString = null;
@@ -329,5 +330,22 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
             }
         }
         return $scale;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see iHaveColorScale::hasColorScale()
+     */
+    public function hasColorScale() : bool
+    {
+        $value = $this->hasColorScaleViaTrait();
+        if ($value === false && null !== $colorCol = $this->getColorColumn()){
+            $colWidget = $colorCol->getCellWidget();
+            if ($colWidget instanceof iHaveColorScale) {
+                return $colWidget->hasColorScale();
+            }
+        }
+        return $value;
     }
 }
