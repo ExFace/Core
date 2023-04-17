@@ -483,7 +483,7 @@ self.addEventListener('sync', function(event) {
 					return false
 				}
 				//if item was already synced or tried to synced since it was added to list of items to be synced, skip it, continue with next one
-				if (element.status !== 'offline' && element.satus !== 'proccessing') {
+				if (element.status !== 'offline' && element.status !== 'proccessing') {
 					return true
 				}
 				//if item is in the proccess of syncing or the last try is fewer than 5 minutes ago and still ongoing, skip it
