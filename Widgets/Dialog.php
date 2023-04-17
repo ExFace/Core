@@ -41,7 +41,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
 
     private $close_button = null;
     
-    private $close_button_uxon = null;
+    private $close_button_action = null;
 
     private $maximizable = true;
 
@@ -119,17 +119,17 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     {
         if (! ($this->close_button instanceof DialogButton)) {
             /* @var $btn DialogButton */
-            $btnUxon = $this->close_button_uxon;
-            $btn = $this->createButton($btnUxon);
+            $btn = $this->createButton();
             $btn->setCloseDialogAfterActionSucceeds(true);
-            if ($btnUxon === null) {
-                $btn->setRefreshInput(false);
-            }
+            $btn->setRefreshInput(false);
             $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
             if ($this->getHideCloseButton()) {
                 $btn->setHidden(true);
+            }
+            if ($this->hasCloseButtonAction()) {
+                $btn->setAction($this->getCloseButtonActionUxon());
             }
             $this->close_button = $btn;
         }
@@ -149,8 +149,31 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      */
     public function setCloseButtonAction($uxon) : Dialog
     {
-        $btn = $this->getCloseButton()->setAction($uxon);
+        $this->close_button_action = $uxon;
+        if ($this->close_button !== null) {
+            $this->close_button->setAction($uxon);
+        }
         return $this;
+    }
+    
+    /**
+     * Returns NULL or the UXON for the close button action
+     * 
+     * @return UxonObject|NULL
+     */
+    public function getCloseButtonActionUxon() : ?UxonObject
+    {
+        return $this->close_button_action;
+    }
+    
+    /**
+     * Returns true if the close button has an action uxon
+     * 
+     * @return boolean
+     */
+    public function hasCloseButtonAction() : bool
+    {
+        return $this->close_button_action !== null;
     }
     
     /**
