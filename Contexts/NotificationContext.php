@@ -221,7 +221,11 @@ class NotificationContext extends AbstractContext
                                 'attribute_alias' => 'UID',
                                 'widget_type' => 'InputHidden',
                                 'value' => $row['UID']
-                            ], [
+                            ],[
+                                'attribute_alias' => 'MODIFIED_ON',
+                                'widget_type' => 'InputHidden',
+                                'value' => $row['MODIFIED_ON']
+                            ],[
                                 'attribute_alias' => 'CREATED_BY_USER__USERNAME',
                                 'widget_type' => 'Display',
                                 'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
@@ -242,6 +246,8 @@ class NotificationContext extends AbstractContext
                 'align' => $dialog->countButtons() <= 1 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
                 'visibility' => $dialog->countButtons() <= 1 ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL
             ])));
+            
+            $dialog->getCloseButton()->setAction(new UxonObject(['alias' => 'exface.Core.NotificationRead']));
             
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);
@@ -295,6 +301,7 @@ class NotificationContext extends AbstractContext
         $ds->getColumns()->addFromSystemAttributes();
         $ds->getColumns()->addMultiple([
             'CREATED_ON',
+            'MODIFIED_ON',
             'CREATED_BY_USER__USERNAME',
             'TITLE',
             'ICON',
@@ -302,6 +309,7 @@ class NotificationContext extends AbstractContext
         ]);
         $ds->getSorters()->addFromString('CREATED_ON', SortingDirectionsDataType::DESC);
         $ds->getFilters()->addConditionFromString('USER__USERNAME', $authToken->getUsername(), ComparatorDataType::EQUALS);
+        $ds->getFilters()->addConditionFromString('ISREAD', 0, ComparatorDataType::EQUALS);
         $ds->dataRead();
         $this->data = $ds;
         return $ds;
