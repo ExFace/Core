@@ -478,92 +478,74 @@ self.addEventListener('sync', function(event) {
 			 * @return {promise}
 			 */
 			sync : async function(id) {
-				var element = await _actionsTable.get(id);
-				if (element === undefined) {
+				var oQItem = await _actionsTable.get(id);
+				if (oQItem === undefined) {
 					return false
 				}
 				//if item was already synced or tried to synced since it was added to list of items to be synced, skip it, continue with next one
-				if (element.status !== 'offline' && element.satus !== 'proccessing') {
+				if (oQItem.status !== 'offline' && oQItem.status !== 'proccessing') {
 					return true
 				}
 				//if item is in the proccess of syncing or the last try is fewer than 5 minutes ago and still ongoing, skip it
-				if (element.status === 'proccessing' && element.lastSync !== undefined && element.lastSyncAttempt + 3000 > _date.timestamp()) {
+				if (oQItem.status === 'proccessing' && oQItem.lastSync !== undefined && oQItem.lastSyncAttempt + 3000 > _date.timestamp()) {
 					return true
 				}
 				
 				// update Element so it has the processing state, therefor no other sync Attempt tries to sync it aswell.
-				var updatedElement = {
+				var oQItemUpdate = {
 						lastSyncAttempt: _date.timestamp(),
 						status: 'proccessing',
-						tries: element.tries + 1
+						tries: oQItem.tries + 1
 				};		
-				var updated = await _actionsTable.update(element.id, updatedElement);
+				await _actionsTable.update(oQItem.id, oQItemUpdate);
 				
 				try {
-					var response = await fetch(element.request.url, {
-						method: element.request.type,
+					var response = await fetch(oQItem.request.url, {
+						method: oQItem.request.type,
 						headers: {
 							'Content-Type': 'application/json; charset=UTF-8',
-							'X-Request-ID': element.id,
+							'X-Request-ID': oQItem.id,
 							'X-Client-ID': _pwa.getDeviceId()
 						},
-						body: JSON.stringify(element.request.data)
+						body: JSON.stringify(oQItem.request.data)
 					})
 				} catch (error) {
-					console.error("Error sync action with id " + element.id + ". " + error.message);
-					var updated = await _actionsTable.update(element.id, {
-						response: error.message,
-						status: 'offline'
-					});
-					if (updated) {
-						//console.log ("Tries for Action with id " + element.id + " increased");
-					} else {
-						//console.log ("Nothing was updated - there was no action with id: ", element.id);
-					}
-					return false;			
+					console.error("Error sync action with id " + oQItem.id + ". " + error.message);
+					oQItemUpdate.response = error.message;
+					oQItemUpdate.status = 'offline';
+					await _actionsTable.update(oQItem.id, oQItemUpdate);
+					return false;
 				}
+				
+				if (response.statusText === 'timeout' || response.status === 0) {
+					oQItemUpdate.response = response.statusText;
+					oQItemUpdate.status = 'offline';
+				}
+				
 				try {
 					var data = await response.json();
 				} catch (e) {
 					// Do nothing here. It will result in an error because there is no data.
 				}
 				if (response.ok && data) {
-					var date = (+ new Date());
-					updatedElement.status = 'synced';
-					updatedElement.response = data;
-					updatedElement.synced = new Date(date).toLocaleString();
-					var updated = await _actionsTable.update(element.id, updatedElement);			
-					if (updated) {
-						//console.log ("Action with id " + element.id + " synced. Action removed from queue");
-					} else {
-						//console.log ("Nothing was updated - there was no action with id: ", element.id);
-					}
+					oQItemUpdate.status = 'synced';
+					oQItemUpdate.response = data;
+					oQItemUpdate.synced = _date.now();
+				} 				
+				
+				if (response.status >= 400) {
+					oQItemUpdate.response = data || (await response.text());
+					oQItemUpdate.status = 'error';
+				}
+				
+				await _actionsTable.update(oQItem.id, oQItemUpdate);
+				
+				if (oQItemUpdate.status === 'synced') {
 					return true;
-				}
-				if (response.statusText === 'timeout' || response.status === 0) {
-					//console.log('Timeout syncing action with id: ' + element.id);
-					updatedElement.response = response.statusText;
-					updatedElement.status = 'offline';
-					var updated = _actionsTable.update(element.id, updatedElement);
-					if (updated) {
-						//console.log ("Tries for Action with id " + element.id + " increased");
-					} else {
-						//console.log ("Nothing was updated - there was no action with id: ", element.id);
-					}
-					return false;
-				}
-				console.log('Server responded with an error syncing action with id: '+ element.id);
-				//await _actionsTable.delete(element.id);
-				//update the entry now for test purposes, normally it gets deleted from the queue
-				updatedElement.status = 'error';
-				updatedElement.response = data;
-				var updated = await _actionsTable.update(element.id, updatedElement);
-				if (updated) {
-					//console.log ("Action with id " + element.id + " was updated");
-				} else {
-					//console.log ("Nothing was updated - there was no action with id: ", element.id);
-				}
-				return false;		
+				} 
+				
+				console.log('Server responded with an error syncing action with id: '+ oQItem.id);
+				return false;	
 			},
 		
 			/**
