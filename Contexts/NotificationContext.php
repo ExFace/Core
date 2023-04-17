@@ -247,7 +247,7 @@ class NotificationContext extends AbstractContext
                 'visibility' => $dialog->countButtons() <= 1 ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL
             ])));
             
-            $dialog->getCloseButton()->setAction(new UxonObject(['alias' => 'exface.Core.NotificationRead']));
+            $dialog->setCloseButtonAction(new UxonObject(['alias' => 'exface.Core.NotificationRead']));
             
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);

@@ -40,6 +40,8 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $hide_close_button = false;
 
     private $close_button = null;
+    
+    private $close_button_uxon = null;
 
     private $maximizable = true;
 
@@ -117,9 +119,12 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     {
         if (! ($this->close_button instanceof DialogButton)) {
             /* @var $btn DialogButton */
-            $btn = $this->createButton();
+            $btnUxon = $this->close_button_uxon;
+            $btn = $this->createButton($btnUxon);
             $btn->setCloseDialogAfterActionSucceeds(true);
-            $btn->setRefreshInput(false);
+            if ($btnUxon === null) {
+                $btn->setRefreshInput(false);
+            }
             $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
@@ -129,6 +134,23 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
             $this->close_button = $btn;
         }
         return $this->close_button;
+    }
+    
+    /**
+     * Sets the action, that the close button will trigger.
+     * 
+     * @uxon-property close_button_action
+     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-template {"alias": ""}
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iDefineAction::setAction()
+     */
+    public function setCloseButtonAction($uxon) : Dialog
+    {
+        $btn = $this->getCloseButton()->setAction($uxon);
+        return $this;
     }
     
     /**
