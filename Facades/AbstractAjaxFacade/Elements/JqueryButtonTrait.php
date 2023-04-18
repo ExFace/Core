@@ -438,7 +438,7 @@ JS;
         
         // Now send the server-action stuff to the server and do the remaining JS-part of the chain
         // after a successful response was received.
-        $js .= 'console.log("chain");' . $this->buildJsClickOfflineWrapper($steps[$firstServerActionIdx], $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
+        $js .= $this->buildJsClickOfflineWrapper($steps[$firstServerActionIdx], $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
         
         return $js;
     }
