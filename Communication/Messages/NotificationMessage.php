@@ -121,6 +121,21 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
     }
     
     /**
+     * The title of the notification (shown in the menu when the context icon is clicked).
+     * alternative you can use `title`.
+     *
+     * @uxon-property subject
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return EmailMessage
+     */
+    public function setSubject(string $value) : EmailMessage
+    {
+        return $this->setTitle($value);
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Communication\AbstractMessage::exportUxonObject()
