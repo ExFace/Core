@@ -261,7 +261,6 @@ class NotificationContext extends AbstractContext
         if ($btnGrp) {
             $btnGrp->addButton($btnGrp->createButton(new UxonObject([
                 'caption' => $translator->translate('CONTEXT.NOTIFICATION.MARK_ALL_READ'),
-                'icon' => 'eraser',
                 'action' => [
                     'alias' => 'exface.Core.NotificationAllRead',
                     'object_alias' => 'exface.Core.NOTIFICATION',
