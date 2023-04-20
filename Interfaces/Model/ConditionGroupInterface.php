@@ -187,4 +187,39 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return ConditionGroupInterface
      */
     public function replaceCondition(ConditionInterface $conditionToReplace, ConditionInterface $replaceWith, bool $recursive = true) : ConditionGroupInterface;
+    
+    /**
+     * Returns a new condition group combining this one and the given via OR
+     * 
+     * @see with() for more details
+     * 
+     * @param ConditionalExpressionInterface $conditionOrGroup
+     * @return ConditionGroupInterface
+     */
+    public function withOR(ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
+    
+    /**
+     * Returns a new condition group combining this one and the given via AND
+     * 
+     * @see with() for more details
+     * 
+     * @param ConditionalExpressionInterface $conditionOrGroup
+     * @return ConditionGroupInterface
+     */
+    public function withAND(ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
+    
+    /**
+     * Returns a new condition group combining this one and the given via the provided operator.
+     * 
+     * Allows to quickly combine different condition groups: e.g. adding an OR-group to an AND-group, etc.
+     * 
+     * Examples:
+     * - AND(a, b)::withAND(OR(c,d)) --> AND(a, b, OR(c, d))
+     * - OR(a, b)::withAND(OR(c, d)) --> AND(OR(a, b), OR(c, d))
+     * 
+     * @param string $operator
+     * @param ConditionalExpressionInterface $conditionOrGroup
+     * @return ConditionGroupInterface
+     */
+    public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface;
 }

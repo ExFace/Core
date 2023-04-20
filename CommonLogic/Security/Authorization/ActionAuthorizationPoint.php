@@ -58,7 +58,7 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $task);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $action);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $action);
         return $task;
     }
     

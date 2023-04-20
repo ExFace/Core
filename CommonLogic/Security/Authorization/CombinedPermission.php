@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Security\Authorization;
 
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
+use exface\Core\Interfaces\Security\ObligationInterface;
 use exface\Core\DataTypes\PolicyCombiningAlgorithmDataType;
 use exface\Core\Factories\PermissionFactory;
 use exface\Core\DataTypes\StringDataType;
@@ -12,6 +13,8 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 /**
  * This permission is calculated by combining a given set of permissions unsing a specified algorithm.
  * 
+ * A combined permission includes obligations from all of the contained permissions.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -19,6 +22,10 @@ class CombinedPermission implements PermissionInterface
 {
     private $algorithm = null;
     
+    /**
+     * 
+     * @var PermissionInterface[]
+     */
     private $permissions = [];
     
     private $result = null;
@@ -34,46 +41,90 @@ class CombinedPermission implements PermissionInterface
         $this->result = $this->combinePermissions($permissions, $this->permissions);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isDenied()
+     */
     public function isDenied(): bool
     {
         return $this->result->isDenied();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isPermitted()
+     */
     public function isPermitted(): bool
     {
         return $this->result->isPermitted();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isIndeterminate()
+     */
     public function isIndeterminate(): bool
     {
         return $this->result->isIndeterminate();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isIndeterminatePermit()
+     */
     public function isIndeterminatePermit(): bool
     {
         return $this->result->isIndeterminatePermit();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isIndeterminateDeny()
+     */
     public function isIndeterminateDeny(): bool
     {
         return $this->result->isIndeterminateDeny();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::isNotApplicable()
+     */
     public function isNotApplicable(): bool
     {
         return $this->result->isNotApplicable();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::getException()
+     */
     public function getException(): ?\Throwable
     {
         return $this->result->getException();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::getPolicy()
+     */
     public function getPolicy(): ?AuthorizationPolicyInterface
     {
         return null;
     }
     
+    /**
+     * 
+     * @return PolicyCombiningAlgorithmDataType
+     */
     public function getPolicyCombiningAlgorithm() : PolicyCombiningAlgorithmDataType
     {
         return $this->algorithm;
@@ -141,17 +192,26 @@ class CombinedPermission implements PermissionInterface
      * 1. If any decision is "Permit", the result is "Permit".
      * 2. Otherwise, the result is "Deny".
      * 
-     * @param iterable $permissions
+     * @param PermissionInterface[] $permissions
      * @param array $resultArray
      * @return PermissionInterface
      */
     protected function combineViaDenyUnlessPermit(iterable $permissions, array &$resultArray) : PermissionInterface
     {
+        $atLeastOnePermit = false;
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isPermitted()) {
-                return PermissionFactory::createPermitted(null, 'At least one `Permit`');
+                $atLeastOnePermit = true;
+                // No obligations = unrestricted permission!
+                if (! $permission->hasObligations()) {
+                    break;
+                }
+                continue;
             }
+        }
+        if ($atLeastOnePermit === true) {
+            return PermissionFactory::createPermitted(null, 'At least one `Permit`');
         }
         return PermissionFactory::createDenied(null, 'No `Permit`');
     }
@@ -183,6 +243,7 @@ class CombinedPermission implements PermissionInterface
     /**
      * The permit overrides combining algorithm is intended for those cases where a permit decision should have priority over a deny decision.
      * This algorithm has the following behavior.
+     * 
      * 1. If any decision is "Permit", the result is "Permit".
      * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
      * 3. Otherwise, if any decision is "Indeterminate{P}" and another decision is “Indeterminate{D} or Deny, the result is "Indeterminate{DP}".
@@ -191,7 +252,7 @@ class CombinedPermission implements PermissionInterface
      * 6. Otherwise, if any decision is "Indeterminate{D}", the result is "Indeterminate{D}".
      * 7. Otherwise, the result is "NotApplicable".
      * 
-     * @param iterable $permissions
+     * @param PermissionInterface[] $permissions
      * @param array $resultArray
      * @return PermissionInterface
      */
@@ -201,10 +262,16 @@ class CombinedPermission implements PermissionInterface
         $atLeastOneIndeterminateP = false;
         $atLeastOneIndeterminate = false;
         $atLeastOneDeny = false;
+        $atLeastOnePermit = false;
         foreach ($permissions as $permission) {
             $resultArray[] = $permission;
             if ($permission->isPermitted()) {
-                return PermissionFactory::createPermitted(null, 'At least one `Permit`');
+                $atLeastOnePermit = true;
+                // No obligations = unrestricted permission!
+                if (! $permission->hasObligations()) {
+                    break;
+                }
+                continue;
             }
             if ($permission->isDenied()) {
                 $atLeastOneDeny = true;
@@ -222,6 +289,9 @@ class CombinedPermission implements PermissionInterface
                 $atLeastOneIndeterminate = true;
                 continue;
             }
+        }
+        if ($atLeastOnePermit) {
+            return PermissionFactory::createPermitted(null, 'At least one `Permit`');
         }
         if ($atLeastOneIndeterminate) {
             return PermissionFactory::createIndeterminate(null, null, null, 'At least one `Indeterminate`');
@@ -244,6 +314,7 @@ class CombinedPermission implements PermissionInterface
     /**
      * The deny overrides combining algorithm is intended for those cases where a deny decision should have priority over a permit decision.
      * This algorithm has the following behavior.
+     * 
      * 1. If any decision is "Deny", the result is "Deny".
      * 2. Otherwise, if any decision is "Indeterminate{DP}", the result is "Indeterminate{DP}".
      * 3. Otherwise, if any decision is "Indeterminate{D}" and another decision is “Indeterminate{P} or Permit, the result is "Indeterminate{DP}".
@@ -252,7 +323,7 @@ class CombinedPermission implements PermissionInterface
      * 6. Otherwise, if any decision is "Indeterminate{P}", the result is "Indeterminate{P}".
      * 7. Otherwise, the result is "NotApplicable".
      * 
-     * @param iterable $permissions
+     * @param PermissionInterface[] $permissions
      * @param array $resultArray
      * @return PermissionInterface
      */
@@ -312,6 +383,10 @@ class CombinedPermission implements PermissionInterface
         return $this->result->toXACMLDecision();
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function __toString()
     {
         return $this->toXACMLDecision();
@@ -325,5 +400,48 @@ class CombinedPermission implements PermissionInterface
     public function getExplanation(): ?string
     {
         return $this->result->getExplanation();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::addObligation()
+     */
+    public function addObligation(ObligationInterface $obligation): PermissionInterface
+    {
+        $this->result->addObligation($obligation);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::hasObligations()
+     */
+    public function hasObligations(): bool
+    {
+        if ($this->result->hasObligations()) {
+            return true;
+        }
+        foreach ($this->permissions as $permission) {
+            if ($permission->hasObligations()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::getObligations()
+     */
+    public function getObligations(): array
+    {
+        $arr = $this->result->getObligations();
+        foreach ($this->permissions as $permission) {
+            $arr = array_merge($arr, $permission->getObligations());
+        }
+        return $arr;
     }
 }

@@ -28,4 +28,14 @@ interface PermissionInterface
     public function getExplanation() : ?string;
     
     public function toXACMLDecision() : string;
+    
+    public function hasObligations() : bool;
+    
+    public function addObligation(ObligationInterface $obligation) : PermissionInterface;
+    
+    /**
+     * 
+     * @return ObligationInterface[]
+     */
+    public function getObligations() : array;
 }

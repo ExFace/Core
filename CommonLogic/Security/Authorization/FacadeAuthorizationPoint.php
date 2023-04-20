@@ -62,7 +62,7 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($facade, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $facade);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $facade);
         return $facade;
     }
     

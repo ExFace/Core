@@ -20,6 +20,7 @@ use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligation;
 
 /**
  * Policy for access to data.
@@ -153,9 +154,15 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 if (empty(array_intersect($operations, $this->getOperations()))) {
                     return PermissionFactory::createNotApplicable($this, 'Operation does not match');
                 } 
+            }
+            
+            if ($applied === false) {
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             } 
             
-            // Add filters if required
+            $permission = PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $explanation);
+            
+            // Add filter obligations if required
             if ($applied === true && null !== $filtersUxon = $this->getFiltersUxon()) {
                 if ($relationPathToDataObj !== null) {
                     $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, MetaObjectFactory::create($this->metaObjectSelector));
@@ -163,32 +170,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 } else {
                     $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
                 }
-                $dataFilters = $dataSheet->getFilters();
-                $explanation .= ($explanation ? ' ' : '') . 'Added filter `' . $condGrp->toString() . '`.';
-                switch (true) {
-                    case $condGrp->getOperator() === $dataFilters->getOperator():
-                        foreach ($condGrp->getConditions() as $cond) {
-                            $dataFilters->addCondition($cond);
-                        }
-                        foreach ($condGrp->getNestedGroups() as $nestedGrp) {
-                            $dataFilters->addNestedGroup($nestedGrp);   
-                        }
-                        break;
-                    case $dataFilters->getOperator() === EXF_LOGICAL_AND:
-                        $dataSheet->getFilters()->addNestedGroup($condGrp);
-                        break;
-                    default:
-                        $newFilters = ConditionGroupFactory::createAND($dataSheet->getMetaObject());
-                        $newFilters->addNestedGroup($condGrp);
-                        if (! $dataFilters->isEmpty()) {
-                            $newFilters->addNestedGroup($dataFilters);
-                        }
-                        break;
-                }
-            }
-            
-            if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
+                $permission->addObligation(new DataFilterObligation($condGrp));
             }
         } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
             $dataSheet->getWorkbench()->getLogger()->logException($e);
@@ -199,7 +181,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $explanation);
+        return $permission;
     }
     
     /**
