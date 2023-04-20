@@ -79,6 +79,20 @@ class EmailMessage extends TextMessage
     }
     
     /**
+     * Email subject, alternative you can use the `subject` proberty
+     *
+     * @uxon-property title
+     * @uxon-type string
+     *
+     * @param string $value
+     * @return EmailMessage
+     */
+    public function setTitle(string $value) : EmailMessage
+    {
+        return $this->setSubject($value);
+    }
+    
+    /**
      * 
      * @return bool
      */
