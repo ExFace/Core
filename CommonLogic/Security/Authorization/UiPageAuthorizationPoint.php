@@ -58,7 +58,7 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($pageOrMenuNode, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $pageOrMenuNode);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $pageOrMenuNode);
         return $pageOrMenuNode;
     }
     
@@ -84,12 +84,12 @@ class UiPageAuthorizationPoint extends AbstractAuthorizationPoint
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::combinePermissions()
+     * @see \exface\Core\CommonLogic\Security\Authorization\AbstractAuthorizationPoint::evaluatePermissions()
      */
-    protected function combinePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
+    protected function evaluatePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
     {
         try {
-            $decision = parent::combinePermissions($permissions, $userOrToken, $resource);
+            $decision = parent::evaluatePermissions($permissions, $userOrToken, $resource);
         } catch (AuthorizationExceptionInterface $e) {
             // If the decision in "not applicable", see if the current user is the creator of the
             // page or menu item. If so, suppress the exception thus giving access.

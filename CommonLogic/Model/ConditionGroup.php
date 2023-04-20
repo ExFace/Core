@@ -118,6 +118,73 @@ class ConditionGroup implements ConditionGroupInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::withOR()
+     */
+    public function withOR(ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface
+    {
+        return $this->with(EXF_LOGICAL_OR, $conditionOrGroup);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::withAND()
+     */
+    public function withAND(ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface
+    {
+        return $this->with(EXF_LOGICAL_AND, $conditionOrGroup);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::with()
+     */
+    public function with(string $operator, ConditionalExpressionInterface $conditionOrGroup) : ConditionGroupInterface
+    {
+        if ($operator !== EXF_LOGICAL_AND && $operator !== EXF_LOGICAL_OR) {
+            throw new InvalidArgumentException('Invalid operator "' . $operator . '" for ConditionalExpression::with() - only AND/OR supported!');
+        }
+        
+        // TODO check if the base object matches!
+        
+        switch (true) {
+            // If adding a condition and the operator matches, just add the condition
+            case $this->getOperator() === $operator && $conditionOrGroup instanceof ConditionInterface:
+                $grp = $this->copy()->addCondition($conditionOrGroup);
+                break;
+            // If adding a condition group and the operator matches, see if the added group has the same
+            // operator too. If so, just add its conditions and nested groups to a copy of this group,
+            // thus avoiding a useless nesting level. Otherwise add a nested gorup regularly
+            case $this->getOperator() === $operator && $conditionOrGroup instanceof ConditionGroupInterface:
+                $grp = $this->copy();
+                if ($conditionOrGroup->getOperator() === $operator) {
+                    foreach ($conditionOrGroup->getConditions() as $cond) {
+                        $grp->addCondition($cond);
+                    }
+                    foreach ($conditionOrGroup->getNestedGroups() as $nestedGrp) {
+                        $grp->addNestedGroup($nestedGrp);
+                    }
+                } else {
+                    $grp->addNestedGroup($conditionOrGroup);
+                }
+                break;
+            // If adding and AND to an OR or vice versa, create a new group with the $operator containing
+            // both: this group and the added one
+            default:
+                $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, $this->getBaseObject(), $this->ignoreEmptyValues);
+                $grp = $grp->with($conditionOrGroup);
+                if (! $this->isEmpty()) {
+                    $grp->addNestedGroup($this);
+                }
+                break;
+        }
+        return $grp;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ConditionGroupInterface::addNestedGroupFromString()
      */
     public function addNestedGroupFromString(string $operator, bool $ignoreEmptyValues = null) : ConditionGroupInterface

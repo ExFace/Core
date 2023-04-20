@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Security\Authorization;
 
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
+use exface\Core\Interfaces\Security\ObligationInterface;
 
 class Permission implements PermissionInterface
 {
@@ -19,6 +20,8 @@ class Permission implements PermissionInterface
     private $policy = null;
     
     private $explanation = null;
+    
+    private $obligations = [];
     
     /**
      * @deprecated use PermissionFactory instead!
@@ -100,7 +103,11 @@ class Permission implements PermissionInterface
      */
     public function getExplanation() : ?string
     {
-        return $this->explanation;
+        $explanation = $this->explanation;
+        foreach ($this->getObligations() as $obligation) {
+            $explanation .= ($explanation ? ' ' : '') . $obligation->getExplanation();
+        }
+        return $explanation;
     }
 
     /**
@@ -123,5 +130,36 @@ class Permission implements PermissionInterface
     public function __toString()
     {
         return $this->toXACMLDecision();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::addObligation()
+     */
+    public function addObligation(ObligationInterface $obligation): PermissionInterface
+    {
+        $this->obligations[] = $obligation;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::hasObligations()
+     */
+    public function hasObligations(): bool
+    {
+        return ! empty($this->obligations);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\PermissionInterface::getObligations()
+     */
+    public function getObligations(): array
+    {
+        return $this->obligations;
     }
 }

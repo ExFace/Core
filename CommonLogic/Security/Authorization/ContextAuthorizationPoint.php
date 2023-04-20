@@ -60,7 +60,7 @@ class ContextAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($context, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $context);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $context);
         return $context;
     }
     

@@ -57,7 +57,7 @@ class HttpRequestAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($facade, $request, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $request);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $request);
         return $facade;
     }
     

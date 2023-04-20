@@ -57,7 +57,7 @@ class CommandLineAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($facade, $command, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $command);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $command);
         return $facade;
     }
     
