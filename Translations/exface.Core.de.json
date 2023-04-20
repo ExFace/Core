@@ -173,6 +173,7 @@
     
     "CONTEXT.NOTIFICATION.NAME": "Benachrichtigungen",
     "CONTEXT.NOTIFICATION.DELETE_ALL": "Alle löschen",
+	"CONTEXT.NOTIFICATION.MARK_ALL_READ": "Alle als gelesen markieren",
     "CONTEXT.NOTIFICATION.MESSAGE_FROM": "Von",
     "CONTEXT.NOTIFICATION.MESSAGE_SENT_AT": "Gesendet am",
     

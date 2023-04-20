@@ -260,24 +260,13 @@ class NotificationContext extends AbstractContext
         
         if ($btnGrp) {
             $btnGrp->addButton($btnGrp->createButton(new UxonObject([
-                'caption' => $translator->translate('CONTEXT.NOTIFICATION.DELETE_ALL'),
-                'icon' => 'eraser',
+                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MARK_ALL_READ'),
                 'action' => [
-                    'alias' => 'exface.Core.DeleteObject',
+                    'alias' => 'exface.Core.NotificationAllRead',
                     'object_alias' => 'exface.Core.NOTIFICATION',
                     'input_rows_min' => 0,
                     'input_data_sheet' => [
-                        'object_alias' => 'exface.Core.NOTIFICATION',
-                        'filters' => [
-                            'operator' => 'AND',
-                            'conditions' => [
-                                [
-                                    'expression' => 'USER__USERNAME',
-                                    'comparator' => '==',
-                                    'value' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername()
-                                ]
-                            ]
-                        ]
+                        'object_alias' => 'exface.Core.NOTIFICATION'
                     ]
                 ]
             ])));
