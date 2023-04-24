@@ -25,6 +25,7 @@ use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Actions\CallAction;
 use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 
 /**
  * 
@@ -510,7 +511,7 @@ JS;
         $eventParamsJs = <<<JS
 
                     [{
-                        trigger_widget_id: "{$this->getId()}",
+                        trigger_widget_id: "{$widget->getId()}",
                         action_alias: "{$action->getAliasWithNamespace()}",
                         effects: [ $effectsJs ],
                         refresh_widgets: [ $refreshIds ],
@@ -956,16 +957,55 @@ JS;
     protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
     {
         $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
+        $beforeJs = '';
+        $afterJs = '';
+        $thisButtonScriptJs = <<<JS
+
+                {$this->buildJsTriggerActionEffects($action)}
+                {$this->buildJsCloseDialog()}
+JS;
         
-        //add the onErrorScripts of the calling Button to the error scripts of the Button to be pressed
-        if ($action->getFunctionName() === Button::FUNCTION_PRESS && method_exists($targetEl, 'addOnErrorScript')) {
-            $targetEl->addOnErrorScript($this->buildJsOnErrorScript());
+        // If the widget function is pressing another button, make sure the success/error 
+        // scripts of this button run AFTER the action of that other button succeeds/fails. 
+        // This is particularly important for dialog buttons, that press other types of
+        // buttons (e.g. data buttons). The dialog button should only close its dialog
+        // AFTER the other button succeeded. It should not close the dialog if the
+        // other button failed!
+        if ($action->getFunctionName() === Button::FUNCTION_PRESS && ($targetEl->getWidget() instanceof iTriggerAction)) {
+            // add the onErrorScripts of the calling Button to the error scripts of the Button to be pressed
+            // FIXME this does not work if the other button is already rendered...
+            if (method_exists($targetEl, 'addOnErrorScript')) {
+                $targetEl->addOnErrorScript($this->buildJsOnErrorScript());
+            }
+            // Add an event listener to on-action-performed to trigger postprocessing for 
+            // this button.
+            $afterJs = '';
+            $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+            $beforeJs = <<<JS
+
+            $( document ).off( "{$actionperformed}.{$this->getId()}" );
+            $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+                var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
+                // Avoid errors if widget was removed already
+                if ($('#{$targetEl->getId()}').length === 0 || $('#{$this->getId()}').length === 0) {
+                    return;
+                }
+                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                    return;
+                }
+                {$thisButtonScriptJs}
+            });
+JS;
+        } else {
+            $afterJs = $thisButtonScriptJs;
         }
+        
+        // Make sure to trigger the widget function only once the 
         return <<<JS
 
+            {$beforeJs}
             {$targetEl->buildJsCallFunction($action->getFunctionName())}
-            {$this->buildJsTriggerActionEffects($action)}
-            {$this->buildJsCloseDialog()}
+            {$afterJs}
 JS;
     }
     
