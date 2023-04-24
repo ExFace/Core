@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
 use exface\Core\Widgets\Parts\DataSchedulerResource;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Shows a timeline with events per resource (lane) - like Outlook scheduling assistant.
@@ -12,7 +14,7 @@ use exface\Core\Widgets\Parts\DataSchedulerResource;
  * @author Andrej Kabachnik
  *
  */
-class Scheduler extends Data
+class Scheduler extends Data implements iFillEntireContainer
 {
     private $timelinePart = null;
     
@@ -145,5 +147,15 @@ class Scheduler extends Data
     {
         $this->startDate = $value;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
+    {
+        return null;
     }
 }
