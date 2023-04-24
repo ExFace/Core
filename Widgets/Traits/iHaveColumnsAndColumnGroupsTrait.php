@@ -209,7 +209,7 @@ trait iHaveColumnsAndColumnGroupsTrait
      */
     protected function hasColumnsExplicitlyDefined() : bool
     {
-        return (count($this->getColumnGroups()) <= 1 && $this->getColumnGroupMain()->isEmpty()) === false;
+        return ((count($this->getColumnGroups()) <= 1 && $this->getColumnGroupMain()->isEmpty()) === false) || $this->hasPropertyDefined('columns') || $this->hasPropertyDefined('column_groups');
     }
     
     /**
