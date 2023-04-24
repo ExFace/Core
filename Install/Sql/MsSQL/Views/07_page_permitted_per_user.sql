@@ -1,5 +1,5 @@
-IF OBJECT_ID('dbo.exf_action_permitted_per_user', 'V') IS NOT NULL
-    DROP VIEW [dbo].[exf_action_permitted_per_user];
+IF OBJECT_ID('dbo.exf_page_permitted_per_user', 'V') IS NOT NULL
+    DROP VIEW [dbo].[exf_page_permitted_per_user];
 GO;
 
 /* View of permitted pages per user */
