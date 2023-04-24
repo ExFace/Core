@@ -1531,4 +1531,15 @@ abstract class AbstractWidget implements WidgetInterface
         $translator = new TranslationsArray($lang, $dictUxon->toArray());
         return $translator->translate($message_id, $placeholders, $number_for_plurification);
     }
+    
+    /**
+     * Returns TRUE if the given UXON property was explicitly defined for this widget (in its UXON model)
+     * 
+     * @param string $uxonPropertyName
+     * @return bool
+     */
+    protected function hasPropertyDefined(string $uxonPropertyName) : bool
+    {
+        return ! empty($this->uxon_original) && $this->exportUxonObjectOriginal()->hasProperty($uxonPropertyName);
+    }
 }
