@@ -756,7 +756,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      *
      * @uxon-property row_filter
      * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping
-     * @uxon-template {"mode": "keep_matches_only", "filter": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
+     * @uxon-template {"mode": "keep_matches_only", "apply_to": "to-sheet", "filter": {"operator": "AND", "conditions": [{"expression": "","comparator": "==","value": ""}]}}
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
