@@ -429,6 +429,13 @@ JS;
                 //mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
             }
 
+            // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
+            if ((this.getJExcel().getConfig().columns[iCol] || {}).type === 'checkbox') {
+                if (mValue === false && (mInitVal === null || mInitVal === '' || mInitVal === undefined) && mInitVal !== true && mInitVal !== 1) {
+                    return false;
+                }
+            }
+
             return mInitVal.toString() != mValue.toString();
         },
         hasChanges: function() {
