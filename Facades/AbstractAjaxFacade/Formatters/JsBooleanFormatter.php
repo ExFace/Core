@@ -52,7 +52,7 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "({$jsInput} == '{$this->getHtmlChecked()}' ? 1 : 0)";
+        return "function(mInput){ if (mInput === null || mInput === '' || mInput === undefined) {return mInput;} return mInput === 1 || mInput === true || mInput === '{$this->getHtmlChecked()}' ? 1 : 0;}({$jsInput})";
     }
 
     /**
