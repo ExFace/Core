@@ -15,6 +15,11 @@ use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\PWA\PWADatasetNotFoundError;
 use exface\Core\Interfaces\PWA\PWADatasetInterface;
+use exface\Core\Exceptions\PWA\PWANotFoundError;
+use exface\Core\DataTypes\LogLevelDataType;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Facades\HttpBadRequestError;
 
 /**
  * 
@@ -84,7 +89,12 @@ class PWAapiFacade extends HttpTaskFacade
                     throw new FacadeRoutingError('PWA data set not specified in request for offline data');
                 }
                 
-                $pwa = PWAFactory::createFromURL($this->getWorkbench(), $pwaUrl);
+                try {
+                    $pwa = PWAFactory::createFromURL($this->getWorkbench(), $pwaUrl);
+                } catch (PWANotFoundError $e) {
+                    $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                    return new Response(404, $headers);
+                }
                 $pwa->loadModel([
                     OfflineStrategyDataType::PRESYNC
                 ]);
@@ -98,10 +108,8 @@ class PWAapiFacade extends HttpTaskFacade
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {
-                    $result = [
-                        'uid' => $dataSetUid,
-                        'status' => 'remove'
-                    ];
+                    $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+                    return new Response(404, $headers);
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);
                 return new Response(200, $headers, JsonDataType::encodeJson($result));
@@ -117,7 +125,8 @@ class PWAapiFacade extends HttpTaskFacade
                 }
                 break;
             default:
-                return new Response(404, $headers);
+                $this->getWorkbench()->getLogger()->logException(new HttpBadRequestError('Route "' . $route . '" not found in facade "' . $this->getAliasWithNamespace() . '"'));
+                return new Response(400, $headers);
         }
     }
     

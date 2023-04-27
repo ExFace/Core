@@ -629,15 +629,23 @@ self.addEventListener('sync', function(event) {
 			 * @return {Promise}
 			 */
 			sync : function(sPwaUrl, bSyncOfflineData) {
+				var oPWA;
 				bSyncOfflineData = bSyncOfflineData === undefined ? true : bSyncOfflineData;
 				return _modelTable
 				.get(sPwaUrl)
 				.then(function(oRow) {
-					var oPWA = oRow;
-					return fetch('api/pwa/model/' + sPwaUrl, {
-						method: 'GET',
-					})
-					.then((response) => response.json())
+					oPWA = oRow;
+					return fetch('api/pwa/model/' + sPwaUrl)
+				})
+				.then(function(oResponse) {
+					if (oResponse.status == 404) {
+						return _pwa.model.remove(sPwaUrl);
+					}
+					if (! oResponse.ok) {
+						throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
+					} 
+					return oResponse
+					.json()
 					.then(function(oModel){
 						var aPromises = [];
 						oPWA.sync_last = (+ new Date());
@@ -669,6 +677,16 @@ self.addEventListener('sync', function(event) {
 						});
 					})
 				})
+			},
+			
+			/**
+			 * Deletes the PWA from the client completely.
+			 * Returns a promise resolving to the number of affected data sets (0 or 1)
+			 * @param {string} sDataSetUid
+			 * @return Promise
+			 */
+			remove : function(sPwaUrl) {
+				return _modelTable.delete(sPwaUrl);
 			},
 		
 			/**
@@ -774,29 +792,46 @@ self.addEventListener('sync', function(event) {
 				.then(function(oRow){
 					oDataSet = oRow;
 					if (oRow === undefined) {
-						Promise.reject('Faild syncing data set ' + sDataSetUid + ': data set not found!');
+						Promise.reject('Faild syncing data set ' + sDataSetUid + ': data set not found in browser!');
 					}
 					return fetch(oDataSet.url);
 				})
 				.then(function(oResponse) {
-					return oResponse.json()
-				})
-				.then(function(oDataUpdate) {
-					if (oDataUpdate.status === 'remove') {
-						return _dataTable.delete(oDataUpdate.uid);
+					if (oResponse.status == 404) {
+						return _pwa.data.remove(oDataSet.uid)
 					}
-					oDataSet.sync_last = (+ new Date());
-					// TODO merge rows in case of incremental updates instead of overwriting them
-					_merge(oDataSet, oDataUpdate);
-					return _dataTable
-					.update(oDataSet.uid, oDataSet)
-					.then(function(){
-						return Promise.resolve(oDataSet);
-					});
+					if (! oResponse.ok) {
+						throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
+					} 
+					return oResponse
+					.json()
+					.then(function(oDataUpdate) {
+						oDataSet.sync_last = (+ new Date());
+						// TODO merge rows in case of incremental updates instead of overwriting them
+						_merge(oDataSet, oDataUpdate);
+						return _dataTable
+						.update(oDataSet.uid, oDataSet)
+						.then(function(){
+							return Promise.resolve(oDataSet);
+						})
+						.then(function(oDataSet){
+							return oDataSet !== undefined ? _pwa.data.cleanupRowsAddedOffline(oDataSet) : Promise.resolve(oDataSet);
+						})
+					})
+				})					
+				.catch(function(e) {
+					console.error(e);
 				})
-				.then(function(oDataSet){
-					return oDataSet !== undefined ? _pwa.data.cleanupRowsAddedOffline(oDataSet) : Promise.resolve(oDataSet);
-				})
+			},
+			
+			/**
+			 * Deletes a data set from the client memory completely.
+			 * Returns a promise resolving to the number of affected data sets (0 or 1)
+			 * @param {string} sDataSetUid
+			 * @return Promise
+			 */
+			remove : function (sDataSetUid) {
+				return _dataTable.delete(sDataSetUid);
 			},
 			
 			/**
