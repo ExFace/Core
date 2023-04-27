@@ -657,9 +657,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     /**
      * Set to TRUE to preload table data asynchronously (e.g. for offline-capable facades)
      * 
-     * @uxon-property preload_data
-     * @uxon-type boolean
-     * @uxon-default false
+     * @deprecated replaced by the PWA model
      * 
      * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
      */

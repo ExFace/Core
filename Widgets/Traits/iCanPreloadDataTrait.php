@@ -16,10 +16,7 @@ trait iCanPreloadDataTrait {
     
     /**
      * Set to `true` to preload all possible data for offline use.
-     *
-     * @uxon-property preload_data
-     * @uxon-type boolean|\exface\Core\CommonLogic\DataSheets\DataSheet
-     *
+     * @deprecated replaced by the PWA model
      * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
      */
     public function setPreloadData($uxonOrString): iCanPreloadData
