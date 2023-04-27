@@ -3,26 +3,15 @@ namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Selectors\CommunicationChannelSelector;
-use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
-use exface\Core\Communication\Messages\TextMessage;
-use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
-use exface\Core\CommonLogic\Communication\CommunicationChannel;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\Interfaces\Selectors\CommunicationMessageSelectorInterface;
-use exface\Core\Interfaces\Communication\CommunicationTemplateInterface;
-use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
-use exface\Core\CommonLogic\Communication\CommunicationTemplate;
-use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
-use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\Interfaces\PWA\PWAInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Facades\PWAFacadeInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\PWA\PWANotFoundError;
+use exface\Core\Exceptions\Facades\FacadeIncompatibleError;
 
 /**
  * Produces components related to the communication framework
@@ -56,7 +45,7 @@ abstract class PWAFactory extends AbstractSelectableComponentFactory
         $ds->dataRead();
         switch ($ds->countRows()) {
             case 0:
-                throw new RuntimeException('No active PWA found with selector "' . $selector->toString() . '"!');
+                throw new PWANotFoundError('No active PWA found with selector "' . $selector->toString() . '"!');
             case 1:
                 break;
             default:
@@ -66,7 +55,7 @@ abstract class PWAFactory extends AbstractSelectableComponentFactory
         $facadeClass = $ds->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
         $facade = FacadeFactory::createFromString($facadeClass, $selector->getWorkbench());
         if (! $facade instanceof PWAFacadeInterface) {
-            throw new InvalidArgumentException('Cannot create PWA in facade ' . $facade->getAliasWithNamespace() . ': this facade does not support progressive web apps!');
+            throw new FacadeIncompatibleError('Cannot create PWA in facade ' . $facade->getAliasWithNamespace() . ': this facade does not support progressive web apps!');
         }
         return $facade->getPWA($pwaUid);
     }
@@ -84,7 +73,7 @@ abstract class PWAFactory extends AbstractSelectableComponentFactory
         $ds->dataRead();
         switch ($ds->countRows()) {
             case 0:
-                throw new RuntimeException('No active PWA found with URL "' . $baseUrl . '"!');
+                throw new PWANotFoundError('No active PWA found with URL "' . $baseUrl . '"!');
             case 1:
                 break;
             default:
@@ -94,7 +83,7 @@ abstract class PWAFactory extends AbstractSelectableComponentFactory
         $facadeClass = $ds->getColumns()->get('PAGE_TEMPLATE__FACADE')->getValue(0);
         $facade = FacadeFactory::createFromString($facadeClass, $workbench);
         if (! $facade instanceof PWAFacadeInterface) {
-            throw new InvalidArgumentException('Cannot create PWA in facade ' . $facade->getAliasWithNamespace() . ': this facade does not support progressive web apps!');
+            throw new FacadeIncompatibleError('Cannot create PWA in facade ' . $facade->getAliasWithNamespace() . ': this facade does not support progressive web apps!');
         }
         return $facade->getPWA($pwaUid);
     }
