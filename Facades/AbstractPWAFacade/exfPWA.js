@@ -795,7 +795,7 @@ self.addEventListener('sync', function(event) {
 					});
 				})
 				.then(function(oDataSet){
-					return _pwa.data.cleanupRowsAddedOffline(oDataSet);
+					return oDataSet !== undefined ? _pwa.data.cleanupRowsAddedOffline(oDataSet) : Promise.resolve(oDataSet);
 				})
 			},
 			
