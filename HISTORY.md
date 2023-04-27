@@ -1,20 +1,38 @@
 # Release history
 
-## 1.7 (in development)
+## 1.9 - in development
 
-- NEW Configuration GUI for progressive web apps (PWA)
+## 1.8 - April 2023
+
+- NEW Configurable offline apps (PWA) with greatly improved offline data storage. Entire pages can be made offline capable fully automatically with all neccessary data being determined in advance and visualized in `Administration > Pages > Offline apps`.
+- NEW Second factor authentication can now be added to any authenticator
+- NEW Support for different time zones in data sources
+- NEW Data mapper types `row_filter` and `subsheet_mappers`
+- NEW Advanced debug output for behaviors + behaviors now visible in the performance chart
+- NEW Built-in JavaScript inspector and console, that can be used even without browser support (e.g. on mobile browsers)
+- IMPROVED MS SQL queries by allowing to add `WITH NOLOCK` to certain meta objects
+- IMPROVED behavior models: order of execution (priority) now configurable
 - FIX data authorization point now correctly handles multiple roles assigned to a user
 
-## 1.6
+## 1.7 - February 2023
+
+- NEW app [axenox.IDE](https://github.com/axenox/ide) providing an integrated development environment for files and SQL schemas
+- NEW Widget for Gantt charts (experimental)
+- NEW `WidgetModifyingBehavior` to modify widget in selected pages
+- NEW Pivot-sheets to transpose data sheets in-memory
+- IMPROVED `NotifyingBehavior` can now send notifications after all transactions committed
+- IMPROVED Action `CallAction`
+
+## 1.6 - December 2022
 
 - NEW Auto-refresh for dashboards
-- NEW Data mapper type "unpivot mapper"
+- NEW Data mapper type `unpivot mapper`
 - NEW Action `CallAction` to select the right action depending on the input
 - Improved `FileBehavior` to save files in any data source transparently
 - Improved security
 - Improved action debugger
 
-## 1.5
+## 1.5 - October 2022
 
 - NEW Communication framework to send emails, Teams messages, etc.
 - NEW Full JSON support in HTTP task facade
@@ -24,7 +42,7 @@
 - Improved `ActionChain` configuration
 - Improved Git console in `Administration > Metamodel > Apps`
 
-## 1.4
+## 1.4 - March 2022
 
 - NEW GUI to install payload packages on a workbench(`Administration > Package manager`)
 - NEW Single-sign-on via SQL query to validate passwords against hashes stored in a database by other applications
@@ -38,7 +56,7 @@
 - Improved data mappers now allowing explicit ordering and adding using custom classes
 - FIX much improved form layouts in the UI5 facade
 
-## 1.3
+## 1.3 - may 2021
 
 - NEW action scheuler: `Administration > BG Processing > Scheduler`
 - NEW infrastructure app [axenox.ETL](https://github.com/axenox/ETL) to build and run ETL processes
