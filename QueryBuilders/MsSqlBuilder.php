@@ -633,7 +633,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlAsForTables(string $alias) : string
     {
         if ($this->getMainObject()->getDataAddressProperty('SQL_SELECT_WITH_NOLOCK') === true) {
-            return ' WITH (NOLOCK) AS ' . $alias;
+            return ' (NOLOCK) AS ' . $alias;
         }
         return ' AS ' . $alias;
     }
