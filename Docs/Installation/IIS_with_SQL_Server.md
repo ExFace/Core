@@ -55,29 +55,29 @@ where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `
 
 ## php.ini Settings
 
-There are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory. Rename `php.ini-development` or `php.ini-production` to `php.ini` to start with.
-
-Use the following configuration in addition to the server-independent [recommendations](Recommended_PHP_settings.md).
+There are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory. 
 
 **IMPORTANT**: Recycle your application pool in the IIS Manager to activate changes in `php.ini`!
 
-1. Initial setup
+1. Rename `php.ini-development` or `php.ini-production` to `php.ini` to start with.
+2. Follow the [general recommendations](Recommended_PHP_settings.md) for PHP setup.
+3. Add IIS-specific options
 	- `extension_dir = ./ext` - this is important! If not set, you might not be able to load extensions!
 	- `cgi.force_redirect = 0`
 	- `cgi.fix_pathinfo = 1`
 	- `fastcgi.impersonate = 1`
 	- `extension = sodium`
 	- `sys_temp_dir = "C:\Program Files\PHP\tmp"` - If the path to your `tmp` folder is different change the path to the correct one!
-2. Add SQL Server Extension:
+4. Add SQL Server Extension:
 	- `extension = sqlsrv_74_nts`
-3. WinCache settings:
+5. Configure WinCache (only if WinCache is used!):
 	- `extension = wincache`
 	- `wincache.fcenabled = 1` (optional)
 	- `wincache.ocenabled = 1` (optional)
-4. OPCache settings:
+6. Check OPCache settings:
 	- `zend_extension = "C:\Program Files\PHP\bin\ext\php_opcache.dll"`
 	- `opcache.enable = 1` and other settings as described in the general [PHP recommendations](Recommended_PHP_settings.md)
-5. Recommended security-related settings
+7. Consider to add these recommended security-related settings
 	- `fastcgi.logging = 0` (for dev-environment `1`) 
 	- `display_errors = Off` (for dev-environment `On`) 
 	- `log_errors = On`
@@ -100,15 +100,6 @@ This will automatically create the physical path.
 
 **IMPORTANT**: the built-in user `IUSR` MUST have full access to the newly created folder! Otherwise many administration features will not work properly.
 
-Now it is time to install the workbench via [Composer](Install_via_Composer.md) or the [deployer app](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) (if you already have a build server).
-
-**IMPORTANT**: Don't forget to add the IIS-specific installer to the configuration file `System.config.json` to make sure the workbench has proper access to all files and folders it needs after installtion:
-
-```
-"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"
-
-```
-
 ### Create a database
 
 Create a separate database on the SQL server and assign a user to it. The user **must** have permissions to read and write data and to execute DDL statements lie `CREATE TABLE`, `CREATE VIEW`, etc.
@@ -119,18 +110,6 @@ You can use different types of authentication for the DB user - see documentatio
 
 #### Set up SQL Server Windows authentication
 
-Place the following in the `System.config.json`. No username or password needed!
-
-```
-{
-	"METAMODEL.CONNECTOR_CONFIG": {
-	    "host": "SERVER\\INSTANCE",
-	    "database": "<database>",
-	    "character_set": "UTF-8"
-  	}
-}
-```
-
 **IMPORTANT:** the PHP process must run as the user you need to authenticate with. Depending on the web
 server used, different approaches are possible.
 
@@ -139,18 +118,42 @@ IIS application pools. The configuration of the pool seems not important, but in
 virtual folder, you need to specify the user and password:
 
 1. Open IIS Manager
-2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
-3. Right click on `Default Web Site` and select `Add Virtual Directory`
-4. Fill out the form and press `Connect as...`
-5. Select `Specific user` and press `Set...` right next to it
-6. Type the user name with domain like `MYDOMAIN\User name` and that users current password
+2. Navigate to `<servername> > Sites > Default Web Site` on the left panel (or whatever web site the workbench is going to run in)
+3. Select the virtual directory created previously (or create one as described above)
+4. Press `Basic settings` in the very right pane
+5. Press `Connect as...` in the lower half of the settings window
+6. Select `Specific user` and press `Set...` right next to it
+7. Type the user name with domain like `MYDOMAIN\User name` and that users current password
 
 The workbench must be installed within the folder above. If you need to change the password, select your
 created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
 
-## Securing sensitive folders
+### Copy files and run the installer
 
-See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
+#### **IMPORTANT**: configure the workbench for the options selected above
+
+Make sure the configuration file `System.config.json` exists and add the following configuration options. Where exactly the configuration file is going to be located depends on the installation type in the next step.
+
+```
+{
+	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\MsSqlModelLoader",
+	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MsSqlBuilder",
+	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MsSqlConnector",
+	"METAMODEL.CONNECTOR_CONFIG": {
+	    "host": "SERVER\\INSTANCE",
+	    "database": "<database>",
+	    "character_set": "UTF-8"
+  	},
+	"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"
+}
+```
+
+- Connection settings for the metamodel DB. If SQL Server authentication with username and passwod is going to be used, add `user` and `password` to `METAMODEL.CONNECTOR_CONFIG`. For other options please see the documentation for the `MsSqlConnector` at `Administration > Documentation > Data Connectors`.
+- The IIS server installer to make sure the workbench has proper access to all files and folders it needs after installtion.
+
+#### Install the workbench
+
+Now it is time to install the workbench via [Composer](Install_via_Composer.md) or the [deployer app](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) (if you already have a build server).
 
 ## Add mime types to IIS configuration if required for facades
 
@@ -164,6 +167,10 @@ Different web facades use different file types and extensions. When installing a
 For exampe, the `exface.UI5Facade` based on SAP UI5 uses `.properties` files for translations. This extension is not part of the standard IIS MIME mapping, so it needs to be added with MIME type `text/plain`.
 
 To find out if MIME types are missing, look for `404`-errors in your browsers network debug tools (i.e. richt click > Inspect element).
+
+## Securing sensitive folders
+
+See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
 
 ## Update PHP version
 
