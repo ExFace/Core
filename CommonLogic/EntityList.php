@@ -158,11 +158,11 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
     }
 
     /**
-     * Removes all entities from the list, thus emptying the list.
-     *
-     * @return EntityList
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\EntityListInterface::removeAll()
      */
-    public function removeAll()
+    public function removeAll() : EntityListInterface
     {
         foreach (array_keys($this->getAll()) as $key) {
             $this->removeByKey($key);
