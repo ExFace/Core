@@ -13,13 +13,13 @@ In general running PHP with FastCGI is the preferable way, it performs faster an
 
 ## Required extensions
 
+These built-in extensions must be uncommented in the `php.ini`!
+
 - `mbstring`
 - `intl`
 - `fileinfo`
 - `sodium`
-- `curl` and `openssl` if you plan to use the `UrlDataConnector`
-
-These built-in extensions must be uncommented in the `php.ini`!
+- `curl` and `openssl` unless you are definitely sure, that you will not need make any HTTP requests and will not use the `UrlDataConnector`
 
 ## Other extensions, that might be neede for optional functions
 
@@ -34,9 +34,10 @@ The following setting are recommended in the `php.ini` file in your PHP director
 
 1. Increase memory limit:
 	- `memory_limit = 1G`
-2. Enable `opcache` or `wincache` - see the server-specific installation guides for details. 
+2. Enable `opcache` - see below 
 3. Security-related options
-	- `display_errors = Off`
+	- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
+	- `display_errors = Off` (or leave it `On` for dev-environmens)
 	- `log_errors = On`
 	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to a log file. 
 	- `open_basedir = <path>` - Restrict where PHP processes can read and write on a file system
