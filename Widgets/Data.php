@@ -183,7 +183,7 @@ class Data
                 $data_sheet->getAggregations()->addFromString($attr);
             }
             
-            // Filters and sorters only if lazy loading is disabled!
+            // Filters only if lazy loading is disabled!
             if (! $this->getLazyLoading()) {
                 // Add filters if they have values
                 foreach ($this->getFilters() as $filter_widget) {
@@ -191,9 +191,12 @@ class Data
                         $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
                     }
                 }
-                // Add sorters
-                foreach ($this->getSorters() as $sorter_obj) {
-                    $data_sheet->getSorters()->addFromString($sorter_obj->getProperty('attribute_alias'), $sorter_obj->getProperty('direction'));
+            }
+            
+            // Sorters defined in widget model if data sheet is not sorted or if there is no lazy loading
+            if (! $data_sheet->hasSorters() || ! $this->getLazyLoading()) {
+                foreach ($this->getSorters() as $sorterUxon) {
+                    $data_sheet->getSorters()->addFromString($sorterUxon->getProperty('attribute_alias'), $sorterUxon->getProperty('direction'));
                 }
             }
         }
