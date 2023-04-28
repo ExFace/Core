@@ -8,16 +8,16 @@ To run PowerUI on an IIS server with SQL, configure the IIS server and install P
 
 - Windows Server 2019+
 	1. Install CGI for IIS
-		1. In the Start menu, click the Server Manager tile, and then click OK.
-		2. In Server Manager, select Dashboard, and click Add roles and features.
+		1. In the Start menu, click the `Server Manager` tile, and then click OK.
+		2. In Server Manager, select Dashboard, and click `Add roles and features`.
 		3. In the Add Roles and Features Wizard, on the 'Before You Begin' page, click Next.
-		4. On the 'Select Installation Type' page, select Role-based or Feature-based Installation and click Next
+		4. On the 'Select Installation Type' page, select `Role-based or Feature-based Installation` and click Next
 		5. On the 'Select Destination Server' page, select a server from the server pool, select the server, and click Next.
-		6. On the 'Select Server Roles' page, select Web Server (IIS).
+		6. On the 'Select Server Roles' page, select `Web Server (IIS)`.
 		7. Click next 3 more times to reach the 'Role Services' page.
-		8. Expand 'Web Server' > 'Application Development' and check the 'CGI' box. Click next.
+		8. Expand `Web Server > Application Development` and check the `CGI` box. Click next.
 		9. On the 'Installation Progress' page, confirm that the installation of the Web Server (IIS) role and required role services completed successfully, and then click Close.
-		10. Restart IIS
+		10. **Restart** IIS or recycle the application pool
 	2. Follow the instructions for [Windows Server 2012+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php) to install PHP.
 - [Windows Server 2012+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
 - [Windows Server 2008+ (IIS 7)](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
