@@ -140,7 +140,7 @@ class TwoFactorTOTPAuthenticator extends AbstractAuthenticator
             $this->setTFAUsernameInSession($token->getUsername());
             
             // Throw a special exception
-            throw new AuthenticationIncompleteError($this, 'Please provide a one-time-password', null, null, $token);
+            throw new AuthenticationIncompleteError($this, 'Please provide a one-time-password', '7QCJZL7', null, $token);
         }
         return $token;
     }

@@ -18,8 +18,7 @@ class AuthenticationIncompleteError extends AuthenticationFailedError
      */
     public function getDefaultAlias()
     {
-        // TODO
-        return '7AL3G5P';
+        return '7QCK0MD';
     }
     
     /**
@@ -29,6 +28,6 @@ class AuthenticationIncompleteError extends AuthenticationFailedError
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::DEBUG;
+        return LoggerInterface::INFO;
     }
 }
