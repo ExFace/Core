@@ -15,6 +15,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * A login promt with potentially multiple forms for different authentication options (i.e. local login, LDAP, OAuth, etc.).
@@ -163,13 +164,17 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
                 if ($workbench->getSecurity()->getAuthenticatedToken()->isAnonymous() === false) {
                     $loginPrompt = $provider->createLoginWidget($loginPrompt, true, new UserSelector($workbench, $workbench->getSecurity()->getAuthenticatedToken()->getUsername()));
                     $loginPrompt->setCaption($workbench->getCoreApp()->getTranslator()->translate('SECURITY.CONNECTIONS.LOGIN_TITLE'));
-                    $loginPrompt->getMessageList()->addError($authErr->getMessage());
                     $loginFormCreated = true;
                 }
             } else {
                 $loginPrompt = $provider->createLoginWidget($loginPrompt);
-                $loginPrompt->getMessageList()->addError($authErr->getMessage());
                 $loginFormCreated = true;
+            }
+            
+            // If the exception is debug-level only (e.g. access denied for anonymous users), don't add 
+            // a message - this is nothing a user should sse.
+            if ($loginFormCreated && strcasecmp($authErr->getLogLevel(), LoggerInterface::DEBUG) !== 0) {
+                $loginPrompt->getMessageList()->addMessageFromModel($authErr->getMessageModel($page->getWorkbench()));
             }
         }
         
