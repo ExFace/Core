@@ -18,6 +18,8 @@ use exface\Core\Interfaces\Model\MessageInterface;
 use exface\Core\Factories\MessageFactory;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\DataTypes\LogLevelDataType;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -231,10 +233,21 @@ trait ExceptionTrait {
             if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface){
                 $this->messageModel = $this->getPrevious()->getMessageModel($workbench);
             } else {
-                if (! ($alias = $this->getAlias())) {
+                $alias = $this->getAlias();
+                $aliasProvided = $alias !== null;
+                if (! $aliasProvided) {
                     $alias = '6VCYFND'; // Internal error
                 }
                 $this->messageModel = MessageFactory::createFromCode($workbench, $alias);
+                if (! $aliasProvided) {
+                    $levelCmp = LogLevelDataType::compareLogLevels($this->getLogLevel(), LoggerInterface::WARNING);
+                    switch (true) {
+                        case $levelCmp < 0: $type = MessageTypeDataType::INFO; break;
+                        case $levelCmp === 0: $type = MessageTypeDataType::WARNING; break;
+                        default: $type = MessageTypeDataType::ERROR;
+                    }
+                    $this->messageModel->setType($type);
+                }
             }
             
             if ($this->getUseExceptionMessageAsTitle() === true) {

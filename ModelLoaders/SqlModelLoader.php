@@ -129,6 +129,8 @@ class SqlModelLoader implements ModelLoaderInterface
     
     private $menu_tress_loaded = [];
     
+    private $messages_loaded = [];
+    
     private $auth_policies_loaded = null;
     
     private $apps_loaded = null;
@@ -1873,14 +1875,20 @@ SQL;
     public function loadMessageData(MessageInterface $message) : MessageInterface
     {
         $messageCode = MessageCodeDataType::cast($message->getCode());
-        $sql = <<<SQL
+        
+        if (! array_key_exists($messageCode, $this->messages_loaded)) {
+            $sql = <<<SQL
 -- Load message
 SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
     FROM exf_message
     WHERE code = '{$messageCode}'
 SQL;
-        $result = $this->getDataConnection()->runSql($sql);
-        $row = $result->getResultArray()[0];
+            $result = $this->getDataConnection()->runSql($sql);
+            $row = $result->getResultArray()[0];
+            $this->messages_loaded[$messageCode] = $row;
+        } else {
+            $row = $this->messages_loaded[$messageCode];
+        }
         
         if (empty($row)) {
             return $message;
