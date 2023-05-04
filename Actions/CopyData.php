@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\DataSheetDataType;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Copies all objects in the input data completely, including dependent objects.
@@ -77,7 +78,7 @@ class CopyData extends SaveData implements iCreateData
     {
         $inputSheet = $this->getInputDataSheet($task);
         
-        $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations(), $transaction);
+        $copiedSheets = $this->copyWithRelatedObjects($inputSheet, $this->getCopyRelations($inputSheet->getMetaObject()), $transaction);
         
         $mainCopiedSheet = $copiedSheets[''];
         $copyCounter = $mainCopiedSheet->countRows();
@@ -111,14 +112,16 @@ class CopyData extends SaveData implements iCreateData
      * Returns an array of data sheets with created data. The keys of the array are the relations pathes to the object of the
      * corresponding data sheet. Here is an example copying a meta object with correspoinding attributes and actions: 
      * 
-     * - copyWithRelatiodObjects(sheet_of_meta_objects, [relation_to_attributes, relation_to_actons], transaction)
+     * - copyWithRelatedObjects(sheet_of_meta_objects, [relation_to_attributes, relation_to_actons], transaction)
      * will produce the following array
      *
+     * ```
      * [
      *  '': data_sheet_with_copied_meta_objects
      *  relation_to_attributes: data_sheet_with_copied_attributes_of_all_copied_meta_objects
      *  relation_to_actions: data_sheet_with_copied_actions_of_all_copied_meta_objects
      * ]
+     * ```
      * 
      * This method is meant to be used recursively as a copied object may require copying related objects by itself
      * (configured in the model of the relations). Recursive calls should get the relations path of the previous
@@ -266,7 +269,7 @@ class CopyData extends SaveData implements iCreateData
 
                 // Call the copy-method for the sheet with the related data (don't forget the relation path)
                 $relPath = $relationPathFromHeadObject->copy()->appendRelation($rel);
-                $relCopySheets = $this->copyWithRelatedObjects($relSheet, [], $transaction, $relPath);
+                $relCopySheets = $this->copyWithRelatedObjects($relSheet, $this->getCopyRelations($relSheet->getMetaObject()), $transaction, $relPath);
                 
                 // The result of the recursive call can be any number of sheets, so we need to merge them
                 // with previous results of the foreach().
@@ -276,7 +279,7 @@ class CopyData extends SaveData implements iCreateData
                     if (! isset($result[$path])) {
                         $result[$path] = $sheet;
                     } else {
-                        $result[$path]->addRows($sheet->getRows());
+                        $result[$path]->addRows($sheet->getRows(), false, false);
                     }
                 }
             }
@@ -297,17 +300,20 @@ class CopyData extends SaveData implements iCreateData
     
     /**
      * Returns the the aliases of relations, pointing to the objects, that must be copied
-     * together with the main input object.
+     * together with an object.
      * 
-     * This array will include those relation specified in `copy_related_objects` as well
-     * as those, marked with the property `COPY_WITH_RELATED_OBJECT` in the metamodel.
+     * For the main object of the action this array will include relations specified in 
+     * `copy_related_objects` as well as those, marked with the property `COPY_WITH_RELATED_OBJECT` 
+     * in the metamodel. For other copied objects only the relations from the metamodel
+     * will be returned as the action setting only applie to its main object.
      * 
+     * @param MetaObjectInterface $obj
      * @return string[]
      */
-    protected function getCopyRelationAliases() : array
+    protected function getCopyRelationAliases(MetaObjectInterface $obj) : array
     {
-        $aliases = $this->copyRelatedObjects;
-        foreach ($this->getMetaObject()->getRelations() as $rel) {
+        $aliases = $obj->isExactly($this->getMetaObject()) ? $this->copyRelatedObjects : [];
+        foreach ($obj->getRelations() as $rel) {
             if ($rel->isRightObjectToBeCopiedWithLeftObject()) {
                 $aliases[] = $rel->getAliasWithModifier(); 
             }
@@ -332,14 +338,15 @@ class CopyData extends SaveData implements iCreateData
     }
     
     /**
+     * @see getCopyRelationAliases()
      * 
+     * @param MetaObjectInterface $obj
      * @return MetaRelationInterface[]
      */
-    protected function getCopyRelations() : array
+    protected function getCopyRelations(MetaObjectInterface $obj) : array
     {
         $rels = [];
-        $obj = $this->getMetaObject();
-        foreach ($this->getCopyRelationAliases() as $alias) {
+        foreach ($this->getCopyRelationAliases($obj) as $alias) {
             $parsedRelationPath = RelationPath::relationPathParse($alias);
             if ($parsedRelationPath !== null && count($parsedRelationPath) > 1) {
                 throw new ActionConfigurationError($this, 'Cannot copy related objects from relation "' . $alias . '": only direct relations supported - no paths!');
