@@ -494,11 +494,17 @@ JS;
         validateAll: function() {
             var aData = this.getJExcel().getData() || [];
             var iDataCnt = aData.length;
+            var iSpareRows = {$this->getMinSpareRows()};
             var oWidget = this;
             
             aData.forEach(function(aRow, iRowIdx) {
                 var bRowEmpty = true;
                 var aCells = [];
+                // Spare rows cannot be invalid
+                if (iRowIdx >= iDataCnt - iSpareRows) {
+                    return;
+                }
+                
                 aRow.forEach(function(mValue, iColIdx) {
                     var mValidated;                    
                     var oCell = oWidget.getJExcel().getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1));
