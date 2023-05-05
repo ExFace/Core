@@ -73,8 +73,8 @@ There are a few settings that need to be changed or added to the `php.ini` file 
 **IMPORTANT**: Recycle your application pool in the IIS Manager to activate changes in `php.ini`!
 
 1. Rename `php.ini-development` or `php.ini-production` to `php.ini` to start with.
-2. Follow the [general recommendations](Recommended_PHP_settings.md) for PHP setup.
-3. Add IIS-specific options
+2. Follow the [PHP configuration guide](Recommended_PHP_settings.md) for server-independent setup.
+3. Add IIS specific options
 	- `extension_dir = ./ext` - this is important! If not set, you might not be able to load extensions!
 	- `cgi.force_redirect = 0`
 	- `cgi.fix_pathinfo = 1`
