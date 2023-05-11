@@ -258,7 +258,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof DomainUsernamePasswordAuthToken;
+        return ($token instanceof DomainUsernamePasswordAuthToken) && $this->isSupportedFacade($token);
     }
     
     /**

@@ -195,7 +195,7 @@ class RememberMeAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof RememberMeAuthToken;
+        return ($token instanceof RememberMeAuthToken) && $this->isSupportedFacade($token);
     }
     
     /**

@@ -26,6 +26,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Widgets\Form;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Provides common base function for authenticators.
@@ -56,6 +57,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $disabled = false;
     
     private $usernameReplaceChars = [];
+    
+    private $onlyForFacades = [];
     
     /**
      * 
@@ -461,5 +464,63 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     protected function createLoginForm(Form $emptyForm) : Form
     {
         return $emptyForm;
+    }
+    
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return bool
+     */
+    protected function isSupportedFacade(AuthenticationTokenInterface $token) : bool
+    {
+        if (empty($this->onlyForFacades)) {
+            return true;
+        }
+        
+        if (null === $facade = $token->getFacade()) {
+            return false;
+        }
+        
+        foreach ($this->getOnlyForFacades() as $selector) {
+            if ($facade->isExactly($selector)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getOnlyForFacades() : array
+    {
+        return $this->onlyForFacades;
+    }
+    
+    /**
+     * Array of facade selectors (alias, path or class name), that are allowed to use this authenticator
+     * 
+     * @uxon-property only_for_facades
+     * @uxon-type metamodel:facade[]
+     * 
+     * @param UxonObject $value
+     * @return AbstractAuthenticator
+     */
+    protected function setOnlyForFacades($uxonOrArrayOfSelectors) : AbstractAuthenticator
+    {
+        switch (true) {
+            case $uxonOrArrayOfSelectors instanceof UxonObject: 
+                $array = $uxonOrArrayOfSelectors->toArray();
+                break;
+            case is_array($uxonOrArrayOfSelectors):
+                $array = $uxonOrArrayOfSelectors;
+                break;
+            default:
+                throw new InvalidArgumentException('Invalid argument supplied for setOnlyForFacades() in ' . get_class($this) . ': expecting UXON or array, received ' . gettype($uxonOrArrayOfSelectors));
+        }
+        
+        $this->onlyForFacades = $array;
+        return $this;
     }
 }
