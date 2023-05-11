@@ -123,7 +123,7 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isSupported()
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool {
-        return $token instanceof PasswordAuthenticationTokenInterface;
+        return ($token instanceof PasswordAuthenticationTokenInterface) && $this->isSupportedFacade($token);
     }
     
     /**

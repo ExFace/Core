@@ -208,9 +208,12 @@ SQL;
         // There have been issues with dates when logging migration success/failure on different SQL Server instances
         // This option only seems to work if SQL Server language is "en"
         // return "CAST('" . DateTimeDataType::formatDateNormalized($time) . "' AS DATETIME)";
-        // This one worked for "de"
-        // return "CONVERT(datetime, '" . DateTimeDataType::formatDateNormalized($time) . "', 121)";
+        // This statementa convert a string formatted as `yyyy-mm-dd hh:mm:ss:nnn` to datetime. 
+        // The format number `120` corresponds to the ODBC canonical format without milliseconds (whereas
+        // `121` would be with milliseconds).
+        // @link https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
+        return "CONVERT(datetime, '" . DateTimeDataType::formatDateNormalized($time) . "', 120)";
         // This is what the MsSqlBuilder seems to use anyhow
-        return "'" . DateTimeDataType::formatDateNormalized($time) . "'";
+        // return "'" . DateTimeDataType::formatDateNormalized($time) . "'";
     }
 }
