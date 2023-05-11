@@ -864,8 +864,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $length=strlen($path);
         $cut=strpos($path, $this->getSqlDbType());
         $file_str = substr($path, $cut, ($length-$cut));
+        $file_str = FilePathDataType::normalize($file_str, '/');
         return $file_str;
-        
     }
     
     protected function getInstallerApp()
