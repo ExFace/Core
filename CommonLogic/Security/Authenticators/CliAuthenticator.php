@@ -102,7 +102,7 @@ class CliAuthenticator extends AbstractAuthenticator
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool
     {
-        return $token instanceof CliEnvAuthToken;
+        return ($token instanceof CliEnvAuthToken) && $this->isSupportedFacade($token);
     }
     
     /**
