@@ -228,7 +228,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             $explodedCredential = explode(":", base64_decode($matches[1]), 2);
             if (count($explodedCredential) == 2) {
                 list($username, $password) = $explodedCredential;
-                return new MetamodelUsernamePasswordAuthToken($username, $password);
+                return new MetamodelUsernamePasswordAuthToken($username, $password, $facade);
             }
         }
         return null;
