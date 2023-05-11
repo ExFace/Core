@@ -15,6 +15,7 @@ use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\Factories\FacadeFactory;
 
 abstract class AbstractFacade implements FacadeInterface
 {
@@ -63,18 +64,14 @@ abstract class AbstractFacade implements FacadeInterface
      */
     public function is($aliasOrSelector) : bool
     {
-        if ($aliasOrSelector instanceof FacadeSelectorInterface) {
-            if ($aliasOrSelector->isAlias()) {
-                $facade_alias = $aliasOrSelector->toString();
-            } else {
-                // TODO add support for other selectors
-                throw new NotImplementedError('Cannot compare facade "' . $this->getAliasWithNamespace() . '" with selector "' . $aliasOrSelector->toString() . '": currently only alias-selectors supported!');
-            }
-        }
-        // TODO check if this facade is a derivative of the facade matching the selector
-        if (strcasecmp($this->getAlias(), $facade_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $facade_alias) === 0) {
+        $selector = $aliasOrSelector instanceof FacadeSelectorInterface ? $aliasOrSelector : new FacadeSelector($this->getWorkbench(), $aliasOrSelector);
+        if ($this->isExactly($selector)) {
             return true;
-        } else {
+        }
+        try {
+            $facade = FacadeFactory::create($selector);
+            return ($this instanceof $facade);
+        } catch (\Throwable $e) {
             return false;
         }
     }

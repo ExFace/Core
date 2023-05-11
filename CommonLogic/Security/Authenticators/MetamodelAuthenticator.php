@@ -21,7 +21,7 @@ class MetamodelAuthenticator extends SymfonyAuthenticator
      * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::isSupported()
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool {
-        return $token instanceof MetamodelUsernamePasswordAuthToken;
+        return ($token instanceof MetamodelUsernamePasswordAuthToken) && $this->isSupportedFacade($token);
     }
     
     /**

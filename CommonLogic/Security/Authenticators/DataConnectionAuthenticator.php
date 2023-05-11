@@ -148,6 +148,10 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             return false;
         }
         
+        if (! $this->isSupportedFacade($token)) {
+            return false;
+        }
+        
         return true;
     }
     
