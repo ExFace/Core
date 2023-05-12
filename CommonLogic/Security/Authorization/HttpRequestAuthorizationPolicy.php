@@ -177,7 +177,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                     }
                 }
                 if ($ipMatched === false) {
-                    return PermissionFactory::createNotApplicable($this, 'Client IP does not match');
+                    return PermissionFactory::createNotApplicable($this, 'Client IP "' . $ip . '" does not match policy IP range/mask');
                 }
             }
             
@@ -328,7 +328,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
      * 
      * Each proxy entry must be a single IP address: e.g. `127.0.0.1` or `::1`
      * 
-     * @uxon-property client_ips
+     * @uxon-property proxy_ips
      * @uxon-type array
      * @uxon-template [""]
      * 
