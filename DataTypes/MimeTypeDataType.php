@@ -225,4 +225,17 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
         
         return null;
     }
+    
+    /**
+     * Returns TRUE if the provided string is a valid mime type and FALSE otherwise
+     * 
+     * @link https://stackoverflow.com/a/48046041
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public static function isValidMimeType(string $str) : bool
+    {
+        return preg_match("@(application|audio|font|example|image|message|model|multipart|text|video|x-(?:[0-9A-Za-z!#$%&'*+.^_`|~-]+))/([0-9A-Za-z!#$%&'*+.^_`|~-]+)@", $str) === 1 ? true : false;
+    }
 }
