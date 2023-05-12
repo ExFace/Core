@@ -399,7 +399,8 @@ JS;
     {
         $widget = $this->getWidget();
         $dataObj = $this->getMetaObjectForDataGetter($action);
-        
+        // Determine the columns we need in the actions data
+        $colNamesList = implode(',', $widget->getActionDataColumnNames());
         switch (true) {
             case $action === null:
                 return "($('#{$this->getIdOfSlick()}').data('_exfData') || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
@@ -424,9 +425,6 @@ JS;
                 if ($relAlias === null || $relAlias === '') {
                     throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
                 }
-                
-                // Determine the columns we need in the actions data
-                $colNamesList = implode(',', $widget->getActionDataColumnNames());
                 
                 return <<<JS
 (function(){
