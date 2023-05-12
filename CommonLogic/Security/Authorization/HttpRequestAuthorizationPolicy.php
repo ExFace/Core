@@ -19,6 +19,7 @@ use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use Psr\Http\Message\ServerRequestInterface;
+use exface\Core\DataTypes\IPDataType;
 
 /**
  * Policy for access to HTTP facades.
@@ -50,6 +51,10 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $bodyRegex = null;
     
+    private $clientIps = [];
+    
+    private $proxyIps = [];
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
@@ -66,7 +71,6 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
             $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
         }
         if ($str = $targets[PolicyTargetDataType::FACADE]) {
-            //SelectorFactory::createFacadeSelector($workbench, $selectorString)
             $this->facadeSelector =  new FacadeSelector($this->workbench, $str);
         }
         
@@ -99,18 +103,21 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 throw new InvalidArgumentException('Cannot evalute facade access policy: no facade provided!');
             }
             
+            // Make sure we have a user token
             if ($userOrToken instanceof AuthenticationTokenInterface) {
                 $user = $this->workbench->getSecurity()->getUser($userOrToken);
             } else {
                 $user = $userOrToken;
             }
             
+            // Check if role matches
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
                 return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
             
+            // Check if facade matches
             if ($this->facadeSelector !== null) {
                 if ($facade->isExactly($this->facadeSelector) === true) {
                     $applied = true;
@@ -119,6 +126,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             }
             
+            // Check if URL matches
             if (null !== $pattern = $this->getUrlPathRegex()) {
                 if (preg_match($pattern, $request->getUri()->getPath()) === 1) {
                     $applied = true;
@@ -130,6 +138,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             }
             
+            // Check if query (after `?`) matches
             if (null !== $pattern = $this->getUrlPathRegex()) {
                 if (preg_match($pattern, $request->getUri()->getQuery()) === 1) {
                     $applied = true;
@@ -141,6 +150,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             }
             
+            // Check if body matches
             if (null !== $pattern = $this->getBodyRegex()) {
                 if (preg_match($pattern, $request->getBody()->__toString()) === 1) {
                     $applied = true;
@@ -149,6 +159,25 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                         return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Cannot check `body_pattern`: failed mathing regular expression "' . str_replace("'", "\\'", $pattern) . '"');
                     }
                     return PermissionFactory::createNotApplicable($this, 'Request body does not match pattern');
+                }
+            }
+            
+            // Check allowed IPs
+            if (! empty($clientIps = $this->getClientIps())) {
+                $ip = IPDataType::findIPAddress($request, $this->getProxyIps());
+                if ($ip === null) {
+                    return PermissionFactory::createNotApplicable($this, 'Cannot determin client IP in HTTP request');
+                }
+                $ipMatched = false;
+                foreach ($clientIps as $mask) {
+                    if (IPDataType::isIPInRange($ip, $mask)) {
+                        $applied = true;
+                        $ipMatched = true;
+                        break;
+                    }
+                }
+                if ($ipMatched === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Client IP does not match');
                 }
             }
             
@@ -238,6 +267,77 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function setBodyPattern(string $value) : HttpRequestAuthorizationPolicy
     {
         $this->bodyRegex = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getClientIps() : array
+    {
+        return $this->clientIps;
+    }
+    
+    /**
+     * Apply the policy only if the client IP matches one of the following ips/ranges
+     * 
+     * Each entry can be:
+     * 
+     * - Single IP address: e.g. `127.0.0.1` or `::1`
+     * - IP v4 mask:
+     *      - Wildcard-mask:  Class A (`10.*.*.*`), Class B (`180.16.*.*`) or Class C (`192.137.15.*`)
+     *      - CIDR mask: e.g. `1.2.3/23` or `1.2.3.4/255.255.255.0`
+     * - IP v4 range (start-end): `1.2.3.0-1.2.3.255`
+     * - IP v6 mask:
+     *      - CIDR mask: e.g. `2001:800::/21 OR 2001::/16`
+     * 
+     * @uxon-property client_ips
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $value
+     * @return HttpRequestAuthorizationPolicy
+     */
+    protected function setClientIps(UxonObject $value) : HttpRequestAuthorizationPolicy
+    {
+        $this->clientIps = $value->toArray();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getProxyIps() : array
+    {
+        return $this->proxyIps;
+    }
+    
+    /**
+     * Specifies valid proxy IPs if `client_ips` filtering is enabled.
+     * 
+     * Listing valid proxies is required if access through a proxy server should be possible!
+     * If the client request goes through a proxy, the IP of the proxy will be treated as
+     * client IP by default. However, if that proxy IP is known to be a proxy, we can try
+     * to determine the original IP.
+     * 
+     * Long story short: if client may use proxies and the real client IP is of interest,
+     * all valid proxy IPs MUST be listed here. Otherwise, you can also allow any request
+     * coming from a proxy by adding the proxy IP to `client_ips`.
+     * 
+     * Each proxy entry must be a single IP address: e.g. `127.0.0.1` or `::1`
+     * 
+     * @uxon-property client_ips
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $value
+     * @return HttpRequestAuthorizationPolicy
+     */
+    protected function setProxyIps(UxonObject $value) : HttpRequestAuthorizationPolicy
+    {
+        $this->proxyIps = $value->toArray();
         return $this;
     }
     

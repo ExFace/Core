@@ -11,7 +11,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
  * @author Thomas Ressel
  * 
  */
-class IpDataType extends TextDataType 
+class IPDataType extends TextDataType 
 {
     private $type = null;
     
@@ -115,17 +115,38 @@ class IpDataType extends TextDataType
             return false;
         }
     }
-
+    
     /**
-     * Range formats:
-     * 1. Wildcard:  Class A (10.*.*.*), Class B (180.16.*.*) or Class C (192.137.15.*)
-     * 2. CIDR:      1.2.3/23  OR  1.2.3.4/255.255.255.0
-     * 3. Start-End: 1.2.3.0-1.2.3.255
+     * Checks if the given IP matches a range
+     * 
      * @param string $ip
      * @param string $range
      * @return bool
      */
-    public function isIPv4InRange(string $ip, string $range) : bool 
+    public static function isIPInRange(string $ip, string $range) : bool
+    {
+        $type = static::findIPtype($ip);
+        switch (true) {
+            case $type === self::IPV4: return static::isIPv4InRange($ip, $range);
+            case $type === self::IPV6: return static::isIPv6InRange($ip, $range);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the given IP v4 matches a range
+     * 
+     * Range formats:
+     * 
+     * 1. Wildcard:  Class A (10.*.*.*), Class B (180.16.*.*) or Class C (192.137.15.*)
+     * 2. CIDR:      1.2.3/23  OR  1.2.3.4/255.255.255.0
+     * 3. Start-End: 1.2.3.0-1.2.3.255
+     * 
+     * @param string $ip
+     * @param string $range
+     * @return bool
+     */
+    public static function isIPv4InRange(string $ip, string $range) : bool 
     {
         if ($ip === $range) {
             return true;
@@ -173,8 +194,10 @@ class IpDataType extends TextDataType
     }
 
     /**
-     * Range format:
-     * CIDR:      2001:800::/21 OR 2001::/16
+     * Checks if the given IP v6 matches a range
+     * 
+     * Range format: CIDR: 2001:800::/21 OR 2001::/16
+     * 
      * @param string $ip
      * @param string $range
      * @return bool
@@ -192,7 +215,7 @@ class IpDataType extends TextDataType
         
         // Pad out the shorthand entries.
         $mainIpParts = explode(":", $mainIpPart);
-        foreach($mainIpParts as $key => $_value) {
+        foreach(array_keys($mainIpParts) as $key) {
             $mainIpParts[$key] = str_pad($mainIpParts[$key], 4, "0", STR_PAD_LEFT);
         }
         
@@ -244,7 +267,7 @@ class IpDataType extends TextDataType
         
         // Pad out the shorthand entries.
         $mainIpParts = explode(":", $mainIpPart);
-        foreach($mainIpParts as $key => $_value) {
+        foreach(array_keys($mainIpParts) as $key) {
             $mainIpParts[$key] = str_pad($mainIpParts[$key], 4, "0", STR_PAD_LEFT);
         }
         
