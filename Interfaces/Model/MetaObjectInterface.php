@@ -293,10 +293,11 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function getDataConnection();
     
     /**
-     * Sets a custom data connection to be used for this object.
-     * This way, the default connection for the data source can be overridden!
+     * Sets a custom data connection to be used for this object (or NULL to use the default connection).
+     * 
+     * This way, the default connection for the data source can be temporarily overridden!
      *
-     * @param string $alias
+     * @param string|NULL $alias
      * @return MetaObjectInterface
      */
     public function setDataConnectionAlias($alias) : MetaObjectInterface;
