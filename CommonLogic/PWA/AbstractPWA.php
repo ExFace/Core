@@ -479,6 +479,7 @@ abstract class AbstractPWA implements PWAInterface
         // Update PWA
         $dsPWA = $this->getDataForPWA();
         $dsPWA->setCellValue('GENERATED_ON', 0, DateTimeDataType::now());
+        $dsPWA->setCellValue('VERSION_BUILD', 0, str_replace(['-', ':', ' '], '', DateTimeDataType::now()));
         $dsPWA->dataUpdate(false, $transaction);
         
         yield 'DONE generating PWA "' . $this->getURL() . '"';
@@ -784,6 +785,17 @@ abstract class AbstractPWA implements PWAInterface
         return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_FLAG', 0);
     }
     
+    /**
+     * 
+     * @return string
+     */
+    public function getVersion() : string
+    {
+        $versionNO = $this->getDataForPWA()->getCellValue('VERSION_NO', 0);
+        $versionBuild = $this->getDataForPWA()->getCellValue('VERSION_BUILD', 0);
+        return $versionNO .  "+" . $versionBuild;
+    }
+    
     public function isAvailableOfflineHelp() : bool
     {
         return $this->getDataForPWA()->getCellValue('AVAILABLE_OFFLINE_HELP_FLAG', 0);
@@ -828,7 +840,8 @@ abstract class AbstractPWA implements PWAInterface
             'PWA' => $this->getUid(),
             'CONTENT' => $content,
             'SIZE' => mb_strlen($content),
-            'USERNAME' => $userOrToken->getUsername()
+            'USERNAME' => $userOrToken->getUsername(),
+            'VERSION' => $this->getVersion()
         ]);
         $ds->dataCreate();
         return $ds;
