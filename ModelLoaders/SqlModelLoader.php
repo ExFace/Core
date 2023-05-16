@@ -409,6 +409,9 @@ class SqlModelLoader implements ModelLoaderInterface
                             try {
                                 $leftKeyAttr = $object->getUidAttribute();
                             } catch (MetaObjectHasNoUidAttributeError $e) {
+                                if ($objectUid === $row['object_oid']) {
+                                    throw new MetaRelationBrokenError($object, 'Self-relation "' . $row['attribute_alias'] . '" of object ' . $object->__toString() . ' broken: object has no UID attribute!');
+                                }
                                 try {
                                     $rightObject = $this->getModel()->getObjectById($row['object_oid']);
                                     $error = 'Broken relation "' . $row['attribute_alias'] . '" from ' . $rightObject->getAliasWithNamespace() . ' to ' . $object->getAliasWithNamespace() . ': ' . $e->getMessage();
@@ -1920,6 +1923,7 @@ SQL;
     public function loadApp($appOrSelector) : AppInterface
     {
         if ($this->apps_loaded === null) {
+            $freshLoad = true;
             $sql = <<<SQL
 -- Load app
 SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
@@ -1927,6 +1931,8 @@ SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name
 SQL;
             $result = $this->getDataConnection()->runSql($sql);
             $this->apps_loaded = $result->getResultArray();
+        } else {
+            $freshLoad = false;
         }
         
         if ($appOrSelector instanceof AppSelectorInterface) {
@@ -1948,6 +1954,12 @@ SQL;
             }
         });
         if (empty($rows)) {
+            // If the app is not found, refresh the cache in case it was just installed
+            // (after the cache was read)
+            if ($freshLoad === false) {
+                $this->apps_loaded = null;
+                return $this->loadApp($appOrSelector);
+            }
             throw new AppNotFoundError('App "' . $selector->toString() . '" not found in meta model!');
         }
         $row = reset($rows);
