@@ -25,8 +25,6 @@ use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Exceptions\InternalError;
 
 /**
  * Default implementation of the SecurityManagerInterface.
