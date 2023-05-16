@@ -635,7 +635,7 @@ self.addEventListener('sync', function(event) {
 				.get(sPwaUrl)
 				.then(function(oRow) {
 					oPWA = oRow;
-					return fetch('api/pwa/model/' + sPwaUrl)
+					return fetch('api/pwa/' + sPwaUrl + '/model')
 				})
 				.then(function(oResponse) {
 					if (oResponse.status == 404) {
@@ -1071,7 +1071,7 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve({});
 				}
 				
-				return fetch('api/pwa/errors/' + _pwa.getDeviceId(), {
+				return fetch('api/pwa/errors?deviceId=' + _pwa.getDeviceId(), {
 					method: 'GET'
 				})
 				.then(function(response){
