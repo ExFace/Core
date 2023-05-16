@@ -94,8 +94,8 @@ class PWAapiFacade extends HttpTaskFacade
             case $route === self::ROUTE_DATA:
                 // Check if array contains DataSetUid, if not, set dataSetUid to old routePath
                 // api/pwa/<pwaUrl>/data?dataSetUid=<dataSetUid>
-                if (array_key_exists("dataSetUid", $request->getQueryParams())) {
-                    $dataSetUid = $request->getQueryParams()['dataSetUid'];
+                if (array_key_exists("dataset", $request->getQueryParams())) {
+                    $dataSetUid = $request->getQueryParams()['dataset'];
                 } else {
                     // api/pwa/<pwaUrl>/data/<dataSetUid>
                     $dataSetUid = $routePath;
@@ -208,7 +208,7 @@ class PWAapiFacade extends HttpTaskFacade
      */
     protected function buildUrlToGetOfflineData(PWADatasetInterface $dataSet) : string
     {
-        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "?dataSetUid={$dataSet->getUid()}";
+        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "?dataset={$dataSet->getUid()}";
     }
     
     /**
