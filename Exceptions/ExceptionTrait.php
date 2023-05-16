@@ -238,15 +238,20 @@ trait ExceptionTrait {
                 if (! $aliasProvided) {
                     $alias = '6VCYFND'; // Internal error
                 }
-                $this->messageModel = MessageFactory::createFromCode($workbench, $alias);
-                if (! $aliasProvided) {
-                    $levelCmp = LogLevelDataType::compareLogLevels($this->getLogLevel(), LoggerInterface::WARNING);
-                    switch (true) {
-                        case $levelCmp < 0: $type = MessageTypeDataType::INFO; break;
-                        case $levelCmp === 0: $type = MessageTypeDataType::WARNING; break;
-                        default: $type = MessageTypeDataType::ERROR;
+                try {
+                    $this->messageModel = MessageFactory::createFromCode($workbench, $alias);
+                    if (! $aliasProvided) {
+                        $levelCmp = LogLevelDataType::compareLogLevels($this->getLogLevel(), LoggerInterface::WARNING);
+                        switch (true) {
+                            case $levelCmp < 0: $type = MessageTypeDataType::INFO; break;
+                            case $levelCmp === 0: $type = MessageTypeDataType::WARNING; break;
+                            default: $type = MessageTypeDataType::ERROR;
+                        }
+                        $this->messageModel->setType($type);
                     }
-                    $this->messageModel->setType($type);
+                } catch (\Throwable $e) {
+                    $workbench->getLogger()->logException($e);
+                    $this->messageModel = MessageFactory::createError($workbench, 'Unknown error');
                 }
             }
             
