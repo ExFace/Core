@@ -164,16 +164,21 @@ class MetaModelInstaller extends AbstractAppInstaller
         // Uninstall additions first as the may depend on the apps model
         foreach ($this->getAdditions() as $addition) {
             $sheet = $addition['sheet'];
+            
+            if ($sheet->isUnfiltered()) {
+                yield $idt . $idt . 'Cannot uninstall ' . $sheet->getMetaObject()->__toString() . ': data has no app relation!';
+            }
+            
             if ($sheet->hasUIdColumn()) {
                 // Read data to fill the UID column. Some data source do not support deletes via
                 // filter (or filter over relations), so it is safer to fetch the UIDs here.
                 $sheet->dataRead();
                 if ($sheet->hasUidColumn(true)) {
                     $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction);
+                    $counter += $sheet->dataDelete($transaction, true, true);
                 }
             } else {
-                $counter += $sheet->dataDelete($transaction);
+                $counter += $sheet->dataDelete($transaction, true, true);
             }
         }
         
@@ -186,7 +191,7 @@ class MetaModelInstaller extends AbstractAppInstaller
             }
         }
         $appSheet->getFilters()->removeAll();
-        $counter += $appSheet->dataDelete($transaction);
+        $counter += $appSheet->dataDelete($transaction, true, true);
         
         $transaction->commit();
         
@@ -234,6 +239,10 @@ class MetaModelInstaller extends AbstractAppInstaller
             $ds = $addition['sheet'];
             $subdir = $addition['subfolder'];
             $lastUpdAlias = $addition['lastUpdateAttributeAlias'];
+            
+            if ($ds->isUnfiltered()) {
+                yield $idt . 'Cannot backup ' . $ds->getMetaObject()->__toString() . ': data has no app relation!';
+            }
             
             $ds->dataRead();
             $nr = $additionCnt[$subdir] = ($additionCnt[$subdir] ?? 0) + 1;
