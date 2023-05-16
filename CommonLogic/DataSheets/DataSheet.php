@@ -1606,7 +1606,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataDelete()
      */
-    public function dataDelete(DataTransactionInterface $transaction = null) : int
+    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true, $skipCascadeErrors = false) : int
     {
         if ($this->getMetaObject()->isWritable() === false) {
             throw new DataSheetWriteError($this, 'Cannot delete data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
@@ -1643,9 +1643,9 @@ class DataSheet implements DataSheetInterface
             $query->setFiltersConditionGroup($this->getFilters());
         }
         
-        if ($eventBefore->isPreventDeleteCascade() === false) {
+        if ($cascading === true && $eventBefore->isPreventDeleteCascade() === false) {
             // Check if there are dependent object, that require cascading deletes
-            foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
+            foreach ($this->getSubsheetsForCascadingDelete($skipCascadeErrors) as $ds) {
                 // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
                 // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
                 // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
@@ -1694,7 +1694,12 @@ class DataSheet implements DataSheetInterface
                 } catch (MetaObjectHasNoDataSourceError $e) {
                     // Just ignore objects without data sources - there is nothing to delete there!
                 } catch (\Throwable $e) {
-                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '): ' . rtrim($e->getMessage(), ".!") . '. Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
+                    $e2 = new DataSheetDeleteError($ds, 'Cannot delete related data for ' . $this->getMetaObject()->__toString() . ': ' . rtrim($e->getMessage(), ".!") . '. Please remove related ' . $ds->getMetaObject()->__toString() . ' manually and try again.', '6ZISUAJ', $e);
+                    if ($skipCascadeErrors) {
+                        $this->getWorkbench()->getLogger()->logException($e2);
+                    } else {
+                        throw $e2;
+                    }
                 }
             }
         }
@@ -1735,7 +1740,7 @@ class DataSheet implements DataSheetInterface
      *
      * @return DataSheetInterface[]
      */
-    public function getSubsheetsForCascadingDelete()
+    public function getSubsheetsForCascadingDelete(bool $skipErrors = false)
     {
         $subsheets = array();
         // Check if there are dependent objects, that require cascading deletes
@@ -1744,63 +1749,72 @@ class DataSheet implements DataSheetInterface
         $thisObj = $this->getMetaObject();
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
         foreach ($thisObj->getRelations() as $rel) {
-            if ($rel->getCardinality() == RelationCardinalityDataType::N_TO_ONE) {
-                continue;
-            }
-            if ($rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE) {
-                // for 1-to-1 relaitons it is important, for which object the relation was defined.
-                if ($rel->getRightKeyAttribute()->isRelation() === true && $rel->getRightKeyAttribute()->getRelation()->reverse() === $rel) {
-                    // If the 1-to-1 relation actually belongs to the right object, we need
-                    // to see if that object must be deleted (just like with 1-to-n relations)
-                    // TODO #1-to-1-relations
-                    continue;
-                } else {
+            try {
+                if ($rel->getCardinality() == RelationCardinalityDataType::N_TO_ONE) {
                     continue;
                 }
-            }
-            // Skip objects, that are not writable
-            if ($rel->getRightObject()->isWritable() === false) {
-                continue;
-            }
-            
-            // See if the relation is marked to delete its right object (= related) together with the left object
-            if ($rel->isRightObjectToBeDeletedWithLeftObject()) {
-                $ds = DataSheetFactory::createFromObject($rel->getRightObject());
-                // Use all filters of the original query in the cascading queries
-                $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));
-                // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
-                // only affect the loaded rows and nothing "invisible" to the user!
-                if ($thisUidCol = $this->getUidColumn()) {
-                    $uids = $thisUidCol->getValues(false);
-                    if (! empty($uids)) {
-                        // Add a filter of the key attribute of the relation on its right side (e.g. if deleting USERs, we
-                        // would also delete USER_ROLE_USERS with a filter over the USER attribute - which is the right key
-                        // of the reverse relation from USER to USER_ROLE_USERS)
-                        $ds->getFilters()->addConditionFromValueArray($rel->getRightKeyAttribute()->getAlias(), $uids);
+                if ($rel->getCardinality() == RelationCardinalityDataType::ONE_TO_ONE) {
+                    // for 1-to-1 relaitons it is important, for which object the relation was defined.
+                    if ($rel->getRightKeyAttribute()->isRelation() === true && $rel->getRightKeyAttribute()->getRelation()->reverse() === $rel) {
+                        // If the 1-to-1 relation actually belongs to the right object, we need
+                        // to see if that object must be deleted (just like with 1-to-n relations)
+                        // TODO #1-to-1-relations
+                        continue;
+                    } else {
+                        continue;
                     }
-                    
-                    // For self-relations some additional filters need to be done on cascading delete sheets!
-                    if ($this->getMetaObject()->isExactly($ds->getMetaObject()) === true) {
-                        // The cascading delete should not attempt to delete the rows already taken care
-                        // of by this sheet - so exclude them by filter! Otherwise we will get infinite 
-                        // recursion!
-                        $ds->getFilters()->addConditionFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
-                        // Also keep UID-filters of the main sheet in addition to the rebased filters
-                        // to make sure, that if we have excluding filters (= meaning DO NOT DELETE 
-                        // certain UIDs), the cascading deletes will not delete the corresponding items
-                        // either.
-                        // For example: concider nested categories via PARENT attribute. If we delete
-                        // all with UID!=2, the cascading deletes might kill category 2 too if it is a child
-                        // of any other category being deleted. Adding UID!=2 to the cascading subsheets will 
-                        // ensure, that category 2 survives in any case!
-                        foreach ($this->getFilters()->getConditions(function(ConditionInterface $cond) use ($thisUidCol) {
-                            return $cond->getExpression()->toString() === $thisUidCol->getAttributeAlias();
-                        }) as $cond) {
-                            $ds->getFilters()->addCondition($cond->copy());
+                }
+                // Skip objects, that are not writable
+                if ($rel->getRightObject()->isWritable() === false) {
+                    continue;
+                }
+                
+                // See if the relation is marked to delete its right object (= related) together with the left object
+                if ($rel->isRightObjectToBeDeletedWithLeftObject()) {
+                    $ds = DataSheetFactory::createFromObject($rel->getRightObject());
+                    // Use all filters of the original query in the cascading queries
+                    $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));
+                    // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
+                    // only affect the loaded rows and nothing "invisible" to the user!
+                    if ($thisUidCol = $this->getUidColumn()) {
+                        $uids = $thisUidCol->getValues(false);
+                        if (! empty($uids)) {
+                            // Add a filter of the key attribute of the relation on its right side (e.g. if deleting USERs, we
+                            // would also delete USER_ROLE_USERS with a filter over the USER attribute - which is the right key
+                            // of the reverse relation from USER to USER_ROLE_USERS)
+                            $ds->getFilters()->addConditionFromValueArray($rel->getRightKeyAttribute()->getAlias(), $uids);
+                        }
+                        
+                        // For self-relations some additional filters need to be done on cascading delete sheets!
+                        if ($this->getMetaObject()->isExactly($ds->getMetaObject()) === true) {
+                            // The cascading delete should not attempt to delete the rows already taken care
+                            // of by this sheet - so exclude them by filter! Otherwise we will get infinite 
+                            // recursion!
+                            $ds->getFilters()->addConditionFromString($thisUidCol->getAttributeAlias(), implode(',', $uids), ComparatorDataType::NOT_IN);
+                            // Also keep UID-filters of the main sheet in addition to the rebased filters
+                            // to make sure, that if we have excluding filters (= meaning DO NOT DELETE 
+                            // certain UIDs), the cascading deletes will not delete the corresponding items
+                            // either.
+                            // For example: concider nested categories via PARENT attribute. If we delete
+                            // all with UID!=2, the cascading deletes might kill category 2 too if it is a child
+                            // of any other category being deleted. Adding UID!=2 to the cascading subsheets will 
+                            // ensure, that category 2 survives in any case!
+                            foreach ($this->getFilters()->getConditions(function(ConditionInterface $cond) use ($thisUidCol) {
+                                return $cond->getExpression()->toString() === $thisUidCol->getAttributeAlias();
+                            }) as $cond) {
+                                $ds->getFilters()->addCondition($cond->copy());
+                            }
                         }
                     }
+                    $subsheets[] = $ds;
                 }
-                $subsheets[] = $ds;
+            } catch (\Throwable $e) {
+                $e2 = new DataSheetDeleteError($this, 'Cannot read data for cascading delete of ' . $rel->getRightObject()->__toString() . ': ' . $e->getMessage(), null, $e);
+                if ($skipErrors) {
+                    $this->getWorkbench()->getLogger()->logException($e2);
+                } else {
+                    throw $e2;
+                }
             }
         }
         return $subsheets;
