@@ -231,6 +231,10 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($res = $query->getResultArray()) {
             $row = $res[0];
             
+            if ($row['app_alias'] === null) {
+                throw new AppNotFoundError('Corrupted meta object "' . $row['app_alias'] . '" - app "' . $row['app_oid'] . '" not found!');
+            }
+            
             $object->setId($row['oid']);
             $object->setAlias($row['object_alias']);
             $object->setDataSourceId($row['data_source_oid']);
