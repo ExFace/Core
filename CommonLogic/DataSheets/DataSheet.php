@@ -1606,7 +1606,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataDelete()
      */
-    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true, $skipCascadeErrors = false) : int
+    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true) : int
     {
         if ($this->getMetaObject()->isWritable() === false) {
             throw new DataSheetWriteError($this, 'Cannot delete data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
@@ -1645,31 +1645,31 @@ class DataSheet implements DataSheetInterface
         
         if ($cascading === true && $eventBefore->isPreventDeleteCascade() === false) {
             // Check if there are dependent object, that require cascading deletes
-            foreach ($this->getSubsheetsForCascadingDelete($skipCascadeErrors) as $ds) {
-                // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
-                // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
-                // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
-                
-                // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
-                // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
-                if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
-                    continue;
-                }
-                
-                // See if the data sheet has any columns and add the system attributes if not
-                // We need some columns as we will read data later on
-                if ($ds->getColumns()->isEmpty()) {
-                    $ds->getColumns()->addFromSystemAttributes();
-                }
-                
-                // If the there can be data, but there are no rows, read the data
+            foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
                 try {
+                    // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
+                    // preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
+                    // a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
+                    
+                    // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
+                    // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
+                    if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
+                        continue;
+                    }
+                    
+                    // See if the data sheet has any columns and add the system attributes if not
+                    // We need some columns as we will read data later on
+                    if ($ds->getColumns()->isEmpty()) {
+                        $ds->getColumns()->addFromSystemAttributes();
+                    }
+                    
+                    // If the there can be data, but there are no rows, read the data
                     switch (true) {
                         // If there are no columns, delete without reading current data. This still can happen
                         // even after we added system columns a few lines ago - there may not be any system columns
                         // - e.g. for a SQL view which was accidently marked as writable in the metamodel
                         case $ds->getColumns()->isEmpty():
-                            $ds->dataDelete($transaction);
+                            $ds->dataDelete($transaction, $cascading);
                             break;
                         // Read current data to double-check there is something to delete
                         case $ds->dataRead() > 0:                    
@@ -1688,18 +1688,13 @@ class DataSheet implements DataSheetInterface
                                 // Add an IN-filter for the UID column
                                 $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
                             }
-                            $ds->dataDelete($transaction);
+                            $ds->dataDelete($transaction, $cascading);
                             break;
                     }
                 } catch (MetaObjectHasNoDataSourceError $e) {
                     // Just ignore objects without data sources - there is nothing to delete there!
                 } catch (\Throwable $e) {
-                    $e2 = new DataSheetDeleteError($ds, 'Cannot delete related data for ' . $this->getMetaObject()->__toString() . ': ' . rtrim($e->getMessage(), ".!") . '. Please remove related ' . $ds->getMetaObject()->__toString() . ' manually and try again.', '6ZISUAJ', $e);
-                    if ($skipCascadeErrors) {
-                        $this->getWorkbench()->getLogger()->logException($e2);
-                    } else {
-                        throw $e2;
-                    }
+                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for ' . $this->getMetaObject()->__toString() . ': ' . rtrim($e->getMessage(), ".!") . '. Please remove related ' . $ds->getMetaObject()->__toString() . ' manually and try again.', '6ZISUAJ', $e);
                 }
             }
         }
@@ -1740,7 +1735,7 @@ class DataSheet implements DataSheetInterface
      *
      * @return DataSheetInterface[]
      */
-    public function getSubsheetsForCascadingDelete(bool $skipErrors = false)
+    public function getSubsheetsForCascadingDelete()
     {
         $subsheets = array();
         // Check if there are dependent objects, that require cascading deletes
@@ -1809,12 +1804,7 @@ class DataSheet implements DataSheetInterface
                     $subsheets[] = $ds;
                 }
             } catch (\Throwable $e) {
-                $e2 = new DataSheetDeleteError($this, 'Cannot read data for cascading delete of ' . $rel->getRightObject()->__toString() . ': ' . $e->getMessage(), null, $e);
-                if ($skipErrors) {
-                    $this->getWorkbench()->getLogger()->logException($e2);
-                } else {
-                    throw $e2;
-                }
+                throw new DataSheetDeleteError($this, 'Cannot read data for cascading delete of ' . $rel->getRightObject()->__toString() . ': ' . $e->getMessage(), null, $e);
             }
         }
         return $subsheets;

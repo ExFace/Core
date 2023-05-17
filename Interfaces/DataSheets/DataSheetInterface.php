@@ -333,14 +333,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * @param DataTransactionInterface $transaction
      * @param bool $cascading
-     * @param boolean $skipCascadeErrors
      *          
      * @triggers \exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnDeleteDataEvent
      * 
      * @return int
      */
-    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true, $skipCascadeErrors = false) : int;
+    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true) : int;
 
     /**
      *

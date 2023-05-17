@@ -537,7 +537,7 @@ class PageInstaller extends AbstractAppInstaller
         $transaction = $transaction ?? $this->getTransaction();
         $ds = $this->createPageDataSheet();
         $page->exportDataRow($ds);
-        return $ds->dataDelete($transaction, true, true);
+        return $ds->dataDelete($transaction);
     }
     
     /**
