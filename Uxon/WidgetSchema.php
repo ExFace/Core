@@ -8,6 +8,9 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\Widgets\Container;
+use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * UXON-schema class for widgets.
@@ -103,73 +106,102 @@ class WidgetSchema extends UxonSchema
         foreach ($obj->getAttributes() as $attr) {
             $allWidgets[] = ['attribute_alias' => $attr->getAlias()];
             if ($attr->isEditable()) {
-                $editableWigets[] = ['attribute_alias' => $attr->getAlias()];
+                $editableWigets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
             if (! $attr->isHidden()) {
-                $visibleWidgets[] = ['attribute_alias' => $attr->getAlias()];
+                $visibleWidgets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
             if ($attr->getDefaultDisplayOrder() !== null) {
-                $defaultDisplayWidgets[] = ['attribute_alias' => $attr->getAlias()];
+                $defaultDisplayWidgets[$attr->getDefaultDisplayOrder()] = ['attribute_alias' => $attr->getAlias()];
             }
             if ($attr->isRequired()) {
-                $requiredWidgets[] = ['attribute_alias' => $attr->getAlias()];
+                $requiredWidgets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
         }
+        ksort($editableWigets);
+        $editableWigets = array_values($editableWigets);
+        ksort($visibleWidgets);
+        $visibleWidgets = array_values($visibleWidgets);
+        ksort($defaultDisplayWidgets);
+        $defaultDisplayWidgets = array_values($defaultDisplayWidgets);
+        ksort($requiredWidgets);
+        $requiredWidgets = array_values($requiredWidgets);
+        ksort($allWidgets);
+        $allWidgets = array_values($allWidgets);
+        
+        if (empty($allWidgets)) {
+            return $presets;
+        }
+        
+        $prototype = str_replace('\\', '/', Container::class) . '.php';
         
         $presets[] = [
             'UID' => '',
             'NAME' => 'Container with all attributes',
             'PROTOTYPE__LABEL' => 'Container',
             'DESCRIPTION' => '',
-            'PROTOTYPE' => Container::class,
+            'PROTOTYPE' => $prototype,
             'UXON' => (new UxonObject([
                 'widgets' => $allWidgets
             ]))->toJson()
         ];
         
-        $presets[] = [
-            'UID' => '',
-            'NAME' => 'Container with all editable attributes',
-            'PROTOTYPE__LABEL' => 'Container',
-            'DESCRIPTION' => '',
-            'PROTOTYPE' => Container::class,
-            'UXON' => (new UxonObject([
-                'widgets' => $editableWigets
-            ]))->toJson()
-        ];
+        if (! empty($editableWigets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Container with all editable attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $prototype,
+                'UXON' => (new UxonObject([
+                    'widgets' => $editableWigets
+                ]))->toJson()
+            ];
+        }
         
-        $presets[] = [
-            'UID' => '',
-            'NAME' => 'Container with all visible attributes',
-            'PROTOTYPE__LABEL' => 'Container',
-            'DESCRIPTION' => '',
-            'PROTOTYPE' => Container::class,
-            'UXON' => (new UxonObject([
-                'widgets' => $visibleWidgets
-            ]))->toJson()
-        ];
+        if (! empty($visibleWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Container with all visible attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $prototype,
+                'UXON' => (new UxonObject([
+                    'widgets' => $visibleWidgets
+                ]))->toJson()
+            ];
+        }
         
-        $presets[] = [
-            'UID' => '',
-            'NAME' => 'Container with default display editable attributes',
-            'PROTOTYPE__LABEL' => 'Container',
-            'DESCRIPTION' => '',
-            'PROTOTYPE' => Container::class,
-            'UXON' => (new UxonObject([
-                'widgets' => $defaultDisplayWidgets
-            ]))->toJson()
-        ];
+        if (! empty($defaultDisplayWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Container with default display editable attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $prototype,
+                'UXON' => (new UxonObject([
+                    'widgets' => $defaultDisplayWidgets
+                ]))->toJson()
+            ];
+        }
         
-        $presets[] = [
-            'UID' => '',
-            'NAME' => 'Container with all required attributes',
-            'PROTOTYPE__LABEL' => 'Container',
-            'DESCRIPTION' => '',
-            'PROTOTYPE' => Container::class,
-            'UXON' => (new UxonObject([
-                'widgets' => $requiredWidgets
-            ]))->toJson()
-        ];
+        if (! empty($requiredWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Container with all required attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $prototype,
+                'UXON' => (new UxonObject([
+                    'widgets' => $requiredWidgets
+                ]))->toJson()
+            ];
+        }
+        
+        $sorter = new RowDataArraySorter();
+        $sorter->addCriteria('PROTOTYPE', SORT_ASC);
+        $sorter->addCriteria('NAME', SORT_ASC);
+        $presets = $sorter->sort($presets);
         
         return $presets;
     }
