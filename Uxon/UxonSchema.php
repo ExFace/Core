@@ -58,6 +58,7 @@ use exface\Core\DataTypes\TimeZoneDataType;
  * - metamodel:role
  * - metamodel:username
  * - metamodel:communication_channel
+ * - metamodel:facade (TODO)
  * - metamodel:<object_alias>:<attribute_alias> - values of the meta attribute
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
