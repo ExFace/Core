@@ -89,7 +89,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function uninstall() : \Iterator
     {
-        return 'SQL schema uninstaller not implemented for ' . $this->getSelectorInstalling()->toString() . '!' . PHP_EOL;
+        yield 'SQL schema uninstaller not implemented for ' . $this->getSelectorInstalling()->toString() . '!' . PHP_EOL;
     }
 
     /**
@@ -100,7 +100,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function backup(string $destination_absolute_path) : \Iterator
     {
-        return 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->toString() . '"!' . PHP_EOL;
+        yield 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->toString() . '"!' . PHP_EOL;
     }
 
     /**
