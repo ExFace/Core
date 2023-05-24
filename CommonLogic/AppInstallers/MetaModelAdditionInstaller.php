@@ -22,7 +22,7 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
     
     private $appInstalled = null;
     
-    private $dataSheet = null;
+    private $dataSheets = [];
     
     public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer)
     {
@@ -49,7 +49,8 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
      */
     protected function createModelDataSheet(string $objectSelector, string $appRelationAttribute, string $sorterAttribute, array $excludeAttributeAliases = []) : DataSheetInterface
     {
-        if ($this->dataSheet === null) {
+        $cacheKey = $objectSelector . '::' . $appRelationAttribute . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
+        if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
             $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
@@ -73,14 +74,12 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
             // there next time (e.g. if we need the sheet after the app was installed)
             if ($appUid !== null) {
                 $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::EQUALS);
-                $this->dataSheet = $ds;
+                $this->dataSheets[$cacheKey] = $ds;
             } else {
                 // If we do not have an app UID, make sure the filter NEVER matches anything, so the
                 // installer will not have any effect!
                 $ds->getFilters()->addConditionFromString($appRelationAttribute, '0x0', ComparatorDataType::EQUALS);
             }
-        } else {
-            $ds = $this->dataSheet;
         }
         
         return $ds->copy();
