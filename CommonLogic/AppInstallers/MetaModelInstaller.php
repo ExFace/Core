@@ -23,7 +23,6 @@ use exface\Core\Exceptions\EncryptionError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
