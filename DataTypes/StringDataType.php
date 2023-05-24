@@ -473,18 +473,20 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Shortens the given $string to a maximum of $length characters
      * 
      * @param string $string
      * @param int $length
-     * @param bool $stickToWords
-     * @param bool $ellipsis
+     * @param bool $stickToWords prevents words getting cut in the middle
+     * @param bool $ellipsis adds `...` at the end if the string is really shortened
+     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull for debug output)
      * @return string
      */
-    public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false, bool $ellipsis = false) : string
+    public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false, bool $ellipsis = false, bool $endHint = false) : string
     {
-        $trunc = strlen($string) > $length;
+        $stringLength = mb_strlen($string);
         
-        if ($trunc === true) {
+        if ($stringLength > $length) {
             if ($ellipsis) {
                 $length = max($length - 3, 3);
             }
@@ -496,6 +498,9 @@ class StringDataType extends AbstractDataType
             }
             if ($ellipsis) {
                 $string .= '...';
+            }
+            if ($endHint) {
+                $string .= ' [truncated ' . number_format($stringLength) . ' characters]';
             }
         }
         
