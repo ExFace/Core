@@ -120,8 +120,14 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             if ($row['SHORT_DESCRIPTION'] === 'VIEW') {
                 $row['SHORT_DESCRIPTION'] = '';
             }
+            
+            if (substr($row['ALIAS'], 0, 1) === '_') {
+                $rows[$nr]['ALIAS'] = ltrim($row['ALIAS'], '_');
+            }
+            
             $rows[$nr]['NAME'] = $this->generateLabel($row['NAME'], $row['SHORT_DESCRIPTION']);
         }
+        
         return $rows;
     }
     
