@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Debugger;
 
 use exface\Core\Interfaces\Exceptions\iContainCustomTrace;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\DataTypes\StringDataType;
 
 if (!function_exists('get_debug_type')) {
     function get_debug_type($value): string { return \Symfony\Polyfill\Php80::get_debug_type($value); }
@@ -27,12 +28,17 @@ class ExceptionRenderer
     private $charset = null;
     private $statusCode = null;
     
-    public function __construct(\Throwable $exception, string $charset = null)
+    private $maxArgChars = 500;
+    private $maxArgArrayItems = 100;
+    
+    public function __construct(\Throwable $exception, string $charset = null, int $maxArgChars = 500, int $maxArgArrayItems = 100)
     {
         $this->code = $exception->getCode();
         $this->file = $exception->getFile();
         $this->line = $exception->getLine();
         $this->charset = $charset;
+        $this->maxArgArrayItems = $maxArgArrayItems;
+        $this->maxArgChars = $maxArgChars;
         
         $this->setMessage($exception->getMessage());
         $this->setTraceFromThrowable($exception);
@@ -197,8 +203,8 @@ class ExceptionRenderer
     {
         $result = [];
         foreach ($args as $key => $value) {
-            if (++$count > 1e4) {
-                return ['array', '*SKIPPED over 10000 entries*'];
+            if (++$count > $this->maxArgArrayItems) {
+                return ['array', '*SKIPPED over ' . $this->maxArgArrayItems . ' entries*'];
             }
             if ($value instanceof \__PHP_Incomplete_Class) {
                 // is_object() returns false on PHP<=7.1
@@ -442,6 +448,10 @@ EOF;
      */
     private function formatArgs(array $args): string
     {
+        if ($this->maxArgChars === 0) {
+            return '';
+        }
+        
         $result = [];
         foreach ($args as $key => $item) {
             if ('object' === $item[0]) {
@@ -455,7 +465,7 @@ EOF;
             } elseif ('resource' === $item[0]) {
                 $formattedValue = '<em>resource</em>';
             } else {
-                $formattedValue = str_replace("\n", '', $this->escapeHtml(var_export($item[1], true)));
+                $formattedValue = str_replace("\n", '', $this->escapeHtml(StringDataType::truncate(var_export($item[1], true), $this->maxArgChars, false, false, true, true)));
             }
             
             $result[] = \is_int($key) ? $formattedValue : sprintf("'%s' => %s", $this->escapeHtml($key), $formattedValue);
