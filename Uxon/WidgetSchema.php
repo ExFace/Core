@@ -11,6 +11,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 
 /**
  * UXON-schema class for widgets.
@@ -93,7 +94,11 @@ class WidgetSchema extends UxonSchema
     public function getPresets(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $presets = parent::getPresets($uxon, $path, $rootPrototypeClass);
-        $obj = $this->getMetaObject($uxon, $path);
+        try {
+            $obj = $this->getMetaObject($uxon, $path);
+        } catch (MetaObjectNotFoundError $e) {
+            return $presets;
+        }
         if ($obj === null) {
             return $presets;
         }
