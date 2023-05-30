@@ -534,6 +534,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $type = $this->getDataType();
         if (! $this->isAlignSet()) {
             switch (true) {
+                case ($this->getCellWidget() instanceof iCanBeAligned) && EXF_ALIGN_DEFAULT !== $cellAlign = $this->getCellWidget()->getAlign():
+                    $this->setAlign($cellAlign);
+                    break;
                 case $type instanceof NumberDataType && ! ($type instanceof EnumDataTypeInterface):
                 case $type instanceof DateDataType:
                     $this->setAlign(EXF_ALIGN_OPPOSITE);
