@@ -96,9 +96,6 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 if ($attributeList->isEmpty() === true && $attributeList->getMetaObject()->hasLabelAttribute() === true) {
                     $attributeList->add($attributeList->getMetaObject()->getLabelAttribute());
                 }
-                $attributeList->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) {
-                    return intval($a->getDefaultDisplayOrder()) - intval($b->getDefaultDisplayOrder());
-                });
                 break;
             case MetaAttributeGroupInterface::WRITABLE:
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
@@ -116,6 +113,13 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 });
                 break;
         }
+        
+        // Always sort groups by default display order
+        $attributeList = $attributeList->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) {
+            $aVal = intval($a->getDefaultDisplayOrder());
+            $bVal = intval($b->getDefaultDisplayOrder());
+            return $aVal === 0 || $bVal === 0 ? ($bVal - $aVal) : $aVal - $bVal;
+        });
         
         return static::getAttributesByMagic($attributeList, $spells);
     }
