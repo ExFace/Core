@@ -15,7 +15,6 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
@@ -280,7 +279,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property table
      * @uxon-type \exface\Core\Widgets\Data
-     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}]}
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_group_alias": "~DEFAULT_DISPLAY"}, {"attribute_alias": ""}]}
      *
      * @param UxonObject|DataTable $widget_or_uxon_object            
      * @throws WidgetConfigurationError
