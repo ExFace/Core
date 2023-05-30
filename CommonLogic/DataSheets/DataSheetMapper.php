@@ -155,7 +155,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
         if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
-            throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
+            throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
         }
         
         // $logbook->addLine('Mapper configuration');
@@ -199,7 +199,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $toSheet->importRows($fromSheet);
             } catch (\Throwable $e) {
                 $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
-                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage());
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
             if ($logbook !== null) {
@@ -216,7 +216,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $toSheet->setFilters($fromSheet->getFilters());
             } catch (\Throwable $e) {
                 $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
-                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot filters in data mapper. ' . $e->getMessage());
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit filters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
             if ($logbook !== null) {
@@ -237,7 +237,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 }
             } catch (\Throwable $e) {
                 $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
-                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage());
+                throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
             if ($logbook !== null) {
@@ -327,6 +327,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             // See if any required columns are missing in the original data sheet. If so, add empty
             // columns and also create a separate sheet for reading missing data.
             $addedCols = [];
+            $addedExprs = [];
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
                     if ($data_sheet->getColumns()->getByExpression($expr)){
@@ -340,12 +341,13 @@ class DataSheetMapper implements DataSheetMapperInterface
                             }
                         }
                     }
+                    $addedExprs[] = $expr->__toString();
                     $data_sheet->getColumns()->addFromExpression($expr);
                     $addedCols[] = $additionSheet->getColumns()->addFromExpression($expr);
                 }
             }
             if ($logbook !== null) {
-                $logbook->addLine('Found ' . count($addedCols) . ' columns to read for the mapper', 1);
+                $logbook->addLine('Found ' . count($addedCols) . ' columns to read for the mapper: `' . implode('`, `', $addedExprs) . '`', 1);
             }
             
             // If columns were added to the original sheet, that need data to be loaded,
@@ -364,7 +366,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                         $uid = $row[$uidCol->getName()];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
-                            throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping!');
+                            throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping! Trying to read ' . $addedCol->getName(), null, null, $logbook);
                         }
                         // Only set cell values if the column is an added column
                         // or the column does not exist yet in the original data sheet.
@@ -640,7 +642,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      *
      * @uxon-property joins
      * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataJoinMapping[]
-     * @uxon-template [{"join":"left","join_input_data_on_attribute":"","join_data_sheet_on_attribute":"","data_sheet":{"object_alias":"","columns":[{"attribute_alias":""}],"filters":[{"operator":"AND","conditions":[{"expression":"","comparator":"==","value":""}]}]}}]
+     * @uxon-template [{"join":"left","join_input_data_on_attribute":"","join_data_sheet_on_attribute":"","join_data_sheet":{"object_alias":"","columns":[{"attribute_alias":""}],"filters":[{"operator":"AND","conditions":[{"expression":"","comparator":"==","value":""}]}]}}]
      *
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
