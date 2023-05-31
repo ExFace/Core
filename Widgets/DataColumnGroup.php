@@ -322,7 +322,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         }
         foreach ($uxonArray as $colUxon) {
             if ($colUxon->hasProperty('attribute_group_alias')) {
-                foreach ($this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
+                $attrGrp = $this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'));
+                $attrGrp->sortByDefaultDisplayOrder();
+                foreach ($attrGrp->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
             } else {
