@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:27:44",
-            "MODIFIED_ON": "2022-07-01 11:39:52",
+            "MODIFIED_ON": "2023-06-01 13:16:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4b0d9c862d5db2cfe4b318306b9a",
@@ -188,6 +188,21 @@
                                                                 "action_alias": "exface.Core.DeleteObject",
                                                                 "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
+                                                            },
+                                                            {
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "object_alias": "exface.Core.USER",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "USER",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }
