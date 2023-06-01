@@ -2,11 +2,11 @@
 
 IF COL_LENGTH('dbo.exf_user','company') IS NULL
 ALTER TABLE exf_user
-	ADD COLUMN company NVARCHAR(200) NULL;
+	ADD company NVARCHAR(200) NULL;
 	
 IF COL_LENGTH('dbo.exf_user','position') IS NULL
 ALTER TABLE exf_user
-	ADD COLUMN position NVARCHAR(200) NULL;
+	ADD position NVARCHAR(200) NULL;
 
 	
 -- DOWN
