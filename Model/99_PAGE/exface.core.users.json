@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2015-12-14 17:07:13",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2020-07-15 09:14:55",
+    "modified_on": "2023-06-01 13:11:35",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.USER",
@@ -28,6 +28,12 @@
             },
             {
                 "attribute_alias": "DISABLED_FLAG"
+            },
+            {
+                "attribute_alias": "COMPANY"
+            },
+            {
+                "attribute_alias": "POSITION"
             }
         ],
         "columns": [
@@ -41,13 +47,19 @@
                 "attribute_alias": "FIRST_NAME"
             },
             {
-                "attribute_alias": "LOCALE"
-            },
-            {
                 "attribute_alias": "DISABLED_FLAG"
             },
             {
                 "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
+            },
+            {
+                "attribute_alias": "COMPANY"
+            },
+            {
+                "attribute_alias": "POSITION"
+            },
+            {
+                "attribute_alias": "LOCALE"
             },
             {
                 "attribute_alias": "USER_CREDENTIALS__UID:COUNT",
