@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Widgets\Tab;
 
 /**
  * UXON-schema class for widgets.
@@ -111,16 +112,16 @@ class WidgetSchema extends UxonSchema
         foreach ($obj->getAttributes() as $attr) {
             $allWidgets[] = ['attribute_alias' => $attr->getAlias()];
             if ($attr->isEditable()) {
-                $editableWigets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+                $editableWigets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
             if (! $attr->isHidden()) {
-                $visibleWidgets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+                $visibleWidgets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
             if ($attr->getDefaultDisplayOrder() !== null) {
                 $defaultDisplayWidgets[$attr->getDefaultDisplayOrder()] = ['attribute_alias' => $attr->getAlias()];
             }
             if ($attr->isRequired()) {
-                $requiredWidgets[$attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+                $requiredWidgets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
             }
         }
         ksort($editableWigets);
@@ -138,14 +139,15 @@ class WidgetSchema extends UxonSchema
             return $presets;
         }
         
-        $prototype = str_replace('\\', '/', Container::class) . '.php';
+        $containerPrototype = str_replace('\\', '/', Container::class) . '.php';
+        $tabPrototype = str_replace('\\', '/', Tab::class) . '.php';
         
         $presets[] = [
             'UID' => '',
             'NAME' => 'Container with all attributes',
             'PROTOTYPE__LABEL' => 'Container',
             'DESCRIPTION' => '',
-            'PROTOTYPE' => $prototype,
+            'PROTOTYPE' => $containerPrototype,
             'UXON' => (new UxonObject([
                 'widgets' => $allWidgets
             ]))->toJson()
@@ -157,8 +159,20 @@ class WidgetSchema extends UxonSchema
                 'NAME' => 'Container with all editable attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
-                'PROTOTYPE' => $prototype,
+                'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
+                    'widgets' => $editableWigets
+                ]))->toJson()
+            ];
+            
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Tab with all editable attributes',
+                'PROTOTYPE__LABEL' => 'Tab',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $tabPrototype,
+                'UXON' => (new UxonObject([
+                    'caption' => '',
                     'widgets' => $editableWigets
                 ]))->toJson()
             ];
@@ -170,7 +184,7 @@ class WidgetSchema extends UxonSchema
                 'NAME' => 'Container with all visible attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
-                'PROTOTYPE' => $prototype,
+                'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
                     'widgets' => $visibleWidgets
                 ]))->toJson()
@@ -183,7 +197,7 @@ class WidgetSchema extends UxonSchema
                 'NAME' => 'Container with default display editable attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
-                'PROTOTYPE' => $prototype,
+                'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
                     'widgets' => $defaultDisplayWidgets
                 ]))->toJson()
@@ -196,7 +210,7 @@ class WidgetSchema extends UxonSchema
                 'NAME' => 'Container with all required attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
-                'PROTOTYPE' => $prototype,
+                'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
                     'widgets' => $requiredWidgets
                 ]))->toJson()
