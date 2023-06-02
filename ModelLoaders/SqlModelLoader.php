@@ -1154,39 +1154,6 @@ class SqlModelLoader implements ModelLoaderInterface
     }
     
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUser()
-     */
-    public function loadUser(UserSelectorInterface $selector) : UserInterface
-    {
-        $userMetaObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        $userData = DataSheetFactory::createFromObject($userMetaObj);
-        foreach ($userMetaObj->getAttributes() as $attr) {
-            $userData->getColumns()->addFromAttribute($attr);
-        }
-        if ($selector->isUid() === true) {
-            $userData->getFilters()->addConditionFromString('UID', $selector->toString(), EXF_COMPARATOR_EQUALS);
-        } else {
-            $userData->getFilters()->addConditionFromString('USERNAME', $selector->toString(), EXF_COMPARATOR_EQUALS);
-        }
-        $userData->dataRead();
-        
-        if ($userData->countRows() === 0) {
-            throw new UserNotFoundError('No user with ' . ($selector->isUid() ? 'UID' : 'username') . ' "' . $selector->toString() . '" found!');
-        }
-        
-        if ($userData->countRows() > 1) {
-            throw new UserNotUniqueError('Multiple users with ' . ($selector->isUid() ? 'UID' : 'username') . ' "' . $selector->toString() . '" found!');
-        }
-        
-        $user = UserFactory::createFromModel($this->getWorkbench(), $userData->getCellValue('USERNAME', 0));
-        // load the user right away, because we already have all data - it just needst to be loaded into
-        // the user object.
-        return $this->loadUserData($user, $userData);
-    }
-    
-    /**
      * Builds sql statement selecting and combining the values of given `sqlColumn` matching the `sqlFrom` and `sqlWhere` into one
      * into one, comma seperated, string. 
      * 
@@ -1210,14 +1177,26 @@ SQL;
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadUserData()
      */
-    public function loadUserData(UserInterface $user, DataSheetInterface $userData = null) : UserInterface
+    public function loadUserData($userOrSelector) : UserInterface
     {
-        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
-        if ($user->isAnonymous()) {
-            $sqlWhere = "u.oid = " . UserSelector::ANONYMOUS_USER_OID;
+        if ($userOrSelector instanceof UserSelectorInterface) {
+            if ($userOrSelector->isUsername()) {
+                $user = UserFactory::createFromUsername($this->getWorkbench(), $userOrSelector->__toString(), false);
+                return $this->loadUserData($user);
+            } else {
+                $user = null;
+                $sqlWhere = "u.oid = {$userOrSelector->toString()}";
+            }
         } else {
-            $sqlWhere = "u.username = '{$this->buildSqlEscapedString($user->getUsername())}'";
+            $user = $userOrSelector;
+            if ($user->isAnonymous()) {
+                $sqlWhere = "u.oid = " . UserSelector::ANONYMOUS_USER_OID;
+            } else {
+                $sqlWhere = "UPPER(u.username) = '" . $this->buildSqlEscapedString(mb_strtoupper($user->getUsername())) . "'";
+            }
         }
+        $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
+        
         $sql = <<<SQL
 -- Load user
 SELECT
@@ -1239,23 +1218,33 @@ SQL;
                 throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
             case 1:
                 $row = $rows[0];
-                $user->setUid($row['oid']);
-                $user->setLocale($row['locale']);
-                $user->setFirstName($row['first_name']);
-                $user->setLastName($row['last_name']);
-                $user->setEmail($row['email']);
-                $user->setDisabled(BooleanDataType::cast($row['disabled_flag']) ?? false);
-                if ($row['password'] !== null) {
-                    $user->setPassword($row['password']);
-                }
-                if ($row['role_oids']) {
-                    foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
-                        $user->addRoleSelector($roleUid);
-                    }
-                }
                 break;
             default:
                 throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
+        }
+        
+        if ($user === null) {
+            $user = UserFactory::createFromUsername($this->getWorkbench(), $row['username'], false);
+        }
+        
+        // Make sure, the username is exactly as it is saved in the DB - even if the user typed it in different
+        // case when logging in!
+        $user->setUsername($row['username']);
+        
+        // Set other user properties
+        $user->setUid($row['oid']);
+        $user->setLocale($row['locale']);
+        $user->setFirstName($row['first_name']);
+        $user->setLastName($row['last_name']);
+        $user->setEmail($row['email']);
+        $user->setDisabled(BooleanDataType::cast($row['disabled_flag']) ?? false);
+        if ($row['password'] !== null) {
+            $user->setPassword($row['password']);
+        }
+        if ($row['role_oids']) {
+            foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {
+                $user->addRoleSelector($roleUid);
+            }
         }
         
         return $user;

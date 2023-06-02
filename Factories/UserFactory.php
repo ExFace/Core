@@ -5,72 +5,91 @@ use exface\Core\CommonLogic\Model\User;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Exceptions\UserNotFoundError;
-use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * Factory class to create Users.
+ * Factory class to instantiate workbench users
  * 
- * @author SFL
+ * @author Andrej Kabachnik
  *
  */
 class UserFactory extends AbstractStaticFactory
-{
+{  
     /**
-     * Creates a user from the passed parameters.
+     * Instantiates a user from the given selector.
      * 
-     * @param Workbench $exface
-     * @param string $username
-     * @param string $firstname
-     * @param string $lastname
-     * @param string $locale
-     * @param string $email
-     * @return User
-     */
-    public static function create(Workbench $exface, $username, $firstname, $lastname, $locale, $email)
-    {
-        $user = self::createEmpty($exface, $username);
-        $user->setFirstName($firstname);
-        $user->setLastName($lastname);
-        $user->setLocale($locale);
-        $user->setEmail($email);
-        return $user;
-    }
-    
-    /**
+     * If `$checkModel` is false (default), model data of the user will not be loaded right away - only if
+     * it is required when reading corresponding user data. Use this option to lazily instatiate users, that
+     * might not be needed in further processing. But keep in mind, that an unverified user might not even
+     * exist!
      * 
      * @param UserSelectorInterface $selector
+     * @param array $constructorArguments
+     * @param bool $checkModel
+     * 
      * @return UserInterface
      */
-    public static function createFromSelector(UserSelectorInterface $selector, array $constructorArguments = null) : UserInterface
+    public static function createFromSelector(UserSelectorInterface $selector, array $constructorArguments = null, bool $checkModel = false) : UserInterface
     {
-        if ($selector->isUsername() === true) {
-            return static::createFromModel($selector->getWorkbench(), $selector->toString());
+        if ($checkModel === false && $selector->isUsername()) {
+            $user = static::createFromUsername($selector->getWorkbench(), $selector->__toString(), false);
+            unset($selector);
+            return $user;
         }
-        return $selector->getWorkbench()->model()->getModelLoader()->loadUser($selector);
+        return static::createFromModel($selector->getWorkbench(), $selector);
     }
     
     /**
+     * Instantiates a user from the given username
+     * 
+     * If `$checkModel` is false (default), model data of the user will not be loaded right away - only if
+     * it is required when reading corresponding user data. Use this option to lazily instatiate users, that
+     * might not be needed in further processing. But keep in mind, that an unverified user might not even
+     * exist!
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $username
+     * @param bool $checkModel
+     * 
+     * @return UserInterface
+     */
+    public static function createFromUsername(WorkbenchInterface $workbench, string $username, bool $checkModel = false)
+    {
+        if ($checkModel === false) {
+            return new User($workbench, $username, $workbench->model()->getModelLoader());
+        }
+        return static::createFromModel($workbench, $username);
+    }
+    
+    /**
+     * Instatiates a user from the give UID or username as string
+     * 
+     * If `$checkModel` is false (default), model data of the user will not be loaded right away - only if
+     * it is required when reading corresponding user data. Use this option to lazily instatiate users, that
+     * might not be needed in further processing. But keep in mind, that an unverified user might not even
+     * exist!
      * 
      * @param WorkbenchInterface $workbench
      * @param string $selectorString
+     * @param bool $checkModel
+     * 
      * @return UserInterface
      */
-    public static function createFromUsernameOrUid(WorkbenchInterface $workbench, string $selectorString) : UserInterface
+    public static function createFromUsernameOrUid(WorkbenchInterface $workbench, string $selectorString, bool $checkModel = false) : UserInterface
     {
-        return static::createFromSelector(new UserSelector($workbench, $selectorString));
+        return static::createFromSelector(new UserSelector($workbench, $selectorString), null, $checkModel);
     }
 
     /**
-     * Creates an empty user.
+     * Creates an empty user without a link to the meta model.
      * 
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param string $username
-     * @return User
+     * @return UserInterface
      */
-    public static function createEmpty(Workbench $exface, string $username)
+    public static function createEmpty(WorkbenchInterface $exface, string $username) : UserInterface
     {
         if ($username === '') {
             throw new UserNotFoundError('Empty username not allowed!');
@@ -80,25 +99,39 @@ class UserFactory extends AbstractStaticFactory
     }
 
     /**
-     * Creates an anonymous user.
+     * Instantiates an anonymous user.
      * 
      * An anonymous user is returned if the currently logged in user is requested but no
      * named user is logged in.
      * 
      * @param Workbench $exface
-     * @return User
+     * @return UserInterface
      */
-    public static function createAnonymous(Workbench $exface)
+    public static function createAnonymous(Workbench $exface) : UserInterface
     {
         return new User($exface, null, $exface->model()->getModelLoader());
     }
     
-    public static function createFromModel(Workbench $workbench, string $username) : UserInterface
+    /**
+     * Instatiates a user loading the respective data from the metamodel
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string|UserSelectorInterface $usernameOrUidOrSelector
+     * @throws UserNotFoundError
+     * 
+     * @return UserInterface
+     */
+    public static function createFromModel(WorkbenchInterface $workbench, $usernameOrUidOrSelector) : UserInterface
     {
-        if ($username === '') {
-            throw new UserNotFoundError('Empty username not allowed!');
+        if (! $usernameOrUidOrSelector instanceof UserSelectorInterface) {
+            if ($usernameOrUidOrSelector === '' || $usernameOrUidOrSelector === null) {
+                throw new UserNotFoundError('Invalid (empty) user selector!');
+            }
+            $selector = new UserSelector($workbench, $usernameOrUidOrSelector);
+        } else {
+            $selector = $usernameOrUidOrSelector;
         }
         
-        return new User($workbench, $username, $workbench->model()->getModelLoader());
+        return $selector->getWorkbench()->model()->getModelLoader()->loadUserData($selector);
     }
 }
