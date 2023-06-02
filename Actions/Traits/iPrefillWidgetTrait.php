@@ -553,9 +553,9 @@ trait iPrefillWidgetTrait
      * @uxon-type boolean
      * 
      * @param bool $value
-     * @return iPrefillWidgetTrait
+     * @return iPrefillWidget
      */
-    public function setPrefillWithDefaults(bool $value) : iPrefillWidgetTrait
+    public function setPrefillWithDefaults(bool $value) : iPrefillWidget
     {
         $this->prefill_with_defaults = $value;
         return $this;

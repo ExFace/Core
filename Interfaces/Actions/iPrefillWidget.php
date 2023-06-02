@@ -119,4 +119,21 @@ interface iPrefillWidget extends ActionInterface
      * @return string
      */
     public function getPrefillDataRefresh() : string;
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getPrefillWithDefaults() : ?bool;
+    
+    /**
+     * Set to TRUE to include default values of widgets in prefill data
+     *
+     * If not set explicitly, this option will be up to the facade: some will set defaults via
+     * prefill, others - when generating the widget.
+     *
+     * @param bool $value
+     * @return iPrefillWidget
+     */
+    public function setPrefillWithDefaults(bool $value) : iPrefillWidget;
 }
