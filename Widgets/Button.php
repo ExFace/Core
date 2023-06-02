@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Interfaces\Actions\iPrefillWidget;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -731,7 +732,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 }
             }
         }
+        
+        // If no checks, quit here
         if ($check === null) {
+            return null;
+        }
+        // If there are input checks, but the input is not going to be used, quit here too
+        if (($action instanceof iPrefillWidget) && $action->getPrefillWithInputData() === false) {
             return null;
         }
         
