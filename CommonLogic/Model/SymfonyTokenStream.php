@@ -152,6 +152,9 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                     //its an attribute alias with an aggregation, therefor buffer the token
                     if ($tokens[$i+1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($tokens[$i+2]['name'])) {
                         $buffer .= $token['name'] . ':';
+                    //if the token is followed by '[' or ']' it's an attribute alias with relation modifier
+                    } else if ($tokens[$i+1]['punctuation'] === '[' || $tokens[$i+1]['punctuation'] === ']') {
+                        $buffer .= $token['name'] . $tokens[$i+1]['punctuation'];
                     } elseif ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
                         $attributes[] = $buffer . $token['name'];
                         $buffer = null;
