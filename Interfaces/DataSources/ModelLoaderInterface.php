@@ -208,20 +208,14 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
     
     /**
      * 
-     * @param UserSelectorInterface $selector
-     */
-    public function loadUser(UserSelectorInterface $selector) : UserInterface;
-    
-    /**
-     * 
      * @param UserInterface $user
      * 
      * @throws UserNotFoundError
      * @throws UserNotUniqueError
      * 
-     * @return UserInterface
+     * @return UserInterface|UserSelectorInterface
      */
-    public function loadUserData(UserInterface $user) : UserInterface;
+    public function loadUserData($user) : UserInterface;
     
     /**
      * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.

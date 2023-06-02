@@ -57,7 +57,7 @@ class User implements UserInterface
 
     /**
      * 
-     * @deprecated use UserFactory::create() instead!
+     * @deprecated use UserFactory instead!
      * @param Workbench $exface
      * @param DataSheetInterface $dataSheet
      * @param boolean $anonymous
