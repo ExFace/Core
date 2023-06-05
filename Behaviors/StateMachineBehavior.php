@@ -1131,7 +1131,7 @@ class StateMachineBehavior extends AbstractBehavior
             }
             if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
                 foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
-                    $stateDetails .= "<br><b>#9993;</b> {$notificationUxon->getProperty('channel')}";
+                    $stateDetails .= "<br><b>#9993;</b> " . $notificationUxon->getProperty('template') ?? $notificationUxon->getProperty('channel');
                     foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
                         $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
                     }
