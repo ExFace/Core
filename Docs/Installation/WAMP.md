@@ -64,7 +64,7 @@ DNS.2 = yourserver
 
 ### httpd.conf
 
-Open `c:/wamp64/bin/apache/apache2.x.xx/conf/httpd.conf` and un-comment (remove the #) the following 3 lines:
+Open `c:/wamp/bin/apache/apache2.x.xx/conf/httpd.conf` and un-comment (remove the #) the following 3 lines:
 
 ```
 LoadModule ssl_module modules/mod_ssl.so
@@ -138,7 +138,7 @@ SSLSessionCacheTimeout  300
 	SSLVerifyDepth  10
 
 	<Directory "c:/wamp/www">
-		Options -Indexes +Includes +FollowSymLinks +MultiViews
+		Options -Indexes +Includes +FollowSymLinks -MultiViews
 		AllowOverride all
 		Require all granted
 	</Directory>
