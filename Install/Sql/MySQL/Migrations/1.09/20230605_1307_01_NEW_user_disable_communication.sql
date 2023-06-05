@@ -1,7 +1,7 @@
 -- UP
 	
 ALTER TABLE `exf_user`
-	CHANGE COLUMN `disabled_communication_flag` TINYINT NOT NULL DEFAULT '0' AFTER `disabled_flag`;
+	ADD COLUMN `disabled_communication_flag` TINYINT NOT NULL DEFAULT '0' AFTER `disabled_flag`;
 	
 
 	
