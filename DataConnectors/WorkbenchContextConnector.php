@@ -96,7 +96,9 @@ class WorkbenchContextConnector extends TransparentConnector implements Communic
                     break;
                 case $recipient instanceof UserRecipientInterface:
                     try {
-                        $userUids[] = $recipient->getUserUid();
+                        if (! $recipient->isMuted()) {
+                            $userUids[] = $recipient->getUserUid();
+                        }
                     } catch (UserNotFoundError $e) {
                         $errors[] = $e;
                     }

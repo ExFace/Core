@@ -439,7 +439,7 @@
         },
         {
             "CREATED_ON": "2020-05-12 13:49:14",
-            "MODIFIED_ON": "2023-06-01 12:50:21",
+            "MODIFIED_ON": "2023-06-05 11:15:44",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea94469df79b09bc54025041000001",
@@ -454,7 +454,13 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "",
+                    "lock"
+                ]
+            },
             "COMMENTS": "",
             "NAME": "Disabled",
             "RELATION_CARDINALITY": "",
@@ -623,6 +629,56 @@
             "CUSTOM_DATA_TYPE": {
                 "length_max": 200
             }
+        },
+        {
+            "CREATED_ON": "2023-06-01 16:06:16",
+            "MODIFIED_ON": "2023-06-05 11:18:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eea1a77a53f7c4a1a7025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "volume-up",
+                    "volume-off"
+                ]
+            },
+            "COMMENTS": "",
+            "NAME": "Disable communication",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "DISABLED_COMMUNICATION_FLAG",
+            "DATATYPE": "0x37000000000000000000000000000000",
+            "DATA_ADDRESS": "disabled_communication_flag",
+            "OBJECT": "0x31343400000000000000000000000000",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "Check to prevent any communication with this user: no emails, no in-app notifications, etc.",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": 0,
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],

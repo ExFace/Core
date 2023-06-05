@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
-use exface\Core\CommonLogic\Model\User;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\CommonLogic\Filemanager;

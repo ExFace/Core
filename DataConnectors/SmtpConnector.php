@@ -27,6 +27,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use exface\Core\Interfaces\Communication\RecipientInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Communication\UserRecipientInterface;
 
 /**
  * Sends emails via SMTP
@@ -344,6 +345,9 @@ MD;
                     $addrs = array_merge($addrs, $this->getEmailAddresses($recipient->getRecipients()));
                     break;
                 case $recipient instanceof EmailRecipientInterface:
+                    if (($recipient instanceof UserRecipientInterface) && $recipient->isMuted()) {
+                        break;
+                    }
                     if ($email = $recipient->getEmail()) {
                         foreach (explode(';', $email) as $addr) {
                             $addrs[] = trim($addr);

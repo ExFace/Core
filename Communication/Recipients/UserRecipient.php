@@ -82,4 +82,14 @@ class UserRecipient implements UserRecipientInterface, EmailRecipientInterface
         $this->emailAttributeAlias = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\UserRecipientInterface::isMuted()
+     */
+    public function isMuted() : bool
+    {
+        return $this->getUser()->isDisabledCommunication();
+    }
 }

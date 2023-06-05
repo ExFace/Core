@@ -65,6 +65,7 @@ class UserContext extends AbstractContext
               "height" => "100%",
               "object_alias" => "exface.Core.USER",
               "columns_in_grid" => "1",
+              "read_only" => true,
               "widgets" => [
                   [
                       "widget_type" => "Message",
@@ -76,22 +77,18 @@ class UserContext extends AbstractContext
                       "attribute_alias" => "UID"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "USERNAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "FIRST_NAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "LAST_NAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "caption" => "Language",
                       "attribute_alias" => "LOCALE",
                       "width" => "100%"

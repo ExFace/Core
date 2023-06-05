@@ -181,4 +181,17 @@ interface UserInterface extends UserImpersonationInterface, WorkbenchDependantIn
      * @return string[]
      */
     public function getRoles(string $attributeAlias = 'ALIAS_WITH_NS') : array;
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isDisabledCommunication() : bool;
+    
+    /**
+     *
+     * @param bool $trueOrFalse
+     * @return User
+     */
+    public function setDisabledCommunication(bool $trueOrFalse) : UserInterface;
 }

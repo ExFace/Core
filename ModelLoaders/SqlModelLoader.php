@@ -32,7 +32,6 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 use exface\Core\Interfaces\UserInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
@@ -50,7 +49,6 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
@@ -1240,6 +1238,9 @@ SQL;
         $user->setDisabled(BooleanDataType::cast($row['disabled_flag']) ?? false);
         if ($row['password'] !== null) {
             $user->setPassword($row['password']);
+        }
+        if ($row['disabled_communication_flag'] !== null) {
+            $user->setDisabledCommunication($row['disabled_communication_flag']);
         }
         if ($row['role_oids']) {
             foreach (explode(',', rtrim($row['role_oids'], ",")) as $roleUid) {

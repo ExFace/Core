@@ -16,4 +16,10 @@ interface UserRecipientInterface extends RecipientInterface
      * @return string
      */
     public function getUserUid() : string;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isMuted() : bool;
 }

@@ -353,7 +353,7 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2023-01-17 14:06:25",
+            "MODIFIED_ON": "2023-06-05 11:20:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca49207f0e9f0a492025041000001",
@@ -368,7 +368,13 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "volume-up",
+                    "volume-off"
+                ]
+            },
             "COMMENTS": "",
             "NAME": "Muted",
             "RELATION_CARDINALITY": "",
