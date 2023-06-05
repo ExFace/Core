@@ -158,6 +158,7 @@ class ShowLookupDialog extends ShowDialog
                 }
             }
             
+            // Add the "OK" button
             $btnUxon = new UxonObject([
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
                 'visibility' => WidgetVisibilityDataType::PROMOTED,
@@ -167,18 +168,22 @@ class ShowLookupDialog extends ShowDialog
                     'target_widget_id' => $this->getTargetWidgetId()
                 ]
             ]);
-            $dialog->addButton($dialog->createButton($btnUxon)->setInputWidget($data_table));
+            $btn = $dialog->createButton($btnUxon)->setInputWidget($data_table);
+            $dialog->addButton($btn);
             
-            /* TODO how to bind closing the dialog to a single click on a row for single-select lookups?
-             * A table button will not close the dialog and a dialog-button cannot be bound to clicks on
-             * a table...
+            // Press "OK" button automatically on double-click in single-select lookups 
             if ($data_table->getMultiSelect() === false) {
-                $singleClickBtnUxon = $btnUxon->copy();
-                $singleClickBtnUxon
-                    ->setProperty('visibility', WidgetVisibilityDataType::HIDDEN)
-                    ->setProperty('bind_to_left_click', true);
+                $singleClickBtnUxon = new UxonObject([
+                    'visibility' => WidgetVisibilityDataType::HIDDEN,
+                    'bind_to_double_click' => true,
+                    'action' => [
+                        'alias' => 'exface.Core.CallWidgetFunction',
+                        'function' => 'press',
+                        'widget_id' => $btn->getId()
+                    ]
+                ]);
                 $data_table->addButton($data_table->createButton($singleClickBtnUxon));
-            }*/
+            }
         }
         
         return $dialog;
