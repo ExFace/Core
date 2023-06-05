@@ -829,7 +829,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         switch (true) {
             case is_string($value):
                 $value = mb_strtolower($value);
-                if (! defined('self::INHERIT_COLUMNS_' . mb_strtoupper($value))) {
+                if (! defined('self::INHERIT_COLUMNS_' . mb_strtoupper($value)) && ! defined('self::INHERIT_' . mb_strtoupper($value))) {
                     throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_columns`');
                 }
                 break;
