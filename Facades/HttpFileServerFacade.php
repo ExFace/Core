@@ -23,6 +23,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\Exceptions\FileNotFoundError;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -90,15 +91,17 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $this->createResponseFromObjectUid($objSel, $uid, $params);        
     }
     
-    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params) : ResponseInterface
+    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params, ServerRequestInterface $originalRequest) : ResponseInterface
     {
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
         }
+        $headers = $this->buildHeadersCommon();
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objSel);
         if (! $ds->getMetaObject()->hasUidAttribute()) {
-            $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!'));
-            return new Response(404);
+            $e = new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!');
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $this->createResponseFromError($originalRequest, $e);
         }
         
         $colFilename = null;
@@ -108,8 +111,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
         if ($attr) {
             $colContents = $ds->getColumns()->addFromAttribute($attr);
         } else {
-            $this->getWorkbench()->getLogger()->logException(new FacadeRuntimeError());
-            return new Response(404);
+            $e = new FacadeRuntimeError('Cannot find file contents attribute for object ' . $ds->getMetaObject()->__toString());
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $this->createResponseFromError($originalRequest, $e);
         }
         $attr = $this->findAttributeForMimeType($ds->getMetaObject());
         if ($attr) {
@@ -124,13 +128,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $ds->dataRead();
         
         if ($ds->isEmpty()) {
-            return new Response(404);
+            $e = new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '"');
+            return $this->createResponseFromError($originalRequest, $e);
         }
         
         $contentType = $colContents->getDataType();
         $binary = null;
         $plain = null;
-        $headers = array_merge($this->buildHeadersCommon(), [
+        $headers = array_merge($headers, [
             'Expires' => 0,
             'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
             'Pragma' => 'public'
@@ -286,7 +291,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $cache = $this->getOtlCachePool();
         if ($cache->get($ident) === null) {
             $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
-            return new Response(404);
+            return new Response(404, $this->buildHeadersCommon());
         }
         $data = $cache->get($ident, null);
         $objSel = $data['object_alias'];
@@ -397,6 +402,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $this->getWorkbench()->getCache()->getPool($this->getOtlCacheName());
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
+     */
     protected function buildHeadersCommon() : array
     {
         return array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());

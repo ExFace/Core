@@ -65,7 +65,6 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
-use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * 
@@ -814,7 +813,8 @@ HTML;
     
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
      */
     protected function buildHeadersCommon() : array
     {
