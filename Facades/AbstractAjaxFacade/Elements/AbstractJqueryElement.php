@@ -775,9 +775,9 @@ JS;
      * @param string $icon            
      * @return string
      */
-    public function buildCssIconClass($icon)
+    public function buildCssIconClass(string $icon) : string
     {
-        $opt = 'ICON_CLASSES.' . strtoupper($icon);
+        $opt = 'ICON_CLASSES.' . strtoupper($icon ?? '');
         $config = $this->getFacade()->getConfig();
         if ($config->hasOption($opt)) {
             return $config->getOption($opt);
@@ -785,11 +785,10 @@ JS;
             $widget = $this->getWidget();
             if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
                 $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';
-            }
-            if (! $prefix) {
+            } else {
                 $prefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
             }
-            return ($prefix !== '' && StringDataType::startsWith($icon, $prefix, false) === false ? $prefix : '') . $icon;
+            return ($prefix !== '' && StringDataType::startsWith($icon ?? '', $prefix, false) === false ? $prefix : '') . ($icon ?? '');
         }
     }
     

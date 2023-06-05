@@ -6,6 +6,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * This widget shows an icon - either a static one or derived from an attribute's value.
@@ -65,8 +67,10 @@ use exface\Core\DataTypes\DateDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Icon extends Display
+class Icon extends Display implements iHaveIcon
 {    
+    use iHaveIconTrait;
+    
     private $iconSize = null;
     
     private $iconPosition = EXF_ALIGN_LEFT;
