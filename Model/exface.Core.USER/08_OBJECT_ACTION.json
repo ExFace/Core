@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-23 13:17:24",
-            "MODIFIED_ON": "2020-04-03 08:33:12",
+            "MODIFIED_ON": "2023-06-05 12:28:50",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6d08a337463fa3480205857feb80",
@@ -95,6 +95,9 @@
                         },
                         {
                             "attribute_alias": "LAST_NAME"
+                        },
+                        {
+                            "attribute_alias": "DISABLED_COMMUNICATION_FLAG"
                         }
                     ],
                     "buttons": [

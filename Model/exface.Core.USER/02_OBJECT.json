@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2023-06-01 12:51:16",
+            "MODIFIED_ON": "2023-06-05 10:40:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
@@ -127,7 +127,11 @@
                                                 "attribute_alias": "LOCALE"
                                             },
                                             {
-                                                "attribute_alias": "DISABLED_FLAG"
+                                                "attribute_alias": "DISABLED_FLAG",
+                                                "caption": "Disable login"
+                                            },
+                                            {
+                                                "attribute_alias": "DISABLED_COMMUNICATION_FLAG"
                                             }
                                         ]
                                     },

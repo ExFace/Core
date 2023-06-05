@@ -8,8 +8,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -54,6 +52,8 @@ class User implements UserInterface
     private $roleData = null;
     
     private $disabled = false;
+    
+    private $disabledCommunication = false;
 
     /**
      * 
@@ -498,6 +498,27 @@ class User implements UserInterface
             $this->loadData();
         }
         return $this->disabled;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isDisabledCommunication()
+     */
+    public function isDisabledCommunication() : bool
+    {
+        return $this->disabledCommunication;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::setDisabledCommunication()
+     */
+    public function setDisabledCommunication(bool $trueOrFalse) : UserInterface
+    {
+        $this->disabledCommunication = $trueOrFalse;
+        return $this;
     }
     
     /**
