@@ -88,10 +88,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $params = [];
         parse_str($uri->getQuery() ?? '', $params);
         
-        return $this->createResponseFromObjectUid($objSel, $uid, $params);        
+        return $this->createResponseFromObjectUid($objSel, $uid, $params, $request);        
     }
     
-    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params, ServerRequestInterface $originalRequest) : ResponseInterface
+    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params, ServerRequestInterface $originalRequest = null) : ResponseInterface
     {
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
@@ -101,7 +101,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         if (! $ds->getMetaObject()->hasUidAttribute()) {
             $e = new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!');
             $this->getWorkbench()->getLogger()->logException($e);
-            return $this->createResponseFromError($originalRequest, $e);
+            return $this->createResponseFromError($e, $originalRequest);
         }
         
         $colFilename = null;
@@ -113,7 +113,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         } else {
             $e = new FacadeRuntimeError('Cannot find file contents attribute for object ' . $ds->getMetaObject()->__toString());
             $this->getWorkbench()->getLogger()->logException($e);
-            return $this->createResponseFromError($originalRequest, $e);
+            return $this->createResponseFromError($e, $originalRequest);
         }
         $attr = $this->findAttributeForMimeType($ds->getMetaObject());
         if ($attr) {
@@ -129,7 +129,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         if ($ds->isEmpty()) {
             $e = new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '"');
-            return $this->createResponseFromError($originalRequest, $e);
+            return $this->createResponseFromError($e, $originalRequest);
         }
         
         $contentType = $colContents->getDataType();
