@@ -224,7 +224,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function importUxonObject(UxonObject $uxon)
     {
         if ($uxon->hasProperty('attribute_alias') === true) {
-            $this->setAttributeAlias($uxon->hasProperty('attribute_alias'));
+            $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
         } elseif (($uxon->getProperty('input_widget') instanceof UxonObject) && $uxon->getProperty('input_widget')->hasProperty('attribute_alias')) {
             $this->setAttributeAlias($uxon->getProperty('input_widget')->getProperty('attribute_alias'));
         }
@@ -316,6 +316,10 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
                     }
                 } else {
                     $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
+                    // Make sure to keep the attribute alias of the filter exactly as it was set.
+                    // Otherwise modifiers like an aggregator will get lost because the default
+                    // editor "thinks" it is a regular input for the attribute
+                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 }
                 break;
             case $this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false:
