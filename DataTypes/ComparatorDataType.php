@@ -3,6 +3,8 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Enumeration of comparators: `=`, `==`, `<`, `>`, etc.
@@ -135,6 +137,56 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         
         return $this->labels;
     }
-
+    
+    /**
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @return bool
+     */
+    public static function isNegative($comparatorOrString) : bool
+    {
+        $cmp = ($comparatorOrString instanceof ComparatorDataType) ? $comparatorOrString->__toString() : $comparatorOrString;
+        switch ($cmp) {
+            case self::EQUALS_NOT:
+            case self::IS_NOT:
+            case self::NOT_IN:
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @throws RuntimeException
+     * @return string|ComparatorDataType
+     */
+    public static function invert($comparatorOrString)
+    {
+        if ($comparatorOrString instanceof ComparatorDataType) {
+            $asString = false;
+            $cmp = $comparatorOrString->__toString();
+        } else {
+            $asString = true;
+            $cmp = $comparatorOrString;
+        }
+        
+        switch ($cmp) {
+            case self::EQUALS: $inv = self::EQUALS_NOT; break;
+            case self::EQUALS_NOT: $inv = self::EQUALS; break;
+            case self::GREATER_THAN: $inv = self::LESS_THAN_OR_EQUALS; break;
+            case self::GREATER_THAN_OR_EQUALS: $inv = self::LESS_THAN; break;
+            case self::IN: $inv = self::NOT_IN; break;
+            case self::NOT_IN: $inv = self::IN; break;
+            case self::IS: $inv = self::IS_NOT; break;
+            case self::IS_NOT: $inv = self::IS; break;
+            case self::LESS_THAN: $inv = self::GREATER_THAN_OR_EQUALS; break;
+            case self::LESS_THAN_OR_EQUALS: $inv = self::GREATER_THAN; break;
+            default:
+                throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
+        }
+        
+        return $asString ? $inv : self::fromValue($comparatorOrString->getWorkbench(), $inv);
+    }
 }
 ?>

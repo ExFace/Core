@@ -2168,6 +2168,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
             $relq->setMainObject($start_rel->getRightObject());
             $relq->setQueryId($this->getNextSubqueryId());
+            
+            // What kind of subquery structure?
+            switch (true) {
+                // For negative comparators `attr NOT IN (subquery with inverted comparator)` 
+                case ComparatorDataType::isNegative($qpart->getComparator()):
+                    $relqFilterComp = ComparatorDataType::invert($qpart->getComparator());
+                    $junctionOp = 'NOT IN';
+                    break;
+                // Otherwise `attr IN (subquery)`
+                default:
+                    $relqFilterComp = $qpart->getComparator();
+                    $junctionOp = 'IN';
+            }
+            
             if ($start_rel->isReverseRelation()) {
                 // If we are dealing with a reverse relation, build a subquery to select foreign keys from rows of the joined tables,
                 // that match the given filter
@@ -2227,10 +2241,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Add the filter relative to the first reverse relation with the same $value and $comparator
                     if ($qpart->isValueDataAddress()) {
                         // If the data address is a custom sql, make sure it still remains a custom sql no matter what
-                        $relq->addFilterWithCustomSql($rel_filter_alias, $qpart->getCompareValue(), $qpart->getComparator());
+                        $relq->addFilterWithCustomSql($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
                     } else {
                         // Otherwise just add a regular filter
-                        $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $qpart->getComparator());
+                        $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
                     }
                     
                     if (! $prefix_rel_path->isEmpty()) {
@@ -2267,8 +2281,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
-            //$output = $junction . ' IN (' . $relq->buildSqlQuerySelect() . ')';
-            $output = $junction . ' IN (' . $relq->buildSqlQuerySelect() . ')';
+            $output = "$junction $junctionOp ({$relq->buildSqlQuerySelect()})";
         }
         
         return $output;
