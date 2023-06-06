@@ -96,7 +96,7 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
             $result = $router->handle($task, $topics, $producer, $requestId, PhpClassDataType::findClassNameWithoutNamespace($this));
             return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $exception) {
-            return $this->createResponseFromError($request, $exception);
+            return $this->createResponseFromError($exception, $request);
         }        
     }
     
@@ -105,7 +105,7 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::createResponseFromError()
      */
-    public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null): ResponseInterface
+    public function createResponseFromError(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null): ResponseInterface
     {
         if ($exception instanceof ExceptionInterface ) {
             $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;

@@ -590,7 +590,7 @@ HTML;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromError()
      */
-    public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
+    public function createResponseFromError(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : ResponseInterface 
     {
         if ($exception instanceof ExceptionInterface) {
             $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
@@ -603,13 +603,13 @@ HTML;
             // Don't show the login-prompt if the request is a login-action itself. In this case,
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
+            $task = $request !== null ? $request->getAttribute($this->getRequestAttributeForTask()) : null;
             if (! $task 
             || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))
             || $exception instanceof AuthenticationIncompleteError) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
-                $response = $this->createResponseUnauthorized($request, $exception, $page);
+                $response = $this->createResponseUnauthorized($exception, $request, $page);
                 if ($response !== null) {
                     return $response;
                 }
@@ -623,19 +623,19 @@ HTML;
             case $this->isShowingErrorDetails() === true:
             case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
                 // If details needed, render a widget
-                $body = $this->buildHtmlFromError($request, $exception, $page);
+                $body = $this->buildHtmlFromError($exception, $request, $page);
                 $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
             default:
-                if ($this->isRequestAjax($request)) {
+                if ($request !== null && $this->isRequestAjax($request)) {
                     // Render error data for AJAX requests, so the JS can interpret it.
                     $body = $this->encodeData($this->buildResponseDataError($exception));
                     $headers = array_merge($headers, $this->buildHeadersForAjax());
                     $headers['Content-Type'] = ['application/json;charset=utf-8'];
                 } else {
                     // If we were rendering a widget, return HTML even for non-detail cases
-                    $body = $this->buildHtmlFromError($request, $exception, $page);
+                    $body = $this->buildHtmlFromError($exception, $request, $page);
                     $headers = array_merge($headers, $this->buildHeadersForHtml());
                     $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 }
@@ -656,10 +656,11 @@ HTML;
      * Override this method, if a specific facade needs special treatment for unauthorized-exceptions.
      * 
      * @param \Throwable $exception
-     * @param UiPageInterface $page
-     * @return ResponseInterface
+     * @param ServerRequestInterface|NULL $request
+     * @param UiPageInterface $page|NULL
+     * @return ResponseInterface|NULL
      */
-    protected function createResponseUnauthorized(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
+    protected function createResponseUnauthorized(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : ?ResponseInterface
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
@@ -670,7 +671,7 @@ HTML;
             return null;
         }
         
-        if ($this->isRequestAjax($request)) {
+        if ($request !== null && $this->isRequestAjax($request)) {
             $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
         } else {
             $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
@@ -704,7 +705,7 @@ HTML;
      * @throws RuntimeException
      * @return string
      */
-    protected function buildHtmlFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : string 
+    protected function buildHtmlFromError(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : string 
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         $body = '';
@@ -712,6 +713,7 @@ HTML;
         try {
             $debug_widget = $exception->createWidget($page);
             switch (true) {
+                case $request === null:
                 case $this->isRequestFrontend($request) === true:
                     $body = $this->buildHtmlPage($debug_widget);
                     break;

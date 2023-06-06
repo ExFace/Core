@@ -16,10 +16,6 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
-use exface\Core\Factories\ActionFactory;
-use exface\Core\CommonLogic\Tasks\HttpTask;
-use exface\Core\Actions\ReadData;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
 /**
@@ -42,7 +38,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         try {
             $response = $this->performCommand($request);
         } catch (\Throwable $e) {
-            $response = $this->createResponseFromError($request, $e);
+            $response = $this->createResponseFromError($e, $request);
         }  
         
         // Don't stop the workbench here!!! The response might include a generator, that
@@ -164,6 +160,12 @@ class WebConsoleFacade extends AbstractHttpFacade
                         yield $output;
                     }
                 };
+                
+                // TODO $process->start() seems not to produce any output with some versions of
+                // Microsoft IIS. 
+                // This returns an output though. So maybe we need an if() here. But how to find
+                // out, when we need it?
+                // dump(shell_exec('dir'));
                 
                 $stream = new IteratorStream($generator($process));
         }

@@ -174,7 +174,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $exception = new AuthenticationFailedError($this->workbench->getSecurity(), $content);
         
         if ($this->facade instanceof AbstractAjaxFacade) {
-            return $this->facade->createResponseFromError($request, $exception);
+            return $this->facade->createResponseFromError($exception, $request);
         } else {
             return new Response(403, [], $content);
         }
