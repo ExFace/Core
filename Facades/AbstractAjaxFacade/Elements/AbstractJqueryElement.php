@@ -772,10 +772,10 @@ JS;
      * Returns a facade specific CSS class for a given icon.
      * In most facades this string will be used as a class for an <a> or <i> element.
      *
-     * @param string $icon            
+     * @param NULL|string $icon            
      * @return string
      */
-    public function buildCssIconClass(string $icon) : string
+    public function buildCssIconClass(?string $icon) : string
     {
         $opt = 'ICON_CLASSES.' . strtoupper($icon ?? '');
         $config = $this->getFacade()->getConfig();
