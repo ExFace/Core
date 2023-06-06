@@ -501,6 +501,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
     {
         $sql = parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
+        $aggregator = $aggregator ?? $qpart->getAggregator();
         $function_name = $aggregator->getFunction()->getValue();
         $args = $aggregator->getArguments();
         switch ($function_name) {
