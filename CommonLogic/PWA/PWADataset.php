@@ -12,6 +12,8 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\ImageUrlDataType;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -51,6 +53,48 @@ class PWADataset implements PWADatasetInterface
     public function getDataSheet(): DataSheetInterface
     {
         return $this->dataSheet;
+    }
+    
+    /**
+     * 
+     * @return array|NULL
+     */
+    public function getImageUrlColumns(PWADataset $dataSet) : ?array
+    {
+        $downloadColumnsArray = [];
+        $dataSheet = $dataSet->getDataSheet();
+        $columns = $dataSheet->getColumns();
+        foreach ($columns as $column) {
+            $dataType = $column->getDataType();
+            
+            if($dataType !== null) {
+                if($dataType instanceof ImageUrlDataType) {
+                    array_push($downloadColumnsArray, $column->getName());
+                }
+            }
+        }
+        return $downloadColumnsArray;
+    }
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getBinaryColumns(PWADataset $dataSet) : ?array
+    {
+        $downloadColumnsArray = [];
+        $dataSheet = $dataSet->getDataSheet();
+        $columns = $dataSheet->getColumns();
+        foreach ($columns as $column) {
+            $dataType = $column->getDataType();
+            
+            if($dataType !== null) {
+                    if($dataType instanceof BinaryDataType) {
+                        array_push($downloadColumnsArray, $column->getName());
+                    }
+            }
+        }
+        return $downloadColumnsArray;
     }
     
     public function canInclude(DataSheetInterface $dataSheet) : bool
