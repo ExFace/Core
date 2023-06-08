@@ -213,17 +213,6 @@ class PWAapiFacade extends HttpTaskFacade
     }
     
     /**
-     * Old formatting of routes
-     * api/pwa/<pwaUrl>/data/<dataSetUid>
-     * @param PWADatasetInterface $dataSet
-     * @return string
-     */
-    protected function buildUrlToGetOfflineDataDeprecated(PWADatasetInterface $dataSet) : string
-    {
-        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "/{$dataSet->getUid()}";
-    }
-    
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::getUrlRouteDefault()
