@@ -85,7 +85,9 @@ class PWAapiFacade extends HttpTaskFacade
                         'uid' => $dataSet->getUid(),
                         'object_alias' => $dataSet->getMetaObject()->getAliasWithNamespace(),
                         'object_name' => $dataSet->getMetaObject()->getName(),
-                        'url' => $this->buildUrlToGetOfflineData($dataSet)
+                        'url' => $this->buildUrlToGetOfflineData($dataSet),
+                        'columns_with_download_urls' => $dataSet->getBinaryDataTypeColumnNames(),
+                        'columns_with_image_urls' => $dataSet->getImageUrlDataTypeColumnNames()
                     ];
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);
@@ -126,7 +128,6 @@ class PWAapiFacade extends HttpTaskFacade
                         'uid_column_name' => ($ds->hasUidColumn() ? $ds->getUidColumn()->getName() : null),
                         'username' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername(),
                         'version' => $pwa->getVersion()
-                        
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {
