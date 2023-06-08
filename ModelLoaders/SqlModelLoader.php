@@ -291,7 +291,11 @@ class SqlModelLoader implements ModelLoaderInterface
                 }
             }
         } else {
-            throw new MetaObjectNotFoundError('Object with alias "' . $object->getAliasWithNamespace() . '" or id "' . $object->getId() . '" not found!');
+            if ($objectUid !== null) {
+                throw new MetaObjectNotFoundError('Meta object with UID "' . $objectUid . '" not found!');
+            } else {
+                throw new MetaObjectNotFoundError('Meta object with alias "' . $object->getAliasWithNamespace() . '" not found!');
+            }
         }
         
         $objectUid = $objectUid ?? HexadecimalNumberDataType::cast($object->getId());
