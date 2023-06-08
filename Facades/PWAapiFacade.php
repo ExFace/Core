@@ -16,18 +16,16 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Exceptions\PWA\PWADatasetNotFoundError;
 use exface\Core\Interfaces\PWA\PWADatasetInterface;
 use exface\Core\Exceptions\PWA\PWANotFoundError;
-use exface\Core\DataTypes\LogLevelDataType;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Facades\HttpBadRequestError;
 
 /**
  * 
  * ## Routes
  * 
- * - `api/pwa/data/<pwaUrl>/<dataSetUid>`
+ * - `api/pwa/<pwaUrl>/data?dataset_uid=<dataSetUid>`
  * - `api/pwa/action/ui5/offline/...`
- * - `api/pwa/errors/<deviceId>`
+ * - `api/pwa/errors?deviceId=<deviceId>`
  * 
  * @author Andrej Kabachnik
  *
@@ -50,15 +48,25 @@ class PWAapiFacade extends HttpTaskFacade
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
         $path = $request->getUri()->getPath();
+        // data/pwa_url/dataset_uid
         $path = ltrim(StringDataType::substringAfter($path, $this->getUrlRouteDefault(), $path), '/');
-        list($route, $routePath) = explode('/', $path, 2);
+        // pwa_url/data/dataset_uid
+        list($pwaUrl, $route, $routePath) = explode('/', $path, 3);
+        
+        // Switch $pwaUrl and $route for compatibility with old routings
+        if(($pwaUrl === self::ROUTE_MODEL || self::ROUTE_DATA) && empty($route) ? false : $this->isPwaUrl($route)) {
+            $tmp = $pwaUrl;
+            $pwaUrl = $route;
+            $route = $tmp;
+        }
         
         $headers = $this->buildHeadersCommon();
-        switch (mb_strtolower($route)) {
-            case self::ROUTE_ACTION:
+        $route = mb_strtolower($route);
+        switch (true) {
+            case $route === self::ROUTE_ACTION:
                 return parent::createResponse($request);
-            case self::ROUTE_MODEL:
-                $pwaUrl = $routePath;
+
+            case $route === self::ROUTE_MODEL:
                 $pwa = PWAFactory::createFromURL($this->getWorkbench(), $pwaUrl);
                 $pwa->loadModel([
                     OfflineStrategyDataType::PRESYNC
@@ -68,6 +76,8 @@ class PWAapiFacade extends HttpTaskFacade
                     'uid' => $pwa->getUid(),
                     'name' => $pwa->getName(),
                     'scope' => $pwa->getURL(),
+                    'username' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername(),
+                    'version' => $pwa->getVersion(),
                     'data_sets' => []
                 ];
                 foreach ($pwa->getDatasets() as $dataSet) {
@@ -80,8 +90,17 @@ class PWAapiFacade extends HttpTaskFacade
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);
                 return new Response(200, $headers, JsonDataType::encodeJson($result));
-            case self::ROUTE_DATA:
-                list($pwaUrl, $dataSetUid) = explode('/', $routePath, 2);
+
+            case $route === self::ROUTE_DATA:
+                // Check if array contains DataSetUid, if not, set dataSetUid to old routePath
+                // api/pwa/<pwaUrl>/data?dataSetUid=<dataSetUid>
+                if (array_key_exists("dataset", $request->getQueryParams())) {
+                    $dataSetUid = $request->getQueryParams()['dataset'];
+                } else {
+                    // api/pwa/<pwaUrl>/data/<dataSetUid>
+                    $dataSetUid = $routePath;
+                }
+
                 if (! $pwaUrl) {
                     throw new FacadeRoutingError('PWA not specified in request for offline data');
                 }
@@ -98,13 +117,16 @@ class PWAapiFacade extends HttpTaskFacade
                 $pwa->loadModel([
                     OfflineStrategyDataType::PRESYNC
                 ]);
-                
+
                 try {
                     $ds = $pwa->getDataset($dataSetUid)->readData();
                     $result = [
                         'uid' => $dataSetUid,
                         'status' => 'fresh',
-                        'uid_column_name' => ($ds->hasUidColumn() ? $ds->getUidColumn()->getName() : null)
+                        'uid_column_name' => ($ds->hasUidColumn() ? $ds->getUidColumn()->getName() : null),
+                        'username' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername(),
+                        'version' => $pwa->getVersion()
+                        
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {
@@ -113,8 +135,17 @@ class PWAapiFacade extends HttpTaskFacade
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);
                 return new Response(200, $headers, JsonDataType::encodeJson($result));
-            case self::ROUTE_ERRORS:
-                $deviceId = $routePath;
+                
+            case $pwaUrl === self::ROUTE_ERRORS:
+                // Check if url parameter deviceId is set, if not, set deviceId to old routePath
+                // api/pwa/errors?deviceId=<deviceId>
+                if (array_key_exists("deviceId", $request->getQueryParams())) {
+                    $deviceId = $request->getQueryParams()['deviceId'];
+                } else {
+                    // api/pwa/errors/<deviceId>
+                    $deviceId = $route;
+                }
+                
                 if ($deviceId) {
                     $uxon = $this->getErrorsDataSheet($deviceId)->exportUxonObject();
                     $uxon->unsetProperty('filters');
@@ -130,6 +161,26 @@ class PWAapiFacade extends HttpTaskFacade
         }
     }
     
+    /**
+     * 
+     * @param string $value
+     * @return bool
+     */
+    protected function isPwaUrl(string $value) : bool
+    {
+        try {
+            PWAFactory::createFromURL($this->getWorkbench(), $value);
+            return true;
+        } catch (PWANotFoundError $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * 
+     * @param string $deviceId
+     * @return DataSheetInterface
+     */
     protected function getErrorsDataSheet(string $deviceId) : DataSheetInterface
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
@@ -149,9 +200,26 @@ class PWAapiFacade extends HttpTaskFacade
         return $ds;
     }
     
+    /**
+     * New formatting of routes
+     * api/pwa/<pwaUrl>/data?dataset_uid=<dataSetUid>
+     * @param PWADatasetInterface $dataSet
+     * @return string
+     */
     protected function buildUrlToGetOfflineData(PWADatasetInterface $dataSet) : string
     {
-        return $this->buildUrlToFacade(true) . "/" . self::ROUTE_DATA . "/{$dataSet->getPWA()->getUrl()}/{$dataSet->getUid()}";
+        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "?dataset={$dataSet->getUid()}";
+    }
+    
+    /**
+     * Old formatting of routes
+     * api/pwa/<pwaUrl>/data/<dataSetUid>
+     * @param PWADatasetInterface $dataSet
+     * @return string
+     */
+    protected function buildUrlToGetOfflineDataDeprecated(PWADatasetInterface $dataSet) : string
+    {
+        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "/{$dataSet->getUid()}";
     }
     
     /**
