@@ -14,6 +14,7 @@ use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ImageUrlDataType;
+use exface\Core\DataTypes\StringDataType;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -57,46 +58,42 @@ class PWADataset implements PWADatasetInterface
     
     /**
      * 
-     * @return array|NULL
+     * @param PWADataset $dataSet
+     * @param unknown $dataType
+     * @return array
      */
-    public function getImageUrlColumns(PWADataset $dataSet) : ?array
+    public function getBinaryDataTypeColumnNames(PWADataset $dataSet) : array
     {
-        $downloadColumnsArray = [];
-        $dataSheet = $dataSet->getDataSheet();
-        $columns = $dataSheet->getColumns();
+        $columnsArray = [];
+        $columns = $dataSet->getDataSheet()->getColumns();
         foreach ($columns as $column) {
-            $dataType = $column->getDataType();
-            
-            if($dataType !== null) {
-                if($dataType instanceof ImageUrlDataType) {
-                    array_push($downloadColumnsArray, $column->getName());
-                }
+            $columnDataType = $column->getDataType();
+            if($columnDataType !== null && $columnDataType instanceof BinaryDataType) {
+                    array_push($columnsArray, $column->getName());
             }
         }
-        return $downloadColumnsArray;
+        return $columnsArray;
     }
     
     /**
      *
-     * @return string|NULL
+     * @param PWADataset $dataSet
+     * @param unknown $dataType
+     * @return array
      */
-    public function getBinaryColumns(PWADataset $dataSet) : ?array
+    public function getImageUrlDataTypeColumnNames(PWADataset $dataSet) : array
     {
-        $downloadColumnsArray = [];
-        $dataSheet = $dataSet->getDataSheet();
-        $columns = $dataSheet->getColumns();
+        $columnsArray = [];
+        $columns = $dataSet->getDataSheet()->getColumns();
         foreach ($columns as $column) {
-            $dataType = $column->getDataType();
-            
-            if($dataType !== null) {
-                    if($dataType instanceof BinaryDataType) {
-                        array_push($downloadColumnsArray, $column->getName());
-                    }
+            $columnDataType = $column->getDataType();
+            if($columnDataType !== null && $columnDataType instanceof ImageUrlDataType) {
+                array_push($columnsArray, $column->getName());
             }
         }
-        return $downloadColumnsArray;
+        return $columnsArray;
     }
-    
+
     public function canInclude(DataSheetInterface $dataSheet) : bool
     {
         if (! $this->getMetaObject()->isExactly($dataSheet->getMetaObject())) {

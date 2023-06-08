@@ -20,6 +20,8 @@ use exface\Core\Interfaces\PWA\PWADatasetInterface;
 use exface\Core\Exceptions\PWA\PWANotFoundError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Exceptions\Facades\HttpBadRequestError;
+use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\ImageUrlDataType;
 
 /**
  *
@@ -87,8 +89,8 @@ class PWAapiFacade extends HttpTaskFacade
                         'object_alias' => $dataSet->getMetaObject()->getAliasWithNamespace(),
                         'object_name' => $dataSet->getMetaObject()->getName(),
                         'url' => $this->buildUrlToGetOfflineData($dataSet, $pwa),
-                        'download_columns' => $dataSet->getBinaryColumns($dataSet),
-                        'imageurl_columns' => $dataSet->getImageUrlColumns($dataSet)
+                        'download_columns' => $dataSet->getBinaryDataTypeColumnNames($dataSet),
+                        'imageurl_columns' => $dataSet->getImageUrlDataTypeColumnNames($dataSet)
                     ];
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);
@@ -122,8 +124,8 @@ class PWAapiFacade extends HttpTaskFacade
                 ]);
                 
                 try {
-                    $ds = $dataSet->readData();
                     $dataSet = $pwa->getDataset($dataSetUid);
+                    $ds = $dataSet->readData();       
                     $result = [
                         'uid' => $dataSetUid,
                         'status' => 'fresh',
