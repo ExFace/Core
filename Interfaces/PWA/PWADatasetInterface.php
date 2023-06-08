@@ -19,6 +19,12 @@ interface PWADatasetInterface extends iCanBeConvertedToUxon
     
     public function getDataSheet() : DataSheetInterface;
     
+    /**
+     *
+     * @return string[]
+     */
+    public function getImageUrlDataTypeColumnNames() : array;
+    
     public function getUid() : ?string;
     
     public function setUid(string $uid) : PWADatasetInterface;

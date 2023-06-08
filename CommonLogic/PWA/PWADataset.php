@@ -62,11 +62,13 @@ class PWADataset implements PWADatasetInterface
      */
     public function getBinaryDataTypeColumnNames() : array
     {
+        // TODO How to get download urls for binary columns?
+        return [];
         $columnsArray = [];
         $columns = $this->getDataSheet()->getColumns();
         foreach ($columns as $column) {
             $columnDataType = $column->getDataType();
-            if($columnDataType !== null && $columnDataType instanceof BinaryDataType) {
+            if($columnDataType !== null && $columnDataType instanceof StringDataType) {
                     array_push($columnsArray, $column->getName());
             }
         }
@@ -75,7 +77,8 @@ class PWADataset implements PWADatasetInterface
     
     /**
      * 
-     * @return array
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getImageUrlDataTypeColumnNames()
      */
     public function getImageUrlDataTypeColumnNames() : array
     {
