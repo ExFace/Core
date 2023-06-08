@@ -11,7 +11,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
  */
 class MessageCodeDataType extends StringDataType
 {
-    const VALIDATION_REGEX = '/^[0-9A-Z]+$/';
+    const VALIDATION_REGEX = '/^[0-9A-Z-]+$/';
     
     /**
      * 
