@@ -89,8 +89,8 @@ class PWAapiFacade extends HttpTaskFacade
                         'object_alias' => $dataSet->getMetaObject()->getAliasWithNamespace(),
                         'object_name' => $dataSet->getMetaObject()->getName(),
                         'url' => $this->buildUrlToGetOfflineData($dataSet, $pwa),
-                        'download_columns' => $dataSet->getBinaryDataTypeColumnNames($dataSet),
-                        'imageurl_columns' => $dataSet->getImageUrlDataTypeColumnNames($dataSet)
+                        'download_columns' => $dataSet->getBinaryDataTypeColumnNames(),
+                        'imageurl_columns' => $dataSet->getImageUrlDataTypeColumnNames()
                     ];
                 }
                 $headers = array_merge($headers, ['Content-Type' => 'application/json']);

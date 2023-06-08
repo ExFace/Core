@@ -58,14 +58,12 @@ class PWADataset implements PWADatasetInterface
     
     /**
      * 
-     * @param PWADataset $dataSet
-     * @param unknown $dataType
      * @return array
      */
-    public function getBinaryDataTypeColumnNames(PWADataset $dataSet) : array
+    public function getBinaryDataTypeColumnNames() : array
     {
         $columnsArray = [];
-        $columns = $dataSet->getDataSheet()->getColumns();
+        $columns = $this->getDataSheet()->getColumns();
         foreach ($columns as $column) {
             $columnDataType = $column->getDataType();
             if($columnDataType !== null && $columnDataType instanceof BinaryDataType) {
@@ -76,15 +74,13 @@ class PWADataset implements PWADatasetInterface
     }
     
     /**
-     *
-     * @param PWADataset $dataSet
-     * @param unknown $dataType
+     * 
      * @return array
      */
-    public function getImageUrlDataTypeColumnNames(PWADataset $dataSet) : array
+    public function getImageUrlDataTypeColumnNames() : array
     {
         $columnsArray = [];
-        $columns = $dataSet->getDataSheet()->getColumns();
+        $columns = $this->getDataSheet()->getColumns();
         foreach ($columns as $column) {
             $columnDataType = $column->getDataType();
             if($columnDataType !== null && $columnDataType instanceof ImageUrlDataType) {
