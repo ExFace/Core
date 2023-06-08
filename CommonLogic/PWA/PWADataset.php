@@ -12,6 +12,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\ImageUrlDataType;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -25,6 +26,12 @@ class PWADataset implements PWADatasetInterface
     
     private $uid = null;
     
+    /**
+     * 
+     * @param PWAInterface $pwa
+     * @param DataSheetInterface $dataSheet
+     * @param string $uid
+     */
     public function __construct(PWAInterface $pwa, DataSheetInterface $dataSheet, string $uid = null)
     {
         $this->pwa = $pwa;
@@ -32,6 +39,11 @@ class PWADataset implements PWADatasetInterface
         $this->uid = $uid;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         // TODO
@@ -48,11 +60,21 @@ class PWADataset implements PWADatasetInterface
         return $this->pwa;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getDataSheet()
+     */
     public function getDataSheet(): DataSheetInterface
     {
         return $this->dataSheet;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::canInclude()
+     */
     public function canInclude(DataSheetInterface $dataSheet) : bool
     {
         if (! $this->getMetaObject()->isExactly($dataSheet->getMetaObject())) {
@@ -74,6 +96,11 @@ class PWADataset implements PWADatasetInterface
         return true;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::includeData()
+     */
     public function includeData(DataSheetInterface $anotherSheet) : PWADatasetInterface
     {
         if (! $this->getDataSheet()->getMetaObject()->isExactly($anotherSheet->getMetaObject())) {
@@ -185,5 +212,33 @@ class PWADataset implements PWADatasetInterface
             return null;
         }
         return $tsBehavior->getUpdatedOnAttribute();
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    public function getBinaryDataTypeColumnNames() : array
+    {
+        // TODO How to get download urls for binary columns?
+        return [];
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getImageUrlDataTypeColumnNames()
+     */
+    public function getImageUrlDataTypeColumnNames() : array
+    {
+        $columnsArray = [];
+        $columns = $this->getDataSheet()->getColumns();
+        foreach ($columns as $column) {
+            $columnDataType = $column->getDataType();
+            if($columnDataType !== null && $columnDataType instanceof ImageUrlDataType) {
+                array_push($columnsArray, $column->getName());
+            }
+        }
+        return $columnsArray;
     }
 }

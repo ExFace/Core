@@ -30,4 +30,24 @@ interface PWADatasetInterface extends iCanBeConvertedToUxon
     public function isIncremental() : bool;
     
     public function getIncrementAttribute() : ?MetaAttributeInterface;
+    
+    /**
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return bool
+     */
+    public function canInclude(DataSheetInterface $dataSheet) : bool;
+    
+    /**
+     * 
+     * @param DataSheetInterface $anotherSheet
+     * @return PWADatasetInterface
+     */
+    public function includeData(DataSheetInterface $anotherSheet) : PWADatasetInterface;
+    
+    /**
+     *
+     * @return string[]
+     */
+    public function getImageUrlDataTypeColumnNames() : array;
 }
