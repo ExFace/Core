@@ -16,6 +16,14 @@ use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\Communication\CommunicationTemplate;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 use exface\Core\CommonLogic\Selectors\CommunicationMessageSelector;
+use exface\Core\Interfaces\Communication\RecipientInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Communication\Recipients\EmailRecipient;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Communication\Recipients\UserRecipient;
+use exface\Core\Communication\Recipients\UserRoleRecipient;
+use exface\Core\CommonLogic\Selectors\UserRoleSelector;
+use exface\Core\Communication\Recipients\UserMultiRoleRecipient;
 
 /**
  * Produces components related to the communication framework
@@ -146,5 +154,49 @@ abstract class CommunicationFactory extends AbstractSelectableComponentFactory
     public static function createTemplateFromUxon(CommunicationTemplateSelectorInterface $selector, UxonObject $uxon) : CommunicationTemplateInterface
     {
         return new CommunicationTemplate($selector, $uxon);
+    }
+    
+    /**
+     * Instatiates a communication recipient from an address in DSN syntax
+     * 
+     * - `user://<username>` or `user://<uid>`
+     * - `role://<alias>` or `role://<alias1>+<alias2>`
+     * - `mailto://<email>`
+     * 
+     * @param string $dsn
+     * @param WorkbenchInterface $workbench
+     * 
+     * @throws RuntimeException
+     * 
+     * @return RecipientInterface
+     */
+    public static function createRecipientFromString(string $dsn, WorkbenchInterface $workbench) : RecipientInterface
+    {
+        switch (true) {
+            // mailto:user@gmail.com
+            case StringDataType::startsWith($dsn, 'mailto:'):
+                $email = trim(ltrim(StringDataType::substringAfter($dsn, 'mailto:'), '/'));
+                if (false !== $filtered = filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    return new EmailRecipient($filtered);
+                }
+                break;
+            // `role://<alias>` or `role://<uid>` or `role://<alias1>+<alias2>`
+            case StringDataType::startsWith($dsn, 'role:'):
+                $selectorString = StringDataType::substringAfter($dsn, 'role://');
+                if (UserMultiRoleRecipient::isMultipleRoles($selectorString)) {
+                    return new UserMultiRoleRecipient($selectorString, $workbench);
+                } else {
+                    return new UserRoleRecipient(new UserRoleSelector($workbench, $selectorString));
+                }
+            // `user://<username>` or `user://<uid>`
+            case StringDataType::startsWith($dsn, 'user:'):
+                $selectorString = StringDataType::substringAfter($dsn, 'user://');
+                return new UserRecipient(UserFactory::createFromModel($workbench, $selectorString));
+            default:
+                if (false !== $filtered = filter_var($dsn, FILTER_VALIDATE_EMAIL)) {
+                    return new EmailRecipient($filtered);
+                }
+        }
+        throw new RuntimeException('Cannot parse "' . $dsn . '" as communication recipient - invalid syntax?');
     }
 }

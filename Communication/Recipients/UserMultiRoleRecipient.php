@@ -8,6 +8,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\UserFactory;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 /**
  * Allows to address users, that have multiple rows: e.g. `my.App.role1+my.App.role2`
@@ -80,7 +81,7 @@ class UserMultiRoleRecipient implements RecipientGroupInterface
      */
     public function __toString(): string
     {
-        return $this->selectorString;
+        return 'role://' . $this->selectorString;
     }
     
     /**
@@ -91,5 +92,15 @@ class UserMultiRoleRecipient implements RecipientGroupInterface
     public static function isMultipleRoles(string $string) : bool
     {
         return strpos($string, self::ROLE_DELIMITER) !== false;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\RecipientInterface::is()
+     */
+    public function is(RecipientInterface $otherRecipient): bool
+    {
+        return strcasecmp($this->__toString(), $otherRecipient->__toString()) === 0;
     }
 }

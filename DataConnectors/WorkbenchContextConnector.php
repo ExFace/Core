@@ -68,7 +68,7 @@ class WorkbenchContextConnector extends TransparentConnector implements Communic
         }
         
         $errors = [];
-        $userIds = $this->getUserUids($message->getRecipients(), $errors);
+        $userIds = $this->getUserUids($message->getRecipients(), $errors, $message->getRecipientsToExclude());
         
         if (! empty($userIds)) {
             NotificationContext::send($notification, $userIds);
@@ -86,19 +86,25 @@ class WorkbenchContextConnector extends TransparentConnector implements Communic
      * @param array $recipients
      * @return array
      */
-    protected function getUserUids(array $recipients, array &$errors) : array
+    protected function getUserUids(array $recipients, array &$errors, array $excludeRecipients = []) : array
     {
         $userUids = [];
         foreach ($recipients as $recipient) {
+            foreach ($excludeRecipients as $excl) {
+                if ($excl->is($recipient)) {
+                    continue 2;
+                }
+            }
             switch (true) {
                 case $recipient instanceof RecipientGroupInterface:
-                    $userUids = array_merge($userUids, $this->getUserUids($recipient->getRecipients(), $errors));
+                    $userUids = array_merge($userUids, $this->getUserUids($recipient->getRecipients(), $errors, $excludeRecipients));
                     break;
                 case $recipient instanceof UserRecipientInterface:
                     try {
-                        if (! $recipient->isMuted()) {
-                            $userUids[] = $recipient->getUserUid();
+                        if ($recipient->isMuted()) {
+                            break;
                         }
+                        $userUids[] = $recipient->getUserUid();
                     } catch (UserNotFoundError $e) {
                         $errors[] = $e;
                     }

@@ -27,12 +27,17 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
- * Creates user-notifications on certain events and conditions.
+ * Sends communication messages (notifications, emails, chat posts, etc.) on certain events and conditions.
  * 
- * Each behavior instance can be configured to send notifications on a specific event
- * by setting the mandatory `notify_on` option. Additionally other `notify_*` options
- * can be used to introduce further conditions. If you need notifications on multiple
- * events - create multiple behaviors for the object.
+ * Each behavior instance can be configured to send messages on a specific event
+ * or action by setting the `notify_on_event` or `notify_on_action` options. Other `notify_*` 
+ * options can be used to add further conditions. 
+ * 
+ * **NOTE:** If the message is based on data (i.e. on data events or actions) and the reciepient
+ * is a user, it will only be sent if this user is authorized to read the data. You can change
+ * this via `notify_if_data_authorized`.
+ * 
+ * If you need notifications on multiple events - create multiple behaviors for the object.
  * 
  * ## Notifications and placeholders
  * 
@@ -150,6 +155,8 @@ class NotifyingBehavior extends AbstractBehavior
     private $notifyIfAttributesChange = null;
     
     private $notifyIfDataMatchesConditionGroupUxon = null;
+    
+    private $notifyIfDataAuthorized = true;
     
     private $ignoreDataSheets = [];
     
@@ -737,5 +744,36 @@ class NotifyingBehavior extends AbstractBehavior
     {
         $this->notifyAfterAllActionsComplete = $value;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the corresponding data
+     * 
+     * By default, the behavior will check every data row to see if the user to be notified
+     * is authorized to read it and will only send the message if so.
+     * 
+     * This option only applies to notifications sent on data events and only if the recipient is
+     * a user, a user role, or anything else, that implies a message being sent ot a user.
+     * 
+     * @uxon-property notify_if_data_authorized
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $trueOrFalse
+     * @return NotifyingBehavior
+     */
+    protected function setNotifyIfDataAuthorized(bool $trueOrFalse) : NotifyingBehavior
+    {
+        $this->notifyIfDataAuthorized = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @see SendMessagesFromDataTrait::willSendOnlyForAuthorizedData()
+     */
+    protected function willSendOnlyForAuthorizedData() : bool
+    {
+        return $this->notifyIfDataAuthorized;
     }
 }

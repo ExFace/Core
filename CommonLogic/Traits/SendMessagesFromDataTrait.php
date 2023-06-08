@@ -11,6 +11,10 @@ use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Communication\Messages\Envelope;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Factories\CommunicationFactory;
+use exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint;
+use exface\Core\Interfaces\Communication\UserRecipientInterface;
+use exface\Core\Interfaces\Communication\RecipientGroupInterface;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 /**
  * This trait allows to send communication messages configured in a UXON array.
@@ -19,7 +23,7 @@ use exface\Core\Factories\CommunicationFactory;
  *
  */
 trait SendMessagesFromDataTrait 
-{    
+{        
     /**
      * 
      * @param UxonObject $messagesConfig
@@ -72,7 +76,15 @@ trait SendMessagesFromDataTrait
                             );
                         $renderedJson = $rowRenderer->render($json);
                         $renderedUxon = UxonObject::fromJson($renderedJson);
-                        $messages[] = new Envelope($this->getWorkbench(), $renderedUxon);
+                        $message = new Envelope($this->getWorkbench(), $renderedUxon);
+                        
+                        if ($this->willSendOnlyForAuthorizedData()) {
+                            foreach ($this->getRecipientsThatCannotSeeData($message->getRecipients(), $dataSheet, $rowNo) as $recipient) {
+                                $message->addRecipientToExclude($recipient);
+                            }
+                        }
+                        
+                        $messages[] = $message;
                     }
                     break;
                 default:
@@ -84,4 +96,43 @@ trait SendMessagesFromDataTrait
         
         return $messages;
     }
+    
+    /**
+     * 
+     * @param RecipientInterface[] $recipients
+     * @param DataSheetInterface $dataSheet
+     * @param int $rowNo
+     * @return array
+     */
+    protected function getRecipientsThatCannotSeeData(array $recipients, DataSheetInterface $dataSheet, int $rowNo) : array
+    {
+        /* @var $authPoint \exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPoint */
+        $authPoint = $dataSheet->getWorkbench()->getSecurity()->getAuthorizationPoint(DataAuthorizationPoint::class);
+        $authSheet = $dataSheet->copy()->removeRows();
+        $excluded = [];
+        foreach ($recipients as $recipient) {
+            switch (true) {
+                case $recipient instanceof RecipientGroupInterface:
+                    $excluded = array_merge($excluded, $this->getRecipientsThatCannotSeeData($recipient->getRecipients(), $dataSheet, $rowNo));
+                    break;
+                case $recipient instanceof UserRecipientInterface:
+                    $user = $recipient->getUser();
+                    $authSheet->getFilters()->removeAll();
+                    $authSheet = $authPoint->authorize($authSheet, [DataAuthorizationPoint::OPERATION_READ], $user);
+                    $authSheet->addRow($dataSheet->getRow($rowNo), false, false);
+                    $authSheet = $authSheet->extract($authSheet->getFilters(), true);
+                    if ($authSheet->isEmpty() === true) {
+                        $excluded[] = $recipient;
+                    }
+                    break;
+            }
+        }
+        return $excluded;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected abstract function willSendOnlyForAuthorizedData() : bool;
 }
