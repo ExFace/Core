@@ -199,7 +199,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         if ($from = $this->getFrom()) {
             $email->from($from);
         }
-        $addresses = $this->getEmailAddresses($message->getRecipients());
+        $addresses = $this->getEmailAddresses($message->getRecipients(), $message->getRecipientsToExclude());
         // Ignore/error if no to-addresses defined
         if (empty($addresses)) {
             if ($this->isErrorIfEmptyTo()) {
@@ -336,13 +336,18 @@ MD;
      * @param RecipientInterface[] $recipients
      * @return string[]
      */
-    protected function getEmailAddresses(array $recipients) : array
+    protected function getEmailAddresses(array $recipients, array $recipientsToExclude = []) : array
     {
         $addrs = [];
         foreach ($recipients as $recipient) {
+            foreach ($recipientsToExclude as $excl) {
+                if ($excl->is($recipient)) {
+                    continue 2;
+                }
+            }
             switch (true) {
                 case $recipient instanceof RecipientGroupInterface:
-                    $addrs = array_merge($addrs, $this->getEmailAddresses($recipient->getRecipients()));
+                    $addrs = array_merge($addrs, $this->getEmailAddresses($recipient->getRecipients(), $recipientsToExclude));
                     break;
                 case $recipient instanceof EmailRecipientInterface:
                     if (($recipient instanceof UserRecipientInterface) && $recipient->isMuted()) {

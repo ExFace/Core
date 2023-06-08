@@ -632,7 +632,7 @@
         },
         {
             "CREATED_ON": "2023-06-01 16:06:16",
-            "MODIFIED_ON": "2023-06-05 11:18:32",
+            "MODIFIED_ON": "2023-06-08 09:20:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eea1a77a53f7c4a1a7025041000001",
@@ -651,7 +651,7 @@
                 "widget_type": "Icon",
                 "icon_scale": [
                     "volume-up",
-                    "volume-off"
+                    ""
                 ]
             },
             "COMMENTS": "",

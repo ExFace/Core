@@ -155,7 +155,7 @@
         },
         {
             "CREATED_ON": "2022-02-01 16:13:03",
-            "MODIFIED_ON": "2022-02-02 16:01:53",
+            "MODIFIED_ON": "2023-06-08 09:17:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ecb037737549feb037747827435ce5",
@@ -167,7 +167,7 @@
             "CONFIG_UXON": {
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
-                "icon": "toggle-off",
+                "icon": "volume-off",
                 "result_message_text": "Channel now disabled",
                 "input_rows_min": 1,
                 "input_mappers": [
@@ -200,9 +200,9 @@
         },
         {
             "CREATED_ON": "2022-06-08 12:53:32",
-            "MODIFIED_ON": "2022-06-08 12:53:51",
+            "MODIFIED_ON": "2023-06-08 09:17:40",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eca6403d974394a640747827435ce5",
             "OBJECT": "0x11ec9b5e07d27cb89b5e025041000001",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
@@ -212,7 +212,7 @@
             "CONFIG_UXON": {
                 "object_alias": "exface.Core.CUSTOMIZING",
                 "input_object_alias": "exface.Core.CUSTOMIZING",
-                "icon": "toggle-on",
+                "icon": "volume-up",
                 "result_message_text": "Channel now active",
                 "input_rows_min": 1,
                 "input_mappers": [

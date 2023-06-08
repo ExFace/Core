@@ -12,7 +12,10 @@ use exface\Core\CommonLogic\Traits\SendMessagesFromDataTrait;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
- * Sends one or more messages through communication channels.
+ * Sends a messages through communication channels for every row in the input data.
+ * 
+ * **NOTE:** If the reciepient is a user, the message will only be sent if this user is authorized to read the 
+ * data row. You can change this via `send_only_if_data_authorized`.
  * 
  * @author Andrej Kabachnik
  *
@@ -22,6 +25,8 @@ class SendMessage extends AbstractAction
     use SendMessagesFromDataTrait;
     
     private $messageUxons = null;
+    
+    private $sendOnlyIfDataAuthorized = true;
     
     /**
      * 
@@ -118,5 +123,36 @@ class SendMessage extends AbstractAction
     {
         $this->messageUxons = $arrayOfMessages;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to send messages for input data even if the recipient user is not authorized to read the corresponding data row
+     *
+     * By default, the action will check every data row to see if the recipient user
+     * is authorized to read it and will only send the message if so.
+     *
+     * This option only applies if the recipient is a user, a user role, or anything else, 
+     * that implies a message being sent ot a user.
+     *
+     * @uxon-property send_only_if_data_authorized
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $trueOrFalse
+     * @return SendMessage
+     */
+    protected function setSendOnlyIfDataAuthorized(bool $trueOrFalse) : SendMessage
+    {
+        $this->sendOnlyIfDataAuthorized = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     *
+     * @see SendMessagesFromDataTrait::willSendOnlyForAuthorizedData()
+     */
+    protected function willSendOnlyForAuthorizedData() : bool
+    {
+        return $this->sendOnlyIfDataAuthorized;
     }
 }

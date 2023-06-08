@@ -28,6 +28,8 @@ use exface\Core\Interfaces\Communication\RecipientInterface;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 use exface\Core\Communication\Recipients\UserMultiRoleRecipient;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Factories\CommunicationFactory;
 
 /**
  * Base class for workbench-based messages providing common properties like `channel`, `recipient_users`, etc. 
@@ -54,6 +56,8 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     private $recipientsCached = null;
     
     private $recipientUserFilter = null;
+    
+    private $recipientsToExclude = [];
     
     private $templateSelector = null;
     
@@ -163,10 +167,11 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
      */
     protected function parseRcipientAddress(string $address) : ?RecipientInterface
     {
-        if (false !== $filtered = filter_var($address, FILTER_VALIDATE_EMAIL)) {
-            return new EmailRecipient($filtered);
+        try {
+            return CommunicationFactory::createRecipientFromString($address, $this->getWorkbench());
+        } catch (\Throwable $e) {
+            return null;
         }
-        return null;
     }
     
     /**
@@ -275,7 +280,12 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     }
     
     /**
-     * List of explicit addresses (e.g. emails, phone numbers, etc.) to notify
+     * List of explicit addresses (e.g. emails, phone numbers, etc.) to notify.
+     * 
+     * Use the URN syntax to specify the type of the recipient:
+     * - `user://<username>` or `user://<uid>`
+     * - `role://<alias>` or `role://<alias1>+<alias2>`
+     * - `mailto://<email>`
      * 
      * @uxon-property recipients
      * @uxon-type array
@@ -356,6 +366,13 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
         }
         if (null !== $this->recipientUserSelectors) {
             $uxon->setProperty('recipient_users', new UxonObject($this->recipientUserSelectors));
+        }
+        if (! empty($excludes = $this->getRecipientsToExclude())) {
+            $exclStrings = [];
+            foreach ($excludes as $recipient) {
+                $exclStrings[] = $recipient->__toString();
+            }
+            $uxon->setProperty('recipients_to_exclude', new UxonObject($exclStrings));
         }
         return $uxon;
     }
@@ -443,6 +460,52 @@ abstract class AbstractMessage implements CommunicationMessageInterface, iCanGen
     protected function setTemplate(string $value) : CommunicationMessageInterface
     {
         $this->templateSelector = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param RecipientInterface $recipient
+     * @return CommunicationMessageInterface
+     */
+    public function addRecipientToExclude(RecipientInterface $recipient) : CommunicationMessageInterface
+    {
+        $this->recipientsToExclude[] = $recipient;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return RecipientInterface[]
+     */
+    public function getRecipientsToExclude() : array
+    {
+        foreach ($this->recipientsToExclude as $i => $recipient) {
+            if (! $recipient instanceof RecipientInterface) {
+                $this->recipientsToExclude[$i] = CommunicationFactory::createRecipientFromString($recipient, $this->getWorkbench());
+            }
+        }
+        return $this->recipientsToExclude;
+    }
+    
+    /**
+     * List of addresses to NOT send this message to.
+     * 
+     * Use the URN syntax to specify the type of the recipient:
+     * - `user://<username>` or `user://<uid>`
+     * - `role://<alias>` or `role://<alias1>+<alias2>`
+     * - `mailto://<email>`
+     * 
+     * @uxon-property recipients_to_exclude
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxonArray
+     * @return CommunicationMessageInterface
+     */
+    protected function setRecipientsToExclude(UxonObject $uxonArray) : CommunicationMessageInterface
+    {
+        $this->recipientsToExclude = $uxonArray->toArray();
         return $this;
     }
 }

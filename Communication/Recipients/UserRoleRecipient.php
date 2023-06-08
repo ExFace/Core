@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\Interfaces\Communication\RecipientGroupInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Communication\RecipientInterface;
 
 class UserRoleRecipient implements RecipientGroupInterface
 {    
@@ -39,6 +40,11 @@ class UserRoleRecipient implements RecipientGroupInterface
         return $this->users;
     }
     
+    public function getRoleSelector() : UserRoleSelectorInterface
+    {
+        return $this->selector;
+    }
+    
     /**
      *
      * @return string[]
@@ -63,6 +69,27 @@ class UserRoleRecipient implements RecipientGroupInterface
      */
     public function __toString(): string
     {
-        return $this->selector->toString();
+        return 'role://' . $this->selector->toString();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Communication\RecipientInterface::is()
+     */
+    public function is(RecipientInterface $otherRecipient): bool
+    {
+        if ($otherRecipient instanceof UserRoleRecipient) {
+            $thisSel = $this->getRoleSelector();
+            $otherSel = $otherRecipient->getRoleSelector();
+            switch (true) {
+                case $thisSel->isAlias() && $otherSel->isAlias():
+                case $thisSel->isUid() && $otherSel->isUid():
+                    return strcasecmp($thisSel->__toString(), $otherSel->__toString()) === 0;
+                default:
+                    // TODO How to compare a UID to an alias? Load data via DataSheet?
+            }
+        }
+        return strcasecmp($this->__toString(), $otherRecipient->__toString()) === 0;
     }
 }
