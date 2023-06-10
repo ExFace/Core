@@ -126,7 +126,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         foreach ($this->getAttributes() as $qpart) {
             $qpartAttr = $qpart->getAttribute();
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if ($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) == 'binary') {
+            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE), 'binary') === 0) {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
@@ -336,7 +336,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
-        $sql_data_type = $dataAddressProps[static::DAP_SQL_DATA_TYPE] ?? null;
+        $sql_data_type = $dataAddressProps[static::DAP_SQL_DATA_TYPE] === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
         if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
             $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
             switch ($data_type->getEncoding()) {
