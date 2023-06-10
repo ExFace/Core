@@ -134,19 +134,19 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                     if (preg_last_error() !== PREG_NO_ERROR) {
                         return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Cannot check `url_path_pattern` condition: failed mathing regular expression "' . str_replace("'", "\\'", $pattern) . '"');
                     }
-                    return PermissionFactory::createNotApplicable($this, 'URL path does not match pattern');
+                    return PermissionFactory::createNotApplicable($this, 'URL path does not match pattern `' . $pattern . '`');
                 }
             }
             
             // Check if query (after `?`) matches
-            if (null !== $pattern = $this->getUrlPathRegex()) {
+            if (null !== $pattern = $this->getUrlQueryRegex()) {
                 if (preg_match($pattern, $request->getUri()->getQuery()) === 1) {
                     $applied = true;
                 } else {
                     if (preg_last_error() !== PREG_NO_ERROR) {
                         return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Cannot check `url_query_pattern`: failed mathing regular expression "' . str_replace("'", "\\'", $pattern) . '"');
                     }
-                    return PermissionFactory::createNotApplicable($this, 'URL query (parameters) does not match pattern');
+                    return PermissionFactory::createNotApplicable($this, 'URL query (parameters) does not match pattern `' . $pattern . '`');
                 }
             }
             
@@ -158,7 +158,7 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                     if (preg_last_error() !== PREG_NO_ERROR) {
                         return PermissionFactory::createIndeterminate(null, $this->getEffect(), $this, 'Cannot check `body_pattern`: failed mathing regular expression "' . str_replace("'", "\\'", $pattern) . '"');
                     }
-                    return PermissionFactory::createNotApplicable($this, 'Request body does not match pattern');
+                    return PermissionFactory::createNotApplicable($this, 'Request body does not match pattern `' . $pattern . '`');
                 }
             }
             
