@@ -24,7 +24,7 @@ class DataSheetExtractError extends DataSheetRuntimeError
      */
     public function __construct(DataSheetInterface $data_sheet, $message, $alias = null, $previous = null, ConditionGroupInterface $filter = null)
     {
-        parent::__construct($message, $alias, $previous);
+        parent::__construct($data_sheet, $message, $alias, $previous);
         $this->conditionGroup = $filter;
     }
     
