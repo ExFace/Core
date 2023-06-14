@@ -185,7 +185,18 @@ class FilePathDataType extends StringDataType
      */
     public static function findFolderPath(string $path) : string
     {
-       return pathinfo($path, PATHINFO_DIRNAME); 
+        return pathinfo($path, PATHINFO_DIRNAME); 
+    }
+    
+    /**
+     * Returns the folder name from the given path: e.g. my/folder/file.txt => folder
+     *
+     * @param string $path
+     * @return string
+     */
+    public static function findFolder(string $path) : string
+    {
+        return pathinfo(pathinfo($path, PATHINFO_DIRNAME), PATHINFO_FILENAME);
     }
     
     /**
