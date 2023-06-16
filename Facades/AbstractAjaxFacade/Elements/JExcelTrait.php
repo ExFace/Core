@@ -164,13 +164,18 @@ JS;
     protected function buildHtmlHeadTagsForJExcel() : array
     {
         $facade = $this->getFacade();
-        return [
+        $includes = [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
-        
+        if ($facade->getConfig()->hasOption('LIBS.JEXCEL.PLUGINS')) {
+            foreach ($facade->getConfig()->getOption('LIBS.JEXCEL.PLUGINS') as $path) {
+                $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile($path) . '"></script>';
+            }
+        }
+        return $includes;
     }
     
     /**
@@ -380,6 +385,11 @@ JS;
         },
         onredo: function(el, historyRecord) {
             el.exfWidget.validateAll();
+        },
+        onevent: function(event) {
+            ({$this->buildJsJqueryElement()}[0].jssPlugins || []).forEach(function(oPlugin) {
+                oPlugin.onevent(event);
+            });
         }
     });
 
@@ -612,7 +622,7 @@ JS;
         }
     };
     
-    {$this->buildJsFixAutoColumnWidth()}
+    {$this->buildJsInitPlugins()}
     {$this->buildJsFixContextMenuPosition()}
 
 JS;
@@ -622,9 +632,21 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsFixAutoColumnWidth() : string
+    protected function buildJsInitPlugins() : string
     {
-        return "{$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');";
+        $pluginsJs = '';
+        $cfg = $this->getFacade()->getConfig();
+        if ($cfg->hasOption('LIBS.JEXCEL.PLUGINS')) {
+            foreach ($cfg->getOption('LIBS.JEXCEL.PLUGINS') as $var => $path) {
+                $pluginsJs = "{$var}({$this->buildJsJqueryElement()}[0].exfWidget.getJExcel())";
+            }
+        }
+        return <<<JS
+        
+        {$this->buildJsJqueryElement()}[0].jssPlugins = [
+            $pluginsJs
+        ];
+JS;
     }
     
     /**
