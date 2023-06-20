@@ -620,6 +620,29 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
                 }
                 break;
+            case $data_type instanceof DateTimeDataType:
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                if ($data_type->getShowMilliseconds()) {
+                    $format = 121;
+                } else {
+                    $format = 120;
+                }
+                // Use CONVERT() instead of string dates like '2023-06-20 23:50:00'
+                // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
+                // But do not convert non-strings like `NULL` or custom SQL statements
+                if ("'" === mb_substr($value, 0, 1)) {
+                    $value = "CONVERT(datetime, {$value}, {$format})";
+                }
+                break;
+            case $data_type instanceof DateDataType:
+                // Use CONVERT() instead of string dates like '2023-06-20'
+                // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
+                // But do not convert non-strings like `NULL` or custom SQL statements
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                if ("'" === mb_substr($value, 0, 1)) {
+                    $value = "CONVERT(date, {$value}, 23)";
+                }
+                break;
             default:
                 $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
         }
