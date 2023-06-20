@@ -37,7 +37,8 @@ use exface\Core\Widgets\Text;
  * ```
  * {
  *  "require": {
- *      "npm-asset/jspreadsheet-ce" : "^4.10"
+ *      "npm-asset/jspreadsheet-ce" : "^4.10",
+		"npm-asset/jspreadsheet--autowidth" : "^2"
  *  }
  * }
  * 
@@ -52,6 +53,9 @@ use exface\Core\Widgets\Text;
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
  *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
  *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css"
+ *  "LIBS.JEXCEL.PLUGINS": {
+ *		"jss_autoWidth": "npm-asset/jspreadsheet--autowidth/plugins/dist/autoWidth.min.js"
+ *	},
  * ```
  * 
  * NOTE: This trait requires the exfTools JS library to be available!
