@@ -16,6 +16,8 @@ class DateTimeDataType extends DateDataType
     
     private $showSeconds = false;
     
+    private $showMilliseconds = false;
+    
     /**
      * 
      * @param \DateTime $date
@@ -99,6 +101,31 @@ class DateTimeDataType extends DateDataType
     public function setShowSeconds(bool $value) : DateTimeDataType
     {
         $this->showSeconds = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowMilliseconds() : bool
+    {
+        return $this->showMilliseconds;
+    }
+    
+    /**
+     * Set to TRUE to show use time with milliseconds (has no effect when custom `format` specified!).
+     *
+     * @uxon-property show_milliseconds
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return TimeDataType
+     */
+    public function setShowMilliseconds(bool $value) : DateTimeDataType
+    {
+        $this->showMilliseconds = $value;
         return $this;
     }
 }
