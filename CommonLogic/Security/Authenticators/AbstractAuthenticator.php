@@ -60,8 +60,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     private $onlyForFacades = [];
     
+    private $syncRoles = false;
+    
+    private $syncRolesWithDataSheet = null;
+    
     /**
-     * 
+     *
      * @param WorkbenchInterface $workbench
      */
     public function __construct(WorkbenchInterface $workbench)
@@ -80,7 +84,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
@@ -102,12 +106,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * The name of the authentication method will be shown on the login-screen and in error messages and traces.
-     * 
+     *
      * Use the `=TRANSLATE()` formula to make the name translatable.
-     * 
+     *
      * @uxon-property name
      * @uxon-type string
-     * 
+     *
      * @param string $value
      * @return AbstractAuthenticator
      */
@@ -119,7 +123,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Returns the default name of the authenticator (if no name was set in it's configuration).
-     * 
+     *
      * @return string
      */
     abstract protected function getNameDefault() : string;
@@ -134,12 +138,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Unique identifier for this authenticator configuration.
-     * 
+     *
      * Each item in the config option `SECURITY.AUTHENTICATORS` must have a unique id!
-     * 
+     *
      * @uxon-property id
      * @uxon-type string
-     * 
+     *
      * @param string $id
      * @return AbstractAuthenticator
      */
@@ -151,10 +155,10 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * How long should a successful authentication be valid (in seconds).
-     * 
+     *
      * After this amount of seconds the user will be asked to log in again. The token
      * lifetime can be set for every authenticator individually. If it is not, the token
-     * lifetime of the `RememberMeAuthenticator` will be used. 
+     * lifetime of the `RememberMeAuthenticator` will be used.
      *
      * @uxon-property token_lifetime_seconds
      * @uxon-type integer
@@ -169,7 +173,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
@@ -179,7 +183,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenRefreshInterval()
      */
@@ -190,14 +194,14 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Number of seconds after which the token lifetime will be extended.
-     * 
+     *
      * This option allows to extend the token while the user is active. Thus, the token would expire only
      * after a period of inactivity longer than `token_lifetime`. If the user is authenticated sooner, the
-     * lifetime counter will be refreshed. 
-     * 
+     * lifetime counter will be refreshed.
+     *
      * If set to 0, the lifetime is concidere absolute. Thus, the user will be logged out after `token_lifetime`
      * regardless of his actual activity.
-     * 
+     *
      * @uxon-property token_refresh_interval
      * @uxon-type integer
      *
@@ -213,7 +217,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     /**
      * Disable the authenticator, it won't be possible to login anymore using this authenticator and
      * it won't be shown in the login dialog.
-     * 
+     *
      * @param bool $values
      * @return AbstractAuthenticator
      */
@@ -224,7 +228,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isDisabled()
      */
@@ -236,7 +240,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     /**
      * Checks if the authenticator is flagged as disabled for the given username.
      * Throws exception if it is flagged as disabled.
-     * 
+     *
      * @param string $username
      * @throws AuthenticationFailedError
      * @return AbstractAuthenticator
@@ -245,22 +249,22 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $dataSheet = $this->getAuthenticatorData($username);
         if ($dataSheet->isEmpty() === true) {
-           return $this;
+            return $this;
         }
         foreach ($dataSheet->getRows() as $row) {
             if (BooleanDataType::cast($row['DISABLED_FLAG']) === true) {
                 throw new AuthenticationFailedError($this, "Authentication failed. Authenticator '{$this->getName()}' disabled for username '$username'!", '7AL3J9X');
             }
         }
-        return $this;        
+        return $this;
     }
     
     /**
      * Returns a data sheet with the current user-authenticator configuration for the username AND this authenticator
-     * 
+     *
      * NOTE: the $username here refers to the username in the authenticator configuration, not
      * the user!
-     * 
+     *
      * @param string $username
      * @return DataSheetInterface
      */
@@ -274,8 +278,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 'PROPERTIES_UXON'
             ]);
             $dataSheet->getFilters()
-                ->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS)
-                ->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            ->addConditionFromString('AUTHENTICATOR_USERNAME', $username, ComparatorDataType::EQUALS)
+            ->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
             $dataSheet->dataRead();
             $this->userAuthData[$username] = $dataSheet;
         }
@@ -284,7 +288,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Writes/Updates log for successful login for this authenticator and given user and username.
-     * 
+     *
      * @param UserInterface $user
      * @param string $username
      */
@@ -323,7 +327,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     protected function getUserData(AuthenticationTokenInterface $token) : DataSheetInterface
     {
         $userDataSheet = $this->userData[$token->getUsername()];
-        if ($userDataSheet === null) {           
+        if ($userDataSheet === null) {
             $exface = $this->getWorkbench();
             $userDataSheet = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.USER');
             $userDataSheet->getColumns()->addFromExpression('DISABLED_FLAG');
@@ -345,12 +349,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!");
             }
             $this->userData[$token->getUsername()] = $userDataSheet;
-        }        
+        }
         return $userDataSheet;
     }
     
     /**
-     * 
+     *
      * @param AuthenticationTokenInterface $token
      * @return string
      */
@@ -386,7 +390,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Returns a user matching the username in the token. Throws exception if no such user exists.
-     * 
+     *
      * @param AuthenticationTokenInterface $token
      * @throws UserNotFoundError
      * @return UserInterface
@@ -399,7 +403,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * @return string[]
      */
     protected function getUsernameReplaceCharacters() : array
@@ -409,15 +413,15 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Characters or regular expressions to replace in the username from the authentication provider
-     * 
+     *
      * Examples:
-     * 
+     *
      * - `{"\/@.*\/": ""}` to extract the username from an email address (the part before `@`)
-     * 
+     *
      * @uxon-property username_replace_characters
      * @uxon-type object
      * @uxon-template {"string or regex": "replacement"}
-     * 
+     *
      * @param UxonObject $value
      * @return AbstractAuthenticator
      */
@@ -428,7 +432,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::createLoginWidget()
      */
@@ -457,7 +461,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * @param Form $emptyForm
      * @return Form
      */
@@ -467,7 +471,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * @param AuthenticationTokenInterface $token
      * @return bool
      */
@@ -490,7 +494,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     *
      * @return array
      */
     protected function getOnlyForFacades() : array
@@ -500,17 +504,17 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     /**
      * Array of facade selectors (alias, path or class name), that are allowed to use this authenticator
-     * 
+     *
      * @uxon-property only_for_facades
      * @uxon-type metamodel:facade[]
-     * 
+     *
      * @param UxonObject $value
      * @return AbstractAuthenticator
      */
     protected function setOnlyForFacades($uxonOrArrayOfSelectors) : AbstractAuthenticator
     {
         switch (true) {
-            case $uxonOrArrayOfSelectors instanceof UxonObject: 
+            case $uxonOrArrayOfSelectors instanceof UxonObject:
                 $array = $uxonOrArrayOfSelectors->toArray();
                 break;
             case is_array($uxonOrArrayOfSelectors):
@@ -522,5 +526,105 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         
         $this->onlyForFacades = $array;
         return $this;
+    }
+    
+    /**
+     *
+     * @param UserInterface $user
+     * @param AuthenticationTokenInterface $token
+     */
+    protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token)
+    {
+        $externalRolesData = $this->getExternalRolesData($token);
+        $transaction = $this->getWorkbench()->data()->startTransaction();
+        $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
+        $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+        $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+        $newRolesSheet->dataDelete($transaction);
+        
+        foreach ($externalRolesData->getRows() as $row) {
+            if ($row['USER_ROLE'] !== null) {
+                $newRolesSheet->addRow([
+                    'USER' => $user->getUid(),
+                    'USER_ROLE' => $row['USER_ROLE']
+                ]);
+            }
+        }
+        if($newRolesSheet->countRows() !== 0){
+            $newRolesSheet->dataCreate(false, $transaction);
+        }
+        $transaction->commit();
+    }
+    
+    /**
+     *
+     * @param AuthenticationTokenInterface $token
+     * @return DataSheetInterface
+     */
+    protected function getExternalRolesData(AuthenticationTokenInterface $token) : DataSheetInterface
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
+        $ds->getColumns()->addMultiple([
+            'UID',
+            'ALIAS',
+            'NAME',
+            'USER_ROLE'
+        ]);
+        $tokenRoles = $this->getExternalRolesFromToken($token);
+        if (empty($tokenRoles)) {
+            return $ds;
+        }
+        $ds->getFilters()->addConditionFromValueArray('ALIAS', $tokenRoles);
+        $ds->dataRead();
+        return $ds;
+    }
+    
+    /**
+     * Set to TRUE to synchronize roles with DataSheet
+     *
+     * @uxon-property sync_roles_with_data_sheet
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $trueOrFalse
+     * @return AuthenticatorInterface
+     */
+    protected function setSyncRolesWithDataSheet(UxonObject $uxonObject) : AuthenticatorInterface
+    {
+        $this->syncRolesWithDataSheet = $uxonObject;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function hasSyncRolesWithDataSheet() : bool
+    {
+        if($this->syncRolesWithDataSheet !== null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    protected function getSyncRolesConfigUxon() : UxonObject
+    {
+        return $this->syncRolesWithDataSheet;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getExternalSyncRoles() : array
+    {
+        $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->getSyncRolesConfigUxon());
+        // gets attribute_alias "displayName" for MS Graph config
+        $column = $dataSheet->getColumns()->getFirst();
+        $dataSheet->dataRead();
+        // gets readable group names
+        $values = $column->getValues();
+        return $values; 
     }
 }

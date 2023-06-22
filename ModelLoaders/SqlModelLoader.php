@@ -291,11 +291,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 }
             }
         } else {
-            if ($objectUid !== null) {
-                throw new MetaObjectNotFoundError('Meta object with UID "' . $objectUid . '" not found!');
-            } else {
-                throw new MetaObjectNotFoundError('Meta object with alias "' . $object->getAliasWithNamespace() . '" not found!');
-            }
+            throw new MetaObjectNotFoundError('Object with alias "' . $object->getAliasWithNamespace() . '" or id "' . $object->getId() . '" not found!');
         }
         
         $objectUid = $objectUid ?? HexadecimalNumberDataType::cast($object->getId());
@@ -720,7 +716,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // Give the data source a connection
         // First see, if the connection had been already loaded previously
         foreach ($this->connections_loaded as $conn) {
-            if ($ds['data_connection_oid'] !== null && strcasecmp($conn->getId(), $ds['data_connection_oid']) === 0) {
+            if ($conn->getId() === $ds['data_connection_oid']) {
                 $data_source->setConnection($conn);
                 return $data_source;
             }
@@ -790,7 +786,23 @@ class SqlModelLoader implements ModelLoaderInterface
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
     {
         foreach ($this->connections_loaded as $conn) {
-            if ($conn->isExactly($selector)) {
+            $connSelector = $conn->getSelector();
+            switch(true) {
+                case $connSelector->isAlias() && $selector->isAlias():
+                case $connSelector->isUid() && $selector->isUid():
+                    $match = (strcasecmp($connSelector->toString(), $selector->toString()) === 0);
+                    break;
+                case $selector->isUid():
+                    $match = (strcasecmp($conn->getId(), $selector->toString()) === 0);
+                    break;
+                case $selector->isAlias():
+                    $match = (strcasecmp($conn->getAliasWithNamespace(), $selector->toString()) === 0);
+                    break;
+                default:
+                    $match = false;
+            }
+
+            if ($match === true) {
                 return $conn;
             }
         }
