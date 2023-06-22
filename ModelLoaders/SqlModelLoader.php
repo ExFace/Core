@@ -720,7 +720,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // Give the data source a connection
         // First see, if the connection had been already loaded previously
         foreach ($this->connections_loaded as $conn) {
-            if ($conn->getSelector() && $conn->getSelector()->toString() === $ds['data_connection_oid']) {
+            if ($ds['data_connection_oid'] !== null && strcasecmp($conn->getId(), $ds['data_connection_oid']) === 0) {
                 $data_source->setConnection($conn);
                 return $data_source;
             }
@@ -790,7 +790,7 @@ class SqlModelLoader implements ModelLoaderInterface
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface
     {
         foreach ($this->connections_loaded as $conn) {
-            if ($conn->getSelector() && $conn->getSelector()->toString() === $selector->toString()) {
+            if ($conn->isExactly($selector)) {
                 return $conn;
             }
         }

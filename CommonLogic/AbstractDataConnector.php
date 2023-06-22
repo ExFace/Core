@@ -37,6 +37,7 @@ use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Exceptions\UxonSyntaxError;
 use exface\Core\Factories\ConditionFactory;
+use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -172,22 +173,29 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     }
     
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getSelector()
      */
-    protected function getClassnameSuffixToStripFromAlias() : string
-    {
-        return '';
-    }
-    
     public function getSelector() : ?DataConnectionSelectorInterface
     {
-        return $this->selector;
+        if ($this->id !== null) {
+            return new DataConnectionSelector($this->getWorkbench(), $this->id);
+        }
+        if ($this->alias !== null) {
+            return new DataConnectionSelector($this->getWorkbench(), $this->getAliasWithNamespace());
+        }
+        return null;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getPrototypeSelector()
+     */
     public function getPrototypeSelector() : DataConnectorSelectorInterface
     {
-        return $this->getPrototypeSelector();
+        return $this->prototypeSelector;
     }
 
     /**
@@ -539,8 +547,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                         $this->getWorkbench()->getLogger()->logException($e);
                         $oldUxon = new UxonObject();
                     }
-                    $newUxon = $oldUxon->extend($uxon);
-                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                    $uxon = $oldUxon->extend($uxon);
+                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $uxon->toJson());
                     $credData->dataUpdate(false, $transaction);
                     break;
                 } else {
@@ -587,6 +595,13 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         }
         
         $transaction->commit();
+        
+        // Apply the configuratio to this instance too!
+        // First extract the credentials properties from the current UXON model of the connection,
+        // then merge them with the just saved credentials values and import that merged UXON
+        $currentUxon = $this->exportUxonObject()->extract(array_keys($uxon->toArray()));
+        $mergedUxon = $currentUxon->extend($uxon);
+        $this->importUxonObject($mergedUxon);
         
         return $this;
     }
@@ -661,5 +676,24 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         }
         
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::isExactly()
+     */
+    public function isExactly($selectorOrString) : bool
+    {
+        if (is_string($selectorOrString)) {
+            $selector = new DataConnectionSelector($this->getWorkbench(), $selectorOrString);
+        }
+        switch (true) {
+            case $selector->isUid() && $this->id !== null:
+                return strcasecmp($this->id, $selector->toString()) === 0;
+            case $selector->isAlias() && $this->alias !== null:
+                return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
+        }
+        return false;
     }
 }
