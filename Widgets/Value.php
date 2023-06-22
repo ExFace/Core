@@ -344,7 +344,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * Changes the data type of the value to one of the
+     * Changes the data type of the value to one of the (MUST be defined AFTER value!)
+     * 
+     * CAUTION: if you set both `value_data_type` AND `value`, the former MUST be defined
+     * after the `value` because setting the value will automatically recompute the data type.
      *
      * @uxon-property value_data_type
      * @uxon-type \exface\Core\CommonLogic\DataTypes\AbstractDataType|metamodel:datatype
