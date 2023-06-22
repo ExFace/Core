@@ -1241,16 +1241,18 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      * Sets a condition to disable the widget.
      *
-     * Examples
+     * ## Examples
      * 
      * Disable an `Input` if checkbox not checked:
      *
      * ```json
-     *  "widget_type": "Input"
-     *  "disabled_if": {
-     *      "value_left": "=id_of_checkbox",
-     *      "comparator": "!=",
-     *      "value_right": "1"
+     *  {
+     *      "widget_type": "Input",
+     *      "disabled_if": {
+     *          "value_left": "=id_of_checkbox",
+     *          "comparator": "!=",
+     *          "value_right": "1"
+     *      }
      *  }
      *
      * ```
@@ -1258,12 +1260,14 @@ abstract class AbstractWidget implements WidgetInterface
      * Disable a `Button` if selected table row does not have required data:
      *
      * ```json
-     *  "widget_type": "Button",
-     *  "caption": "Call",
-     *  "disabled_if": {
-     *      "value_left": "=id_of_table!PHONE_NUMBER",
-     *      "comparator": "==",
-     *      "value_right": ""
+     *  {
+     *      "widget_type": "Button",
+     *      "caption": "Call",
+     *      "disabled_if": {
+     *          "value_left": "=id_of_table!PHONE_NUMBER",
+     *          "comparator": "==",
+     *          "value_right": ""
+     *      }
      *  }
      *
      * ```
@@ -1271,12 +1275,12 @@ abstract class AbstractWidget implements WidgetInterface
      * Disable a `Button` on a complex AND-condition
      * 
      * ```json
-     *  "widget_type": "Button",
-     *  "caption": "Call",
-     *  "disabled_if": {
-     *      "operator": "AND",
-     *      "conditions": [
-     *          {
+     *  {
+     *      "widget_type": "Button",
+     *      "caption": "Call",
+     *      "disabled_if": {
+     *          "operator": "AND",
+     *          "conditions": [{
      *              "value_left": "=id_of_table!PHONE_NUMBER",
      *              "comparator": "==",
      *              "value_right": ""
