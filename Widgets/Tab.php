@@ -5,6 +5,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A Tab is a special panel to be used within tab-containers like Tabs and WidgetCarousel.
@@ -19,6 +21,8 @@ class Tab extends Panel
     private $badge_attribute_alias;
 
     private $badge_value;
+    
+    private $activeIf = null;
     
     public function getBadgeAttributeAlias() : ?string
     {
@@ -158,5 +162,75 @@ class Tab extends Panel
     public function getTabIndex() : int
     {
         return $this->getTabs()->getWidgetIndex($this);
+    }
+    
+    /**
+     * Set to TRUE to show this tab initially instead of the first tab (index 0)
+     * 
+     * This is an alternative to `active_tab` of the Tabs widget. If multiple tabs
+     * are marked as `active`, the last one will be actually active.
+     * 
+     * You can also use a condition to determine the active tab based on values
+     * of other widgets via `active_if`.
+     * 
+     * @uxon-property active
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return Tab
+     */
+    public function setActive(bool $trueOrFalse) : Tab
+    {
+        $this->getTabs()->setActiveTab($this->getTabIndex());
+        return $this;
+    }
+    
+    /**
+     * Sets a condition to activate the tab automatically.
+     *
+     * ## Examples
+     * 
+     * Activate a different tab when opening an existing object than when creating a new one
+     *
+     * ```json
+     *  {
+     *      "widget_type": "Tab"
+     *      "active_if": {
+     *          "value_left": "=id_of_uid_field",
+     *          "comparator": "!==",
+     *          "value_right": ""
+     *      }
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property active_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setActiveIf(UxonObject $uxon) : Tab
+    {
+        $this->activeIf = $uxon;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getActiveIf() : ?ConditionalProperty
+    {
+        if ($this->activeIf === null) {
+            return null;
+        }
+        
+        if (! ($this->activeIf instanceof ConditionalProperty)) {
+            $this->activeIf = new ConditionalProperty($this, 'active_if', $this->activeIf);
+        }
+        
+        return $this->activeIf;
     }
 }
