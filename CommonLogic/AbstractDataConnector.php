@@ -547,8 +547,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                         $this->getWorkbench()->getLogger()->logException($e);
                         $oldUxon = new UxonObject();
                     }
-                    $newUxon = $oldUxon->extend($uxon);
-                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                    $uxon = $oldUxon->extend($uxon);
+                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $uxon->toJson());
                     $credData->dataUpdate(false, $transaction);
                     break;
                 } else {
@@ -595,6 +595,13 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         }
         
         $transaction->commit();
+        
+        // Apply the configuratio to this instance too!
+        // First extract the credentials properties from the current UXON model of the connection,
+        // then merge them with the just saved credentials values and import that merged UXON
+        $currentUxon = $this->exportUxonObject()->extract(array_keys($uxon->toArray()));
+        $mergedUxon = $currentUxon->extend($uxon);
+        $this->importUxonObject($mergedUxon);
         
         return $this;
     }
