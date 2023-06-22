@@ -274,10 +274,27 @@ class UxonObject implements \IteratorAggregate
      * @param UxonObject $extend_by_uxon            
      * @return UxonObject
      */
-    public function extend(UxonObject $extend_by_uxon)
+    public function extend(UxonObject $extend_by_uxon) : UxonObject
     {
-        // before new UxonObject: return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
         return new self(array_replace_recursive($this->array, $extend_by_uxon->toArray()));
+    }
+    
+    /**
+     * Returns a new UXON object containing only properties matching the provided array
+     * 
+     * @param string[] $properties
+     * @return UxonObject
+     */
+    public function extract(array $properties) : UxonObject
+    {
+        $old = $this->toArray();
+        $new = [];
+        foreach ($properties as $key) {
+            if (array_key_exists($key, $old)) {
+                $new[$key] = $old[$key];
+            }
+        }
+        return new self($new);
     }
 
     /**

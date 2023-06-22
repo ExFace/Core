@@ -183,4 +183,11 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * @see \exface\Core\Interfaces\Security\AuthenticationProviderInterface::authenticate()
      */
     public function authenticate(AuthenticationTokenInterface $token, bool $updateUserCredentials = true, UserInterface $credentialsOwner = null, bool $credentialsArePrivate = null) : AuthenticationTokenInterface;
+    
+    /**
+     * 
+     * @param DataConnectionSelectorInterface|string $selectorOrString
+     * @return bool
+     */
+    public function isExactly($selectorOrString) : bool;
 }
