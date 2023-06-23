@@ -121,5 +121,17 @@ class DialogButton extends Button
         
         throw new WidgetConfigurationError($this, 'Widget DialogButton can only be placed inside a Dialog widget!');
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Button::getRefreshInput()
+     */
+    public function getRefreshInput() : bool
+    {
+        if ($this->getCloseDialogAfterActionSucceeds() === true && $this->getInputWidget() instanceof Dialog) {
+            return false;
+        }
+        return parent::getRefreshInput();
+    }
 }
-?>
