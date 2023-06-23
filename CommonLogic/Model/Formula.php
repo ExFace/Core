@@ -23,7 +23,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 abstract class Formula implements FormulaInterface
 {
 
-    private $required_attributes = null;
+    private $requiredAttributeAliases = null;
 
     private $currentDataSheet = null;
 
@@ -142,24 +142,24 @@ abstract class Formula implements FormulaInterface
      */
     public function getRequiredAttributes(bool $withRelationPath = true) : array
     {
-        if ($this->required_attributes === null) {
+        if ($this->requiredAttributeAliases === null) {
             $tStream = $this->getTokenStream();
             if ($tStream === null) {
                 return [];
             }
             
             $attrs = $tStream->getAttributes();            
-            $this->required_attributes = $attrs;
+            $this->requiredAttributeAliases = $attrs;
         }
         if ($withRelationPath && $this->hasRelationPath()) {
-            $attrs = $this->required_attributes;
+            $attrs = $this->requiredAttributeAliases;
             $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
                 $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
             }
             return $attrs;
         }
-        return $this->required_attributes;
+        return $this->requiredAttributeAliases;
     }
 
     /**
