@@ -512,7 +512,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 }
                 // Don't break here! Let the exception happen!
             default:
-                throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
+                throw new BehaviorRuntimeError($this, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK', null, $logbook);
         }
         $update_cnt = count($update_times);
         $logbook->addLine('Input data has ' . $update_cnt . ' rows.');
