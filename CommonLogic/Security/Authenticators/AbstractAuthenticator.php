@@ -617,14 +617,36 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * 
      * @return array
      */
-    public function getExternalSyncRoles() : array
+    public function getExternalSyncRoles($name) : array
     {
         $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->getSyncRolesConfigUxon());
-        // gets attribute_alias "displayName" for MS Graph config
-        $column = $dataSheet->getColumns()->getFirst();
-        $dataSheet->dataRead();
-        // gets readable group names
-        $values = $column->getValues();
-        return $values; 
+        
+        // roles sync for Azure AD
+        if($dataSheet->getMetaObject()->getAlias() === "meGroups") {
+            // gets group IDs from attribute_alias "displayName"
+            $dataSheet->dataRead();
+            return $dataSheet->getColumns()->getFirst()->getValues();
+        }
+
+        // roles sync for LogBase
+        if($dataSheet->getMetaObject()->getAlias() === "testLogbase") {
+            $dataSheet->dataRead();
+            $columns = $dataSheet->getColumns()->getAll();
+            $rolesArray = [];
+            foreach($columns["Aktiv"]->getValues() as $key => $activeColumn) {
+                //checks if role is set to active
+                if($activeColumn !== 1) {
+                    continue;
+                }
+                // filters table on full name of authenticated user
+                if($columns["Benutzername"]->getValues()[$key] === $name) {
+                    // adds readable group names from attribute_alias "Rollenname" to array
+                    array_push($rolesArray, $dataSheet->getColumns()->getFirst()->getValues()[$key]);
+                }
+            }
+            return $rolesArray;
+        }
+        
+        return null;
     }
 }
