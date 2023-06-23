@@ -4,7 +4,6 @@ namespace exface\Core\Interfaces\Formulas;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\RuntimeException;
 
@@ -49,7 +48,7 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * Returns attribute aliases of required attributes
      * 
      * @param bool $withRelationPath
-     * @return array
+     * @return string[]
      */
     public function getRequiredAttributes(bool $withRelationPath = true) : array;
     
@@ -64,7 +63,7 @@ interface FormulaInterface extends WorkbenchDependantInterface
     /**
      * Get formula names of formulas that are nested in this formula
      * 
-     * @return array
+     * @return string[]
      */
     public function getNestedFormulas() : array;
     
