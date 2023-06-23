@@ -535,13 +535,17 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token)
     {
-        $externalRolesData = $this->getExternalRolesData($token);
         $transaction = $this->getWorkbench()->data()->startTransaction();
+        
+        // Get external roles the user should have according to the remote
+        $externalRolesData = $this->getExternalRolesForUser($user, $token);
+        // Get current workbench roles the user actually has, that were added by this authenticator previously
         $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
         $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
         $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+        // Delete roles assigned by this sync previously
         $newRolesSheet->dataDelete($transaction);
-        
+        // Add roles matching the current external roles (see above) 
         foreach ($externalRolesData->getRows() as $row) {
             if ($row['USER_ROLE'] !== null) {
                 $newRolesSheet->addRow([
@@ -557,11 +561,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     *
+     * Returns a data sheet of exface.Core.USER_ROLE_EXTERNAL, that the user should currently get
+     * 
      * @param AuthenticationTokenInterface $token
      * @return DataSheetInterface
      */
-    protected function getExternalRolesData(AuthenticationTokenInterface $token) : DataSheetInterface
+    protected function getExternalRolesForUser(UserInterface $user, AuthenticationTokenInterface $token) : DataSheetInterface
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
         $ds->getColumns()->addMultiple([
@@ -570,21 +575,39 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             'NAME',
             'USER_ROLE'
         ]);
-        $tokenRoles = $this->getExternalRolesFromToken($token);
-        if (empty($tokenRoles)) {
+        $currentRemoteRoleNames = $this->getExternalRolesFromRemote($token);
+        if (empty($currentRemoteRoleNames)) {
             return $ds;
         }
-        $ds->getFilters()->addConditionFromValueArray('ALIAS', $tokenRoles);
+        $ds->getFilters()->addConditionFromValueArray('ALIAS', $currentRemoteRoleNames);
         $ds->dataRead();
         return $ds;
+    }
+    
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return string[]
+     */
+    protected function getExternalRolesFromRemote(AuthenticationTokenInterface $token) : array
+    {
+        $roleSyncUxon = $this->getSyncRolesWithDataSheetUxon();
+        if ($roleSyncUxon === null) {
+            return [];
+        }
+        
+        $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $roleSyncUxon);
+        $firstCol = $dataSheet->getColumns()->getFirst();
+        $dataSheet->dataRead();
+        return $firstCol->getValues();
     }
     
     /**
      * Set to TRUE to synchronize roles with DataSheet
      *
      * @uxon-property sync_roles_with_data_sheet
-     * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}]}
      *
      * @param bool $trueOrFalse
      * @return AuthenticatorInterface
@@ -608,45 +631,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         }
     }
     
-    protected function getSyncRolesConfigUxon() : UxonObject
-    {
-        return $this->syncRolesWithDataSheet;
-    }
-    
     /**
      * 
-     * @return array
+     * @return UxonObject|NULL
      */
-    public function getExternalSyncRoles($name) : array
+    protected function getSyncRolesWithDataSheetUxon() : ?UxonObject
     {
-        $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->getSyncRolesConfigUxon());
-        
-        // roles sync for Azure AD
-        if($dataSheet->getMetaObject()->getAlias() === "meGroups") {
-            // gets group IDs from attribute_alias "displayName"
-            $dataSheet->dataRead();
-            return $dataSheet->getColumns()->getFirst()->getValues();
-        }
-
-        // roles sync for LogBase
-        if($dataSheet->getMetaObject()->getAlias() === "testLogbase") {
-            $dataSheet->dataRead();
-            $columns = $dataSheet->getColumns()->getAll();
-            $rolesArray = [];
-            foreach($columns["Aktiv"]->getValues() as $key => $activeColumn) {
-                //checks if role is set to active
-                if($activeColumn !== 1) {
-                    continue;
-                }
-                // filters table on full name of authenticated user
-                if($columns["Benutzername"]->getValues()[$key] === $name) {
-                    // adds readable group names from attribute_alias "Rollenname" to array
-                    array_push($rolesArray, $dataSheet->getColumns()->getFirst()->getValues()[$key]);
-                }
-            }
-            return $rolesArray;
-        }
-        
-        return null;
+        return $this->syncRolesWithDataSheet;
     }
 }
