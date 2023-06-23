@@ -17,12 +17,12 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * here: instantiate a class implementing FormulaExpressionLanguage and call the evaluate
      * method with the formula and teh current row as arguments.
      *
-     * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet            
+     * @param DataSheetInterface $dataSheet            
      * @param string $column_name            
-     * @param int $row_number            
+     * @param int $rowIdx            
      * @return mixed
      */
-    public function evaluate(DataSheetInterface $data_sheet, int $row_number);
+    public function evaluate(DataSheetInterface $dataSheet = null, int $rowIdx = null);
 
     /**
      * Returns the data type, that the formula will produce
@@ -92,4 +92,13 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return FormulaInterface
      */
     public function withRelationPath(string $relationPath) : FormulaInterface;
+    
+    /**
+     * Forces the formula to evaluate in the context of a data sheet or a certain data row
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param int $rowIdx
+     * @return FormulaInterface
+     */
+    public function setDataContext(DataSheetInterface $dataSheet = null, int $rowIdx = null) : FormulaInterface;
 }

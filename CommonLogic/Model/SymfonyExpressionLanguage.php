@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Wraper class to evaluate a formula expression using Symfony/ExpressionLanguage
@@ -23,13 +24,21 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
     
     private $cacheName = '_expressions';
     
+    private $dataSheet = null;
+    
+    private $dataSheetRowIdx = null;
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
+     * @param DataSheetInterface $dataSheet
+     * @param int $rowIdx
      */
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(WorkbenchInterface $workbench, DataSheetInterface $dataSheet = null, int $rowIdx = null)
     {
-        $this->workbench = $workbench;        
+        $this->workbench = $workbench;    
+        $this->dataSheet = $dataSheet;
+        $this->dataSheetRowIdx = $rowIdx;
     }
     
     /**
@@ -40,12 +49,16 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
     public function evaluate(FormulaInterface $formula, array $row)
     {
         $exface = $this->getWorkbench();
+        
         if ($exface->getCache()->hasPool($this->cacheName)) {
             $cache = $exface->getCache()->getPool($this->cacheName, false);    
         } else {            
             $cache = $exface->getCache()->createDefaultPool($exface, $this->cacheName, false);
             $exface->getCache()->addPool($this->cacheName, $cache);
         }
+        
+        $formula->setDataContext($this->dataSheet, $this->dataSheetRowIdx);
+        
         $expressionLanguage = new ExpressionLanguage($cache);
         $expression = $formula->__toString();
         $name = $formula->getFormulaName();
@@ -82,6 +95,9 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
             $expression = str_replace($attrsArgs[$i], $columnName, $expression);
         }
         $value = $expressionLanguage->evaluate($expression, $row);
+        
+        $formula->setDataContext(null);
+        
         return $value;
     }
     
@@ -100,12 +116,15 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
             $args = func_get_args();
             //cut of the first one as it is the array given to the evalute function call as second argument
             array_shift($args);
-            return call_user_func_array([
+            $formula->setDataContext($this->dataSheet, $this->dataSheetRowIdx);
+            $result = call_user_func_array([
                 $formula,
                 'run'
             ], $args);
+            $formula->setDataContext(null);
+            return $result;
         });
-            return $formula;
+        return $formula;
     }
     
     /**
