@@ -2,13 +2,12 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  *
- * @method Container getWidget()
+ * @method \exface\Core\Widgets\Container getWidget()
  *        
  * @author Andrej Kabachnik
  *        
@@ -224,5 +223,75 @@ JS;
             $output .= $this->getFacade()->getElement($subw)->buildJsResetter() . ";\n";
         }
         return $output;
+    }
+    
+    /**
+     * Registers a jQuery custom event handler that refreshes the container contents if effected by an action.
+     *
+     * Returns JS code to register a listener on `document` for the custom jQuery event
+     * `actionperformed`. The listener will see if the widget configured is affected
+     * by the event (e.g. by the action effects) and triggers a refresh on the widget.
+     *
+     * @param string $scriptJs
+     * @return string
+     */
+    protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
+    {
+        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
+        foreach ($this->getWidget()->getWidgetsRecursive() as $child) {
+            if (! $child->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $child->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        return <<<JS
+        
+$( document ).off( "{$actionperformed}.{$this->getId()}" );
+$( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+    var oEffect = {};
+    var aUsedObjectAliases = {$effectedAliasesJs};
+    var sWidgetId = "{$this->getId()}";
+    var fnRefresh = function() {
+        {$scriptJs}
+    };
+    
+    // Avoid errors if dialog is closed
+    if ($('#{$this->getId()}').getModel('view').getProperty('/_closed') === true) {
+        return;
+    }
+    
+    if (oParams.refresh_not_widgets.indexOf(sWidgetId) !== -1) {
+        return;
+    }
+    
+    if (oParams.refresh_widgets.indexOf(sWidgetId) !== -1) {
+        fnRefresh();
+        return;
+    }
+    
+    for (var i = 0; i < oParams.effects.length; i++) {
+        oEffect = oParams.effects[i];
+        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            // refresh immediately if directly affected or delayed if it is an indirect effect
+            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                fnRefresh();
+            } else {
+                setTimeout(fnRefresh, 100);
+            }
+            return;
+        }
+    }
+});
+
+JS;
     }
 }
