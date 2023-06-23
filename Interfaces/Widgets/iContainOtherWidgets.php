@@ -71,10 +71,17 @@ interface iContainOtherWidgets extends WidgetInterface
      * By default all input widgets are collected recursively from all subcontainers, but the recursion depth can be restricted
      * via $depth: e.g. get_input_widgets(1) will return only the direct children of the container.
      *
-     * @param integer $depth            
+     * @param int $depth            
+     * @return iTakeInput[]
+     */
+    public function getInputWidgets(int $depth = null) : array;
+    
+    /**
+     *
+     * @param int $depth
      * @return WidgetInterface[]
      */
-    public function getInputWidgets($depth = null);
+    public function getWidgetsRecursive(int $depth = null) : array;
 
     /**
      * Removes all widgets from the container

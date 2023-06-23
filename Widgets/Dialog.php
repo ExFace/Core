@@ -432,7 +432,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getInputWidgets()
      */
-    public function getInputWidgets($depth = null)
+    public function getInputWidgets(int $depth = null) : array
     {
         $result = parent::getInputWidgets($depth);
         if ($this->hasHeader() && ($depth === null || $depth > 1)) {

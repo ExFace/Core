@@ -364,21 +364,34 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
      */
-    public function getInputWidgets($depth = null)
+    public function getInputWidgets(int $depth = null) : array
     {
         $result = array();
-        foreach ($this->getWidgets() as $widget) {
+        foreach ($this->getWidgetsRecursive($depth) as $widget) {
             if (($widget instanceof iTakeInput) && ! $widget->isReadonly()) {
                 $result[] = $widget;
             }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetsRecursive()
+     */
+    public function getWidgetsRecursive(int $depth = null) : array
+    {
+        $result = array();
+        foreach ($this->getWidgets() as $widget) {
+            $result[] = $widget;
             if ($widget instanceof iContainOtherWidgets) {
                 if ($depth === 1) {
                     continue;
                 }
-                $result = array_merge($result, $widget->getInputWidgets($depth ? $depth - 1 : null));
+                $result = array_merge($result, $widget->getWidgetsRecursive($depth ? $depth - 1 : null));
             }
         }
         return $result;
