@@ -200,6 +200,9 @@ class LdapAuthenticator extends AbstractAuthenticator
                 return new DomainUsernamePasswordAuthToken($token->getDomain(), $user->getUsername(), $token->getPassword());
             }
         }
+        
+        $this->syncUserRoles($user, $token);
+        
         return $token;
     }
     

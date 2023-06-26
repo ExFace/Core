@@ -109,6 +109,9 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         }
         
         $this->saveAuthenticatedToken($authenticatedToken);
+        
+        $this->syncUserRoles($user, $authenticatedToken);
+        
         return $authenticatedToken;
     }
     

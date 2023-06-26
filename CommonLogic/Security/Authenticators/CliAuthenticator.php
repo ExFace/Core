@@ -82,6 +82,8 @@ class CliAuthenticator extends AbstractAuthenticator
         
         $this->authenticatedToken = $token;
         
+        $this->syncUserRoles($user, $token);
+        
         return $token;
     }
     
