@@ -49,6 +49,13 @@ class SymfonyAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, $e->getMessage(), '7AL3J9X', $e);
         }
         
+        /* TODO what if the username is different? Need to create a new token then, but which one?
+        if ($token->getUsername() !== $user->getUsername()) {
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword(), $token->getFacade());
+        } else {
+            $authenticatedToken = $token;
+        }*/
+        
         $this->syncUserRoles($user, $token);
         
         return $token;

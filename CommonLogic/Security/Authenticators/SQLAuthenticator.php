@@ -163,14 +163,16 @@ class SQLAuthenticator extends DataConnectionAuthenticator
         
         $this->logSuccessfulAuthentication($user, $token->getUsername());
         if ($token->getUsername() !== $user->getUsername()) {
-            return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword(), $token->getFacade());
+        } else {
+            $authenticatedToken = $token;
         }
         
-        $this->saveAuthenticatedToken($token);
+        $this->saveAuthenticatedToken($authenticatedToken);
         
-        $this->syncUserRoles($user, $token);
+        $this->syncUserRoles($user, $authenticatedToken);
         
-        return $token;
+        return $authenticatedToken;
     }
     
     /**
