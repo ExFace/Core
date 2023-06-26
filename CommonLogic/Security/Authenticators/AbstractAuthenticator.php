@@ -28,6 +28,7 @@ use exface\Core\Exceptions\InternalError;
 use exface\Core\Widgets\Form;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Security\AuthenticationRuntimeError;
 
 /**
  * Provides common base function for authenticators.
@@ -543,29 +544,35 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             return $this;
         }
         
-        $transaction = $this->getWorkbench()->data()->startTransaction();
+        try {
         
-        // Get external roles the user should have according to the remote
-        $externalRolesData = $this->getExternalRolesForUser($user, $token);
-        // Get current workbench roles the user actually has, that were added by this authenticator previously
-        $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
-        $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
-        $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
-        // Delete roles assigned by this sync previously
-        $newRolesSheet->dataDelete($transaction);
-        // Add roles matching the current external roles (see above) 
-        foreach ($externalRolesData->getRows() as $row) {
-            if ($row['USER_ROLE'] !== null) {
-                $newRolesSheet->addRow([
-                    'USER' => $user->getUid(),
-                    'USER_ROLE' => $row['USER_ROLE']
-                ]);
+            $transaction = $this->getWorkbench()->data()->startTransaction();
+            
+            // Get external roles the user should have according to the remote
+            $externalRolesData = $this->getExternalRolesForUser($user, $token);
+            // Get current workbench roles the user actually has, that were added by this authenticator previously
+            $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
+            $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
+            $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            // Delete roles assigned by this sync previously
+            $newRolesSheet->dataDelete($transaction);
+            // Add roles matching the current external roles (see above) 
+            foreach ($externalRolesData->getRows() as $row) {
+                if ($row['USER_ROLE'] !== null) {
+                    $newRolesSheet->addRow([
+                        'USER' => $user->getUid(),
+                        'USER_ROLE' => $row['USER_ROLE']
+                    ]);
+                }
             }
+            if($newRolesSheet->countRows() !== 0){
+                $newRolesSheet->dataCreate(false, $transaction);
+            }
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            // If roles cannot be synced, do not stop the authentication!
+            $this->getWorkbench()->getLogger()->logException(new AuthenticationRuntimeError($this, 'Cannot sync roles for authenticator "' . $this->getId() . '": ' . $e->getMessage(), null, $e));
         }
-        if($newRolesSheet->countRows() !== 0){
-            $newRolesSheet->dataCreate(false, $transaction);
-        }
-        $transaction->commit();
         
         return $this;
     }
