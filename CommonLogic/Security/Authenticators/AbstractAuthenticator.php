@@ -27,6 +27,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Widgets\Form;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Provides common base function for authenticators.
@@ -60,10 +61,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     
     private $onlyForFacades = [];
     
-    private $syncRoles = false;
-    
     private $syncRolesWithDataSheet = null;
-    
+
     /**
      *
      * @param WorkbenchInterface $workbench
@@ -128,6 +127,11 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      */
     abstract protected function getNameDefault() : string;
     
+    /**
+     * 
+     * @throws RuntimeException
+     * @return string
+     */
     protected function getId() : string
     {
         if ($this->id === null) {
@@ -533,8 +537,12 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * @param UserInterface $user
      * @param AuthenticationTokenInterface $token
      */
-    protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token)
+    protected function syncUserRoles(UserInterface $user, AuthenticationTokenInterface $token) : AuthenticatorInterface
     {
+        if ($this->hasSyncRoles() === false) {
+            return $this;
+        }
+        
         $transaction = $this->getWorkbench()->data()->startTransaction();
         
         // Get external roles the user should have according to the remote
@@ -558,6 +566,17 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             $newRolesSheet->dataCreate(false, $transaction);
         }
         $transaction->commit();
+        
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasSyncRoles() : bool
+    {
+        return $this->hasSyncRolesWithDataSheet();
     }
     
     /**
@@ -575,7 +594,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             'NAME',
             'USER_ROLE'
         ]);
-        $currentRemoteRoleNames = $this->getExternalRolesFromRemote($token);
+        $currentRemoteRoleNames = $this->getExternalRolesFromRemote($user, $token);
         if (empty($currentRemoteRoleNames)) {
             return $ds;
         }
@@ -585,13 +604,23 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * 
+     * Returns readable role names from dataSheet
      * @param AuthenticationTokenInterface $token
      * @return string[]
      */
-    protected function getExternalRolesFromRemote(AuthenticationTokenInterface $token) : array
+    protected function getExternalRolesFromRemote(UserInterface $user, AuthenticationTokenInterface $token) : array
     {
         $roleSyncUxon = $this->getSyncRolesWithDataSheetUxon();
+        
+        $uxonString = $roleSyncUxon->toJson();
+        $phs = StringDataType::findPlaceholders($uxonString);
+        $phVals = [];
+        foreach ($phs as $ph) {
+            $phVals[$ph] = $user->getAttribute($ph);
+        }
+        $uxonString = StringDataType::replacePlaceholders($uxonString, $phVals);
+        $roleSyncUxon = UxonObject::fromJson($uxonString);
+        
         if ($roleSyncUxon === null) {
             return [];
         }
@@ -609,7 +638,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
      * @uxon-template {"object_alias": "", "columns": [{"attribute_alias": ""}]}
      *
-     * @param bool $trueOrFalse
+     * @param UxonObject $uxonObject
      * @return AuthenticatorInterface
      */
     protected function setSyncRolesWithDataSheet(UxonObject $uxonObject) : AuthenticatorInterface
