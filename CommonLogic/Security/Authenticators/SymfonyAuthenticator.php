@@ -48,6 +48,9 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), '7AL3J9X', $e);
         }
+        
+        $this->syncUserRoles($user, $token);
+        
         return $token;
     }
     

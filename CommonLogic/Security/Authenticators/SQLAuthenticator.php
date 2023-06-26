@@ -113,6 +113,9 @@ class SQLAuthenticator extends DataConnectionAuthenticator
         }
         
         $this->saveAuthenticatedToken($token);
+        
+        $this->syncUserRoles($user, $token);
+        
         return $token;
     }
     
