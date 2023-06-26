@@ -685,15 +685,24 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function isExactly($selectorOrString) : bool
     {
-        if (is_string($selectorOrString)) {
-            $selector = new DataConnectionSelector($this->getWorkbench(), $selectorOrString);
+        switch (true) {
+            case is_string($selectorOrString):
+                $selector = new DataConnectionSelector($this->getWorkbench(), $selectorOrString);
+                break;
+            case $selectorOrString instanceof DataConnectionSelectorInterface:
+                $selector = $selectorOrString;
+                break;
+            default:
+                return false;
         }
+        
         switch (true) {
             case $selector->isUid() && $this->id !== null:
                 return strcasecmp($this->id, $selector->toString()) === 0;
             case $selector->isAlias() && $this->alias !== null:
                 return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
         }
+        
         return false;
     }
 }
