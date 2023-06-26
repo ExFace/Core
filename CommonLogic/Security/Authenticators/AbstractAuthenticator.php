@@ -545,7 +545,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         }
         
         try {
-        
             $transaction = $this->getWorkbench()->data()->startTransaction();
             
             // Get external roles the user should have according to the remote
@@ -587,13 +586,17 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Returns a data sheet of exface.Core.USER_ROLE_EXTERNAL, that the user should currently get
+     * Returns a data sheet of exface.Core.USER_ROLE_EXTERNAL, that the user should have according to the authentication provider
      * 
      * @param AuthenticationTokenInterface $token
      * @return DataSheetInterface
      */
     protected function getExternalRolesForUser(UserInterface $user, AuthenticationTokenInterface $token) : DataSheetInterface
     {
+        // Read remote roles from the authenticator
+        $currentRemoteRoleNames = $this->getExternalRolesFromRemote($user, $token);
+        
+        // Now read local external role mappings matching those remote roles
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
         $ds->getColumns()->addMultiple([
             'UID',
@@ -601,7 +604,6 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             'NAME',
             'USER_ROLE'
         ]);
-        $currentRemoteRoleNames = $this->getExternalRolesFromRemote($user, $token);
         if (empty($currentRemoteRoleNames)) {
             return $ds;
         }
@@ -611,7 +613,10 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Returns readable role names from dataSheet
+     * Reads the roles ids the user should have from the remote authentication provider.
+     * 
+     * These ids will later be matched against the ALIAS of the external role mappings in the metamodel
+     * 
      * @param AuthenticationTokenInterface $token
      * @return string[]
      */
