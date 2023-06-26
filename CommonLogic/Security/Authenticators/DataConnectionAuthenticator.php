@@ -91,21 +91,19 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
         
-        if (! $authenticatedToken->isAnonymous()) {
-            if ($user === null) {
-                if ($this->getCreateNewUsers() === true) {
-                    $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
-                    // second authentification to save credentials
-                    $connector->authenticate($token, true, $user, true);
-                } else {            
-                    throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
-                }
+        if ($user === null) {
+            if ($this->getCreateNewUsers() === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
+                // second authentification to save credentials
+                $connector->authenticate($token, true, $user, true);
+            } else {            
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
             }
-            
-            $this->logSuccessfulAuthentication($user, $token->getUsername());
-            if ($token->getUsername() !== $user->getUsername()) {
-                return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
-            }
+        }
+        
+        $this->logSuccessfulAuthentication($user, $token->getUsername());
+        if ($token->getUsername() !== $user->getUsername()) {
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
         }
         
         $this->saveAuthenticatedToken($authenticatedToken);

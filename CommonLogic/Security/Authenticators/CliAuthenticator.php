@@ -75,16 +75,18 @@ class CliAuthenticator extends AbstractAuthenticator
                 throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
             }
             if ($token->getUsername() !== $user->getUsername()) {
-                return new RememberMeAuthToken($user->getUsername());
+                $authenticatedToken = new RememberMeAuthToken($user->getUsername());
+            } else {
+                $authenticatedToken = $token;
             }
             $this->logSuccessfulAuthentication($user, $token->getUsername());
+            
+            $this->syncUserRoles($user, $authenticatedToken);
         }
         
-        $this->authenticatedToken = $token;
+        $this->authenticatedToken = $authenticatedToken;
         
-        $this->syncUserRoles($user, $token);
-        
-        return $token;
+        return $authenticatedToken;
     }
     
     /**
