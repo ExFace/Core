@@ -632,7 +632,50 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Set to TRUE to synchronize roles with DataSheet
+     * Define a data sheet to select roles assigned to the user to sync them with workbench roles.
+     * 
+     * If a data sheet is specified here, it will be read each time the user logs in. The user
+     * roles assigned in the workbench will be overwritten with those read from this data sheet.
+     * This will only be the case for roles assigned through the sync in this authenticator. Any
+     * roles assigned explicitly in the workbench configuration will remain untouched. 
+     * 
+     * The role names returned by this data sheet will be matched agains the external roles
+     * configuration for this authenticator.
+     * 
+     * The data sheet definition may contain placeholders. Any attribute of the `exface.Core.USER`
+     * object is available: e.g. `USERNAME`, `EMAIL` as well as related attribute.
+     * 
+     * ## Example
+     * 
+     * ```
+     *  {
+     *     "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
+     *     "sync_roles_with_data_sheet": {
+     *         "object_alias": "my.App.ROLE",
+     *		   "columns": [
+     *	           {
+     *				  "attribute_alias": "Name"
+     *			   }
+     *			],
+     *			"filters": {
+     *				"operator": "AND",
+     *				"conditions": [
+     *					{
+     *						"expression": "RELATION_TO__USER_TABLE",
+     *						"comparator": "==",
+     *						"value": "[#USERNAME#]"
+     *					},
+     *					{
+     *						"expression": "ACTIVE_FLAG",
+     *						"comparator": "==",
+     *						"value": "1"
+     *					}
+     *				]
+     *			}
+     *		}
+     *  },
+     * 
+     * ```
      *
      * @uxon-property sync_roles_with_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
