@@ -24,6 +24,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\JsonBodyParser;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * This facade allows to perform actions via HTTP requests (JSON or urlencoded like AbstractAjaxFacade).
@@ -288,7 +289,7 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
             $error['title'] = $msg->getTitle();
             $error['hint'] = $msg->getHint();
             $error['description'] = $msg->getDescription();
-            $error['type'] = $msg->getType();
+            $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
         }
         
         return [
