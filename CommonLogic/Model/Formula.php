@@ -23,7 +23,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 abstract class Formula implements FormulaInterface
 {
 
-    private $required_attributes = null;
+    private $requiredAttributeAliases = null;
 
     private $currentDataSheet = null;
 
@@ -76,10 +76,9 @@ abstract class Formula implements FormulaInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, int $row_number = null)
+    public function evaluate(DataSheetInterface $dataSheet = null, int $rowNumber = null)
     {
         try {
             if ($this->__toString() === '') {
@@ -87,41 +86,47 @@ abstract class Formula implements FormulaInterface
             }
             
             if ($this->isStatic()) {
-                $row = [];
+                $args = [];
             } else {
-                if (is_null($data_sheet) || is_null($row_number)) {
+                if (is_null($dataSheet) || is_null($rowNumber)) {
                     throw new InvalidArgumentException('In a non-static formula $data_sheet and $row_number are mandatory arguments.');
                 }
                 
-                $this->currentDataSheet = $data_sheet;
-                $this->currentRowNumber = $row_number;
-                $row = $data_sheet->getRow($row_number);
-                if ($row === null && $data_sheet->hasColumTotals()) {
-                    $totals_number = $row_number - $data_sheet->countRows();
-                    $row = $data_sheet->getTotalsRow($totals_number, false);
+                $args = $dataSheet->getRow($rowNumber);
+                if ($args === null && $dataSheet->hasColumTotals()) {
+                    $totals_number = $rowNumber - $dataSheet->countRows();
+                    $args = $dataSheet->getTotalsRow($totals_number, false);
                 }
-                if ($row === null) {
-                    throw new InvalidArgumentException('Row number "' . $row_number . '" not found in data sheet!');
+                if ($args === null) {
+                    throw new InvalidArgumentException('Row number "' . $rowNumber . '" not found in data sheet!');
                 }
             }
-            $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench());
-            $result = $expressionLanguage->evaluate($this, $row);
-            
-            // Clean up current data in case the formula will be evaluated again
-            $this->currentDataSheet = null;
-            $this->currentRowNumber = null;
+            $expressionLanguage = new SymfonyExpressionLanguage($this->getWorkbench(), $dataSheet, $rowNumber);
+            $result = $expressionLanguage->evaluate($this, $args);
             
             return $result;
         } catch (\Throwable $e) {
             $errorText = 'Cannot evaluate formula `' . $this->__toString() . '`';
-            if ($data_sheet === null) {
+            if ($dataSheet === null) {
                 $errorText .= ' statically!';
             } else {
-                $onRow = $row_number !== null ? ' on row ' . $row_number : '';
-                $errorText .= ' for data of ' . $data_sheet->getMetaObject()->getAliasWithNamespace() . $onRow . '!';
+                $onRow = $rowNumber !== null ? ' on row ' . $rowNumber : '';
+                $errorText .= ' for data of ' . $dataSheet->getMetaObject()->getAliasWithNamespace() . $onRow . '!';
             }
             throw new FormulaError($errorText . ' ' . $e->getMessage(), null, $e);
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::setDataContext()
+     */
+    public function setDataContext(DataSheetInterface $dataSheet = null, int $rowIdx = null) : FormulaInterface
+    {
+        $this->currentDataSheet = $dataSheet;
+        $this->currentRowNumber = $rowIdx;
+        return $this;        
     }
     
     /**
@@ -142,24 +147,24 @@ abstract class Formula implements FormulaInterface
      */
     public function getRequiredAttributes(bool $withRelationPath = true) : array
     {
-        if ($this->required_attributes === null) {
+        if ($this->requiredAttributeAliases === null) {
             $tStream = $this->getTokenStream();
             if ($tStream === null) {
                 return [];
             }
             
             $attrs = $tStream->getAttributes();            
-            $this->required_attributes = $attrs;
+            $this->requiredAttributeAliases = $attrs;
         }
         if ($withRelationPath && $this->hasRelationPath()) {
-            $attrs = $this->required_attributes;
+            $attrs = $this->requiredAttributeAliases;
             $relPathStr = $this->getRelationPathString();
             foreach ($attrs as $i => $attr) {
                 $attrs[$i] = RelationPath::relationPathAdd($relPathStr, $attr);
             }
             return $attrs;
         }
-        return $this->required_attributes;
+        return $this->requiredAttributeAliases;
     }
 
     /**

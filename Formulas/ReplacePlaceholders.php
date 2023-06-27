@@ -73,4 +73,22 @@ class ReplacePlaceholders extends \exface\Core\CommonLogic\Model\Formula
     {
         return false;
     }
+    
+    public function getRequiredAttributes(bool $withRelationPath = true) : array
+    {
+        return array_merge(parent::getRequiredAttributes(), $this->getRequiredPlaceholders());
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    protected function getRequiredPlaceholders() : array
+    {
+        $phs = [];
+        foreach ($this->getTokenStream()->getArguments() as $arg) {
+            $phs = array_merge(StringDataType::findPlaceholders($arg), $phs);
+        }
+        return $phs;
+    }
 }

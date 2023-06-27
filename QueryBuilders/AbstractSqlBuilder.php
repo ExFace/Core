@@ -451,13 +451,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * E.g. `DELETE FROM $this->buildSqlFrom() $where`
      *
-     * @param string $sqlSet
      * @param string $sqlWhere
+     * @param string $joins
      * @return string
      */
-    public function buildSqlQueryDelete(string $sqlWhere) : string
+    public function buildSqlQueryDelete(string $sqlWhere, string $joins = null) : string
     {
-        return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . $sqlWhere;
+        return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . ($joins ?? '') . $sqlWhere;
     }
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
@@ -1131,8 +1131,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        // filters -> WHERE
-        $where = $this->buildSqlWhere($this->getFilters(), false);
+        // filters -> WHERE + JOIN
+        // NOTE: Not all DB engines allow JOINs in DELETE queries: e.g. MySQL does not. In
+        // this case, override this method - see MySqlBuilder for an example.
+        $joins = $this->buildSqlJoins($this->getFilters());
+        $where = $this->buildSqlWhere($this->getFilters(), true);
         // add custom sql where from the object
         if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $where = $this->appendCustomWhere($where, $custom_where);
@@ -1142,7 +1145,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
         }
         
-        $sql = $this->buildSqlQueryDelete($where);
+        $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
         $query = $data_connection->runSql($sql);
         
         return new DataQueryResultData([], $query->countAffectedRows());

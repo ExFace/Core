@@ -596,10 +596,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryDelete()
      */
-    public function buildSqlQueryDelete(string $sqlWhere) : string
+    public function buildSqlQueryDelete(string $sqlWhere, string $joins = null) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
-        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $sqlWhere;
+        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $joins . $sqlWhere;
     }
     
     /**

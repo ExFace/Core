@@ -15,30 +15,18 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * 
  * Allows single-sign-on with any application that stores password hashes in SQL.
  * 
- * ## Examples
- * 
- * ### Authentication + create new users with static roles
- * 
- * This configuration will automatically create a workbench user with `SUPERUSER` role
- * if valid credentials for the metamodel's DB connection are provided.
- * 
- * ```
- * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
- * 		"connection_aliases": [
- * 			"my.App.db_connection"
- * 		],
- *      "sql_to_check_password": "SELECT id FROM users_table WHERE user_name = '[#username#]' AND password_hash = PASSWORD('[#password#]')",
- *      "sql_to_get_user_data": "SELECT first_name AS FIRST_NAME, last_name AS LAST_NAME FROM users_table WHERE id = '[#id#]'",
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		]
- * }
- * 
- * ```
+ * Basically, you need to provide the SQLs to verify the password and to read user data with some placeholders:
+ * - `sql_to_check_password` must return a non-empty result if the placeholders `[#username#]` and `[#password#]`
+ * match the stored credetials. The returned data can by anything. But it MUST  be empty (no rows) if the password
+ * does not match. If it does match, any returned columns can be used as placeholders in the subsequet query to
+ * read user data.
+ * - `sql_to_get_user_data` may return user data like `FIRST_NAME`, `LAST_NAME`, `EMAIL`. The column names must
+ * match attributes of the `exface.Core.USER` object. This allows to read the user data and create new users
+ * on the fly. Placeholders can be used in the SQL: any column retured by `sql_to_check_password` is available.
  * 
  * If you specify multiple connections, the user will be able to choose one berfor logging in.
+ * 
+ * ## Auto-create new users
  * 
  * If `create_new_users` is `true`, a new workbench user will be created automatically once
  * a new username is authenticated successfully. These new users can be assigned some roles
@@ -46,6 +34,68 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * 
  * If a new user is not assigned any roles, he or she will only have access to resources
  * available for the user roles `exface.Core.ANONYMOUS` and `exface.Core.AUTHENTICATED`.
+ * 
+ * ## Examples
+ * 
+ * ### Authentication + create new users with static roles
+ * 
+ * This configuration will automatically create a workbench user with `SUPERUSER` role
+ * if valid credentials for the metamodel's DB connection are provided.
+ * 
+ * Note, that the `sql_to_get_user_data` query uses the `[#id#]` placeholder, which resolves to the `id` column
+ * selected previously by `sql_to_check_password`.
+ * 
+ * ```
+ * {
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
+ *      "connection_aliases": [
+ *          "my.App.db_connection"
+ *      ],
+ *      "sql_to_check_password": "SELECT id FROM users_table WHERE user_name = '[#username#]' AND password_hash = PASSWORD('[#password#]')",
+ *      "sql_to_get_user_data": "SELECT first_name AS FIRST_NAME, last_name AS LAST_NAME FROM users_table WHERE id = '[#id#]'",
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ]
+ * }
+ * 
+ * ```
+ * 
+ * ### Sync roles with an external SQL DB
+ * 
+ * If the external DB is the master for user role assignment, the authenticator can be configured to sync
+ * workbench user roles with those in the SQL DB: simply configure a data sheet selecting the names of all
+ * roles assigned to a username in `sync_roles_with_data_sheet`.
+ * 
+ * The role names returned by this data sheet will be matched agains the external roles
+ * configuration for this authenticator.
+ * 
+ * Note, this data sheet also conains placeholders. In contrast to the placeholders in the SQL statements
+ * above, these are not the selected columns, but attributes of the `exface.Core.USER` meta object. This is
+ * because roles get synchronized only after the user was created and they can be synchronized independently
+ * from the password check.
+ * 
+ * ```
+ *  {
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
+ *      "id": "",
+ *      "sync_roles_with_data_sheet": {
+ *          "object_alias": "my.App.ROLE",
+ *          "columns": [
+ *              {"attribute_alias": "Name"}
+ *          ],
+ *          "filters": {
+ *              "operator": "AND",
+ *              "conditions": [{
+ *                  "expression": "RELATION_TO__USER_TABLE",
+ *                  "comparator": "==",
+ *                  "value": "[#USERNAME#]"
+ *		        }]
+ *          }
+ *      }
+ *  }
+ *  
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -109,11 +159,16 @@ class SQLAuthenticator extends DataConnectionAuthenticator
         
         $this->logSuccessfulAuthentication($user, $token->getUsername());
         if ($token->getUsername() !== $user->getUsername()) {
-            return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword(), $token->getFacade());
+        } else {
+            $authenticatedToken = $token;
         }
         
-        $this->saveAuthenticatedToken($token);
-        return $token;
+        $this->saveAuthenticatedToken($authenticatedToken);
+        
+        $this->syncUserRoles($user, $authenticatedToken);
+        
+        return $authenticatedToken;
     }
     
     /**

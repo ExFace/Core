@@ -7,6 +7,8 @@ use exface\Core\Formulas\Calc;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Exceptions\FormulaError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Wrapper class to extract formula name, nested formulas and attributes
@@ -29,6 +31,8 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
     
     private $attributes = null;
     
+    private $arguments = null;
+    
     /**
      * 
      * @param string $expression
@@ -42,8 +46,12 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
         $expression = str_replace("\n", "\\n", $expression);
         $expression = str_replace("\t", "\\t", $expression);
         
-        $lexer = new Lexer();
-        $tokenStream = $lexer->tokenize($expression);
+        try {
+            $lexer = new Lexer();
+            $tokenStream = $lexer->tokenize($expression);
+        } catch (\Throwable $e) {
+            throw new FormulaError('Cannot parse formula: ' . $e->getMessage(), '7R34E52', $e);
+        }
         $this->tokenStream = $tokenStream;
     }
     
@@ -76,20 +84,23 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $delim = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
             $tokens = $this->getTokens();
             $buffer = null;
-            for ($i = 0; $i < count($tokens); $i++) {
-                $token = $tokens[$i];
+            foreach ($tokens as $i => $token) {
+                $name = $token['name'] ?? null;
+                if ($name === null) {
+                    continue;
+                }
                 //if token is preceeded by a ':' it might be an aggregation, so check that, else it's a formula
-                if ($token['name'] && $tokens[$i-1]['punctuation'] !== ':' && AggregatorFunctionsDataType::isValidStaticValue($token['name']) === false) {
+                if ($tokens[$i-1]['punctuation'] !== ':' && AggregatorFunctionsDataType::isValidStaticValue($name) === false) {
                     //if the token is followd by a '.' ist a formula with namespace, therefor buffer the token
                     if ($tokens[$i+1]['punctuation'] === $delim) {
-                        $buffer .= $token['name'] . $delim;
+                        $buffer .= $name . $delim;
                         continue;
                     }
                     if ($tokens[$i+1]['punctuation'] === '(') {
                         if ($tokens[$i-1]['punctuation'] === $delim && $buffer) {
-                            $forms[] = $buffer . $token['name'];
+                            $forms[] = $buffer . $name;
                         } else {
-                            $forms[] = $token['name'];
+                            $forms[] = $name;
                         }
                         $buffer = null;
                     }
@@ -145,28 +156,62 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
             $tokens = $this->getTokens();
             $attributes = [];
             $buffer = null;
-            for ($i = 0; $i < count($tokens); $i++) {
-                $token = $tokens[$i];
-                if ($token['name']) {
+            foreach ($tokens as $i => $token) {
+                $name = $token['name'] ?? null;
+                if (null === $name) {
+                    continue;
+                }
+                $nextPunct = $tokens[$i+1]['punctuation'] ?? null;
+                switch (true) {
                     //if the token is followed by a ':' and  the following token is an aggregation,
                     //its an attribute alias with an aggregation, therefor buffer the token
-                    if ($tokens[$i+1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($tokens[$i+2]['name'])) {
-                        $buffer .= $token['name'] . ':';
+                    case $nextPunct === ':' && AggregatorFunctionsDataType::isValidStaticValue($tokens[$i+2]['name']):
+                        $buffer .= $name . ':';
+                        break;
                     //if the token is followed by '[' or ']' it's an attribute alias with relation modifier
-                    } else if ($tokens[$i+1]['punctuation'] === '[' || $tokens[$i+1]['punctuation'] === ']') {
-                        $buffer .= $token['name'] . $tokens[$i+1]['punctuation'];
-                    } elseif ($tokens[$i+1]['punctuation'] !== '(' && $tokens[$i+1]['punctuation'] !== '.') {
-                        $attributes[] = $buffer . $token['name'];
+                    case $nextPunct === '[' || $nextPunct === ']':
+                        $buffer .= $name . $nextPunct;
+                        break;
+                    case $nextPunct !== '(' && $nextPunct !== '.':
+                        $attributes[] = $buffer . $name;
                         $buffer = null;
-                    } else {
+                        break;
+                    default:
                         $buffer = null;
-                    }
                 }
             }
             $attributes = array_unique($attributes);
             $this->attributes = $attributes;
         }
         return $this->attributes;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getArguments()
+     */
+    public function getArguments() : array
+    {
+        if ($this->arguments === null) {
+            $args = [];
+            foreach ($this->getTokens() as $token) {
+                if ($token['string'] !== null) {
+                    $args[] = $token['string'];
+                    continue;
+                }
+                if ($token['number'] !== null) {
+                    $args[] = $token['number'];
+                    continue;
+                }
+                if (strcasecmp($token['name'] ?? '', 'false') === 0 || strcasecmp($token['name'] ?? '', 'true') === 0) {
+                    $args[] = $token['name'];
+                    continue;
+                }
+            }
+            $this->arguments = $args;
+        }
+        return $this->arguments;
     }
     
     /**
