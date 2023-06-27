@@ -65,6 +65,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * 
@@ -420,7 +421,7 @@ HTML;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromTaskResult()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromTaskResult()
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
@@ -754,7 +755,7 @@ HTML;
             $error['title'] = $forceHtmlEntities ? htmlspecialchars($msg->getTitle()) : $msg->getTitle();
             $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
             $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
-            $error['type'] = $msg->getType();
+            $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
         }
         
         return [

@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -19,6 +18,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Interfaces\Actions\iShowDialog;
 
 /**
  * This action chains other actions and performs them one after another.
@@ -212,6 +212,13 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR') . PHP_EOL;
         $diagram .= "{$lbId}T(Task) -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}0" . PHP_EOL;
         foreach ($this->getActions() as $idx => $action) {
+            // Skip show-dialog actions. It does not make sense to really perform them within the chain.
+            // Instead, they are currently called separately by the front-end similar to front-end-actions
+            // - see `JQueryButtonTrait::buildJsClickActionChain()` for details
+            if ($action instanceof iShowDialog) {
+                continue;
+            }
+            
             // Prepare the action
             // All actions are all called by the widget, that called the chain
             if ($triggerWidget !== null) {
@@ -328,13 +335,44 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     }
     
     /**
+     * Attempts to find the action to start the chain from - for a given task.
+     * 
+     * - If the task references the entire chain, the first action in the chain is returned
+     * - If the task matches exactly one action in the chain, that action is returned
+     * - otherwise NULL is returned
+     * 
+     * Background: complex chains with front-end and back-end actions may require multiple
+     * server requests for a single chain with different tasks. It is not really clear,
+     * how to match the chain steps reliably. The blelow code works for the cases we know
+     * so far:
+     * 
+     * - Task for the entire action
+     * - Task for a ReadPrefill action resulting from a ShowWidget action somewhere along 
+     * the chain (the method would return NULL, which is the same behavior as for regular 
+     * ReadPrefill actions without chains - see `GenericTask::getAction()`)
+     * - Task with an actions selector that matches one or more actoin along the chain.
+     * There was no usecase for this so far.
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iCallOtherActions::getActionToStart()
      */
     public function getActionToStart(TaskInterface $task) : ?ActionInterface
     {
-        return $this->getActionFirst();
+        $taskActionSelector = $task->getActionSelector();
+        if ($this->isExactly($taskActionSelector)) {
+            return $this->getActionFirst();
+        }
+        $found = [];
+        foreach ($this->getActions() as $action) {
+            if ($action->is($taskActionSelector)) {
+                $found[] = $action;
+                break;
+            }
+        }
+        if (count($found) === 1) {
+            return reset($found);
+        }
+        return null;
     }
     
     /**
@@ -399,10 +437,6 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     protected function addAction(ActionInterface $action) : iCallOtherActions
     {
-        if ($action instanceof iShowWidget){
-            throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
-        }
-        
         $this->actions[] = $action;
         return $this;
     }

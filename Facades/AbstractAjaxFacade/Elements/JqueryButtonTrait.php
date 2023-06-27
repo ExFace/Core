@@ -26,6 +26,7 @@ use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Actions\CallAction;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Actions\ActionChain;
 
 /**
  * 
@@ -395,27 +396,51 @@ JS;
     {
         $firstServerActionIdx = null;
         $lastServerActionIdx = null;
+        $firstDialogActionIdx = null;
         $steps = $action->getActions();
         $lastActionIdx = count($steps) - 1;
         foreach ($steps as $i => $step) {
-            if (! $this->isActionFrontendOnly($step)) {
-                if ($firstServerActionIdx !== null && $lastServerActionIdx !== $i-1) {
-                    throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): cannot mix front- and back-end actions!');
-                }
-                if ($firstServerActionIdx === null) {
-                    $firstServerActionIdx = $i;
-                }
-                $lastServerActionIdx = $i;
+            // For front-end action their JS code will be called directly
+            if ($this->isActionFrontendOnly($step)) {
+                continue;
             }
+            // For actions showing dialogs, this can be done too, but only if they use the input data
+            // of the chain and not that of some step in the middle
+            if ($step instanceof iShowDialog) {
+                if ($firstDialogActionIdx !== null) {
+                    throw new FacadeRuntimeError('Cannot render action chain with multiple actions showing dialogs!');
+                }
+                if ($i > 0 && ($action instanceof ActionChain) && $action->getUseInputDataOfAction() !== 0) {
+                    throw new FacadeRuntimeError('Cannot render action chain with multiple actions showing dialogs!');
+                }
+                $firstDialogActionIdx = $i;
+                continue;
+            } 
+            // ShowWidget actions other than ShowDialog cannot be used in chains - its not clear, what
+            // they would do.
+            if ($step instanceof iShowWidget) {
+                throw new FacadeRuntimeError('Cannot render action chain with ShowWidget actions!');
+            }
+            // Make sure there are no client-side action between two server actions
+            if ($firstServerActionIdx !== null && $lastServerActionIdx !== $i-1) {
+                throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): cannot mix front- and back-end actions!');
+            }
+            // Since we know, this is a server action it must be the first one if we did not see
+            // any other so far.
+            if ($firstServerActionIdx === null) {
+                $firstServerActionIdx = $i;
+            }
+            $lastServerActionIdx = $i;
         }
         
+        // If the chain consists of server actions only - just pass it to the server
         if ($firstServerActionIdx === 0 && $lastServerActionIdx === $lastActionIdx) {
             return $this->buildJsClickCallServerAction($action, $jsRequestData);
         }
         
         // Render JS for the chain
         // Starting with the front-end-actions BEFORE the first server-action
-        $js = '';
+        $js = 'var oChainThis = this; ';
         for ($i = 0; $i < $firstServerActionIdx; $i++) {
             $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
         }
@@ -423,7 +448,10 @@ JS;
         // code into $onSuccess in order to perform it after the server request
         $onSuccess = '';
         for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
-            $onSuccess .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+            // Make sure the on-success code has the same `this` in the JS as the code
+            // executed immediately. After all, the action handlers cannot know, that
+            // they are called within a chain.
+            $onSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], $jsRequestData)} }).call(oChainThis); \n\n";
         }
         
         // TODO Multiple server actions in the middle are not supported yet
@@ -431,15 +459,10 @@ JS;
             throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): action chains with mixed front- and back-end actions can only contain a single back-end action!');
         }
         
-        // TODO Show-widget actions in chains not supported yet
-        $serverAction = $steps[$firstServerActionIdx];
-        if ($serverAction instanceof iShowWidget) {
-            throw new FacadeRuntimeError('Cannot use actions that render widgets in mixed action chains!');
-        }
-        
         // Now send the server-action stuff to the server and do the remaining JS-part of the chain
         // after a successful response was received.
-        $js .= $this->buildJsClickOfflineWrapper($steps[$firstServerActionIdx], $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
+        $serverAction = $steps[$firstServerActionIdx];
+        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
         
         return $js;
     }

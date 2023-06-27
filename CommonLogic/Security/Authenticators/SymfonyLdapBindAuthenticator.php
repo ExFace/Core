@@ -80,12 +80,13 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
         $authenticatedToken = parent::authenticate($token);
         if ($authenticatedToken->isAnonymous() === false) {
             if ($this->getCreateNewUsers(true) === true) {
-                $this->createUserWithRoles($this->getWorkbench(), $token);
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);
             } else {
                 if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
                     throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
                 }
             }
+            $this->syncUserRoles($user, $authenticatedToken);
         }
         return $token;
     }
