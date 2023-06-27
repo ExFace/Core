@@ -120,9 +120,9 @@
         },
         {
             "CREATED_ON": "2020-05-11 09:59:27",
-            "MODIFIED_ON": "2022-06-06 16:19:31",
+            "MODIFIED_ON": "2023-05-17 18:54:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea936e192716e4a9d10205857feb80",
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
@@ -342,6 +342,23 @@
                                             "widgets": [
                                                 {
                                                     "attribute_alias": "MENU_VISIBLE"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "caption": "Menu parent",
+                                    "icon": "folder-open",
+                                    "action": {
+                                        "alias": "exface.Core.ShowMassEditDialog",
+                                        "widget": {
+                                            "widget_type": "Dialog",
+                                            "columns_in_grid": 1,
+                                            "height": "auto",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "MENU_PARENT"
                                                 }
                                             ]
                                         }
