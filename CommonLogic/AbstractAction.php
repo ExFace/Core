@@ -869,26 +869,28 @@ abstract class AbstractAction implements ActionInterface
      */
     public function is($actionOrSelectorOrString) : bool
     {
-        if ($actionOrSelectorOrString instanceof ActionInterface){
-            $class = get_class($actionOrSelectorOrString);
-            return $this instanceof $class;
-        } elseif (is_string($actionOrSelectorOrString)){
-            if ($this->isExactly($actionOrSelectorOrString)) {
-                return true;
-            }
-            if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
-                $selector = $actionOrSelectorOrString;
-            } else {
-                $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
-            }
-            if ($selector->isClassname()) {
-                $class_name = $selector->toString();
-            } else {
-                $class_name = get_class(ActionFactory::create($selector));
-            }
-            return $this instanceof $class_name;
-        } else {
-            throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
+        switch (true) {
+            case $actionOrSelectorOrString instanceof ActionInterface:
+                $class = get_class($actionOrSelectorOrString);
+                return $this instanceof $class;
+            case is_string($actionOrSelectorOrString):
+            case $actionOrSelectorOrString instanceof ActionSelectorInterface:
+                if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
+                    $selector = $actionOrSelectorOrString;
+                } else {
+                    $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
+                }
+                if ($this->isExactly($selector)) {
+                    return true;
+                }
+                if ($selector->isClassname()) {
+                    $class_name = $selector->toString();
+                } else {
+                    $class_name = get_class(ActionFactory::create($selector));
+                }
+                return $this instanceof $class_name;
+            default:
+                throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
     }
     
