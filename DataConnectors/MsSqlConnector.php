@@ -157,7 +157,9 @@ class MsSqlConnector extends AbstractSqlConnector
     {
         $connectInfo = $this->getConnectionOptions();
         $connectInfo["Database"] = $this->getDatabase();
-        $connectInfo["CharacterSet"] = $this->getCharacterSet();
+        if (null !== $charset = $this->getCharacterSet()) {
+            $connectInfo["CharacterSet"] = $charset;
+        }
         $connectInfo['ReturnDatesAsStrings'] = $this->getConnectionOptions()['ReturnDatesAsStrings'] ?? true;
         if ($this->getUser()) {
             $connectInfo["UID"] = $this->getUser();
