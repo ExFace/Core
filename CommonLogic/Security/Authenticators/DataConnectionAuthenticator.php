@@ -29,15 +29,15 @@ use exface\Core\Widgets\Form;
  * 
  * ```
  * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
- * 		"connection_aliases": [
- * 			"exface.Core.METAMODEL_CONNECTION"
- * 		],
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		]
- * }
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
+ *      "connection_aliases": [
+ *          "exface.Core.METAMODEL_CONNECTION"
+ *      ],
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ]
+ *  }
  * 
  * ```
  * 

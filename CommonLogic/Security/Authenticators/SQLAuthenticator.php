@@ -47,16 +47,16 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * 
  * ```
  * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
- * 		"connection_aliases": [
- * 			"my.App.db_connection"
- * 		],
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
+ *      "connection_aliases": [
+ *          "my.App.db_connection"
+ *      ],
  *      "sql_to_check_password": "SELECT id FROM users_table WHERE user_name = '[#username#]' AND password_hash = PASSWORD('[#password#]')",
  *      "sql_to_get_user_data": "SELECT first_name AS FIRST_NAME, last_name AS LAST_NAME FROM users_table WHERE id = '[#id#]'",
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		]
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ]
  * }
  * 
  * ```
@@ -77,26 +77,22 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * 
  * ```
  *  {
- *     "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
- *     "id": "",
- *     "sync_roles_with_data_sheet": {
- *         "object_alias": "my.App.ROLE",
- *		   "columns": [
- *	           {
- *				  "attribute_alias": "Name"
- *			   }
- *			],
- *			"filters": {
- *				"operator": "AND",
- *				"conditions": [
- *					{
- *						"expression": "RELATION_TO__USER_TABLE",
- *						"comparator": "==",
- *						"value": "[#USERNAME#]"
- *					}
- *				]
- *			}
- *		}
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\SQLAuthenticator",
+ *      "id": "",
+ *      "sync_roles_with_data_sheet": {
+ *          "object_alias": "my.App.ROLE",
+ *          "columns": [
+ *              {"attribute_alias": "Name"}
+ *          ],
+ *          "filters": {
+ *              "operator": "AND",
+ *              "conditions": [{
+ *                  "expression": "RELATION_TO__USER_TABLE",
+ *                  "comparator": "==",
+ *                  "value": "[#USERNAME#]"
+ *		        }]
+ *          }
+ *      }
  *  }
  *  
  * ```

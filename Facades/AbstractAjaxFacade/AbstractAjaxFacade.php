@@ -421,7 +421,7 @@ HTML;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromTaskResult()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromTaskResult()
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {

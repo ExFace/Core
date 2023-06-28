@@ -4,7 +4,41 @@ Diagrams help undertand processes a lot. Whenever a business process or a techni
 
 ## Diagramming tools
 
-[PlantUML](http://plantuml.com/) is the recommended tool to create UML diagrams. It is free to use and works with plain text sources, that can be easily versioned together with the actual diagrams. There are plenty of plugins for various editors and even web browsers. Here are those used by the core team:
+### Mermaid - embedded diagramming
+
+Mermaid is a markup language for diagramming. It can be directly included in the documentation without exporting the diagram as an image. It is the recommended approach for diagramming, since the markup is also supported on GitHub, GitLab and other versioning platforms.
+
+- There is a good WYSIWYG editor here: https://mermaid.live/
+
+To include a diagram, simply paste it into a codeblock like this:
+
+````
+```mermaid
+stateDiagram-v2
+	direction LR
+	[*] --> Still
+	Still --> [*]
+	Still --> Moving
+	Moving --> Still
+	Moving --> Crash
+	Crash --> [*]
+```
+````
+
+```mermaid
+stateDiagram-v2
+	direction LR
+	[*] --> Still
+	Still --> [*]
+	Still --> Moving
+	Moving --> Still
+	Moving --> Crash
+	Crash --> [*]
+```
+
+### PlantUML - free tool to create diagrams
+
+[PlantUML](http://plantuml.com/) is a wide spread diagramming tool, that can be used to generate images and insert them into the docs. It is free to use and works with plain text sources, that can be easily versioned together with the actual diagrams. The syntax is different from mermaid, but it is a similar approach. There are plenty of plugins for various editors and even web browsers. Here are those used by the core team:
 
 - [Eclipse plugin](http://plantuml.com/eclipse)
 - [Google Chrome plugin](https://chrome.google.com/webstore/detail/plantuml-viewer/legbfeljfbjgfifnkmpoajgpgejojooj)
