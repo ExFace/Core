@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Removes rows by appying a filter condition group.
@@ -62,7 +63,7 @@ class RowFilterMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         switch ($this->getApplyTo()) {
             case self::APPLY_TO_FROM_SHEEET:

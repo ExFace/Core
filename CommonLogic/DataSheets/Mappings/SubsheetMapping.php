@@ -10,6 +10,7 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Applies a data mapper to a column with subsheets - i.e. to each subsheet in that column.
@@ -36,7 +37,7 @@ class SubsheetMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $subsheetMapper = $this->getSubsheetMapper();
         $fromSubsheetCol = $fromSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString());
@@ -49,6 +50,11 @@ class SubsheetMapping extends AbstractDataSheetMapping
             $toSubsheetCol = $toSheet->getColumns()->addFromExpression($this->getToSubsheetRelationString());
         }
         
+        if ($logbook !== null) {
+            $logbook->addLine("Subsheet `{$fromSubsheetCol->getName()}` -> `{$toSubsheetCol->getName()}`");
+            $logbook->addIndent(1);
+        }
+        
         foreach ($fromSubsheetCol->getValues() as $i => $subsheetVal) {
             if ($subsheetVal === null || $subsheetVal === '') {
                 continue;
@@ -58,10 +64,14 @@ class SubsheetMapping extends AbstractDataSheetMapping
             }
             $subsheet = DataSheetFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($subsheetVal));
             $readMissingData = null;
+            // If the subsheet is completely empty, make sure no to attempt to read it. Otherwise
+            // column mappers would add columns and the mapper would attempt to read the entire
+            // data not filtered at all. Subsheets do not have a filter over their parent most of the
+            // time - that filter is added automatically, when writing is performed.
             if ($subsheet->isEmpty()) {
                 $readMissingData = false;
             }
-            $toSubsheet = $subsheetMapper->map($subsheet, $readMissingData);
+            $toSubsheet = $subsheetMapper->map($subsheet, $readMissingData, $logbook);
             $toSubsheetCol->setValue($i, $toSubsheet->exportUxonObject());
         }  
         
@@ -70,6 +80,8 @@ class SubsheetMapping extends AbstractDataSheetMapping
                 $toSheet->getColumns()->remove($removeCol);
             }
         }
+        
+        if ($logbook !== null) $logbook->addIndent(-1);
         
         return $toSheet;
     }

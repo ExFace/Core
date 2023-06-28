@@ -1127,7 +1127,6 @@ abstract class AbstractAction implements ActionInterface
         // Apply the input mappers
         $logbook->removeSection('Input mapper');
         $logbook->addSection('Input mapper');
-        $logbook->setIndentActive(1);
         $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
         
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
