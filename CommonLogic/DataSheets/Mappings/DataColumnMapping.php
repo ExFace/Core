@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -109,10 +110,12 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
+        
+        if ($logbook !== null) $logbook->addLine("Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`");
         
         switch (true) {
             // Constants and static formulas

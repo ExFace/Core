@@ -7,6 +7,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Joins any data to the to-sheet of the mapping using left or right JOINs similar to SQL.
@@ -88,7 +89,7 @@ class DataJoinMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $joinSheet = $this->getJoinDataSheet();
         if (! $joinSheet->isFresh()) {
