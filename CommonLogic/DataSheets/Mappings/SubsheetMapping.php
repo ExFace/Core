@@ -57,7 +57,11 @@ class SubsheetMapping extends AbstractDataSheetMapping
                 throw new \UnexpectedValueException('Invalid subsheet format');
             }
             $subsheet = DataSheetFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($subsheetVal));
-            $toSubsheet = $subsheetMapper->map($subsheet);
+            $readMissingData = null;
+            if ($subsheet->isEmpty()) {
+                $readMissingData = false;
+            }
+            $toSubsheet = $subsheetMapper->map($subsheet, $readMissingData);
             $toSubsheetCol->setValue($i, $toSubsheet->exportUxonObject());
         }  
         
