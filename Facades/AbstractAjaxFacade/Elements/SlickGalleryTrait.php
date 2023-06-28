@@ -658,7 +658,7 @@ JS;
         $contentColName = DataColumn::sanitizeColumnName($uploader->getFileContentAttribute()->getAliasWithRelationPath());
         $fileColumnsJs = '';
         if ($uploader->hasFileModificationTimeAttribute()) {
-            $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileModificationAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
+            $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileModificationTimeAttribute()->getAliasWithRelationPath()) . ": file.lastModified,";
         }
         if ($uploader->hasFileSizeAttribute()) {
             $fileColumnsJs .= DataColumn::sanitizeColumnName($uploader->getFileSizeAttribute()->getAliasWithRelationPath()) . ": file.size,";
