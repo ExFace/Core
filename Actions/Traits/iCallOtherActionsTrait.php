@@ -15,6 +15,25 @@ trait iCallOtherActionsTrait
     /**
      *
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallOtherActions::getActionsRecursive()
+     */
+    public function getActionsRecursive(callable $filter = null) : array
+    {
+        $found = [];
+        foreach ($this->getActions() as $chainedAction) {
+            if ($filter === null || $filter($chainedAction) === true) {
+                $found[] = $chainedAction;
+            }
+            if ($chainedAction instanceof iCallOtherActions) {
+                $found = array_merge($found, $chainedAction->getActionsRecursive($filter));
+            }
+        }
+        return $found;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iCallOtherActions::containsAction()
      */
     public function containsAction(ActionInterface $action, bool $recursive = true): bool

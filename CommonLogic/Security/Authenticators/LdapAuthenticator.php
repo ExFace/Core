@@ -48,13 +48,13 @@ use exface\Core\Widgets\Form;
  * Create a separate php-file for testing with the code below an call it from command line!
  * 
  * ```
- * <?php
- * ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, 7);
- * $resource = ldap_connect("ldaps://{redacted}/", 636) or die ("Could not connect.");
- * ldap_set_option($resource, LDAP_OPT_PROTOCOL_VERSION, 3)
- * ldap_set_option ($ldapconn, LDAP_OPT_REFERRALS, 0);
- * $bound = ldap_bind($resource, "{redacted}\ldap", "****");
- * echo ldap_error($resource);
+ *  <?php
+ *  ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, 7);
+ *  $resource = ldap_connect("ldaps://{redacted}/", 636) or die ("Could not connect.");
+ *  ldap_set_option($resource, LDAP_OPT_PROTOCOL_VERSION, 3)
+ *  ldap_set_option ($ldapconn, LDAP_OPT_REFERRALS, 0);
+ *  $bound = ldap_bind($resource, "{redacted}\ldap", "****");
+ *  echo ldap_error($resource);
  * 
  * ```
  * 
@@ -63,20 +63,20 @@ use exface\Core\Widgets\Form;
  * ### Authentication + create new users with static roles
  * 
  * ```
- * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\LdapAuthenticator",
- * 		"host": "adserver",
- * 		"domains": [
- * 			"mydomain"
- * 		],
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		],
+ *  {
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\LdapAuthenticator",
+ *      "host": "adserver",
+ *      "domains": [
+ *          "mydomain"
+ *      ],
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ],
  *      "ldap_name_alias": "name",
  *      "ldap_name_pattern": "/(?<lastname>.*), (?<firstname>.*)/i",
  *      "dn_string": "[#domain#]\\[#username#]"
- * }
+ *  }
  * 
  * ```
  * 
@@ -418,7 +418,7 @@ class LdapAuthenticator extends AbstractAuthenticator
      * The mask should contain the named character groups `lastname` and `firstname`.
      * The default regular expression is: `/(?<lastname>.*), (?<firstname>.*)/i`.
      * 
-     * @uxon-prototype ldap_name_pattern
+     * @uxon-property ldap_name_pattern
      * @uxon-type string
      * 
      * @param string $pattern
