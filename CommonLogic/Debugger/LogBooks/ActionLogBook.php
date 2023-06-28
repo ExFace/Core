@@ -240,6 +240,17 @@ class ActionLogBook implements DataLogBookInterface
     }
     
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addIndent()
+     */
+    public function addIndent(int $positiveOrNegative) : LogBookInterface
+    {
+        $this->logBook->addIndent($positiveOrNegative);
+        return $this;
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Debug\LogBookInterface::addException()

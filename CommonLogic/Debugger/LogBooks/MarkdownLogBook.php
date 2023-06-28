@@ -165,6 +165,9 @@ class MarkdownLogBook implements LogBookInterface
                 $str .= PHP_EOL . '## ' . $section . PHP_EOL;
             }
             foreach ($lines as $lineProps) {
+                if ($lineProps['indent'] === 0) {
+                    $str .= PHP_EOL;
+                }
                 $str .= $this->convertIndentToString($lineProps['indent']) . $lineProps['text'] . PHP_EOL;
             }
         }
@@ -208,9 +211,25 @@ class MarkdownLogBook implements LogBookInterface
         return $str . '- ';
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::setIndentActive()
+     */
     public function setIndentActive(int $zeroOrMore) : LogBookInterface
     {
         $this->currentIndent = $zeroOrMore;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addIndent()
+     */
+    public function addIndent(int $positiveOrNegative) : LogBookInterface
+    {
+        $this->currentIndent = $this->currentIndent + $positiveOrNegative;
         return $this;
     }
     

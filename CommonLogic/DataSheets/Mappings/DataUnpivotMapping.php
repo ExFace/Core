@@ -8,6 +8,7 @@ use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Tansforms selected columns to rows.
@@ -224,7 +225,7 @@ class DataUnpivotMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $toColLabels = $toSheet->getColumns()->addFromExpression($this->getToLabelsColumnExpression());
         $toColValues = $toSheet->getColumns()->addFromExpression($this->getToValuesColumnExpression());
