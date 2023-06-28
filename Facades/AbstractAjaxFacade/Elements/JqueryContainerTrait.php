@@ -239,7 +239,7 @@ JS;
     {
         $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
         foreach ($this->getWidget()->getWidgetsRecursive() as $child) {
-            if (! $child->isBoundToAttribute()) {
+            if (! (($child instanceof iShowSingleAttribute) && $child->isBoundToAttribute())) {
                 continue;
             }
             $attr = $child->getAttribute();
@@ -263,11 +263,6 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
     var fnRefresh = function() {
         {$scriptJs}
     };
-    
-    // Avoid errors if dialog is closed
-    if ($('#{$this->getId()}').getModel('view').getProperty('/_closed') === true) {
-        return;
-    }
     
     if (oParams.refresh_not_widgets.indexOf(sWidgetId) !== -1) {
         return;
