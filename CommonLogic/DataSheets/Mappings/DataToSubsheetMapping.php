@@ -11,6 +11,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\RowArrayDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Puts values of selected column in a subsheet, mapping a large flat data sheet ot a smaller one with subsheets in each row
@@ -103,7 +104,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $toRows = $toSheet->getRows();
         $toRowsUnique = RowArrayDataType::findUniqueRows($toRows);

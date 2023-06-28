@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Maps on data sheet column to a filter expression in another data sheet.
@@ -23,7 +24,7 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
