@@ -176,7 +176,6 @@ class WebConsoleFacade extends AbstractHttpFacade
                     $resultStr = implode("\n", $result);
                     $stream = Psr7\Utils::streamFor($resultStr);
                 }
-                // dump(shell_exec('dir'));
         }
         
         try {
