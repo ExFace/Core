@@ -104,6 +104,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $customHint = null;
     
     private $readOnly = false;
+    
+    private $mergeCells = false;
 
     public function getAttributeAlias()
     {
@@ -1088,6 +1090,31 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setReadonly(bool $value) : DataColumn
     {
         $this->readOnly = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getMergeCellsWithSameValues() : bool
+    {
+        return $this->mergeCells;
+    }
+    
+    /**
+     * Set to TRUE to merge cells of neighbouring rows if they have the same value
+     * 
+     * @uxon-property merge_cells_with_same_values
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataColumn
+     */
+    public function setMergeCellsWithSameValues(bool $value) : DataColumn
+    {
+        $this->mergeCells = $value;
         return $this;
     }
 }
