@@ -297,13 +297,28 @@ class WebConsoleFacade extends AbstractHttpFacade
     }
     
     /**
+     * Returns TRUE if Symfony process should work on the current server setup
+     * 
+     * Currently known systems not compatible with Symfony process:
+     * - Some IIS versions on Windows
      * 
      * @return bool
      */
     protected function canUseSymfonyProcess() : bool
     {
-        $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
-        return false;
-        return ! $isIIS;
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        if ($isWindows) {
+            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
+            if ($isIIS) {
+                // Check, if symfony process will return non-empty output: 
+                // `whoami` should always return something
+                $process = new Process(['whoami']);
+                $process->run();                
+                if (! $process->isSuccessful() || $process->getOutput() === '') {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
