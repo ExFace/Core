@@ -280,13 +280,11 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         // If we must not read any data, simply skip this method
         if ($readMissingColumns === false) {
-            if ($logbook !== null) {
-                $logbook->addLine('Reading missing columns explicitly `false`');
-            }
+            if ($logbook !== null) $logbook->addLine('Reading missing columns explicitly `false`');
             return $data_sheet;
         }
         
-        $logbook->addLine('Checking input data for missing columns');
+        if ($logbook !== null) $logbook->addLine('Checking input data for missing columns');
         
         // If the sheet is empty, just fill it with the required columns and read everything 
         // (no UID values to filter in this case)
@@ -296,9 +294,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $data_sheet->getColumns()->addFromExpression($expr);
                 }
             }
-            if ($logbook !== null) {
-                $logbook->addLine('Reading all columns for empty data sheet', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Reading all columns for empty data sheet', 1);
             $data_sheet->dataRead();
             return $data_sheet;
         }
@@ -346,9 +342,9 @@ class DataSheetMapper implements DataSheetMapperInterface
             if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
-                if ($logbook !== null) {
-                    $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
-                }
+                
+                if ($logbook !== null) $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
+                
                 $uidCol = $data_sheet->getUidColumn();
                 foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
@@ -421,9 +417,8 @@ class DataSheetMapper implements DataSheetMapperInterface
                             foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                                 $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
                             }
-                            if ($logbook !== null) {
-                                $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
-                            }
+                            
+                            if ($logbook !== null) $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
                         }
                         
                     } // END foreach ($expr->getRequiredAttributes())
