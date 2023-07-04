@@ -1266,7 +1266,6 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
         // Determine the columns we need in the actions data
@@ -1348,7 +1347,10 @@ JS;
             
         return <<<JS
         (function(){ 
-            var aRows = {$rows};
+            var jqEl = {$this->buildJsJqueryElement()};
+            var aRows;
+            if (jqEl.length === 0) return {};
+            aRows = {$this->buildJsConvertArrayToData("jqEl.jexcel('getData', false)")};
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
 
@@ -1372,31 +1374,44 @@ JS;
 !function() {    
     var oData = {$jsData};    
     var aData = [];
-
+    var jqCtrl = {$this->buildJsJqueryElement()};
+    if (jqCtrl.length === 0) {
+        return;
+    }
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
-        {$this->buildJsJqueryElement()}[0].exfWidget._initData = oData.rows;
+        jqCtrl[0].exfWidget._initData = oData.rows;
     } else {
-        {$this->buildJsJqueryElement()}[0].exfWidget._initData = [];
+        jqCtrl[0].exfWidget._initData = [];
     }
     if (aData.length === 0) {
         for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
             aData.push([]);
         }
     }
-    {$this->buildJsJqueryElement()}.jexcel('setData', aData);
-    {$this->buildJsResetSelection($this->buildJsJqueryElement())};
-    {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties();
+    jqCtrl.jexcel('setData', aData);
+    {$this->buildJsResetSelection('jqCtrl')};
+    jqCtrl[0].exfWidget.refreshConditionalProperties();
 }()
 
 JS;
     }
-        
+       
+    /**
+     * 
+     * @param string $arrayOfArraysJs
+     * @return string
+     */
     protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
         return "{$this->buildJsJqueryElement()}[0].exfWidget.convertArrayToData({$arrayOfArraysJs})";
     }
     
+    /**
+     * 
+     * @param string $arrayOfObjectsJs
+     * @return string
+     */
     protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
     {
         return "{$this->buildJsJqueryElement()}[0].exfWidget.convertDataToArray({$arrayOfObjectsJs})";
@@ -1616,6 +1631,9 @@ JS;
         return $valueJs;
     }
     
+    /**
+     * @return void
+     */
     protected function registerConditionalPropertiesOfColumns() 
     {
         foreach ($this->getWidget()->getColumns() as $col) {
