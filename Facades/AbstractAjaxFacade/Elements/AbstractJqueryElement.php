@@ -845,25 +845,20 @@ JS;
     {
         return '';
     }
-
+    
     /**
-     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
-     *
+     * Returns an inline JS snippet which disabled/enables the widget (no tailing semicolon!).
+     * 
+     * @param bool $trueOrFalse
      * @return string
      */
-    public function buildJsEnabler()
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
-        return '$("#' . $this->getId() . '").removeProp("disabled")';
-    }
-
-    /**
-     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
-     *
-     * @return string
-     */
-    public function buildJsDisabler()
-    {
-        return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
+        if ($trueOrFalse === true) {
+            return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
+        } else {
+            return '$("#' . $this->getId() . '").removeProp("disabled")';
+        }
     }
     
     /**
@@ -1008,9 +1003,9 @@ JS;
             case $functionName === AbstractWidget::FUNCTION_RESET:
                 return $this->buildJsResetter();
             case $functionName === AbstractWidget::FUNCTION_ENABLE:
-                return $this->buildJsEnabler();
+                return $this->buildJsSetDisabled(false);
             case $functionName === AbstractWidget::FUNCTION_DISABLE:
-                return $this->buildJsDisabler();
+                return $this->buildJsSetDisabled(true);
         }
         throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }

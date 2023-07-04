@@ -40,8 +40,6 @@ trait JqueryButtonTrait {
     
     use JsConditionalPropertyTrait;
     
-    use JqueryDisableConditionTrait;
-    
     private $onSuccessJs = [];
     
     private $onErrorJs = [];
