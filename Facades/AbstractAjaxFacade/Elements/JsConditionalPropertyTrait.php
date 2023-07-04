@@ -19,7 +19,7 @@ use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
  * 
  * 1) Call `registerConditionalPropertyUpdaterOnLinkedElements()` in the `init()` method of your element to
  * make sure, it is called _before_ the onChange handler of any linked widget is rendered.
- * 2) Call `buildJsDisableConditionInitializer()` in the `buildJs()` method of your element _after_
+ * 2) Call `buildJsConditionalProperty()` in the `buildJs()` method of your element _after_
  * the element itself is initialized. This method will set the initial value of the conditional property.
  * 
  * You will need to pass the JS code to execute if the condition is TRUE or FALSE to each of these methods.
@@ -141,25 +141,6 @@ trait JsConditionalPropertyTrait {
     }
     
     /**
-     * Returns JS-code to set the initial state of the conditional property.
-     *
-     * @param ConditionalProperty $conditionalProperty
-     * @param string $ifJs
-     * @param string $elseJs
-     * @return string
-     */
-    protected function buildJsConditionalPropertyInitializer(ConditionalProperty $conditionalProperty, string $ifJs, string $elseJs) : string
-    {
-        return <<<JS
-        
-                    setTimeout(function(){
-                        {$this->buildJsConditionalProperty($conditionalProperty, $ifJs, $elseJs)}
-                    }, 0);
-
-JS;
-    }
-    
-    /**
      * Returns a JS if-statement that performs the $ifJs or $elseJs scripts depending on
      * whether the property condition is TRUE or FALSE.
      * 
@@ -168,16 +149,26 @@ JS;
      * @param string $elseJs
      * @return string
      */
-    protected function buildJsConditionalProperty(ConditionalProperty $conditionalProperty, string $ifJs, string $elseJs) : string
+    protected function buildJsConditionalProperty(ConditionalProperty $conditionalProperty, string $ifJs, string $elseJs, bool $async = false) : string
     {
-        return <<<JS
+        $js = <<<JS
         
 						if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
 							{$ifJs};
 						} else {
 							{$elseJs};
 						}
-						
 JS;
+							
+		if ($async === true) {
+		    $js .= <<<JS
+		    
+                    setTimeout(function(){
+                        {$js}
+                    }, 0);
+JS;
+		}
+							
+		return $js;
     }
 }
