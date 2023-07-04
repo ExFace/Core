@@ -852,7 +852,7 @@ JS;
      * @param bool $trueOrFalse
      * @return string
      */
-    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    public function buildJsSetDisabled(bool $trueOrFalse, bool $resetWidgetOnChange = false) : string
     {
         if ($trueOrFalse === true) {
             return '$("#' . $this->getId() . '").prop("disabled", "disabled")';

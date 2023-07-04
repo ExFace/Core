@@ -35,6 +35,8 @@ class ConditionalProperty implements WidgetPartInterface
     
     private $conditionGroup = null;
     
+    private $resetOnChange = null;
+    
     /**
      * 
      * @param WidgetInterface $widget
@@ -158,5 +160,32 @@ class ConditionalProperty implements WidgetPartInterface
     public function getConditions() : array
     {
         return $this->getConditionGroup()->getConditionsRecursive();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasResetWidgetOnChange() : ?bool
+    {
+        return $this->resetOnChange;
+    }
+    
+    /**
+     * Set to TRUE or FALSE to force-reset (e.g. empty) the widget every time the condition changes
+     * 
+     * If not set, facades will determine the behavior automatically: e.g. `hidden_if` will
+     * reset the widget when hiding/showing it while `required_if` will not.
+     * 
+     * @uxon-property reset_widget_on_change
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ConditionalProperty
+     */
+    public function setResetWidgetOnChange(bool $value) : ConditionalProperty
+    {
+        $this->resetOnChange = $value;
+        return $this;
     }
 }
