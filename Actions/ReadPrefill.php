@@ -20,6 +20,8 @@ use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -265,6 +267,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     }
     
     /**
+     * Returns the action that showed the widget an thus triggered the prefill
      * 
      * @param TaskInterface $task
      * @return ActionInterface|NULL
@@ -273,7 +276,34 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     {
         $trigger = $this->getPrefillTrigger($task);
         if (($trigger instanceof iTriggerAction) && $trigger->hasAction()) {
-            return $trigger->getAction();
+            $action = $trigger->getAction();
+            // If it is an action chain, try to find the trigger action inside the chain
+            if ($action instanceof iCallOtherActions) {
+                // First see, if the chain finds an exact match
+                $step = $action->getActionToStart($task);
+                if ($step !== null) {
+                    return $step;
+                }
+                // If not, take the first show-widget-action. This will actually
+                // happen moste of the time because the chain will typically include
+                // a ShowWidget action and not ReadPrefil explicitly, so the chain
+                // itself will not be able to match a task with ReadPrefill with any
+                // of its actions.
+                $found = [];
+                foreach ($action->getActions() as $step) {
+                    if ($step instanceof iShowWidget) {
+                        $found[] = $step;
+                    }
+                }
+                if (! empty($found)) {
+                    if (count($found) === 1) {
+                        return $found[0];
+                    } else {
+                        throw new ActionRuntimeError($this, 'Cannot read prefill data for action in a chain if the chain has multiple ShowWidget actions');
+                    }
+                }
+            } 
+            return $action;
         }
         return null;
     }
