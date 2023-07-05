@@ -456,10 +456,16 @@ class FileFinderBuilder extends AbstractQueryBuilder
     protected function buildPathsFromValues(FileFinderConnector $connection = null) : array
     {
         switch (true) {
-            case $qpart = $this->getValue('PATHNAME_ABSOLUTE'):
+            case ($qpart = $this->getValue('PATHNAME_ABSOLUTE')) && $qpart->hasValues():
                 return $qpart->getValues();
-            case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $connection !== null && ($basePath = $connection->getBasePath()):
+            case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $qpart->hasValues():
                 $paths = [];
+                if ($connection !== null) {
+                    $basePath = $connection->getBasePath();
+                }
+                if (! $basePath) {
+                    $basePath = $this->getWorkbench()->getInstallationPath();
+                }
                 foreach ($qpart->getValues() as $rowIdx => $relPath) {
                     if (! FilePathDataType::isAbsolute($relPath)) {
                         $paths[$rowIdx] = FilePathDataType::join([$basePath, $relPath]);
@@ -468,7 +474,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                     }
                 }
                 return $paths;
-            case $qpart = $this->getValue('FILENAME'):
+            case ($qpart = $this->getValue('FILENAME')) && $qpart->hasValues():
                 $paths = [];
                 $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress());
                 $addr = StringDataType::substringBefore($addr, '/', $addr, false, true);
@@ -481,7 +487,11 @@ class FileFinderBuilder extends AbstractQueryBuilder
                             $phVals[$ph] = $phQpart->getValues()[$rowIdx];
                         }
                     }
-                    $paths[$rowIdx] = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
+                    $path = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
+                    if (! FilePathDataType::isAbsolute($path)) {
+                        $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $path;
+                    }
+                    $paths[$rowIdx] = $path;
                 }
                 return $paths;
         }
@@ -636,12 +646,13 @@ class FileFinderBuilder extends AbstractQueryBuilder
         if (count($fileArray) !== count($contentArray)) {
             throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($fileArray) . ' files exist!');
         }
-        
+        $fm = $this->getWorkbench()->filemanager();
         for ($i = 0; $i < count($fileArray); $i ++) {
             if ($contentArray[$i] === null) {
                 continue;
             }
-            file_put_contents($fileArray[$i], $this->getValue('CONTENTS')->getDataType()->parse($contentArray[$i]));
+            $fm->dumpFile($fileArray[$i], $this->getValue('CONTENTS')->getDataType()->parse($contentArray[$i]));
+            
             $writtenFileNr ++;
         }
         
