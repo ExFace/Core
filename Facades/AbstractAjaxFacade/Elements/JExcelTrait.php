@@ -28,6 +28,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
 use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -1653,9 +1654,18 @@ JS;
      */
     public function buildJsValidator() : string
     {
+        // Make sure to avoid errors if JExcel is not (yet) initialized in the DOM
+        // This might happen for example if it is placed inside a (temporary) invisible
+        // dev.
+        $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
+        $bRequiredJs = $required ? 'true' : 'false';
         return <<<JS
 
 (function(jqExcel) {
+    var bRequired = $bRequiredJs;
+    if (jqExcel.length === 0) {
+        return bRequired ? false : true;
+    }
     jqExcel[0].exfWidget.validateAll();
     return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
 })({$this->buildJsJqueryElement()})
