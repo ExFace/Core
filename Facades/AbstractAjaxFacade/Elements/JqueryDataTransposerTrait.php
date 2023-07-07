@@ -273,6 +273,7 @@ trait JqueryDataTransposerTrait {
     		}
 
     		for (fld in newColVals){
+                console.log('Test');
                 oColOrig = oResult.oColModelsOriginal[fld];
                 sRowKey = newRowId+fld;
                 oColOrig.iTransposedToSubrow = subRowCounter++;
@@ -284,7 +285,7 @@ trait JqueryDataTransposerTrait {
 				if (newColVals[fld] !== null && newColVals[fld] !== '' && newColVals[fld] !== undefined) {
 					oRowKeys[sRowKey]['_subRowEmpty'] = false;
 				}
-				oRowKeys[sRowKey]['_subRowHidden'] = oColOrig[bHideRowIfEmpty] === true && oRowKeys[sRowKey]['_subRowEmpty'] === true;
+				oRowKeys[sRowKey]['_subRowHidden'] = oColOrig['bHideRowIfEmpty'] === true && oRowKeys[sRowKey]['_subRowEmpty'] === true;
     			oRowKeys[sRowKey][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
                 oRowKeys[sRowKey][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){
