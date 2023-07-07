@@ -8,6 +8,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 
 /**
  * Joins any data to the to-sheet of the mapping using left or right JOINs similar to SQL.
@@ -97,9 +98,9 @@ class DataJoinMapping extends AbstractDataSheetMapping
         }
         switch ($this->getJoinType()) {
             case self::JOIN_TYPE_LEFT:
-                return $toSheet->joinLeft($joinSheet, $this->getJoinInputDataKeyColumn($fromSheet)->getName(), $this->getJoinDataKeyColumn($toSheet));
+                return $toSheet->joinLeft($joinSheet, $this->getJoinInputDataKeyColumn($fromSheet)->getName(), $this->getJoinDataKeyColumn($joinSheet)->getName());
             case self::JOIN_TYPE_RIGHT:
-                return $joinSheet->joinLeft($toSheet, $this->getJoinDataSheetOnAttributeAlias(), $this->getJoinInputDataOnAttributeAlias());
+                return $joinSheet->joinLeft($toSheet, $this->getJoinDataKeyColumn($joinSheet)->getName(), $this->getJoinInputDataKeyColumn($fromSheet)->getName());
         }
     }
     
@@ -183,7 +184,11 @@ class DataJoinMapping extends AbstractDataSheetMapping
      */
     protected function getJoinInputDataKeyColumn(DataSheetInterface $fromSheet) : DataColumnInterface
     {
-        return $fromSheet->getColumns()->getByExpression($this->getJoinInputDataOnExpression());
+        $col = $fromSheet->getColumns()->getByExpression($this->getJoinInputDataOnExpression());
+        if (! $col) {
+            throw new DataMappingConfigurationError($this, 'JOIN key column "' . $this->getJoinInputDataOnExpression()->__toString() . '" not found in input data!');
+        }
+        return $col;
     }
     
     /**
@@ -219,7 +224,11 @@ class DataJoinMapping extends AbstractDataSheetMapping
      */
     protected function getJoinDataKeyColumn(DataSheetInterface $toSheet) : DataColumnInterface
     {
-        return $toSheet->getColumns()->getByExpression($this->getJoinDataSheetOnAttributeAlias());
+        $col = $toSheet->getColumns()->getByExpression($this->getJoinDataSheetOnAttributeAlias());
+        if (! $col) {
+            throw new DataMappingConfigurationError($this, 'JOIN key column "' . $this->getJoinDataSheetOnAttributeAlias() . '" not found in input data!');
+        }
+        return $col;
     }
     
     /**

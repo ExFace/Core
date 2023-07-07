@@ -26,6 +26,8 @@ use exface\Core\CommonLogic\DataSheets\Mappings\DataToSubsheetMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataUnpivotMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
+use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -236,7 +238,14 @@ class DataSheetMapper implements DataSheetMapperInterface
         // Apply mappers
         if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
         foreach ($this->getMappings() as $map){
-            $toSheet = $map->map($fromSheet, $toSheet, $logbook);
+            try {
+                $toSheet = $map->map($fromSheet, $toSheet, $logbook);
+            } catch (\Throwable $e) {
+                if ($e instanceof DataMappingExceptionInterface) {
+                    throw $e;
+                }
+                throw new DataMappingFailedError($map, $fromSheet, $toSheet, $e->getMessage(), null, $e);
+            }
         }
         if ($logbook !== null) $logbook->addIndent(-1);
         
