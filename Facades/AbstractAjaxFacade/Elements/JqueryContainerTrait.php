@@ -231,13 +231,30 @@ JS;
      * Returns JS code to register a listener on `document` for the custom jQuery event
      * `actionperformed`. The listener will see if the widget configured is affected
      * by the event (e.g. by the action effects) and triggers a refresh on the widget.
+     * 
+     * By default, a container is refreshed if
+     * - it is to be refreshed explicitly (e.g. the button has a `refresh_widget_ids`
+     * or `refresh_input` explicitly set to `true`)
+     * - its main object is effected by an action directly
+     * - one of the related objects used within the container is effected directly
+     * or indirectly
+     * 
+     * The container is not refreshed if it is explicitly excluded via `refresh_input`
+     * being set to `false` on the button.
+     * 
+     * Thus, the behavior is slightly different than that of data widgets. Refreshing
+     * the entire container (e.g. Dialog) blocks user interaction, so we try to do it
+     * only when really neccessary. In Dialog particularly, any action performed inside
+     * a nested dialog is concidered to have an indirect effect on the object of the
+     * outer dialog. These effects do not lead to a refresh. Instead, the Dialog will
+     * only be refreshed if the action effects its object explicitly.
      *
      * @param string $scriptJs
      * @return string
      */
     protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
     {
-        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
+        $relatedObjAliases = [];
         foreach ($this->getWidget()->getWidgetsRecursive() as $child) {
             if (! (($child instanceof iShowSingleAttribute) && $child->isBoundToAttribute())) {
                 continue;
@@ -247,18 +264,18 @@ JS;
                 continue;
             }
             foreach ($attr->getRelationPath()->getRelations() as $rel) {
-                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
-                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+                $relatedObjAliases[] = $rel->getRightObject()->getAliasWithNamespace();
             }
         }
-        $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        $relatedObjAliasesJs = json_encode(array_values(array_unique($relatedObjAliases)));
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
         return <<<JS
         
 $( document ).off( "{$actionperformed}.{$this->getId()}" );
 $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
     var oEffect = {};
-    var aUsedObjectAliases = {$effectedAliasesJs};
+    var aRelatedObjectAliases = {$relatedObjAliasesJs};
+    var sMainObjectAlias = '{$this->getMetaObject()->getAliasWithNamespace()}';
     var sWidgetId = "{$this->getId()}";
     var fnRefresh = function() {
         {$scriptJs}
@@ -272,16 +289,17 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
         fnRefresh();
         return;
     }
-    
+  
     for (var i = 0; i < oParams.effects.length; i++) {
         oEffect = oParams.effects[i];
-        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
-            // refresh immediately if directly affected or delayed if it is an indirect effect
-            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
-                fnRefresh();
-            } else {
-                setTimeout(fnRefresh, 100);
-            }
+        // Refresh if the main object of the container is effected directly
+        if (oEffect.effected_object === sMainObjectAlias && ! oEffect.relation_path_to_effected_object) {
+            fnRefresh();
+            return;
+        }
+        // Refresh if one of the objects required for inner widgets is effected directly or indirectly
+        if (aRelatedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            fnRefresh();
             return;
         }
     }
