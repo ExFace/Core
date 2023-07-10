@@ -121,7 +121,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
              }
          } elseif ($this->isBoundToDataColumn() || $this->isBoundToAttribute()) {
              $prefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAlias(), $this->getDataColumnName());
-             if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr)) {
+             // FIXME #unknown-column-types currently need to double-check column type here because
+             // of issues with columns with aggregators. E.g. an attribute column `MY_ATTR:SUM`
+             // will match an unknown column `MY_ATTR_SUM`, which may or may not be
+             // a good idea depending on the use case! Since transforming data sheets
+             // to JS and back often removes the original attribute aliases, this
+             // happens in dialog refreshes: the input of ReadPrefill contains such an
+             // aggregated column of type "unknown" (because its attribute_alias was lost
+             // in the request from the client - that column is "found" when the widget is
+             // looking for its column `MY_ATTR:SUM`, but it cannot be read when refreshing
+             // because it lost its attribute binding.
+             if ($prefillExpr !== null && ! $data_sheet->getColumns()->getByExpression($prefillExpr, true)) {
                  $data_sheet->getColumns()->addFromExpression($prefillExpr, null, $this->isHidden());
              }
          }

@@ -77,11 +77,16 @@ interface iContainOtherWidgets extends WidgetInterface
     public function getInputWidgets(int $depth = null) : array;
     
     /**
-     *
+     * Returns inner widgets of this container and any nested containers recursively.
+     * 
+     * The resulting array will contain all inner widgets of this container and
+     * their inner widgets too.
+     * 
+     * @param callable $filterCallback
      * @param int $depth
      * @return WidgetInterface[]
      */
-    public function getWidgetsRecursive(int $depth = null) : array;
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array;
 
     /**
      * Removes all widgets from the container

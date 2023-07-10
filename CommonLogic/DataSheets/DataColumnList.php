@@ -194,16 +194,27 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::getByExpression()
      */
-    public function getByExpression($expression_or_string)
+    public function getByExpression($expression_or_string, bool $checkType = false)
     {
         if ($expression_or_string instanceof ExpressionInterface) {
             $exprString = $expression_or_string->toString();
         } else {
             $exprString = $expression_or_string;
         }
+        
+        // FIXME #unknown-column-types shouldn't we double-check the column-type here?
+        // Especially the second round searching below produces strange results
+        // on columns with aggregations. E.g. an attribute column `MY_ATTR:SUM`
+        // will match an unknown column `MY_ATTR_SUM`, which may or may not be
+        // a good idea depending on the use case! Since transforming data sheets
+        // to JS and back often removes the original attribute aliases, this 
+        // happens in dialog refreshes: the input of ReadPrefill contains such an
+        // aggregated column of type "unknown" (because its attribute_alias was lost
+        // in the request from the client - that column is "found" when the widget is
+        // looking for its column `MY_ATTR:SUM`, but it cannot be read when refreshing
+        // because it lost its attribute binding.
         
         // First check if there is a column with exactly the same expression
         foreach ($this->getAll() as $col) {
@@ -217,11 +228,13 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         // because sometimes the original expression is lost due to encoding
         // or decoding data leaving only the column name. If that matches,
         // however, it's enough to assume, that this column fits.
-        $colNameForExpression = DataColumn::sanitizeColumnName($exprString);
-        if ($colNameForExpression !== '') {
-            foreach ($this->getAll() as $col) {
-                if ($col->getName() === $colNameForExpression) {
-                    return $col;
+        if ($checkType === false) {
+            $colNameForExpression = DataColumn::sanitizeColumnName($exprString);
+            if ($colNameForExpression !== '') {
+                foreach ($this->getAll() as $col) {
+                    if ($col->getName() === $colNameForExpression) {
+                        return $col;
+                    }
                 }
             }
         }

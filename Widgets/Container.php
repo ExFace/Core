@@ -369,7 +369,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     public function getInputWidgets(int $depth = null) : array
     {
         $result = array();
-        foreach ($this->getWidgetsRecursive($depth) as $widget) {
+        foreach ($this->getWidgetsRecursive(null, $depth) as $widget) {
             if (($widget instanceof iTakeInput) && ! $widget->isReadonly()) {
                 $result[] = $widget;
             }
@@ -382,16 +382,16 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetsRecursive()
      */
-    public function getWidgetsRecursive(int $depth = null) : array
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
     {
         $result = array();
-        foreach ($this->getWidgets() as $widget) {
+        foreach ($this->getWidgets($filterCallback) as $widget) {
             $result[] = $widget;
             if ($widget instanceof iContainOtherWidgets) {
                 if ($depth === 1) {
                     continue;
                 }
-                $result = array_merge($result, $widget->getWidgetsRecursive($depth ? $depth - 1 : null));
+                $result = array_merge($result, $widget->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
             }
         }
         return $result;
