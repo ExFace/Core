@@ -518,4 +518,26 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         }
         return null;
     }
+    
+    /**
+     * Returns inner widgets of this Dialog, its DialogHeader and any nested containers recursively
+     * 
+     * NOTE: in contranst to other containers, this method includes not only members of the `widgets`
+     * list, but also widgets from the `header`!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgetsRecursive()
+     */
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
+    {
+        $result = parent::getWidgetsRecursive($filterCallback, $depth);
+        if ($this->hasHeader()) {
+            $header = $this->getHeader();
+            $result[] = $header;
+            if ($depth !== 1) {
+                $result = array_merge($result, $header->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
+            }
+        }
+        return $result;
+    }
 }
