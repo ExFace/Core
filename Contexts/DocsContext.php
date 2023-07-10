@@ -76,6 +76,7 @@ class DocsContext extends AbstractContext
                     'alias' => 'exface.Core.ShowDialog',
                     'dialog' => [
                         'caption' => $title,
+                        'cacheable' => false,
                         'height' => '80%',
                         'width' => '2',
                         'widgets' => [
