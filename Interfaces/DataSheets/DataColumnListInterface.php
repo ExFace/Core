@@ -144,13 +144,19 @@ interface DataColumnListInterface extends EntityListInterface
 
     /**
      * Returns the first data column matching the given expression or FALSE if no matching column is found.
+     * 
      * The expression can be passed as a string or an instantiated expression object.
+     * 
+     * The optional argument $checkType controls, the columns expression type is also
+     * to be verified. This helps avoid (very rare!) collisions between expressions of
+     * different types - especially "unknown" expressions (e.g. user-defined column names)
+     * and regular ones.
      *
-     * @param
-     *            expression | string $expression_or_string
+     * @param ExpressionInterface|string $expression_or_string
+     * @param bool $checkType
      * @return DataColumnInterface|boolean
      */
-    public function getByExpression($expression_or_string);
+    public function getByExpression($expression_or_string, bool $checkType = false);
 
     /**
      * Returns the first column, that shows the specified attribute explicitly (not within a formula).
