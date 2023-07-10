@@ -2494,7 +2494,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
-        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
+        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId())), $custom_statement);
     }
     
     /**
