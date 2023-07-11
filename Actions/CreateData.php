@@ -27,6 +27,18 @@ use exface\Core\Exceptions\Actions\ActionRuntimeError;
 class CreateData extends SaveData implements iCreateData
 {
     private $ingnore_related_objects_in_input_data = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setInputRowsMin(1);
+        $this->setInputRowsMax(null);
+    }
 
     /**
      * 
