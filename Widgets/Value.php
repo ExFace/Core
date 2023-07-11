@@ -336,7 +336,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     break;
                 case $expr && $expr->isReference():                    
                     $target = $expr->getWidgetLink($this)->getTargetWidget();
-                    if ($target instanceof iHaveValue) {
+                    if ($target instanceof iHaveValue && $expr->getWidgetLink($this)->getTargetColumnId() === null) {
                         $this->data_type = $target->getValueDataType();
                     } else {
                         $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
