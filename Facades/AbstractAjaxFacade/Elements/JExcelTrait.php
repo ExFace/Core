@@ -1308,6 +1308,12 @@ JS;
                 
                 $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
                 
+                // FIXME the check for visibility in case of empty data is there to prevent data loss if
+                // jExcel was hidden. This happened in UI5 in a Tab, that got hidden after a certain action.
+                // The jExcel in that tab was visible and got an HTML element. Once the dialog was closed and
+                // reopened, the tab was not visible anymore and for some reason the jExce inside did not get
+                // proper data. Not sure, if hidden subsheet excels shoud maybe be excluded from the data in
+                // general?
                 $data = <<<JS
     {
         oId: '{$dataObj->getId()}',
@@ -1315,7 +1321,10 @@ JS;
             {
                 '{$relAlias}': function(){
                     var oData = {$configurator_element->buildJsDataGetter()};
-                    oData.rows = aRows
+                    if (aRows.length === 0 && {$this->buildJsCheckHidden('jqEl')}) {
+                        return {};
+                    }
+                    oData.rows = aRows;
                     return oData;
                 }()
             }
@@ -1671,5 +1680,10 @@ JS;
 })({$this->buildJsJqueryElement()})
         
 JS;
+    }
+    
+    protected function buildJsCheckHidden(string $jqElement) : string
+    {
+        return "($jqElement.parents().filter(':visible').length !== $jqElement.parents().length)";
     }
 }
