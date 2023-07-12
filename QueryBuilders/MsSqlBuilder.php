@@ -533,11 +533,14 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $subq->setQueryId($this->getNextSubqueryId());
                     $subq->setMainObject($this->getMainObject());
                     $subqSelectPart = $subq->addAttribute($qpart->getAttribute()->getAliasWithRelationPath());
+                    // The subquery must get all filters of the original query (since it is based on the same object)...
+                    $subq->setFilters($this->getFilters());
+                    // ... and an additional filter for every aggregated GROUP BY predicate
                     foreach ($this->getAggregations() as $aggrPart) {
                         if ($aggrPart->getAttribute()->isExactly($qpart->getAttribute())) {
                             continue;
                         }
-                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAlias(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
+                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAliasWithRelationPath(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
