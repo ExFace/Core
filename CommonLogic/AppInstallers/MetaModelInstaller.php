@@ -518,7 +518,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_TEMPLATE'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE_COMPOUND'), 'COMPOUND_ATTRIBUTE__OBJECT__APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), ['PAGE__APP', 'PAGE_GROUP__APP']);
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), 'PAGE__APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.USER_ROLE'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POINT'), 'APP', [
             'DEFAULT_EFFECT',
