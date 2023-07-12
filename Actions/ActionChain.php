@@ -211,6 +211,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         // Place the nodes from left to right, if there are max. 3 nodes and top-down if there are more
         $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR') . PHP_EOL;
         $diagram .= "{$lbId}T(Task) -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}0" . PHP_EOL;
+        $logbook->setIndentActive(1);
         foreach ($this->getActions() as $idx => $action) {
             // Skip show-dialog actions. It does not make sense to really perform them within the chain.
             // Instead, they are currently called separately by the front-end similar to front-end-actions
@@ -245,7 +246,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             }
             
             // Perform the action if it should not be skipped
-            if ($this->getSkipActionsIfInputEmpty() === false || ! $inputSheet->isEmpty() || $action->getInputRowsMin() === 0) {
+            $skip = ($this->getSkipActionsIfInputEmpty() === true && $inputSheet->isEmpty() && $action->getInputRowsMin() !== 0);
+            $logbook->addLine(($skip ? 'SKIP' : 'DO') . " {$action->getAliasWithNamespace()} on {$inputSheet->countRows()} rows of {$inputSheet->getMetaObject()->__toString()} (`skip_action_if_input_empty: " . ($this->getSkipActionsIfInputEmpty() ? 'true' : 'false') . "`, `input_rows_min: {$action->getInputRowsMin()}`)");
+            if ($skip === false) {
                 if ($idx > 0) {
                     // id0[alias] -->|N| id1[alias]
                     $diagram .= " -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
