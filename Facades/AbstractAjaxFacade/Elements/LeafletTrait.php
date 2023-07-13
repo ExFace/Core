@@ -25,6 +25,7 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
 use exface\Core\Widgets\Image;
+use exface\Core\Widgets\DataButton;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -1064,14 +1065,30 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = '';
-        if (is_null($action)) {
-            $rows = "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data : []";
-        } elseif ($action instanceof iReadData) {
+        
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
+        } else {
+            $customMode = null;
+        }
+        
+        switch (true) {
+            case $customMode === DataButton::ALL:
+            case $action === null:
+                $rows = "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data : []";
+                break;
+            
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
             // If we are reading, than we need the special data from the configurator
             // widget: filters, sorters, etc.
-            return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
-        } else {
-            $rows = $this->buildJsLeafletGetSelectedRows();
+            case $action instanceof iReadData:
+                return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            default:
+                $rows = $this->buildJsLeafletGetSelectedRows();
         }
         return "{oId: {$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.object : '{$widget->getMetaObject()->getId()}', rows: $rows}";
     }

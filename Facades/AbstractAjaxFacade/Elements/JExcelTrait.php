@@ -29,6 +29,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
 use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Widgets\DataButton;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -1272,8 +1273,15 @@ JS;
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
         
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
+        } else {
+            $customMode = null;
+        }
+        
         switch (true) {
             // If there is no action or the action 
+            case $customMode === DataButton::ALL:
             case $action === null:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
@@ -1287,8 +1295,13 @@ JS;
 JS;
                 break;
                 
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
             // If we have an action, that is based on another object and does not have an input mapper for
             // the widgets's object, the data should become a subsheet.
+            case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject()) 
