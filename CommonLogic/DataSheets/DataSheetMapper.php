@@ -322,11 +322,18 @@ class DataSheetMapper implements DataSheetMapperInterface
             // columns and also create a separate sheet for reading missing data.
             $addedCols = [];
             $addedExprs = [];
+            $effectedFormulas = [];
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
+                    // Skip the column if it already exists in the from-sheet
                     if ($data_sheet->getColumns()->getByExpression($expr)){
                         continue;
                     }
+                    // Otherwise we need a separate data sheet to read the required data.
+                    // Can't use the from-sheet itself as reading might overwrite other 
+                    // values set by the user!
+                    // So create an extra copy of the sheet and remove any columns except
+                    // for the UID, that (as we know from above) hase meaningful values.
                     if ($additionSheet === null) {
                         $additionSheet = $data_sheet->copy();
                         foreach ($additionSheet->getColumns() as $col) {
@@ -336,8 +343,26 @@ class DataSheetMapper implements DataSheetMapperInterface
                         }
                     }
                     $addedExprs[] = $expr->__toString();
+                    // If the new expression is a formula, remember it to update its calculation
+                    // after the mapping
+                    if ($expr->isFormula()) {
+                        $effectedFormulas[] = $expr;
+                    }
+                    // Now add readable stuff required for the expression to the addition sheet.
+                    // DO NOT add the expression itself as it might be a formula, that requires
+                    // other columns from the from-sheet, that may not be available in the sheet
+                    // with additional values. Formula will be recalculated later.
+                    foreach ($expr->getRequiredAttributes() as $exprReqStr) {
+                        $exprReq = ExpressionFactory::createForObject($data_sheet->getMetaObject(), $exprReqStr);
+                        if ($exprReq->isMetaAttribute() && $exprReq->getAttribute()->isReadable()) {
+                            $addedCols[] = $additionSheet->getColumns()->addFromExpression($exprReq);
+                        }
+                    }
+                    // Add the expression to the from-sheet. This will mark it as not fresh, which
+                    // is important below.
+                    // TODO it does not feel right to change the from-sheet in a mapper. Maybe the
+                    // columns shoud be removed at some later point of time?
                     $data_sheet->getColumns()->addFromExpression($expr);
-                    $addedCols[] = $additionSheet->getColumns()->addFromExpression($expr);
                 }
             }
             if (! empty($addedCols) && $logbook !== null) {
@@ -369,6 +394,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                             $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                         }
                     }
+                }
+                // Recalculate all formulas, that rely on the newly added columns
+                foreach ($effectedFormulas as $expr) {
+                    $data_sheet->getColumns()->getByExpression($expr)->setValuesByExpression($expr);
                 }
             }
         } else { 
