@@ -689,6 +689,10 @@ JS;
         // etc. To get the files from the XHR on server-side, we could replace their names
         // by the corresponding data column names and teach the data reader middleware to
         // place $_FILES in the data sheet if the column names match.
+        // TODO There was a very strange bug with the file.preview in OpenUI5 if the carousel was placed
+        // inside a Wizard: the preview was empty and its data URL length was 1614. A workaround for this
+        // case was added to use the object URL of the file in an <img> tag instead. Need to find a better
+        // solution in future!
         $output = <<<JS
             
     /*$jqSlickJs.slick('slickAdd', '<a class="imagecarousel-upload pastearea"><i class="fa fa-upload"></i></a>');
@@ -758,8 +762,13 @@ JS;
             }
 
             $('#{$this->getIdOfSlick()}-nodata').hide();
-            if (file.type.startsWith('image')){
-                $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
+            if (file.type.startsWith('image')){console.log('preview');
+                // If upload preview is available, use it - otherwise use an <img> with src set to the object URL
+                if (file.preview && file.preview.toDataURL().length > 1614) {
+                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
+                } else {
+                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append('<img src="' + URL.createObjectURL(file) + '">')[0]);
+                }
             } else {
                 $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', '.imagecarousel-pending')}));
             }
