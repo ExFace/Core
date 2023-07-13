@@ -37,6 +37,15 @@ use exface\Core\Interfaces\Actions\iShowDialog;
  * - trigger widget 
  * - expected number of input rows
  * 
+ * ## Passing values from one action to another
+ * 
+ * Each action will receive the output of the previous one as input data. In many cases, you might need
+ * other data too - e.g. user input meant for a specific action somewhere in the chain. In this case,
+ * you can place the required values in context variables using `column_to_variable_mappings` in the 
+ * `input_mapper` of the first action or of the chain itself. To read the variables simply use 
+ * `variable_to_column_mappings` in the `input_mapper` of the action requiring the data or the formula 
+ * `=GetContextVar()` in any mapper along the chain. 
+ * 
  * ## Action effects
  * 
  * The chain has modified data if at least one of the actions modified data.

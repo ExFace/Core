@@ -28,6 +28,8 @@ use exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
 use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToVariableMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -64,6 +66,23 @@ use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
  * where you must define the class of each mapping however. All the specific arrays like
  * `column_to_column_mappings` are just there for convenience - technically they all just fill 
  * the `mappings`.
+ * 
+ * ## Variables
+ * 
+ * If you need certain values to "survive" a number of mappings an be reused afterwards, you can 
+ * store the in variables using special variable mappings. This is mainly used in action chains,
+ * where certain values need to be passed from one action to another. 
+ * 
+ * - `column_to_variable_mappings` to store values of the from-sheet
+ * - `variable_to_column_mappings` to read stored values and put them back into a data sheet
+ * 
+ * These mappings use context variables, that remain available throughout the request.
+ * 
+ * **NOTE:** do not use `=GetContextVar()` formulas on variables set by a previous mapping of
+ * the same mapper - the variables will not yet be available! Use `variable_to_column_mappings`
+ * instead. Remember, that any mapper will attempt to read missing from-values (see below), 
+ * which will include your formula, of course. Thus the formula will be evaluated __before__ 
+ * the variables are populated.
  * 
  * ## Inheriting properties of the from-sheet
  * 
@@ -628,7 +647,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * 
      * @uxon-property column_to_filter_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToFilterMapping[]
-     * @uxon-template [{"from": "", "to": "", "comparator": "="}]
+     * @uxon-template [{"from": "", "to": "", "comparator": "=="}]
      * 
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
@@ -1119,6 +1138,42 @@ class DataSheetMapper implements DataSheetMapperInterface
     protected function setRemoveDuplicateRows(bool $value) : DataSheetMapper
     {
         $this->removeDuplicateRows = $value;
+        return $this;
+    }
+    
+    /**
+     * Stores values from a column of the from-sheet in a context variable
+     *
+     * @uxon-property column_to_variable_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToVariableMapping[]
+     * @uxon-template [{"from": "", "variable": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setColumnToVariableMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnToVariableMapping($this, $prop));
+        }
+        return $this;
+    }
+    
+    /**
+     * Places values of a context variable into a column of the to-sheet
+     *
+     * @uxon-property variable_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping[]
+     * @uxon-template [{"variable": "", "to": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setVariableToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new VariableToColumnMapping($this, $prop));
+        }
         return $this;
     }
 }
