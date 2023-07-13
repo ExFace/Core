@@ -17,6 +17,7 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Actions\DownloadFile;
+use exface\Core\Widgets\DataButton;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -401,14 +402,30 @@ JS;
         $dataObj = $this->getMetaObjectForDataGetter($action);
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
+        
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
+        } else {
+            $customMode = null;
+        }
+        
         switch (true) {
+            case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
                 return "($('#{$this->getIdOfSlick()}').data('_exfData') || {oId: '{$widget->getMetaObject()->getId()}', rows: []})";
                 break;
+                
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
+            // If we are reading, than we need the special data from the configurator
+            // widget: filters, sorters, etc.
             case $action instanceof iReadData:
-                // If we are reading, than we need the special data from the configurator
-                // widget: filters, sorters, etc.
                 return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            // Use a subsheet for non-instant uploads
+            case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:    
             case $widget->isUploadEnabled() && $widget->getUploader()->isInstantUpload() === false
             && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject())

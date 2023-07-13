@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+
 /**
  * A special type of button to use in DataTables and other Data widgets.
  * The action can be bound to clicks on the Data widget.
@@ -14,10 +16,17 @@ namespace exface\Core\Widgets;
  */
 class DataButton extends Button
 {
-
+    const INPUT_ROWS_ALL = 'all';
+    const INPUT_ROWS_ALL_AS_SUBSHEET = 'all_as_subsheet';
+    const INPUT_ROWS_SELECTED = 'selected';
+    const INPUT_ROWS_AUTO = 'auto';
+    const INPUT_ROWS_NONE = 'none';
+    
     private $bind_to_mouse_action = null;
     
     private $bind_to_single_result = false;
+    
+    private $inputRows = null;
 
     /**
      * Returns the mouse action, this button is bound to (one of the EXF_MOUSE_ACTION_*** constants) or NULL if the button
@@ -138,6 +147,38 @@ class DataButton extends Button
     public function setBindToSingleResult(bool $value) : DataButton
     {
         $this->bind_to_single_result = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getInputRows() : ?string
+    {
+        return $this->inputRows;
+    }
+    
+    /**
+     * Specify, what rows of the input widget to pass the action of this button: all, selected or only those changed.
+     * 
+     * By default this is determined automatically based on the action to be performed. However, on rare
+     * occasions the option needs to be overridden manually: e.g. if a CallWebService action is actually
+     * modifying data, it may need all the rows instead of the selected ones.
+     * 
+     * @uxon-property input_rows
+     * @uxon-type [auto,all,all_as_subsheet,selected,none]
+     * @uxon-default auto
+     *
+     * @param string $value
+     * @return Button
+     */
+    public function setInputRows(string $value) : Button
+    {
+        if (! defined('self::INPUT_ROWS_' . strtoupper($value))) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for `input_rows` of widget "' . $this->getWidgetType() . '"!');
+        }
+        $this->inputRows = strtolower($value);
         return $this;
     }
 }
