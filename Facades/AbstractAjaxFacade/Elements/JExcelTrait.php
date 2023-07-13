@@ -1281,7 +1281,7 @@ JS;
         
         switch (true) {
             // If there is no action or the action 
-            case $customMode === DataButton::ALL:
+            case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')

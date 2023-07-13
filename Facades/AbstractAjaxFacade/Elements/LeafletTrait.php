@@ -1073,7 +1073,7 @@ JS;
         }
         
         switch (true) {
-            case $customMode === DataButton::ALL:
+            case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
                 $rows = "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data : []";
                 break;
