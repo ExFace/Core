@@ -26,13 +26,17 @@ abstract class ExpressionFactory
     {
         // IDEA cache expressions within the workbench instead of a static cache?
         
-        $objId = $object === null ? 'null' : $object->getId()  . '-' . $treatUnknownAsString;
-        
-        if (! isset(self::$cache[$string]) || ! isset(self::$cache[$string][$objId])) {
+        // Be carefull when caching as the Expression parser might see a difference in
+        // similar values of different types: e.g. `0`, `false` and `'0'` will yield
+        // the same cache key, but are different expressions! This is why the cache
+        // key gets the type as prefix.
+        $objKey = $object === null ? 'null' : $object->getId()  . '-' . $treatUnknownAsString;
+        $exprKey = gettype($string) . ':' . $string;
+        if (! isset(self::$cache[$exprKey]) || ! isset(self::$cache[$exprKey][$objKey])) {
             $expr = new Expression($exface, $string, $object, true, $treatUnknownAsString);
-            self::$cache[$string][$objId] = $expr;
+            self::$cache[$exprKey][$objKey] = $expr;
         } else {
-            $expr = self::$cache[$string][$objId];
+            $expr = self::$cache[$exprKey][$objKey];
         }
         
         return $expr;
