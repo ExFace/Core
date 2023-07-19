@@ -94,7 +94,7 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
                 $this->oldDataSheet = false;
             }
         }
-        if ($oldSheet === false) {
+        if ($this->oldDataSheet === false) {
             return null;
         }
         return $this->oldDataSheet;
