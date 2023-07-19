@@ -601,7 +601,7 @@
 				switch (sComparator) {
 	                case '==':
 	                case '!==':
-	                    bResult = (mLeft || '').toString() == (mRight || '').toString();
+	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
 	                    if (sComparator === '!==') {
 							bResult = ! bResult;
 						}
