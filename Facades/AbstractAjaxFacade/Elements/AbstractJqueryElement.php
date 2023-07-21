@@ -416,6 +416,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         if ($dimension->isRelative()) {
             if (! $dimension->isMax()) {
                 $width = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $width = '100%';
             }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $width = $dimension->getValue();
@@ -456,6 +458,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         if ($dimension->isRelative()) {
             if (! $dimension->isMax()) {
                 $height = ($this->getHeightRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $height = '100%';
             }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $height = $dimension->getValue();
