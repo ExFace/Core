@@ -31,7 +31,15 @@ abstract class ExpressionFactory
         // the same cache key, but are different expressions! This is why the cache
         // key gets the type as prefix.
         $objKey = $object === null ? 'null' : $object->getId()  . '-' . $treatUnknownAsString;
-        $exprKey = gettype($string) . ':' . $string;
+        $type = gettype($string);
+        if ($type=== 'boolean') {
+            // Convert the boolean value `true` to `1` and the
+            // boolean value `false` to '0' because else PHP automatically
+            // converts `true` to `1` when it is treated as a string but
+            // converts `false` to `` instead of `0`
+            $string = $string ? '1' : '0';
+        }
+        $exprKey = $type . ':' . $string;
         if (! isset(self::$cache[$exprKey]) || ! isset(self::$cache[$exprKey][$objKey])) {
             $expr = new Expression($exface, $string, $object, true, $treatUnknownAsString);
             self::$cache[$exprKey][$objKey] = $expr;
