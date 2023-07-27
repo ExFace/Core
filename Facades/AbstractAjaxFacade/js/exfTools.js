@@ -580,7 +580,6 @@
 			},
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
-				console.log('compare');
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
 				mLeft = mLeft !== undefined ? mLeft : null;
 				mRight = mRight !== undefined ? mRight : null;
