@@ -350,7 +350,7 @@ class Tracer extends Profiler
     {
         try {
             $ms = $this->stop($event->getMessage());
-            $name = $this->getLapName($event->getMessage());
+            $name = $this->getLapName($event);
             if ($ms !== null) {
                 $duration = ' (' . $ms . ' ms)';
             } else {
