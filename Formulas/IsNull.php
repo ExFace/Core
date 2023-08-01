@@ -16,9 +16,12 @@ class IsNull extends Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run($value = null)
+    public function run($value = null, $nullString = null)
     {
         if ($value == null || $value == '') {
+            return true;
+        }
+        if ($nullString === true && CASE_UPPER($value) == 'NULL') {
             return true;
         }
         return false;
