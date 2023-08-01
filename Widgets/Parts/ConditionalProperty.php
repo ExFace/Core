@@ -93,6 +93,7 @@ class ConditionalProperty implements WidgetPartInterface
         
         $condGrpUxon = $uxon->copy();
         // TODO remove non-conditional UXON stuff
+        $condGrpUxon->unsetProperty('reset_widget_on_change');
         $this->conditionGroup = new ConditionalPropertyConditionGroup($this, $condGrpUxon);
         
         $this->importUxonObjectViaTrait($uxon, ['conditions', 'condition_groups', 'operator']);
