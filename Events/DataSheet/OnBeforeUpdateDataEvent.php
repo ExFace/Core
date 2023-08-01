@@ -88,6 +88,19 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
             // if ($newSheet->getFilters()->isEmpty() === false) {
             if ($newSheet->hasUidColumn(true) === true) {
                 $oldSheet->getFilters()->addConditionFromColumnValues($newSheet->getUidColumn());
+                // Remove cols that are formulas using aliases that are not attributes from the object as
+                // those attributes can not be read and therefor the formula can not be evaluated
+                foreach ($oldSheet->getColumns() as $col) {
+                    if ($col->getExpressionObj()->isFormula()) {
+                        $formula = $col->getExpressionObj();
+                        foreach ($formula->getRequiredAttributes() as $atr) {
+                            if ($oldSheet->getMetaObject()->hasAttribute($atr) === false) {
+                                $oldSheet->getColumns()->remove($col);
+                            }
+                        }
+                    }
+                }
+                // TODO better read max-timestamp of all nested data here!
                 $oldSheet->dataRead();
                 $this->oldDataSheet = $oldSheet;
             } else {

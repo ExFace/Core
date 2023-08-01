@@ -685,6 +685,16 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             if ($col->getDataType() instanceof DataSheetDataType) {
                 $check_sheet->getColumns()->remove($col);
             }
+            // Remove cols that are formulas using aliases that are not attributes from the object as
+            // those attributes can not be read and therefor the formula can not be evaluated
+            if ($col->getExpressionObj()->isFormula()) {
+                $formula = $col->getExpressionObj();
+                foreach ($formula->getRequiredAttributes() as $atr) {
+                    if ($check_sheet->getMetaObject()->hasAttribute($atr) === false) {
+                        $check_sheet->getColumns()->remove($col);
+                    }
+                }
+            }
         }
         
         $check_sheet->dataRead();
