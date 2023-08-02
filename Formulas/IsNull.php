@@ -21,7 +21,7 @@ class IsNull extends Formula
         if ($value == null || $value == '') {
             return true;
         }
-        if ($nullString === true && CASE_UPPER($value) == 'NULL') {
+        if ($nullString === true && mb_strtoupper($value) == 'NULL') {
             return true;
         }
         return false;
