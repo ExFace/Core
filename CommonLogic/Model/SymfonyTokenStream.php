@@ -161,6 +161,9 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                 if (null === $name) {
                     continue;
                 }
+                if (mb_strtoupper($name) === 'TRUE' || mb_strtoupper($name) === 'FALSE') {
+                    continue;
+                }
                 $nextPunct = $tokens[$i+1]['punctuation'] ?? null;
                 switch (true) {
                     //if the token is followed by a ':' and  the following token is an aggregation,
