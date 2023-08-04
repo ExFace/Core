@@ -632,9 +632,9 @@
         },
         {
             "CREATED_ON": "2023-06-01 16:06:16",
-            "MODIFIED_ON": "2023-06-08 09:20:15",
+            "MODIFIED_ON": "2023-07-26 11:47:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eea1a77a53f7c4a1a7025041000001",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -651,7 +651,7 @@
                 "widget_type": "Icon",
                 "icon_scale": [
                     "volume-up",
-                    ""
+                    "ban"
                 ]
             },
             "COMMENTS": "",
@@ -661,7 +661,7 @@
             "COPYABLEFLAG": 1,
             "ALIAS": "DISABLED_COMMUNICATION_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
-            "DATA_ADDRESS": "disabled_communication_flag",
+            "DATA_ADDRESS": "(COALESCE(disabled_communication_flag, 0))",
             "OBJECT": "0x31343400000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
