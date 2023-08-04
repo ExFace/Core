@@ -160,14 +160,14 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         $cnt = 0;
 
         foreach ($this->getDownMigrations($migrationsInDB, $migrationsInApp) as $migration) {
+            $noscript = '';
             if (! $migration->hasDownScript()) {
-                yield $indent2 . 'DOWN migration ' . $migration->getMigrationName() . ' not required - migration has no down-script';
-                continue;
+                $noscript = ' not required - migration has no down-script';
             }
             try {
                 $this->migrateDown($migration, $connection);
                 $cnt++;
-                yield $indent2 . 'DOWN migration ' . $migration->getMigrationName();
+                yield $indent2 . 'DOWN migration ' . $migration->getMigrationName() . $noscript;
             } catch (\Throwable $e) {
                 $this->migrateFail($migration, $connection, false, $e);
                 yield $indent2 . 'FAILED DOWN migration ' . $migration->getMigrationName() . ' failed! ' . $e->getMessage() . ' - see SQL migration logs for troubleshooting.' . PHP_EOL;
