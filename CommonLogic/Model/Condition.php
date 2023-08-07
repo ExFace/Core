@@ -580,7 +580,10 @@ class Condition implements ConditionInterface
                 }
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
                 foreach ($rightParts as $part) {
-                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, $part)) {
+                    // trim the $part value as list read from data source might be
+                    // seperated by list delimiter and whitespace
+                    // TODO find a better solution for that?
+                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, trim($part, ' '))) {
                         return $resposeOnFound;
                     }
                 }
