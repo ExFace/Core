@@ -37,6 +37,8 @@ class ConditionalProperty implements WidgetPartInterface
     
     private $resetOnChange = null;
     
+    private $emptyOnChange = null;
+    
     /**
      * 
      * @param WidgetInterface $widget
@@ -94,6 +96,7 @@ class ConditionalProperty implements WidgetPartInterface
         $condGrpUxon = $uxon->copy();
         // TODO remove non-conditional UXON stuff
         $condGrpUxon->unsetProperty('reset_widget_on_change');
+        $condGrpUxon->unsetProperty('empty_widget_on_change');
         $this->conditionGroup = new ConditionalPropertyConditionGroup($this, $condGrpUxon);
         
         $this->importUxonObjectViaTrait($uxon, ['conditions', 'condition_groups', 'operator']);
@@ -173,6 +176,15 @@ class ConditionalProperty implements WidgetPartInterface
     }
     
     /**
+     *
+     * @return bool
+     */
+    public function hasEmptyWidgetOnChange() : ?bool
+    {
+        return $this->emptyOnChange;
+    }
+    
+    /**
      * Set to TRUE or FALSE to force-reset (e.g. empty) the widget every time the condition changes
      * 
      * If not set, facades will determine the behavior automatically: e.g. `hidden_if` will
@@ -187,6 +199,22 @@ class ConditionalProperty implements WidgetPartInterface
     public function setResetWidgetOnChange(bool $value) : ConditionalProperty
     {
         $this->resetOnChange = $value;
+        return $this;
+    }
+    
+    /**
+     * Set to TRUE or FALSE to empty the widget every time the condition changes
+     *
+     *
+     * @uxon-property empty_widget_on_change
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return ConditionalProperty
+     */
+    public function setEmptyWidgetOnChange(bool $value) : ConditionalProperty
+    {
+        $this->emptyOnChange = $value;
         return $this;
     }
 }
