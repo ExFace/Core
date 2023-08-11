@@ -426,7 +426,13 @@ class DataSheet implements DataSheetInterface
             
             // If the QueryBuilder for the current object can read the attribute, add it
             if ($query->canReadAttribute($attribute)) {
-                $query->addAttribute($attr, $col->getName());
+                $name = null;
+                // if the col is representing formula expression we can not use the column name
+                // adding as it is the string represantation of the formula
+                if (!$col->getExpressionObj()->isFormula()) {
+                    $name = $col->getName();
+                }
+                $query->addAttribute($attr, $name);
             } elseif (! $attribute->getRelationPath()->isEmpty()) {
                 // If the query builder cannot read the attribute, make a subsheet and ultimately a separate query.
                 // To create a subsheet we need to split the relation path to the current attribute into the part 
