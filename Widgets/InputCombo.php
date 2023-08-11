@@ -421,7 +421,9 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                         );
                 }
                 if (! $data_sheet->getColumns()->getByExpression($keyPrefillAlias)) {
-                    $data_sheet->getColumns()->addFromExpression($keyPrefillAlias);
+                    // use the attribute alias as column name so the model binding in UI5 works correctly
+                    // else multiselect InputComboTables wouldn't be prefilled correctly
+                    $data_sheet->getColumns()->addFromExpression($keyPrefillAlias, $this->getAttributeAlias());
                 }
                 
                 if ($this->isRelation()) {
@@ -433,6 +435,8 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
                             );
                     }
                     if (! $data_sheet->getColumns()->getByExpression($textPrefillAlias)) {
+                        // TODO shouldn't we also add the textAttributeAlias as name here?
+                        // causes SQL-Error as autosuggest does not uses parsed values then
                         $data_sheet->getColumns()->addFromExpression($textPrefillAlias);
                     }
                 }
