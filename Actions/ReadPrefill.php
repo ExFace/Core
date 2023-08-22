@@ -147,18 +147,6 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             if ($canLoadMoreData === true && $mainSheet->isFresh() === false) {
                 $log .= '- Refreshing data' . PHP_EOL;
                 $mainSheet->dataRead();
-                
-                // Check fresh prefill data again if it is still valid because actual input data
-                // for the action could have been old and user might actually not be allowed
-                // to trigger showing a dialog anymore and therefor trigger the prefill
-                // This can occur if user did load data in a table and the another user changed a data entry
-                // after the first user did load the table. The first user can then select an entry and press a button
-                // to show a dialog, for example to change a status with ading a commentary.
-                // With up to date data that action wouldn't be allowed, but as the user still has old data shown they can
-                // trigger the action initially.
-                // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
-                // by checking again against the checks of the trigger action.
-                $this->validateInputData($mainSheet);
             } else {
                 $log .= '- Refresh is not required or not possible' . PHP_EOL;
             }
@@ -193,6 +181,17 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                     unset ($defaults[$widget->getId()]);
                 }
             });
+            // Check fresh prefill data again if it is still valid because actual input data
+            // for the action could have been old and user might actually not be allowed
+            // to trigger showing a dialog anymore and therefor trigger the prefill
+            // This can occur if user did load data in a table and the another user changed a data entry
+            // after the first user did load the table. The first user can then select an entry and press a button
+            // to show a dialog, for example to change a status with ading a commentary.
+            // With up to date data that action wouldn't be allowed, but as the user still has old data shown they can
+            // trigger the action initially.
+            // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
+            // by checking again against the checks of the trigger action.
+            $this->validateInputData($mainSheet);
             
             // Do the prefill to trigger the events
             $targetWidget->prefill($mainSheet);
