@@ -31,7 +31,9 @@ class DataCheckFailedError extends UnexpectedValueException implements DataCheck
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setDataSheet($data_sheet);
-        $this->setCheck($check);
+        if ($check !== null) {
+            $this->setCheck($check);
+        }
     }
     
     /**
