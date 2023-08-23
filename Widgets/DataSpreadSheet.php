@@ -13,6 +13,7 @@ use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Widgets\iCanEditData;
 
 /**
  * An Excel-like table with editable cells.
@@ -39,7 +40,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * @author Andrej Kabachnik
  *
  */
-class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, iCanWrapText
+class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInput, iCanEditData, iCanWrapText
 {
     use EditableTableTrait;
     use DataTableTrait;

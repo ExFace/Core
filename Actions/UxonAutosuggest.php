@@ -35,17 +35,20 @@ use exface\Core\Uxon\QueryBuilderSchema;
  * 
  * The result is a JSON with the following structure
  * 
- * {
- *  "values": [
- *      "suggestion 1",
- *      "suggestion 2",
- *      "..."
- *  ],
- *  "templates": {
- *      "field1": {"": ""},
- *      "field2": ["": ""]
+ * ```
+ *  {
+ *      "values": [
+ *          "suggestion 1",
+ *          "suggestion 2",
+ *          "..."
+ *      ],
+ *      "templates": {
+ *          "field1": {"": ""},
+ *          "field2": {"": [""]}
+ *      }
  *  }
- * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *

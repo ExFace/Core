@@ -18,7 +18,7 @@ interface iShowDataColumn extends WidgetInterface
     /**
      * Returns the name of the corresponding column of the data sheet shown.
      *
-     * @return string
+     * @return string|NULL
      */
     public function getDataColumnName();
     
