@@ -17,6 +17,7 @@ use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Widgets\iCanEditData;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -116,7 +117,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * @author Andrej Kabachnik
  *
  */
-class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
+class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTakeInput
 {
     use iCanUseProxyFacadeTrait;
     use EditableTableTrait;
