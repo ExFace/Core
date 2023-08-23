@@ -368,11 +368,16 @@ class DataSheetMapper implements DataSheetMapperInterface
                         $effectedFormulas[] = $expr;
                     }
                     // Now add readable stuff required for the expression to the addition sheet.
+                    // But only if it does not exist yet in the from sheet as this would overwrite
+                    // values set by the user!
                     // DO NOT add the expression itself as it might be a formula, that requires
                     // other columns from the from-sheet, that may not be available in the sheet
                     // with additional values. Formula will be recalculated later.
                     foreach ($expr->getRequiredAttributes() as $exprReqStr) {
                         $exprReq = ExpressionFactory::createForObject($data_sheet->getMetaObject(), $exprReqStr);
+                        if ($data_sheet->getColumns()->getByExpression($exprReq)){
+                            continue;
+                        }
                         if ($exprReq->isMetaAttribute() && $exprReq->getAttribute()->isReadable()) {
                             $addedCols[] = $additionSheet->getColumns()->addFromExpression($exprReq);
                         }
