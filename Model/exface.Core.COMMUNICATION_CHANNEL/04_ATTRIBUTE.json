@@ -353,9 +353,9 @@
         },
         {
             "CREATED_ON": "2022-01-22 15:38:57",
-            "MODIFIED_ON": "2023-06-08 09:19:04",
+            "MODIFIED_ON": "2023-08-23 10:10:29",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eca49207f0e9f0a492025041000001",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -372,7 +372,7 @@
                 "widget_type": "Icon",
                 "icon_scale": [
                     "volume-up",
-                    ""
+                    "ban"
                 ]
             },
             "COMMENTS": "",
