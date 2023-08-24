@@ -57,6 +57,8 @@ class StateMachineState implements iHaveIcon
     
     private $notifications = null;
     
+    private $notifyIfDataAuthorized = null;
+    
     private $description = null;
     
     private $startState = null;
@@ -564,6 +566,37 @@ class StateMachineState implements iHaveIcon
     public function getNotificationsUxon() : ?UxonObject
     {
         return $this->notifications;
+    }
+    
+    /**
+     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the corresponding data
+     *
+     * By default, the behavior will check every data row to see if the user to be notified
+     * is authorized to read it and will only send the message if so.
+     *
+     * This option only applies to notifications where the recipient is a user, a user role, 
+     * or anything else, that implies a message being sent ot a user.
+     *
+     * @uxon-property notify_if_data_authorized
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $trueOrFalse
+     * @return StateMachineState
+     */
+    protected function setNotifyIfDataAuthorized(bool $trueOrFalse) : StateMachineState
+    {
+        $this->notifyIfDataAuthorized = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    public function getNotifyOnlyForAuthorizedData() : ?bool
+    {
+        return $this->notifyIfDataAuthorized;
     }
     
     /**
