@@ -1,6 +1,6 @@
 # Creating CRUD UIs for complex objects
 
-#### [< Previous](06_Organizing_pages.md) | [BookClub tutorial](index.md) | [Next >](08_Using_custom_widgets_and_data_types_in_the_model.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](06_Organizing_pages.md) [<kbd> <br>Next > <br> </kbd>](08_Using_custom_widgets_and_data_types_in_the_model.md)
 
 Now that we have some [administration pages](06_Organizing_pages.md) to manage (simple) master data objects, let's create a catalogue-page, the will let us search for books, create, update and delete them - typical CRUD-operations (Create, Read, Update, Delete). We will also create a custom editor widget for the book instead of the auto-generated editors we used for simple master data objects previously.
 
@@ -268,4 +268,4 @@ Here is a copy-paste version of the resulting UXON - just in case.
 }
 ```
 
-### [< Previous](06_Organizing_pages.md) | [BookClub tutorial](index.md) | [Next >](08_Using_custom_widgets_and_data_types_in_the_model.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](06_Organizing_pages.md) [<kbd> <br>Next > <br> </kbd>](08_Using_custom_widgets_and_data_types_in_the_model.md)
