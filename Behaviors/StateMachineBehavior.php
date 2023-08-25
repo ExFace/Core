@@ -1033,6 +1033,10 @@ class StateMachineBehavior extends AbstractBehavior
         return false;
     }
     
+    /**
+     * 
+     * @return StateMachineBehavior
+     */
     protected function registerNotifications() : StateMachineBehavior
     {
         // Only register behaviors once!
@@ -1044,8 +1048,9 @@ class StateMachineBehavior extends AbstractBehavior
         
         foreach ($this->getStates() as $state) {
             if (null !== $notifications = $state->getNotificationsUxon()) {
+                // Create a behavior configuration notify on updates changing the state attribute
                 $uxon = new UxonObject([
-                    "notify_on_event" => $state->isStartState() ? OnCreateDataEvent::getEventName() : OnUpdateDataEvent::getEventName(),
+                    "notify_on_event" => OnUpdateDataEvent::getEventName(),
                     "notify_if_attributes_change" => [$this->getStateAttributeAlias()],
                     "notify_if_data_matches_conditions" => [
                         "operator" => EXF_LOGICAL_AND,
@@ -1059,9 +1064,22 @@ class StateMachineBehavior extends AbstractBehavior
                     ],
                     'notifications' => $notifications
                 ]);
-                $behavior = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
-                $this->getObject()->getBehaviors()->add($behavior);
-                $this->behaviors[] = $behavior;
+                if ($state->getNotifyOnlyForAuthorizedData() !== null) {
+                    $uxon->setProperty('notify_if_data_authorized', $state->getNotifyOnlyForAuthorizedData());
+                }
+                // Add the on-update behavior
+                $behaviorOnUpdate = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                $this->getObject()->getBehaviors()->add($behaviorOnUpdate);
+                $this->behaviors[] = $behaviorOnUpdate;
+                
+                // For start-states also add an on-create behavior with the same configuration
+                if ($state->isStartState()) {
+                    $uxonCreate = $uxon->copy();
+                    $uxonCreate->setProperty('notify_on_event', OnCreateDataEvent::getEventName());
+                    $behaviorOnCreate = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                    $this->getObject()->getBehaviors()->add($behaviorOnCreate);
+                    $this->behaviors[] = $behaviorOnCreate;
+                }
             }
         }
         return $this;

@@ -35,10 +35,8 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
-use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Widgets\Parts\PrefillModel;
-use exface\Core\CommonLogic\Tasks\GenericTask;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -419,7 +417,9 @@ abstract class AbstractPWA implements PWAInterface
         $newDataSets->dataReplaceByFilters($transaction);
         $uids = $newDataSets->getUidColumn()->getValues();
         foreach ($this->getDatasets() as $i => $set) {
-            $set->setUid($uids[$i]);
+            if (null !== $uids[$i]) {
+                $set->setUid($uids[$i]);
+            }
         }
         
         // Actions

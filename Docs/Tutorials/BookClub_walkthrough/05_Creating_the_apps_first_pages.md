@@ -1,6 +1,6 @@
 # Creating a simple page
 
-#### [< Previous](04_Generating_a_model_from_an_SQL_schema.md) | [BookClub tutorial](index.md) | [Next >](06_Organizing_pages.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](04_Generating_a_model_from_an_SQL_schema.md) [<kbd> <br>Next > <br> </kbd>](06_Organizing_pages.md)
 
 Now that we have a [metamodel](04_Generating_a_model_from_an_SQL_schema.md) for the [BookClub tutorial app](index.md), we can start building it's user interface. 
 
@@ -22,6 +22,9 @@ It is always a good idea to start with creating a simple page to test, if the mo
 	![Create a UI page to manage languages](Images/page_languages.png)
 	
 5. Switch to tab `Widget`
+
+	![Widget presets](Images/page_languages_widget_empty.png)
+	
 6. Press the large magic-wand icon in the middle of the screen. It opens a dialog with configuration presets for widgets. Search for `master data` and select the preset `Simple master data table`.
 
 	![Widget presets](Images/page_languages_presets.png)
@@ -93,4 +96,4 @@ Note, how different the app looks now. It still has exactly the same core featur
 
 In real-world projects, it is a good idea to design apps for a specific template and not to switch back-and-forth. Different templates may implement widget features differently, so get to know each template and select the best fit for your project's specific needs. For example, the jEasyUI templates are great to fit lot's of information on a single screen, but they are not mobile-capable at all. UI5 templates look nice on any screen size, but each control takes a lot more space and there are some technological limitations like the main menu having a maximum depth of 2.   
 
-### [< Previous](04_Generating_a_model_from_an_SQL_schema.md) | [BookClub tutorial](index.md) | [Next >](06_Organizing_pages.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](04_Generating_a_model_from_an_SQL_schema.md) [<kbd> <br>Next > <br> </kbd>](06_Organizing_pages.md)

@@ -581,38 +581,9 @@
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
-				mLeft = mLeft !== undefined ? mLeft : null;
-				mRight = mRight !== undefined ? mRight : null;
-				// Make sure boolean values and strings representing booleans are converted to 0 and 1
-				// so that comparing values 0 and false and 1 and true return true and not false
-				switch (true){
-					case (mLeft === true):
-					case (mLeft === 'true'):
-						mLeft = 1;
-						break;
-					case (mLeft === false):
-					case (mLeft === 'false'):
-						mLeft = 0;
-						break;
-				}
-				switch (true){
-					case (mRight === true):
-					case (mRight === 'true'):
-						mRight = 1;
-						break;
-					case (mRight === false):
-					case (mRight === 'false'):
-						mRight = 0;
-						break;
-				}
+				mLeft = exfTools.data.comparableValue(mLeft);
+				mRight = exfTools.data.comparableValue(mRight);
 				
-				// Make sure, numeric 0 is transformed to string as otherwise the latter || operators
-				// will transform it to an empty string because 0 is a falsly value.
-				mLeft = mLeft === 0 ? '0' : mLeft;
-				mRight = mRight === 0 ? '0' : mRight;
-				// Handle `NULL` strings used in metamodel
-				mLeft = exfTools.string.isString(mLeft) && mLeft.toUpperCase() === 'NULL' ? null : mLeft;
-				mRight = exfTools.string.isString(mRight) && mRight.toUpperCase() === 'NULL' ? null : mRight;
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
 					if (parseFloat(mLeft) !== NaN) {
 						mLeft = parseFloat(mLeft);
@@ -678,6 +649,34 @@
 	                  	throw 'Unknown comparator "' + sComparator + '"!';
 	            }
 	            return bResult;
+			},
+			
+			/**
+			 * Prepares the given value for comparision via compareValues
+			 *
+			 * @param {mixed} [mVal]
+			 * @return {String|number|NULL}
+			 */
+			comparableValue: function(mVal) {
+				var bValIsString = exfTools.string.isString(mVal);
+				
+				// Convert undefined to null to reduce all sorts of checks
+				if (mVal === undefined) return null;
+				
+				// Make sure, numeric 0 is transformed to string as otherwise the possible || operators
+				// will transform it to an empty string because 0 is a falsly value.
+				if (mVal === 0) return '0';
+				
+				// Make sure boolean values and strings representing booleans are converted to the strings 
+				// '0' and '1' so that comparing values 0 and false and 1 and true return true and not false.
+				// If not explicitly normalized (false).toString() will yield '' and not '0'.
+				if (mVal === true || (bValIsString && mVal.toLowerCase() === 'true')) return '1';
+				if (mVal === false || (bValIsString && mVal.toLowerCase() === 'false')) return '0';
+				
+				// Handle `NULL` strings used in metamodel
+				if (bValIsString && mVal.toUpperCase() === 'NULL') return null;
+				
+				return mVal;
 			},
 			
 			/**

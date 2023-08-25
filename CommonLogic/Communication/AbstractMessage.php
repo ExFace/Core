@@ -10,7 +10,6 @@ use exface\Core\Communication\Recipients\UserRoleRecipient;
 use exface\Core\Communication\Recipients\UserRecipient;
 use exface\Core\Factories\UserFactory;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
-use exface\Core\Communication\Recipients\EmailRecipient;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Uxon\CommunicationMessageSchema;
 use exface\Core\CommonLogic\Model\Expression;
@@ -28,7 +27,6 @@ use exface\Core\Interfaces\Communication\RecipientInterface;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\Selectors\CommunicationTemplateSelector;
 use exface\Core\Communication\Recipients\UserMultiRoleRecipient;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\CommunicationFactory;
 
 /**

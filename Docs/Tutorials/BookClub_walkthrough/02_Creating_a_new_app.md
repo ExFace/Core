@@ -1,6 +1,6 @@
 # Creating a new app in the metamodel
 
-#### [< Previous](01_Preparation.md) | [BookClub tutorial](index.md) | [Next >](03_Connecting_to_an_sql_database.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](01_Preparation.md) [<kbd> <br>Next > <br> </kbd>](03_Connecting_to_an_sql_database.md)
 
 First of all we will need a new app in our metamodel. It is important to create an app in the metamodel for every application you will create. The app acts as a container for all meta objects, UI pages, security rules, actions, etc. related to it. 
 
@@ -23,4 +23,4 @@ The default language of the app is the language we are going to use for descript
 
 Read more about apps [here](../../understanding_the_metamodel/App_metamodel.md).
 
-### [< Previous](01_Preparation.md) | [BookClub tutorial](index.md) | [Next >](03_Connecting_to_an_sql_database.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](01_Preparation.md) [<kbd> <br>Next > <br> </kbd>](03_Connecting_to_an_sql_database.md)
