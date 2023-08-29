@@ -608,6 +608,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             return $ds;
         }
         $ds->getFilters()->addConditionFromValueArray('ALIAS', $currentRemoteRoleNames);
+        $ds->getFilters()->addConditionFromExpression('ACTIVE_FLAG', 1, ComparatorDataType::EQUALS);
         $ds->dataRead();
         return $ds;
     }
