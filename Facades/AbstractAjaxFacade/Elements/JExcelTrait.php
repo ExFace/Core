@@ -992,6 +992,7 @@ JS;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
                 $type = "checkbox";
+                $align = "center";
                 break;
             case $cellWidget instanceof InputText:
             case $cellWidget instanceof Text:
@@ -1007,7 +1008,7 @@ JS;
                 return null;
         }
         
-        $align = $align ? 'align: "' . $align . '",' : '';
+        $align = $align ? 'align: "' . $align . '",' : 'align: "left",';
         return <<<JS
                 type: "$type",
                 $options
