@@ -5305,6 +5305,28 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2023-08-29 20:30:05",
+            "MODIFIED_ON": "2023-08-29 20:30:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eea6a014006a24a6a0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Boolean value as icon",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Icon.php",
+            "UXON": {
+                "widget_type": "icon",
+                "attribute_alias": "",
+                "icon_scale": [
+                    "toggle-off",
+                    "toggle-on"
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],

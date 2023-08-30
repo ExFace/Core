@@ -671,7 +671,7 @@
         },
         {
             "CREATED_ON": "2021-10-13 11:35:41",
-            "MODIFIED_ON": "2021-10-13 11:35:41",
+            "MODIFIED_ON": "2023-08-29 20:31:16",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ec9192eea18a5e9192025041000001",
@@ -686,7 +686,13 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "icon",
+                "icon_scale": [
+                    "toggle-off",
+                    "toggle-on"
+                ]
+            },
             "COMMENTS": "",
             "NAME": "On",
             "RELATION_CARDINALITY": "",

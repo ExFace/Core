@@ -183,9 +183,9 @@
         },
         {
             "CREATED_ON": "2020-06-07 15:59:54",
-            "MODIFIED_ON": "2021-04-13 12:43:08",
+            "MODIFIED_ON": "2023-08-29 20:18:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eaa8d7c1d6c637bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
@@ -197,7 +197,7 @@
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-off",
                 "input_mapper": {
-                    "inherit_columns": false,
+                    "inherit_columns": "none",
                     "column_to_column_mappings": [
                         {
                             "from": "=1",
@@ -220,9 +220,9 @@
         },
         {
             "CREATED_ON": "2020-06-07 19:52:45",
-            "MODIFIED_ON": "2021-04-13 12:43:38",
+            "MODIFIED_ON": "2023-08-29 20:26:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eaa8f848d0cba3bba0e4b318306b9a",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
@@ -234,7 +234,7 @@
                 "input_object_alias": "exface.Core.USER",
                 "icon": "toggle-on",
                 "input_mapper": {
-                    "inherit_columns": false,
+                    "inherit_columns": "none",
                     "column_to_column_mappings": [
                         {
                             "from": "=0",
