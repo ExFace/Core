@@ -144,11 +144,12 @@ class WidgetSchema extends UxonSchema
         
         $presets[] = [
             'UID' => '',
-            'NAME' => 'Container with all attributes',
+            'NAME' => 'Form/Panel/WidgetGroup with all attributes',
             'PROTOTYPE__LABEL' => 'Container',
             'DESCRIPTION' => '',
             'PROTOTYPE' => $containerPrototype,
             'UXON' => (new UxonObject([
+                'widget_type' => '',
                 'widgets' => $allWidgets
             ]))->toJson()
         ];
@@ -156,11 +157,12 @@ class WidgetSchema extends UxonSchema
         if (! empty($editableWigets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Container with all editable attributes',
+                'NAME' => 'Form/Panel/WidgetGroup with all editable attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
+                    'widget_type' => '',
                     'widgets' => $editableWigets
                 ]))->toJson()
             ];
@@ -181,11 +183,12 @@ class WidgetSchema extends UxonSchema
         if (! empty($visibleWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Container with all visible attributes',
+                'NAME' => 'Form/Panel/WidgetGroup with all visible attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
+                    'widget_type' => '',
                     'widgets' => $visibleWidgets
                 ]))->toJson()
             ];
@@ -194,11 +197,12 @@ class WidgetSchema extends UxonSchema
         if (! empty($defaultDisplayWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Container with default display editable attributes',
+                'NAME' => 'Form/Panel/WidgetGroup with default display editable attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
+                    'widget_type' => '',
                     'widgets' => $defaultDisplayWidgets
                 ]))->toJson()
             ];
@@ -207,11 +211,12 @@ class WidgetSchema extends UxonSchema
         if (! empty($requiredWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Container with all required attributes',
+                'NAME' => 'Form/Panel/WidgetGroup with all required attributes',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
                 'UXON' => (new UxonObject([
+                    'widget_type' => '',
                     'widgets' => $requiredWidgets
                 ]))->toJson()
             ];
