@@ -12,6 +12,32 @@ interface FileInfoInterface extends \Stringable
     public function getPath(bool $withFilename = true) : string;
     
     /**
+     * 
+     * @return string|NULL
+     */
+    public function getBasePath() : ?string;
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isPathAbsolute() : bool;
+    
+    /**
+     * 
+     * @param bool $withFilename
+     * @return string
+     */
+    public function getPathAbsolute(bool $withFilename = true) : string;
+    
+    /**
+     * 
+     * @param bool $withFilename
+     * @return string|NULL
+     */
+    public function getPathRelative(bool $withFilename = true) : ?string;
+    
+    /**
      * Gets the filename
      * 
      * @param bool $withExtension
@@ -124,4 +150,10 @@ interface FileInfoInterface extends \Stringable
      * @return FileInterface
      */
     public function openFile(string $open_mode = null, bool $use_include_path = null) : FileInterface;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getDirectorySeparator() : string;
 }
