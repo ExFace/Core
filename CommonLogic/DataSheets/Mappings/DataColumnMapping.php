@@ -115,7 +115,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
         
-        if ($logbook !== null) $logbook->addLine("Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`");
+        $log = "Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`.";
         
         switch (true) {
             // Constants and static formulas
@@ -124,6 +124,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // If the sheet has no rows, setValuesByExpression() will not have an effect, so
                 // we need to add a row manually.
                 if ($toSheet->isEmpty() === true) {
+                    $log .= ' Adding a new row because the to-sheet was empty.';
                     $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
                 }
                 break;
@@ -135,6 +136,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // we need to add a row manually. But this will only work if the from-sheet
                 // has at least one row - othewise non-static formulas will throw an error!
                 if ($toSheet->isEmpty() === true && $fromSheet->isEmpty() === false) {
+                    $log .= ' Adding a new row because the to-sheet was empty.';
                     $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
                 }
                 break;
@@ -145,6 +147,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
             // Data column references should not result in errors if the data sheet is completely empty
             // Otherwise input-mappers would always produce errors on empty input data!
             case $fromSheet->getColumns()->isEmpty() && ! $fromExpr->isReference():
+                if ($logbook !== null) $logbook->addLine($log . ' Not required because from-sheet is empty.');
                 return $toSheet;
             default:
                 if ($fromExpr->isMetaAttribute()) {
@@ -152,6 +155,8 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 }
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
         }
+        
+        if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
     }
