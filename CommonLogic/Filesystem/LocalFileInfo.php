@@ -1,56 +1,42 @@
 <?php
 namespace exface\Core\CommonLogic\Filesystem;
 
-use exface\Core\Behaviors\FileBehavior;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataTypes\BinaryDataType;
-use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Exceptions\OverflowException;
 use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 
 /**
- * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
- * 
- * The paths have the following schemes: 
- * 
- * - `metamodel://my.app.ObjectAlias/uid_of_file/filename.ext`
- * - `metamodel://my.app.ObjectAlias/uid_of_file/*`
- * - `metamodel://my.app.ObjectAlias/folder_attribute/*`
- * 
- * Currently no real (nested) folder structure is supported - you can't travel up the folder tree, but
- * the `folder_attribute` of the `FileBehavior` may contain a complex path.
+ * Contains information about a single local file - similar to PHPs splFileInfo.
  * 
  * @author Andrej Kabachnik
- * 
- * IDEA added wildcard support for filenames - to select one of multiple files inside a folder in
- * case the `folder_attribute` is not a UID. See `getFilenameMask()` for details
  */
 class LocalFileInfo implements FileInfoInterface
 {
     private $splFileInfo = null;
     
+    private $basePath = null;
+    
+    private $directorySeparator = null;
+    
+    private $normalized = [];
+    
     /**
      * 
-     * @param string $folder
-     * @param MetaObjectInterface $object
+     * @param string|\SplFileInfo $pathOrSplFileInfo
+     * @param string $basePath
+     * @param string $directorySeparator
      */
-    public function __construct($pathOrSplFileInfo)
+    public function __construct($pathOrSplFileInfo, string $basePath = null, string $directorySeparator = '/')
     {
         if ($pathOrSplFileInfo instanceof \SplFileInfo) {
             $this->splFileInfo = $pathOrSplFileInfo;
         } else {
             $this->splFileInfo = new \SplFileInfo($pathOrSplFileInfo);
         }
+        
+        $this->directorySeparator = $directorySeparator;        
+        $this->basePath = $basePath;
     }
     
     /**
@@ -93,7 +79,60 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function getPath(bool $withFilename = true) : string
     {
-        return $withFilename === true ? $this->splFileInfo->getPathname() : $this->splFileInfo->getPath();
+        $path = $withFilename === true ? $this->splFileInfo->getPathname() : $this->splFileInfo->getPath();
+        if (null === $normalized = ($this->normalized[$path][$this->directorySeparator] || null)) {
+            $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
+        }
+        return $normalized;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getBasePath()
+     */
+    public function getBasePath() : ?string
+    {
+        $path = $this->basePath;
+        if (null === $normalized = ($this->normalized[$path][$this->directorySeparator] || null)) {
+            $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
+        }
+        return $normalized;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isPathAbsolute()
+     */
+    public function isPathAbsolute() : bool
+    {
+        return FilePathDataType::isAbsolute($this->getPath());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathAbsolute()
+     */
+    public function getPathAbsolute(bool $withFilename = true) : string
+    {
+        $path = $this->getPath($withFilename);
+        if ($this->isPathAbsolute()) {
+            return $path;
+        }
+        return FilePathDataType::join([$this->getBasePath(), $path]);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathRelative()
+     */
+    public function getPathRelative(bool $withFilename = true) : ?string
+    {
+        $basePath = $this->getBasePath() ? $this->getBasePath() . $this->directorySeparator : '';
+        return $basePath !== '' ? str_replace($basePath, '', $this->getPath()) : $this->getPath();
     }
     
     /**
@@ -239,5 +278,26 @@ class LocalFileInfo implements FileInfoInterface
             return null;
         }
         return new LocalFileInfo($folderPath, $this->object->getWorkbench());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getDirectorySeparator()
+     */
+    public function getDirectorySeparator() : string
+    {
+        return $this->directorySeparator;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return LocalFileInfo
+     */
+    public function setDirectorySeparator(string $value) : LocalFileInfo
+    {
+        $this->directorySeparator = $value;
+        return $this;
     }
 }
