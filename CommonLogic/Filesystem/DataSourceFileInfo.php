@@ -399,4 +399,54 @@ class DataSourceFileInfo implements FileInfoInterface
         }
         return new DataSourceFileInfo($folderPath, $this->object->getWorkbench());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getBasePath()
+     */
+    public function getBasePath(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathAbsolute()
+     */
+    public function getPathAbsolute(bool $withFilename = true): string
+    {
+        return $this->getPath($withFilename);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathRelative()
+     */
+    public function getPathRelative(bool $withFilename = true): ?string
+    {
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isPathAbsolute()
+     */
+    public function isPathAbsolute(): bool
+    {
+        return true;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getDirectorySeparator()
+     */
+    public function getDirectorySeparator(): string
+    {
+        return self::SLASH;   
+    }
 }
