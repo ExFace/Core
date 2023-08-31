@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * 
@@ -42,6 +43,10 @@ class ReadData extends AbstractAction implements iReadData
         // action is part of an action chain. In this case, simply read the columns there are.
         if ($dataWidget !== null && $dataWidget->getMetaObject()->is($data_sheet->getMetaObject())) {
             $data_sheet = $dataWidget->prepareDataSheetToRead($data_sheet);
+        }
+        
+        if ($data_sheet->getColumns()->isEmpty(false)) {
+            throw new ActionRuntimeError($this, 'Cannot read data for ' . $data_sheet->getMetaObject() . ' - no columns to read specified!');
         }
         
         // Read from the data source
