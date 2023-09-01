@@ -5,6 +5,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
+use exface\Core\DataTypes\MimeTypeDataType;
 
 /**
  * Contains information about a single local file - similar to PHPs splFileInfo.
@@ -44,9 +45,14 @@ class LocalFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolder()
      */
-    public function getFolder() : ?string
+    public function getFolderName() : ?string
     {
         return FilePathDataType::findFolder($this->splFileInfo->getPathname());
+    }
+    
+    public function getFolderPath() : ?string
+    {
+        return $this->splFileInfo->getPath();
     }
     
     /**
@@ -77,9 +83,9 @@ class LocalFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPath()
      */
-    public function getPath(bool $withFilename = true) : string
+    public function getPath() : string
     {
-        $path = $withFilename === true ? $this->splFileInfo->getPathname() : $this->splFileInfo->getPath();
+        $path = $this->splFileInfo->getPathname();
         if (null === $normalized = ($this->normalized[$path][$this->directorySeparator] || null)) {
             $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
         }
@@ -115,9 +121,9 @@ class LocalFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathAbsolute()
      */
-    public function getPathAbsolute(bool $withFilename = true) : string
+    public function getPathAbsolute() : string
     {
-        $path = $this->getPath($withFilename);
+        $path = $this->getPath();
         if ($this->isPathAbsolute()) {
             return $path;
         }
@@ -129,7 +135,7 @@ class LocalFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathRelative()
      */
-    public function getPathRelative(bool $withFilename = true) : ?string
+    public function getPathRelative() : ?string
     {
         $basePath = $this->getBasePath() ? $this->getBasePath() . $this->directorySeparator : '';
         return $basePath !== '' ? str_replace($basePath, '', $this->getPath()) : $this->getPath();
@@ -273,7 +279,7 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function getFolderInfo(): ?FileInfoInterface
     {
-        $folderPath = $this->getPath(false);
+        $folderPath = $this->getFolderPath();
         if ($folderPath === null || $folderPath === '') {
             return null;
         }
@@ -299,5 +305,15 @@ class LocalFileInfo implements FileInfoInterface
     {
         $this->directorySeparator = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMimetype()
+     */
+    public function getMimetype(): ?string
+    {
+        return MimeTypeDataType::findMimeTypeOfFile($this->getPathAbsolute());
     }
 }

@@ -28,14 +28,14 @@ interface FileInfoInterface extends \Stringable
      * @param bool $withFilename
      * @return string
      */
-    public function getPathAbsolute(bool $withFilename = true) : string;
+    public function getPathAbsolute() : string;
     
     /**
      * 
      * @param bool $withFilename
      * @return string|NULL
      */
-    public function getPathRelative(bool $withFilename = true) : ?string;
+    public function getPathRelative() : ?string;
     
     /**
      * Gets the filename
@@ -133,7 +133,13 @@ interface FileInfoInterface extends \Stringable
      * 
      * @return string|NULL
      */
-    public function getFolder() : ?string;
+    public function getFolderName() : ?string;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFolderPath() : ?string;
     
     /**
      * 
@@ -156,4 +162,10 @@ interface FileInfoInterface extends \Stringable
      * @return string
      */
     public function getDirectorySeparator() : string;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getMimetype() : ?string;
 }

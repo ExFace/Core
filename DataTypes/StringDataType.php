@@ -514,11 +514,12 @@ class StringDataType extends AbstractDataType
     /**
      * 
      * @param string $string
+     * @param int $limit
      * @return string[]
      */
-    public static function splitLines(string $string) : array
+    public static function splitLines(string $string, int $limit = null) : array
     {
-        return preg_split("/\R/u", $string);
+        return preg_split("/\R/u", $string, ($limit > 0 ? $limit : -1));
     }
     
     /**

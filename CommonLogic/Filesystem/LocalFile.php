@@ -17,6 +17,8 @@ class LocalFile implements FileInterface
     
     private $mode = null;
     
+    private $splFileObject = null;
+    
     /**
      * 
      * @param LocalFileInfo $fileInfo
@@ -86,5 +88,34 @@ class LocalFile implements FileInterface
     public function getFileInfo(): FileInfoInterface
     {
         return $this->fileInfo;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInterface::readLine()
+     */
+    public function readLine(int $lineNo) : ?string
+    {
+        if ($lineNo === 1) {
+            $value = $this->getSplFileObject()->fgets();
+        } else {
+            $fileObject = $this->getSplFileObject();
+            $fileObject->seek(($lineNo-1));
+            $value = $fileObject->current();
+        }
+        return $value;
+    }
+    
+    /**
+     * 
+     * @return \SplFileObject
+     */
+    protected function getSplFileObject() : \SplFileObject
+    {
+        if ($this->splFileObject === null) {
+            $this->splFileObject = new \SplFileObject($this->fileInfo->getPathAbsolute(), $this->mode);
+        }
+        return $this->splFileObject;
     }
 }

@@ -3,8 +3,6 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
-use Symfony\Component\Finder\SplFileInfo;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -18,8 +16,6 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\DataConnectors\FileFinderConnector;
-use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\CommonLogic\DataQueries\FileWriteDataQuery;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
@@ -53,23 +49,35 @@ use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
  * 
  * ### Attributes 
  * 
- * Attributes are file properties. The following data addresses are available:
+ * Attributes are file/folder properties. The data addresses allow to address properties of a file like
+ * `~file:name` or of the containing folder via `~folder:name`. Most addresses except for content-related
+ * data are available in both cases.
  * 
- * - `name` - file/folder name with extension
- * - `folder_name` - name of the containing folder
- * - `path_relative` - folder path relative to the base path of the connector
- * - `pathname_absolute` - absolute file path including extension 
- * - `pathname_relative` - file path including extension relative to the base path 
- * of the connector
- * - `mtime` - last modification time
- * - `ctime` - creation time
- * - `line(n)` - n-th line of the file starting with 1: e.g. `line(1)` to get the first line
- * - `subpath(start,length)` - extracts a subset of the folder path (excl. the filenam): e.g.
+ * Using the `~folder:` prefix basically shifts the focus one level up the file tree. You can also chain it:
+ * `~folder:~folder:name` will giv you the name of the second folder up the hierarchy. 
+ * 
+ * The following data addresses are available:
+ * 
+ * - `~file:name` - file name with extension
+ * - `~folder:name` - name of the containing folder
+ * - `~file:path_relative` - path to the file relative to the base path of the connector
+ * - `~folder:path_relative` - path to the folder containing the file relative to the base path of the connector
+ * - `~file:path_absolute` - absolute file path
+ * - `~file:extension`
+ * - `~file:name_without_extension`
+ * - `~file:mtime` - last modification time
+ * - `~file:ctime` - creation time
+ * - `~file:mimetype` - MIME type of the file - e.g. `text/plain`
+ * - `~file:subpath(start,length)` - extracts a subset of the folder path (excl. the filenam): e.g.
  * `subpath(0,2)` from the path `exface/Core/Translations/Objects` would yield `exface/Core`,
  * while `subpath(0,-1)` would produce `exface/Core/Translations`, `subpath(2)` - `Translations/Objects`
  * and `subpath(-1)` - `Objects`
- * - Any getter-methods of the class `SplFileInfo` can be called by using the method 
- * name withoug the get-prefix as data address: e.g. `extension` for `SplFileInfo::getExtension()`
+ * - `~file:is_file`
+ * - `~file:is_folder`
+ * - `~file:is_link`
+ * - `~folder:~folder:path_relative`
+ * - `~file:line(n)` - n-th line of the file starting with 1: e.g. `line(1)` to get the first line. This only works with files!
+ * - `~file:content` - the entire content of the file as a string
  * 
  * ## Built-in FILE-object
  * 
@@ -81,7 +89,7 @@ use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
  * ## Limitations
  *  
  * In case there are files in different folders with the same name and files of both folders will be selected,
- * with one of the selected files being such a file the FileFinder will find also the file in the other folder with that name.
+ * with one of the selected files being such a file the FileBuilder will find also the file in the other folder with that name.
  * This can for example lead to files being accidentally deleted in a folder because they have the same name as a file of another folder
  * but files in the first folder also were selected to delete.
  *
@@ -124,26 +132,48 @@ class FileBuilder extends AbstractQueryBuilder
     const DAP_DELETE_EMPTY_FOLDERS = 'delete_empty_folders';
     
     
-    const ATTR_ADDRESS_FILEPATH = '~filepath';
+    const ATTR_ADDRESS_PREFIX_FILE= '~file';
     
-    const ATTR_ADDRESS_FILEPATH_RELATIVE = '~filepath_relative';
+    const ATTR_ADDRESS_PREFIX_FOLDER = '~folder';
     
-    const ATTR_ADDRESS_FOLDER = '~folder';
+    const ATTR_ADDRESS_PATH_ABSOLUTE = 'path_absolute';
     
-    const ATTR_ADDRESS_CONTENTS = '~contents';
+    const ATTR_ADDRESS_PATH_RELATIVE = 'path_relative';
     
-    const ATTR_ADDRESS_FILENAME = '~filename';
+    const ATTR_ADDRESS_SUBPATH = 'subpath';
     
-    const ATTR_ADDRESS_FILENAME_WITHOUT_EXTENSION = '~filename_without_extension';
+    const ATTR_ADDRESS_CONTENT = 'content';
     
-    const ATTR_ADDRESS_EXTENSION = '~extension';
+    const ATTR_ADDRESS_NAME = 'name';
+    
+    const ATTR_ADDRESS_NAME_WITHOUT_EXTENSION = 'name_without_extension';
+    
+    const ATTR_ADDRESS_EXTENSION = 'extension';
+    
+    const ATTR_ADDRESS_SIZE = 'size';
+    
+    const ATTR_ADDRESS_MIMETYPE = 'mimetype';
+    
+    const ATTR_ADDRESS_MTIME = 'mtime';
+    
+    const ATTR_ADDRESS_CTIME = 'ctime';
+    
+    const ATTR_ADDRESS_IS_FILE= 'is_file';
+    
+    const ATTR_ADDRESS_IS_FOLDER = 'is_folder';
+    
+    const ATTR_ADDRESS_IS_LINK = 'is_link';
+    
+    const ATTR_ADDRESS_IS_READABLE = 'is_readable';
+    
+    const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
     
     /**
-     *
-     * @return FileFinderDataQuery
+     * 
+     * @return FileReadDataQuery
      */
-    protected function buildQueryToRead()
+    protected function buildQueryToRead() : FileReadDataQuery
     {
         $query = new FileReadDataQuery();
         
@@ -203,7 +233,7 @@ class FileBuilder extends AbstractQueryBuilder
         return $addr === FileBuilder::ATTR_ADDRESS_CONTENTS || $addr === 'contents';
     }
     
-    protected function buildFilenameFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : ?string
+    protected function buildFilenameFromFilterGroup(QueryPartFilterGroup $qpart, FileReadDataQuery $query) : ?string
     {
         $values = [];
         $filtersApplied = [];
@@ -259,7 +289,7 @@ class FileBuilder extends AbstractQueryBuilder
         return $filename;
     }
     
-    protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : array
+    protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileReadDataQuery $query) : array
     {
         // See if the data address has placeholders
         $oper = $qpart->getOperator();
@@ -335,7 +365,7 @@ class FileBuilder extends AbstractQueryBuilder
                 } elseif ($oper === EXF_LOGICAL_OR) {
                     $uidPatterns = array_unique(array_merge($uidPatterns, $uidPaths));
                 } else {
-                    throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileFinderBuilder');
+                    throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileBuilder');
                 }
             } else {
                 $this->addAttribute($qpart->getExpression()->toString());
@@ -391,7 +421,8 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function create(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $fileArray = $this->buildPathsFromValues($dataConnection);
+        $basePath = $dataConnection->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
+        $fileArray = $this->buildPathsFromValues($basePath);
         if (empty($fileArray)) {
             throw new QueryBuilderException('Cannot create files: no paths specified!');
         }
@@ -469,22 +500,18 @@ class FileBuilder extends AbstractQueryBuilder
     }
     
     /**
+     * TODO Add an interface for file-based data connections to get their base paths
      * 
+     * @param string $basePath
      * @return string[]
      */
-    protected function buildPathsFromValues(FileFinderConnector $connection = null) : array
+    protected function buildPathsFromValues(string $basePath) : array
     {
         switch (true) {
             case ($qpart = $this->getValue('PATHNAME_ABSOLUTE')) && $qpart->hasValues():
                 return $qpart->getValues();
             case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $qpart->hasValues():
                 $paths = [];
-                if ($connection !== null) {
-                    $basePath = $connection->getBasePath();
-                }
-                if (! $basePath) {
-                    $basePath = $this->getWorkbench()->getInstallationPath();
-                }
                 foreach ($qpart->getValues() as $rowIdx => $relPath) {
                     if (! FilePathDataType::isAbsolute($relPath)) {
                         $paths[$rowIdx] = FilePathDataType::join([$basePath, $relPath]);
@@ -583,7 +610,8 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $touchedFilesCnt = 0;
         // Update by path (in one of the values)
-        $fileArray = $this->buildPathsFromValues($dataConnection);
+        $basePath = $dataConnection->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
+        $fileArray = $this->buildPathsFromValues($basePath);
         
         // Update by filters
         if (empty($fileArray) && ! $this->getFilters()->isEmpty()) {
@@ -656,107 +684,175 @@ class FileBuilder extends AbstractQueryBuilder
 
     /**
      * 
-     * @param SplFileInfo $file
-     * @param FileFinderDataQuery $query
+     * @param FileInfoInterface $file
      * @throws QueryBuilderException
      * @return string[]|mixed[]
      */
-    protected function buildResultRow(FileInfoInterface $file)
+    protected function buildResultRow(FileInfoInterface $file) : array
     {
-        $row = array();
-        
-        $file_data = $this->getDataFromFile($file);
-        
+        $row = [];
         foreach ($this->getAttributes() as $qpart) {
             if ($field = $qpart->getAttribute()->getDataAddress()) {
-                $fieldLC = mb_strtolower($field);
-                switch (true) {
-                    case array_key_exists($fieldLC, $file_data):
-                        $value = $file_data[$fieldLC];
-                        break;
-                    case substr($fieldLC, 0, 4) === 'line':
-                        $line_nr = intval(trim(substr($fieldLC, 4), '()'));
-                        if ($line_nr === 1) {
-                            $value = $file->openFile()->fgets();
-                        } else {
-                            $fileObject = $file->openFile();
-                            $fileObject->seek(($line_nr-1));
-                            $value = $fileObject->current();
-                        }
-                        break;
-                    case substr($fieldLC, 0, 7) === 'subpath':
-                        list($start, $length) = explode(',', trim(substr($fieldLC, 7), '()'));
-                        $start = trim($start);
-                        $length = trim($length);
-                        if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
-                            throw new QueryBuilderException('Cannot query "' . $field . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
-                        }
-                        $pathParts = explode('/', $this->getPathRelative($file->getPath(), $query));
-                        $subParts = array_slice($pathParts, $start, $length);
-                        $value = implode('/', $subParts);
-                        break;
-                    case $fieldLC === 'mimetype':
-                        $value = MimeTypeDataType::findMimeTypeOfFile($file->getPathname());
-                        break;
-                    case $fieldLC === 'contents':
-                        $value = $file->isFile() ? $file->getContents() : null;
-                        break;
-                    default: 
-                        $method_name = 'get' . ucfirst($field);
-                        if (method_exists($file, $method_name)) {
-                            $value = call_user_func(array(
-                                $file,
-                                $method_name
-                            ));
-                        }
-                        break;
-                }
-                $row[$qpart->getColumnKey()] = $value;
+                $row[$qpart->getColumnKey()] = $this->buildResultValueFromFile($file, $field);
+            }
+        }
+        return $row;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $file
+     * @param string $dataAddress
+     * 
+     * @throws QueryBuilderException
+     * 
+     * @return NULL
+     */
+    protected function buildResultValueFromFile(FileInfoInterface $file, string $dataAddress)
+    {
+        $fieldLC = mb_strtolower($dataAddress);
+        
+        // backwards compatibility
+        if ($fieldLC === 'path_relative') {
+            $fieldLC = self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_RELATIVE;
+        } elseif ($fieldLC === '~folder' || $fieldLC === 'folder_name') {
+            $fieldLC = self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME;
+            break;
+        }
+        
+        // Pass ~folder:xxx addresses to the parent folder and handle ~file:xxx here directly
+        if (StringDataType::startsWith($fieldLC, self::ATTR_ADDRESS_PREFIX_FOLDER)) {
+            $folderAddr = substr($dataAddress, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
+            $folderAddr = strpos($folderAddr, ':') === false ? self::ATTR_ADDRESS_PREFIX_FILE . $folderAddr : $folderAddr;
+            return $this->buildResultValueFromFile($file->getFolderInfo(), $folderAddr);
+        } else {
+            // For file data addresses translate older notation to new notation and
+            // and remove the `~file:` prefix for the current notation
+            switch ($fieldLC) {
+                // backwards compatibility
+                case 'path':
+                    $fieldLC = self::ATTR_ADDRESS_PATH_ABSOLUTE;
+                    break;
+                // backwards compatibility
+                case 'name':
+                    $fieldLC = self::ATTR_ADDRESS_NAME_WITHOUT_EXTENSION;
+                    break;
+                // backwards compatibility
+                case '~filename':
+                case 'filename':
+                    $fieldLC = self::ATTR_ADDRESS_NAME;
+                    break;
+                // backwards compatibility
+                case '~filename_without_extension':
+                    $fieldLC = self::ATTR_ADDRESS_NAME_WITHOUT_EXTENSION;
+                    break;  
+                // backwards compatibility
+                case '~filepath':
+                case 'pathname_absolute':
+                    $fieldLC = self::ATTR_ADDRESS_PATH_ABSOLUTE;
+                    break;
+                // backwards compatibility
+                case '~filepath_relative':
+                case 'pathname_relative':
+                    $fieldLC = FileBuilder::ATTR_ADDRESS_PATH_RELATIVE;
+                    break;
+                // backwards compatibility
+                case '~contents':
+                case 'contents':
+                    $fieldLC = self::ATTR_ADDRESS_CONTENT;
+                    break;
+                // backwards compatibility
+                case '~extension':
+                    $fieldLC = self::ATTR_ADDRESS_EXTENSION;
+                    break;
+                // Current data addresses with `~file:xxx` - remove the `~file:` prefix
+                default:
+                    $fieldLC = StringDataType::substringAfter($fieldLC, self::ATTR_ADDRESS_PREFIX_FILE);
+                    break;
             }
         }
         
-        return $row;
-    }
-
-    protected function getDataFromFile(SplFileInfo $file)
-    {
-        $path = Filemanager::pathNormalize($file->getPath());
-        $pathname = Filemanager::pathNormalize($file->getPathname());
-        $folder_name = StringDataType::substringAfter(rtrim($path, "/"), '/', '', false, true);
+        $value = null;
         
-        $file_data = array(
-            'name' => $file->getExtension() ? str_replace('.' . $file->getExtension(), '', $file->getFilename()) : $file->getFilename(),
-            'path_relative' => $this->getPathRelative($path, $query, false),
-            'pathname_absolute' => $file->getRealPath(),
-            'pathname_relative' => $this->getPathRelative($pathname, $query, false),
-            'mtime' => TimestampDataType::cast('@' . $file->getMTime()),
-            'ctime' => TimestampDataType::cast('@' . $file->getCTime()),
-            'folder_name' => $folder_name
-        );
-        
-        return $file_data;
-    }
-    
-    /**
-     * Makes $fullPath relative to the query's base path
-     * 
-     * @param string $fullPath
-     * @param FileFinderDataQuery $query
-     * @param bool $normalize
-     * @param string $normalDirectorySep
-     * @return string
-     */
-    protected function getPathRelative(string $fullPath, FileFinderDataQuery $query, bool $normalize = true, string $normalDirectorySep = '/') : string
-    {
-        if ($normalize) {
-            $fullPath = FilePathDataType::normalize($fullPath, $normalDirectorySep);
+        // simple properties
+        switch ($fieldLC) {
+            case self::ATTR_ADDRESS_NAME:
+                $value = $file->getFilename(true);
+                break;
+            case self::ATTR_ADDRESS_NAME_WITHOUT_EXTENSION:
+                $value = $file->getFilename(false);
+                break;
+            case self::ATTR_ADDRESS_PATH_ABSOLUTE:
+                $value = $file->getPathAbsolute();
+                break;
+            case FileBuilder::ATTR_ADDRESS_PATH_RELATIVE;
+                $value = $file->getPathRelative();
+                break;
+            case self::ATTR_ADDRESS_MTIME:
+                $value = TimestampDataType::cast('@' . $file->getMTime());
+                break;
+            case self::ATTR_ADDRESS_CTIME:
+                $value = TimestampDataType::cast('@' . $file->getCTime());
+                break;
+            case self::ATTR_ADDRESS_MIMETYPE:
+                $value = $file->getMimetype();
+                break;
+            case self::ATTR_ADDRESS_CONTENT:
+                $value = $file->isFile() ? $file->getContents() : null;
+                break;
+            case self::ATTR_ADDRESS_EXTENSION:
+                $value = $file->getExtension();
+                break;
+            case self::ATTR_ADDRESS_SIZE:
+                $value = $file->getSize();
+                break;
+            case self::ATTR_ADDRESS_IS_FILE:
+                $value = $file->isFile();
+                break;
+            case self::ATTR_ADDRESS_IS_FOLDER:
+                $value = $file->isDir();
+                break;
+            case self::ATTR_ADDRESS_IS_LINK:
+                $value = $file->isLink();
+                break;
+            case self::ATTR_ADDRESS_IS_READABLE:
+                $value = $file->isReadable();
+                break;
+            case self::ATTR_ADDRESS_IS_WRITABLE:
+                $value = $file->isWritable();
+                break;
         }
-        $base_path = $query->getBasePath() ? $query->getBasePath() . $normalDirectorySep : '';
-        return $base_path !== '' ? str_replace($base_path, '', $fullPath) : $fullPath;
+        
+        // complex properties
+        switch (true) {
+            case substr($fieldLC, 0, 4) === self::ATTR_ADDRESS_LINE:
+                if (! $file->isFile()) {
+                    throw new QueryBuilderException('Cannot read line from "' . $file->getPathRelative() . '" - it is not a file!');
+                }
+                $lineNo = intval(trim(substr($fieldLC, 4), '()'));
+                if (! ($lineNo > 0)) {
+                    throw new QueryBuilderException('Cannot read line "' . $lineNo . '" from file! Invalid line number.');
+                }
+                $value = $file->openFile()->readLine($lineNo);
+                break;
+            case substr($fieldLC, 0, 7) === self::ATTR_ADDRESS_SUBPATH:
+                list($start, $length) = explode(',', trim(substr($fieldLC, 7), '()'));
+                $start = trim($start);
+                $length = trim($length);
+                if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
+                    throw new QueryBuilderException('Cannot query "' . $$dataAddress . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
+                }
+                $pathParts = explode($file->getDirectorySeparator(), $file->getFolderPath());
+                $subParts = array_slice($pathParts, $start, $length);
+                $value = implode($file->getDirectorySeparator(), $subParts);
+                break;
+        }
+        
+        return $value;
     }
     
     /**
-     * The FileFinderBuilder can only handle attributes FILE objects, so no relations to
+     * The FileBuilder can only handle attributes FILE objects, so no relations to
      * other objects than those based on exface.Core.FILE can be read directly.
      * 
      * {@inheritDoc}
@@ -782,4 +878,3 @@ class FileBuilder extends AbstractQueryBuilder
         return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_FOLDER_DEPTH);
     }
 }
-?>
