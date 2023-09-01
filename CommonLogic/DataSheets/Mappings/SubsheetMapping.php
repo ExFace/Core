@@ -76,7 +76,7 @@ class SubsheetMapping extends AbstractDataSheetMapping
         }  
         
         if ($fromSheet->getMetaObject() === $toSheet->getMetaObject()) {
-            if ($removeCol = $toSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString())) {
+            if ($toSubsheetCol !== $removeCol = $toSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString())) {
                 $toSheet->getColumns()->remove($removeCol);
             }
         }
