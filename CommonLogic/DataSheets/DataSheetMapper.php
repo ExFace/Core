@@ -260,6 +260,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             try {
                 $toSheet = $map->map($fromSheet, $toSheet, $logbook);
             } catch (\Throwable $e) {
+                if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
                 if ($e instanceof DataMappingExceptionInterface) {
                     throw $e;
                 }

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnToFilterMappingInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Factories\ConditionFactory;
 
 /**
  * Maps on data sheet column to a filter expression in another data sheet.
@@ -28,15 +29,20 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
     {
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
+        $log = "Column `{$fromExpr->__toString()}` -> filter ";
         
         switch (true) {
             case $fromExpr->isStatic():
-                $toSheet->getFilters()->addConditionFromExpression($toExpr, $fromExpr->evaluate(), $this->getComparator());
+                $val = $fromExpr->evaluate();
+                $log .= "`{$toExpr->__toString()} {$this->getComparator()} {$val}`.";
+                $toSheet->getFilters()->addConditionFromExpression($toExpr, $val, $this->getComparator());
                 break;
             case $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr):
                 $separator = $fromExpr->isMetaAttribute() ? $fromExpr->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
                 $comparator = $fromSheet->countRows() > 1 ? EXF_COMPARATOR_IN : $this->getComparator();
-                $toSheet->getFilters()->addConditionFromExpression($toExpr, implode($separator, $fromCol->getValues(false)), $comparator);
+                $value = implode($separator, $fromCol->getValues(false));
+                $log .= "`{$toExpr->__toString()} {$comparator} {$value}`.";
+                $toSheet->getFilters()->addConditionFromExpression($toExpr, $value, $comparator);
                 break;
             default:
                 if ($fromExpr->isMetaAttribute()) {
@@ -44,6 +50,8 @@ class DataColumnToFilterMapping extends DataColumnMapping implements DataColumnT
                 }
                 throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-filter mapping: only data column names, constants and static formulas allowed!', '7H6M243');
         }
+        
+        if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
     }
