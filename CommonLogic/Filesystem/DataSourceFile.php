@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * 
@@ -85,5 +86,17 @@ class DataSourceFile implements FileInterface
     public function getFileInfo(): FileInfoInterface
     {
         return $this->fileInfo;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInterface::readLine()
+     */
+    public function readLine(int $lineNo): ?string
+    {
+        $text = $this->read();
+        $lines = StringDataType::splitLines($text, $lineNo);
+        return $lines[$lineNo-1];
     }
 }

@@ -11,5 +11,7 @@ interface FileInterface extends \Stringable
     
     public function writeStream($resource) : FileInterface;
     
+    public function readLine(int $lineNo) : ?string;
+    
     public function getFileInfo() : FileInfoInterface;
 }

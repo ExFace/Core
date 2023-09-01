@@ -96,9 +96,20 @@ class DataSourceFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolder()
      */
-    public function getFolder() : ?string
+    public function getFolderName() : ?string
     {
         return $this->folder;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolderPath()
+     */
+    public function getFolderPath() : ?string
+    {
+        // TODO
+        return null;
     }
     
     /**
@@ -238,11 +249,8 @@ class DataSourceFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPath()
      */
-    public function getPath(bool $withFilename = true) : string
+    public function getPath() : string
     {
-        if ($withFilename === false) {
-            return FilePathDataType::findFolderPath($this->pathname);
-        }
         return $this->pathname;
     }
     
@@ -393,7 +401,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getFolderInfo(): ?FileInfoInterface
     {
-        $folderPath = $this->getPath(false);
+        $folderPath = $this->getFolderPath();
         if ($folderPath === null || $folderPath === '') {
             return null;
         }
@@ -415,9 +423,9 @@ class DataSourceFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathAbsolute()
      */
-    public function getPathAbsolute(bool $withFilename = true): string
+    public function getPathAbsolute(): string
     {
-        return $this->getPath($withFilename);
+        return $this->getPath();
     }
 
     /**
@@ -425,7 +433,7 @@ class DataSourceFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathRelative()
      */
-    public function getPathRelative(bool $withFilename = true): ?string
+    public function getPathRelative(): ?string
     {
         return null;
     }
@@ -448,5 +456,19 @@ class DataSourceFileInfo implements FileInfoInterface
     public function getDirectorySeparator(): string
     {
         return self::SLASH;   
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMimetype()
+     */
+    public function getMimetype(): ?string
+    {
+        $val = null;
+        if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
+            $val = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        }
+        return $val;
     }
 }
