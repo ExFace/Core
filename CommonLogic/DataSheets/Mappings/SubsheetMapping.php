@@ -42,7 +42,8 @@ class SubsheetMapping extends AbstractDataSheetMapping
         $subsheetMapper = $this->getSubsheetMapper();
         $fromSubsheetCol = $fromSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString());
         if (! $fromSubsheetCol) {
-            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Subsheet-column "' . $this->getFromSubsheetRelationString() . '" not found in data!');
+            if ($logbook) $logbook->addLine("Subsheet `{$this->getFromSubsheetRelationString()}` NOT FOUND - ignoring mapper");
+            return $toSheet;
         }
         
         // Make sure, the to-sheet has a column for the subsheet
