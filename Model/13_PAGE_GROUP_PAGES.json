@@ -984,6 +984,78 @@
             "UID": "0x11eeb85c8ca0ab66b85c747827435ce5",
             "PAGE": "0x11ee9b3a8c96a4549b3a747827435ce5",
             "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:05",
+            "MODIFIED_ON": "2023-09-08 12:37:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8544a841c3188544025041000001",
+            "PAGE": "0x11eebcc50094e7d6bcc5025041000001",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:05",
+            "MODIFIED_ON": "2023-09-08 12:37:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8ae2a841de348ae2025041000001",
+            "PAGE": "0x11eea41a19233582a41a025041000001",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:05",
+            "MODIFIED_ON": "2023-09-08 12:37:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8f4ea8314d448f4e025041000001",
+            "PAGE": "0x11ee9493dea8f2029493025041000001",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:05",
+            "MODIFIED_ON": "2023-09-08 12:37:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee924ea841f61c924e025041000001",
+            "PAGE": "0x11ee8fe7b10842948fe7025041000001",
+            "PAGE_GROUP": "0x11ea631047ee7732a2e30205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:15",
+            "MODIFIED_ON": "2023-09-08 12:37:15",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8009ad7581268009025041000001",
+            "PAGE": "0x11eebcc50094e7d6bcc5025041000001",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:15",
+            "MODIFIED_ON": "2023-09-08 12:37:15",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8cccad75974c8ccc025041000001",
+            "PAGE": "0x11eea41a19233582a41a025041000001",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:15",
+            "MODIFIED_ON": "2023-09-08 12:37:15",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee9488ad75aaac9488025041000001",
+            "PAGE": "0x11ee8fe7b10842948fe7025041000001",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
+        },
+        {
+            "CREATED_ON": "2023-09-08 12:37:15",
+            "MODIFIED_ON": "2023-09-08 12:37:15",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eeb204ad753c48b204025041000001",
+            "PAGE": "0x11ee9493dea8f2029493025041000001",
+            "PAGE_GROUP": "0x11ea6f997fc61ac8a3480205857feb80"
         }
     ],
     "totals_rows": [],
@@ -993,12 +1065,6 @@
         "conditions": [
             {
                 "expression": "PAGE__APP",
-                "comparator": "=",
-                "value": "0x31000000000000000000000000000000",
-                "object_alias": "exface.Core.PAGE_GROUP_PAGES"
-            },
-            {
-                "expression": "PAGE_GROUP__APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
                 "object_alias": "exface.Core.PAGE_GROUP_PAGES"

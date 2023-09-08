@@ -109,17 +109,7 @@ HTML;
     {
         return <<<JS
         
-    $oSurveyJs.locale = '{$this->getSurveyLocale()}';
-    
-    $oSurveyJs.onUpdateQuestionCssClasses.add(function(_, options) {
-        const classes = options.cssClasses;
-        if (classes.headerLeft === 'title-left') {
-            classes.titleLeftRoot += ' sapUiRespGrid sapUiRespGridHSpace0 sapUiRespGridVSpace0 sapUiFormResGridCont sapUiRespGridOverflowHidden sapUiRespGridMedia-Std-LargeDesktop';
-            /* TODO replace class sapUiRespGridMedia-Std-LargeDesktop to match current device in UI5 */
-            classes.headerLeft += ' sapUiRespGridSpanXL5 sapUiRespGridSpanL4 sapUiRespGridSpanM4 sapUiRespGridSpanS12';
-        }
-    });
-    
+    $oSurveyJs.locale = '{$this->getSurveyLocale()}';    
 JS;
     }
     
@@ -183,7 +173,7 @@ JS;
 (function(){
     var oSurvey = new Survey.Model({$this->buildJsSurveyModelGetter()});
     oSurvey.data = (JSON.parse({$value} || '{}'));
-    oSurvey.locale = '{$this->getSurveyLocale()}';
+    {$this->buildJsSurveyInitOptions('oSurvey')};
     
     oSurvey.render("{$this->getIdOfSurveyDiv()}");
     {$this->buildJsSurveyVar()} = oSurvey;

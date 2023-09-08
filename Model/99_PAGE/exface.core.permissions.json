@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-03-02 18:00:43",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-09-08 12:44:39",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -276,6 +276,46 @@
                             },
                             {
                                 "action_alias": "exface.Core.EnableAuthorizationPolicy"
+                            },
+                            {
+                                "widget_type": "MenuButton",
+                                "caption": "Matrix preview",
+                                "hint": "Preview access rights for users and roles in a matrix",
+                                "icon": "table",
+                                "buttons": [
+                                    {
+                                        "caption": "Pages per role",
+                                        "icon": "users",
+                                        "action": {
+                                            "alias": "exface.Core.GoToPage",
+                                            "page_alias": "exface.core.page-access-per-role"
+                                        }
+                                    },
+                                    {
+                                        "caption": "Pages per user",
+                                        "icon": "user",
+                                        "action": {
+                                            "alias": "exface.Core.GoToPage",
+                                            "page_alias": "exface.core.page-access-per-user"
+                                        }
+                                    },
+                                    {
+                                        "caption": "Actions per role",
+                                        "icon": "users",
+                                        "action": {
+                                            "alias": "exface.Core.GoToPage",
+                                            "page_alias": "exface.core.action-access-per-role"
+                                        }
+                                    },
+                                    {
+                                        "caption": "Actions per user",
+                                        "icon": "user",
+                                        "action": {
+                                            "alias": "exface.Core.GoToPage",
+                                            "page_alias": "exface.core.action-access-per-user"
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
