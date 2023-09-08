@@ -1,0 +1,139 @@
+{
+    "uid": "0x11eebcc50094e7d6bcc5025041000001",
+    "alias_with_namespace": "exface.core.action-access-per-role",
+    "menu_parent_page_selector": "0x11ea8de4ed64848f97940205857feb80",
+    "menu_index": 2,
+    "menu_visible": true,
+    "name": "Action access per role",
+    "description": "Access matrix showing actions and roles",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2023-09-08 10:02:05",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-09-08 12:38:12",
+    "contents": {
+        "object_alias": "exface.Core.ACTION_PERMIT_PER_ROLE",
+        "widget_type": "Chart",
+        "hide_legend": true,
+        "hide_caption": false,
+        "data": {
+            "paginate": false,
+            "filters": [
+                {
+                    "attribute_alias": "ACTION__APP",
+                    "hidden": true,
+                    "required": true,
+                    "caption": "Pages of app(s)",
+                    "input_widget": {
+                        "id": "app_filter",
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "value": "=app_filter!UID",
+                    "attribute_alias": "ROLE__APP",
+                    "caption": "Roles of app(s)",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    },
+                    "condition_group": {
+                        "operator": "OR",
+                        "conditions": [
+                            {
+                                "value": "[#value#]",
+                                "comparator": "[",
+                                "attribute_alias": "ROLE__APP"
+                            },
+                            {
+                                "value": "AUTHENTICATED",
+                                "comparator": "==",
+                                "attribute_alias": "ROLE__ALIAS"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "attribute_alias": "ROLE",
+                    "caption": "Specific role"
+                },
+                {
+                    "attribute_alias": "ACTION__ACTION_PROTOTYPE",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "ACTION__OBJECT",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "ACTION__LABEL"
+                },
+                {
+                    "attribute_alias": "PERMITTED"
+                }
+            ],
+            "sorters": [
+                {
+                    "attribute_alias": "ACTION__OBJECT__NAME",
+                    "direction": "asc"
+                },
+                {
+                    "attribute_alias": "ACTION__LABEL",
+                    "direction": "asc"
+                },
+                {
+                    "attribute_alias": "ROLE__LABEL",
+                    "direction": "desc"
+                }
+            ]
+        },
+        "axis_y": [
+            {
+                "zoomable": true,
+                "grid_area": true,
+                "attribute_alias": "ROLE__LABEL",
+                "hide_caption": true,
+                "caption": "User role"
+            }
+        ],
+        "axis_x": [
+            {
+                "zoomable": true,
+                "grid_area": true,
+                "position": "top",
+                "attribute_alias": "=Concatenate(ACTION__LABEL, ' - ', ACTION__ACTION_PROTOTYPE__LABEL)",
+                "caption": "Action",
+                "hide_caption": true,
+                "rotate_labels_degrees": -90
+            }
+        ],
+        "series": [
+            {
+                "type": "heatmap",
+                "value_attribute_alias": "PERMITTED",
+                "caption": "Has access",
+                "x_axis_no": 0,
+                "y_axis_no": 0,
+                "show_values": false,
+                "show_borders": true,
+                "color_scale": {
+                    "show_scale_filter": false,
+                    "max": 1,
+                    "min": 0,
+                    "colors": [
+                        "red",
+                        "#36a832"
+                    ]
+                }
+            }
+        ]
+    }
+}
