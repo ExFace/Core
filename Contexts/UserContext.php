@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * The UserContext shows the logged in User and some user-related controls like a logout button.
@@ -110,7 +111,7 @@ class UserContext extends AbstractContext
             // add fields to the context widget. Reading data for the prefill is done below
             // after the IF.
             $prefillData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-            $prefillData->getFilters()->addConditionFromString('USERNAME', $token->getUsername());
+            $prefillData->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
             
         // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
