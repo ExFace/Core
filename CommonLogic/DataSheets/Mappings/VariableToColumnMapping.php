@@ -146,6 +146,6 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
     
     protected function readVariable(string $name)
     {
-        return $this->getWorkbench()->getContext()->getScopeRequest()->setVariable($name);
+        return $this->getWorkbench()->getContext()->getScopeRequest()->getVariable($name);
     }
 }
