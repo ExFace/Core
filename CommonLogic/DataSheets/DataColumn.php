@@ -990,5 +990,30 @@ class DataColumn implements DataColumnInterface
         $this->title = $string;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isReadable()
+     */
+    public function isReadable() : bool
+    {
+        switch (true) {
+            case $this->isAttribute():
+                return $this->getAttribute()->isReadable();
+            case $this->isFormula():
+                $formula = $this->getExpressionObj();
+                foreach ($formula->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getMetaObject()->hasAttribute($attrAlias) || $this->getMetaObject()->getAttribute($attrAlias)->isReadable()) {
+                        return false;
+                    }
+                }
+                return true;
+            case $this->isStatic():
+            case $this->isEmpty():
+                return true;
+        }
+        
+        return false;
+    }
 }
