@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Widgets\Container;
 
 /**
  *
@@ -306,5 +307,26 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
 });
 
 JS;
+    }
+    
+    /**
+     * 
+     * @param string $functionName
+     * @param array $parameters
+     * @return string
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof Container && $widget->hasFunction($functionName, false)) {
+            return parent::buildJsCallFunction($functionName, $parameters);
+        }
+        
+        $js = '';
+        foreach ($this->getWidget()->getWidgets() as $child) {
+            $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);    
+        }
+        
+        return $js;
     }
 }

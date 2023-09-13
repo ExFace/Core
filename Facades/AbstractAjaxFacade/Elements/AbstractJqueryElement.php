@@ -853,15 +853,15 @@ JS;
     /**
      * Returns an inline JS snippet which disabled/enables the widget (no tailing semicolon!).
      * 
-     * @param bool $trueOrFalse
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsSetDisabled()
      */
-    public function buildJsSetDisabled(bool $trueOrFalse, bool $resetWidgetOnChange = false) : string
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
         if ($trueOrFalse === true) {
-            return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
+            return '$("#' . $this->getId() . '").prop("disabled", "disabled");';
         } else {
-            return '$("#' . $this->getId() . '").removeProp("disabled")';
+            return '$("#' . $this->getId() . '").removeProp("disabled");';
         }
     }
     
@@ -1010,6 +1010,8 @@ JS;
                 return $this->buildJsSetDisabled(false);
             case $functionName === AbstractWidget::FUNCTION_DISABLE:
                 return $this->buildJsSetDisabled(true);
+            case $functionName === AbstractWidget::FUNCTION_NONE:
+                return '';
         }
         throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }

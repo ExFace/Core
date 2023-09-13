@@ -122,7 +122,7 @@ Survey.StylesManager.applyTheme("default");
 JS;
     }
     
-    public function buildJsSetDisabled(bool $trueOrFalse, bool $resetWidgetOnChange = false) : string
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
         if ($trueOrFalse === true) {
             return $this->buildJsSurveyVar() . ".mode = 'display';";
