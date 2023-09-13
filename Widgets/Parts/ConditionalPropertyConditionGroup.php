@@ -56,8 +56,8 @@ class ConditionalPropertyConditionGroup implements WidgetPartInterface
             $uxon->appendToProperty('conditions', $condition->exportUxonObject());
         }
         
-        foreach ($this->getConditions() as $condition) {
-            $uxon->appendToProperty('conditions', $condition->exportUxonObject());
+        foreach ($this->getConditionGroups() as $condGrp) {
+            $uxon->appendToProperty('condition_groups', $condGrp->exportUxonObject());
         }
         
         return $uxon;

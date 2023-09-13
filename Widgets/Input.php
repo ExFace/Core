@@ -18,7 +18,7 @@ use exface\Core\CommonLogic\UxonObject;
  * table columns and so on.
  * 
  * Inputs will validate the received data against their `value_data_type` and display errors
- * and/or hints if this validation fails.
+ * and/or hints if this validation fails. You can also add custom validation via `invalid_if`.
  * 
  * Generic inputs like `Input` or `InputHidden` can optionally accept multiple values separated
  * by a delimiter. Use `multiple_values_allowed` and `multiple_values_delimiter` to control this.
@@ -43,6 +43,10 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     
     /**
      * Empty the input
+     * 
+     * Inputs are emptied automatically on some ocasions:
+     * - when a `hidden_if` hides the widget
+     * - when a `disabled_if` disables the widget - unless the `value` is a link to another widget
      *
      * @uxon-property empty
      *
@@ -50,9 +54,29 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      */
     const FUNCTION_EMPTY = 'empty';
     
+    /**
+     * Mark the input as required
+     *
+     * @uxon-property require
+     *
+     * @var string
+     */
+    const FUNCTION_REQUIRE = 'require';
+    
+    /**
+     * Make the input optional (not required)
+     *
+     * @uxon-property unrequire
+     *
+     * @var string
+     */
+    const FUNCTION_UNREQUIRE = 'unrequire';
+    
     private $required = null;
     
     private $requiredIf = null;
+    
+    private $invalidIf = null;
 
     private $readonly = false;
 
@@ -130,7 +154,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      *  {
      *      "widget_type": "Input",
      *      "required_if": {
-     *          "value_left": "id_of_checkbox",
+     *          "value_left": "=id_of_checkbox",
      *          "comparator": "==",
      *          "value_right": "1"
      *      }
@@ -148,6 +172,53 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function setRequiredIf(UxonObject $uxon): iCanBeRequired
     {
         $this->requiredIf = $uxon;
+        return $this;
+    }   
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getInvalidIf(): ?ConditionalProperty
+    {
+        if ($this->invalidIf === null) {
+            return null;
+        }
+        
+        if (! ($this->invalidIf instanceof ConditionalProperty)) {
+            $this->invalidIf = new ConditionalProperty($this, 'invalid_if', $this->invalidIf);
+        }
+        
+        return $this->invalidIf;
+    }
+    
+    /**
+     * Sets a condition to make the widget invalid.
+     *
+     * E.g. make an `Input` invalid if its value is less than that of another one:
+     *
+     * ```json
+     *  {
+     *      "widget_type": "Input",
+     *      "invalid_if": {
+     *          "value_left": "=~self",
+     *          "comparator": "<",
+     *          "value_right": "=id_of_other_input"
+     *      }
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property invalid_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setInvalidIf(UxonObject $uxon): Input
+    {
+        $this->invalidIf = $uxon;
         return $this;
     }    
 
@@ -449,6 +520,34 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     {
         $this->multiValueDelimiter = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHiddenIf()
+     */
+    public function getHiddenIf() : ?ConditionalProperty
+    {
+        $condProp = parent::getHiddenIf();
+        if ($condProp !== null && $condProp->getFunctionOnTrue() === null) {
+            $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
+        }
+        return $condProp;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getDisabledIf()
+     */
+    public function getDisabledIf() : ?ConditionalProperty
+    {
+        $condProp = parent::getDisabledIf();
+        if ($condProp !== null && $condProp->getFunctionOnTrue() === null && $this->getValueWidgetLink() === null) {
+            $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
+        }
+        return $condProp;
     }
 }
 ?>

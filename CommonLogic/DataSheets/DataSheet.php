@@ -405,6 +405,7 @@ class DataSheet implements DataSheetInterface
     protected function dataReadAddColumnToQuery(DataColumnInterface $col, QueryBuilderInterface $query)
     {
         $sheetObject = $this->getMetaObject();
+        $colIsAttribute = $col->isAttribute();
         // add the required attributes
         foreach ($col->getExpressionObj()->getRequiredAttributes() as $attr) {
             try {
@@ -426,7 +427,9 @@ class DataSheet implements DataSheetInterface
             
             // If the QueryBuilder for the current object can read the attribute, add it
             if ($query->canReadAttribute($attribute)) {
-                $query->addAttribute($attr);
+                // Make sure to keep custom column names for columns with attributes. In most cases, the column
+                // name will be the attribute alias, but it might get overwritten explicitly!
+                $query->addAttribute($attr, ($colIsAttribute ? $col->getName() : null));
             } elseif (! $attribute->getRelationPath()->isEmpty()) {
                 // If the query builder cannot read the attribute, make a subsheet and ultimately a separate query.
                 // To create a subsheet we need to split the relation path to the current attribute into the part 

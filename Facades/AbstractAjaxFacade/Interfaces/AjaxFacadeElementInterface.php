@@ -307,12 +307,12 @@ interface AjaxFacadeElementInterface
     public function buildJsValidationError();
 
     /**
-     * Returns an inline JS snippet which disable/enable the widget (no tailing semicolon!).
+     * Returns an JS code to disable/enable the widget (with tailing semicolon!).
      * 
      * @param bool $trueOrFalse
      * @return string
      */
-    public function buildJsSetDisabled(bool $trueOrFalse, bool $resetWidgetOnChange = false) : string;
+    public function buildJsSetDisabled(bool $trueOrFalse) : string;
     
     /**
      * Returns a JS snippet to destroy this element: i.e. remove from dom, unregister listeners, etc.
