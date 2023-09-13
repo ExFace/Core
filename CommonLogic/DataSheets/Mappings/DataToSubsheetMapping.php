@@ -126,7 +126,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
         // Otherwise use the keys to split the from-rows into multiple to-rows and thus multiple subsheets
         if (empty($fromKeyCols)) {
             if (count($toRowsUnique) > 1) {
-                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map data to a single subsheet: multiple unique to-rows require `from_key_columns` to be defined!');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map data to a single subsheet: multiple unique to-rows require `from_sheet_key_columns` to be defined!');
             }
             $subsheet = $subsheetMapper->map($fromSheet);
             $toRowsUnique[0][$subsheetCol->getName()] = $subsheet->exportUxonObject();

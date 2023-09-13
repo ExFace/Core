@@ -328,6 +328,8 @@ class DataSheetMapper implements DataSheetMapperInterface
             return $data_sheet;
         }
         
+        // TODO #DataCollector needs to be used here instead of all the following logic
+        
         // Now we know, reading missing data is not forbidden, but the sheet already has some data
         // Add missing columns automatically here if:
         // - the sheet has a UID column AND is fresh (no values changed) - this means it is more or 

@@ -405,6 +405,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function isStatic() : bool;
     
     /**
+     * Returns TRUE if the column can be read from the data source (or environment in case of static values).
+     * 
+     * Returns FALSE if the column cannot be read: e.g. if
+     * - it is of unknown type or 
+     * - references a non-readable or
+     * - contains a formula, that in turn has uses one of the above
+     * 
+     * @return bool
+     */
+    public function isReadable() : bool;
+    
+    /**
      * Returns the aggregator defined for this column or NULL if it is not aggregated
      * 
      * @return AggregatorInterface|NULL
