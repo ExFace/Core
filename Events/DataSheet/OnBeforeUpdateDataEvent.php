@@ -80,6 +80,9 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
     public function getDataSheetWithOldData() : ?DataSheetInterface
     {
         if ($this->oldDataSheet === null) {
+            
+            // TODO #DataCollector needs to be used here instead of all the following logic
+            
             $newSheet = $this->getDataSheet();
             $oldSheet = $newSheet->copy()->removeRows();
             // Only read current data if there are UIDs or filters in the original sheet!
@@ -88,16 +91,12 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
             // if ($newSheet->getFilters()->isEmpty() === false) {
             if ($newSheet->hasUidColumn(true) === true) {
                 $oldSheet->getFilters()->addConditionFromColumnValues($newSheet->getUidColumn());
-                // Remove cols that are formulas using aliases that are not attributes from the object as
-                // those attributes can not be read and therefor the formula can not be evaluated
+                // TODO Remove non-readable column from the sheet to read old data. This will
+                // ensure, that it can be read, but it is not quite clear, if non-readable columns
+                // should be concidered as "changed" by `willChange()` and `getChanges()`. 
                 foreach ($oldSheet->getColumns() as $col) {
-                    if ($col->getExpressionObj()->isFormula()) {
-                        $formula = $col->getExpressionObj();
-                        foreach ($formula->getRequiredAttributes() as $atr) {
-                            if ($oldSheet->getMetaObject()->hasAttribute($atr) === false) {
-                                $oldSheet->getColumns()->remove($col);
-                            }
-                        }
+                    if (! $col->isReadable()) {
+                        $oldSheet->getColumns()->remove($col);
                     }
                 }
                 // TODO better read max-timestamp of all nested data here!
