@@ -678,7 +678,7 @@ class ConditionGroup implements ConditionGroupInterface
         // IDEA move this logic to the condition, so it can be used generally
         $expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
         if (count($expression_strings) > 1) {
-            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
+            $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR, $base_object, $ignoreEmptyValue ?? $this->ignoreEmptyValues);
             foreach ($expression_strings as $f) {
                 $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
             }
