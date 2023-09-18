@@ -56,6 +56,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -486,9 +487,9 @@ class DataSheet implements DataSheetInterface
                 
                 // Determine the attribute alias for the subsheet
                 // Also find out if we will need to aggregate the subsheet
-                $subsheet_attribute_alias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
+                $subsheetAttributeAlias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
                 if ($attribute_aggregator) {
-                    $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
+                    $subsheetAttributeAlias = DataAggregation::addAggregatorToAlias($subsheetAttributeAlias, $attribute_aggregator);
                     // If the attribute, we are looking for has an aggregator, we need to aggregate
                     // the subsheet over the key, that we are going to use for our join later on.
                     $needGroup = true;
@@ -503,15 +504,46 @@ class DataSheet implements DataSheetInterface
                 // will mean for the specific data.
                 $subsheetId = $relPathToSubsheet->toString() . ($needGroup ? ':GROUPED' : '');
                 if (! $subsheet = $this->getSubsheets()->get($subsheetId)) {
-                    $subsheet_object = $relPathToSubsheet->getEndObject();
                     $parentSheetKeyAlias = $relPathInParentSheet->getAttributeOfEndObject($relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias())->getAliasWithRelationPath();
+                    $parentSheetKeyAttr = $sheetObject->getAttribute($parentSheetKeyAlias);
+                    $subsheetObj = $relPathToSubsheet->getEndObject();
                     $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
-                    $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
+                    
+                    // If the attribute being loaded is aggregated, there are different case to treat depending on
+                    // where exactly the aggregation needs to be done: in the subsheet only or in both sheets. 
+                    // Concider the following two examples for an app with a `DEPARTMENT` object, that references 
+                    // a core `USER_ROLE` (thus, all members of that role are seen as department members) and a `COMPANY`
+                    // inside the app itself.
+                    // - if the rows of the parent sheet do not need to be aggregated, we can leave it as-is and will
+                    // have a single foreign key per row. This is the case, if the relation path in the parent sheet
+                    // only has forward relations. This guarantees, that each row will only have at most one key for
+                    // the future JOIN. In the above example this would happen if we list all employees of a departnemnt 
+                    // via `DEPARTMENT__USER_ROLE__USER__USERNAME:LIST`. The parent sheet will have `DEPARTMENT__USER_ROLE`, 
+                    // which is one per department. The aggregation will only take place in the subsheet, where all users 
+                    // per role will be listed.
+                    // - otherwise the parent sheet rows will need to be grouped too. Thus, we need to define an aggregator
+                    // for the key expressions on both sides. We will use the non-distinct LIST aggreator to make sure,
+                    // the list contains as many items as there were rows - even if some rows had the same key values.
+                    // In the above example that would be the case if listing all employees for an entire company:
+                    // `COMPANY__DEPARTMENT__USER_ROLE__USER__USERNAME`. The parent sheet would have `COMPANY__DEPARTMENT`,
+                    // which contains a reverse relation from department to company and thus, would need to be aggregated
+                    // too.
+                    $groupedKeys = $parentSheetKeyAttr && $parentSheetKeyAttr->isRelated() && $parentSheetKeyAttr->getRelationPath()->containsReverseRelations() ? true : false;
+                    if ($groupedKeys === true) {
+                        $groupedKeysAggr = AggregatorFunctionsDataType::LIST_ALL . '(,)';
+                        $parentSheetKeyAlias = DataAggregation::addAggregatorToAlias($parentSheetKeyAlias, $groupedKeysAggr);
+                        $subsheetKeyAlias = DataAggregation::addAggregatorToAlias($subsheetKeyAlias, $groupedKeysAggr);
+                        // Now, that we know, the JOIN key is an aggregation itself, we can't group the subsheet by it.
+                        // Simply because it is not an attribute.
+                        $needGroup = false;
+                    }
+                    
+                    $subsheet = DataSheetFactory::createSubsheet($this, $subsheetObj, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
                     $this->getSubsheets()->add($subsheet, $subsheetId);
                     // Add the foreign key to the main query
                     // If the foreign key is calculated, add all attributes required to the query, otherwise just add
                     // the attribute itself
-                    if (null !== $parentSheetKeyExpr = $this->getMetaObject()->getAttribute($parentSheetKeyAlias)->getCalculationExpression()) {
+                    if (null !== $parentSheetKeyExpr = $parentSheetKeyAttr->getCalculationExpression()) {
                         foreach ($parentSheetKeyExpr->getRequiredAttributes() as $alias) {
                             $query->addAttribute($alias);
                         }
@@ -525,7 +557,7 @@ class DataSheet implements DataSheetInterface
                 }
                 
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
-                $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
+                $subsheet->getColumns()->addFromExpression($subsheetAttributeAlias);
                 
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
                 $subsheet->getColumns()->addFromExpression($subsheet->getJoinKeyAliasOfSubsheet());
@@ -640,7 +672,8 @@ class DataSheet implements DataSheetInterface
                     return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
                 }));
                 // Also add a filter over the UIDs of this sheet for the later JOIN
-                $subsheet->getFilters()->addConditionFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreign_keys), EXF_COMPARATOR_IN);
+                $foreign_keys_uid_alias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
+                $subsheet->getFilters()->addConditionFromString($foreign_keys_uid_alias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreign_keys), EXF_COMPARATOR_IN);
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);
