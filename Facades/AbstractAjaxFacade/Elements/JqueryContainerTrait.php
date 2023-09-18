@@ -324,7 +324,9 @@ JS;
         
         $js = '';
         foreach ($this->getWidget()->getWidgets() as $child) {
-            $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);    
+            if ($child->hasFunction($functionName, false)) {
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+            }
         }
         
         return $js;
