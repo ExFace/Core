@@ -52,6 +52,10 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
     {
+        if (! $this->isPrefillable()) {
+            return $data_sheet;
+        }
+        
         foreach ($this->getChildren() as $widget) {
             $widget->prefill($data_sheet);
         }
@@ -380,7 +384,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     {
         $result = array();
         foreach ($this->getWidgetsRecursive(null, $depth) as $widget) {
-            if (($widget instanceof iTakeInput) && ! $widget->isReadonly()) {
+            if (($widget instanceof iTakeInput) && ! $widget->isReadonly() && ! $widget->isDisplayOnly()) {
                 $result[] = $widget;
             }
         }
