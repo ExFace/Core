@@ -183,6 +183,15 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->setIndentActive(1);
+        
+        // Ignore creates that do not contain all compare attributes
+        foreach ($this->getCompareAttributeAliases() as $attrAlias) {
+            if (! $eventSheet->getColumns()->getByAttribute($object->getAttribute($attrAlias))) {
+                $logbook->addLine('Skip behavior as input data for compare attribute ' . $attrAlias . 'is missing.');
+                return;
+            }
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
         $mode = $this->getMode($eventSheet);
