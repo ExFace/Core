@@ -18,6 +18,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\CommonLogic\Constants\Colors;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -241,13 +242,22 @@ class NotificationContext extends AbstractContext
                     ]
                 ]
             ]));
+            
+            //add read button
             $dialog->addButton($dialog->createButton(new UxonObject([
-                'action_alias' => 'exface.Core.DeleteObject',
+                'action_alias' => 'exface.Core.NotificationRead',
                 'align' => $dialog->countButtons() <= 1 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
-                'visibility' => $dialog->countButtons() <= 1 ? WidgetVisibilityDataType::PROMOTED : WidgetVisibilityDataType::NORMAL
+                'visibility' => WidgetVisibilityDataType::NORMAL
             ])));
             
-            $dialog->setCloseButtonAction(new UxonObject(['alias' => 'exface.Core.NotificationRead']));
+            //add delete button
+            $dialog->addButton($dialog->createButton(new UxonObject([
+                'action_alias' => 'exface.Core.DeleteObject',
+                'align' => $dialog->countButtons() <= 2 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
+                'visibility' => WidgetVisibilityDataType::NORMAL,
+                'color' => Colors::SEMANTIC_ERROR
+            ])));
+            
             
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);
