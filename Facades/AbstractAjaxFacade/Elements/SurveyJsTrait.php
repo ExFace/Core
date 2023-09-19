@@ -107,9 +107,11 @@ HTML;
      */
     protected function buildJsSurveyInitOptions(string $oSurveyJs = 'oSurvey') : string
     {
+        $disableJs = $this->getWidget()->isDisabled() ? "{$oSurveyJs}.mode = 'display';" : '';
         return <<<JS
         
     $oSurveyJs.locale = '{$this->getSurveyLocale()}';    
+    $disableJs
 JS;
     }
     
@@ -124,11 +126,8 @@ JS;
     
     public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
-        if ($trueOrFalse === true) {
-            return $this->buildJsSurveyVar() . ".mode = 'display';";
-        } else {
-            return $this->buildJsSurveyVar() . ".mode = 'edit';";
-        }
+        $mode = $trueOrFalse ? 'display' : 'edit';
+        return "{$this->buildJsSurveyVar()}.mode = '{$mode}'";
     }
     
     /**
