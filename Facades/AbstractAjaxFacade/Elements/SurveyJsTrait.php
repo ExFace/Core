@@ -168,15 +168,28 @@ JS;
      */
     public function buildJsValueSetter($value)
     {
+        // Make sure not to re-render the survey if its model is still the same! Otherwise
+        // any unsaved input will be lost every time the value setter is called - which
+        // in most cases does NOT change the survery model, but merely its data (= answers)
         return <<<JS
-(function(){
-    var oSurvey = new Survey.Model({$this->buildJsSurveyModelGetter()});
+(function(jqContainer){
+    var oConfig = {$this->buildJsSurveyModelGetter()};
+    var oConfigCurrent = jqContainer.data('survey-config');
+    var oSurvey = {$this->buildJsSurveyVar()} || null;
+
+    if (oSurvey !== null && oConfigCurrent === oConfig) {
+        return;
+    }
+
+    oSurvey = new Survey.Model(oConfig);
     oSurvey.data = (JSON.parse({$value} || '{}'));
     {$this->buildJsSurveyInitOptions('oSurvey')};
     
-    oSurvey.render("{$this->getIdOfSurveyDiv()}");
+    oSurvey.render(jqContainer[0]);
+
     {$this->buildJsSurveyVar()} = oSurvey;
-})()
+    jqContainer.data('survey-config', oConfig);
+})($('#{$this->getIdOfSurveyDiv()}'))
 
 JS;
     }
