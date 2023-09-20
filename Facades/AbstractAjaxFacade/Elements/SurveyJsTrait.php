@@ -177,18 +177,15 @@ JS;
     var oConfigCurrent = jqContainer.data('survey-config');
     var oSurvey = {$this->buildJsSurveyVar()} || null;
 
-    if (oSurvey !== null && oConfigCurrent === oConfig) {
-        return;
+    if (oSurvey === null || oConfigCurrent !== oConfig) {
+        oSurvey = new Survey.Model(oConfig);
+        {$this->buildJsSurveyInitOptions('oSurvey')};
+        oSurvey.render(jqContainer[0]);
+        jqContainer.data('survey-config', oConfig);
+        {$this->buildJsSurveyVar()} = oSurvey;
     }
 
-    oSurvey = new Survey.Model(oConfig);
     oSurvey.data = (JSON.parse({$value} || '{}'));
-    {$this->buildJsSurveyInitOptions('oSurvey')};
-    
-    oSurvey.render(jqContainer[0]);
-
-    {$this->buildJsSurveyVar()} = oSurvey;
-    jqContainer.data('survey-config', oConfig);
 })($('#{$this->getIdOfSurveyDiv()}'))
 
 JS;
