@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputFormDesigner;
+use exface\Core\DataTypes\LocaleDataType;
 
 /**
  * Helps implement InputForm and InputFormDesigner widgets with Survey JS and jQuery.
@@ -15,6 +16,7 @@ use exface\Core\Widgets\InputFormDesigner;
  * To use this trait, you will need the following JS dependency:
  *
  * ```
+ * "npm-asset/survey-core": "^1",
  * "npm-asset/survey-knockout": "^1",
  * "npm-asset/survey-creator": "^1"
  *
@@ -27,6 +29,7 @@ use exface\Core\Widgets\InputFormDesigner;
  * ```
  * 	"LIBS.SURVEY.KNOCKOUT_JS": "npm-asset/knockout/build/output/knockout-latest.js",
  * 	"LIBS.SURVEY.SURVEY_JS": "npm-asset/survey-knockout/survey.ko.min.js",
+ * 	"LIBS.SURVEY.SURVEY_JS_I18N": "npm-asset/survey-core/survey.i18n.min.js",
  * 	"LIBS.SURVEY.SURVEY_CSS": "npm-asset/survey-knockout/survey.min.css",
  * 	"LIBS.SURVEY.THEME_CSS": "<path_to_your_theme>",
  * 	"LIBS.SURVEY.CREATOR_JS": "npm-asset/survey-creator/survey-creator.min.js",
@@ -145,6 +148,10 @@ JS;
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_CSS') . '">';
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_CSS') . '">';
         
+        if ($this->getSurveyLocale() !== 'en') {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_JS_I18N') . '"></script>';
+        }
+        
         if ($this->getWidget() instanceof InputFormDesigner) {
             foreach ($facade->getConfig()->getOption('LIBS.SURVEY.CREATOR_ACE_JS') as $url) {
                 $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile($url) . '"></script>';
@@ -158,7 +165,7 @@ JS;
     
     protected function getSurveyLocale() : string
     {
-        return $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
+        return LocaleDataType::findLanguage($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale());
     }
     
     /**
