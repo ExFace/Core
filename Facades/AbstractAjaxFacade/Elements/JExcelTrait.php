@@ -30,6 +30,8 @@ use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\DataTable;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -1699,5 +1701,28 @@ JS;
     protected function buildJsCheckHidden(string $jqElement) : string
     {
         return "($jqElement.parents().filter(':visible').length !== $jqElement.parents().length)";
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function buildJsEmpty() : string
+    {
+        return $this->buildJsDataSetter('[]');
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AjaxFacadeElementInterface::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === DataTable::FUNCTION_EMPTY:
+                return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
     }
 }

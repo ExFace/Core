@@ -9,15 +9,44 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Applies a data mapper to a column with subsheets - i.e. to each subsheet in that column.
  * 
+ * This mapping will be ignored if the input mapper does not contain a column for 
+ * `from_subsheet_relation_path` or that column does not have data.
+ * 
  * ## Examples
  * 
- * TODO
+ * ### Add auto-calculated column to subsheet
+ * 
+ * The following mapper will sets the `DUE_DATE` of all items to 5 days from now in a
+ * data sheet with a list of projects, where the column `OPEN_ITEM` contains a subsheet
+ * with open items for each project. The other columns in the subsheet will remain untouched
+ * because the mapper does not change the meta object and, thus, all columns will be inherited.
+ * 
+ * ```
+ *  {
+ *    "from_object_alias": "my.App.PROJECT",
+ *    "to_object_alias": "my.App.PROJECT",
+ *    "subsheet_mappings": [
+ *        {
+ *          "from_subsheet_relation_path": "OPEN_ITEM",
+ *          "to_subsheet_relation_path": "OPEN_ITEM",
+ *          "subsheet_mapper": {
+ *            "column_to_column_mappings": [
+ *              {
+ *                "from": "=DateAdd(Now(), 5)",
+ *                "to": "DUE_DATE"
+ *              }
+ *            ]
+ *          }
+ *        }
+ *     ]
+ *  }
+ *    
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -42,7 +71,8 @@ class SubsheetMapping extends AbstractDataSheetMapping
         $subsheetMapper = $this->getSubsheetMapper();
         $fromSubsheetCol = $fromSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString());
         if (! $fromSubsheetCol) {
-            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Subsheet-column "' . $this->getFromSubsheetRelationString() . '" not found in data!');
+            if ($logbook) $logbook->addLine("Subsheet `{$this->getFromSubsheetRelationString()}` NOT FOUND - ignoring mapper");
+            return $toSheet;
         }
         
         // Make sure, the to-sheet has a column for the subsheet
@@ -76,7 +106,7 @@ class SubsheetMapping extends AbstractDataSheetMapping
         }  
         
         if ($fromSheet->getMetaObject() === $toSheet->getMetaObject()) {
-            if ($removeCol = $toSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString())) {
+            if ($toSubsheetCol !== $removeCol = $toSheet->getColumns()->getByExpression($this->getFromSubsheetRelationString())) {
                 $toSheet->getColumns()->remove($removeCol);
             }
         }
