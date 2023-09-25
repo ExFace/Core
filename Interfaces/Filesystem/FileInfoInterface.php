@@ -9,7 +9,7 @@ interface FileInfoInterface extends \Stringable
      * @param bool $withFilename
      * @return string
      */
-    public function getPath(bool $withFilename = true) : string;
+    public function getPath() : string;
     
     /**
      * 

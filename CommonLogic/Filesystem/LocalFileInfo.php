@@ -283,7 +283,7 @@ class LocalFileInfo implements FileInfoInterface
         if ($folderPath === null || $folderPath === '') {
             return null;
         }
-        return new LocalFileInfo($folderPath, $this->object->getWorkbench());
+        return new LocalFileInfo($folderPath);
     }
     
     /**
