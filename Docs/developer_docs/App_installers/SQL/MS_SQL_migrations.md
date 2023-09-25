@@ -9,7 +9,7 @@ Replace `{TABLE_NAME}` with the name of your desired table and `dbo` if using a 
 ### Create a table
 
 ```
-IF OBJECT_ID ({TABLE_NAME}', N'U') IS NULL 
+IF OBJECT_ID ('{TABLE_NAME}', N'U') IS NULL 
 CREATE TABLE "{TABLE_NAME}" (
 	"Id" BIGINT NOT NULL,
 	PRIMARY KEY ("Id")
@@ -65,6 +65,15 @@ BEGIN
 	ALTER TABLE "dbo"."{TABLE_NAME}"
 		ALTER COLUMN "{COLUMN_NAME}" BIGINT NOT NULL
 END
+```
+
+**NOTE:** The `EXEC` in the middle makes sure, the `ALTER TABLE` changes are applied __before__ the `UPDATE`. If the whole script is not placed in `BEGIN/END`, you can also put a `GO` in the middle to force changes to be applied.
+
+```
+IF COL_LENGTH('dbo.my_table','col1') IS NOT NULL
+EXEC sp_rename 'dbo.my_table.col1', 'col2', 'COLUMN';
+GO
+ALTER TABLE [dbo].[my_table] ALTER COLUMN [col2] nvarchar(max) NULL;
 ```
 
 ### Remove columns 
