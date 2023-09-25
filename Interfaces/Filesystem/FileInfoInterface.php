@@ -151,11 +151,10 @@ interface FileInfoInterface extends \Stringable
      * The mode for opening the file. See the fopen documentation for descriptions of possible modes. 
      * The default is read only.
      * 
-     * @param string $open_mode
-     * @param bool $use_include_path
+     * @param string $mode
      * @return FileInterface
      */
-    public function openFile(string $open_mode = null, bool $use_include_path = null) : FileInterface;
+    public function openFile(string $mode = null) : FileInterface;
     
     /**
      *

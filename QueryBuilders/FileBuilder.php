@@ -132,9 +132,9 @@ class FileBuilder extends AbstractQueryBuilder
     const DAP_DELETE_EMPTY_FOLDERS = 'delete_empty_folders';
     
     
-    const ATTR_ADDRESS_PREFIX_FILE= '~file';
+    const ATTR_ADDRESS_PREFIX_FILE= '~file:';
     
-    const ATTR_ADDRESS_PREFIX_FOLDER = '~folder';
+    const ATTR_ADDRESS_PREFIX_FOLDER = '~folder:';
     
     const ATTR_ADDRESS_PATH_ABSOLUTE = 'path_absolute';
     
@@ -672,7 +672,6 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $deletedFileNr = 0;
         $query = new FileWriteDataQuery();
         if (null !== $deleteEmptyFolder = BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DELETE_EMPTY_FOLDERS))) {
             $query->setDeleteEmptyFolders($deleteEmptyFolder);
@@ -681,10 +680,10 @@ class FileBuilder extends AbstractQueryBuilder
         /* @var FileInfoInterface $file */
         foreach ($dataConnection->query($this->buildQueryToRead())->getFiles() as $file) {
             $query->addFileToDelete($file);
-            $deletedFileNr++;
         }
+        $performed = $dataConnection->query($query);
         
-        return new DataQueryResultData([], $deletedFileNr);
+        return new DataQueryResultData([], $performed->countAffectedRows());
     }
 
     /**
@@ -726,7 +725,7 @@ class FileBuilder extends AbstractQueryBuilder
         
         // Pass ~folder:xxx addresses to the parent folder and handle ~file:xxx here directly
         if (StringDataType::startsWith($fieldLC, self::ATTR_ADDRESS_PREFIX_FOLDER)) {
-            $folderAddr = substr($dataAddress, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
+            $folderAddr = substr($fieldLC, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
             $folderAddr = strpos($folderAddr, ':') === false ? self::ATTR_ADDRESS_PREFIX_FILE . $folderAddr : $folderAddr;
             return $this->buildResultValueFromFile($file->getFolderInfo(), $folderAddr);
         } else {
@@ -770,8 +769,10 @@ class FileBuilder extends AbstractQueryBuilder
                     $fieldLC = self::ATTR_ADDRESS_EXTENSION;
                     break;
                 // Current data addresses with `~file:xxx` - remove the `~file:` prefix
+                // If it is not there, just keep the address as-is. This might happen for
+                // legacy addresses like `extension`, that did not have prefixes.
                 default:
-                    $fieldLC = StringDataType::substringAfter($fieldLC, self::ATTR_ADDRESS_PREFIX_FILE);
+                    $fieldLC = StringDataType::substringAfter($fieldLC, self::ATTR_ADDRESS_PREFIX_FILE, $fieldLC);
                     break;
             }
         }
@@ -802,7 +803,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $value = $file->getMimetype();
                 break;
             case self::ATTR_ADDRESS_CONTENT:
-                $value = $file->isFile() ? $file->getContents() : null;
+                $value = $file->isFile() ? $file->openFile()->read() : null;
                 break;
             case self::ATTR_ADDRESS_EXTENSION:
                 $value = $file->getExtension();
