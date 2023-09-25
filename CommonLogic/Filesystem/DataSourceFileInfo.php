@@ -359,7 +359,7 @@ class DataSourceFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::openFile()
      */
-    public function openFile(string $open_mode = null, bool $use_include_path = null) : FileInterface
+    public function openFile(string $mode = null) : FileInterface
     {
         return new DataSourceFile($this);
     }

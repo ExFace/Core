@@ -85,9 +85,20 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function getPath() : string
     {
-        $path = $this->splFileInfo->getPathname();
-        if (null === $normalized = ($this->normalized[$path][$this->directorySeparator] || null)) {
+        return $this->normalize($this->splFileInfo->getPathname());
+    }
+    
+    /**
+     * 
+     * @param string $path
+     * @return string
+     */
+    protected function normalize(string $path) : string
+    {
+        $normalized = $this->normalized[$path][$this->directorySeparator] ?? null;
+        if (null === $normalized) {
             $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
+            $this->normalized[$path][$this->directorySeparator] = $normalized;
         }
         return $normalized;
     }
@@ -99,11 +110,10 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function getBasePath() : ?string
     {
-        $path = $this->basePath;
-        if (null === $normalized = ($this->normalized[$path][$this->directorySeparator] || null)) {
-            $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
+        if ($this->basePath === null) {
+            return null;
         }
-        return $normalized;
+        return $this->normalize($this->basePath);
     }
     
     /**
@@ -113,7 +123,7 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function isPathAbsolute() : bool
     {
-        return FilePathDataType::isAbsolute($this->getPath());
+        return FilePathDataType::isAbsolute($this->splFileInfo->getPathname());
     }
     
     /**
@@ -237,9 +247,9 @@ class LocalFileInfo implements FileInfoInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::openFile()
      */
-    public function openFile(string $open_mode = null, bool $use_include_path = null) : FileInterface
+    public function openFile(string $mode = null) : FileInterface
     {
-        return new DataSourceFile($this);
+        return new LocalFile($this, $mode);
     }
     
     /**

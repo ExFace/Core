@@ -24,10 +24,10 @@ class LocalFile implements FileInterface
      * @param LocalFileInfo $fileInfo
      * @param string $mode
      */
-    public function __construct(LocalFileInfo $fileInfo, string $mode = 'r+')
+    public function __construct(LocalFileInfo $fileInfo, string $mode = null)
     {
         $this->fileInfo = $fileInfo;
-        $this->mode = $mode;
+        $this->mode = $mode ?? 'r+';
     }
     
     /**
@@ -46,7 +46,7 @@ class LocalFile implements FileInterface
      */
     public function read() : string
     {
-        return file_get_contents();
+        return file_get_contents($this->getFileInfo()->getPathAbsolute());
     }
     
     /**
