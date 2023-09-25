@@ -122,6 +122,15 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     
     use DataTableTrait;
     
+    /**
+     * Empty the table
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
+    
     private $empty_text = null;
     
     private $previewButton = null;

@@ -45,7 +45,11 @@ trait JqueryInputTrait
             case $functionName === Input::FUNCTION_FOCUS:
                 return "setTimeout(function(){ $('#{$this->getId()}').focus(); }, 0);";
             case $functionName === Input::FUNCTION_EMPTY:
-                return "setTimeout(function(){ {$this->buildJsResetter()} }, 0);";
+                return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
+            case $functionName === Input::FUNCTION_REQUIRE:
+                return "setTimeout(function(){ {$this->buildJsSetRequired(true)} }, 0);";
+            case $functionName === Input::FUNCTION_UNREQUIRE:
+                return "setTimeout(function(){ {$this->buildJsSetRequired(false)} }, 0);";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
     }
@@ -72,5 +76,21 @@ trait JqueryInputTrait
         } else {
             return "$('#{$this->getId()}').removeProp('required');";
         }
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsEmpty() : string
+    {
+        return <<<JS
+        (function(){
+			var val = {$this->buildJsValueGetter()};
+            if (val !== undefined && val !== '' && val !== null) {
+                {$this->buildJsValueSetter("''")}
+            }
+        })()
+JS;
     }
 }

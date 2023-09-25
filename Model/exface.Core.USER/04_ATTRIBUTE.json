@@ -682,7 +682,7 @@
         },
         {
             "CREATED_ON": "2023-06-16 10:58:47",
-            "MODIFIED_ON": "2023-06-22 10:41:35",
+            "MODIFIED_ON": "2023-09-19 09:00:06",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ee875401e224828754025041000001",
@@ -705,7 +705,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "FULL_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
-            "DATA_ADDRESS": "(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#]))",
+            "DATA_ADDRESS": "(CASE \n  WHEN ([#FIRST_NAME#] IS NOT NULL AND [#FIRST_NAME#] <> '') OR ([#LAST_NAME#] IS NOT NULL AND [#LAST_NAME#] <> '') THEN TRIM(CONCAT([#FIRST_NAME#], ' ', [#LAST_NAME#]))\n  ELSE [#USERNAME#]\nEND)",
             "OBJECT": "0x31343400000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,

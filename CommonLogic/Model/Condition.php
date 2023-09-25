@@ -582,8 +582,7 @@ class Condition implements ConditionInterface
                 foreach ($rightParts as $part) {
                     // trim the $part value as list read from data source might be
                     // seperated by list delimiter and whitespace
-                    // TODO find a better solution for that?
-                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, trim($part, ' '))) {
+                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, trim($part))) {
                         return $resposeOnFound;
                     }
                 }

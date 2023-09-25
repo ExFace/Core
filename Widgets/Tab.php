@@ -116,6 +116,9 @@ class Tab extends Panel
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
+        if (! $this->isPrefillable()) {
+            return $data_sheet;
+        }
         parent::doPrefill($data_sheet);
         if ($this->getBadgeAttributeAlias()) {
             if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {

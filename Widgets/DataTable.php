@@ -99,6 +99,15 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
 {
     use DataTableTrait;
     use EditableTableTrait;
+    
+    /**
+     * Empty the table
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
 
     private $show_filter_row = null;
 
