@@ -20,7 +20,15 @@ class LocalFileInfo implements FileInfoInterface
     
     private $directorySeparator = null;
     
-    private $normalized = [];
+    /**
+     * Global static cache for normalized paths: $normalized[$path][$dirSepararator] = $normalizedPath
+     * 
+     * Since all local paths work similarly, it makes sense to use a static cache accross
+     * all FileInfo classes! This will particularly speed up normalization of common base paths.
+     * 
+     * @var string[][]
+     */
+    protected static $normalized = [];
     
     /**
      * 
@@ -95,10 +103,10 @@ class LocalFileInfo implements FileInfoInterface
      */
     protected function normalize(string $path) : string
     {
-        $normalized = $this->normalized[$path][$this->directorySeparator] ?? null;
+        $normalized = static::$normalized[$path][$this->directorySeparator] ?? null;
         if (null === $normalized) {
             $normalized = FilePathDataType::normalize($path, $this->directorySeparator);
-            $this->normalized[$path][$this->directorySeparator] = $normalized;
+            static::$normalized[$path][$this->directorySeparator] = $normalized;
         }
         return $normalized;
     }

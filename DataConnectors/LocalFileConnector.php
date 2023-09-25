@@ -67,16 +67,21 @@ class LocalFileConnector extends TransparentConnector
      */
     protected function performRead(FileReadDataQuery $query) : FileReadDataQuery
     {
+        // TODO when to normalize paths? Always normalize to "/" or to "\"?
         $paths = [];
         
         // Prepare an array of absolute paths to search in
+        // Note: $query->getBasePath() already includes the base path of this connection
+        // - see `performQuery()`
+        $basePath = $query->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
+        $basePath = FilePathDataType::normalize($basePath);
         foreach ($query->getFolders() as $path) {
-            $paths[] = $this->addBasePath($path, $query);
+            $paths[] = $this->addBasePath($path, $basePath);
         }
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
         if (empty($paths)) {
-            $paths[] = $query->getBasePath();
+            $paths[] = $basePath;
         }
         
         // Now doublecheck if all explicit (non-wildcard) paths exists because otherwise
@@ -129,10 +134,6 @@ class LocalFileConnector extends TransparentConnector
         }
         
         try {
-            $basePath = $query->getBasePath();
-            if ($basePath) {
-                $basePath = FilePathDataType::normalize($basePath);
-            }
             $finder->in($pathsFiltered);
             return $query->withResult($this->createGenerator($finder, $basePath));
         } catch (\Exception $e) {
@@ -140,6 +141,12 @@ class LocalFileConnector extends TransparentConnector
         }
     }
     
+    /**
+     * 
+     * @param Finder $finder
+     * @param string $basePath
+     * @return \Generator
+     */
     protected function createGenerator(Finder $finder, string $basePath = null) : \Generator
     {
         foreach ($finder as $file) {
@@ -210,15 +217,16 @@ class LocalFileConnector extends TransparentConnector
      * @param string $pathRelativeOrAbsolute
      * @return string
      */
-    protected function addBasePath(string $pathRelativeOrAbsolute, FileDataQueryInterface $query) : string
+    protected function addBasePath(string $pathRelativeOrAbsolute, string $basePath) : string
     {
-        $basePath = $query->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
         if (! FilePathDataType::isAbsolute($pathRelativeOrAbsolute)) {
             $path = FilePathDataType::join([
                 $basePath,
                 $pathRelativeOrAbsolute
             ]);
-        } 
+        } else {
+            $path = $pathRelativeOrAbsolute;
+        }
         
         return FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
     }
