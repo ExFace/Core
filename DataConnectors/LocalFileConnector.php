@@ -95,18 +95,9 @@ class LocalFileConnector extends TransparentConnector
         }
         
         $finder = new Finder();
-        switch (count($query->getFilenamePatterns())) {
-            case 0:
-                break;
-            case 1:
-                $query->getFinder()->name(array_key_first($query->getFilenamePatterns()));
-                break;
-            default:
-                throw new DataQueryFailedError($query, 'Cannot handle multiple file name patterns in one local file query at the moment');
-        }
         
         if ($query->getFolderDepth() !== null) {
-            $query->getFinder()->depth($query->getFolderDepth());
+            $finder->depth($query->getFolderDepth());
         }
         
         // Make sure not to have double paths as Symfony FileFinder will yield results for each path separately
@@ -115,7 +106,7 @@ class LocalFileConnector extends TransparentConnector
         $pathsFiltered = $paths;
         foreach ($paths as $path) {
             $path = FilePathDataType::normalize($path);
-            if (strpos($path, '*')) {
+            if (strpos($path, '*') !== false) {
                 foreach ($paths as $i => $otherPath) {
                     $otherPath = FilePathDataType::normalize($otherPath);
                     if ($otherPath !== $path && fnmatch($path, $otherPath)) {
@@ -125,20 +116,34 @@ class LocalFileConnector extends TransparentConnector
             }
         }
         
+        $names = $query->getFilenamePatterns();
+        switch (count($names)) {
+            case 0:
+                break;
+            case 1:
+                $finder->name($names[array_key_first($names)]);
+                break;
+            default:
+                // FIXME combine multiple patterns or call finder multiple times?
+                throw new DataQueryFailedError($query, 'Cannot handle multiple file name patterns in one local file query at the moment');
+        }
+        
         try {
             $basePath = $query->getBasePath();
             if ($basePath) {
                 $basePath = FilePathDataType::normalize($basePath);
             }
             $finder->in($pathsFiltered);
-            $generator = function() use ($finder, $basePath) {
-                foreach ($finder as $file) {
-                    yield new LocalFileInfo($file, $basePath);
-                }
-            };
-            return $query->withResult($generator);
+            return $query->withResult($this->createGenerator($finder, $basePath));
         } catch (\Exception $e) {
             throw new DataQueryFailedError($query, "Failed to read local files", null, $e);
+        }
+    }
+    
+    protected function createGenerator(Finder $finder, string $basePath = null) : \Generator
+    {
+        foreach ($finder as $file) {
+            yield new LocalFileInfo($file, $basePath);
         }
     }
     

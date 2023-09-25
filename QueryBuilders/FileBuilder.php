@@ -136,37 +136,39 @@ class FileBuilder extends AbstractQueryBuilder
     
     const ATTR_ADDRESS_PREFIX_FOLDER = '~folder';
     
-    const ATTR_ADDRESS_PATH_ABSOLUTE = 'path_absolute';
+    const ATTR_ADDRESS_PATH_ABSOLUTE = '~path_absolute';
     
-    const ATTR_ADDRESS_PATH_RELATIVE = 'path_relative';
+    const ATTR_ADDRESS_PATH_RELATIVE = '~path_relative';
     
-    const ATTR_ADDRESS_SUBPATH = 'subpath';
+    const ATTR_ADDRESS_LINE = '~line';
     
-    const ATTR_ADDRESS_CONTENT = 'content';
+    const ATTR_ADDRESS_SUBPATH = '~subpath';
     
-    const ATTR_ADDRESS_NAME = 'name';
+    const ATTR_ADDRESS_CONTENT = '~content';
     
-    const ATTR_ADDRESS_NAME_WITHOUT_EXTENSION = 'name_without_extension';
+    const ATTR_ADDRESS_NAME = '~name';
     
-    const ATTR_ADDRESS_EXTENSION = 'extension';
+    const ATTR_ADDRESS_NAME_WITHOUT_EXTENSION = '~name_without_extension';
     
-    const ATTR_ADDRESS_SIZE = 'size';
+    const ATTR_ADDRESS_EXTENSION = '~extension';
     
-    const ATTR_ADDRESS_MIMETYPE = 'mimetype';
+    const ATTR_ADDRESS_SIZE = '~size';
     
-    const ATTR_ADDRESS_MTIME = 'mtime';
+    const ATTR_ADDRESS_MIMETYPE = '~mimetype';
     
-    const ATTR_ADDRESS_CTIME = 'ctime';
+    const ATTR_ADDRESS_MTIME = '~mtime';
     
-    const ATTR_ADDRESS_IS_FILE= 'is_file';
+    const ATTR_ADDRESS_CTIME = '~ctime';
     
-    const ATTR_ADDRESS_IS_FOLDER = 'is_folder';
+    const ATTR_ADDRESS_IS_FILE= '~is_file';
     
-    const ATTR_ADDRESS_IS_LINK = 'is_link';
+    const ATTR_ADDRESS_IS_FOLDER = '~is_folder';
     
-    const ATTR_ADDRESS_IS_READABLE = 'is_readable';
+    const ATTR_ADDRESS_IS_LINK = '~is_link';
     
-    const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
+    const ATTR_ADDRESS_IS_READABLE = '~is_readable';
+    
+    const ATTR_ADDRESS_IS_WRITABLE = '~is_writable';
     
     
     /**
@@ -218,7 +220,7 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFilename(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_FILENAME || $addr === 'name' || $addr === 'filename';
+        return $addr === FileBuilder::ATTR_ADDRESS_NAME || $addr === 'name' || $addr === 'filename';
     }
     
     /**
@@ -559,24 +561,27 @@ class FileBuilder extends AbstractQueryBuilder
         }
         
         $query = $this->buildQueryToRead();
-        $files = $dataConnection->query($query)->getFiles();
+        $performedQuery = $dataConnection->query($query);
         $rownr = - 1;
-        foreach ($files as $file) {
+        $fullScan = $query->isFullScanRequired();
+        $limit = $this->getLimit();
+        $offset = $this->getOffset();
+        foreach ($performedQuery->getFiles() as $file) {
             // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
-            if (! $query->getFullScanRequired()) {
+            if (! $fullScan) {
                 $pagination_applied = true;
                 $rownr ++;
                 // Skip rows, that are positioned below the offset
-                if (! $query->getFullScanRequired() && $rownr < $this->getOffset()) {
+                if ($rownr < $this->getOffset()) {
                     continue;
                 }
                 // Skip rest if we are over the limit
-                if (! $query->getFullScanRequired() && $this->getLimit() > 0 && $rownr >= $this->getOffset() + $this->getLimit()) {
+                if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
                     break;
                 }
             }
             // Otherwise add the file data to the result rows
-            $result_rows[] = $this->buildResultRow($file, $query);
+            $result_rows[] = $this->buildResultRow($file);
         }
         $totalCount = count($result_rows);
         
@@ -717,7 +722,6 @@ class FileBuilder extends AbstractQueryBuilder
             $fieldLC = self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_RELATIVE;
         } elseif ($fieldLC === '~folder' || $fieldLC === 'folder_name') {
             $fieldLC = self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_NAME;
-            break;
         }
         
         // Pass ~folder:xxx addresses to the parent folder and handle ~file:xxx here directly

@@ -33,7 +33,7 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     {
         $instance = clone $this;
         $instance->resultGenerator = $fileInfoGenerator;
-        return $this;
+        return $instance;
     }
     
     /**
