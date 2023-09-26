@@ -24,6 +24,17 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     
     private $resultCache = null;
     
+    private $directorySeparator = null;
+    
+    /**
+     * 
+     * @param string $directorySeparator
+     */
+    public function __construct(string $directorySeparator = '/')
+    {
+        $this->directorySeparator = $directorySeparator;
+    }
+    
     /**
      * 
      * @param iterable $fileInfoGenerator
@@ -136,7 +147,7 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     public function setBasePath(string $absolutePath) : FileReadDataQuery
     {
-        $this->basePath = Filemanager::pathNormalize($absolutePath);
+        $this->basePath = Filemanager::pathNormalize($absolutePath, $this->getDirectorySeparator());
         return $this;
     }
 
@@ -210,5 +221,31 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     {
         $this->folderDepth = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\FileDataQueryInterface::getDirectorySeparator()
+     */
+    public function getDirectorySeparator() : string
+    {
+        return $this->directorySeparator;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataQueries\AbstractDataQuery::countAffectedRows()
+     */
+    public function countAffectedRows()
+    {
+        if (! $this->isPerformed()) {
+            return 0;
+        }
+        if ($this->resultCache === null) {
+            return 0;
+        }
+        return count($this->resultCache);
     }
 }

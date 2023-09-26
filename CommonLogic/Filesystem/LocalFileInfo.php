@@ -301,7 +301,7 @@ class LocalFileInfo implements FileInfoInterface
         if ($folderPath === null || $folderPath === '') {
             return null;
         }
-        return new LocalFileInfo($folderPath);
+        return new LocalFileInfo($folderPath, $this->getBasePath(), $this->getDirectorySeparator());
     }
     
     /**

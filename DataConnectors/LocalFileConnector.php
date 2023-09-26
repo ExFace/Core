@@ -67,16 +67,14 @@ class LocalFileConnector extends TransparentConnector
      */
     protected function performRead(FileReadDataQuery $query) : FileReadDataQuery
     {
-        // TODO when to normalize paths? Always normalize to "/" or to "\"?
         $paths = [];
         
         // Prepare an array of absolute paths to search in
         // Note: $query->getBasePath() already includes the base path of this connection
         // - see `performQuery()`
-        $basePath = $query->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
-        $basePath = FilePathDataType::normalize($basePath);
+        $basePath = $query->getBasePath();
         foreach ($query->getFolders() as $path) {
-            $paths[] = $this->addBasePath($path, $basePath);
+            $paths[] = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
         }
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
@@ -110,10 +108,10 @@ class LocalFileConnector extends TransparentConnector
         // Also try to filter out paths that match paterns in other paths
         $pathsFiltered = $paths;
         foreach ($paths as $path) {
-            $path = FilePathDataType::normalize($path);
+            $path = FilePathDataType::normalize($path, $query->getDirectorySeparator());
             if (strpos($path, '*') !== false) {
                 foreach ($paths as $i => $otherPath) {
-                    $otherPath = FilePathDataType::normalize($otherPath);
+                    $otherPath = FilePathDataType::normalize($otherPath, $query->getDirectorySeparator());
                     if ($otherPath !== $path && fnmatch($path, $otherPath)) {
                         unset($pathsFiltered[$i]);
                     }
@@ -135,7 +133,7 @@ class LocalFileConnector extends TransparentConnector
         
         try {
             $finder->in($pathsFiltered);
-            return $query->withResult($this->createGenerator($finder, $basePath));
+            return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator()));
         } catch (\Exception $e) {
             throw new DataQueryFailedError($query, "Failed to read local files", null, $e);
         }
@@ -145,12 +143,13 @@ class LocalFileConnector extends TransparentConnector
      * 
      * @param Finder $finder
      * @param string $basePath
+     * @param string $directorySeparator
      * @return \Generator
      */
-    protected function createGenerator(Finder $finder, string $basePath = null) : \Generator
+    protected function createGenerator(Finder $finder, string $basePath = null, string $directorySeparator = '/') : \Generator
     {
         foreach ($finder as $file) {
-            yield new LocalFileInfo($file, $basePath);
+            yield new LocalFileInfo($file, $basePath, $directorySeparator);
         }
     }
     
@@ -168,16 +167,13 @@ class LocalFileConnector extends TransparentConnector
             if ($path === null || $content === null) {
                 continue;
             }
-            $path = $this->addBasePath($path, $query);
+            $path = $this->addBasePath($path, $query, $query->getDirectorySeparator());
             $fm->dumpFile($path, $content);
             $resultFiles[] = new LocalFileInfo($path);
         }
         
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
         foreach ($query->getFilesToDelete() as $pathOrInfo) {
-            if ($path === null || $content === null) {
-                continue;
-            }
             if ($pathOrInfo instanceof FileInfoInterface) {
                 $path = $pathOrInfo->getPath();
                 $fileInfo = $pathOrInfo;
@@ -185,13 +181,16 @@ class LocalFileConnector extends TransparentConnector
                 $path = $pathOrInfo;
                 $fileInfo = null;
             }
-            $path = $this->addBasePath($path, $query);
+            
+            $basePath = $query->getBasePath();
+            if ($basePath !== null) {
+                $path = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
+            }
             
             if (! file_exists($path)) {
                 continue;
             }
             
-            $folder = FilePathDataType::findFolder($path);
             
             if (is_dir($path)) {
                 $fm->deleteDir($path);
@@ -204,8 +203,11 @@ class LocalFileConnector extends TransparentConnector
             
             $resultFiles[] = $fileInfo ?? new LocalFileInfo($path);
             
-            if ($folder !== '' && $deleteEmptyFolders === true && $fm::isDirEmpty($folder)) {
-                $fm::deleteDir($folder);
+            if ($deleteEmptyFolders === true) {
+                $folder = FilePathDataType::findFolder($path);
+                if ($folder !== '' && $fm::isDirEmpty($folder)) {
+                    $fm::deleteDir($folder);
+                }
             }
         }
         
@@ -217,7 +219,7 @@ class LocalFileConnector extends TransparentConnector
      * @param string $pathRelativeOrAbsolute
      * @return string
      */
-    protected function addBasePath(string $pathRelativeOrAbsolute, string $basePath) : string
+    protected function addBasePath(string $pathRelativeOrAbsolute, string $basePath, string $directorySeparator = DIRECTORY_SEPARATOR) : string
     {
         if (! FilePathDataType::isAbsolute($pathRelativeOrAbsolute)) {
             $path = FilePathDataType::join([
@@ -228,7 +230,7 @@ class LocalFileConnector extends TransparentConnector
             $path = $pathRelativeOrAbsolute;
         }
         
-        return FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+        return FilePathDataType::normalize($path, $directorySeparator);
     }
 
     /**
@@ -252,10 +254,10 @@ class LocalFileConnector extends TransparentConnector
                         $base = FilePathDataType::join([$fm->getPathToBaseFolder(), $base]);
                     }
                     break;
+                default:
+                    $base = $this->getWorkbench()->getInstallationPath();
             }
-            if ($base !== null) {
-                $this->base_path_absolute = FilePathDataType::normalize($base, '/');
-            }
+            $this->base_path_absolute = $base;
         }
         
         return $this->base_path_absolute;
