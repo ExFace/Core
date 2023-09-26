@@ -21,4 +21,10 @@ interface FileDataQueryInterface extends DataQueryInterface
      * @return string|NULL
      */
     public function getBasePath() : ?string;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getDirectorySeparator() : string;
 }

@@ -21,6 +21,19 @@ class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInter
     
     private $deleteEmptyFolders = false;
     
+    private $filesTouched = 0;
+    
+    private $directorySeparator = null;
+    
+    /**
+     * 
+     * @param string $directorySeparator
+     */
+    public function __construct(string $directorySeparator = '/')
+    {
+        $this->directorySeparator = $directorySeparator;
+    }
+    
     /**
      * 
      * @param iterable $fileInfoGenerator
@@ -81,7 +94,7 @@ class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInter
      */
     public function setBasePath(string $absolutePath) : FileWriteDataQuery
     {
-        $this->basePath = Filemanager::pathNormalize($absolutePath);
+        $this->basePath = Filemanager::pathNormalize($absolutePath, $this->getDirectorySeparator());
         return $this;
     }
 
@@ -93,7 +106,7 @@ class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInter
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $finder_tab = $debug_widget->createTab();
-        $finder_tab->setCaption('Finder');
+        $finder_tab->setCaption('File writer');
         /* @var $finder_widget \exface\Core\Widgets\Html */
         $finder_widget = WidgetFactory::createFromUxonInParent($finder_tab, new UxonObject([
             'widget_type' => 'Markdown',
@@ -113,7 +126,8 @@ class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInter
     protected function toMarkdown() : string
     {
         $deleteEmptyFolders = $this->getDeleteEmptyFolders() ? 'Yes' : 'No';
-        $filesToSave = implode("\n\t -", $this->getFilesToSave());
+        $filesToSave = empty($this->getFilesToSave()) ? 'none' : implode("\n\t -", $this->getFilesToSave());
+        $filesToDelete = empty($this->getFilesToDelete()) ? 'none' : implode("\n\t -", $this->getFilesToDelete());
         $md = <<<MD
 Base path: ""{$this->getBasePath()}"
 
@@ -121,6 +135,7 @@ Delete empty folders: {$deleteEmptyFolders}
 
 Files to save: {$filesToSave}
 
+Files to delete: {$filesToDelete}
 
 MD;
         return $md;
@@ -185,5 +200,39 @@ MD;
     {
         $this->filesToDelete[] = $pathOrFileInfo;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\FileDataQueryInterface::getDirectorySeparator()
+     */
+    public function getDirectorySeparator() : string
+    {
+        return $this->directorySeparator;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataQueries\AbstractDataQuery::countAffectedRows()
+     */
+    public function countAffectedRows()
+    {
+        if (! $this->isPerformed()) {
+            return 0;
+        }
+        if ($this->resultCache === null) {
+            if (is_countable($this->resultGenerator)) {
+                return count($this->resultGenerator);
+            } else {
+                $i = 0;
+                foreach ($this->getFiles() as $f) {
+                    $i++;
+                }
+                return $i;
+            }
+        }
+        return count($this->resultCache);
     }
 }

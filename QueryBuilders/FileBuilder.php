@@ -131,6 +131,16 @@ class FileBuilder extends AbstractQueryBuilder
      */
     const DAP_DELETE_EMPTY_FOLDERS = 'delete_empty_folders';
     
+    /**
+     * Use `/` or `\` as directory separator in file system paths - `/` by default.
+     *
+     * @uxon-property directory_separator
+     * @uxon-target object
+     * @uxon-type [/,\]
+     * @uxon-default /
+     */
+    const DAP_DIRECTORY_SEPARATOR = 'directory_separator';
+    
     
     const ATTR_ADDRESS_PREFIX_FILE= '~file:';
     
@@ -177,7 +187,7 @@ class FileBuilder extends AbstractQueryBuilder
      */
     protected function buildQueryToRead() : FileReadDataQuery
     {
-        $query = new FileReadDataQuery();
+        $query = new FileReadDataQuery($this->getDirectorySeparator());
         
         $path_patterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filename = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
@@ -434,7 +444,7 @@ class FileBuilder extends AbstractQueryBuilder
             }
         }
         $contentQparts = $this->getValuesForFileContent();
-        $query = new FileWriteDataQuery();
+        $query = new FileWriteDataQuery($this->getDirectorySeparator());
         $touchedFilesCnt = 0;
         switch (true) {
             case count($contentQparts) === 1:
@@ -637,7 +647,7 @@ class FileBuilder extends AbstractQueryBuilder
         }
         
         // Do the updating
-        $query = new FileWriteDataQuery();
+        $query = new FileWriteDataQuery($this->getDirectorySeparator());
         if (empty($fileArray) === false) {
             $contentQparts = $this->getValuesForFileContent();
             switch (true) {
@@ -672,7 +682,7 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $query = new FileWriteDataQuery();
+        $query = new FileWriteDataQuery($this->getDirectorySeparator());
         if (null !== $deleteEmptyFolder = BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DELETE_EMPTY_FOLDERS))) {
             $query->setDeleteEmptyFolders($deleteEmptyFolder);
         }
@@ -878,8 +888,21 @@ class FileBuilder extends AbstractQueryBuilder
         return true;
     }
     
+    /**
+     * 
+     * @return int|NULL
+     */
     protected function getFolderDepth() : ?int
     {
         return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_FOLDER_DEPTH);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getDirectorySeparator() : string
+    {
+        return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DIRECTORY_SEPARATOR) ?? '/';
     }
 }
