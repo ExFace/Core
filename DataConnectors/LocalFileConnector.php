@@ -12,7 +12,6 @@ use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use Symfony\Component\Finder\Finder;
-use exface\Core\DataTypes\RegularExpressionDataType;
 
 class LocalFileConnector extends TransparentConnector
 {
@@ -188,7 +187,7 @@ class LocalFileConnector extends TransparentConnector
                 continue;
             }
             
-            
+            // Do delete now
             if (is_dir($path)) {
                 $fm->deleteDir($path);
             } else {
@@ -201,7 +200,7 @@ class LocalFileConnector extends TransparentConnector
             $resultFiles[] = $fileInfo ?? new LocalFileInfo($path, $basePath, $query->getDirectorySeparator());
             
             if ($deleteEmptyFolders === true) {
-                $folder = FilePathDataType::findFolder($path);
+                $folder = FilePathDataType::findFolderPath($path);
                 if ($folder !== '' && $fm::isDirEmpty($folder)) {
                     $fm::deleteDir($folder);
                 }
