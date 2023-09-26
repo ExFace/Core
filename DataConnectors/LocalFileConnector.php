@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use Symfony\Component\Finder\Finder;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 class LocalFileConnector extends TransparentConnector
 {
@@ -119,16 +120,9 @@ class LocalFileConnector extends TransparentConnector
             }
         }
         
-        $names = $query->getFilenamePatterns();
-        switch (count($names)) {
-            case 0:
-                break;
-            case 1:
-                $finder->name($names[array_key_first($names)]);
-                break;
-            default:
-                // FIXME combine multiple patterns or call finder multiple times?
-                throw new DataQueryFailedError($query, 'Cannot handle multiple file name patterns in one local file query at the moment');
+        $namePatterns = $query->getFilenamePatterns();
+        if (! empty($namePatterns)) {
+            $finder->name(array_unique($namePatterns));
         }
         
         try {
@@ -161,14 +155,18 @@ class LocalFileConnector extends TransparentConnector
      */
     protected function performWrite(FileWriteDataQuery $query) : FileWriteDataQuery
     {
+        // Note: the base path of the query already includes the base path of this connection
+        // - see `performQuery()`
+        $basePath = $query->getBasePath();
+        
         $resultFiles = [];
         $fm = $this->getWorkbench()->filemanager();
         foreach ($query->getFilesToSave() as $path => $content) {
-            if ($path === null || $content === null) {
-                continue;
+            if ($path === null) {
+                throw new DataQueryFailedError($query, 'Cannot write file with an empty path!');
             }
-            $path = $this->addBasePath($path, $query, $query->getDirectorySeparator());
-            $fm->dumpFile($path, $content);
+            $path = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
+            $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
         
@@ -182,7 +180,6 @@ class LocalFileConnector extends TransparentConnector
                 $fileInfo = null;
             }
             
-            $basePath = $query->getBasePath();
             if ($basePath !== null) {
                 $path = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
             }
@@ -201,7 +198,7 @@ class LocalFileConnector extends TransparentConnector
                 }
             }
             
-            $resultFiles[] = $fileInfo ?? new LocalFileInfo($path);
+            $resultFiles[] = $fileInfo ?? new LocalFileInfo($path, $basePath, $query->getDirectorySeparator());
             
             if ($deleteEmptyFolders === true) {
                 $folder = FilePathDataType::findFolder($path);

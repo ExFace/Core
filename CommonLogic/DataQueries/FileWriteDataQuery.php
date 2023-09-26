@@ -43,7 +43,7 @@ class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInter
     {
         $instance = clone $this;
         $instance->resultGenerator = $fileInfoGenerator;
-        return $this;
+        return $instance;
     }
     
     /**

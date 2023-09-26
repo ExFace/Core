@@ -242,7 +242,7 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFileContent(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_CONTENTS || $addr === 'contents';
+        return $addr === FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
     }
     
     protected function buildFilenameFromFilterGroup(QueryPartFilterGroup $qpart, FileReadDataQuery $query) : ?string
@@ -444,8 +444,8 @@ class FileBuilder extends AbstractQueryBuilder
             }
         }
         $contentQparts = $this->getValuesForFileContent();
+        
         $query = new FileWriteDataQuery($this->getDirectorySeparator());
-        $touchedFilesCnt = 0;
         switch (true) {
             case count($contentQparts) === 1:
                 $contentArray = $this->buildFilesContentsFromValues(reset($contentQparts));
@@ -454,7 +454,6 @@ class FileBuilder extends AbstractQueryBuilder
                 }
                 foreach ($fileArray as $i => $path) {
                     $query->addFileToSave($path, $contentArray[$i]);
-                    $touchedFilesCnt++;
                 }
                 break;
             case count($contentQparts) > 1:
@@ -466,7 +465,9 @@ class FileBuilder extends AbstractQueryBuilder
             default:
                 throw new QueryBuilderException('Cannot create files without contents! Please add a data column for file contents.');
         }
-        return new DataQueryResultData([], $touchedFilesCnt);
+        
+        $performed = $dataConnection->query($query);
+        return new DataQueryResultData([], $performed->countAffectedRows());
     }
     
     /**
@@ -623,7 +624,6 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function update(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $touchedFilesCnt = 0;
         // Update by path (in one of the values)
         $basePath = $dataConnection->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
         $fileArray = $this->buildPathsFromValues($basePath);
@@ -657,8 +657,12 @@ class FileBuilder extends AbstractQueryBuilder
                         throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($fileArray) . ' files exist!');
                     }
                     foreach ($fileArray as $i => $path) {
-                        $query->addFileToSave($path, $contentArray[$i]);
-                        $touchedFilesCnt++;
+                        $content = $contentArray[$i];
+                        // Skip rows with content `NULL` because these would be the updates,
+                        // where the content is not to be changed!
+                        if ($path !== null && $content !== null) {
+                            $query->addFileToSave($path, $content);
+                        }
                     }
                     break;
                 case count($contentQparts) > 1:
@@ -672,7 +676,8 @@ class FileBuilder extends AbstractQueryBuilder
             }
         }
         
-        return new DataQueryResultData([], $touchedFilesCnt);
+        $performed = $dataConnection->query($query);
+        return new DataQueryResultData([], $performed->countAffectedRows());
     }
 
     /**
