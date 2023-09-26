@@ -6,6 +6,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Events\Widget\OnBeforePrefillEvent;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Renders a dialog to create a copy of the input object.
@@ -82,7 +84,20 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
                 $this->getMetaObject()
             ));
         }
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBeforePrefillEvent::getEventName(), [$this, 'onBeforePrefillCheckIfCopyable']);
+        
         return parent::prefillWidget($task, $widget);
+    }
+    
+    public function onBeforePrefillCheckIfCopyable(OnBeforePrefillEvent $event)
+    {
+        $widget = $event->getWidget();
+        if ($widget instanceof iShowData) {
+            foreach ($widget->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject()) as $filter) {
+                
+            }
+        }
     }
     
     /**
