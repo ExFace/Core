@@ -63,6 +63,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     private $value = null;
     
+    private $calculationExpr = null;
+    
     /**
      *
      * {@inheritdoc}
@@ -220,6 +222,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
                     $this->setValue($value, false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
+                // FIXME now, that there is a separate `calculation` property, wouldn't it be better
+                // to skip the prefill for widget with live-refs in general and not only for non-empty
+                // values?
                 } elseif ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
                     $this->setValue($value, false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
@@ -530,7 +535,12 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
-     * Explicitly sets the value of the widget.
+     * Explicitly sets the value of the widget: static value, widget link or formula.
+     * 
+     * **WARNING:** If a calculated expression (link of formula) is used as `value`, the widget
+     * will not be prefilled anymore! Its value will always be calculated. However, it can still
+     * be changed by the user in case of input-widgets, that are not disabled. If you want the
+     * widget to get prefilled, use `calculation` instead of `value`.
      *
      * @uxon-property value
      * @uxon-type metamodel:expression
@@ -545,7 +555,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         
         if ($expressionOrString instanceof ExpressionInterface) {
-            $this->value = $expressionOrString;
+            $expr = $expressionOrString;
         } else {
             // TODO #expression-syntax is still not 100% stable.
             //
@@ -574,15 +584,19 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             } else {
                 $expr = ExpressionFactory::createAsScalar($this->getWorkbench(), $expressionOrString, $this->getMetaObject());
             }
-            
-            $this->value = $expr;
-            // If the value is a widget link, call the getter to make sure the link is instantiated
-            // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
-            // when some other code calls $expr->getWidgetLink(), which may happen too late for
-            // possible event handlers!
-            if ($expr->isReference()) {
-                $this->getValueWidgetLink();
-            }
+        }
+        $this->value = $expr;
+        
+        if ($expr->isReference() || $expr->isFormula()) {
+            $this->calculationExpr = $expr;
+        }
+        
+        // If the value is a widget link, call the getter to make sure the link is instantiated
+        // thus firing OnWidgetLinkedEvent. If not done here, the event will be only fired
+        // when some other code calls $expr->getWidgetLink(), which may happen too late for
+        // possible event handlers!
+        if ($expr->isReference()) {
+            $this->getValueWidgetLink();
         }
         
         // Reset cached data type to make sure it is recomputed with the new value expression.
@@ -631,6 +645,48 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
             $link = $expr->getWidgetLink($this);
         }
         return $link;
+    }
+    
+    /**
+     * Place an expression here to calculate values for the widget instead of using static `value`.
+     *
+     * Examples:
+     *
+     * - `=NOW()` will place the current date in every cell
+     * - `=some_widget_id` will place the current value of the widget with the given id in the cells
+     *
+     * NOTE: `calculation` can be used used without an `attribute_alias` producing a calculated column,
+     * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place
+     * the calculated value in the attribute's column for further processing.
+     *
+     * @uxon-property calculation
+     * @uxon-type metamodel:expression
+     *
+     * @param string $expression
+     * @return DataColumn
+     */
+    public function setCalculation(string $expression) : DataColumn
+    {
+        $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isCalculated() : bool
+    {
+        return $this->calculationExpr !== null;
+    }
+    
+    /**
+     *
+     * @return ExpressionInterface|NULL
+     */
+    public function getCalculationExpression() : ?ExpressionInterface
+    {
+        return $this->calculationExpr;
     }
 }
 ?>
