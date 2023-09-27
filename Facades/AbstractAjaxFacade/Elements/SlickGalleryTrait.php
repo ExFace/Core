@@ -715,7 +715,7 @@ JS;
         $('#{$this->getIdOfSlick()}-dropzone').show();
     })
 
-    $('#{$this->getId()}').on('dragleave', function(){console.log('leave');
+    $('#{$this->getId()}').on('dragleave', function(){
         $('#{$this->getIdOfSlick()}-dropzone').hide();
         $('#{$this->getIdOfSlick()}-nodata').show();
     })*/
@@ -762,7 +762,7 @@ JS;
             }
 
             $('#{$this->getIdOfSlick()}-nodata').hide();
-            if (file.type.startsWith('image')){console.log('preview');
+            if (file.type.startsWith('image')){
                 // If upload preview is available, use it - otherwise use an <img> with src set to the object URL
                 if (file.preview && file.preview.toDataURL().length > 1614) {
                     $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
