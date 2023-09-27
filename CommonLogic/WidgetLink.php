@@ -168,6 +168,9 @@ class WidgetLink implements WidgetLinkInterface
     {
         $this->setPageAlias($object->getProperty('page_alias'));
         $this->setWidgetId($object->getProperty('widget_id'));
+        if ($object->hasProperty('only_if_not_empty')) {
+            $this->setOnlyIfNotEmpty($object->getProperty('only_if_not_empty'));
+        }
         return $this;
     }
 
@@ -456,11 +459,25 @@ class WidgetLink implements WidgetLinkInterface
         return $this->sourceWidget !== null;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isOnlyIfNotEmpty() : bool
     {
         return $this->ifNotEmpty;
     }
     
+    /**
+     * Set to TRUE to ignore the link completely if the linked value is empty
+     * 
+     * @uxon-property only_if_not_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return WidgetLink
+     */
     public function setOnlyIfNotEmpty(bool $value) : WidgetLink
     {
         $this->ifNotEmpty = $value;
