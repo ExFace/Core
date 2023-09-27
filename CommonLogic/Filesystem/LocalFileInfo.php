@@ -267,7 +267,7 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function __toString() 
     {
-        return $this->getPathname();
+        return $this->getPath();
     }
     
     /**
