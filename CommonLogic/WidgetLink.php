@@ -12,6 +12,7 @@ use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A reference to another widget or its data.
@@ -31,10 +32,15 @@ use exface\Core\Exceptions\UxonParserError;
  * - `~parent` - references the immediate parent of `~self`
  * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
  * 
+ * You can make a widget link "optional" by adding a trailing `?`. This will make sure, the linked value
+ * us only used if it is not empty. Thus, the widget, that contains the link will not be emptied if the
+ * linked widget has no value.
+ * 
  * A few examples:
  * 
  * - `some_widget` - references the entire widget with id `some_widget`
  * - `some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+ * - `some_widget!mycol?` - references the column `mycol` only if it has a non-empty value. Otherwise the reference is not applied!
  * - `[my.App.page1]` - references the root widget of the page with alias `my.App.page1`
  * - `[my.App.page1]some_widget` - references the widget with id `some_widget` on page `my.App.page1`
  * - `~self!mycol` - references the column `mycol` in the data of the current widget
@@ -62,6 +68,8 @@ class WidgetLink implements WidgetLinkInterface
     private $targetColumnId = null;
 
     private $targetRowNumber = null;
+    
+    private $ifNotEmpty = false;
 
     /**
      * 
@@ -104,6 +112,14 @@ class WidgetLink implements WidgetLinkInterface
     protected function parseLinkString(string $string) : WidgetLinkInterface
     {
         $string = trim($string);
+        
+        if (StringDataType::endsWith($string, '?')) {
+            $this->setOnlyIfNotEmpty(true);
+            $string = substr($string, 0, -1);
+        } else {
+            $this->setOnlyIfNotEmpty(false);
+        }
+        
         // Check for reference to specific page_alias
         if (strpos($string, '[') === 0) {
             $page_alias = substr($string, 1, strpos($string, ']') - 1);
@@ -439,6 +455,16 @@ class WidgetLink implements WidgetLinkInterface
     {
         return $this->sourceWidget !== null;
     }
-
+    
+    public function isOnlyIfNotEmpty() : bool
+    {
+        return $this->ifNotEmpty;
+    }
+    
+    public function setOnlyIfNotEmpty(bool $value) : WidgetLink
+    {
+        $this->ifNotEmpty = $value;
+        return $this;
+    }
 }
 ?>
