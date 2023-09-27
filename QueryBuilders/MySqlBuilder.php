@@ -315,7 +315,7 @@ class MySqlBuilder extends AbstractSqlBuilder
          */
         if ($data_type instanceof DateDataType) {
             try {
-                $data_type->parse($value);  
+                $data_type::cast($value);  
                 if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
                     $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                 }
@@ -334,11 +334,11 @@ class MySqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         $sql_data_type = $dataAddressProps[static::DAP_SQL_DATA_TYPE] === null ? null : mb_strtolower($dataAddressProps[static::DAP_SQL_DATA_TYPE]);
         if ($sql_data_type === 'binary' && $data_type instanceof BinaryDataType) {
-            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+            $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
             switch ($data_type->getEncoding()) {
                 case BinaryDataType::ENCODING_BASE64:
                     return "FROM_BASE64(" . $value . ")";
@@ -358,7 +358,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             }
         }
         
-        return parent::prepareInputValue($value, $data_type, $dataAddressProps);
+        return parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
     }
 
     /**
