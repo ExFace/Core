@@ -27,12 +27,12 @@ class GenericUxonFactory extends AbstractStaticFactory
      *              "fromArray": [
      *                  {
      *                      "file": {
-     *                          "public": "0640",
-     *                          "private": "0604"
+     *                          "public": 640,
+     *                          "private": 604
      *                      },
      *                      "dir": {
-     *                          "public": "0740",
-     *                          "private": "7604"
+     *                          "public": 740,
+     *                          "private": 7604
      *                      }
      *                  }
      *              ]
