@@ -93,5 +93,11 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
      * @return bool
      */
     public function hasSourceWidget() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isOnlyIfNotEmpty() : bool;
 }
 ?>

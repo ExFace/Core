@@ -45,13 +45,27 @@ trait JqueryLiveReferenceTrait {
         
         $output = '';
         if ($linked_element = $this->getLinkedFacadeElement()) {
-            $link = $this->getWidget()->getValueWidgetLink();
+            $link = $this->getWidget()->getCalculationWidgetLink();
             $col = $link->getTargetColumnId();
             if (! StringDataType::startsWith($col, '~')) {
                 $col = DataColumn::sanitizeColumnName($col);
             }
-            $output = '
-					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())) . ';';
+            if ($link->isOnlyIfNotEmpty()) {
+                $output = <<<JS
+
+(function() {
+    var mVal = {$linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())};
+    if (mVal !== undefined && mVal !== '' && mVal != null) {
+        {$this->buildJsValueSetter('mVal')};
+    }
+})();
+
+JS;
+                
+            } else {
+                $output = '
+					   ' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())) . ';';
+            }
         }
         return $output;
     }
@@ -64,7 +78,7 @@ trait JqueryLiveReferenceTrait {
      */
     protected function hasLiveReference()
     {
-        return $this->getWidget()->getValueWidgetLink() ? true : false;
+        return $this->getWidget()->getCalculationWidgetLink() ? true : false;
     }
 
     /**
@@ -79,7 +93,7 @@ trait JqueryLiveReferenceTrait {
             $getAndSetValueJs = $this->buildJsLiveReference();
             // If the link targets a specific row, activate it with every refresh,
             // otherwise it targets the current value, so only activate it if the value changes
-            if (null !== $this->getWidget()->getValueWidgetLink()->getTargetRowNumber()) {
+            if (null !== $this->getWidget()->getCalculationWidgetLink()->getTargetRowNumber()) {
                 $linked_element->addOnRefreshScript($getAndSetValueJs);
             } else {
                 $linked_element->addOnChangeScript($getAndSetValueJs);
@@ -96,7 +110,7 @@ trait JqueryLiveReferenceTrait {
     public function getLinkedFacadeElement()
     {
         $linked_element = null;
-        if ($link = $this->getWidget()->getValueWidgetLink()) {
+        if ($link = $this->getWidget()->getCalculationWidgetLink()) {
             $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
         }
         return $linked_element;
