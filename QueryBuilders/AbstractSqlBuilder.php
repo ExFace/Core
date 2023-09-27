@@ -1060,12 +1060,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @param mixed $value
      * @param DataTypeInterface $data_type
-     * @param string $sql_data_type
-     * @return string
+     * @param string[] $dataAddressProps
+     * @param bool $parse
+     * @return string|mixed
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $value = $data_type->parse($value);
+        $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
         switch (true) {
             case $data_type instanceof StringDataType:
                 // JSON values are strings too, but their columns should be null even if the value is an
@@ -2132,7 +2133,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps);
+                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps, false);
                 break;
             default:
                 $output = $this->escapeString($value);

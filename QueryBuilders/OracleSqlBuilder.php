@@ -466,7 +466,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         switch (true) {
             case $data_type instanceof DateTimeDataType:
@@ -488,7 +488,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             default: 
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
         }
         return $value;
     }
