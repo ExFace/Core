@@ -315,7 +315,7 @@ class MySqlBuilder extends AbstractSqlBuilder
          */
         if ($data_type instanceof DateDataType) {
             try {
-                $data_type->parse($value);  
+                $data_type::cast($value);  
                 if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
                     $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                 }

@@ -610,7 +610,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         switch (true) {
             case $data_type instanceof StringDataType:
@@ -624,7 +624,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ($data_type->getShowMilliseconds()) {
                     $format = 121;
                 } else {
@@ -641,13 +641,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Use CONVERT() instead of string dates like '2023-06-20'
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ("'" === mb_substr($value, 0, 1)) {
                     $value = "CONVERT(date, {$value}, 23)";
                 }
                 break;
             default:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
         }
         return $value;
     }
