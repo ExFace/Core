@@ -222,6 +222,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
                     $this->setValue($value, false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
+                // FIXME now, that there is a separate `calculation` property, wouldn't it be better
+                // to skip the prefill for widget with live-refs in general and not only for non-empty
+                // values?
                 } elseif ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
                     $this->setValue($value, false);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
