@@ -648,6 +648,20 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
+     * 
+     * @return WidgetLinkInterface|NULL
+     */
+    public function getCalculationWidgetLink() : ?WidgetLinkInterface
+    {
+        $link = null;
+        $expr = $this->getCalculationExpression();
+        if ($expr && $expr->isReference()) {
+            $link = $expr->getWidgetLink($this);
+        }
+        return $link;
+    }
+    
+    /**
      * Place an expression here to calculate values for the widget instead of using static `value`.
      *
      * Examples:
@@ -665,7 +679,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * @param string $expression
      * @return DataColumn
      */
-    public function setCalculation(string $expression) : DataColumn
+    public function setCalculation(string $expression) : Value
     {
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
         return $this;
