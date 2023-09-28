@@ -1113,6 +1113,9 @@ class InputSelect extends Input implements iSupportMultiSelect
             } else {
                 $this->multi_select_text_delimiter = EXF_LIST_SEPARATOR;
             }
+            if ($this->multi_select_text_delimiter === EXF_LIST_SEPARATOR) {
+                $this->multi_select_text_delimiter .= ' ';
+            }
         }
         return $this->multi_select_text_delimiter;
     }
