@@ -519,7 +519,7 @@
 		        if (sTimeFormat !== undefined) {
 					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
 					if (oMoment.isValid()) {
-						if (sTimeFormat.indexOf('a') !== '-1') {
+						if (sTimeFormat.indexOf('a') !== -1) {
 							return oMoment.format('hh:mm:ss a');
 						} else {
 							return oMoment.format('HH:mm:ss');
