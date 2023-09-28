@@ -61,9 +61,21 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     
     private $data_column_name = null;
     
-    private $value = null;
+    private $valueExpr = null;
+    
+    /**
+     * 
+     * @var WidgetLinkInterface|NULL|false
+     */
+    private $valueLink = null;
     
     private $calculationExpr = null;
+    
+    /**
+     * 
+     * @var WidgetLinkInterface|NULL|false
+     */
+    private $calculationLink = null;
     
     /**
      *
@@ -183,7 +195,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         return false;
     }
     
-    
+    /**
+     * Returns true if the value is a widget link
+     * 
+     * @return bool
+     */
     protected function isBoundByReference() : bool
     {
         return $this->hasValue() && $this->getValueExpression()->isReference();
@@ -538,9 +554,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * Explicitly sets the value of the widget: static value, widget link or formula.
      * 
      * **WARNING:** If a calculated expression (link of formula) is used as `value`, the widget
-     * will not be prefilled anymore! Its value will always be calculated. However, it can still
-     * be changed by the user in case of input-widgets, that are not disabled. If you want the
-     * widget to get prefilled, use `calculation` instead of `value`.
+     * will not be able to read the value of its attribute or prefill data. In fact, it will not
+     * get prefilled at all: the formula replaces the own value. However, if the widget is interactive,
+     * the value will still change on user input as long as the widget is not disabled. 
+     * 
+     * If you want the widget to have its own value in addition to a calculation use the `calculation`
+     * option explicitly. In this case, the calculation will only be performed if the widget has no
+     * explicit value.
      *
      * @uxon-property value
      * @uxon-type metamodel:expression
@@ -585,9 +605,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 $expr = ExpressionFactory::createAsScalar($this->getWorkbench(), $expressionOrString, $this->getMetaObject());
             }
         }
-        $this->value = $expr;
+        $this->valueLink = null;
+        $this->valueExpr = $expr;
         
-        if ($expr->isReference() || $expr->isFormula()) {
+        // If the value is a calculation AND there is no other calculation set explicitly, uset the value expression as calculation too!
+        if ($this->calculationExpr === null && ($expr->isReference() || $expr->isFormula())) {
             $this->calculationExpr = $expr;
         }
         
@@ -629,7 +651,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValueExpression() : ?ExpressionInterface
     {
-        return $this->value;
+        return $this->valueExpr;
     }
     
     /**
@@ -639,12 +661,15 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValueWidgetLink() : ?WidgetLinkInterface
     {
-        $link = null;
-        $expr = $this->getValueExpression();
-        if ($expr && $expr->isReference()) {
-            $link = $expr->getWidgetLink($this);
+        if ($this->valueLink === null) {
+            $expr = $this->getValueExpression();
+            if ($expr !== null && $expr->isReference()) {
+                $this->valueLink = $expr->getWidgetLink($this);
+            } else {
+                $this->valueLink = false;
+            }
         }
-        return $link;
+        return $this->valueLink === false ? null : $this->valueLink;
     }
     
     /**
@@ -652,22 +677,30 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * @return WidgetLinkInterface|NULL
      */
     public function getCalculationWidgetLink() : ?WidgetLinkInterface
-    {
-        $link = null;
-        $expr = $this->getCalculationExpression();
-        if ($expr && $expr->isReference()) {
-            $link = $expr->getWidgetLink($this);
+    {        
+        if ($this->calculationLink === null) {
+            $expr = $this->getCalculationExpression();
+            if ($expr !== null && $expr->isReference()) {
+                $this->calculationLink = $expr->getWidgetLink($this);
+            } else {
+                $this->calculationLink = false;
+            }
         }
-        return $link;
+        return $this->calculationLink === false ? null : $this->calculationLink;
     }
     
     /**
-     * Place an expression here to calculate values for the widget instead of using static `value`.
+     * Place an expression here to calculate values for the widget instead of using a static `value`.
      *
      * Examples:
      *
      * - `=NOW()` will place the current date in every cell
      * - `=some_widget_id` will place the current value of the widget with the given id in the cells
+     * 
+     * The calculation is only performed if the widget has no explicit value. In contrast to a formula
+     * or widget link in `value`, the widget will still get prefilled by actions, it will show its
+     * attribute if it has an `attribute_alias`, etc. However, if none of this applies, the calculation
+     * will be used instead of leaving the widget empty.
      *
      * NOTE: `calculation` can be used used without an `attribute_alias` producing a calculated column,
      * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place
@@ -681,6 +714,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setCalculation(string $expression) : Value
     {
+        $this->calculationLink = null;
         $this->calculationExpr = ExpressionFactory::createForObject($this->getMetaObject(), $expression);
         return $this;
     }
