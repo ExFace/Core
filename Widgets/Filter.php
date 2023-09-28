@@ -428,6 +428,13 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input->setIgnoreDefaultValue(true);
         }
         
+        // Filters do not need data type specific validation like min/max values. For example, if you have a date 
+        // attribute, that must be a future date, you will set `min:0` in the data type customization. However, 
+        // you will still need past days in filters. 
+        if ($input instanceof Input) {
+            $input->setDisableValidation(true);
+        }
+        
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
         // In particularly, it's disabled-state should not depend on the settings of the attribute, etc.
         if (true === parent::isDisabled()) {
