@@ -809,10 +809,10 @@ class FileBuilder extends AbstractQueryBuilder
                 $value = $file->getPathRelative();
                 break;
             case self::ATTR_ADDRESS_MTIME:
-                $value = TimestampDataType::cast('@' . $file->getMTime());
+                $value = $file->getMTime() === null ? null : TimestampDataType::cast('@' . $file->getMTime());
                 break;
             case self::ATTR_ADDRESS_CTIME:
-                $value = TimestampDataType::cast('@' . $file->getCTime());
+                $value = $file->getCTime() === null ? null : TimestampDataType::cast('@' . $file->getCTime());
                 break;
             case self::ATTR_ADDRESS_MIMETYPE:
                 $value = $file->getMimetype();
@@ -884,13 +884,7 @@ class FileBuilder extends AbstractQueryBuilder
             return true;
         }
         
-        foreach ($attribute->getRelationPath()->getRelations() as $rel) {
-            if (! $rel->getRightObject()->is('exface.Core.FILE')) {
-                return false;
-            }
-        }
-        
-        return true;
+        return false;
     }
     
     /**
