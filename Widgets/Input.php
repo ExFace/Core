@@ -85,6 +85,8 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     private $allowMultipleValues = false;
     
     private $multiValueDelimiter = null;
+    
+    private $disableValidation = false;
 
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
@@ -548,6 +550,39 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
             $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
         }
         return $condProp;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getDisableValidation() : bool
+    {
+        return $this->disableValidation;
+    }
+    
+    /**
+     * Set to TRUE to disable data-type specific validation like min/max values etc.
+     * 
+     * Normally a widget will validate input automatically and make sure it fits the constraints defined in the data type
+     * of its attributes. However, you can disable this for a specific widget to allow any input the widget type allows.
+     * 
+     * For example, if you have a date attribute, that must be a future date, you will set `min:0` in the data type
+     * customization. Any input for this attribute will now accept future dates only. However, this will also be true
+     * for filters, where you still need past days too. Filters will turn off this type of validation automatically, but
+     * you can also do it manually if required.
+     * 
+     * @uxon-property disable_validation
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Input
+     */
+    public function setDisableValidation(bool $value) : Input
+    {
+        $this->disableValidation = $value;
+        return $this;
     }
 }
 ?>
