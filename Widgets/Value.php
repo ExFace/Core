@@ -610,7 +610,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         
         // If the value is a calculation AND there is no other calculation set explicitly, uset the value expression as calculation too!
         if ($this->calculationExpr === null && ($expr->isReference() || $expr->isFormula())) {
-            $this->calculationExpr = $expr;
+            $this->setCalculation($expr);
         }
         
         // If the value is a widget link, call the getter to make sure the link is instantiated
