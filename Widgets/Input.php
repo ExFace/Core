@@ -546,7 +546,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function getDisabledIf() : ?ConditionalProperty
     {
         $condProp = parent::getDisabledIf();
-        if ($condProp !== null && $condProp->getFunctionOnTrue() === null && $this->getValueWidgetLink() === null) {
+        if ($condProp !== null && $condProp->getFunctionOnTrue() === null && $this->getCalculationWidgetLink() === null) {
             $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
         }
         return $condProp;
