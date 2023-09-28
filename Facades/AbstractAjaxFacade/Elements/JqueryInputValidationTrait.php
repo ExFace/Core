@@ -99,12 +99,13 @@ trait JqueryInputValidationTrait {
     {
         $widget = $this->getWidget();
         $formatter = $this->getFacade()->getDataTypeFormatter($type);
+        $typeValidationDisabled = ($widget instanceof Input) && $widget->getDisableValidation();
         $js = '';
         
         // If the input allows multiple values as a delimited list, apply the validation to each
         // part of the list - in particular to check string length for each value individually
         switch (true) {
-            case ($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true:
+            case ($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true && $typeValidationDisabled === false:
                 $partValidator = $formatter->buildJsValidator('part');
                 $js .= <<<JS
 
@@ -118,7 +119,9 @@ trait JqueryInputValidationTrait {
 JS;
                 break;
             default:
-                $typeValidator = $formatter->buildJsValidator($valueJs);
+                if ($typeValidationDisabled === false) {
+                    $typeValidator = $formatter->buildJsValidator($valueJs);
+                }
                 $js .= $typeValidator ? "if($typeValidator !== true) {$onFailJs};" : '';
                 break;
         }

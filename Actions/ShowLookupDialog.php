@@ -147,6 +147,18 @@ class ShowLookupDialog extends ShowDialog
                         default:
                             break;
                     }
+                    // Inherit aggregations from calling widget
+                    $aggr = [];
+                    switch (true) {
+                        // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            $aggr = $inputWidget->getTable()->getAggregations();
+                            $data_table->setAggregateByAttributeAlias(implode(',', $aggr));
+                            break;
+                        // TODO inherit aggregations from other types of input widgets?
+                        default:
+                            break;
+                    }
                     foreach ($cols as $col) {
                         if (! $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
                             $widgetType = $data_table->getColumnDefaultWidgetType();
