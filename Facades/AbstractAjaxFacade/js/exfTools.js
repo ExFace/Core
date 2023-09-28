@@ -287,7 +287,7 @@
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
 				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					iYYYY = moment().year;
+					iYYYY = moment().year();
 					iMM = Number(oMatches[2]);
 					iDD = Number(oMatches[1]);
 					bParsed = true;
@@ -311,7 +311,7 @@
 				}
 				// ddMM
 				if (!bParsed && (oMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					iYYYY = (new Date()).getFullYear();
+					iYYYY = moment().year();
 					iMM = Number(oMatches[2]);
 					iDD = Number(oMatches[1]);
 					bParsed = true;
@@ -420,6 +420,53 @@
 			
 			validate: function (sDate) {				
 				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
+			},
+			
+			/**
+			 * Compares two given date strings with the given comparator and granularity.
+			 * Supported comparators are '==', '<=', '<', '>=', '>'.
+			 * Supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'.
+			 *
+			 * @param {string} sDate1
+			 * @param {string} sDate2
+			 * @param {string} sComparator
+			 * @param {string} sGranularity
+			 * 
+			 * @return {bool}			 *
+			 */
+			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
+				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
+				var supportedComparators = ['==', '<=', '<', '>=', '>'];
+				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
+				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
+				if (supportedComparators.includes(sComparator) !== true) {
+					console.error("Comparator '" + sComparator + "' is not supported in date compare, supported comparators are '==', '<=', '<', '>=', '>' !")
+					return false;
+				}
+				if (supportedGranularity.includes(sGranularity) !== true) {
+					console.error("Granularity '" + sGranularity + "' is not supported in date compare, supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'seconds', 'millisecond' !")
+					return false;
+				}
+				oParsedDate1 = this.parse(sDate1);
+				if (oParsedDate1 === null) {
+					console.error("Date '" + sDate1 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oParsedDate2 = this.parse(sDate2);
+				if (oParsedDate2 === null) {
+					console.error("Date '" + sDate2 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oMomentDate1 = moment(oParsedDate1);
+				oMomentDate2 = moment(oParsedDate2);
+				switch (sComparator) {
+					case '==': return oMomentDate1.isSame(oMomentDate2, sGranularity);
+					case '<': return oMomentDate1.isBefore(oMomentDate2, sGranularity);
+					case '<=': return oMomentDate1.isSameOrBefore(oMomentDate2, sGranularity);
+					case '>': return oMomentDate1.isAfter(oMomentDate2, sGranularity);
+					case '>=': return oMomentDate1.isSameOrAfter(oMomentDate2, sGranularity);
+					default: return false;
+				}
 			}
 		},
 		
@@ -472,7 +519,7 @@
 		        if (sTimeFormat !== undefined) {
 					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
 					if (oMoment.isValid()) {
-						if (sTimeFormat.indexOf('a') !== '-1') {
+						if (sTimeFormat.indexOf('a') !== -1) {
 							return oMoment.format('hh:mm:ss a');
 						} else {
 							return oMoment.format('HH:mm:ss');

@@ -38,7 +38,7 @@ trait JsConditionalPropertyTrait {
      * @throws FacadeRuntimeError
      * @return string
      */
-    private function buildJsConditionalPropertyIf(ConditionalPropertyConditionGroup $conditionGroup) : string
+    protected function buildJsConditionalPropertyIf(ConditionalPropertyConditionGroup $conditionGroup) : string
     {
         $jsConditions = [];
         
