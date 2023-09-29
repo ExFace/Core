@@ -663,17 +663,25 @@ class DataSheet implements DataSheetInterface
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
                 }
                 
+                // Add a subsheet-filter over the UIDs of this sheet for the later JOIN
+                $foreignKeys = array_unique($parentSheetKeyCol->getValues(false));
+                $foreignKeys = array_filter($foreignKeys, function($val) {
+                    return $val !== '' && $val !== null;
+                });
+                // Stop here if there are no foreign key - we won't be able to JOIN anything!
+                if (empty($foreignKeys)) {
+                    continue;
+                }
+                // Otherwise add an IN-filter for foreign keys
+                $foreignKeysUidAlias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
+                $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
+                
                 // Make sure the subsheet inherits all the filters of this sheet that apply to
                 // the subsheet's object (= start with the relation path to the subsheet)
                 $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
-                $foreign_keys = array_unique($parentSheetKeyCol->getValues(false));
-                $foreign_keys = array_filter($foreign_keys, function($val) {return $val !== '' && $val !== null;});
                 $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
                     return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
                 }));
-                // Also add a filter over the UIDs of this sheet for the later JOIN
-                $foreign_keys_uid_alias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
-                $subsheet->getFilters()->addConditionFromString($foreign_keys_uid_alias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreign_keys), EXF_COMPARATOR_IN);
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);
