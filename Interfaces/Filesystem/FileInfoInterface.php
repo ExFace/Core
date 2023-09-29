@@ -3,6 +3,12 @@ namespace exface\Core\Interfaces\Filesystem;
 
 interface FileInfoInterface extends \Stringable
 {
+    const FILE = 'file';
+    
+    const DIR = 'dir';
+    
+    const LINK = 'link';
+    
     /**
      * Gets the path without filename
      * 
@@ -85,6 +91,12 @@ interface FileInfoInterface extends \Stringable
      * @return \DateTimeInterface|NULL
      */
     public function getCreatedOn() : ?\DateTimeInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getType() : string;
     
     /**
      * Tells if the entry is writable

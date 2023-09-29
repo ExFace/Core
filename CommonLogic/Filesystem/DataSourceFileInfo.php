@@ -471,4 +471,14 @@ class DataSourceFileInfo implements FileInfoInterface
         }
         return $val;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getType()
+     */
+    public function getType(): string
+    {
+        return FileInfoInterface::FILE;
+    }
 }

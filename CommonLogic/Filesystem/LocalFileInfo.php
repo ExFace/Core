@@ -334,4 +334,14 @@ class LocalFileInfo implements FileInfoInterface
     {
         return MimeTypeDataType::findMimeTypeOfFile($this->getPathAbsolute());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getType()
+     */
+    public function getType(): string
+    {
+        $this->splFileInfo->getType();
+    }
 }
