@@ -742,7 +742,8 @@ class FileBuilder extends AbstractQueryBuilder
         if (StringDataType::startsWith($fieldLC, self::ATTR_ADDRESS_PREFIX_FOLDER)) {
             $folderAddr = substr($fieldLC, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
             $folderAddr = strpos($folderAddr, ':') === false ? self::ATTR_ADDRESS_PREFIX_FILE . $folderAddr : $folderAddr;
-            return $this->buildResultValueFromFile($file->getFolderInfo(), $folderAddr);
+            $folderInfo = $file->getFolderInfo();
+            return $folderInfo === null ? null : $this->buildResultValueFromFile($folderInfo, $folderAddr);
         } else {
             // For file data addresses translate older notation to new notation and
             // and remove the `~file:` prefix for the current notation
