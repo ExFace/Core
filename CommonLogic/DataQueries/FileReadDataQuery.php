@@ -7,6 +7,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\DataTypes\FilePathDataType;
 
 class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterface
 {
@@ -103,8 +104,15 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      * 
      * @return string[]
      */
-    public function getFolders() : array
+    public function getFolders(bool $withBasePath = false) : array
     {
+        if ($withBasePath) {
+            $basePath = $this->getBasePath() ?? '';
+            foreach ($this->folders as $path) {
+                $paths[] = $this->makeAbsolutePath($path, $basePath);
+            }
+            return $paths;
+        }
         return $this->folders;
     }
 
@@ -127,8 +135,44 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     public function addFolder(string $relativeOrAbsolutePath) : FileReadDataQuery
     {
+        $path = FilePathDataType::normalize($relativeOrAbsolutePath, $this->getDirectorySeparator());
+        
+        // Also try to filter out paths that match paterns in other paths
+        if (strpos($path, '*') !== false) {
+            foreach ($this->folders as $i => $otherPath) {
+                // Remove any existing paths, that match the new wildcard pattern as they
+                // will be included anyhow
+                if ($otherPath !== $path && FilePathDataType::matchesPattern($otherPath, $path)) {
+                    unset($this->folders[$i]);
+                }
+            }
+        }
         $this->folders[] = $relativeOrAbsolutePath;
+        
+        // Make sure not to have duplicate paths as some libs like Symfony FileFinder will yield results 
+        // for each path separately
+        $this->folders = array_unique($this->folders);
+        
         return $this;
+    }
+    
+    /**
+     *
+     * @param string $pathRelativeOrAbsolute
+     * @return string
+     */
+    protected function makeAbsolutePath(string $pathRelativeOrAbsolute, string $basePath) : string
+    {
+        if (! FilePathDataType::isAbsolute($pathRelativeOrAbsolute)) {
+            $path = FilePathDataType::join([
+                $basePath,
+                $pathRelativeOrAbsolute
+            ]);
+        } else {
+            $path = $pathRelativeOrAbsolute;
+        }
+        
+        return FilePathDataType::normalize($path, $this->getDirectorySeparator());
     }
 
     /**
