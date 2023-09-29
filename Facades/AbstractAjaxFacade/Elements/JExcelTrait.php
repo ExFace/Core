@@ -684,7 +684,7 @@ JS;
             // with visible columns. This is important because a user would not understand
             // why his column keeps gettin a sequence-number even if there are no visible
             // naming conflicts.
-            if ($col->isEditable() && $col->getCellWidget()->isRequired()) {
+            if ($col->getCellWidget()->isRequired() && $col->isEditable()) {
                 $col->setCaption($col->getCaption() . ' *');
             }
             
