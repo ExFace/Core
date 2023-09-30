@@ -11,7 +11,7 @@ use exface\Core\DataTypes\FilePathDataType;
 
 class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterface
 {
-    private $folders = array();
+    private $folders = [];
     
     private $folderDepth = null;
 
@@ -107,6 +107,7 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     public function getFolders(bool $withBasePath = false) : array
     {
         if ($withBasePath) {
+            $paths = [];
             $basePath = $this->getBasePath() ?? '';
             foreach ($this->folders as $path) {
                 $paths[] = $this->makeAbsolutePath($path, $basePath);

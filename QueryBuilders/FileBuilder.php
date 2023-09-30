@@ -190,25 +190,23 @@ class FileBuilder extends AbstractQueryBuilder
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
         $path_patterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
-        $filename = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         
         // Setup query
         foreach ($path_patterns as $path) {
             if ($path == '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
-            $last_slash_pos = mb_strripos($path, '/');
-            if ($last_slash_pos === false) {
-                $pathRelative = $path;
-            } else {
-                $pathRelative = substr($path, 0, $last_slash_pos);
-                $name = $filename ? $filename : substr($path, ($last_slash_pos + 1));
-            }
-            if (! is_null($name) && $name !== '') {
-                $query->addFilenamePattern($name);
-            }
             
-            $query->addFolder($pathRelative);            
+            $pathEnd = FilePathDataType::findFileName($path, true);
+            $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
+            
+            if ($pathFolder) {
+                $query->addFolder($pathFolder);
+            } 
+            
+            if ($pathEnd) {
+                $query->addFilenamePattern($pathEnd);
+            }         
         }
         
         if (count($this->getSorters()) > 0) {
@@ -245,6 +243,12 @@ class FileBuilder extends AbstractQueryBuilder
         return $addr === FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
     }
     
+    /**
+     * 
+     * @param QueryPartFilterGroup $qpart
+     * @param FileReadDataQuery $query
+     * @return string|NULL
+     */
     protected function buildFilenameFromFilterGroup(QueryPartFilterGroup $qpart, FileReadDataQuery $query) : ?string
     {
         $values = [];
