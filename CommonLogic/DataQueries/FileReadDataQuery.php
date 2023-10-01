@@ -109,8 +109,9 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
         if ($withBasePath) {
             $paths = [];
             $basePath = $this->getBasePath() ?? '';
+            $sep = $this->getDirectorySeparator();
             foreach ($this->folders as $path) {
-                $paths[] = $this->makeAbsolutePath($path, $basePath);
+                $paths[] = FilePathDataType::makeAbsolute($path, $basePath, $sep);
             }
             return $paths;
         }
@@ -155,25 +156,6 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
         $this->folders = array_unique($this->folders);
         
         return $this;
-    }
-    
-    /**
-     *
-     * @param string $pathRelativeOrAbsolute
-     * @return string
-     */
-    protected function makeAbsolutePath(string $pathRelativeOrAbsolute, string $basePath) : string
-    {
-        if (! FilePathDataType::isAbsolute($pathRelativeOrAbsolute)) {
-            $path = FilePathDataType::join([
-                $basePath,
-                $pathRelativeOrAbsolute
-            ]);
-        } else {
-            $path = $pathRelativeOrAbsolute;
-        }
-        
-        return FilePathDataType::normalize($path, $this->getDirectorySeparator());
     }
 
     /**
