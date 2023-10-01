@@ -134,6 +134,13 @@ interface FileInfoInterface extends \Stringable
     public function isLink() : bool;
     
     /**
+     * Returns TRUE if the file/folder currently exists
+     * 
+     * @return bool
+     */
+    public function exists() : bool;
+    
+    /**
      * Gets the target of the filesystem link
      * 
      * @return string|NULL

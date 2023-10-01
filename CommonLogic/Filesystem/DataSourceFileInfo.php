@@ -481,4 +481,15 @@ class DataSourceFileInfo implements FileInfoInterface
     {
         return FileInfoInterface::FILE;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::exists()
+     */
+    public function exists(): bool
+    {
+        // TODO re-read data here?
+        return $this->getFileDataSheet()->countRows() === 1;
+    }
 }
