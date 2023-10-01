@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\DataTypes\FilePathDataType;
 
 class FileWriteDataQuery extends AbstractDataQuery implements FileDataQueryInterface
 {
@@ -165,8 +166,17 @@ MD;
      * 
      * @return array
      */
-    public function getFilesToSave() : array
+    public function getFilesToSave(bool $withBasePath = false) : array
     {
+        if ($withBasePath) {
+            $paths = [];
+            $basePath = $this->getBasePath() ?? '';
+            $sep = $this->getDirectorySeparator();
+            foreach ($this->filesToSave as $path => $content) {
+                $paths[FilePathDataType::makeAbsolute($path, $basePath, $sep)] = $content;
+            }
+            return $paths;
+        }
         return $this->filesToSave;
     }
     
@@ -186,7 +196,7 @@ MD;
      * 
      * @return string[]|FileInfoInterface[]
      */
-    public function getFilesToDelete() : array
+    public function getFilesToDelete(bool $withBasePath = false) : array
     {
         return $this->filesToDelete;
     }

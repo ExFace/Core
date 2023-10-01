@@ -437,12 +437,11 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function create(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $basePath = $dataConnection->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
-        $fileArray = $this->buildPathsFromValues($basePath);
-        if (empty($fileArray)) {
+        $pathArray = $this->buildPathsFromValues();
+        if (empty($pathArray)) {
             throw new QueryBuilderException('Cannot create files: no paths specified!');
         }
-        foreach ($fileArray as $path) {
+        foreach ($pathArray as $path) {
             if ($path === null || $path === '') {
                 throw new QueryBuilderException('Cannot create file: path is empty!');
             }
@@ -453,10 +452,10 @@ class FileBuilder extends AbstractQueryBuilder
         switch (true) {
             case count($contentQparts) === 1:
                 $contentArray = $this->buildFilesContentsFromValues(reset($contentQparts));
-                if (count($fileArray) !== count($contentArray)) {
-                    throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($fileArray) . ' files exist!');
+                if (count($pathArray) !== count($contentArray)) {
+                    throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($pathArray) . ' files exist!');
                 }
-                foreach ($fileArray as $i => $path) {
+                foreach ($pathArray as $i => $path) {
                     $query->addFileToSave($path, $contentArray[$i]);
                 }
                 break;
@@ -522,7 +521,7 @@ class FileBuilder extends AbstractQueryBuilder
      * @param string $basePath
      * @return string[]
      */
-    protected function buildPathsFromValues(string $basePath) : array
+    protected function buildPathsFromValues() : array
     {
         switch (true) {
             case ($qpart = $this->getValue('PATHNAME_ABSOLUTE')) && $qpart->hasValues():
@@ -530,11 +529,7 @@ class FileBuilder extends AbstractQueryBuilder
             case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $qpart->hasValues():
                 $paths = [];
                 foreach ($qpart->getValues() as $rowIdx => $relPath) {
-                    if (! FilePathDataType::isAbsolute($relPath)) {
-                        $paths[$rowIdx] = FilePathDataType::join([$basePath, $relPath]);
-                    } else {
-                        $paths[$rowIdx] = $relPath;
-                    }
+                    $paths[$rowIdx] = $relPath;
                 }
                 return $paths;
             case ($qpart = $this->getValue('FILENAME')) && $qpart->hasValues():
@@ -551,9 +546,6 @@ class FileBuilder extends AbstractQueryBuilder
                         }
                     }
                     $path = StringDataType::replacePlaceholders($addr, $phVals) . '/' . $filename;
-                    if (! FilePathDataType::isAbsolute($path)) {
-                        $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $path;
-                    }
                     $paths[$rowIdx] = $path;
                 }
                 return $paths;
@@ -629,11 +621,10 @@ class FileBuilder extends AbstractQueryBuilder
     public function update(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
         // Update by path (in one of the values)
-        $basePath = $dataConnection->getBasePath() ?? $this->getWorkbench()->getInstallationPath();
-        $fileArray = $this->buildPathsFromValues($basePath);
+        $pathArray = $this->buildPathsFromValues();
         
         // Update by filters
-        if (empty($fileArray) && ! $this->getFilters()->isEmpty()) {
+        if (empty($pathArray) && ! $this->getFilters()->isEmpty()) {
             $fileQuery = new FileBuilder($this->getSelector());
             $fileQuery->setMainObject($this->getMainObject());
             $fileQuery->setFilters($this->getFilters());
@@ -643,8 +634,8 @@ class FileBuilder extends AbstractQueryBuilder
             $fileQuery->addAttribute('PATHNAME_RELATIVE');
             $fileReadResult = $fileQuery->read($dataConnection);
             foreach ($fileReadResult->getResultRows() as $row) {
-                $fileArray[] = $row['PATHNAME_ABSOLUTE'];
-                if (count($fileArray) > 1) {
+                $pathArray[] = $row['PATHNAME_ABSOLUTE'];
+                if (count($pathArray) > 1) {
                     throw new QueryBuilderException('Cannot update more than 1 file at a time by filters!');   
                 }
             }
@@ -652,15 +643,15 @@ class FileBuilder extends AbstractQueryBuilder
         
         // Do the updating
         $query = new FileWriteDataQuery($this->getDirectorySeparator());
-        if (empty($fileArray) === false) {
+        if (empty($pathArray) === false) {
             $contentQparts = $this->getValuesForFileContent();
             switch (true) {
                 case count($contentQparts) === 1:
                     $contentArray = $this->buildFilesContentsFromValues(reset($contentQparts));
-                    if (count($fileArray) !== count($contentArray)) {
-                        throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($fileArray) . ' files exist!');
+                    if (count($pathArray) !== count($contentArray)) {
+                        throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($pathArray) . ' files exist!');
                     }
-                    foreach ($fileArray as $i => $path) {
+                    foreach ($pathArray as $i => $path) {
                         $content = $contentArray[$i];
                         // Skip rows with content `NULL` because these would be the updates,
                         // where the content is not to be changed!
@@ -744,10 +735,22 @@ class FileBuilder extends AbstractQueryBuilder
         
         // Pass ~folder:xxx addresses to the parent folder and handle ~file:xxx here directly
         if (StringDataType::startsWith($fieldLC, self::ATTR_ADDRESS_PREFIX_FOLDER)) {
-            $folderAddr = substr($fieldLC, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
-            $folderAddr = strpos($folderAddr, ':') === false ? self::ATTR_ADDRESS_PREFIX_FILE . $folderAddr : $folderAddr;
-            $folderInfo = $file->getFolderInfo();
-            return $folderInfo === null ? null : $this->buildResultValueFromFile($folderInfo, $folderAddr);
+            // Load folder properties from the ~folder: via `getFolderInfo()` except
+            // for those, that can be determined from the path directly. DO NOT call
+            // `getFolderInfo()` for these properties as this will read the folder and
+            // might fail if it is a virtual folder, the user has not general access
+            // to it, etc. These failures might prevent reading files inside the folder.
+            switch ($fieldLC) {
+                case '~folder:path':
+                    return $file->getFolderPath();
+                case '~folder:name':
+                    return $file->getFolderName();
+                default:                    
+                    $folderAddr = substr($fieldLC, strlen(self::ATTR_ADDRESS_PREFIX_FOLDER));
+                    $folderAddr = strpos($folderAddr, ':') === false ? self::ATTR_ADDRESS_PREFIX_FILE . $folderAddr : $folderAddr;
+                    $folderInfo = $file->getFolderInfo();
+                    return $folderInfo === null ? null : $this->buildResultValueFromFile($folderInfo, $folderAddr);
+            }
         } else {
             // For file data addresses translate older notation to new notation and
             // and remove the `~file:` prefix for the current notation
