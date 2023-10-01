@@ -618,7 +618,7 @@ class DataSheet implements DataSheetInterface
         
         // set sorting
         $sorters = $this->getSorters();
-        if ($sorters->isEmpty() && $this->getAutoSort() === true) {
+        if ($sorters->isEmpty() && $this->getAutoSort() === true && $this->hasAggregateAll() === false) {
             $sorters = $this->getMetaObject()->getDefaultSorters();
         }
         $postprocessorSorters = new DataSorterList($this->getWorkbench(), $this);
