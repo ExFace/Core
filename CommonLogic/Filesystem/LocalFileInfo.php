@@ -344,4 +344,14 @@ class LocalFileInfo implements FileInfoInterface
     {
         $this->splFileInfo->getType();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::exists()
+     */
+    public function exists(): bool
+    {
+        return file_exists($this->getPathAbsolute());
+    }
 }
