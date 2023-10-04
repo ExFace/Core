@@ -14,11 +14,11 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Widgets\Markdown;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Uxon\QueryBuilderSchema;
+use exface\Core\DataTypes\MarkdownDataType;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -315,7 +315,7 @@ class UxonAutosuggest extends AbstractAction
     protected function buildHtmlFromMarkdown(string $markdown) : string 
     {
         try{
-            $html = Markdown::convertMarkdownToHtml($markdown);
+            $html = MarkdownDataType::convertMarkdownToHtml($markdown);
             $html = preg_replace("(</?a[^>]*\>)i", "", $html);
             return $html;
         } catch (\Throwable $e) {
