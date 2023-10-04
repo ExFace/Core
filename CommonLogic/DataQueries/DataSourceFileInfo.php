@@ -15,6 +15,7 @@ use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\OverflowException;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Custom splFileInfo implementation working with files stored in data sources if the meta object has the `FileBehavior`.
@@ -125,10 +126,10 @@ class DataSourceFileInfo extends \SplFileInfo
      * @throws InvalidArgumentException
      * @return FileBehavior
      */
-    protected function getFileBehavior() : FileBehavior
+    protected function getFileBehavior() : FileBehaviorInterface
     {
         if ($this->fileBehavior === null) {
-            $behaviors = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class);
+            $behaviors = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class);
             if (! $behaviors->isEmpty()) {
                 $this->fileBehavior = $behaviors->getFirst();
             } else {

@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Makes the object behave as a file regardless of its data source (e.g. files in DB, etc.)
@@ -17,7 +18,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  * @author Andrej Kabachnik
  *
  */
-class FileBehavior extends AbstractBehavior
+class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
 {    
     private $filenameAttributeAlias = null;
     

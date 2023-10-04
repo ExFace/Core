@@ -17,6 +17,7 @@ use exface\Core\Exceptions\OverflowException;
 use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
@@ -139,10 +140,10 @@ class DataSourceFileInfo implements FileInfoInterface
      * @throws InvalidArgumentException
      * @return FileBehavior
      */
-    protected function getFileBehavior() : FileBehavior
+    protected function getFileBehavior() : FileBehaviorInterface
     {
         if ($this->fileBehavior === null) {
-            $behaviors = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class);
+            $behaviors = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class);
             if (! $behaviors->isEmpty()) {
                 $this->fileBehavior = $behaviors->getFirst();
             } else {
