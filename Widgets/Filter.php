@@ -156,7 +156,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanPreloadData
+class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
 
     private $inputWidget = null;
