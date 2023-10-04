@@ -232,7 +232,7 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFilename(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_NAME || $addr === 'name' || $addr === 'filename';
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_NAME || $addr === 'name' || $addr === 'filename';
     }
     
     /**
@@ -244,7 +244,7 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFileContent(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
     }
     
     /**
