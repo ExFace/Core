@@ -93,6 +93,8 @@ class Uploader implements WidgetPartInterface
     
     private $uxon = null;
     
+    private $checkedBehaviorForObject;
+    
     /**
      * 
      * @param WidgetInterface $widget
@@ -593,7 +595,7 @@ class Uploader implements WidgetPartInterface
     protected function guessAttributes()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
-        if ($behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
             if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
                 $this->setFileContentAttribute($attr->getAlias());
             }
@@ -610,6 +612,8 @@ class Uploader implements WidgetPartInterface
                 $this->setMaxFileSizeMb($val);
             }
         }
+        
+        $this->checkedBehaviorForObject = $this->getMetaObject();
     }
     
     /**
