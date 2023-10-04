@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
 
 class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterface
 {
@@ -205,17 +206,15 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
-        $finder_tab = $debug_widget->createTab();
-        $finder_tab->setCaption('Finder');
-        /* @var $finder_widget \exface\Core\Widgets\Html */
-        $finder_widget = WidgetFactory::createFromUxonInParent($finder_tab, new UxonObject([
+        $tab = $debug_widget->createTab();
+        $tab->setCaption('File reader');
+        $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'Markdown',
             'value' => $this->toMarkdown(),
             'height' => '100%',
             'width' => '100%'
-        ]));
-        $finder_tab->addWidget($finder_widget);
-        $debug_widget->addTab($finder_tab);
+        ])));
+        $debug_widget->addTab($tab);
         return $debug_widget;
     }
 
@@ -225,9 +224,22 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     protected function toMarkdown() : string
     {
-        $md = '';
-        $md .= "Folders:\n" . implode("\n- ", $this->getFolders());
-        return $md;
+        $folders = MarkdownDataType::buildMarkdownListFromArray($this->getFolders(), 'none');
+        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns(), 'none');
+        $depth = $this->getFolderDepth() === null ? '`null` (unlimited)' : "`{$this->getFolderDepth()}`";
+        
+        return <<<MD
+Base path: `{$this->getBasePath()}`
+
+Directory separator: `{$this->getDirectorySeparator()}`
+        
+Folder depth: `{$depth}`
+
+Folders: {$folders}
+
+Filename patterns: {$filenamePatterns}
+
+MD;
     }
     
     /**
