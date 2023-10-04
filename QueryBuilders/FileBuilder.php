@@ -244,6 +244,23 @@ class FileBuilder extends AbstractQueryBuilder
     }
     
     /**
+     *
+     * @param string $dataAddress
+     * @return bool
+     */
+    protected function isFileProperty(QueryPartAttribute $qpart) : bool
+    {
+        $prop = mb_strtoupper(trim($qpart->getDataAddress()));
+        $begin = substr($prop, 0, 1);
+        if ($begin === '_' || $begin === '~') {
+            if (defined(__CLASS__ . '::ATTR_ADDRESS_' . substr($prop, 1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
      * 
      * @param QueryPartFilterGroup $qpart
      * @param FileReadDataQuery $query
