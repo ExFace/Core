@@ -18,12 +18,12 @@ use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -263,7 +263,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param string $urlParams
      * @return string
      */
-    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $urlParams = null, bool $relativeToSiteRoot = true, string $urlParams = null) : string
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $urlParams = null, bool $relativeToSiteRoot = true) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $cache = $facade->getOtlCachePool();        
@@ -310,7 +310,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getContentsAttribute();
         }
         
@@ -328,7 +328,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForFilename(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getFilenameAttribute();
         }
         
@@ -346,7 +346,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getMimeTypeAttribute();
         }
         

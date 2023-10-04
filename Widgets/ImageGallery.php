@@ -15,9 +15,9 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\FacadeFactory;
-use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -696,7 +696,7 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
     protected function guessColumns()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
-        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
                 $this->setFilenameAttributeAlias($attr->getAlias());
             }
