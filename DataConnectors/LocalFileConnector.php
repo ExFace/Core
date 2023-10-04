@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use Symfony\Component\Finder\Finder;
+use exface\Core\DataTypes\StringDataType;
 
 class LocalFileConnector extends TransparentConnector
 {
@@ -48,8 +49,21 @@ class LocalFileConnector extends TransparentConnector
         }
         
         // If the query does not have a base path, use the base path of the connection
-        if (! $query->getBasePath() && null !== $basePath = $this->getBasePath()) {
-            $query->setBasePath($basePath);
+        $connectionBase = $this->getBasePath();
+        if ($connectionBase !== null) {
+            $queryBase = $query->getBasePath();
+            switch (true) {
+                case ! $queryBase:
+                    $query->setBasePath($connectionBase);
+                    break;
+                case FilePathDataType::isAbsolute($queryBase) && FilePathDataType::isAbsolute($connectionBase):
+                    if (StringDataType::startsWith($connectionBase, $queryBase)) {
+                        $query->setBasePath($connectionBase);
+                    } elseif (! StringDataType::startsWith($queryBase, $connectionBase)) {
+                        throw new DataQueryFailedError($query, 'Cannot combine base paths of file query ("' . $queryBase .  '") and connection ("' . $connectionBase . '")');
+                    }
+                    break;
+            }
         }
         
         if ($query instanceof FileWriteDataQuery) {
@@ -67,29 +81,18 @@ class LocalFileConnector extends TransparentConnector
      */
     protected function performRead(FileReadDataQuery $query) : FileReadDataQuery
     {
-        $paths = [];
+        $paths = $query->getFolders(true);
         
         // Prepare an array of absolute paths to search in
         // Note: $query->getBasePath() already includes the base path of this connection
         // - see `performQuery()`
         $basePath = $query->getBasePath();
-        foreach ($query->getFolders() as $path) {
-            $paths[] = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
-        }
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
         if (empty($paths)) {
             $paths[] = $basePath;
         }
         
-        // Now doublecheck if all explicit (non-wildcard) paths exists because otherwise
-        // finder will throw an error. Just remove all non-existant paths as the definitely
-        // do not contain files.
-        foreach ($paths as $nr => $path){
-            if (strpos($path, '*') === false && ! is_dir($path)){
-                unset($paths[$nr]);
-            }
-        }
         // If there are no paths at this point, we don't have any existing folder to look in,
         // so add an empty result to the finder and return it. We must call in() or append()
         // to be able to iterate over the finder!
@@ -97,26 +100,19 @@ class LocalFileConnector extends TransparentConnector
             return $query->withResult([]);
         }
         
-        $finder = new Finder();
-        
-        if ($query->getFolderDepth() !== null) {
-            $finder->depth($query->getFolderDepth());
+        // Now doublecheck if all explicit (non-wildcard) paths exists because otherwise
+        // finder will throw an error. Just remove all non-existant paths as they definitely
+        // do not contain files.
+        foreach ($paths as $nr => $path){
+            if (strpos($path, '*') === false && ! is_dir($path)){
+                unset($paths[$nr]);
+            }
         }
         
-        // Make sure not to have double paths as Symfony FileFinder will yield results for each path separately
-        $paths = array_unique($paths);
-        // Also try to filter out paths that match paterns in other paths
-        $pathsFiltered = $paths;
-        foreach ($paths as $path) {
-            $path = FilePathDataType::normalize($path, $query->getDirectorySeparator());
-            if (strpos($path, '*') !== false) {
-                foreach ($paths as $i => $otherPath) {
-                    $otherPath = FilePathDataType::normalize($otherPath, $query->getDirectorySeparator());
-                    if ($otherPath !== $path && fnmatch($path, $otherPath)) {
-                        unset($pathsFiltered[$i]);
-                    }
-                }
-            }
+        // Instantiate Symfony Finder
+        $finder = new Finder();
+        if ($query->getFolderDepth() !== null) {
+            $finder->depth($query->getFolderDepth());
         }
         
         $namePatterns = $query->getFilenamePatterns();
@@ -125,7 +121,7 @@ class LocalFileConnector extends TransparentConnector
         }
         
         try {
-            $finder->in($pathsFiltered);
+            $finder->in($paths);
             return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator()));
         } catch (\Exception $e) {
             throw new DataQueryFailedError($query, "Failed to read local files", null, $e);
@@ -154,33 +150,30 @@ class LocalFileConnector extends TransparentConnector
      */
     protected function performWrite(FileWriteDataQuery $query) : FileWriteDataQuery
     {
-        // Note: the base path of the query already includes the base path of this connection
-        // - see `performQuery()`
-        $basePath = $query->getBasePath();
-        
         $resultFiles = [];
         $fm = $this->getWorkbench()->filemanager();
-        foreach ($query->getFilesToSave() as $path => $content) {
+        
+        // Save files
+        foreach ($query->getFilesToSave(true) as $path => $content) {
             if ($path === null) {
                 throw new DataQueryFailedError($query, 'Cannot write file with an empty path!');
             }
-            $path = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
             $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
         
+        // Delete files
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
-        foreach ($query->getFilesToDelete() as $pathOrInfo) {
+        // Note: the base path of the query already includes the base path of this connection
+        // - see `performQuery()`
+        $basePath = $query->getBasePath();
+        foreach ($query->getFilesToDelete(true) as $pathOrInfo) {
             if ($pathOrInfo instanceof FileInfoInterface) {
                 $path = $pathOrInfo->getPath();
                 $fileInfo = $pathOrInfo;
             } else {
                 $path = $pathOrInfo;
                 $fileInfo = null;
-            }
-            
-            if ($basePath !== null) {
-                $path = $this->addBasePath($path, $basePath, $query->getDirectorySeparator());
             }
             
             if (! file_exists($path)) {
@@ -208,25 +201,6 @@ class LocalFileConnector extends TransparentConnector
         }
         
         return $query->withResult($resultFiles);
-    }
-    
-    /**
-     * 
-     * @param string $pathRelativeOrAbsolute
-     * @return string
-     */
-    protected function addBasePath(string $pathRelativeOrAbsolute, string $basePath, string $directorySeparator = DIRECTORY_SEPARATOR) : string
-    {
-        if (! FilePathDataType::isAbsolute($pathRelativeOrAbsolute)) {
-            $path = FilePathDataType::join([
-                $basePath,
-                $pathRelativeOrAbsolute
-            ]);
-        } else {
-            $path = $pathRelativeOrAbsolute;
-        }
-        
-        return FilePathDataType::normalize($path, $directorySeparator);
     }
 
     /**
