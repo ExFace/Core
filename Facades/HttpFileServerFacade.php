@@ -240,16 +240,17 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * 
      * @param MetaObjectInterface $object
      * @param string $uid
+     * @param string $urlParams
+     * @param bool $urlEncodeUid
      * @param bool $relativeToSiteRoot
-     * @param string $properties
      * @return string
      */
-    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, string $urlParams = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
-        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
-        if ($properties) {
-            $url .= '?'. $properties;
+        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . ($urlEncodeUid ? urlencode($uid) : $uid);
+        if ($urlParams) {
+            $url .= '?'. $urlParams;
         }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
@@ -259,10 +260,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param MetaObjectInterface $object
      * @param string $uid
      * @param bool $relativeToSiteRoot
-     * @param string $properties
+     * @param string $urlParams
      * @return string
      */
-    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $urlParams = null, bool $relativeToSiteRoot = true, string $urlParams = null) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $cache = $facade->getOtlCachePool();        
@@ -271,8 +272,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $data['object_alias'] = $object->getAliasWithNamespace();
         $data['uid'] = $uid;
         $params = [];
-        if ($properties) {
-            parse_str($properties, $params);
+        if ($urlParams) {
+            parse_str($urlParams, $params);
         }
         $data['params'] = $params;        
         $cache->set($rand, $data);        
