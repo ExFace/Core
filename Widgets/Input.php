@@ -30,7 +30,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class Input extends Value implements iTakeInput, iHaveDefaultValue
+class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequired
 {
     /**
      * Focus the input
