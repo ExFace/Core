@@ -663,6 +663,15 @@ class DataSheet implements DataSheetInterface
                     throw new DataSheetJoinError($this, 'Cannot join subsheet based on object "' . $subsheet->getMetaObject()->getName() . '" to data sheet of "' . $this->getMetaObject()->getName() . '": the subsheet\'s key column attribute "' . $subsheet->getJoinKeyColumnOfSubsheet()->getAttribute()->getName() . '" is not readable!');
                 }
                 
+                // Let the subsheet inherit all the filters of this sheet that apply to
+                // the subsheet's object (= start with the relation path to the subsheet)
+                // Do this before adding the foreign-key filter as this operation __replaces__
+                // all subsheet filters.
+                $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
+                $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
+                    return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
+                }));
+                
                 // Add a subsheet-filter over the UIDs of this sheet for the later JOIN
                 $foreignKeys = array_unique($parentSheetKeyCol->getValues(false));
                 $foreignKeys = array_filter($foreignKeys, function($val) {
@@ -675,13 +684,6 @@ class DataSheet implements DataSheetInterface
                 // Otherwise add an IN-filter for foreign keys
                 $foreignKeysUidAlias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
                 $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
-                
-                // Make sure the subsheet inherits all the filters of this sheet that apply to
-                // the subsheet's object (= start with the relation path to the subsheet)
-                $subsheetRelPath = $subsheet->getRelationPathFromParentSheet()->toString();
-                $subsheet->setFilters($this->getFilters()->rebase($subsheetRelPath, function(ConditionInterface $condition) use ($subsheetRelPath) {
-                    return StringDataType::startsWith($condition->getAttributeAlias(), $subsheetRelPath . RelationPath::RELATION_SEPARATOR);
-                }));
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);
