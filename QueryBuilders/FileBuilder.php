@@ -189,10 +189,14 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
-        $path_patterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
+        $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
+        $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
+        if ($filenamePattern) {
+            $query->addFilenamePattern($filenamePattern);
+        }
         
         // Setup query
-        foreach ($path_patterns as $path) {
+        foreach ($pathPatterns as $path) {
             if ($path == '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
@@ -204,7 +208,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $query->addFolder($pathFolder);
             } 
             
-            if ($pathEnd) {
+            if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
                 $query->addFilenamePattern($pathEnd);
             }         
         }
@@ -276,7 +280,7 @@ class FileBuilder extends AbstractQueryBuilder
                 switch ($filter->getComparator()) {
                     case EXF_COMPARATOR_EQUALS:
                     case EXF_COMPARATOR_IS:
-                        $mask = preg_quote($filter->getCompareValue()) . ($this->isFilename($filter) ? '\\.' : '');
+                        $mask = preg_quote($filter->getCompareValue());
                         if ($filter->getComparator() === EXF_COMPARATOR_EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
