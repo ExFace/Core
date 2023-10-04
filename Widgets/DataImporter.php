@@ -24,6 +24,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Widgets\Traits\iCanEditDataTrait;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -113,7 +114,7 @@ use exface\Core\Widgets\Traits\iCanEditDataTrait;
  * @author Andrej Kabachnik
  *        
  */
-class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons, iCanWrapText
+class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons, iCanWrapText, iCanBeRequired
 {
     use iHaveColumnsAndColumnGroupsTrait;
     
