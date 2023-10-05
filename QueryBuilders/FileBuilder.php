@@ -922,7 +922,8 @@ class FileBuilder extends AbstractQueryBuilder
      */
     protected function getFolderDepth() : ?int
     {
-        return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_FOLDER_DEPTH);
+        $obj = $this->getMainObject();
+        return $obj->getDataAddressProperty(FileBuilder::DAP_FOLDER_DEPTH) ?? $this->getMainObject()->getDataAddressProperty('finder_depth');
     }
     
     /**
