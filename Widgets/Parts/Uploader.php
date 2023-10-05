@@ -14,7 +14,7 @@ use exface\Core\Actions\CreateData;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 
 /**
@@ -92,6 +92,8 @@ class Uploader implements WidgetPartInterface
     private $fileSizeAttributeAlias = null;
     
     private $uxon = null;
+    
+    private $checkedBehaviorForObject;
     
     /**
      * 
@@ -593,7 +595,7 @@ class Uploader implements WidgetPartInterface
     protected function guessAttributes()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
-        if ($behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
                 $this->setFileContentAttribute($attr->getAlias());
             }
@@ -610,6 +612,8 @@ class Uploader implements WidgetPartInterface
                 $this->setMaxFileSizeMb($val);
             }
         }
+        
+        $this->checkedBehaviorForObject = $this->getMetaObject();
     }
     
     /**

@@ -138,6 +138,27 @@ class FilePathDataType extends StringDataType
     }
     
     /**
+     * 
+     * @param string $pathRelativeOrAbsolute
+     * @param string $basePath
+     * @param string $directorySeparator
+     * @return string
+     */
+    public static function makeAbsolute(string $pathRelativeOrAbsolute, string $basePath, string $directorySeparator = DIRECTORY_SEPARATOR) : string
+    {
+        if (! static::isAbsolute($pathRelativeOrAbsolute)) {
+            $path = static::join([
+                $basePath,
+                $pathRelativeOrAbsolute
+            ]);
+        } else {
+            $path = $pathRelativeOrAbsolute;
+        }
+        
+        return static::normalize($path, $directorySeparator);
+    }
+    
+    /**
      * Returns the longest common base path for all given paths or NULL if there is no common base.
      *
      * @param array $paths
