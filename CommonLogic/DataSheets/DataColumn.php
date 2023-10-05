@@ -596,7 +596,7 @@ class DataColumn implements DataColumnInterface
             $uid = $this_uid_column->getCellValue($row_nr);
             $otherVal = $another_column->getCellValue($other_uid_column->findRowByValue($uid));
             if ($another_column->getDataType()) {
-                $otherVal = $another_column->getDataType()::cast($val);
+                $otherVal = $another_column->getDataType()::cast($otherVal);
             }
             $thisVal = $val;
             if ($this->getDataType()) {
