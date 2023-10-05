@@ -242,8 +242,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
-            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
+            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . $limitRows . ' ROWS ONLY';
         }
 
         if ($useEnrichment) {

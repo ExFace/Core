@@ -206,8 +206,12 @@ class MySqlBuilder extends AbstractSqlBuilder
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
-            $limit = ' LIMIT ' . ($this->getLimit()+1) . ' OFFSET ' . $this->getOffset();
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
+            $limit = ' LIMIT ' . $limitRows . ' OFFSET ' . $this->getOffset();
         }
         
         if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->getSelectDistinct())) {

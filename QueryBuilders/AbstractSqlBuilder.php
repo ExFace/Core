@@ -41,6 +41,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -1362,6 +1363,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        
+        // Some aggregators require customized subselects - handle them here
+        if (($qpart instanceof QueryPartSelect) && $qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator()->getFunction()->__toString();
+            // MIN_OF and MAX_OF basically do subselect with LIMIT 1 ordered by the first argument of the aggregator
+            if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
+                $relq->setLimit(1, 0);
+                $relq->addSorter(
+                    $qpart->getAggregator()->getArguments()[0], 
+                    $aggr === AggregatorFunctionsDataType::MAX_OF ? SortingDirectionsDataType::DESC : SortingDirectionsDataType::ASC,
+                    false
+                );
+                $relq_attribute_alias = DataAggregation::stripAggregator($relq_attribute_alias);
+            }
+        }
+        
         $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
@@ -1497,6 +1514,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case AggregatorFunctionsDataType::MAX:
             case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
+                break; 
+            case AggregatorFunctionsDataType::MAX_OF:
+            case AggregatorFunctionsDataType::MIN_OF:
+                // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
+                $output = $sql;
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
