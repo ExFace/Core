@@ -229,10 +229,18 @@ class FileBuilder extends AbstractQueryBuilder
         return $query;
     }
     
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
     protected function isFilename(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
-        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_NAME || $addr === 'name' || $addr === 'filename';
+        return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_NAME 
+        || $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_NAME_WITHOUT_EXTENSION 
+        || $addr === 'name' 
+        || $addr === 'filename';
     }
     
     /**
@@ -245,6 +253,17 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $addr = mb_strtolower(trim($qpart->getDataAddress()));
         return $addr === FileBuilder::ATTR_ADDRESS_PREFIX_FILE . FileBuilder::ATTR_ADDRESS_CONTENT || $addr === 'contents';
+    }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
+    protected function isFilePath(QueryPartAttribute $qpart) : bool
+    {
+        $addr = mb_strtolower($qpart->getDataAddress());
+        return $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_RELATIVE || $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_ABSOLUTE;
     }
     
     /**
@@ -544,19 +563,27 @@ class FileBuilder extends AbstractQueryBuilder
      */
     protected function buildPathsFromValues() : array
     {
+        $pathQpart = null;
+        $filenameQpart = null;
+        foreach ($this->getValues() as $qpart) {
+            switch (true) {
+                case $this->isFilePath($qpart) && $qpart->hasValues():
+                    $pathQpart = $qpart;
+                    break;
+                case $this->isFilename($qpart) && $qpart->hasValues():
+                    $filenameQpart = $qpart;
+                    break;
+            }
+        }
+        
         switch (true) {
-            case ($qpart = $this->getValue('PATHNAME_ABSOLUTE')) && $qpart->hasValues():
-                return $qpart->getValues();
-            case ($qpart = $this->getValue('PATHNAME_RELATIVE')) && $qpart->hasValues():
+            case $pathQpart !== null:
+                return $pathQpart->getValues();
+            case $filenameQpart !== null:
                 $paths = [];
-                foreach ($qpart->getValues() as $rowIdx => $relPath) {
-                    $paths[$rowIdx] = $relPath;
-                }
-                return $paths;
-            case ($qpart = $this->getValue('FILENAME')) && $qpart->hasValues():
-                $paths = [];
-                $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress());
-                $addr = StringDataType::substringBefore($addr, '/', $addr, false, true);
+                $sep = $this->getDirectorySeparator();
+                $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress(), $sep);
+                $addr = StringDataType::substringBefore($addr, $sep, $addr, false, true);
                 $addrPhs = StringDataType::findPlaceholders($addr);
                 
                 foreach ($qpart->getValues() as $rowIdx => $filename) {
@@ -571,6 +598,7 @@ class FileBuilder extends AbstractQueryBuilder
                 }
                 return $paths;
         }
+        
         return [];
     }
 
