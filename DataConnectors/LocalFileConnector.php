@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use Symfony\Component\Finder\Finder;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\ArrayDataType;
 
 class LocalFileConnector extends TransparentConnector
 {
@@ -121,6 +122,11 @@ class LocalFileConnector extends TransparentConnector
         }
         
         try {
+            // Remove case-insensitive duplicates on windows since file system paths are
+            // case insensitive here
+            if (DIRECTORY_SEPARATOR === '\\') {
+                $paths = ArrayDataType::filterUniqueCaseInsensitive($paths);
+            }
             $finder->in($paths);
             return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator()));
         } catch (\Exception $e) {
