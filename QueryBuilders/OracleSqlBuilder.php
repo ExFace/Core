@@ -231,13 +231,17 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $core_query = "
 								SELECT " . $distinct . $core_select . $select_comment . " FROM " . $core_from . $core_join . $where . $group_by . $having . $order_by;
             
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
             $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM
 				(SELECT *
 					FROM
 						(SELECT exftbl.*, ROWNUM EXFRN
 							FROM (" . $core_query . ") exftbl
-		         			WHERE ROWNUM <= " . ($this->getLimit()+ 1 + $this->getOffset()) . "
+		         			WHERE ROWNUM <= " . ($limitRows + $this->getOffset()) . "
 						)
          			WHERE EXFRN > " . $this->getOffset() . "
          		) exfcoreq " . $enrichment_join . $enrichment_order_by;

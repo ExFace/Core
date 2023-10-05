@@ -348,14 +348,16 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      * 
      * @return QueryPartSorter
      */
-    public function addSorter($sort_by, $order = 'ASC')
+    public function addSorter($sort_by, $order = 'ASC', bool $addToAttributes = true)
     {
         $qpart = new QueryPartSorter($sort_by, $this);
         $qpart->setOrder($order);
         $this->sorters[$sort_by . $order] = $qpart;
         // IDEA move this to the read method of the concrete builder, since it might not be neccessary for
         // all data sources.
-        $this->addAttribute($sort_by);
+        if ($addToAttributes === true) {
+            $this->addAttribute($sort_by);
+        }
         return $qpart;
     }
 
