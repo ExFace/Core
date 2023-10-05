@@ -594,7 +594,15 @@ class DataColumn implements DataColumnInterface
         }
         foreach ($this->getValues(false) as $row_nr => $val) {
             $uid = $this_uid_column->getCellValue($row_nr);
-            if ($another_column->getCellValue($other_uid_column->findRowByValue($uid)) !== $val) {
+            $otherVal = $another_column->getCellValue($other_uid_column->findRowByValue($uid));
+            if ($another_column->getDataType()) {
+                $otherVal = $another_column->getDataType()::cast($val);
+            }
+            $thisVal = $val;
+            if ($this->getDataType()) {
+                $thisVal = $this->getDataType()::cast($val);
+            }
+            if (mb_strtolower($otherVal) !== mb_strtolower($thisVal)) {
                 $result[$uid] = $val;
             }
         }
