@@ -74,7 +74,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local Vendor Folders",
-            "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/LocalFileConnector.php",
             "CONFIG": {
                 "use_vendor_folder_as_base": 1
             },
