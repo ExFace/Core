@@ -698,15 +698,15 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
         if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setFilenameAttributeAlias($attr->getAlias());
+                $this->setFilenameAttributeAlias($attr->getAliasWithRelationPath());
             }
             
             if ($this->imageTitleColumn === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setImageTitleAttributeAlias($attr->getAlias());
+                $this->setImageTitleAttributeAlias($attr->getAliasWithRelationPath());
             }
             
             if ($this->mimeTypeColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
-                $this->setMimeTypeAttributeAlias($attr->getAlias());
+                $this->setMimeTypeAttributeAlias($attr->getAliasWithRelationPath());
             }
             
             if ($this->imageUrlColumn === null) {

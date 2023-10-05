@@ -597,15 +597,15 @@ class Uploader implements WidgetPartInterface
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
         if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
-                $this->setFileContentAttribute($attr->getAlias());
+                $this->setFileContentAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->filenameAttributeAlias === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setFilenameAttribute($attr->getAlias());
+                $this->setFilenameAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->mimeTypeAttributeAlias === null && $attr = $behavior->getMimeTypeAttribute()) {
-                $this->setFileMimeTypeAttribute($attr->getAlias());
+                $this->setFileMimeTypeAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->maxFileSizeMb === null && null !== $val = $behavior->getMaxFileSizeInMb()) {
