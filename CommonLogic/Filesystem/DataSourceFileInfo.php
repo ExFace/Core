@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic\DataQueries;
+namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -8,17 +8,19 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\OverflowException;
+use \DateTimeInterface;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
+use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
- * Custom splFileInfo implementation working with files stored in data sources if the meta object has the `FileBehavior`.
+ * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
  * 
  * The paths have the following schemes: 
  * 
@@ -34,7 +36,7 @@ use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
  * IDEA added wildcard support for filenames - to select one of multiple files inside a folder in
  * case the `folder_attribute` is not a UID. See `getFilenameMask()` for details
  */
-class DataSourceFileInfo extends \SplFileInfo
+class DataSourceFileInfo implements FileInfoInterface
 {
     const SCHEME = 'metamodel://';
     
@@ -92,11 +94,23 @@ class DataSourceFileInfo extends \SplFileInfo
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolder()
      */
-    public function getFolder() : string
+    public function getFolderName() : ?string
     {
         return $this->folder;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolderPath()
+     */
+    public function getFolderPath() : ?string
+    {
+        // TODO
+        return null;
     }
     
     /**
@@ -181,7 +195,7 @@ class DataSourceFileInfo extends \SplFileInfo
      * 
      * @return mixed|NULL
      */
-    public function getContents()
+    public function getContent()
     {
         if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
             $val = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
@@ -204,19 +218,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getPath()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFilename()
      */
-    public function getPath() 
-    {
-        return FilePathDataType::findFolderPath($this->pathname);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getFilename()
-     */
-    public function getFilename() 
+    public function getFilename(bool $withExtension = true) : string
     {
         if ($this->filename === null) {
             if (null !== $attr = $this->getFileBehavior()->getFilenameAttribute()) {
@@ -225,15 +229,18 @@ class DataSourceFileInfo extends \SplFileInfo
                 $this->filename = $this->getFilenameMask();
             }
         }
+        if ($withExtension === false && $this->filename !== null) {
+            return StringDataType::substringBefore($this->filename, FilePathDataType::findFileName($this->filename, false));
+        }
         return $this->filename ?? '';
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getExtension()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getExtension()
      */
-    public function getExtension() 
+    public function getExtension() : string
     {
         return FilePathDataType::findExtension($this->getFilename());    
     }
@@ -241,23 +248,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getBasename()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPath()
      */
-    public function getBasename(string $suffix = null) 
-    {
-        $filename = $this->getFilename();
-        if ($suffix !== null) {
-            return StringDataType::substringBefore($filename, $suffix, $filename, false, true);
-        }
-        return $filename;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getPathname()
-     */
-    public function getPathname() 
+    public function getPath() : string
     {
         return $this->pathname;
     }
@@ -265,109 +258,49 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getPerms()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getSize()
      */
-    public function getPerms() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getInode()
-     */
-    public function getInode() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getSize()
-     */
-    public function getSize() 
+    public function getSize() : ?int
     {
         if (null !== $attr = $this->getFileBehavior()->getFileSizeAttribute()) {
             return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
         }
-        return false;
+        return null;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getOwner()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMTime()
      */
-    public function getOwner() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getGroup()
-     */
-    public function getGroup() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getATime()
-     */
-    public function getATime() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getMTime()
-     */
-    public function getMTime() 
+    public function getMTime() : ?int
     {
         if (null !== $attr = $this->getFileBehavior()->getTimeModifiedAttribute()) {
             return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
         }
-        return false;
+        return null;
         
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getCTime()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getCTime()
      */
-    public function getCTime() 
+    public function getCTime() : ?int
     {
         if (null !== $attr = $this->getFileBehavior()->getTimeCreatedAttribute()) {
             return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
         }
-        return false;
+        return null;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getType()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isWritable()
      */
-    public function getType() 
-    {
-        return 'file';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::isWritable()
-     */
-    public function isWritable() 
+    public function isWritable() : bool
     {
         return $this->getMetaObject()->isWritable();
     }
@@ -375,9 +308,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::isReadable()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isReadable()
      */
-    public function isReadable() 
+    public function isReadable() : bool
     {
         return $this->getMetaObject()->isReadable();
     }
@@ -385,19 +318,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::isExecutable()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isFile()
      */
-    public function isExecutable() 
-    {
-        return false;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::isFile()
-     */
-    public function isFile() 
+    public function isFile() : bool
     {
         return true;
     }
@@ -405,9 +328,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::isDir()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isDir()
      */
-    public function isDir() 
+    public function isDir() : bool
     {
         return false;
     }
@@ -415,9 +338,9 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::isLink()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isLink()
      */
-    public function isLink() 
+    public function isLink() : bool
     {
         return false;
     }
@@ -425,71 +348,21 @@ class DataSourceFileInfo extends \SplFileInfo
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getLinkTarget()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getLinkTarget()
      */
-    public function getLinkTarget() 
+    public function getLinkTarget() : ?string
     {
-        return false;
+        return null;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \SplFileInfo::getRealPath()
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::openFile()
      */
-    public function getRealPath() 
+    public function openFile(string $mode = null) : FileInterface
     {
-        return $this->getPath() . self::SLASH . $this->getFilename();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getFileInfo()
-     */
-    public function getFileInfo (string $class_name = null) 
-    {
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::getPathInfo()
-     */
-    public function getPathInfo(string $class_name = null) 
-    {
-        throw new NotImplementedError('Method DataSourceFileInfo::getPathInfo() not implemented yet!');
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::openFile()
-     */
-    public function openFile(string $open_mode = null, bool $use_include_path = null, $context = null) 
-    {
-        throw new NotImplementedError('Method DataSourceFileInfo::getPathInfo() not implemented yet!');
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::setFileClass()
-     */
-    public function setFileClass(string $class_name = null) 
-    {
-        $this->fileClass = $class_name;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \SplFileInfo::setInfoClass()
-     */
-    public function setInfoClass(string $class_name = null) 
-    {
-        $this->infoClass = $class_name;
+        return new DataSourceFile($this);
     }
     
     /**
@@ -500,5 +373,124 @@ class DataSourceFileInfo extends \SplFileInfo
     public function __toString() 
     {
         return $this->getPathname();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getModifiedOn()
+     */
+    public function getModifiedOn(): ?DateTimeInterface
+    {
+        return new \DateTimeImmutable('@' . $this->getMTime());
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getCreatedOn()
+     */
+    public function getCreatedOn(): ?\DateTimeInterface
+    {
+        return new \DateTimeImmutable('@' . $this->getCTime());
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getFolderInfo()
+     */
+    public function getFolderInfo(): ?FileInfoInterface
+    {
+        $folderPath = $this->getFolderPath();
+        if ($folderPath === null || $folderPath === '') {
+            return null;
+        }
+        return new DataSourceFileInfo($folderPath, $this->object->getWorkbench());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getBasePath()
+     */
+    public function getBasePath(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathAbsolute()
+     */
+    public function getPathAbsolute(): string
+    {
+        return $this->getPath();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getPathRelative()
+     */
+    public function getPathRelative(): ?string
+    {
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::isPathAbsolute()
+     */
+    public function isPathAbsolute(): bool
+    {
+        return true;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getDirectorySeparator()
+     */
+    public function getDirectorySeparator(): string
+    {
+        return self::SLASH;   
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMimetype()
+     */
+    public function getMimetype(): ?string
+    {
+        $val = null;
+        if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
+            $val = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        }
+        return $val;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getType()
+     */
+    public function getType(): string
+    {
+        return FileInfoInterface::FILE;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::exists()
+     */
+    public function exists(): bool
+    {
+        // TODO re-read data here?
+        return $this->getFileDataSheet()->countRows() === 1;
     }
 }
