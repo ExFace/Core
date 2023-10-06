@@ -83,6 +83,26 @@ class ExcelBuilder extends FileContentsBuilder
     const DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND = 'excel_error_if_sheet_not_found';
     
     /**
+     * Set to TRUE to open the excel file for reading only - this consumes less memory.
+     *
+     * @uxon-property excel_read_only
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default false
+     */
+    const DAP_EXCEL_READ_ONLY = 'excel_read_only';
+    
+    /**
+     * Set to FALSE to skip reading empty cells saving some more memory on large files.
+     *
+     * @uxon-property excel_read_empty_cells
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default true
+     */
+    const DAP_EXCEL_READ_EMPTY_CELLS = 'excel_read_empty_cells';
+    
+    /**
      * 
      * @param MetaObjectInterface $object
      * @return string|NULL
@@ -127,6 +147,7 @@ class ExcelBuilder extends FileContentsBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result_rows = [];
+        $mainObj = $this->getMainObject();
         
         $query = $this->buildQuery();
         $query = $data_connection->query($query);
@@ -148,12 +169,26 @@ class ExcelBuilder extends FileContentsBuilder
             $excelPath = $query->getPathAbsolute();
         }
         
-        $spreadsheet = IOFactory::load($excelPath);
-        $sheetName = $this->getSheetForObject($this->getMainObject());
+        $dapReadOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_ONLY)) ?? false;
+        $dapReadEmptyCells = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_EMPTY_CELLS)) ?? true;
+        $dapErrorIfNoSheet = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND)) ?? true;
+        
+        $sheetName = $this->getSheetForObject($mainObj);
+        if ($dapReadOnly || $dapReadEmptyCells) {
+            $reader = IOFactory::createReader('Xlsx');
+            
+            $reader->setReadDataOnly($dapReadOnly);
+            $reader->setReadEmptyCells($dapReadEmptyCells);
+            $reader->setLoadSheetsOnly($sheetName);
+            
+            $spreadsheet = $reader->load($excelPath);
+        } else {
+            $spreadsheet = IOFactory::load($excelPath);
+        }
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
         if (! $sheet) {
-            if (BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND) ?? true)) {
+            if ($dapErrorIfNoSheet) {
                 throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
             } else {
                 return new DataQueryResultData([], 0, false, 0);
