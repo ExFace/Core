@@ -1365,7 +1365,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
         
         // Some aggregators require customized subselects - handle them here
-        if (($qpart instanceof QueryPartSelect) && $qpart->hasAggregator()) {
+        if (($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator()) {
             $aggr = $qpart->getAggregator()->getFunction()->__toString();
             // MIN_OF and MAX_OF basically do subselect with LIMIT 1 ordered by the first argument of the aggregator
             if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
