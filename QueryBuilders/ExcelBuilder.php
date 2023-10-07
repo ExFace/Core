@@ -83,14 +83,14 @@ class ExcelBuilder extends FileContentsBuilder
     const DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND = 'excel_error_if_sheet_not_found';
     
     /**
-     * Set to TRUE to open the excel file for reading only - this consumes less memory.
+     * Set to TRUE to read only data, no formatting information, etc. - this consumes less memory.
      *
-     * @uxon-property excel_read_only
+     * @uxon-property excel_read_data_only
      * @uxon-target object
      * @uxon-type boolean
      * @uxon-default false
      */
-    const DAP_EXCEL_READ_ONLY = 'excel_read_only';
+    const DAP_EXCEL_READ_DATA_ONLY = 'excel_read_data_only';
     
     /**
      * Set to FALSE to skip reading empty cells saving some more memory on large files.
@@ -169,22 +169,21 @@ class ExcelBuilder extends FileContentsBuilder
             $excelPath = $query->getPathAbsolute();
         }
         
-        $dapReadOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_ONLY)) ?? false;
+        $dapReadDataOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_DATA_ONLY)) ?? false;
         $dapReadEmptyCells = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_EMPTY_CELLS)) ?? true;
         $dapErrorIfNoSheet = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND)) ?? true;
         
         $sheetName = $this->getSheetForObject($mainObj);
-        if ($dapReadOnly || $dapReadEmptyCells) {
-            $reader = IOFactory::createReader('Xlsx');
-            
-            $reader->setReadDataOnly($dapReadOnly);
-            $reader->setReadEmptyCells($dapReadEmptyCells);
-            $reader->setLoadSheetsOnly($sheetName);
-            
-            $spreadsheet = $reader->load($excelPath);
-        } else {
-            $spreadsheet = IOFactory::load($excelPath);
-        }
+        
+        $reader = IOFactory::createReaderForFile($excelPath);
+        // Add performance-related settings
+        $reader->setReadDataOnly($dapReadDataOnly);
+        $reader->setReadEmptyCells($dapReadEmptyCells);
+        // Make sure, only our target sheet is read as this will save memory on files with many large sheets
+        $reader->setLoadSheetsOnly($sheetName);
+        // Do read
+        $spreadsheet = $reader->load($excelPath);
+        // Get the sheet
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
         if (! $sheet) {
@@ -241,6 +240,11 @@ class ExcelBuilder extends FileContentsBuilder
                 $result_rows[$row_nr][$alias] = $val;
             }
         }
+        
+        // Free up memory as PHPSreadsheet is known to consume a lot of it
+        unset($sheet);
+        unset($spreadsheet);
+        unset($reader);
         
         $resultTotalRows = count($result_rows);
         
