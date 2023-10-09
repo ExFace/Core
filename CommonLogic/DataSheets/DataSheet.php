@@ -808,6 +808,9 @@ class DataSheet implements DataSheetInterface
                             $condDS->getFilters()->addConditionFromExpression($cond->getExpression()->rebase($condRel->getAliasWithModifier()), $cond->getValue(), $cond->getComparator());
                             $condDS->dataRead();
                             $newCond = ConditionFactory::createFromAttribute($condRel->getLeftKeyAttribute(), implode($condAttr->getValueListDelimiter(), array_filter(array_unique($condCol->getValues()))), ComparatorDataType::IN);
+                            if ($newCond->getExpression()->getAttribute()->isFilterable() === false) {
+                                throw new DataSheetReadError($this, 'Cannot use corss-data-source filter "' . $cond->toString() . '" for object ' . $this->getMetaObject()->__toString() . ': the foreign key ' . $newCond->getExpression()->getAttribute()->getAliasWithRelationPath() . ' is not filterable according to the metamodel!');
+                            }
                             $queryFilters->replaceCondition($cond, $newCond);
                         }
                     }
@@ -954,6 +957,9 @@ class DataSheet implements DataSheetInterface
             return 0;
         }
         
+        // Create a query
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
+        
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
         foreach ($this->getColumns() as $col) {
@@ -977,6 +983,11 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             
+            // Same goes for attributes, that the current query builder cannot handel
+            if (! $query->canReadAttribute($col->getAttribute())) {
+                continue;
+            }
+            
             // Since updating an attribute also means updating the corresponding object, we need
             // to apply fixed values to every attribute of the object. Note, that the updated
             // attribute may be a related one, so we need to add fixed attributes of it's (related)
@@ -996,8 +1007,6 @@ class DataSheet implements DataSheetInterface
             $processed_relations[$rel_path] = true;
         }
         
-        // Create a query
-        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         // Add filters to the query
         $query->setFiltersConditionGroup($this->getFilters());
         
@@ -1009,6 +1018,7 @@ class DataSheet implements DataSheetInterface
         // - A data sheet with a single row and a UID column, where the one row references multiple object explicitly selected by the user (the UID
         // column will have one cell with a list of UIDs in this case.
         $sheetHasUidValues = $this->hasUidColumn(true);
+        $relatedSheets = [];
         foreach ($this->getColumns() as $col) {
             if (! $col->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
@@ -1017,16 +1027,40 @@ class DataSheet implements DataSheetInterface
             
             $columnAttr = $col->getAttribute();
             switch (true) {
+                // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
-                    // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                     continue 2;
+                // Update related columns, that the current query builder cannot write, as
+                // subsheets too. Similarly to dataCreate()
+                case ! $query->canReadAttribute($columnAttr):
+                    // Move related columns to subsheets based on their objects
+                    // Do it before handling nested sheets as nested sheets with
+                    // multi-step relations should be moved to subsheets too!
+                    
+                    // Regular related data always goes into a subsheet
+                    $relPath = $col->getAttribute()->getRelationPath();
+                    $relSheetAttrAlias = $col->getAttribute()->getAlias();
+                    
+                    // Do not create a subsheet if it will not have any data - that would only cause errors. This
+                    // check also allow optional subsheets - no values, no subsheet.
+                    if ($col->isEmpty(true)) {
+                        continue 2;
+                    }
+                    // Now we are ready to create a subsheet and pass data to it
+                    if (null === $relSheet = $relatedSheets[$relPath->toString()]) {
+                        $relSheet = DataSheetFactory::createSubsheet($this, $relPath->getEndObject(), $relPath->getRelationLast()->getRightKeyAttribute()->getAlias(), $relPath->getRelationFirst()->getLeftKeyAttribute()->getAlias(), $relPath);
+                        $relatedSheets[$relPath->toString()] = $relSheet;
+                    }
+                    $relSheet->getColumns()->addFromExpression($relSheetAttrAlias)->setValues($col->getValues());
+
+                    continue 2;
+                // Update nested sheets - i.e. replace all rows in the data source, that are related to
+                // the each row of the main sheet with the nested rows here.
                 case $col->getDataType() instanceof DataSheetDataType:
-                    // Update nested sheets - i.e. replace all rows in the data source, that are related to
-                    // the each row of the main sheet with the nested rows here.
                     $this->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2;                
+                // Skip columns with aggregate functions
                 case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString()):
-                    // Skip columns with aggregate functions
                     continue 2;
             }
             
@@ -1117,6 +1151,17 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
         }
         
+        // Handle subsheets with columns with relations
+        foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            $relatedSheet = $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
+            $relatedSheet->dataUpdate($create_if_uid_not_found, $transaction);
+            // TODO update data in the main sheet with values from the related sheet - only for those columns with
+            // corresponding relation path. This would make the main sheet also get default values and values altered
+            // be behaviors. See if($create_if_uid_not_found) {...} in dataUpdate() for similar logic. Perhaps both
+            // can be combined into a new method. Using joinLeft() does not work as it would add all sorts of system
+            // columns of the related sheet too.
+        }
+        
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
         }
@@ -1130,6 +1175,38 @@ class DataSheet implements DataSheetInterface
         $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
         
         return $counter;
+    }
+    
+    /**
+     * 
+     * @param string $relPathStr
+     * @param DataSheetInterface $relatedSheet
+     * @throws DataSheetWriteError
+     * @return DataSheetInterface
+     */
+    protected function dataSavePrepareRelatedSheet(string $relPathStr, DataSheetInterface $relatedSheet) : DataSheetInterface
+    {
+        $relatedKeyCol = $relatedSheet->getColumns()->addFromExpression($relatedSheet->getJoinKeyAliasOfSubsheet());
+        try {
+            $thisKeyCol = $relatedSheet->getJoinKeyColumnOfParentSheet();
+        } catch (DataSheetColumnNotFoundError $e) {
+            // If the foreign key column is not there, but is purely calculated, attempt
+            // to calculate it here.
+            // This is a really rare case, which arose only once: a file attachment object
+            // had the path to the file calculated. Not sure, if this is a good idea at all,
+            // but it worked
+            $thisKeyAttr = $this->getMetaObject()->getAttribute($relPathStr);
+            if ($thisKeyAttr->getObject() === $this->getMetaObject() && $thisKeyAttr->hasCalculation()) {
+                $thisKeyCol = $this->getColumns()->addFromExpression($relPathStr);
+                $thisKeyCol->setValuesByExpression($thisKeyCol->getAttribute()->getCalculationExpression());
+            } else {
+                throw new DataSheetWriteError($this, 'Cannot save subsheet for "' . $relPathStr . '": missing relation key column "' . $relPathStr . '" in the main data sheet!');
+            }
+        }
+        foreach ($thisKeyCol->getValues() as $r => $val) {
+            $relatedKeyCol->setValue($r, $val);
+        }
+        return $relatedSheet;
     }
     
     /**
@@ -1461,11 +1538,10 @@ class DataSheet implements DataSheetInterface
                 }
                 // Now we are ready to create a subsheet and pass data to it
                 if (null === $relSheet = $relatedSheets[$relPath->toString()]) {
-                    //$relSheet = DataSheetFactory::createFromObject($relPath->getEndObject());
                     $relSheet = DataSheetFactory::createSubsheet($this, $relPath->getEndObject(), $relPath->getRelationLast()->getRightKeyAttribute()->getAlias(), $relPath->getRelationFirst()->getLeftKeyAttribute()->getAlias(), $relPath);
                     $relatedSheets[$relPath->toString()] = $relSheet;
                 }
-                $relSheet->getColumns($relSheetAttrAlias)->addFromExpression($relSheetAttrAlias)->setValues($column->getValues());
+                $relSheet->getColumns()->addFromExpression($relSheetAttrAlias)->setValues($column->getValues());
                 continue;
             }
             
@@ -1527,13 +1603,9 @@ class DataSheet implements DataSheetInterface
             $this->setColumnValues($thisObj->getUidAttributeAlias(), $new_uids);
         }
         
-        // Handle subsheet with columns with relations
-        foreach ($relatedSheets as $relatedSheet) {
-            $relatedKeyCol = $relatedSheet->getColumns()->addFromExpression($relatedSheet->getJoinKeyAliasOfSubsheet());
-            $thisKeyCol = $relatedSheet->getJoinKeyColumnOfParentSheet();
-            foreach ($thisKeyCol->getValues() as $r => $val) {
-                $relatedKeyCol->setValue($r, $val);
-            }
+        // Handle subsheets with columns with relations
+        foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataCreate($update_if_uid_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
             // corresponding relation path. This would make the main sheet also get default values and values altered
