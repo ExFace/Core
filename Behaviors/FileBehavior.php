@@ -38,7 +38,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getFilenameAttribute()
      */
     public function getFilenameAttribute() : MetaAttributeInterface
     {
@@ -63,7 +64,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getContentsAttribute()
      */
     public function getContentsAttribute() : MetaAttributeInterface
     {
@@ -88,7 +90,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getMimeTypeAttribute()
      */
     public function getMimeTypeAttribute() : ?MetaAttributeInterface
     {
@@ -112,7 +115,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getFileSizeAttribute()
      */
     public function getFileSizeAttribute() : ?MetaAttributeInterface
     {
@@ -135,8 +139,9 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     }
     
     /**
-     *
-     * @return MetaAttributeInterface|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getTimeCreatedAttribute()
      */
     public function getTimeCreatedAttribute() : ?MetaAttributeInterface
     {
@@ -159,8 +164,9 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     }
     
     /**
-     *
-     * @return MetaAttributeInterface|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getTimeModifiedAttribute()
      */
     public function getTimeModifiedAttribute() : ?MetaAttributeInterface
     {
@@ -184,7 +190,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return float|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getMaxFileSizeInMb()
      */
     public function getMaxFileSizeInMb() : ?float
     {
@@ -208,7 +215,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getFolderAttribute()
      */
     public function getFolderAttribute() : ?MetaAttributeInterface
     {
@@ -237,7 +245,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     
     /**
      * 
-     * @return MetaAttributeInterface[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface::getFileAttributes()
      */
     public function getFileAttributes() : array
     {

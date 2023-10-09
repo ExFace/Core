@@ -20,6 +20,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\CommonLogic\DataQueries\FileWriteDataQuery;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -263,7 +264,23 @@ class FileBuilder extends AbstractQueryBuilder
     protected function isFilePath(QueryPartAttribute $qpart) : bool
     {
         $addr = mb_strtolower($qpart->getDataAddress());
-        return $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_RELATIVE || $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_ABSOLUTE;
+        return $this->isFilePathAddress($addr);
+    }
+    
+    /**
+     * 
+     * @param string $addr
+     * @return bool
+     */
+    protected function isFilePathAddress(string $addr) : bool
+    {
+        return $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_RELATIVE 
+        || $addr === self::ATTR_ADDRESS_PREFIX_FILE . self::ATTR_ADDRESS_PATH_ABSOLUTE
+        // Backwards compatibility with legacy data addresses
+        || $addr === '~filepath'
+        || $addr === 'pathname_absolute'
+        || $addr === '~filepath_relative'
+        || $addr === 'pathname_relative';
     }
     
     /**
@@ -556,7 +573,6 @@ class FileBuilder extends AbstractQueryBuilder
     }
     
     /**
-     * TODO Add an interface for file-based data connections to get their base paths
      * 
      * @param string $basePath
      * @return string[]
@@ -565,6 +581,7 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $pathQpart = null;
         $filenameQpart = null;
+        $contentQpart = null;
         foreach ($this->getValues() as $qpart) {
             switch (true) {
                 case $this->isFilePath($qpart) && $qpart->hasValues():
@@ -573,10 +590,15 @@ class FileBuilder extends AbstractQueryBuilder
                 case $this->isFilename($qpart) && $qpart->hasValues():
                     $filenameQpart = $qpart;
                     break;
+                case $this->isFileContent($qpart) && $qpart->hasUids():
+                    $contentQpart = $qpart;
+                    break;
             }
         }
         
         switch (true) {
+            case $contentQpart !== null && $this->isFilePathAddress($this->getMainObject()->getUidAttribute()->getDataAddress()):
+                return $contentQpart->getUids();
             case $pathQpart !== null:
                 return $pathQpart->getValues();
             case $filenameQpart !== null:
@@ -674,16 +696,25 @@ class FileBuilder extends AbstractQueryBuilder
         
         // Update by filters
         if (empty($pathArray) && ! $this->getFilters()->isEmpty()) {
+            // Read all files using the filters and use their UIDs to delete them
+            // one-by-one
             $fileQuery = new FileBuilder($this->getSelector());
             $fileQuery->setMainObject($this->getMainObject());
             $fileQuery->setFilters($this->getFilters());
-            // Read both - absolute and relative paths because the filters may need to be applied after reading,
-            // so instead of trying to figure out which attribute will be needed, we just add them both here.
-            $fileQuery->addAttribute('PATHNAME_ABSOLUTE');
-            $fileQuery->addAttribute('PATHNAME_RELATIVE');
+            $uidQpart = $fileQuery->addAttribute($this->getMainObject()->getUidAttributeAlias());
+            // Read all path attributes because the filters may need to be applied after reading,
+            // so instead of trying to figure out which attribute will be needed, we just add 
+            // them all here.
+            foreach ($this->findPathAttributes($this->getMainObject()) as $attr) {
+                // The UID has been alread added
+                if ($attr->isUidForObject()) {
+                    continue;
+                }
+                $fileQuery->addAttribute($attr->getAliasWithNamespace());
+            }
             $fileReadResult = $fileQuery->read($dataConnection);
             foreach ($fileReadResult->getResultRows() as $row) {
-                $pathArray[] = $row['PATHNAME_ABSOLUTE'];
+                $pathArray[] = $row[$uidQpart->getColumnKey()];
                 if (count($pathArray) > 1) {
                     throw new QueryBuilderException('Cannot update more than 1 file at a time by filters!');   
                 }
@@ -722,6 +753,22 @@ class FileBuilder extends AbstractQueryBuilder
         
         $performed = $dataConnection->query($query);
         return new DataQueryResultData([], $performed->countAffectedRows());
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaAttributeInterface[]
+     */
+    protected function findPathAttributes(MetaObjectInterface $object) : array
+    {
+        $attrs = [];
+        foreach ($object->getAttributes() as $attr) {
+            if ($this->isFilePathAddress($attr->getDataAddress())) {
+                $attrs[] = $attr;
+            }
+        }
+        return $attrs;
     }
 
     /**
