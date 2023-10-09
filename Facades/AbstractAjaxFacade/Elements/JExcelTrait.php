@@ -1651,7 +1651,7 @@ JS;
                 $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
                 break;
             default:
-                throw new WidgetConfigurationError('Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
+                throw new WidgetConfigurationError($this, 'Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
         }
         
         return $valueJs;
