@@ -22,7 +22,9 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 /**
  * A query builder to access Excel files (or similar spreadsheets).
  * 
- * **WARNING:** currently only reading is supported
+ * **WARNING:** currently only reading is supported and only that of entire worksheets.
+ * The pagination is virtual, so even if the first 10 rows are requested, all rows will
+ * be read from the Excel and filtered in-memory.
  * 
  * ## Data source configuration
  * 
@@ -52,6 +54,11 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * left to right.
  * - single cell coordinates (e.g. `B3`) will add the value of the cell to each row - handy for reading header data for
  * a table.
+ * 
+ * ## Known issues and TODOs
+ * 
+ * TODO Add real pagination using read-filters
+ * TODO Add writing capabilities
  *
  * @author Andrej Kabachnik
  *        
