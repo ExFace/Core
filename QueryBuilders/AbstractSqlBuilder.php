@@ -1036,6 +1036,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($qparts as $qpart) {
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             $attr = $qpart->getAttribute();
+            if (! $this->canReadAttribute($attr)) {
+                continue;
+            }
             if (! $queries[$attr->getRelationPath()->toString()]) {
                 $q = clone $this;
                 if ($attr->getRelationPath()->toString()) {
