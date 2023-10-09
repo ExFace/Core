@@ -89,6 +89,9 @@ class Condition implements ConditionInterface
         $this->exface = $exface;
         $this->ignoreEmptyValues = $ignoreEmptyValues;
         
+        if ($comparator !== null) {
+            $this->setComparator($comparator);
+        }
         if ($leftExpression !== null) {
             $this->setExpression($leftExpression);
         }
@@ -174,7 +177,11 @@ class Condition implements ConditionInterface
                 throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
             }
         }
-        if ($this->ignoreEmptyValues === true && $this->getDataType()->isValueEmpty($value)) {
+        $cmp = $this->getComparator();
+        // If the value empty according to its data type, concider this condition not empty
+        // only if it should explicitly support empty values AND never for IN comparators
+        // (not sure, what exactly IN(nothing) or NOT_IN(nothing) are supposed to mean)
+        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
         $this->value_set = true;
