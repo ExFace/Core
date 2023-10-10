@@ -627,7 +627,11 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $this->inProgress = true;
         
         $fileSheet = $pending['deleteSheet'];
-        $fileSheet->dataDelete($event->getTransaction());
+        //FIXME skip delete if the datasheet is empty
+        //maybe already dont add that sheet to the pending sheets?
+        if (! $fileSheet->isUnfiltered()) {
+            $fileSheet->dataDelete($event->getTransaction());
+        }        
         
         unset($this->pendingSheets[$pendingKey]);
         $this->inProgress = false;
