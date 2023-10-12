@@ -94,13 +94,6 @@ class LocalFileConnector extends TransparentConnector
             $paths[] = $basePath;
         }
         
-        // If there are no paths at this point, we don't have any existing folder to look in,
-        // so add an empty result to the finder and return it. We must call in() or append()
-        // to be able to iterate over the finder!
-        if (empty($paths)){
-            return $query->withResult([]);
-        }
-        
         // Now doublecheck if all explicit (non-wildcard) paths exists because otherwise
         // finder will throw an error. Just remove all non-existant paths as they definitely
         // do not contain files.
@@ -108,6 +101,13 @@ class LocalFileConnector extends TransparentConnector
             if (strpos($path, '*') === false && ! is_dir($path)){
                 unset($paths[$nr]);
             }
+        }
+        
+        // If there are no paths at this point, we don't have any existing folder to look in,
+        // so add an empty result to the finder and return it. We must call in() or append()
+        // to be able to iterate over the finder!
+        if (empty($paths)){
+            return $query->withResult([]);
         }
         
         // Instantiate Symfony Finder
