@@ -159,11 +159,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         // Resize images
-        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
+        if (null !== $resize = $params['resize'] ?? null) {
             list($width, $height) = explode('x', $resize);
             try {
-                $newBinary = $this->resizeImage($binary, $width, $height);
-                $binary = $newBinary;
+                $newImage = $this->resizeImage($binary ?? $plain, $width, $height);
+                $binary = $newImage;
             } catch (\Throwable $e) {
                 if ($colFilename !== null) {
                     $text = $colFilename->getValue(0);
