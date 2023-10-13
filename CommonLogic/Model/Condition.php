@@ -177,10 +177,13 @@ class Condition implements ConditionInterface
                 throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
             }
         }
-        $cmp = $this->getComparator();
+        $cmp = $this->comparator;
         // If the value empty according to its data type, concider this condition not empty
         // only if it should explicitly support empty values AND never for IN comparators
         // (not sure, what exactly IN(nothing) or NOT_IN(nothing) are supposed to mean)
+        // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
+        // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
+        // like in a Prefill of an InputComboTable with multi-select
         if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
