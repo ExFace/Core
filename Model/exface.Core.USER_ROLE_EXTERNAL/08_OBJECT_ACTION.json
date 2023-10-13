@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-08-29 20:18:43",
-            "MODIFIED_ON": "2023-08-29 20:21:05",
+            "MODIFIED_ON": "2023-10-13 09:34:52",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ee84de7ddbb99684de025041000001",
@@ -75,7 +75,7 @@
                 "input_object_alias": "exface.Core.USER_ROLE_EXTERNAL",
                 "icon": "toggle-off",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
                             "from": "=0",
@@ -98,7 +98,7 @@
         },
         {
             "CREATED_ON": "2023-08-29 20:20:41",
-            "MODIFIED_ON": "2023-08-29 20:21:10",
+            "MODIFIED_ON": "2023-10-13 09:34:18",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ee9815c2fe74f09815025041000001",
@@ -112,7 +112,7 @@
                 "input_object_alias": "exface.Core.USER_ROLE_EXTERNAL",
                 "icon": "toggle-on",
                 "input_mapper": {
-                    "inherit_columns": "none",
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
                             "from": "=1",
