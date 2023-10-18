@@ -2869,6 +2869,21 @@ class DataSheet implements DataSheetInterface
     
     /**
      * 
+     * @return DataSheetInterface
+     */
+    public function extractSystemColumns() : DataSheetInterface
+    {
+        $copy = $this->copy();
+        foreach ($copy->getColumns() as $col) {
+            if (! $col->isAttribute() || ! $col->getAttribute()->isSystem()) {
+                $copy->getColumns()->remove($col);
+            }
+        }
+        return $copy;
+    }
+    
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sort()
      */
