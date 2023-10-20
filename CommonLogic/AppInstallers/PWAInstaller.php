@@ -19,11 +19,10 @@ class PWAInstaller extends MetaModelAdditionInstaller
      * @param SelectorInterface $selectorToInstall
      * @param InstallerContainerInterface $installerContainer
      */
-    public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer)
+    public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer, string $subfolder = 'PWA')
     {
-        parent::__construct($selectorToInstall, $installerContainer);
-        $modelFolder = 'PWA';
-        $this->addModelDataSheet($modelFolder, $this->createModelDataSheet('exface.Core.PWA', 'APP', 'MODIFIED_ON', [
+        parent::__construct($selectorToInstall, $installerContainer, $subfolder);
+        $this->addModelDataSheet($subfolder, $this->createModelDataSheet('exface.Core.PWA', 'MODIFIED_ON', 'APP', [
             'REGENERATE_AFTER',
             'GENERATED_ON'
         ]));
@@ -38,7 +37,7 @@ class PWAInstaller extends MetaModelAdditionInstaller
     {
         $indent = '  ';
         yield from parent::install($source_absolute_path);
-        $pwaSheet = $this->createModelDataSheet('exface.Core.PWA', 'APP', 'MODIFIED_ON');
+        $pwaSheet = $this->createModelDataSheet('exface.Core.PWA', 'MODIFIED_ON', 'APP');
         $pwaSheet->dataRead();
         foreach ($pwaSheet->getRows() as $row) {
             $pwa = PWAFactory::createFromString($this->getWorkbench(), $row['UID']);
