@@ -460,7 +460,7 @@ class MetaModelInstaller extends AbstractAppInstaller
                         }
                     }
                     break;
-                case $dataType instanceof UxonDataType:
+                case $dataType instanceof JsonDataType:
                     $colName = $col->getName();
                     foreach ($rows as $i => $row) {
                         $val = $row[$colName];
