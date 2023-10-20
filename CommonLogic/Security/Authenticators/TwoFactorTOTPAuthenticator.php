@@ -29,7 +29,7 @@ use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
  * 
  * The secret is encrypted and stored in the user-authentication data in the metamodel.
  * 
- * Should the authenticator app get lost or reset, just delete the record for this authenticator from
+ * Should the authenticator app get lost or reset, just reset or delete the record for this authenticator from
  * the users authentication list (tab `Authentication` in the user editor for admins) and the initial setup
  * process will start again.
  * 
