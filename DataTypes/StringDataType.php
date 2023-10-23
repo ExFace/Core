@@ -78,6 +78,16 @@ class StringDataType extends AbstractDataType
         
         return $text;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    public function getInputFormatHint() : string
+    {
+        return $this->getValidationDescription();
+    }
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
