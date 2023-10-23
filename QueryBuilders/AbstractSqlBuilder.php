@@ -2050,6 +2050,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             continue;
                         }
                         // Normalize non-empty values
+                        $val = trim($val);
                         $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
                     }
                     
