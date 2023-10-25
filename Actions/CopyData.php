@@ -157,7 +157,7 @@ class CopyData extends SaveData implements iCreateData
                 continue;
             }
             
-            if (! $col->isAttribute()) {
+            if (! $col->isAttribute() || $col->getAttribute()->isCopyable() === false) {
                 $inputSheet->getColumns()->remove($col);
             } elseif ($col->getAttribute()->isRelated()) {
                 $inputSheet->getColumns()->remove($col);
@@ -209,6 +209,7 @@ class CopyData extends SaveData implements iCreateData
             ->copy()
             ->removeRows()
             ->addRow($rowMerged);
+            $mainSheet->getFilters()->removeAll();
             $mainSheet->getUidColumn()->removeRows();
             // Save the copy of the main object
             $mainSheet->dataCreate(false, $transaction);
