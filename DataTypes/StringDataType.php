@@ -78,16 +78,6 @@ class StringDataType extends AbstractDataType
         
         return $text;
     }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
-     */
-    public function getInputFormatHint() : string
-    {
-        return $this->getValidationDescription();
-    }
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
@@ -586,5 +576,25 @@ class StringDataType extends AbstractDataType
     public static function indent(string $string, $indent = '  ') : string
     {
         return $indent .= preg_replace('/(\\R)(.*)/', '\\1' . preg_quote($indent, '/') . '\\2', $string);
+    }
+    
+    /**
+     * 
+     * @param string $text
+     * @param string $puct
+     * @return string
+     */
+    public static function endSentence(string $text, string $puct = '.') : string
+    {
+        $text = trim($text);
+        $end = mb_substr($text, -1);
+        switch ($end) {
+            case '.':
+            case '?':
+            case '!':
+                return $text;
+        }
+        
+        return $text . $puct;
     }
 }
