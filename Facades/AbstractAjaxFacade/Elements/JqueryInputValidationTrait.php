@@ -40,7 +40,7 @@ trait JqueryInputValidationTrait {
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
-    public function buildJsValidator(string $valJs = null)
+    public function buildJsValidator(?string $valJs = null) : string
     {
         $constraintsJs = $this->buildJsValidatorCheckRequired('val', 'bConstraintsOK = false;')
         . $this->buildJsValidatorConstraints('val', 'bConstraintsOK = false;', $this->getWidget()->getValueDataType());

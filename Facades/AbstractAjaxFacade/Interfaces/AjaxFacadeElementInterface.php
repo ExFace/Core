@@ -293,9 +293,10 @@ interface AjaxFacadeElementInterface
      * Returns true if the widget is
      * valid, returns false if the widget is invalid.
      *
+     * @param string|NULL $valJs
      * @return string
      */
-    public function buildJsValidator();
+    public function buildJsValidator(?string $valJs = null) : string;
 
     /**
      * Returns a JavaScript snippet which handles the situation where the widget is invalid e.g.
