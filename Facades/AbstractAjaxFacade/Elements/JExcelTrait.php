@@ -398,6 +398,108 @@ JS;
             ({$this->buildJsJqueryElement()}[0].jssPlugins || []).forEach(function(oPlugin) {
                 oPlugin.onevent(event);
             });
+        },
+
+        /**
+        * Before the paste action is performed. Can return parsed or filtered data, can cancel the action when return false.
+        *
+        * @param el: Object
+        * @param data: Array
+        * @param x: Number
+        * @param y: Number
+        * @param style: Array
+        * @param processedData: String
+        */
+        onbeforepaste: function(el, data, x, y, style, processedData) {
+            var oDropdownVals = {};
+            var aPastedData = [];
+            var aProcessedData = [];
+            var iXStart = parseInt(x);
+            var iXEnd = iXStart;
+            var oColOpts = {};
+            el.jexcel.parseCSV(data).forEach(function(aRow){
+                aPastedData.push(aRow[0].split("\\t"));
+            });
+            iXEnd = iXStart + aPastedData[0].length;
+
+            for (var i = iXStart; i <= iXEnd; i++) {
+                oColOpts = el.jexcel.options.columns[i];
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    oDropdownVals[i - iXStart] = oColOpts.source;
+                }
+            };
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            aPastedData.forEach(function(aRow) {
+                var aValRows, mVal, oValRow;
+                for (var iCol in oDropdownVals) {
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.name == mVal) {
+                            aRow[iCol] = oValRow.id;
+                            break;
+                        }
+                    }
+                }
+                aProcessedData.push(aRow.join("\t"));
+            });
+
+            return aProcessedData.join("\\r\\n");
+        },
+
+        /**
+        * When a copy is performed in the spreadsheet. 
+        * Any string returned will overwrite the user data or return null to progress with the default behavior.
+        * NOTE: returning a string does not work though!
+        * @param el: Object
+        * @param selectedCells: Array
+        * @param data: String
+        */
+        oncopy: function(el, selectedCells, data) {
+            var oDropdownVals = {};
+            var aSelectedData = [];
+
+            el.jexcel.getSelectedColumns().forEach(function(iX, iCol){
+                var oColOpts = el.jexcel.getColumnOptions(iX);
+                if (oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    oDropdownVals[iCol] = oColOpts.source;
+                }
+            });
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            selectedCells.forEach(function(sRow, iX) {
+                var aRow = sRow.split("\t");
+                var aValRows, mVal, oValRow;
+                for (var iCol in oDropdownVals) {
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.id == mVal) {
+                            aRow[iCol] = oValRow.name;
+                            break;
+                        }
+                    }
+                }
+                aSelectedData.push(aRow.join("\t"));
+            });
+
+            this.data = aSelectedData.join("\\r\\n");
+
+            // Create a hidden textarea to copy the values
+            this.textarea.value = this.data;
+            this.textarea.select();
+            document.execCommand("copy");
+
+            return this.data;
         }
     });
 
@@ -1188,7 +1290,7 @@ JS;
             
         }
         
-        return "source: {$srcJson}, {$filterJs}";
+        return "options: {newOptions: false}, source: {$srcJson}, {$filterJs}";
     }
     
     /**
@@ -1677,7 +1779,7 @@ JS;
      * 
      * @return string
      */
-    public function buildJsValidator() : string
+    public function buildJsValidator(?string $valJs = null) : string
     {
         // Make sure to avoid errors if JExcel is not (yet) initialized in the DOM
         // This might happen for example if it is placed inside a (temporary) invisible
