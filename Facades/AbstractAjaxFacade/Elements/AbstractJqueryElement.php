@@ -833,7 +833,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         return 'true';
     }

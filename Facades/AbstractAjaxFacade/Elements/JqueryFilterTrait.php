@@ -1,12 +1,11 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Widgets\Filter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  *
- * @method Filter getWidget()
+ * @method \exface\Core\Widgets\Filter getWidget()
  *        
  * @author Andrej Kabachnik
  *        
@@ -102,7 +101,7 @@ trait JqueryFilterTrait {
      * {@inheritdoc}
      * @see AbstractJqueryElement::buildJsValidator()
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         return $this->getInputElement()->buildJsValidator();
     }

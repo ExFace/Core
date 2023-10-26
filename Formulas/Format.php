@@ -1,9 +1,7 @@
 <?php
 namespace exface\Core\Formulas;
 
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\FormulaError;
 
