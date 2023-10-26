@@ -931,11 +931,12 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this instanceof iTakeInput && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
             if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
+                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . StringDataType::endSentence($dataTypeHint);
             }
             
             if ($this->isRequired() === true) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
+                $msg = $attr->getDataType()->getValidationErrorMessage();
+                $hint .= ($hint ? "\n\n" : '') . ($msg ? StringDataType::endSentence(($msg->getHint() ? $msg->getHint() : $msg->getTitle())) . ' ' : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
             }
         }
         
@@ -946,7 +947,7 @@ abstract class AbstractWidget implements WidgetInterface
         
         // Dev-hint
         if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = rtrim(rtrim($hint), '.') .  ".\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
+            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
         }
         return $hint;
     }
