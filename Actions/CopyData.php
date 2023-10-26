@@ -157,7 +157,7 @@ class CopyData extends SaveData implements iCreateData
                 continue;
             }
             
-            if (! $col->isAttribute() || $col->getAttribute()->isCopyable() === false) {
+            if (! $col->isAttribute()) {
                 $inputSheet->getColumns()->remove($col);
             } elseif ($col->getAttribute()->isRelated()) {
                 $inputSheet->getColumns()->remove($col);
