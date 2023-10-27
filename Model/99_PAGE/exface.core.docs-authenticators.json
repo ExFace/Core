@@ -1,0 +1,42 @@
+{
+    "uid": "0x11ee9b3a8c96a4549b3a747827435ce5",
+    "alias_with_namespace": "exface.core.docs-authenticators",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 9,
+    "menu_visible": true,
+    "name": "Authenticators",
+    "description": "Authenticators and Single-Sign-On options",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2023-06-27 13:41:26",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-06-27 14:28:54",
+    "contents": {
+        "object_alias": "exface.Core.AUTHENTICATOR_CLASS",
+        "widget_type": "SplitHorizontal",
+        "panels": [
+            {
+                "caption": "Authenticator classes",
+                "width": "50%",
+                "widgets": [
+                    {
+                        "extend_widget": "[exface.core.docs-widgets]",
+                        "object_alias": "exface.Core.AUTHENTICATOR_CLASS"
+                    }
+                ]
+            },
+            {
+                "caption": "Documentation",
+                "widgets": [
+                    {
+                        "widget_type": "Browser",
+                        "object_alias": "exface.Core.Docs",
+                        "base_url": "[#api#]\/docs\/",
+                        "url": "exface\/Core\/Docs\/Security\/Authentication\/index.md"
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -33,6 +33,10 @@ class AggregatorFunctionsDataType extends StringDataType implements EnumDataType
     
     const MAX = 'MAX';
     
+    const MIN_OF = 'MIN_OF';
+    
+    const MAX_OF = 'MAX_OF';
+    
     const LIST_ALL = 'LIST';
     
     const LIST_DISTINCT = 'LIST_DISTINCT';

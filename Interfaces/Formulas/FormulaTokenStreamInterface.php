@@ -26,10 +26,17 @@ interface FormulaTokenStreamInterface
     public function getAttributes() : array;
     
     /**
+     * Returns a flat array of all scalar arguments (strings, numbers, booleans) 
+     * including those from nested formulas
+     * 
+     * @return string[]
+     */
+    public function getArguments() : array;
+    
+    /**
      * Returns the expression.
      *
      * @return string
      */
     public function __toString() : string;
-    
 }

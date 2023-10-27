@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Performs an action on the from-sheet an puts its results into the to-sheet
@@ -61,7 +62,7 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $action = $this->getAction();
         

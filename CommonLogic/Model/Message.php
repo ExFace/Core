@@ -66,12 +66,15 @@ class Message implements MessageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MessageInterface::getType()
      */
-    public function getType() : string
+    public function getType(string $default = null) : string
     {
         if ($this->type === null) {
             $this->loadModelData();
         }
-        return $this->type ?? MessageTypeDataType::INFO;
+        if (! MessageTypeDataType::isValidStaticValue($default)) {
+            $default = MessageTypeDataType::INFO;
+        }
+        return $this->type ?? $default;
     }
     
     /**

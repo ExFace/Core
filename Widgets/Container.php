@@ -16,13 +16,23 @@ use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
- * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
- * The conainer itself is mostly invisible - it
- * is just a technical grouping element. Use it, if you just need to place multiple widgets somewhere, where only one widget is expected. The
- * Container is also a common base for many other wigdets: the Panel (a visible UI area, that contains other widgets), the Form, Tabs and Splits, etc.
+ * The Container is a basic widget, that contains other widgets.
+ * 
+ * The `Conainer` itself is mostly invisible - it is just a technical grouping element. 
+ * Use it, if you just need to place multiple widgets somewhere, where only one widget 
+ * is expected. The
+ * 
+ * The `Container` is also a common base for many other wigdets: the `Panel` (a visible UI area, 
+ * that contains other widgets), the `Form`, `Tabs` and `Split`s, etc.
  *
- * In HTML-facades the container will either be a simple (invisible) <div> or completely invisible - thus, just a list of it's contents without
- * any wrapper.
+ * In HTML-facades the container will either be a simple (invisible) <div> or completely 
+ * invisible - thus, just a list of it's contents without any wrapper.
+ * 
+ * ## Widget functions
+ * 
+ * A container has its own functions like `enable`, `disable`, etc., but it can also call
+ * functions of its child-widgets: e.g. you can call `empty` or `require` on a container,
+ * that contains at least one `Input` widget. 
  *
  * @author Andrej Kabachnik
  *        
@@ -42,6 +52,10 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
     {
+        if (! $this->isPrefillable()) {
+            return $data_sheet;
+        }
+        
         foreach ($this->getChildren() as $widget) {
             $widget->prefill($data_sheet);
         }
@@ -364,21 +378,34 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
      */
-    public function getInputWidgets($depth = null)
+    public function getInputWidgets(int $depth = null) : array
     {
         $result = array();
-        foreach ($this->getWidgets() as $widget) {
-            if (($widget instanceof iTakeInput) && ! $widget->isReadonly()) {
+        foreach ($this->getWidgetsRecursive(null, $depth) as $widget) {
+            if (($widget instanceof iTakeInput) && ! $widget->isReadonly() && ! $widget->isDisplayOnly()) {
                 $result[] = $widget;
             }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetsRecursive()
+     */
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
+    {
+        $result = array();
+        foreach ($this->getWidgets($filterCallback) as $widget) {
+            $result[] = $widget;
             if ($widget instanceof iContainOtherWidgets) {
                 if ($depth === 1) {
                     continue;
                 }
-                $result = array_merge($result, $widget->getInputWidgets($depth ? $depth - 1 : null));
+                $result = array_merge($result, $widget->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
             }
         }
         return $result;
@@ -478,5 +505,26 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
             return $visibleChildren[0];
         }
         return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::hasFunction()
+     */
+    public function hasFunction(string $functionName, bool $allowChildFunctions = true) : bool
+    {
+        $constName = 'static::FUNCTION_' . strtoupper($functionName);
+        if (defined($constName)) {
+            return true;
+        }
+        if ($allowChildFunctions) {
+            foreach ($this->getWidgets() as $child) {
+                if ($child->hasFunction($functionName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

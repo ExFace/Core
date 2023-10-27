@@ -11,6 +11,9 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Actions\DeleteObject;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Facades\HttpFileServerFacade;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Lists files and associated data with optional upload and download functionality.
@@ -301,7 +304,7 @@ class FileList extends DataTable
      */
     public function getFileContentColumnName() : string
     {
-        return \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileContentAttribute()->getAlias());
+        return \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileContentAttribute()->getAliasWithRelationPath());
     }
     
     /**
@@ -606,14 +609,75 @@ class FileList extends DataTable
     /**
      *
      * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $dataSheet = null) : DataSheetInterface
+    {
+        $this->guessColumns();
+        return parent::prepareDataSheetToPrefill($dataSheet);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $dataSheet = null) : DataSheetInterface
+    {
+        $this->guessColumns();
+        return parent::prepareDataSheetToRead($dataSheet);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
      * @see \exface\Core\Widgets\Data::getActionDataColumnNames()
      */
     public function getActionDataColumnNames() : array
     {
+        $this->guessColumns();
         $cols = parent::getActionDataColumnNames();
         if ($this->isUploadEnabled()) {
             $cols = array_merge($cols, $this->getUploader()->getActionDataColumnNames());
         }
         return array_unique($cols);
+    }
+    
+    /**
+     * @return void
+     */
+    protected function guessColumns()
+    {
+        /* @var $behavior \exface\Core\Behaviors\FileBehavior */
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
+            if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
+                $this->setFilenameAttributeAlias($attr->getAliasWithRelationPath());
+            }
+            
+            if ($this->mimeTypeColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
+                $this->setMimeTypeAttributeAlias($attr->getAliasWithRelationPath());
+            }
+            
+            if ($this->fileContentColumn === null && $attr = $behavior->getContentsAttribute()) {
+                $this->setFileContentAttributeAlias($attr->getAliasWithRelationPath());
+            }
+        }
+        $this->checkedBehaviorForObject = $this->getMetaObject();
+    }
+    
+    /**
+     *
+     * @param string $uid
+     * @param string $width
+     * @param string $height
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public function buildUrlForDownload(string $uid = null, bool $relativeToSiteRoot = true) : string
+    {
+        if ($uid === null) {
+            $uid = '[#' . $this->getUidColumn()->getDataColumnName() . '#]';
+        }
+        return HttpFileServerFacade::buildUrlToDownloadData($this->getMetaObject(), $uid, null, false, $relativeToSiteRoot);
     }
 }

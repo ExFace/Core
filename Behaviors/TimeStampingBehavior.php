@@ -512,7 +512,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 }
                 // Don't break here! Let the exception happen!
             default:
-                throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK');
+                throw new BehaviorRuntimeError($this, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->getUpdatedOnAttributeAlias() . '" not found in given data sheet!', '7FDSVFK', null, $logbook);
         }
         $update_cnt = count($update_times);
         $logbook->addLine('Input data has ' . $update_cnt . ' rows.');
@@ -529,7 +529,11 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
             // is very small. Still, this really needs to be fixed!
         } else {
             // Check the current update timestamp in the data source
-            $check_sheet = $this->readCurrentData($data_sheet, $logbook);
+            $check_attrs = [$this->getUpdatedOnAttribute()];
+            if ($data_sheet->hasUidColumn()) {
+                $check_attrs[] = $data_sheet->getUidColumn()->getAttribute();
+            }
+            $check_sheet = $this->readCurrentData($data_sheet, $check_attrs, $logbook);
             $logbook->addSection('Comparing timestamps');
             $check_column = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
             $check_cnt = count($check_column->getValues());
@@ -643,13 +647,18 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
     /**
      * 
      * @param DataSheetInterface $originalSheet
+     * @param MetaAttributeInterface[]
      * @param LogBookInterface $logbook
      * @return DataSheetInterface
      */
-    protected function readCurrentData(DataSheetInterface $originalSheet, LogBookInterface $logbook) : DataSheetInterface
+    protected function readCurrentData(DataSheetInterface $originalSheet, array $attributes, LogBookInterface $logbook) : DataSheetInterface
     {
         $logbook->addSection('Loading potential conflicts');
         $check_sheet = $originalSheet->copy()->removeRows();
+        $check_sheet->getColumns()->removeAll();
+        foreach($attributes as $attr) {
+            $check_sheet->getColumns()->addFromAttribute($attr);
+        }
         // Only read current data if there are UIDs or filters in the original sheet!
         // Otherwise it would read ALL data which is useless.
         switch (true) {
@@ -662,8 +671,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 // If there are no UIDs, but filters and a single row, this is a mass-update sheet.
                 // In this case, we need to get the maximum of the update-times of the affected data items
                 // and compare that to the time in the input data (in `onUpdateCheckForConflicts()`). 
-                // FIXME what about the other columns? Read them too? With default aggregators?!
-                if ($originalSheet->countRows() === 1 && $updCol = $originalSheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
+                if ($originalSheet->countRows() === 1 && $updCol = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute())) {
                     $logbook->addLine('Input data has a single row and a column with update timestamps - must be a mass-update');
                     $maxSheet = DataSheetFactory::createFromObject($check_sheet->getMetaObject());
                     $maxCol = $maxSheet->getColumns()->addFromExpression(DataAggregation::addAggregatorToAlias($this->getUpdatedOnAttributeAlias(), AggregatorFunctionsDataType::MAX));
@@ -679,13 +687,7 @@ class TimeStampingBehavior extends AbstractBehavior implements DataModifyingBeha
                 return $check_sheet;
         }
         
-        // Remove nested sheet columns
         // TODO better read max-timestamp of all nested data here!
-        foreach ($check_sheet->getColumns() as $col) {
-            if ($col->getDataType() instanceof DataSheetDataType) {
-                $check_sheet->getColumns()->remove($col);
-            }
-        }
         
         $check_sheet->dataRead();
         $logbook->addLine('Found ' . $check_sheet->countRows() . ' rows in data source');

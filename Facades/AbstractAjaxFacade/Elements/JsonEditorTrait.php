@@ -2009,7 +2009,7 @@ JS;
         return $funcPrefix . '_onBlur';
     }
     
-    protected function buildJsRequiredSetter(bool $required) : string
+    protected function buildJsSetRequired(bool $required) : string
     {
         return "";
     }

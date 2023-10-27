@@ -7,6 +7,8 @@ use exface\Core\Widgets\Parts\DataCalendarItem;
 use exface\Core\Widgets\Parts\DataSchedulerResource;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Widgets\Traits\iCanEditDataTrait;
 
 /**
  * Shows a timeline with events per resource (lane) - like Outlook scheduling assistant.
@@ -14,8 +16,10 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *
  */
-class Scheduler extends Data implements iFillEntireContainer
+class Scheduler extends Data implements iFillEntireContainer, iCanEditData
 {
+    use iCanEditDataTrait;
+    
     private $timelinePart = null;
     
     private $calendarItemPart = null;

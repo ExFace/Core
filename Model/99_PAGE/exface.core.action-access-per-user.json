@@ -1,0 +1,117 @@
+{
+    "uid": "0x11eea41a19233582a41a025041000001",
+    "alias_with_namespace": "exface.core.action-access-per-user",
+    "menu_parent_page_selector": "0x11ea8de4ed64848f97940205857feb80",
+    "menu_index": 3,
+    "menu_visible": true,
+    "name": "Action access per user",
+    "description": "Access matrix showing actions and users",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2023-09-08 10:02:47",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-10-05 10:08:25",
+    "contents": {
+        "object_alias": "exface.Core.ACTION_PERMIT_PER_USER",
+        "widget_type": "Chart",
+        "hide_legend": true,
+        "hide_caption": false,
+        "data": {
+            "paginate": false,
+            "filters": [
+                {
+                    "attribute_alias": "ACTION__APP",
+                    "required": true,
+                    "caption": "Pages of app(s)",
+                    "input_widget": {
+                        "id": "app_filter",
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "USER",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "ACTION__ACTION_PROTOTYPE",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "ACTION__OBJECT",
+                    "input_widget": {
+                        "widget_type": "InputComboTable",
+                        "multi_select": true
+                    }
+                },
+                {
+                    "attribute_alias": "ACTION__LABEL"
+                },
+                {
+                    "attribute_alias": "PERMITTED"
+                }
+            ],
+            "sorters": [
+                {
+                    "attribute_alias": "ACTION__OBJECT__NAME",
+                    "direction": "asc"
+                },
+                {
+                    "attribute_alias": "ACTION__LABEL",
+                    "direction": "asc"
+                },
+                {
+                    "attribute_alias": "USER__LABEL",
+                    "direction": "desc"
+                }
+            ]
+        },
+        "axis_y": [
+            {
+                "zoomable": true,
+                "grid_area": true,
+                "attribute_alias": "USER__LABEL",
+                "hide_caption": true,
+                "caption": "User"
+            }
+        ],
+        "axis_x": [
+            {
+                "zoomable": true,
+                "grid_area": true,
+                "position": "top",
+                "attribute_alias": "=Concatenate(ACTION__LABEL, ' - ', ACTION__ACTION_PROTOTYPE__LABEL)",
+                "caption": "Action",
+                "hide_caption": true,
+                "rotate_labels_degrees": -90
+            }
+        ],
+        "series": [
+            {
+                "type": "heatmap",
+                "value_attribute_alias": "PERMITTED",
+                "caption": "Has access",
+                "x_axis_no": 0,
+                "y_axis_no": 0,
+                "show_values": false,
+                "show_borders": true,
+                "color_scale": {
+                    "show_scale_filter": false,
+                    "max": 1,
+                    "min": 0,
+                    "colors": [
+                        "red",
+                        "#36a832"
+                    ]
+                }
+            }
+        ]
+    }
+}

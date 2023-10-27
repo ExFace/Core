@@ -157,7 +157,9 @@ class MsSqlConnector extends AbstractSqlConnector
     {
         $connectInfo = $this->getConnectionOptions();
         $connectInfo["Database"] = $this->getDatabase();
-        $connectInfo["CharacterSet"] = $this->getCharacterSet();
+        if (null !== $charset = $this->getCharacterSet()) {
+            $connectInfo["CharacterSet"] = $charset;
+        }
         $connectInfo['ReturnDatesAsStrings'] = $this->getConnectionOptions()['ReturnDatesAsStrings'] ?? true;
         if ($this->getUser()) {
             $connectInfo["UID"] = $this->getUser();
@@ -345,9 +347,11 @@ class MsSqlConnector extends AbstractSqlConnector
         
         $code = $err['code'];
         $msg = $err['message'];
+        // Remove error origin markers like [Microsoft][ODBC Driver Manager]...
+        $msg = trim(preg_replace('~^(\[[^]]*])+~m', '', $msg));
         
         // Workaround for strang error in some multi-sequence queries
-        if ($msg === '[Microsoft][ODBC Driver Manager] Function sequence error') {
+        if ($msg === 'Function sequence error') {
             $errors = $this->getErrors();
             if (count($errors) > 1) {
                 for ($i = 1; $i < count($errors); $i++) {
@@ -355,14 +359,6 @@ class MsSqlConnector extends AbstractSqlConnector
                 }
             }
         }
-        
-        // Remove error origin markers
-        $msg = str_replace([
-            '[Microsoft]',
-            '[ODBC Driver Manager]',
-            '[SQL Server]'
-        ], '', $msg);
-        $msg = preg_replace('/\\[ODBC Driver \\d+ for SQL Server\\]/', '', $msg);
         
         return $msg . ($code ? ' (code ' . $code . ')' : '');
     }

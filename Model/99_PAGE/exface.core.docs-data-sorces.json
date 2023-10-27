@@ -1,0 +1,50 @@
+{
+    "uid": "0xcdf966ba949e11e7a875028037ec0200",
+    "alias_with_namespace": "exface.core.docs-data-sorces",
+    "menu_parent_page_selector": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "menu_index": 6,
+    "menu_visible": true,
+    "name": "Data Sorces",
+    "description": "Available query builders and data connectors to connect data sources",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2016-11-21 12:16:23",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-06-27 13:56:19",
+    "contents": {
+        "object_alias": "exface.core.QUERY_BUILDER",
+        "widget_type": "SplitHorizontal",
+        "panels": [
+            {
+                "width": "33%",
+                "caption": "Connectors",
+                "widgets": [
+                    {
+                        "extend_widget": "[exface.core.docs-widgets]",
+                        "object_alias": "exface.Core.DATA_CONNECTOR"
+                    }
+                ]
+            },
+            {
+                "caption": "Query builders",
+                "widgets": [
+                    {
+                        "extend_widget": "[exface.core.docs-widgets]",
+                        "object_alias": "exface.core.QUERY_BUILDER"
+                    }
+                ]
+            },
+            {
+                "caption": "Model builders",
+                "width": "33%",
+                "widgets": [
+                    {
+                        "extend_widget": "[exface.core.docs-widgets]",
+                        "object_alias": "exface.Core.MODEL_BUILDER"
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -242,8 +242,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
-            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
+            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . $limitRows . ' ROWS ONLY';
         }
 
         if ($useEnrichment) {
@@ -533,11 +537,14 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     $subq->setQueryId($this->getNextSubqueryId());
                     $subq->setMainObject($this->getMainObject());
                     $subqSelectPart = $subq->addAttribute($qpart->getAttribute()->getAliasWithRelationPath());
+                    // The subquery must get all filters of the original query (since it is based on the same object)...
+                    $subq->setFilters($this->getFilters());
+                    // ... and an additional filter for every aggregated GROUP BY predicate
                     foreach ($this->getAggregations() as $aggrPart) {
                         if ($aggrPart->getAttribute()->isExactly($qpart->getAttribute())) {
                             continue;
                         }
-                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAlias(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
+                        $subq->addFilterWithCustomSql($aggrPart->getAttribute()->getAliasWithRelationPath(), $this->buildSqlSelect($aggrPart, null, null, false, false, false), ComparatorDataType::EQUALS);
                     }
                     $subSql = $subq->buildSqlQuerySelect();
                     $subSqlFrom = 'FROM ' . $subq->buildSqlFrom();
@@ -596,10 +603,10 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryDelete()
      */
-    public function buildSqlQueryDelete(string $sqlWhere) : string
+    public function buildSqlQueryDelete(string $sqlWhere, string $joins = null) : string
     {
         $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
-        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $sqlWhere;
+        return 'DELETE ' . $table_alias . '  FROM ' . $this->buildSqlFrom(AbstractSqlBuilder::OPERATION_WRITE) . $joins . $sqlWhere;
     }
     
     /**
@@ -607,7 +614,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         switch (true) {
             case $data_type instanceof StringDataType:
@@ -621,7 +628,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ($data_type->getShowMilliseconds()) {
                     $format = 121;
                 } else {
@@ -638,13 +645,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Use CONVERT() instead of string dates like '2023-06-20'
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ("'" === mb_substr($value, 0, 1)) {
                     $value = "CONVERT(date, {$value}, 23)";
                 }
                 break;
             default:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
         }
         return $value;
     }

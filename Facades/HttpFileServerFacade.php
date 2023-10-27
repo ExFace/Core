@@ -18,12 +18,12 @@ use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -159,11 +159,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         // Resize images
-        if ($binary !== null && null !== $resize = $params['resize'] ?? null) {
+        if (null !== $resize = $params['resize'] ?? null) {
             list($width, $height) = explode('x', $resize);
             try {
-                $newBinary = $this->resizeImage($binary, $width, $height);
-                $binary = $newBinary;
+                $newImage = $this->resizeImage($binary ?? $plain, $width, $height);
+                $binary = $newImage;
             } catch (\Throwable $e) {
                 if ($colFilename !== null) {
                     $text = $colFilename->getValue(0);
@@ -240,16 +240,17 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * 
      * @param MetaObjectInterface $object
      * @param string $uid
+     * @param string $urlParams
+     * @param bool $urlEncodeUid
      * @param bool $relativeToSiteRoot
-     * @param string $properties
      * @return string
      */
-    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
+    public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, string $urlParams = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
-        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . urlencode($uid);
-        if ($properties) {
-            $url .= '?'. $properties;
+        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . ($urlEncodeUid ? urlencode($uid) : $uid);
+        if ($urlParams) {
+            $url .= '?'. $urlParams;
         }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
@@ -259,10 +260,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param MetaObjectInterface $object
      * @param string $uid
      * @param bool $relativeToSiteRoot
-     * @param string $properties
+     * @param string $urlParams
      * @return string
      */
-    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, bool $relativeToSiteRoot = true, string $properties = null) : string
+    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $urlParams = null, bool $relativeToSiteRoot = true) : string
     {
         $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
         $cache = $facade->getOtlCachePool();        
@@ -271,8 +272,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $data['object_alias'] = $object->getAliasWithNamespace();
         $data['uid'] = $uid;
         $params = [];
-        if ($properties) {
-            parse_str($properties, $params);
+        if ($urlParams) {
+            parse_str($urlParams, $params);
         }
         $data['params'] = $params;        
         $cache->set($rand, $data);        
@@ -309,7 +310,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getContentsAttribute();
         }
         
@@ -327,7 +328,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForFilename(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getFilenameAttribute();
         }
         
@@ -345,7 +346,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
     {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getMimeTypeAttribute();
         }
         

@@ -19,6 +19,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\CommonLogic\Tasks\GenericTask;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Actions\ShowWidget;
 
 class PrefillModel implements PrefillModelInterface
 {    
@@ -95,6 +97,25 @@ class PrefillModel implements PrefillModelInterface
         
         // Now see, what action, we are dealing with and whether it requires a prefill
         $action = $button->getAction();
+        if ($action instanceof iCallOtherActions) {
+            if (! $task->hasAction()) {
+                $task->setActionSelector('exface.Core.ShowWidget');
+            }
+            $foundStep = $action->getActionToStart($task);
+            if ($foundStep === null) {
+                foreach ($action->getActions() as $step) {
+                    if ($step instanceof ShowWidget) {
+                        if ($foundStep !== null) {
+                            throw new RuntimeException('Cannot emulate widget prefill for action chains with multiple ShowWidget actions!');
+                        }
+                        $foundStep = $step;
+                    }
+                }
+            }
+            if ($foundStep !== null) {
+                $action = $foundStep;
+            }
+        }
         if (($action instanceof iShowWidget) && ($action->getPrefillWithInputData() || $action->getPrefillWithPrefillData() || $action->getPrefillWithFilterContext())) {
             // If a prefill is required, but there is no input data (e.g. a button with ShowObjectEditDialog was pressed and
             // the corresponding view or viewcontroller is being loaded), just fake the input data by reading the first row of

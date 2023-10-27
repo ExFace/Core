@@ -26,6 +26,10 @@ use exface\Core\CommonLogic\DataSheets\Mappings\DataToSubsheetMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataUnpivotMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
+use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
+use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToVariableMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -62,6 +66,23 @@ use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
  * where you must define the class of each mapping however. All the specific arrays like
  * `column_to_column_mappings` are just there for convenience - technically they all just fill 
  * the `mappings`.
+ * 
+ * ## Variables
+ * 
+ * If you need certain values to "survive" a number of mappings an be reused afterwards, you can 
+ * store the in variables using special variable mappings. This is mainly used in action chains,
+ * where certain values need to be passed from one action to another. 
+ * 
+ * - `column_to_variable_mappings` to store values of the from-sheet
+ * - `variable_to_column_mappings` to read stored values and put them back into a data sheet
+ * 
+ * These mappings use context variables, that remain available throughout the request.
+ * 
+ * **NOTE:** do not use `=GetContextVar()` formulas on variables set by a previous mapping of
+ * the same mapper - the variables will not yet be available! Use `variable_to_column_mappings`
+ * instead. Remember, that any mapper will attempt to read missing from-values (see below), 
+ * which will include your formula, of course. Thus the formula will be evaluated __before__ 
+ * the variables are populated.
  * 
  * ## Inheriting properties of the from-sheet
  * 
@@ -158,12 +179,11 @@ class DataSheetMapper implements DataSheetMapperInterface
             throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
         }
         
-        // $logbook->addLine('Mapper configuration');
-        
         $fromSheetWasEmpty = $fromSheet->isEmpty();
         
         if ($logbook !== null) {
-            $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**', 1);
+            $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
+            $logbook->addIndent(1);
         }
         
         // Make sure, the from-sheet has everything needed
@@ -174,7 +194,8 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         // Inherit stuff
         if ($logbook !== null) {
-            $logbook->addLine('Inheriting: ', 1);
+            $logbook->addLine('Inheriting: ');
+            $logbook->addIndent(1);
         }
         // Inherit columns if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritColumns()){
@@ -192,36 +213,28 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $processedNames[] = $fromCol->getName();
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
-            if ($logbook !== null) {
-                $logbook->addLine(count($processedNames) . ' columns (mode "' . $inheritMode . '"): ' . implode(', ', $processedNames), 2);
-            }
+            if ($logbook !== null) $logbook->addLine(count($processedNames) . ' columns (mode "' . $inheritMode . '"): ' . implode(', ', $processedNames));
             try {
                 $toSheet->importRows($fromSheet);
             } catch (\Throwable $e) {
-                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) {
-                $logbook->addLine('0 columns', 2);
-            }
+            if ($logbook !== null) $logbook->addLine('0 columns');
         }
         
         // Inherit filters if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
-            if ($logbook !== null) {
-                $logbook->addLine('Filters: ' . $fromSheet->getFilters()->__toString(), 2);
-            }
+            if ($logbook !== null) $logbook->addLine('Filters: ' . $fromSheet->getFilters()->__toString());
             try {
                 $toSheet->setFilters($fromSheet->getFilters());
             } catch (\Throwable $e) {
-                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit filters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) {
-                $logbook->addLine('0 filters', 2);
-            }
+            if ($logbook !== null) $logbook->addLine('0 filters');
         }
         
         // Inherit sorters if neccessary
@@ -232,51 +245,52 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $toSheet->getSorters()->add($sorter);
                     $processedNames[] = $sorter->__toString();
                 }
-                if ($logbook !== null) {
-                    $logbook->addLine(count($processedNames) . ' sorters: ' . implode(', ', $processedNames), 2);
-                }
+                if ($logbook !== null) $logbook->addLine(count($processedNames) . ' sorters: ' . implode(', ', $processedNames));
             } catch (\Throwable $e) {
-                $logbook->addLine('**ERROR**: ' . $e->getMessage(), 2);
+                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) {
-                $logbook->addLine('0 sorters', 2);
-            }
+            if ($logbook !== null) $logbook->addLine('0 sorters');
         }
         
         // Apply mappers
+        if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
         foreach ($this->getMappings() as $map){
-            $toSheet = $map->map($fromSheet, $toSheet);
+            try {
+                $toSheet = $map->map($fromSheet, $toSheet, $logbook);
+            } catch (\Throwable $e) {
+                if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                if ($e instanceof DataMappingExceptionInterface) {
+                    throw $e;
+                }
+                throw new DataMappingFailedError($map, $fromSheet, $toSheet, $e->getMessage(), null, $e);
+            }
         }
+        if ($logbook !== null) $logbook->addIndent(-1);
         
         // Make sure the to-sheet is empty if the from-sheet was empty and the empty state is to be inherited
         if ($this->getInheritEmptyData() && $fromSheetWasEmpty) {
             $toSheet->removeRows();
-            if ($logbook !== null) {
-                $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`');
         }
         
         // Refresh data if needed
         if ($this->getRefreshDataAfterMapping()) {
             $toSheet->dataRead();
-            if ($logbook !== null) {
-                $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows');
         }
         
         // Remove duplicate rows if explicitly required or the sheet has a UID column. If there is a UID column,
         // we can be sure, that equal rows actually are the same data item.
         if ($this->getRemoveDuplicateRows() === true || ($toSheet->hasUidColumn(true) && $toSheet->countRows() > 1 && $this->getRemoveDuplicateRows() !== false)) {
             $duplicateRows = $toSheet->removeRowDuplicates();
-            if ($logbook !== null) {
-                $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows');
         }
         
         if ($logbook !== null) {
-            $logbook->addLine('Mapper output: ' . $toSheet->countRows() . ' rows of ' . $toSheet->getMetaObject()->__toString(), 1);
+            $logbook->addIndent(-1);
+            $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
         }
         
         return $toSheet;
@@ -284,20 +298,22 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     /**
      * Checks if all required columns are in the from-sheet and tries to add missing ones and reload the data.
-     * 
+     *  
      * @param DataSheetInterface $data_sheet
-     * 
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     * @param bool $readMissingColumns
+     * @param LogBookInterface $logbook
+     * @throws DataMapperRuntimeError
+     * @return DataSheetInterface
      */
     protected function prepareFromSheet(DataSheetInterface $data_sheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
         // If we must not read any data, simply skip this method
         if ($readMissingColumns === false) {
-            if ($logbook !== null) {
-                $logbook->addLine('Reading missing columns explicitly `false`', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Reading missing columns explicitly `false`');
             return $data_sheet;
         }
+        
+        if ($logbook !== null) $logbook->addLine('Checking input data for missing columns');
         
         // If the sheet is empty, just fill it with the required columns and read everything 
         // (no UID values to filter in this case)
@@ -307,12 +323,12 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $data_sheet->getColumns()->addFromExpression($expr);
                 }
             }
-            if ($logbook !== null) {
-                $logbook->addLine('Reading all columns for empty data sheet', 1);
-            }
+            if ($logbook !== null) $logbook->addLine('Reading all columns for empty data sheet', 1);
             $data_sheet->dataRead();
             return $data_sheet;
         }
+        
+        // TODO #DataCollector needs to be used here instead of all the following logic
         
         // Now we know, reading missing data is not forbidden, but the sheet already has some data
         // Add missing columns automatically here if:
@@ -328,11 +344,18 @@ class DataSheetMapper implements DataSheetMapperInterface
             // columns and also create a separate sheet for reading missing data.
             $addedCols = [];
             $addedExprs = [];
+            $effectedFormulas = [];
             foreach ($this->getMappings() as $map){
                 foreach ($map->getRequiredExpressions($data_sheet) as $expr) {
+                    // Skip the column if it already exists in the from-sheet
                     if ($data_sheet->getColumns()->getByExpression($expr)){
                         continue;
                     }
+                    // Otherwise we need a separate data sheet to read the required data.
+                    // Can't use the from-sheet itself as reading might overwrite other 
+                    // values set by the user!
+                    // So create an extra copy of the sheet and remove any columns except
+                    // for the UID, that (as we know from above) hase meaningful values.
                     if ($additionSheet === null) {
                         $additionSheet = $data_sheet->copy();
                         foreach ($additionSheet->getColumns() as $col) {
@@ -342,11 +365,34 @@ class DataSheetMapper implements DataSheetMapperInterface
                         }
                     }
                     $addedExprs[] = $expr->__toString();
+                    // If the new expression is a formula, remember it to update its calculation
+                    // after the mapping
+                    if ($expr->isFormula()) {
+                        $effectedFormulas[] = $expr;
+                    }
+                    // Now add readable stuff required for the expression to the addition sheet.
+                    // But only if it does not exist yet in the from sheet as this would overwrite
+                    // values set by the user!
+                    // DO NOT add the expression itself as it might be a formula, that requires
+                    // other columns from the from-sheet, that may not be available in the sheet
+                    // with additional values. Formula will be recalculated later.
+                    foreach ($expr->getRequiredAttributes() as $exprReqStr) {
+                        $exprReq = ExpressionFactory::createForObject($data_sheet->getMetaObject(), $exprReqStr);
+                        if ($data_sheet->getColumns()->getByExpression($exprReq)){
+                            continue;
+                        }
+                        if ($exprReq->isMetaAttribute() && $exprReq->getAttribute()->isReadable()) {
+                            $addedCols[] = $additionSheet->getColumns()->addFromExpression($exprReq);
+                        }
+                    }
+                    // Add the expression to the from-sheet. This will mark it as not fresh, which
+                    // is important below.
+                    // TODO it does not feel right to change the from-sheet in a mapper. Maybe the
+                    // columns shoud be removed at some later point of time?
                     $data_sheet->getColumns()->addFromExpression($expr);
-                    $addedCols[] = $additionSheet->getColumns()->addFromExpression($expr);
                 }
             }
-            if ($logbook !== null) {
+            if (! empty($addedCols) && $logbook !== null) {
                 $logbook->addLine('Found ' . count($addedCols) . ' columns to read for the mapper: `' . implode('`, `', $addedExprs) . '`', 1);
             }
             
@@ -357,9 +403,9 @@ class DataSheetMapper implements DataSheetMapperInterface
             if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
-                if ($logbook !== null) {
-                    $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
-                }
+                
+                if ($logbook !== null) $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
+                
                 $uidCol = $data_sheet->getUidColumn();
                 foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
@@ -375,6 +421,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                             $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
                         }
                     }
+                }
+                // Recalculate all formulas, that rely on the newly added columns
+                foreach ($effectedFormulas as $expr) {
+                    $data_sheet->getColumns()->getByExpression($expr)->setValuesByExpression($expr);
                 }
             }
         } else { 
@@ -432,9 +482,8 @@ class DataSheetMapper implements DataSheetMapperInterface
                             foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                                 $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
                             }
-                            if ($logbook !== null) {
-                                $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
-                            }
+                            
+                            if ($logbook !== null) $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
                         }
                         
                     } // END foreach ($expr->getRequiredAttributes())
@@ -606,7 +655,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * 
      * @uxon-property column_to_filter_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToFilterMapping[]
-     * @uxon-template [{"from": "", "to": "", "comparator": "="}]
+     * @uxon-template [{"from": "", "to": "", "comparator": "=="}]
      * 
      * @param UxonObject $uxon
      * @return DataSheetMapperInterface
@@ -1097,6 +1146,42 @@ class DataSheetMapper implements DataSheetMapperInterface
     protected function setRemoveDuplicateRows(bool $value) : DataSheetMapper
     {
         $this->removeDuplicateRows = $value;
+        return $this;
+    }
+    
+    /**
+     * Stores values from a column of the from-sheet in a context variable
+     *
+     * @uxon-property column_to_variable_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToVariableMapping[]
+     * @uxon-template [{"from": "", "variable": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setColumnToVariableMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new DataColumnToVariableMapping($this, $prop));
+        }
+        return $this;
+    }
+    
+    /**
+     * Places values of a context variable into a column of the to-sheet
+     *
+     * @uxon-property variable_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping[]
+     * @uxon-template [{"variable": "", "to": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setVariableToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new VariableToColumnMapping($this, $prop));
+        }
         return $this;
     }
 }

@@ -263,9 +263,9 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
      *
      * @return QueryPartSorter
      */
-    public function addSorter($sort_by, $order = 'ASC')
+    public function addSorter($sort_by, $order = 'ASC', bool $addToAttributes = true)
     {
-        return $this->qb->addSorter($sort_by, $order);
+        return $this->qb->addSorter($sort_by, $order, $addToAttributes);
     }
     
     /**

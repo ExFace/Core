@@ -20,6 +20,8 @@ use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Exports the prefill data sheet for the target widget.
@@ -149,10 +151,26 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                 $log .= '- Refresh is not required or not possible' . PHP_EOL;
             }
         }
+        // Check the prefill data again if it is still valid because actual input data
+        // for the action could have been old and user might actually not be allowed
+        // to trigger showing a dialog anymore and therefor trigger the prefill.
+        // As we might have to load additional data for checks, only do that if data sheet has
+        // UID column with values.
+        // This can occur if user did load data in a table and the another user changed a data entry
+        // after the first user did load the table. The first user can then select an entry and press a button
+        // to show a dialog, for example to change a status with ading a commentary.
+        // With up to date data that action wouldn't be allowed, but as the user still has old data shown they can
+        // trigger the action initially.
+        // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
+        // by checking again against the checks of the trigger action.
+        if ($mainSheet !== null && $mainSheet->hasUidColumn()) {
+            $this->validateInputData($mainSheet);
+        }
         
         if ($mainSheet === null) {
             $log .= '- No prefill data found so far: creating an empty data sheet.' . PHP_EOL;
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
+            $mainSheet->setAutoCount(false);
         }
         
         $prefillWithDefaults = $this->getPrefillWithDefaults($task);
@@ -178,6 +196,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
                     unset ($defaults[$widget->getId()]);
                 }
             });
+            
             // Do the prefill to trigger the events
             $targetWidget->prefill($mainSheet);
             // If there are $defaults, place the respective values in every empty cell of the data
@@ -265,6 +284,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     }
     
     /**
+     * Returns the action that showed the widget an thus triggered the prefill
      * 
      * @param TaskInterface $task
      * @return ActionInterface|NULL
@@ -273,7 +293,34 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     {
         $trigger = $this->getPrefillTrigger($task);
         if (($trigger instanceof iTriggerAction) && $trigger->hasAction()) {
-            return $trigger->getAction();
+            $action = $trigger->getAction();
+            // If it is an action chain, try to find the trigger action inside the chain
+            if ($action instanceof iCallOtherActions) {
+                // First see, if the chain finds an exact match
+                $step = $action->getActionToStart($task);
+                if ($step !== null) {
+                    return $step;
+                }
+                // If not, take the first show-widget-action. This will actually
+                // happen moste of the time because the chain will typically include
+                // a ShowWidget action and not ReadPrefil explicitly, so the chain
+                // itself will not be able to match a task with ReadPrefill with any
+                // of its actions.
+                $found = [];
+                foreach ($action->getActions() as $step) {
+                    if ($step instanceof iShowWidget) {
+                        $found[] = $step;
+                    }
+                }
+                if (! empty($found)) {
+                    if (count($found) === 1) {
+                        return $found[0];
+                    } else {
+                        throw new ActionRuntimeError($this, 'Cannot read prefill data for action in a chain if the chain has multiple ShowWidget actions');
+                    }
+                }
+            } 
+            return $action;
         }
         return null;
     }

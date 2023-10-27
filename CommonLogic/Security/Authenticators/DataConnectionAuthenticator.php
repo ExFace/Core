@@ -29,15 +29,15 @@ use exface\Core\Widgets\Form;
  * 
  * ```
  * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
- * 		"connection_aliases": [
- * 			"exface.Core.METAMODEL_CONNECTION"
- * 		],
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		]
- * }
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
+ *      "connection_aliases": [
+ *          "exface.Core.METAMODEL_CONNECTION"
+ *      ],
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ]
+ *  }
  * 
  * ```
  * 
@@ -91,24 +91,25 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
         
-        if (! $authenticatedToken->isAnonymous()) {
-            if ($user === null) {
-                if ($this->getCreateNewUsers() === true) {
-                    $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
-                    // second authentification to save credentials
-                    $connector->authenticate($token, true, $user, true);
-                } else {            
-                    throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
-                }
-            }
-            
-            $this->logSuccessfulAuthentication($user, $token->getUsername());
-            if ($token->getUsername() !== $user->getUsername()) {
-                return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
+        if ($user === null) {
+            if ($this->getCreateNewUsers() === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
+                // second authentification to save credentials
+                $connector->authenticate($token, true, $user, true);
+            } else {            
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
             }
         }
         
+        $this->logSuccessfulAuthentication($user, $token->getUsername());
+        if ($token->getUsername() !== $user->getUsername()) {
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
+        }
+        
         $this->saveAuthenticatedToken($authenticatedToken);
+        
+        $this->syncUserRoles($user, $authenticatedToken);
+        
         return $authenticatedToken;
     }
     

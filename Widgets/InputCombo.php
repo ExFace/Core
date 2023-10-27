@@ -375,29 +375,30 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
         $sheetObj = $data_sheet->getMetaObject();
         $widgetObj = $this->getMetaObject();
         if ($sheetObj->is($widgetObj)) {
-            $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
-            
-            // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
-            // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-            // set it here. In most facades, setting merely the value of the combo will make the facade load the
-            // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
-            if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
-                // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
-                $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
-                // When the text for a combo comes from another data source, reading it in advance
-                // might have a serious performance impact. Since adding the text column to the prefill
-                // is generally optional (see above), it is a good idea to check, if the text column
-                // can be read with the same query, as the rest of the prefill da and, if not, exclude
-                // it from the prefill.
-                $sheetObj = $sheetObj;
-                if ($sheetObj->isReadable() && $sheetObj->hasAttribute($text_column_expr)) {
-                    $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
-                    if (! $sheetQuery->canRead($text_column_expr)) {
-                        unset($text_column_expr);
+            if ($this->isBoundToAttribute()) {
+                $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
+                // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
+                // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
+                // set it here. In most facades, setting merely the value of the combo will make the facade load the
+                // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
+                if ($this->getAttribute()->isRelation()) {
+                    // FIXME use $this->getTextAttributeAlias() here instead? But isn't that alias relative to the table's object?
+                    $text_column_expr = RelationPath::relationPathAdd($this->getAttribute()->getAliasWithRelationPath(), $this->getTextColumn()->getAttributeAlias());
+                    // When the text for a combo comes from another data source, reading it in advance
+                    // might have a serious performance impact. Since adding the text column to the prefill
+                    // is generally optional (see above), it is a good idea to check, if the text column
+                    // can be read with the same query, as the rest of the prefill da and, if not, exclude
+                    // it from the prefill.
+                    $sheetObj = $sheetObj;
+                    if ($sheetObj->isReadable() && $sheetObj->hasAttribute($text_column_expr)) {
+                        $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
+                        if (! $sheetQuery->canRead($text_column_expr)) {
+                            unset($text_column_expr);
+                        }
                     }
+                } elseif ($widgetObj->isExactly($this->getOptionsObject())) {
+                    $text_column_expr = $this->getTextColumn()->getExpression()->toString();
                 }
-            } elseif ($widgetObj->isExactly($this->getOptionsObject())) {
-                $text_column_expr = $this->getTextColumn()->getExpression()->toString();
             }
             
             if ($text_column_expr) {
