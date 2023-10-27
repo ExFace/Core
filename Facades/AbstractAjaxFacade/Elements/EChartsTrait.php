@@ -3526,14 +3526,30 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = '';
-        if (is_null($action)) {
-            $rows = "{$this->buildJsEChartsVar()}._dataset";
-        } elseif ($action instanceof iReadData) {
-            // If we are reading, than we need the special data from the configurator
-            // widget: filters, sorters, etc.
-            return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+        
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
-            $rows = "({$this->buildJsEChartsVar()}._oldSelection ? [{$this->buildJsEChartsVar()}._oldSelection] : [])";
+            $customMode = null;
+        }
+        
+        switch (true) {
+            case $customMode === DataButton::INPUT_ROWS_ALL:
+            case $action === null:
+                $rows = "{$this->buildJsEChartsVar()}._dataset";
+                break;
+                
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
+            case $action instanceof iReadData:
+                // If we are reading, than we need the special data from the configurator
+                // widget: filters, sorters, etc.
+                return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            default:
+                $rows = "({$this->buildJsEChartsVar()}._oldSelection ? [{$this->buildJsEChartsVar()}._oldSelection] : [])";
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
     }

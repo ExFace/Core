@@ -278,7 +278,7 @@ class MetaModelInstaller extends AbstractAppInstaller
             $lastUpdAlias = $addition['lastUpdateAttributeAlias'];
             
             if ($ds->isUnfiltered()) {
-                yield $idt . 'Cannot backup ' . $ds->getMetaObject()->__toString() . ': data has no app relation!';
+                yield $idt . 'Backing up ALL data of ' . $ds->getMetaObject()->__toString() . PHP_EOL;
             }
             
             $ds->dataRead();
@@ -292,11 +292,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         // Save some information about the package in the extras of composer.json
         $package_props = array(
             'app_uid' => $app->getUid(),
-            'app_alias' => $app->getAliasWithNamespace(),
-            /* TODO remove hash and timestamp completely as they mainly cause merge conflicts
-             * and their value is not proportional.
-            'model_md5' => md5($model_string),
-            'model_timestamp' => $last_modification_time*/
+            'app_alias' => $app->getAliasWithNamespace()
         );
         
         $packageManager = $this->getWorkbench()->getApp("axenox.PackageManager");
@@ -464,7 +460,7 @@ class MetaModelInstaller extends AbstractAppInstaller
                         }
                     }
                     break;
-                case $dataType instanceof UxonDataType:
+                case $dataType instanceof JsonDataType:
                     $colName = $col->getName();
                     foreach ($rows as $i => $row) {
                         $val = $row[$colName];
@@ -518,7 +514,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_TEMPLATE'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE_COMPOUND'), 'COMPOUND_ATTRIBUTE__OBJECT__APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), ['PAGE__APP', 'PAGE_GROUP__APP']);
+        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), 'PAGE__APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.USER_ROLE'), 'APP');
         $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POINT'), 'APP', [
             'DEFAULT_EFFECT',
@@ -648,7 +644,8 @@ class MetaModelInstaller extends AbstractAppInstaller
                         $data_sheet->getFilters()->removeAll();
                         $counter = $data_sheet->dataUpdate(true, $transaction);
                     } else {
-                        $counter = $data_sheet->dataReplaceByFilters($transaction);
+                        $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
+                        $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
                     }
                     
                     if ($counter > 0) {

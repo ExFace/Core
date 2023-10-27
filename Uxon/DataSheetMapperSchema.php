@@ -97,13 +97,18 @@ class DataSheetMapperSchema extends UxonSchema
         return '\\' . DataSheetMapper::class;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getPropertyValueRecursive()
+     */
     public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
     {
-        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'from' && $uxon['from_object_alias']) {
-            return $uxon['from_object_alias'];
+        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'from' && $uxon->hasProperty('from_object_alias')) {
+            return $uxon->getProperty('from_object_alias');
         }
-        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'to' && $uxon['to_object_alias']) {
-            return $uxon['to_object_alias'];
+        if ($propertyName === 'object_alias' && $path[count($path)-1] === 'to' && $uxon->hasProperty('to_object_alias')) {
+            return $uxon->getProperty('to_object_alias');
         }
         return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue);
     }

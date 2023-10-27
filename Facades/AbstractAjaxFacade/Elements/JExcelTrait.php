@@ -28,6 +28,10 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
 use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\DataTable;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -394,6 +398,108 @@ JS;
             ({$this->buildJsJqueryElement()}[0].jssPlugins || []).forEach(function(oPlugin) {
                 oPlugin.onevent(event);
             });
+        },
+
+        /**
+        * Before the paste action is performed. Can return parsed or filtered data, can cancel the action when return false.
+        *
+        * @param el: Object
+        * @param data: Array
+        * @param x: Number
+        * @param y: Number
+        * @param style: Array
+        * @param processedData: String
+        */
+        onbeforepaste: function(el, data, x, y, style, processedData) {
+            var oDropdownVals = {};
+            var aPastedData = [];
+            var aProcessedData = [];
+            var iXStart = parseInt(x);
+            var iXEnd = iXStart;
+            var oColOpts = {};
+            el.jexcel.parseCSV(data).forEach(function(aRow){
+                aPastedData.push(aRow[0].split("\\t"));
+            });
+            iXEnd = iXStart + aPastedData[0].length;
+
+            for (var i = iXStart; i <= iXEnd; i++) {
+                oColOpts = el.jexcel.options.columns[i];
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    oDropdownVals[i - iXStart] = oColOpts.source;
+                }
+            };
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            aPastedData.forEach(function(aRow) {
+                var aValRows, mVal, oValRow;
+                for (var iCol in oDropdownVals) {
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.name == mVal) {
+                            aRow[iCol] = oValRow.id;
+                            break;
+                        }
+                    }
+                }
+                aProcessedData.push(aRow.join("\t"));
+            });
+
+            return aProcessedData.join("\\r\\n");
+        },
+
+        /**
+        * When a copy is performed in the spreadsheet. 
+        * Any string returned will overwrite the user data or return null to progress with the default behavior.
+        * NOTE: returning a string does not work though!
+        * @param el: Object
+        * @param selectedCells: Array
+        * @param data: String
+        */
+        oncopy: function(el, selectedCells, data) {
+            var oDropdownVals = {};
+            var aSelectedData = [];
+
+            el.jexcel.getSelectedColumns().forEach(function(iX, iCol){
+                var oColOpts = el.jexcel.getColumnOptions(iX);
+                if (oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    oDropdownVals[iCol] = oColOpts.source;
+                }
+            });
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            selectedCells.forEach(function(sRow, iX) {
+                var aRow = sRow.split("\t");
+                var aValRows, mVal, oValRow;
+                for (var iCol in oDropdownVals) {
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.id == mVal) {
+                            aRow[iCol] = oValRow.name;
+                            break;
+                        }
+                    }
+                }
+                aSelectedData.push(aRow.join("\t"));
+            });
+
+            this.data = aSelectedData.join("\\r\\n");
+
+            // Create a hidden textarea to copy the values
+            this.textarea.value = this.data;
+            this.textarea.select();
+            document.execCommand("copy");
+
+            return this.data;
         }
     });
 
@@ -680,7 +786,7 @@ JS;
             // with visible columns. This is important because a user would not understand
             // why his column keeps gettin a sequence-number even if there are no visible
             // naming conflicts.
-            if ($col->isEditable() && $col->getCellWidget()->isRequired()) {
+            if ($col->getCellWidget() instanceof iCanBeRequired && $col->getCellWidget()->isRequired() && $col->isEditable()) {
                 $col->setCaption($col->getCaption() . ' *');
             }
             
@@ -990,6 +1096,7 @@ JS;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
                 $type = "checkbox";
+                $align = "center";
                 break;
             case $cellWidget instanceof InputText:
             case $cellWidget instanceof Text:
@@ -1005,7 +1112,7 @@ JS;
                 return null;
         }
         
-        $align = $align ? 'align: "' . $align . '",' : '';
+        $align = $align ? 'align: "' . $align . '",' : 'align: "left",';
         return <<<JS
                 type: "$type",
                 $options
@@ -1183,7 +1290,7 @@ JS;
             
         }
         
-        return "source: {$srcJson}, {$filterJs}";
+        return "options: {newOptions: false}, source: {$srcJson}, {$filterJs}";
     }
     
     /**
@@ -1266,14 +1373,20 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
         
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
+        } else {
+            $customMode = null;
+        }
+        
         switch (true) {
             // If there is no action or the action 
+            case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
@@ -1287,8 +1400,13 @@ JS;
 JS;
                 break;
                 
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
             // If we have an action, that is based on another object and does not have an input mapper for
             // the widgets's object, the data should become a subsheet.
+            case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
             && ! $dataObj->is($widget->getMetaObject()) 
@@ -1308,6 +1426,12 @@ JS;
                 
                 $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
                 
+                // FIXME the check for visibility in case of empty data is there to prevent data loss if
+                // jExcel was hidden. This happened in UI5 in a Tab, that got hidden after a certain action.
+                // The jExcel in that tab was visible and got an HTML element. Once the dialog was closed and
+                // reopened, the tab was not visible anymore and for some reason the jExce inside did not get
+                // proper data. Not sure, if hidden subsheet excels shoud maybe be excluded from the data in
+                // general?
                 $data = <<<JS
     {
         oId: '{$dataObj->getId()}',
@@ -1315,7 +1439,10 @@ JS;
             {
                 '{$relAlias}': function(){
                     var oData = {$configurator_element->buildJsDataGetter()};
-                    oData.rows = aRows
+                    if (aRows.length === 0 && {$this->buildJsCheckHidden('jqEl')}) {
+                        return {};
+                    }
+                    oData.rows = aRows;
                     return oData;
                 }()
             }
@@ -1348,7 +1475,10 @@ JS;
             
         return <<<JS
         (function(){ 
-            var aRows = {$rows};
+            var jqEl = {$this->buildJsJqueryElement()};
+            var aRows;
+            if (jqEl.length === 0) return {};
+            aRows = {$this->buildJsConvertArrayToData("jqEl.jexcel('getData', false)")};
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
 
@@ -1372,31 +1502,44 @@ JS;
 !function() {    
     var oData = {$jsData};    
     var aData = [];
-
+    var jqCtrl = {$this->buildJsJqueryElement()};
+    if (jqCtrl.length === 0) {
+        return;
+    }
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
-        {$this->buildJsJqueryElement()}[0].exfWidget._initData = oData.rows;
+        jqCtrl[0].exfWidget._initData = oData.rows;
     } else {
-        {$this->buildJsJqueryElement()}[0].exfWidget._initData = [];
+        jqCtrl[0].exfWidget._initData = [];
     }
     if (aData.length === 0) {
         for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
             aData.push([]);
         }
     }
-    {$this->buildJsJqueryElement()}.jexcel('setData', aData);
-    {$this->buildJsResetSelection($this->buildJsJqueryElement())};
-    {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties();
+    jqCtrl.jexcel('setData', aData);
+    {$this->buildJsResetSelection('jqCtrl')};
+    jqCtrl[0].exfWidget.refreshConditionalProperties();
 }()
 
 JS;
     }
-        
+       
+    /**
+     * 
+     * @param string $arrayOfArraysJs
+     * @return string
+     */
     protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
         return "{$this->buildJsJqueryElement()}[0].exfWidget.convertArrayToData({$arrayOfArraysJs})";
     }
     
+    /**
+     * 
+     * @param string $arrayOfObjectsJs
+     * @return string
+     */
     protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
     {
         return "{$this->buildJsJqueryElement()}[0].exfWidget.convertDataToArray({$arrayOfObjectsJs})";
@@ -1610,12 +1753,15 @@ JS;
                 $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
                 break;
             default:
-                throw new WidgetConfigurationError('Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
+                throw new WidgetConfigurationError($this, 'Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
         }
         
         return $valueJs;
     }
     
+    /**
+     * @return void
+     */
     protected function registerConditionalPropertiesOfColumns() 
     {
         foreach ($this->getWidget()->getColumns() as $col) {
@@ -1633,15 +1779,52 @@ JS;
      * 
      * @return string
      */
-    public function buildJsValidator() : string
+    public function buildJsValidator(?string $valJs = null) : string
     {
+        // Make sure to avoid errors if JExcel is not (yet) initialized in the DOM
+        // This might happen for example if it is placed inside a (temporary) invisible
+        // dev.
+        $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
+        $bRequiredJs = $required ? 'true' : 'false';
         return <<<JS
 
 (function(jqExcel) {
+    var bRequired = $bRequiredJs;
+    if (jqExcel.length === 0) {
+        return bRequired ? false : true;
+    }
     jqExcel[0].exfWidget.validateAll();
     return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
 })({$this->buildJsJqueryElement()})
         
 JS;
+    }
+    
+    protected function buildJsCheckHidden(string $jqElement) : string
+    {
+        return "($jqElement.parents().filter(':visible').length !== $jqElement.parents().length)";
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function buildJsEmpty() : string
+    {
+        return $this->buildJsDataSetter('[]');
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AjaxFacadeElementInterface::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === DataTable::FUNCTION_EMPTY:
+                return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
     }
 }

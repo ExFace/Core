@@ -57,6 +57,10 @@ class DateDataType extends AbstractDataType
     
     private $timeZone = null;
     
+    private $min = null;
+    
+    private $max = null;
+    
     /**
      * 
      * @param string|\DateTimeInterface|NULL $string
@@ -679,5 +683,103 @@ class DateDataType extends AbstractDataType
     public static function getTimeZoneDefault(WorkbenchInterface $workbench) : string
     {
         return date_default_timezone_get();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getMin() : ?string
+    {
+        return $this->min;
+    }
+    
+    /**
+     * Minimum value for the date. Supports following syntax:
+     * 
+     * - +/- {n} days (e.g. `+1` for tomorrow, `-1` for yesterday, `0` for today)
+     * - +/- {n}w weeks (e.g. `+1w` for next week)
+     * - +/- {n}m months (e.g. `-3m` for three months ago)
+     * - +/- {n}y years (e.g. `-1y` for the same date last year)
+     * - dd.MM, dd-MM, dd/MM, d.M, d-M, d/M (e.g. `30.09` or `30/9`) for the current year
+     * - ddMMyyyy, ddMMyy, ddMM (e.g. `30092015`, `300915` or `3009`)
+     *
+     * @uxon-property min
+     * @uxon-type string
+     *
+     * @param string $min
+     * @return DateDataType
+     */
+    public function setMin(string $min) : DateDataType
+    {
+        $this->min = $min;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getMax() : ?string
+    {
+        return $this->max;
+    }
+    
+    /**
+     * Maximum value for the date. Supports following syntax:
+     * 
+     * - +/- {n} days (e.g. `+1` for tomorrow, `-1` for yesterday, `0` for today)
+     * - +/- {n}w weeks (e.g. `+1w` for next week)
+     * - +/- {n}m months (e.g. `-3m` for three months ago)
+     * - +/- {n}y years (e.g. `-1y` for the same date last year)
+     * - dd.MM, dd-MM, dd/MM, d.M, d-M, d/M (e.g. `30.09` or `30/9`) for the current year
+     * - ddMMyyyy, ddMMyy, ddMM (e.g. `30092015`, `300915` or `3009`)
+     *
+     * @uxon-property max
+     * @uxon-type string
+     *
+     * @param string $max
+     * @return DateDataType
+     */
+    public function setMax(string $max) : DateDataType
+    {
+        $this->max = $max;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $and = $translator->translate('DATATYPE.VALIDATION.AND');
+        $text = '';
+        if ($this->getMin() !== null) {
+            if ($this->getMin() == 0) {
+                $minMaxCond = ' ≥ ' . $translator->translate('LOCALIZATION.DATE.TODAY');
+            } else {
+                $minMaxCond = ' ≥ ' . $this->getMin();
+            }
+        }
+        if ($this->getMax() !== null) {
+            if ($this->getMax() == 0) {
+                $maxValue = $translator->translate('LOCALIZATION.DATE.TODAY');
+            } else {
+                $maxValue = $this->getMax();
+            }
+            $minMaxCond .= ($minMaxCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $maxValue;
+        }
+        if ($minMaxCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.MINMAX_CONDITION', ['%condition%' => $minMaxCond]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
     }
 }

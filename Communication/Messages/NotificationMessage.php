@@ -128,9 +128,9 @@ class NotificationMessage extends AbstractMessage implements iHaveIcon
      * @uxon-type string
      *
      * @param string $value
-     * @return EmailMessage
+     * @return NotificationMessage
      */
-    public function setSubject(string $value) : EmailMessage
+    public function setSubject(string $value) : NotificationMessage
     {
         return $this->setTitle($value);
     }

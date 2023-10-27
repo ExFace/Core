@@ -89,6 +89,9 @@ class Condition implements ConditionInterface
         $this->exface = $exface;
         $this->ignoreEmptyValues = $ignoreEmptyValues;
         
+        if ($comparator !== null) {
+            $this->setComparator($comparator);
+        }
         if ($leftExpression !== null) {
             $this->setExpression($leftExpression);
         }
@@ -174,7 +177,14 @@ class Condition implements ConditionInterface
                 throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
             }
         }
-        if ($this->ignoreEmptyValues === true && $this->getDataType()->isValueEmpty($value)) {
+        $cmp = $this->comparator;
+        // If the value empty according to its data type, concider this condition not empty
+        // only if it should explicitly support empty values AND never for IN comparators
+        // (not sure, what exactly IN(nothing) or NOT_IN(nothing) are supposed to mean)
+        // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
+        // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
+        // like in a Prefill of an InputComboTable with multi-select
+        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
         $this->value_set = true;
@@ -580,7 +590,9 @@ class Condition implements ConditionInterface
                 }
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
                 foreach ($rightParts as $part) {
-                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, $part)) {
+                    // trim the $part value as list read from data source might be
+                    // seperated by list delimiter and whitespace
+                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, trim($part))) {
                         return $resposeOnFound;
                     }
                 }

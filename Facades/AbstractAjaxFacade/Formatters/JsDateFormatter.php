@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * This formatter generates javascript code to format and parse date/time via the library moment.js.
@@ -42,7 +43,20 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  */
 class JsDateFormatter extends AbstractJsDataTypeFormatter
 {
-
+    const DATE_COMPARE_YEAR = 'year';
+    
+    const DATE_COMPARE_MONTH = 'month';
+    
+    const DATE_COMPARE_DAY = 'day';
+    
+    const DATE_COMPARE_HOUR = 'hour';
+    
+    const DATE_COMPARE_MINUTE = 'minute';
+    
+    const DATE_COMPARE_SECOND = 'second';
+    
+    const DATE_COMPARE_MILLISECOND = 'millisecond';
+    
     private $format = null;
 
     /**
@@ -151,10 +165,45 @@ JS;
     public function buildJsValidator(string $jsValue) : string
     {
         $formatQuoted = json_encode($this->getFormat());
+        //TODO granularities als Konstanten
+        $granularity = self::DATE_COMPARE_DAY;
+        $dataType = $this->getDataType();
+        if ($dataType instanceof DateTimeDataType) {
+            if ($dataType->getShowMilliseconds()) {
+                $granularity = self::DATE_COMPARE_MILLISECOND;
+            } elseif ($dataType->getShowSeconds()) {
+                $granularity = self::DATE_COMPARE_SECOND;
+            }
+        }
+        $jsCompareMax = '';
+        $jsCompareMin = '';
+        if ($dataType->getMax() !== null) {
+            $jsCompareMax = <<<JS
+                sDateMax = '{$dataType->getMax()}';
+                valid = exfTools.date.compareDates(mVal, sDateMax, '<=', sGranularity);
+                if (valid !== true) {
+                    return false;
+                }
+JS;
+        }
+        if ($dataType->getMin() !== null) {
+            $jsCompareMin = <<<JS
+                sDateMin = '{$dataType->getMin()}';
+                valid = exfTools.date.compareDates(mVal, sDateMin, '>=', sGranularity);
+JS;
+        }
         return <<<JS
 function() {
                 var mVal = {$jsValue};
-                return mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+                var sGranularity = '{$granularity}';
+                var sDateMax, sDateMin;
+                var valid = mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+                if (valid !== true) {
+                    return false;
+                }
+                {$jsCompareMax}
+                {$jsCompareMin}
+                return valid;
             }()
             
 JS;

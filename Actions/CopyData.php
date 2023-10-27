@@ -209,6 +209,7 @@ class CopyData extends SaveData implements iCreateData
             ->copy()
             ->removeRows()
             ->addRow($rowMerged);
+            $mainSheet->getFilters()->removeAll();
             $mainSheet->getUidColumn()->removeRows();
             // Save the copy of the main object
             $mainSheet->dataCreate(false, $transaction);

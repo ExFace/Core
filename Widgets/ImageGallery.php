@@ -15,8 +15,9 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\FacadeFactory;
-use exface\Core\Behaviors\FileBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -58,29 +59,47 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * 
  * ## Examples
  * 
- * The following simple exmple will produce a default gallery (the facade will choose
- * it's orientation):
+ * ### Simple gallery based on image files
+ * 
+ * It is most simple to create a gallery from an object, that has the `FileBehavior`. In this
+ * case all attributes are determined automatically! Images will be served via the `HttpFileServerFacade`,
+ * which will take care of security, resizing, etc.
+ * 
+ * ```
+ * {
+ *  "widget_type": "Imagegallery",
+ *  "object_alias": "my.App.image_files",
+ * }
+ * 
+ * ```
+ * 
+ * ### Gallery with custom image URLs
+ * 
+ * If your object already has image URLs as attributes (e.g. images hosted on a media server), you can 
+ * use the explicitly. However, in this case, the image server will need to take care of authorization,
+ * etc.!
  * 
  * ```
  * {
  *  "widget_type": "Imagegallery",
  *  "object_alias": "my.App.images",
  *  "image_url_attribute_alias": "uri",
+ *  "thumbnail_url_attribute_alias": "thumb",
  *  "image_title_attribute_alias": "description"
  * }
  * 
  * ```
  * 
+ * ### Interactive gallery with custom columns, filters and buttons
+ * 
  * Here is an example with custom filters, columns and buttons. Note, that you need to
  * explicitly let the widget show a header, if you want your filters to be visible from
- * the start.
+ * the start.Here we assume, that the object has `FileBehavior`.
  * 
  * ```
  * {
  *  "widget_type": "Imagegallery",
  *  "object_alias": "my.App.product_images",
- *  "image_url_attribute_alias": "uri",
- *  "image_title_attribute_alias": "description",
  *  "hide_header": false,
  *  "filters": [
  *      {
@@ -101,6 +120,21 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * 
  * ```
  * 
+ * ### Gallery with up- and download
+ * 
+ * ```
+ * {
+ *  "widget_type": "Imagegallery",
+ *  "object_alias": "my.App.product_images",
+ *  "download_enabled": true,
+ *  "upload_enabled": true,
+ *  "uploader": {
+ *      "instant_upload": false
+ *  }
+ * }
+ * 
+ * ```
+ * 
  * ## Similar widgets and alternatives
  * 
  * There is another handy image widget called `ImageCarousel`: it adds a details-widget
@@ -116,7 +150,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * @author Andrej Kabachnik
  *
  */
-class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
+class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTakeInput
 {
     use iCanUseProxyFacadeTrait;
     use EditableTableTrait;
@@ -124,13 +158,13 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     const ORIENTATION_HORIZONTAL = 'horizontal';
     const ORIENTATION_VERTICAL = 'vertical';
 
-    private $image_url_column = null;
+    private $imageUrlColumn = null;
 
-    private $image_title_column = null;
+    private $imageTitleColumn = null;
     
-    private $image_url_attribute_alias = null;
+    private $imageUrlAttributeAlias = null;
     
-    private $image_title_attribute_alias = null;
+    private $imageTitleAttributeAlias = null;
     
     private $mimeTypeAttributeAlias = null;
     
@@ -173,21 +207,16 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     /**
      * 
-     * @return DataColumn
+     * @return DataColumn|NULL
      */
-    public function getImageUrlColumn() : DataColumn
+    public function getImageUrlColumn() : ?DataColumn
     {
-        if ($this->image_url_column !== null) {
-            return $this->image_url_column;
-        } else {
-            foreach ($this->getColumns() as $col) {
-                if ($col->getDataType() instanceof ImageUrlDataType) {
-                    $this->image_url_column = $col;
-                    return $col;
-                }
-            }
-        }
-        throw new WidgetConfigurationError($this, 'No data column to be used for image URLs could be found!');
+        return $this->imageUrlColumn;
+    }
+    
+    public function hasImageUrlColumn() : bool
+    {
+        return $this->imageTitleColumn !== null;
     }
 
     /**
@@ -197,11 +226,11 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function getImageTitleColumn() : DataColumn
     {
-        if ($this->image_title_attribute_alias === null) {
+        if ($this->imageTitleAttributeAlias === null) {
             $this->guessColumns();
         }
-        if ($this->image_title_column !== null) {
-            return $this->image_title_column;
+        if ($this->imageTitleColumn !== null) {
+            return $this->imageTitleColumn;
         } 
         throw new WidgetConfigurationError($this, 'No data column to be used for image titles could be found!');
     }
@@ -212,7 +241,7 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function hasImageTitleColumn() : bool
     {
-        return $this->image_title_attribute_alias !== null;
+        return $this->imageTitleAttributeAlias !== null;
     }
     
     /**
@@ -226,7 +255,7 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function setImageUrlAttributeAlias(string $value) : Imagegallery
     {
-        $this->image_url_attribute_alias = $value;
+        $this->imageUrlAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
         // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
         // so facades, that do not have a gallery implementation, can simply fall back to a table and it
@@ -235,7 +264,7 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
             "widget_type" => "Image"
         ]));
         $this->addColumn($col);
-        $this->image_url_column = $col;       
+        $this->imageUrlColumn = $col;       
         return $this;
     }
     
@@ -253,10 +282,10 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      */
     public function setImageTitleAttributeAlias(string $value) : Imagegallery
     {
-        $this->image_title_attribute_alias = $value;
+        $this->imageTitleAttributeAlias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
         $this->addColumn($col);
-        $this->image_title_column = $col;
+        $this->imageTitleColumn = $col;
         return $this;
     }
     
@@ -538,15 +567,22 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     
     /**
      * 
-     * @param string|number $uid
+     * @param string $uid
+     * @param string $width
+     * @param string $height
+     * @param bool $relativeToSiteRoot
      * @return string
      */
-    public function buildUrlForThumbnail($uid = null, $width = '[#width#]', $height = '[#height#]', bool $relativeToSiteRoot = true) : string
+    public function buildUrlForImage(string $uid = null, string $width = null, string $height = null, bool $relativeToSiteRoot = true) : string
     {
         if ($uid === null) {
             $uid = '[#' . $this->getUidColumn()->getDataColumnName() . '#]';
         }
-        return "{$this->getFilesFacade()->buildUrlToFacade($relativeToSiteRoot)}/{$this->getMetaObject()->getAliasWithNamespace()}/{$uid}?&resize={$width}x{$height}";
+        $url = HttpFileServerFacade::buildUrlToDownloadData($this->getMetaObject(), $uid, null, false, $relativeToSiteRoot);
+        if ($width !== null && $height !== null) {
+            $url .= "?&resize={$width}x{$height}";
+        }
+        return $url;
     }
     
     /**
@@ -562,7 +598,7 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
      * 
      * @return bool
      */
-    public function hasCustomThumbnails() : bool
+    public function hasThumbnailUrlColumn() : bool
     {
         return $this->thumbnailUrlAttributeAlias !== null;
     }
@@ -660,17 +696,26 @@ class ImageGallery extends Data implements iCanUseProxyFacade, iTakeInput
     protected function guessColumns()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
-        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehavior::class)->getFirst()) {
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             if ($this->filenameColumn === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setFilenameAttributeAlias($attr->getAlias());
+                $this->setFilenameAttributeAlias($attr->getAliasWithRelationPath());
             }
             
-            if ($this->image_title_column === null && $attr = $behavior->getFilenameAttribute()) {
-                $this->setImageTitleAttributeAlias($attr->getAlias());
+            if ($this->imageTitleColumn === null && $attr = $behavior->getFilenameAttribute()) {
+                $this->setImageTitleAttributeAlias($attr->getAliasWithRelationPath());
             }
             
             if ($this->mimeTypeColumn === null && $attr = $behavior->getMimeTypeAttribute()) {
-                $this->setMimeTypeAttributeAlias($attr->getAlias());
+                $this->setMimeTypeAttributeAlias($attr->getAliasWithRelationPath());
+            }
+            
+            if ($this->imageUrlColumn === null) {
+                foreach ($this->getColumns() as $col) {
+                    if ($col->getDataType() instanceof ImageUrlDataType) {
+                        $this->imageUrlColumn = $col;
+                        break;
+                    }
+                }
             }
         }
         $this->checkedBehaviorForObject = $this->getMetaObject();

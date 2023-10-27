@@ -57,6 +57,16 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getArguments()
+     */
+    public function getArguments(): array
+    {
+        return [];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::__toString()
      */
     public function __toString() : string

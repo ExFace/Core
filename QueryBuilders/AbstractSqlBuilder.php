@@ -41,6 +41,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -451,13 +452,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * E.g. `DELETE FROM $this->buildSqlFrom() $where`
      *
-     * @param string $sqlSet
      * @param string $sqlWhere
+     * @param string $joins
      * @return string
      */
-    public function buildSqlQueryDelete(string $sqlWhere) : string
+    public function buildSqlQueryDelete(string $sqlWhere, string $joins = null) : string
     {
-        return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . $sqlWhere;
+        return 'DELETE FROM ' . $this->buildSqlFrom(static::OPERATION_WRITE) . ($joins ?? '') . $sqlWhere;
     }
     
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
@@ -1035,6 +1036,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($qparts as $qpart) {
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             $attr = $qpart->getAttribute();
+            if (! $this->canReadAttribute($attr)) {
+                continue;
+            }
             if (! $queries[$attr->getRelationPath()->toString()]) {
                 $q = clone $this;
                 if ($attr->getRelationPath()->toString()) {
@@ -1060,12 +1064,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @param mixed $value
      * @param DataTypeInterface $data_type
-     * @param string $sql_data_type
-     * @return string
+     * @param string[] $dataAddressProps
+     * @param bool $parse
+     * @return string|mixed
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $value = $data_type->parse($value);
+        $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
         switch (true) {
             case $data_type instanceof StringDataType:
                 // JSON values are strings too, but their columns should be null even if the value is an
@@ -1131,8 +1136,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        // filters -> WHERE
-        $where = $this->buildSqlWhere($this->getFilters(), false);
+        // filters -> WHERE + JOIN
+        // NOTE: Not all DB engines allow JOINs in DELETE queries: e.g. MySQL does not. In
+        // this case, override this method - see MySqlBuilder for an example.
+        $joins = $this->buildSqlJoins($this->getFilters());
+        $where = $this->buildSqlWhere($this->getFilters(), true);
         // add custom sql where from the object
         if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $where = $this->appendCustomWhere($where, $custom_where);
@@ -1142,7 +1150,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             throw new QueryBuilderException('Cannot delete all data from "' . $this->main_object->getAlias() . '". Forbidden operation!');
         }
         
-        $sql = $this->buildSqlQueryDelete($where);
+        $sql = $this->buildSqlQueryDelete($where, implode(' ', $joins));
         $query = $data_connection->runSql($sql);
         
         return new DataQueryResultData([], $query->countAffectedRows());
@@ -1358,6 +1366,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        
+        // Some aggregators require customized subselects - handle them here
+        if (($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator()->getFunction()->__toString();
+            // MIN_OF and MAX_OF basically do subselect with LIMIT 1 ordered by the first argument of the aggregator
+            if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
+                $relq->setLimit(1, 0);
+                $relq->addSorter(
+                    $qpart->getAggregator()->getArguments()[0], 
+                    $aggr === AggregatorFunctionsDataType::MAX_OF ? SortingDirectionsDataType::DESC : SortingDirectionsDataType::ASC,
+                    false
+                );
+                $relq_attribute_alias = DataAggregation::stripAggregator($relq_attribute_alias);
+            }
+        }
+        
         $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
@@ -1493,6 +1517,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case AggregatorFunctionsDataType::MAX:
             case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
+                break; 
+            case AggregatorFunctionsDataType::MAX_OF:
+            case AggregatorFunctionsDataType::MIN_OF:
+                // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
+                $output = $sql;
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
@@ -2021,6 +2050,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             continue;
                         }
                         // Normalize non-empty values
+                        $val = trim($val);
                         $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
                     }
                     
@@ -2129,7 +2159,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps);
+                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps, false);
                 break;
             default:
                 $output = $this->escapeString($value);
@@ -2491,7 +2521,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
-        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
+        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId())), $custom_statement);
     }
     
     /**

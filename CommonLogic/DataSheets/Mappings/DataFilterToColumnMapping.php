@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Maps all filters matching the given expression from one sheet to a column of another sheet.
@@ -50,7 +51,7 @@ class DataFilterToColumnMapping extends DataColumnMapping implements DataFilterT
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null)
     {
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();

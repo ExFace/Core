@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Widgets\Input;
 
 
 /**
@@ -34,6 +35,14 @@ class ConditionalProperty implements WidgetPartInterface
     private $propertyName = null;
     
     private $conditionGroup = null;
+    
+    private $resetOnChange = null;
+    
+    private $onTrue = null;
+    
+    private $onFalse = null;
+    
+    private $reason = null;
     
     /**
      * 
@@ -90,7 +99,10 @@ class ConditionalProperty implements WidgetPartInterface
         }
         
         $condGrpUxon = $uxon->copy();
-        // TODO remove non-conditional UXON stuff
+        $condGrpUxon->unsetProperty('empty_widget_on_change');
+        $condGrpUxon->unsetProperty('function_on_true');
+        $condGrpUxon->unsetProperty('function_on_false');
+        $condGrpUxon->unsetProperty('reason');
         $this->conditionGroup = new ConditionalPropertyConditionGroup($this, $condGrpUxon);
         
         $this->importUxonObjectViaTrait($uxon, ['conditions', 'condition_groups', 'operator']);
@@ -106,7 +118,15 @@ class ConditionalProperty implements WidgetPartInterface
     {
         $uxon = $this->getConditionGroup()->exportUxonObject();
         
-        // TODO add non-conditional UXON stuff
+        if (null !== $val = $this->getFunctionOnTrue()) {
+            $uxon->setProperty('function_on_true', $val);
+        }
+        if (null !== $val = $this->getFunctionOnFalse()) {
+            $uxon->setProperty('function_on_false', $val);
+        }
+        if (null !== $val = $this->getReason()) {
+            $uxon->setProperty('reason', $val);
+        }
         
         return $uxon;
     }
@@ -158,5 +178,91 @@ class ConditionalProperty implements WidgetPartInterface
     public function getConditions() : array
     {
         return $this->getConditionGroup()->getConditionsRecursive();
+    }
+    
+    /**
+     * @deprecated use setFunctionOnTrue() and setFunctionOnFalse() instead!
+     * 
+     * @param bool $value
+     * @return ConditionalProperty
+     */
+    private function setEmptyWidgetOnChange(bool $value) : ConditionalProperty
+    {
+        $this->setFunctionOnTrue(Input::FUNCTION_EMPTY);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getReason() : ?string
+    {
+        return $this->reason;
+    }
+    
+    /**
+     * Description of what this means for the user - i.e. WHY a `xxx_if` property was applied in simple words
+     * 
+     * @uxon-property reason
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return ConditionalProperty
+     */
+    public function setReason(string $value) : ConditionalProperty
+    {
+        $this->reason = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFunctionOnTrue() : ?string
+    {
+        return $this->onTrue;
+    }
+    
+    /**
+     * A widget function (e.g. `reset`) to be called after this condition evaluates to TRUE
+     * 
+     * For example, you can force an input to be emptied in its `disabled_if` condition.
+     * 
+     * @uxon-property function_on_true
+     * @uxon-type metamodel:widget_function
+     * 
+     * @param string $widgetFunction
+     * @return ConditionalProperty
+     */
+    public function setFunctionOnTrue(string $widgetFunction) : ConditionalProperty
+    {
+        $this->onTrue = $widgetFunction;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFunctionOnFalse() : ?string
+    {
+        return $this->onFalse;
+    }
+    
+    /**
+     * A widget function (e.g. `reset`) to be called after this condition evaluates to FALSE
+     * 
+     * @uxon-property function_on_false
+     * @uxon-type metamodel:widget_function
+     * 
+     * @param string $widgetFunction
+     * @return ConditionalProperty
+     */
+    public function setFunctionOnFalse(string $widgetFunction) : ConditionalProperty
+    {
+        $this->onFalse = $widgetFunction;
+        return $this;
     }
 }

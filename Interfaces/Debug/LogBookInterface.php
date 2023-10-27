@@ -51,6 +51,13 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     
     /**
      * 
+     * @param int $positiveOrNegative
+     * @return LogBookInterface
+     */
+    public function addIndent(int $positiveOrNegative) : LogBookInterface;
+    
+    /**
+     * 
      * @param string $code
      * @param string|int $type
      * @return LogBookInterface

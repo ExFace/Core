@@ -81,6 +81,15 @@ abstract class AbstractWidget implements WidgetInterface
 	const FUNCTION_ENABLE = 'enable';
 	
 	/**
+	 * Do not do anything - used to explicitly disable function executed by default
+	 *
+	 * @uxon-property none
+	 *
+	 * @var string
+	 */
+	const FUNCTION_NONE = 'none';
+	
+	/**
 	 * Disable the widget if enabled
 	 *
 	 * @uxon-property disable
@@ -922,11 +931,12 @@ abstract class AbstractWidget implements WidgetInterface
         if ($this instanceof iTakeInput && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
             if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
+                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . StringDataType::endSentence($dataTypeHint);
             }
             
             if ($this->isRequired() === true) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
+                $msg = $attr->getDataType()->getValidationErrorMessage();
+                $hint .= ($hint ? "\n\n" : '') . ($msg ? StringDataType::endSentence(($msg->getHint() ? $msg->getHint() : $msg->getTitle())) . ' ' : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
             }
         }
         
@@ -937,7 +947,7 @@ abstract class AbstractWidget implements WidgetInterface
         
         // Dev-hint
         if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = rtrim(rtrim($hint), '.') .  ".\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
+            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
         }
         return $hint;
     }
@@ -1241,16 +1251,18 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      * Sets a condition to disable the widget.
      *
-     * Examples
+     * ## Examples
      * 
      * Disable an `Input` if checkbox not checked:
      *
      * ```json
-     *  "widget_type": "Input"
-     *  "disabled_if": {
-     *      "value_left": "=id_of_checkbox",
-     *      "comparator": "!=",
-     *      "value_right": "1"
+     *  {
+     *      "widget_type": "Input",
+     *      "disabled_if": {
+     *          "value_left": "=id_of_checkbox",
+     *          "comparator": "!=",
+     *          "value_right": "1"
+     *      }
      *  }
      *
      * ```
@@ -1258,12 +1270,14 @@ abstract class AbstractWidget implements WidgetInterface
      * Disable a `Button` if selected table row does not have required data:
      *
      * ```json
-     *  "widget_type": "Button",
-     *  "caption": "Call",
-     *  "disabled_if": {
-     *      "value_left": "=id_of_table!PHONE_NUMBER",
-     *      "comparator": "==",
-     *      "value_right": ""
+     *  {
+     *      "widget_type": "Button",
+     *      "caption": "Call",
+     *      "disabled_if": {
+     *          "value_left": "=id_of_table!PHONE_NUMBER",
+     *          "comparator": "==",
+     *          "value_right": ""
+     *      }
      *  }
      *
      * ```
@@ -1271,12 +1285,12 @@ abstract class AbstractWidget implements WidgetInterface
      * Disable a `Button` on a complex AND-condition
      * 
      * ```json
-     *  "widget_type": "Button",
-     *  "caption": "Call",
-     *  "disabled_if": {
-     *      "operator": "AND",
-     *      "conditions": [
-     *          {
+     *  {
+     *      "widget_type": "Button",
+     *      "caption": "Call",
+     *      "disabled_if": {
+     *          "operator": "AND",
+     *          "conditions": [{
      *              "value_left": "=id_of_table!PHONE_NUMBER",
      *              "comparator": "==",
      *              "value_right": ""

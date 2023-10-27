@@ -287,7 +287,7 @@
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
 				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					iYYYY = moment().year;
+					iYYYY = moment().year();
 					iMM = Number(oMatches[2]);
 					iDD = Number(oMatches[1]);
 					bParsed = true;
@@ -311,7 +311,7 @@
 				}
 				// ddMM
 				if (!bParsed && (oMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					iYYYY = (new Date()).getFullYear();
+					iYYYY = moment().year();
 					iMM = Number(oMatches[2]);
 					iDD = Number(oMatches[1]);
 					bParsed = true;
@@ -420,6 +420,53 @@
 			
 			validate: function (sDate) {				
 				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
+			},
+			
+			/**
+			 * Compares two given date strings with the given comparator and granularity.
+			 * Supported comparators are '==', '<=', '<', '>=', '>'.
+			 * Supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'.
+			 *
+			 * @param {string} sDate1
+			 * @param {string} sDate2
+			 * @param {string} sComparator
+			 * @param {string} sGranularity
+			 * 
+			 * @return {bool}			 *
+			 */
+			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
+				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
+				var supportedComparators = ['==', '<=', '<', '>=', '>'];
+				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
+				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
+				if (supportedComparators.includes(sComparator) !== true) {
+					console.error("Comparator '" + sComparator + "' is not supported in date compare, supported comparators are '==', '<=', '<', '>=', '>' !")
+					return false;
+				}
+				if (supportedGranularity.includes(sGranularity) !== true) {
+					console.error("Granularity '" + sGranularity + "' is not supported in date compare, supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'seconds', 'millisecond' !")
+					return false;
+				}
+				oParsedDate1 = this.parse(sDate1);
+				if (oParsedDate1 === null) {
+					console.error("Date '" + sDate1 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oParsedDate2 = this.parse(sDate2);
+				if (oParsedDate2 === null) {
+					console.error("Date '" + sDate2 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oMomentDate1 = moment(oParsedDate1);
+				oMomentDate2 = moment(oParsedDate2);
+				switch (sComparator) {
+					case '==': return oMomentDate1.isSame(oMomentDate2, sGranularity);
+					case '<': return oMomentDate1.isBefore(oMomentDate2, sGranularity);
+					case '<=': return oMomentDate1.isSameOrBefore(oMomentDate2, sGranularity);
+					case '>': return oMomentDate1.isAfter(oMomentDate2, sGranularity);
+					case '>=': return oMomentDate1.isSameOrAfter(oMomentDate2, sGranularity);
+					default: return false;
+				}
 			}
 		},
 		
@@ -472,7 +519,7 @@
 		        if (sTimeFormat !== undefined) {
 					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
 					if (oMoment.isValid()) {
-						if (sTimeFormat.indexOf('a') !== '-1') {
+						if (sTimeFormat.indexOf('a') !== -1) {
 							return oMoment.format('hh:mm:ss a');
 						} else {
 							return oMoment.format('HH:mm:ss');
@@ -581,15 +628,9 @@
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
 				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
-				mLeft = mLeft !== undefined ? mLeft : null;
-				mRight = mRight !== undefined ? mRight : null;
-				// Make sure, numeric 0 is transformed to string as otherwise the latter || operators
-				// will transform it to an empty string because 0 is a falsly value.
-				mLeft = mLeft === 0 ? '0' : mLeft;
-				mRight = mRight === 0 ? '0' : mRight;
-				// Handle `NULL` strings used in metamodel
-				mLeft = exfTools.string.isString(mLeft) && mLeft.toUpperCase() === 'NULL' ? null : mLeft;
-				mRight = exfTools.string.isString(mRight) && mRight.toUpperCase() === 'NULL' ? null : mRight;
+				mLeft = exfTools.data.comparableValue(mLeft);
+				mRight = exfTools.data.comparableValue(mRight);
+				
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
 					if (parseFloat(mLeft) !== NaN) {
 						mLeft = parseFloat(mLeft);
@@ -601,7 +642,7 @@
 				switch (sComparator) {
 	                case '==':
 	                case '!==':
-	                    bResult = (mLeft || '').toString() == (mRight || '').toString();
+	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
 	                    if (sComparator === '!==') {
 							bResult = ! bResult;
 						}
@@ -655,6 +696,34 @@
 	                  	throw 'Unknown comparator "' + sComparator + '"!';
 	            }
 	            return bResult;
+			},
+			
+			/**
+			 * Prepares the given value for comparision via compareValues
+			 *
+			 * @param {mixed} [mVal]
+			 * @return {String|number|NULL}
+			 */
+			comparableValue: function(mVal) {
+				var bValIsString = exfTools.string.isString(mVal);
+				
+				// Convert undefined to null to reduce all sorts of checks
+				if (mVal === undefined) return null;
+				
+				// Make sure, numeric 0 is transformed to string as otherwise the possible || operators
+				// will transform it to an empty string because 0 is a falsly value.
+				if (mVal === 0) return '0';
+				
+				// Make sure boolean values and strings representing booleans are converted to the strings 
+				// '0' and '1' so that comparing values 0 and false and 1 and true return true and not false.
+				// If not explicitly normalized (false).toString() will yield '' and not '0'.
+				if (mVal === true || (bValIsString && mVal.toLowerCase() === 'true')) return '1';
+				if (mVal === false || (bValIsString && mVal.toLowerCase() === 'false')) return '0';
+				
+				// Handle `NULL` strings used in metamodel
+				if (bValIsString && mVal.toUpperCase() === 'NULL') return null;
+				
+				return mVal;
 			},
 			
 			/**

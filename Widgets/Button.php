@@ -303,6 +303,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         return $icon;
     }
 
+    /**
+     * Returns TRUE if the input widget is to be refreshed after the action succeeds
+     * 
+     * @return bool
+     */
     public function getRefreshInput() : bool
     {
         return $this->refresh_input;

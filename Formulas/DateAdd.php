@@ -8,6 +8,8 @@ use exface\Core\DataTypes\DateTimeDataType;
 /**
  * Adds a positive or negative interval to a date/time value.
  * 
+ * **NOTE:** this formula always returns a date-time. Even if the input was a pure date!
+ * 
  * Supported intervals:
  * 
  * - `Y` - years, 
@@ -20,8 +22,9 @@ use exface\Core\DataTypes\DateTimeDataType;
  * 
  * Examples:
  * 
- * - `=DateAdd('2022-10-21', -1, 'D')` -> 2022-10-20
- * - `=DateAdd('2022-10-21', 1, 'W')` -> 2022-10-28
+ * - `=DateAdd('2022-10-21', -1)` -> 2022-10-20 00:00:00
+ * - `=Date(DateAdd('2022-10-21', -1))` -> 2022-10-20
+ * - `=DateAdd('2022-10-21', 1, 'W')` -> 2022-10-28 00:00:00
  * - `=DateAdd('2022-10-21 13:45:00', 1, 'h')` -> 2022-10-21 14:45:00
  * 
  * @author Andrej Kabachnik
@@ -36,9 +39,9 @@ class DateAdd extends Formula
      * @param string $period
      * @return string
      */
-    public function run($dateTimeString = null, int $number = 0, string $period = 'D')
+    public function run($dateTimeString = null, int $number = null, string $period = 'D')
     {
-        return DateTimeDataType::addInterval($dateTimeString, $number, $period);
+        return DateTimeDataType::addInterval($dateTimeString, ($number ?? 0), $period);
     }
     
     /**

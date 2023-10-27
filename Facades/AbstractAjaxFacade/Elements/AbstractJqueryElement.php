@@ -416,6 +416,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         if ($dimension->isRelative()) {
             if (! $dimension->isMax()) {
                 $width = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $width = '100%';
             }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $width = $dimension->getValue();
@@ -456,6 +458,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         if ($dimension->isRelative()) {
             if (! $dimension->isMax()) {
                 $height = ($this->getHeightRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $height = '100%';
             }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $height = $dimension->getValue();
@@ -829,7 +833,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         return 'true';
     }
@@ -845,25 +849,20 @@ JS;
     {
         return '';
     }
-
+    
     /**
-     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
-     *
-     * @return string
+     * Returns an inline JS snippet which disabled/enables the widget (no tailing semicolon!).
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsSetDisabled()
      */
-    public function buildJsEnabler()
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
-        return '$("#' . $this->getId() . '").removeProp("disabled")';
-    }
-
-    /**
-     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
-     *
-     * @return string
-     */
-    public function buildJsDisabler()
-    {
-        return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
+        if ($trueOrFalse === true) {
+            return '$("#' . $this->getId() . '").prop("disabled", "disabled");';
+        } else {
+            return '$("#' . $this->getId() . '").removeProp("disabled");';
+        }
     }
     
     /**
@@ -1008,9 +1007,11 @@ JS;
             case $functionName === AbstractWidget::FUNCTION_RESET:
                 return $this->buildJsResetter();
             case $functionName === AbstractWidget::FUNCTION_ENABLE:
-                return $this->buildJsEnabler();
+                return $this->buildJsSetDisabled(false);
             case $functionName === AbstractWidget::FUNCTION_DISABLE:
-                return $this->buildJsDisabler();
+                return $this->buildJsSetDisabled(true);
+            case $functionName === AbstractWidget::FUNCTION_NONE:
+                return '';
         }
         throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }

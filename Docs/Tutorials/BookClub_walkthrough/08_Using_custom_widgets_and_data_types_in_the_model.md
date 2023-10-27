@@ -1,3 +1,3 @@
 # Using custom widget and data types in the model
 
-#### [< Previous](07_CRUD_UIs_for_complex_objects.md) | [BookClub tutorial](index.md) | [Next >](07_CRUD_UIs_for_complex_objects.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](07_CRUD_UIs_for_complex_objects.md) [<kbd> <br>Next > <br> </kbd>](07_CRUD_UIs_for_complex_objects.md)

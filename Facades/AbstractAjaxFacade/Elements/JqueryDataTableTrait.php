@@ -84,35 +84,17 @@ trait JqueryDataTableTrait {
     /**
      *
      * {@inheritdoc}
-     * @see AbstractJqueryElement::buildJsEnabler()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsSetDisabled()
      */
-    public function buildJsEnabler()
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
         $js = '';
         $facade = $this->getFacade();
         foreach ($this->getWidget()->getFilters() as $filter) {
-            $js .= $facade->getElement($filter)->buildJsEnabler() . ";\n";
+            $js .= $facade->getElement($filter)->buildJsSetDisabled($trueOrFalse) . ";\n";
         }
         foreach ($this->getWidget()->getButtons() as $btn) {
-            $js .= $facade->getElement($btn)->buildJsEnabler() . ";\n";
-        }
-        return $js;
-    }
-    
-    /**
-     * 
-     * {@inheritdoc}
-     * @see AbstractJqueryElement::buildJsDisabler()
-     */
-    public function buildJsDisabler()
-    {
-        $js = '';
-        $facade = $this->getFacade();
-        foreach ($this->getWidget()->getFilters() as $filter) {
-            $js .= $facade->getElement($filter)->buildJsDisabler() . ";\n";
-        }
-        foreach ($this->getWidget()->getButtons() as $btn) {
-            $js .= $facade->getElement($btn)->buildJsDisabler() . ";\n";
+            $js .= $facade->getElement($btn)->buildJsSetDisabled($trueOrFalse) . ";\n";
         }
         return $js;
     }

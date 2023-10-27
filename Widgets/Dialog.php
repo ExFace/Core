@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
@@ -432,7 +434,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getInputWidgets()
      */
-    public function getInputWidgets($depth = null)
+    public function getInputWidgets(int $depth = null) : array
     {
         $result = parent::getInputWidgets($depth);
         if ($this->hasHeader() && ($depth === null || $depth > 1)) {
@@ -468,5 +470,74 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     {
         $this->cacheable = $value;
         return $this;
+    }
+    
+    /**
+     * Returns the button that opened the dialog or NULL if not available
+     *
+     * @return iTriggerAction|NULL
+     */
+    public function getOpenButton() : ?iTriggerAction
+    {
+        if ($this->hasParent()) {
+            $parent = $this->getParent();
+            if ($parent instanceof iTriggerAction) {
+                return $parent;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Returns the action that opened the dialog or NULL if not available
+     *
+     * @return iShowDialog|NULL
+     */
+    public function getOpenAction() : ?iShowDialog
+    {
+        if ($button = $this->getOpenButton()) {
+            if ($button->hasAction()) {
+                $action = $button->getAction();
+                switch (true) {
+                    // If the action shows a dialog, that's it
+                    case $action instanceof iShowDialog:
+                        return $action;
+                        // If the action calls other actions, see if one of them fits: that is, it shows exactly
+                        // our dialog. It is importantch to check for the dialog id as CallAction action might
+                        // have multiple actions calling each their own dialog!
+                    case $action instanceof iCallOtherActions:
+                            $thisDialogId = $this->getId();
+                            foreach ($action->getActionsRecursive() as $innerAction) {
+                                if (($innerAction instanceof iShowDialog) && $innerAction->getDialogWidget()->getId() === $thisDialogId) {
+                                    return $innerAction;
+                                }
+                            }
+                            break;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Returns inner widgets of this Dialog, its DialogHeader and any nested containers recursively
+     * 
+     * NOTE: in contranst to other containers, this method includes not only members of the `widgets`
+     * list, but also widgets from the `header`!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgetsRecursive()
+     */
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
+    {
+        $result = parent::getWidgetsRecursive($filterCallback, $depth);
+        if ($this->hasHeader()) {
+            $header = $this->getHeader();
+            $result[] = $header;
+            if ($depth !== 1) {
+                $result = array_merge($result, $header->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
+            }
+        }
+        return $result;
     }
 }

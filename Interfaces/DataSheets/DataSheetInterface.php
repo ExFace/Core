@@ -696,6 +696,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
     
     /**
+     * Returns a copy of this data sheet, that only contains system columns
+     * 
+     * @return DataSheetInterface
+     */
+    public function extractSystemColumns() : DataSheetInterface;
+    
+    /**
      * Sorts the current rows using the sorters defined in the sheet or a given sorter list.
      * 
      * By default, all values of the sorted columns are normalized before sorting. This is

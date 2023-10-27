@@ -100,7 +100,24 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
         if (substr($string, 0, 1) === '{' && substr($string, -1) === '}') {
             return static::createFromUxon($object->getWorkbench(), UxonObject::fromJson($string), $object);
         }
-        /*
+
+        list($expr, $comp, $val) = explode(' ', $string, 3);
+        if ($expr === '' || $expr === null || $comp === '' || $comp === null) {
+            throw new RuntimeException('Cannot parse condition `' . $string . '`. Currently only simple conditions of the form `<expression> <comparator> <value>` are supported');
+        }
+        return self::createFromUxon($object->getWorkbench(), new UxonObject([
+            'operator' => EXF_LOGICAL_AND,
+            'ignore_empty_values' => $ignoreEmptyValues,
+            'conditions' => [
+                [
+                    'expression' => $expr,
+                    'comparator' => $comp,
+                    'value' => $val
+                ]
+            ]
+        ]), $object);
+        
+        /* TODO Add more sophisticated condition parsing. Use the SymfonyTokenStream here?
         $ops = [EXF_LOGICAL_AND, EXF_LOGICAL_OR, EXF_LOGICAL_XOR];
         $tokens = explode(' ', $string);
         

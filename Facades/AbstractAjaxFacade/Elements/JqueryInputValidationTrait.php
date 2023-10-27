@@ -40,7 +40,7 @@ trait JqueryInputValidationTrait {
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
-    public function buildJsValidator(string $valJs = null)
+    public function buildJsValidator(?string $valJs = null) : string
     {
         $constraintsJs = $this->buildJsValidatorCheckRequired('val', 'bConstraintsOK = false;')
         . $this->buildJsValidatorConstraints('val', 'bConstraintsOK = false;', $this->getWidget()->getValueDataType());
@@ -99,12 +99,15 @@ trait JqueryInputValidationTrait {
     {
         $widget = $this->getWidget();
         $formatter = $this->getFacade()->getDataTypeFormatter($type);
+        $typeValidationDisabled = ($widget instanceof Input) && $widget->getDisableValidation();
+        $js = '';
         
         // If the input allows multiple values as a delimited list, apply the validation to each
         // part of the list - in particular to check string length for each value individually
-        if (($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true) {
-            $partValidator = $formatter->buildJsValidator('part');
-            return <<<JS
+        switch (true) {
+            case ($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true && $typeValidationDisabled === false:
+                $partValidator = $formatter->buildJsValidator('part');
+                $js .= <<<JS
 
                     if ($valueJs !== undefined && $valueJs !== null && Array.isArray($valueJs) === false) {
                         $valueJs.toString().split("{$widget->getMultipleValuesDelimiter()}").forEach(function(part){
@@ -114,10 +117,20 @@ trait JqueryInputValidationTrait {
                         });
                     }
 JS;
+                break;
+            default:
+                if ($typeValidationDisabled === false) {
+                    $typeValidator = $formatter->buildJsValidator($valueJs);
+                }
+                $js .= $typeValidator ? "if($typeValidator !== true) {$onFailJs};" : '';
+                break;
         }
         
-        $typeValidator = $formatter->buildJsValidator($valueJs);
-        return $typeValidator ? "if($typeValidator !== true) {$onFailJs};" : '';
+        if (null !== $condProp = $widget->getInvalidIf()) {
+            $js .= "if ({$this->buildJsConditionalPropertyIf($condProp->getConditionGroup())} === true) {$onFailJs};";
+        }
+        
+        return $js;
     }
     
     /**
@@ -143,7 +156,15 @@ JS;
             $text = ($text ? rtrim(trim($text), ".!") . '. ' : $text) . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
         }
         
-        return $text ? $text : $translator->translate('WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR');
+        if ((null !== $condProp = $widget->getInvalidIf()) && null !== $condReason = $condProp->getReason()) {
+            $text = $condReason . ($text ? "\n$text" : '');
+        }
+        
+        if (! $text) {
+            $translator->translate('WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR');
+        }
+        
+        return $text;
     }
 }
 ?>

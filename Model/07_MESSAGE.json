@@ -2416,6 +2416,20 @@
             "HINT": "",
             "TYPE": "QUESTION",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2023-06-23 16:31:50",
+            "MODIFIED_ON": "2023-06-23 16:31:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eeb093b0e00c8eb093025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7R34E52",
+            "TITLE": "Error in formula syntax",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

@@ -60,6 +60,7 @@ trait JqueryDataTransposerTrait {
             sCaption: {$this->escapeString($col->getCaption())},
             sHint: {$this->escapeString($col->getHint(), true, false)},
             bHidden: " . ($col->isHidden() ? 'true' : 'false') . ",
+            bHideRowIfEmpty: " . (($col instanceof DataColumnTransposed) ? ($col->getHiddenIfEmpty() ? 'true' : 'false') : 'false') . ",
             sAlign: null,
             sFooterAggregator: {$this->escapeString($col->hasFooter() === true && $col->getFooter()->hasAggregator() === true ? $col->getFooter()->getAggregator()->exportString() : '')},
             fnFormatter: function(value){return {$this->getFacade()->getDataTypeFormatter($col->getCellWidget()->getValueDataType())->buildJsFormatter('value')} },
@@ -246,9 +247,10 @@ trait JqueryDataTransposerTrait {
     		
             var subRowCounter = 0;
             var oColOrig, sRowKey;
-
+			var val;
+			
     		for (fld in oRow){
-    			var val = oRow[fld];
+    			val = oRow[fld];
                 switch (true) {
     			    case oLabelCols[fld] != undefined:
         				if (typeof val !== 'string') {
@@ -271,13 +273,19 @@ trait JqueryDataTransposerTrait {
     		}
 
     		for (fld in newColVals){
+                console.log('Test');
                 oColOrig = oResult.oColModelsOriginal[fld];
                 sRowKey = newRowId+fld;
                 oColOrig.iTransposedToSubrow = subRowCounter++;
     			if (oRowKeys[sRowKey] == undefined){
     				oRowKeys[sRowKey] = $.extend(true, {}, newRow);
     				oRowKeys[sRowKey]['_subRowIndex'] = oColOrig.iTransposedToSubrow;
+					oRowKeys[sRowKey]['_subRowEmpty'] = true;
     			}
+				if (newColVals[fld] !== null && newColVals[fld] !== '' && newColVals[fld] !== undefined) {
+					oRowKeys[sRowKey]['_subRowEmpty'] = false;
+				}
+				oRowKeys[sRowKey]['_subRowHidden'] = oColOrig['bHideRowIfEmpty'] === true && oRowKeys[sRowKey]['_subRowEmpty'] === true;
     			oRowKeys[sRowKey][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
                 oRowKeys[sRowKey][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){
@@ -317,6 +325,9 @@ trait JqueryDataTransposerTrait {
     		}
     	});
     	for (var i in oRowKeys){
+			if (oRowKeys[i]['_subRowHidden'] === true) {
+				continue;
+			}
     		aRowsNew.push(oRowKeys[i]);
     	}
     	

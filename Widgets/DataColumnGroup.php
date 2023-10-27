@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
+use exface\Core\Interfaces\Widgets\iCanEditData;
 
 
 /**
@@ -434,7 +435,14 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function isEditable() : bool
     {
-        return $this->editable ?? $this->getDataWidget()->isEditable();
+        if ($this->editable !== null) {
+            return $this->editable;
+        }
+        $dataWidget = $this->getDataWidget();
+        if ($dataWidget instanceof iCanEditData) {
+            return $dataWidget->isEditable();
+        }
+        return false;
     }
     
     /**

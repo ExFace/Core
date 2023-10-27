@@ -104,11 +104,6 @@ class Data
     /** @var UxonObject[] */
     private $sorters = array();
 
-    /** @var boolean */
-    private $is_editable = false;
-    
-    private $editable_changes_reset_on_refresh = true;
-
     /** @var WidgetLinkInterface */
     private $refresh_with_widget = null;
 
@@ -948,68 +943,6 @@ class Data
             $this->has_system_columns = true;
         }
         
-        return $this;
-    }
-
-    /**
-     * Returns TRUE, if the data widget contains at least one editable column or column group.
-     *
-     * @return boolean
-     */
-    public function isEditable() : bool
-    {
-        return $this->is_editable;
-    }
-
-    /**
-     * Set to TRUE to make the column cells editable.
-     * 
-     * This makes all columns editable, that are bound to an editable model
-     * attribute or have no model binding at all. Editable column cells will 
-     * automatically use the default editor widget from the bound model attribute 
-     * as `cell_widget`.
-     *
-     * @uxon-property editable
-     * @uxon-type boolean
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iShowData::setEditable()
-     */
-    public function setEditable(bool $value = true) : iShowData
-    {
-        $this->is_editable = $value;
-        return $this;
-    }
-    
-    /**
-     *
-     * @return bool
-     */
-    public function getEditableChangesResetOnRefresh() : bool
-    {
-        return $this->editable_changes_reset_on_refresh;
-    }
-    
-    /**
-     * Set to FALSE to make changes in editable columns survive refreshes.
-     * 
-     * By default, any changes, that were not saved explicitly, will be lost
-     * as soon as the widget is refreshed - that is if a search is performed
-     * or the data is sorted, etc. If this `editable_changes_reset_on_refresh`
-     * is set to `false`, changes made in editable columns will "survive"
-     * refreshes. On the other hand, there will be no possibility to revert
-     * them, unless there is a dedicated reset-button (e.g. one with action
-     * `exface.Core.ResetWidget`).     * 
-     * 
-     * @uxon-property editable_changes_reset_on_refresh
-     * @uxon-type boolean
-     * @uxon-default true 
-     * 
-     * @param bool $value
-     * @return Data
-     */
-    public function setEditableChangesResetOnRefresh(bool $value) : Data
-    {
-        $this->editable_changes_reset_on_refresh = $value;
         return $this;
     }
 

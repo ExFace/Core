@@ -293,9 +293,10 @@ interface AjaxFacadeElementInterface
      * Returns true if the widget is
      * valid, returns false if the widget is invalid.
      *
+     * @param string|NULL $valJs
      * @return string
      */
-    public function buildJsValidator();
+    public function buildJsValidator(?string $valJs = null) : string;
 
     /**
      * Returns a JavaScript snippet which handles the situation where the widget is invalid e.g.
@@ -307,18 +308,12 @@ interface AjaxFacadeElementInterface
     public function buildJsValidationError();
 
     /**
-     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
-     *
+     * Returns an JS code to disable/enable the widget (with tailing semicolon!).
+     * 
+     * @param bool $trueOrFalse
      * @return string
      */
-    public function buildJsEnabler();
-
-    /**
-     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
-     *
-     * @return string
-     */
-    public function buildJsDisabler();
+    public function buildJsSetDisabled(bool $trueOrFalse) : string;
     
     /**
      * Returns a JS snippet to destroy this element: i.e. remove from dom, unregister listeners, etc.

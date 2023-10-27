@@ -20,6 +20,13 @@ interface iCallOtherActions extends ActionInterface
     
     /**
      * 
+     * @param callable $filter
+     * @return ActionInterface[]
+     */
+    public function getActionsRecursive(callable $filter = null) : array;
+    
+    /**
+     * 
      * @return bool
      */
     public function getUseSingleTransaction() : bool;

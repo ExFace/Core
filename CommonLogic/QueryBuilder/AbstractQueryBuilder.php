@@ -348,14 +348,16 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      * 
      * @return QueryPartSorter
      */
-    public function addSorter($sort_by, $order = 'ASC')
+    public function addSorter($sort_by, $order = 'ASC', bool $addToAttributes = true)
     {
         $qpart = new QueryPartSorter($sort_by, $this);
         $qpart->setOrder($order);
         $this->sorters[$sort_by . $order] = $qpart;
         // IDEA move this to the read method of the concrete builder, since it might not be neccessary for
         // all data sources.
-        $this->addAttribute($sort_by);
+        if ($addToAttributes === true) {
+            $this->addAttribute($sort_by);
+        }
         return $qpart;
     }
 
@@ -706,16 +708,9 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
     
     /**
-     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
      * 
-     * Depending on the QueryBuilder, even related attributes can be included in a query 
-     * (e.g. in SQL via JOIN or oData via $expand).
-     * 
-     * This method is used by the core to determine, if a read operation on a DataSheet must 
-     * be split into multiple subsheets and joind afterwards in-memory.
-     * 
-     * @param MetaAttributeInterface $attribute
-     * @return bool
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::canReadAttribute()
      */
     abstract public function canReadAttribute(MetaAttributeInterface $attribute) : bool;
     
@@ -727,6 +722,16 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public function canRead(string $modelAliasExpression) : bool
     {
         return $this->canReadAttribute($this->getMainObject()->getAttribute($modelAliasExpression));
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::canWriteAttribute()
+     */
+    public function canWriteAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $this->canReadAttribute($attribute);
     }
     
     /**

@@ -23,6 +23,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
+use exface\Core\Widgets\Traits\iCanEditDataTrait;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -112,7 +114,7 @@ use exface\Core\Interfaces\Widgets\iCanWrapText;
  * @author Andrej Kabachnik
  *        
  */
-class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons, iCanWrapText
+class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons, iCanWrapText, iCanBeRequired
 {
     use iHaveColumnsAndColumnGroupsTrait;
     
@@ -122,9 +124,24 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     
     use DataTableTrait;
     
+    use iCanEditDataTrait;
+    
+    /**
+     * Empty the table
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
+    
     private $empty_text = null;
     
     private $previewButton = null;
+    
+    private $displayOnly = false;
+    
+    private $required = false;
     
     /**
      * Set to TRUE to force the user to fill all required fields of at least one row.

@@ -398,13 +398,6 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
     
     /**
-     * Returns TRUE if the columns should contain editors by default or FALSE for displays
-     * 
-     * @return bool
-     */
-    abstract public function isEditable() : bool;
-    
-    /**
      * 
      * @return bool
      */

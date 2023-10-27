@@ -157,7 +157,7 @@ class PWAapiFacade extends HttpTaskFacade
                 }
                 break;
             default:
-                $this->getWorkbench()->getLogger()->logException(new HttpBadRequestError('Route "' . $route . '" not found in facade "' . $this->getAliasWithNamespace() . '"'));
+                $this->getWorkbench()->getLogger()->logException(new HttpBadRequestError($request, 'Route "' . $route . '" not found in facade "' . $this->getAliasWithNamespace() . '"'));
                 return new Response(400, $headers);
         }
     }

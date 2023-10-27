@@ -594,7 +594,15 @@ class DataColumn implements DataColumnInterface
         }
         foreach ($this->getValues(false) as $row_nr => $val) {
             $uid = $this_uid_column->getCellValue($row_nr);
-            if ($another_column->getCellValue($other_uid_column->findRowByValue($uid)) !== $val) {
+            $otherVal = $another_column->getCellValue($other_uid_column->findRowByValue($uid));
+            if ($another_column->getDataType()) {
+                $otherVal = $another_column->getDataType()::cast($otherVal);
+            }
+            $thisVal = $val;
+            if ($this->getDataType()) {
+                $thisVal = $this->getDataType()::cast($val);
+            }
+            if (mb_strtolower($otherVal) !== mb_strtolower($thisVal)) {
                 $result[$uid] = $val;
             }
         }
@@ -990,5 +998,30 @@ class DataColumn implements DataColumnInterface
         $this->title = $string;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isReadable()
+     */
+    public function isReadable() : bool
+    {
+        switch (true) {
+            case $this->isAttribute():
+                return $this->getAttribute()->isReadable();
+            case $this->isFormula():
+                $formula = $this->getExpressionObj();
+                foreach ($formula->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getMetaObject()->hasAttribute($attrAlias) || $this->getMetaObject()->getAttribute($attrAlias)->isReadable()) {
+                        return false;
+                    }
+                }
+                return true;
+            case $this->isStatic():
+            case $this->isEmpty():
+                return true;
+        }
+        
+        return false;
+    }
 }
