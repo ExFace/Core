@@ -100,6 +100,8 @@ class CallActionBehavior extends AbstractBehavior
     
     private $isHandling = false;
     
+    private $commitBeforeAction = false;
+    
     /**
      *
      * {@inheritDoc}
@@ -302,6 +304,11 @@ class CallActionBehavior extends AbstractBehavior
                 if ($event instanceof DataTransactionEventInterface) {
                     $logbook->addLine('Getting the transaction from the event');
                     $this->isHandling = true;
+                    // commit the transaction in case the action calls a external
+                    // system which relies on the commited data
+                    if ($this->getCommitBeforeAction()) {
+                       $event->getTransaction()->commit(); 
+                    }
                     $action->handle($task, $event->getTransaction());
                     $this->isHandling = false;
                 } else {
@@ -461,6 +468,27 @@ class CallActionBehavior extends AbstractBehavior
     {
         $this->onFailError = $value;
         return $this;
+    }
+    
+    /**
+     * Set to TRUE to call a commit on the transaction of the event
+     *
+     * @uxon-property commit_before_action
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return CallActionBehavior
+     */
+    public function setCommitBeforeAction(bool $value) : CallActionBehavior
+    {
+        $this->commitBeforeAction = $value;
+        return $this;
+    }
+    
+    protected function getCommitBeforeAction() : bool
+    {
+        return $this->commitBeforeAction;
     }
     
     /**
