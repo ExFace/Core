@@ -675,7 +675,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Check to prevent any communication with this user: no emails, no in-app notifications, etc.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_SELECT\":\"(COALESCE([#~alias#].disabled_communication_flag, 0))\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_SELECT": "(COALESCE([#~alias#].disabled_communication_flag, 0))"
+            },
             "DEFAULT_VALUE": 0,
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
