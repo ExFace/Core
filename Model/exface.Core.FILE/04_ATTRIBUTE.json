@@ -254,7 +254,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
+            "DATA_ADDRESS_PROPS": {
+                "filter_locally": 1
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -342,7 +344,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Folder path relative to the base installation folder",
-            "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
+            "DATA_ADDRESS_PROPS": {
+                "filter_locally": 1
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -518,7 +522,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
+            "DATA_ADDRESS_PROPS": {
+                "filter_locally": 1
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -606,7 +612,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Absolute path to the folder",
-            "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
+            "DATA_ADDRESS_PROPS": {
+                "filter_locally": 1
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
