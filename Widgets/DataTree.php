@@ -75,6 +75,8 @@ class DataTree extends DataTable
 
     private $tree_folder_flag_attribute_alias = null;
     
+    private $tree_hide_empty_folders = false;
+    
     private $tree_leaf_id_concatenate = null;
     
     private $tree_leaf_id_column_id = null;
@@ -631,6 +633,36 @@ class DataTree extends DataTable
     public function setLazyLoadTreeLevels(bool $value) : DataTree
     {
         $this->lazy_load_tree_levels = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getTreeHideEmptyFolders() : bool
+    {
+        if ($this->tree_hide_empty_folders === true && ! $this->hasTreeFolderFlag()) {
+            throw new WidgetConfigurationError($this, 'Cannot use `tree_hide_empty_folders` without `tree_folder_flag_attribute_alias` in widget ' . $this->getWidgetType() . '!');
+        }
+        return $this->tree_hide_empty_folders;
+    }
+    
+    /**
+     * Set to TRUE to hide tree nodes that are folders, but do not have any children
+     * 
+     * **NOTE:** This only works if `tree_folder_flag_attribute_alias` is set! 
+     * 
+     * @uxon-property tree_hide_empty_folders
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataTree
+     */
+    public function setTreeHideEmptyFolders(bool $value) : DataTree
+    {
+        $this->tree_hide_empty_folders = $value;
         return $this;
     }
 }
