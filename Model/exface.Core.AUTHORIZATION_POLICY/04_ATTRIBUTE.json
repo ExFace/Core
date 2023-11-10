@@ -350,7 +350,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -394,7 +396,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -438,7 +442,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the policy will only have effect on pages in this group",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -482,7 +488,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the policy will only have effect on users with this role",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -526,7 +534,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the policy will only have effect if this object is involved.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -614,7 +624,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the policy will only have effect on this specific action model.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null

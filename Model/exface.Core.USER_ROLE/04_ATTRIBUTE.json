@@ -298,7 +298,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -386,7 +388,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -474,7 +478,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The page to be used when the user requests the site root (instead of the SERVER.INDEX_PAGE_SELECTOR from the system configuration)",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
