@@ -36,6 +36,14 @@ const EXF_COMPARATOR_IN = '[';
 const EXF_COMPARATOR_NOT_IN = '![';
 
 /**
+ * @const EXF_COMPARATOR_MATCH compares two list on if at least one element matches.
+ * At least one must suffice.
+ */
+const EXF_COMPARATOR_MATCH = '][';
+
+const EXF_COMPARATOR_NOT_MATCH = '!][';
+
+/**
  * @const EXF_COMPARATOR_IS universal comparater - can be applied to any data type
  */
 const EXF_COMPARATOR_IS = '=';
