@@ -95,7 +95,10 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6bae2326c99b59ee0e4b318306b9a",
-            "DATA_ADDRESS_PROPS": "{\"annotation_level\":\"method\",\"ignore_comments_without_matching_tags\":\"true\"}",
+            "DATA_ADDRESS_PROPS": {
+                "annotation_level": "method",
+                "ignore_comments_without_matching_tags": "true"
+            },
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Panel",
                 "widgets": [
