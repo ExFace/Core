@@ -19,15 +19,42 @@ CREATE TABLE "{TABLE_NAME}" (
 ### Drop a table
 
 ```
-DECLARE @SQL NVARCHAR(MAX) = N'';
-SELECT @SQL += N'
-ALTER TABLE ' + OBJECT_NAME(PARENT_OBJECT_ID) + ' DROP CONSTRAINT ' + OBJECT_NAME(OBJECT_ID) + ';' 
-FROM SYS.OBJECTS
-WHERE TYPE_DESC LIKE '%CONSTRAINT' AND OBJECT_NAME(PARENT_OBJECT_ID) IN ('{TABLE_NAME_WITHOUT_SCHEMA}');
-EXECUTE(@SQL);
+DECLARE @table NVARCHAR(max) = 'Bundesland';
+DECLARE @schema NVARCHAR(max) = 'bmdb';
+DECLARE @stmt NVARCHAR(max);
 
-IF OBJECT_ID (N'{TABLE_NAME}', N'U') IS NOT NULL
-DROP TABLE "{TABLE_NAME}";
+IF OBJECT_ID (CONCAT(@schema, '.', @table), N'U') IS NOT NULL
+BEGIN
+	-- STEP1: Remove foreign keys to this table
+	-- Cursor to generate ALTER TABLE DROP CONSTRAINT statements  
+	DECLARE cur CURSOR FOR
+		SELECT 'ALTER TABLE ' + OBJECT_SCHEMA_NAME(parent_object_id) + '.' + OBJECT_NAME(parent_object_id) + ' DROP CONSTRAINT ' + name
+		FROM sys.foreign_keys 
+		WHERE OBJECT_SCHEMA_NAME(referenced_object_id) = @schema 
+			AND OBJECT_NAME(referenced_object_id) = @table;
+ 
+   OPEN cur;
+   FETCH cur INTO @stmt;
+	-- Drop each found foreign key constraint 
+	WHILE @@FETCH_STATUS = 0
+		BEGIN
+			EXEC (@stmt);
+			FETCH cur INTO @stmt;
+		END
+	CLOSE cur;
+	DEALLOCATE cur;
+	
+	-- STEP2: remove constraints inside this table
+	SELECT @stmt = '';
+	SELECT @stmt += N'
+ALTER TABLE ' + OBJECT_NAME(parent_object_id) + ' DROP CONSTRAINT ' + OBJECT_NAME(object_id) + ';' 
+	FROM SYS.OBJECTS
+	WHERE TYPE_DESC LIKE '%CONSTRAINT' AND OBJECT_NAME(parent_object_id) = @table AND SCHEMA_NAME(schema_id) = @schema;
+	EXEC(@stmt);
+
+	-- FINALLY drop the table itself
+	DROP TABLE CONCAT(@schema, '.', @table);
+END
 ```
 
 ## Columns
