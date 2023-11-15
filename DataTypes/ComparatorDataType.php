@@ -66,6 +66,17 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const NOT_IN = '![';
     
     /**
+     * @const MATCH compares to list with each other. Becomes true when there is at least one element in both lists.
+     */
+    const MATCH = '][';
+    
+    /**
+     * @const NOT_MATCH the inverse von `][` . Becomes true when there is no element in both lists.
+     * list within the right value.
+     */
+    const NOT_MATCH = '!][';
+    
+    /**
      * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
      * If the left value is a string, becomes TRUE if it contains the right value. Case insensitive
      * for strings.
