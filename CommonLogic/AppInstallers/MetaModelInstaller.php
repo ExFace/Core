@@ -554,6 +554,21 @@ class MetaModelInstaller extends AbstractAppInstaller
     {
         return $this->additions;
     }
+    
+    /**
+     * Returns TRUE if the given data sheet contains an addition object and NOT a core model object
+     * @param DataSheetInterface $sheet
+     * @return bool
+     */
+    protected function isAddition(DataSheetInterface $sheet) : bool
+    {
+        foreach ($this->getAdditions() as $addition) {
+            if ($sheet->getMetaObject()->isExactly($addition['sheet']->getMetaObject())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      *
@@ -653,7 +668,18 @@ class MetaModelInstaller extends AbstractAppInstaller
                         yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
                     }
                 } catch (\Throwable $e) {
-                    throw new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
+                    $ex = new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
+                    // Continue with the next sheet if an addition failed - its not critical for general operation.
+                    // In fact, additions will always fail on first install of their app because their SQL migrations
+                    // were not run yet. 
+                    // TODO #DataInstaller replace additions with a separate installer for data, that would be run
+                    // AFTER the model installer and AFTER the SQL installers of the respective app.
+                    if ($this->isAddition($data_sheet)) {
+                        yield $indent . $indent . "SKIPPED: {$data_sheet->getMetaObject()->getName()} - {$e->getMessage()}" . PHP_EOL;
+                        $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::WARNING);
+                    } else {
+                        throw $ex;
+                    }
                 }
             }
             
@@ -709,7 +735,11 @@ class MetaModelInstaller extends AbstractAppInstaller
                 }
             }
             $uxons[$type][] = $uxon;
-        }
+        } 
+        // Sort additions by their keys (that contain the subfolder name) to ensure, that additions
+        // are installed folder-by-folder and are not being mixed.
+        ksort($additionUxons);
+        // Append additions the $uxons array at the end - after the core sheets.
         $uxons = array_merge($uxons, $additionUxons);
         
         // For each object, combine it's UXONs into a single data sheet
