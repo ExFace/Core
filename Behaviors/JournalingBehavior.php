@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Actions\CreateData;
 use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
 
 /**
  * Automatically creates entries in a "journal" object when things change in the main object
@@ -53,7 +54,11 @@ class JournalingBehavior extends AbstractBehavior
     
     private $saveAttributesMappingsUxon = [];
     
+    private $saveOnCreate = true;
+    
     private $onUpdateBehavior = null;
+    
+    private $onCreateBehavior = null;
     
     protected function registerEventListeners() : BehaviorInterface
     {
@@ -82,6 +87,35 @@ class JournalingBehavior extends AbstractBehavior
             $this->getObject()->getBehaviors()->add($this->onUpdateBehavior);   
         } else {
             $this->onUpdateBehavior->enable();
+        }
+        
+        if ($this->getSaveOnCreate()) {
+            if ($this->onCreateBehavior === null) {
+                $colMappings = $this->getSaveAttributesMappingsUxon();
+                $thisObjKeyAlias = $this->getRelationToJournal()->getLeftKeyAttribute()->getAlias();
+                $journalKeyAlias = $this->getRelationToJournal()->getRightKeyAttribute()->getAlias();
+                $colMappings->append(new UxonObject([
+                    'from' => $thisObjKeyAlias,
+                    'to' => $journalKeyAlias
+                ]));
+                $uxon = new UxonObject([
+                    "event_alias" => OnCreateDataEvent::getEventName(),
+                    "only_if_attributes_change" => $this->getSaveIfAttributesChange(),
+                    "action" => [
+                        "alias" => CreateData::class,
+                        "object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
+                        "input_mapper" => [
+                            "from_object_alias" => $this->getObject()->getAliasWithNamespace(),
+                            "to_object_alias" => $this->getObjectOfJournal()->getAliasWithNamespace(),
+                            "column_to_column_mappings" => $colMappings->toArray()
+                        ]
+                    ]
+                ]);
+                $this->onCreateBehavior = BehaviorFactory::createFromUxon($this->getObject(), CallActionBehavior::class, $uxon);
+                $this->getObject()->getBehaviors()->add($this->onCreateBehavior);
+            } else {
+                $this->onCreateBehavior->enable();
+            }
         }
         return $this;
     }
@@ -186,4 +220,28 @@ class JournalingBehavior extends AbstractBehavior
         $this->saveAttributesMappingsUxon = $value;
         return $this;
     }
+    /**
+     * @return boolean
+     */
+    protected function getSaveOnCreate() : bool
+    {
+        return $this->saveOnCreate;
+    }
+
+    /**
+     * Set false to not create a journal entry on creation of e new entry.
+     * 
+     * @uxon-property save_on_create
+     * @uxon-type bool
+     * @uxon-default true
+     * 
+     * @param trueOrFalse
+     * @return JournalingBehavior
+     */
+    public function setSaveOnCreate(bool $trueOrFalse) : JournalingBehavior
+    {
+        $this->saveOnCreate = $trueOrFalse;
+        return $this;
+    }
+
 }
