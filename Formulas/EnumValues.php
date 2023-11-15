@@ -9,7 +9,29 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * Returns the values of an enumeration data type as a list (optionally filtered)
+ * Returns the values of an enumeration used for a given attribute in the metamodel (optionally filtered)
+ * 
+ * Examples:
+ * 
+ * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS')` will give you status values of the error object
+ * in the monitor, that is `10,15,20,40,90,99`
+ * - `=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '<90')` will give you status values less than 90,
+ * that would be `10,15,20,40`
+ * 
+ * This is particularly usedful for predefined filter values. For example, if you need a filter to show 
+ * all monitored errors, that have not bee dealt with yet, you can create a filter like this:
+ * 
+ * ```
+ *  {
+ *      "attribute_alias": "STATUS",
+ *      "input_widget": {
+ *          "widget_type": "InputSelect",
+ *          "multi_select": true,
+ *          "value": "=EnumValues('exface.Core.MONITOR_ERROR', 'STATUS', '<90')"
+ *      }
+ *  }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
