@@ -144,7 +144,7 @@ class ImageMap extends AbstractBaseMap
                 $linkedEl = $facadeElement->getFacade()->getElement($link->getTargetWidget());
                 $urlJs = $linkedEl->buildJsValueGetter($link->getTargetColumnId());
                 $urlJs = '(' . $urlJs . ' || "")';
-                $linkedEl->addOnChangeScript("$('#{$facadeElement->getIdLeaflet()}').data('_exfLeaflet').fire('exfRefresh');");
+                $linkedEl->addOnChangeScript("setTimeout(function() { $('#{$facadeElement->getIdLeaflet()}').data('_exfLeaflet').fire('exfRefresh')}, 0);");
                 $updateMapJs .= <<<JS
                     oMap.on('exfRefresh', function(){
                         var oLayer = {$facadeElement->buildJsBaseMapGetter($this, 'oMap')};
