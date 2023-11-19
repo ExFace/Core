@@ -918,6 +918,8 @@ JS;
         
         switch (true) {
             case ($layer instanceof DataPointsLayer):
+                $valueJs = ! $layer->hasValue() ? "''" : "'<div class=\"exf-map-point-value\" style=\"margin-left: calc({$layer->getPointSize()}px + 3px); margin-top: calc(-{$layer->getPointSize()}px * 1.5);\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
                 $js= <<<JS
 function(){
                             var sColor = $colorJs;
@@ -925,7 +927,7 @@ function(){
                                 className: 'exf-map-point',
                                 iconSize: [{$layer->getPointSize()}, {$layer->getPointSize()}],
                                 shadowSize: null,
-                                html: '<div style="height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: ' + sColor + '; border-radius: 50%;"></div>'
+                                html: {$pointJs} + {$valueJs}
                             })
                         }()
 JS;
