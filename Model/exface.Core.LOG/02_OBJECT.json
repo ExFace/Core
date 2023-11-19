@@ -95,7 +95,9 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{\"folder_depth\":\"0\"}",
+            "DATA_ADDRESS_PROPS": {
+                "folder_depth": 0
+            },
             "DEFAULT_EDITOR_UXON": {
                 "object_alias": "exface.Core.LOG_ENTRY",
                 "widget_type": "DataTable",

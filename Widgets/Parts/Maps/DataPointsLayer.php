@@ -41,6 +41,51 @@ class DataPointsLayer extends AbstractDataLayer
     
     private $size = 10;
     
+    private $valueAttributeAlias = null;
+    
+    private $valueColumn = null;
+    
+    /**
+     *
+     * @return string|NULL
+     */
+    public function getValueAttributeAlias() : ?string
+    {
+        return $this->valueAttributeAlias;
+    }
+    
+    /**
+     * Alias of the attribtue containing the data to show inside the marker (typically a number)
+     *
+     * @uxon-property value_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return DataPointsLayer
+     */
+    public function setValueAttributeAlias(string $value) : DataPointsLayer
+    {
+        $this->valueAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasValue() : bool
+    {
+        return $this->getValueAttributeAlias() !== null;
+    }
+    
+    /**
+     * @return DataColumn|NULL
+     */
+    public function getValueColumn() : ?DataColumn
+    {
+        return $this->valueColumn;
+    }
+    
     /**
      *
      * @return string|NULL
@@ -92,15 +137,26 @@ class DataPointsLayer extends AbstractDataLayer
     {
         $widget = $this->initDataWidgetForPoints($widget);
         
-        if ($this->getColorAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getColorAttributeAlias())) {
+        if (null !== $alias = $this->getColorAttributeAlias()) {
+            if (! $col = $widget->getColumnByAttributeAlias($alias)) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getColorAttributeAlias(),
+                    'attribute_alias' => $alias,
                     'visibility' => WidgetVisibilityDataType::HIDDEN
                 ]));
                 $widget->addColumn($col, 0);
             }
             $this->colorColumn = $col;
+        }
+        
+        if (null !== $alias = $this->getValueAttributeAlias()) {
+            if (! $col = $widget->getColumnByAttributeAlias($alias)) {
+                $col = $widget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $alias,
+                    'visibility' => WidgetVisibilityDataType::PROMOTED
+                ]));
+                $widget->addColumn($col, 0);
+            }
+            $this->valueColumn = $col;
         }
         
         return $widget;

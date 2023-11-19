@@ -26,7 +26,12 @@ trait iHaveIconTrait {
      * 
      * Refer to the documentation of the facade for supported icon names. Most
      * facades will support font awesome icons and some poprietary icon set
-     * additionally.
+     * additionally (like UI5 icons in the UI5Facade).
+     * 
+     * You can search for icons here:
+     * 
+     * - [Font Awesome 4 icons](https://fontawesome.com/v4/icons/)
+     * - [UI5 icon explorer (only for UI5!)](https://sapui5.hana.ondemand.com/sdk/test-resources/sap/m/demokit/iconExplorer/webapp/index.html#/overview/SAP-icons/?tab=grid)
      * 
      * @uxon-property icon
      * @uxon-type icon|string

@@ -930,13 +930,15 @@ abstract class AbstractWidget implements WidgetInterface
         // Input specific formatting 
         if ($this instanceof iTakeInput && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
-            if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . StringDataType::endSentence($dataTypeHint);
+            $msg = $attr->getDataType()->getValidationErrorMessage();
+            if ($validationHint = ($msg ? StringDataType::endSentence(($msg->getHint() ? $msg->getHint() : $msg->getTitle())) . ' ' : '')) {
+                $hint .= ($hint ? "\n\n" : '') . $validationHint;
             }
-            
+            if ($formatHint = $attr->getDataType()->getInputFormatHint()) {
+                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . StringDataType::endSentence($formatHint);
+            }
             if ($this->isRequired() === true) {
-                $msg = $attr->getDataType()->getValidationErrorMessage();
-                $hint .= ($hint ? "\n\n" : '') . ($msg ? StringDataType::endSentence(($msg->getHint() ? $msg->getHint() : $msg->getTitle())) . ' ' : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
+                $hint .= ($hint ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
             }
         }
         

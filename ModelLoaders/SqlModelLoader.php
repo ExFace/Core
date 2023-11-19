@@ -1367,16 +1367,17 @@ SQL;
         }
         
         foreach (($this->auth_policies_loaded[$username][$authPoint->getUid()] ?? []) as $row) {
-            $action = null;
-            if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
-            }
-            if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                $action = $row['target_action_class_path'];
-            } else if ($row['target_object_action_oid'] !== null) {
-                $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
-            }
+            //make sure to not throw exception outside of the try catch as it would skip adding and evaluating any further policies!
             try {
+                $action = null;
+                if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {                    
+                    throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
+                }
+                if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                    $action = $row['target_action_class_path'];
+                } else if ($row['target_object_action_oid'] !== null) {
+                    $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
+                }            
                 $authPoint->addPolicy(
                     [
                         PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],

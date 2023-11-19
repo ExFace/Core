@@ -13,11 +13,48 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Displays the widgets value as a progress bar with a floating label text.
+ * Displays the widgets value as a progress bar with a floating text label.
  * 
  * The progress bar can be configured by setting `min`/`max` values, a `color_scale`
- * and a `text_map` to add a text to the value. By default, a percentual scale
- * (from 0 to 100) will be assumed.
+ * and a `text_map` to add a text to the value. 
+ * 
+ * By default, a percentual scale (from 0 to 100) with a yellow-green color gradient will be used.
+ * 
+ * ## Examples
+ * 
+ * Progress bar with a single color:
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "color": "lightgray"
+ *  }
+ * 
+ * ```
+ * 
+ * Custom colors for certain values:
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "color_scale": {
+ *          "50": "~ERROR",
+ *          "100": "lightgray"
+ *      }
+ *  }
+ * 
+ * ```
+ * 
+ * Value of another attribute as text (instead of the percent value):
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "attribute_alias": "PROGRESS",
+ *      "text_attribute_alias": "STATUS__NAME"
+ *  }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -168,7 +205,7 @@ class ProgressBar extends Display implements iCanBeAligned
     public function getColorScale() : array
     {
         $scale = parent::getColorScale();
-        return empty($scale) ? static::getColorScaleDefault($this->getMin(), $this->getMax()) : $scale;
+        return empty($scale) && $this->getColor() === null ? static::getColorScaleDefault($this->getMin(), $this->getMax()) : $scale;
     }
     
     /**
