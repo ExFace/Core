@@ -23,6 +23,7 @@ class DataTimeline implements WidgetPartInterface
     const GRANULARITY_WEEKS = 'weeks';
     const GRANULARITY_MONTHS = 'months';
     const GRANULARITY_YEARS = 'years';
+    const GRANULARITY_ALL = 'all';
     
     private $granularity = null;
     
@@ -54,10 +55,10 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
-     * Initial zoom level: hours, days, weeks or months
+     * Initial zoom level: `hours`, `days`, `weeks`, `months`, `years` or `all`
      * 
      * @uxon-property granularity
-     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months,years]
+     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months,years,all]
      * @uxon-default hour
      * 
      * @param string $value

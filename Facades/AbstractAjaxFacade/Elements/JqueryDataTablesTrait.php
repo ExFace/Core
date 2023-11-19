@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Input;
 use exface\Core\Widgets\DataTableResponsive;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\Parts\DataRowGrouper;
 
 /**
  * This trait contains common methods for facade elements using the jQuery DataTables library.
@@ -555,9 +556,9 @@ JS;
                 $rowGroupConter = "''";
             }
             
-            if ($grouper->getExpandFirstGroupOnly() === true) {
+            if ($grouper->getExpandGroups() === DataRowGrouper::EXPAND_FIRST_GROUP) {
                 $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').not(':first-child').trigger('click');}, 0);\n");
-            } elseif ($grouper->getExpandAllGroups() === false){
+            } elseif ($grouper->getExpandGroups() === DataRowGrouper::EXPAND_NO_GROUPS){
                 $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').trigger('click');}, 0);\n");
             }
             

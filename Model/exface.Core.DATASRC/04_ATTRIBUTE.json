@@ -210,7 +210,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Overrides the default data connection for this installation only.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -254,7 +256,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, any object from this source will inherit from the base object.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -430,7 +434,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Optional relation to a specific app. If set, this data source will be part of the app's package. It can still be used in any other app too.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -474,7 +480,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The default connection is part of the app's metamodel and is maintained by the author of the app. In contrast to CUSTOM_CONNECTION, it will be overwritten by updates.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -518,7 +526,9 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The data connection, that is currently used for this data source.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null

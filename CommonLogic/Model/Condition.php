@@ -597,6 +597,25 @@ class Condition implements ConditionInterface
                     }
                 }
                 return ! $resposeOnFound;
+            case ComparatorDataType::MATCH:
+            case ComparatorDataType::NOT_MATCH:
+                $resposeOnFound = $comparator === ComparatorDataType::MATCH ? true : false;
+                if ($rightVal === null && $leftVal === null) {
+                    return $resposeOnFound;
+                }
+                if ($rightVal === null || $leftVal === null) {
+                    return ! $resposeOnFound;
+                }
+                $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                $leftParts = is_array($leftVal) ? $leftVal : explode($listDelimiter, $leftVal);
+                $rightPartsTrimmed = array_map('trim', $rightParts);
+                $leftPartsTrimmed = array_map('trim', $leftParts);
+                $intersectArray = array_intersect($rightPartsTrimmed, $leftPartsTrimmed);
+                if (! empty($intersectArray)) {
+                    return $resposeOnFound;
+                } else {
+                    return ! $resposeOnFound;
+                }
             default:
                 throw new RuntimeException('Invalid comparator "' . $comparator . '" used in condition "' . $this->toString() . '"!');
         }

@@ -1075,4 +1075,20 @@ HTML;
         $this->sematic_colors = $array;
         return $this;
     }
+    
+    public function getExternalScripts () : string
+    {
+        if ($this->getConfig()->hasOption('FACADE.EXTERNAL.SCRIPTS') === false) {
+            return '';
+        }
+        $scripts = $this->getConfig()->getOption('FACADE.EXTERNAL.SCRIPTS') ?? [];
+        if (empty($scripts)) {
+            return '';
+        }
+        $html = '';
+        foreach ($scripts as $script) {
+            $html .= "<script src=$script></script>\n";
+        }
+        return $html;
+    }
 }
