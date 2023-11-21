@@ -17,6 +17,11 @@ use MongoDB\BSON\Undefined;
 use exface\Core\Actions\UxonAutosuggest;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use Ramsey\Uuid\Type\Integer;
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * This behavior auto sorts the given object
@@ -100,35 +105,44 @@ class OrderingBehavior extends AbstractBehavior
                 $indexSheet->getSorters()->addFromString($indexAttributeAlias, SortingDirectionsDataType::ASC);
                 $indexSheet->dataRead();
                 
-                $lastIndex = null;
-                $updateIndex = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
-                foreach ($indexSheet->getRows() as $currentRow){
-                    $currentIndex = $currentRow[$indexAttributeAlias];
-                    $updateNeeded = false;
-                    
-                    if ($currentIndex === null && $this->closeGaps){  
-                        $updateNeeded = true;
-                        $currentIndex = $lastIndex === null ? 0 : $lastIndex+1;
-                    }
-                    else if ($currentIndex <= $lastIndex){
-                        $updateNeeded = true;
-                        $currentIndex = $lastIndex+1;
-                    }
-                    else if ($currentIndex > $lastIndex+1 && $this->closeGaps){
-                        $updateNeeded = true;
-                        $currentIndex = $lastIndex+1;
-                    }
-                    
-                    if ($updateNeeded){
-                        $rowWithUpdatedValue = $currentRow;
-                        $rowWithUpdatedValue[$indexAttributeAlias] = $currentIndex;
-                        $updateIndex->addRow($rowWithUpdatedValue);
-                    }
-                    
-                    $lastIndex = $currentIndex;
-                }
-                
-                $updateIndex->dataUpdate(false, $event->getTransaction());
+                $indexAttributeDataType = $sheet->getMetaObject()->getAttribute($indexAttributeAlias)->getDataType();
+                switch($indexAttributeDataType->getAlias()){
+                    case 'Integer':
+                        $lastIndex = null;
+                        $updateIndex = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
+                        foreach ($indexSheet->getRows() as $currentRow){
+                            $currentIndex = $currentRow[$indexAttributeAlias];
+                            $updateNeeded = false;
+                            
+                            if ($currentIndex === null && $this->closeGaps){
+                                $updateNeeded = true;
+                                $currentIndex = $lastIndex === null ? 0 : $lastIndex+1;
+                            }
+                            else if ($currentIndex <= $lastIndex){
+                                $updateNeeded = true;
+                                $currentIndex = $lastIndex+1;
+                            }
+                            else if ($currentIndex > $lastIndex+1 && $this->closeGaps){
+                                $updateNeeded = true;
+                                $currentIndex = $lastIndex+1;
+                            }
+                            
+                            if ($updateNeeded){
+                                $rowWithUpdatedValue = $currentRow;
+                                $rowWithUpdatedValue[$indexAttributeAlias] = $currentIndex;
+                                $updateIndex->addRow($rowWithUpdatedValue);
+                            }
+                            
+                            $lastIndex = $currentIndex;
+                        }
+                        
+                        $updateIndex->dataUpdate(false, $event->getTransaction());
+                        break;
+                    default:
+                        throw new BehaviorConfigurationError(
+                            $this, 'Datatype of ordering attribute \'' . $indexAttributeAlias . '\' not supported!');
+                        break;                    
+                }                
             }
         }
         
