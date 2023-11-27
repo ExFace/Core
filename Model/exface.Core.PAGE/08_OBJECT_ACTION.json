@@ -80,9 +80,9 @@
         },
         {
             "CREATED_ON": "2020-05-04 10:14:44",
-            "MODIFIED_ON": "2020-05-04 10:14:44",
+            "MODIFIED_ON": "2023-11-27 16:08:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea8deff52a8f4f97940205857feb80",
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
@@ -92,6 +92,7 @@
             "CONFIG_UXON": {
                 "icon": "list-ol",
                 "input_object_alias": "exface.Core.PAGE",
+                "input_rows_min": 1,
                 "input_mapper": {
                     "inherit_columns": false,
                     "column_to_column_mappings": [
@@ -120,9 +121,9 @@
         },
         {
             "CREATED_ON": "2020-05-11 09:59:27",
-            "MODIFIED_ON": "2023-05-17 18:54:03",
+            "MODIFIED_ON": "2023-11-27 15:27:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea936e192716e4a9d10205857feb80",
             "OBJECT": "0x11e86314af5caf7f971b0205857feb80",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
@@ -363,6 +364,9 @@
                                             ]
                                         }
                                     }
+                                },
+                                {
+                                    "action_alias": "exface.Core.RestorePageMenuPosition"
                                 }
                             ]
                         }
