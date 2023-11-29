@@ -534,6 +534,9 @@ HTML;
      * Returns an array of data rows with sanitized values, that are safe to put publish as HTML
      * 
      * @param DataSheetInterface $data_sheet
+     * @param bool $decrypt
+     * @param bool $forceHtmlEntities
+     * @param bool $stripHtmlTags
      * @return array
      */
     protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, bool $forceHtmlEntities = true, bool $stripHtmlTags = false) : array
