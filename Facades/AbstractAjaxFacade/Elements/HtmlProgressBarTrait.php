@@ -107,7 +107,6 @@ function(val) {
     var colorBase = '{$widget->getColor()}';
     var color = colorMap.length > 0 ? colorMap[colorMap.length-1][1] : (colorBase || 'transparent');
     var oSemanticColors = $semanticColorsJs;
-console.log('{$widget->getAttributeAlias()}', color);
     var c = [];
     for (var i in colorMap) {
         c = colorMap[i];
