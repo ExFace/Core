@@ -42,7 +42,7 @@ trait ColoredLayerTrait
     }
     
     /**
-     * Alias of the attribtue containing the color value or the base for the `color_scale`
+     * Alias of the attribtue containing the exact color value or base value for the `color_scale`
      *
      * @uxon-property color_attribute_alias
      * @uxon-type metamodel:attribute
