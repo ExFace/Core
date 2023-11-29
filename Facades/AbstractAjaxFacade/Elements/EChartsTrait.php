@@ -2536,7 +2536,7 @@ JS;
     var formatNames = [];
     for (var i = 0; i < newNames.length; i++) {
         var formatted = {$nameFormatterJs}
-        formatNames.push(formatted);
+        formatNames.push(exfTools.string.htmlUnescape !== undefined ? exfTools.string.htmlUnescape(formatted) : formatted);
     }
     //newNames = formatNames;
     if (baseColor == 'undefined') {

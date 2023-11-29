@@ -975,6 +975,30 @@
 			 */
 			isString: function(val) {
 				return (typeof val === 'string' || val instanceof String);
+			},
+			
+			htmlEscape: function(text) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+  
+				return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+			},
+			
+			htmlUnescape: function(text) {
+				var map = {
+					'&amp;': '&',
+					'&lt;': '<',
+					'&gt;': '>',
+					'&quot;': '"',
+					'&#039;': "'"
+				};
+  
+				return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
 			}
 		}
 	}
