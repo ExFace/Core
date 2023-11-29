@@ -205,7 +205,15 @@ JS;
      */
     public function buildJsValueGetter()
     {
-        return "JSON.stringify({$this->buildJsSurveyVar()}.data)";
+        return <<<JS
+        function() {
+            if ({$this->buildJsSurveyVar()} != null) {
+                return JSON.stringify({$this->buildJsSurveyVar()}.data);
+            }
+            return '';
+        }()
+
+JS;
     }
     
     /**
