@@ -534,9 +534,12 @@ HTML;
      * Returns an array of data rows with sanitized values, that are safe to put publish as HTML
      * 
      * @param DataSheetInterface $data_sheet
+     * @param bool $decrypt
+     * @param bool $forceHtmlEntities
+     * @param bool $stripHtmlTags
      * @return array
      */
-    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, $forceHtmlEntities = true) : array
+    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, bool $forceHtmlEntities = true, bool $stripHtmlTags = false) : array
     {
         $rows = $decrypt ? $data_sheet->getRowsDecrypted() : $data_sheet->getRows();
         if (empty($rows)) {
@@ -554,11 +557,16 @@ HTML;
                     // FIXME #xss-protection sanitize JSON here!
                     break;
                 case $colType instanceof StringDataType:
-                    if ($forceHtmlEntities) {
+                    if ($forceHtmlEntities === true || $stripHtmlTags === true) {
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if ($val !== null && $val !== '') {
-                                $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
+                                if ($stripHtmlTags === true) {
+                                    $rows[$i][$colName] = strip_tags($val);
+                                }
+                                if ($forceHtmlEntities === true) {
+                                    $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
+                                }
                             }
                         }
                     }

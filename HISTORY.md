@@ -1,5 +1,7 @@
 # Release history
 
+## 1.13 - in development
+
 ## 1.12 - 20.11.2023
 
 New features: 
@@ -7,15 +9,35 @@ New features:
 - New Comparator `][` and `!][` to check for intersections in two value lists
 - Added administration dialog to search the entire model
 - New option for HTTP facades to include external scripts (e.g. counters) in all templates
+- Selected objects from an app (e.g. master data) can now be included in its model via `MetamodelAdditionInstaller`
+- New data timeline granularity `all` to show all item in a single view
 
 Improvements: 
 
-- Improved Scheduler widget in UI5 facade
+- Improved `Scheduler` widget in UI5 facade
 - Improved model editors for objects and data types, added more buttons to open relations, etc.
-- TreeTable and Gantt widgets now allow hiding empty folders
-- Added option to commit transactions before the action in CallActionBehavior 
+- `TreeTable` and Gantt widgets now allow hiding empty folders
+- Added option to commit transactions before the action in `CallActionBehavior`
+- Better support for complex inline widgets in UI5 dialog headers: e.g. `ColorIndicator`, `ProgressBar`
 
 ## 1.11 - 26.10.2023
+
+New features:
+
+- Entirely new file system model with a universal `FileBuilder` and the possibility to access remote or virtual file systems by using compatible connectors. Added optional app [FlysystemConnector](https://github.com/axenox/FlysystemConnector) with a generic Connector to use with the popular PHP library Flysystem.
+- Added aggregators `:MIN_OF()` and `:MAX_OF()` to quickly get the text of the newest comment and similar data
+- New `JournalingBehavior` to save entries in a history-table every time certain things happen to an object
+- New features for data flows in [axenox.ETL](https://github.com/axenox/ETL/):
+	- Added `DataFlowFacade` to build web services for data flows.
+	- New flow step `DataSheetToSQL` to import large data sets with better performance
+
+Improvements:
+
+- `DataSpreadSheet` widgets now support copy/paste dropdown values to and from excel using visible names and not techical ids.
+- Various improvements in [axenox.ETL](https://github.com/axenox/ETL/)
+- Improved performance of the `ExcelBuilder`
+- Widget `ImageGallery` does not required file-related configuration anymore for objects with `FileBehavior`
+- Fixed prefill issues with multi-select `InputComboTable`
 
 ## 1.10 - 07.08.2023
 
