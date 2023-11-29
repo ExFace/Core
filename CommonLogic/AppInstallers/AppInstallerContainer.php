@@ -52,9 +52,14 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         }
     }
 
+    /**
+     * Makes every installer uninstall iterating in reverse order (last installer uninstalling first)
+     * 
+     * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
+     */
     public final function uninstall() : \Iterator
     {
-        foreach ($this->getInstallers() as $installer) {
+        foreach (array_reverse($this->getInstallers()) as $installer) {
             yield from $installer->uninstall();
         }
     }
