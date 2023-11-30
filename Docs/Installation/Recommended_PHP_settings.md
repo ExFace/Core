@@ -32,17 +32,28 @@ These built-in extensions must be uncommented in the `php.ini`!
 
 The following setting are recommended in the `php.ini` file in your PHP directory. 
 
-1. Increase memory limit:
-	- `memory_limit = 1G`
-2. Enable `opcache` - see below 
-3. Security-related options
-	- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
-	- `display_errors = Off` (or leave it `On` for dev-environmens)
+### General
+
+1. Increase memory limit: `memory_limit = 1G`
+2. Set the correct timezone in `date.Timezone` - e.g. `date.timezone = Europe/Berlin`
+3. Enable and configure OPCache as shown below to increase performance
+4. Logging
 	- `log_errors = On`
-	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to a log file. 
-	- `open_basedir = <path>` - Restrict where PHP processes can read and write on a file system
-4. Set the correct timezone in `date.Timezone` - e.g. `date.timezone = Europe/Berlin`
-5. Enable and configure OPCache as shown below to increase performance
+	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to 
+
+
+### DEV environments
+
+- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
+- `display_errors = On`
+
+### PROD environments
+
+- `error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED`
+- `display_errors = Off`
+- `zend.exception_ignore_args = On` - do not show function parameters in traces to make sure no passwords are shown/logged
+- `expose_php = Off` - hide PHP and its version from generic server responses
+- `open_basedir = <path>` - Restrict where PHP processes can read and write on a file system
 
 ### Enabling OPCache
 
