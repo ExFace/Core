@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Widgets\AbstractWidget;
+use exface\Core\DataTypes\HtmlDataType;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -187,9 +188,9 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
         $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
-            $hint = trim(preg_replace('/\r|\n/', ' ', $hint));
+            $hint = trim(StringDataType::stripLineBreaks($hint));
         } else {
-            $parts = explode("\n", $hint);
+            $parts = StringDataType::splitLines($hint);
             $hint = '';
             foreach ($parts as $part) {
                 if (strlen($part) > $max_hint_len) {
