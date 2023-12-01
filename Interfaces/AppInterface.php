@@ -181,7 +181,7 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
 
     /**
      *
-     * @param InstallerInterface $injected_installer            
+     * @param InstallerInterface $injected_installer DEPRECATED!!!        
      * @return AppInstallerInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null);

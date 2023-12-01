@@ -20,6 +20,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -288,7 +289,8 @@ class Condition implements ConditionInterface
             $comparator = EXF_COMPARATOR_IN;
         } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && $base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = EXF_COMPARATOR_IN;

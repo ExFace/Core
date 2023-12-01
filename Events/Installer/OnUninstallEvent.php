@@ -9,6 +9,6 @@ namespace exface\Core\Events\Installer;
  * @author Andrej Kabachnik
  *        
  */
-class OnUninstallEvent extends AbstractAppInstallerEvent
+class OnUninstallEvent extends OnBeforeUninstallEvent
 {
 }

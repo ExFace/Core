@@ -18,6 +18,7 @@ use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
@@ -59,7 +60,16 @@ class FacadeResolverMiddleware implements MiddlewareInterface
     {
         $facade = $this->getFacadeFromUriRoutes($request->getUri());
         if ($facade === null) {
-            $this->workbench->start();
+            // TODO add more specific response for additional exception types          
+            try {
+                $this->workbench->start();
+            } catch (\Exception $e) {
+                $this->workbench->getLogger()->logException($e);
+                if ($e instanceof DataConnectionFailedError) {                    
+                    return new Response(500, [], "Workbench couldn't start. Could not connect to metamodel database!");
+                }
+                return new Response(500, [], "Workbench couldn't start. Undefined error when starting workbench!");                
+            }
             try {
                 $page = $this->getPageFromUri($request->getUri());
                 $facade = $page->getFacade();
