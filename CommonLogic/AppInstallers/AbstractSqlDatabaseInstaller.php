@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
-use exface\Core\Events\Installer\OnInstallEvent;
 use exface\Core\Interfaces\Selectors\DataSourceSelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataSourceSelector;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
@@ -127,8 +126,6 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
         yield from $this->installDatabase($this->getDataConnection(), $indent.$indent);
         yield from $this->installMigrations($source_absolute_path, $indent.$indent);
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
-        
-        $this->getWorkbench()->eventManager()->dispatch(new OnInstallEvent($this));
         
         return;
     }
