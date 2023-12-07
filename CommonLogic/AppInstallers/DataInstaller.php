@@ -25,6 +25,12 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Events\Installer\OnInstallEvent;
+use exface\Core\Interfaces\SelectorInstallerInterface;
+use exface\Core\Events\Installer\OnBeforeUninstallEvent;
+use exface\Core\Events\Installer\OnBackupEvent;
+use exface\Core\Interfaces\Events\InstallerEventInterface;
+use exface\Core\Interfaces\InstallerInterface;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -132,6 +138,65 @@ class DataInstaller extends AbstractAppInstaller
     {
         parent::__construct($selectorToInstall);
         $this->setDataFolderPath($folderPath);
+        $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'handleInstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUninstallEvent::getEventName(), [$this, 'handleUninstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnBackupEvent::getEventName(), [$this, 'handleBackup']);
+    }
+    
+    /**
+     * 
+     * @param InstallerEventInterface $event
+     * @return bool
+     */
+    protected function isModelInstaller(InstallerEventInterface $event) : bool
+    {
+        $installer = $event->getInstaller();
+        if (! ($installer instanceof MetaModelInstaller)) {
+            return false;
+        }
+        if (! ($installer instanceof SelectorInstallerInterface) || $installer->getSelectorInstalling() !== $this->getSelectorInstalling()) {
+            return false;
+        }
+        return true;
+    }
+       
+    /**
+     * 
+     * @param OnInstallEvent $event
+     */
+    public function handleInstall(OnInstallEvent $event)
+    {
+        if (! $this->isModelInstaller($event)) {
+            return;
+        }
+        
+        $this->install($event->getSourcePath());
+    }
+     
+    /**
+     * 
+     * @param OnBeforeUninstallEvent $event
+     */
+    public function handleUninstall(OnBeforeUninstallEvent $event)
+    {
+        if (! $this->isModelInstaller($event)) {
+            return;
+        }
+        
+        $this->uninstall();
+    }
+      
+    /**
+     * 
+     * @param OnBackupEvent $event
+     */
+    public function handleBackup(OnBackupEvent $event)
+    {
+        if (! $this->isModelInstaller($event)) {
+            return;
+        }
+        
+        $this->backup($event->getDestinationPath());
     }
 
     /**
@@ -155,6 +220,10 @@ class DataInstaller extends AbstractAppInstaller
         yield from $this->backupModel($destination_absolute_path);
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function getName() : string
     {
         return  mb_strtolower($this->getDataFolderPathRelative());
