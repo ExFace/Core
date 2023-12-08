@@ -48,6 +48,8 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     
     private $colorColumn = null;
     
+    private $indicator = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -347,5 +349,43 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
             }
         }
         return $value;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasIndicator() : bool
+    {
+        return $this->indicator !== null;
+    }
+    
+    /**
+     * 
+     * @return DataItemIndicator|NULL
+     */
+    public function getIndicatorConfig() : ?DataItemIndicator
+    {
+        return $this->indicator;
+    }
+    
+    /**
+     * Each calendar item can have an indicator with a different color - e.g. representing a status or similar.
+     * 
+     * The indicator is independant of the main color of the event. Depending on the facade
+     * used, it may be rendered as a stripe on the side of the event bar or an icon inside
+     * of it.
+     *
+     * @uxon-property indicator
+     * @uxon-type \exface\Core\Widgets\Parts\DataItemIndicator
+     * @uxon-template {"color": ""}
+     *
+     * @param DataCalendarItem $uxon
+     * @return DataCalendarItem
+     */
+    public function setIndicator(UxonObject $uxon) : DataCalendarItem
+    {
+        $this->indicator = new DataItemIndicator($this->getDataWidget(), $uxon);
+        return $this;
     }
 }
