@@ -990,7 +990,10 @@
 				};
   				var oRegEx = bEscapeQuotes ? /[&<>"']/g : /[&<>]/g;
 				bEscapeQuotes !== undefined ? bEscapeQuotes : true;
-				return text.replace(oRegEx, function(m) { return map[m]; });
+				if (exfTools.string.isString(text)) {
+					return text.replace(oRegEx, function(m) { return map[m]; });
+				}
+				return text;
 			},
 			
 			htmlUnescape: function(text) {
@@ -1002,7 +1005,9 @@
 					'&#039;': "'"
 				};
   
-				return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
+				if (exfTools.string.isString(text)) {
+					return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
+				}
 			}
 		}
 	}
