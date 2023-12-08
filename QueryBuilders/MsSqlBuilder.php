@@ -618,7 +618,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
     {
         switch (true) {
             case $data_type instanceof StringDataType:
-                $value = $data_type->parse($value);
+                $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
                 // JSON values are strings too, but their columns should be null even if the value is an
                 // empty object or empty array (otherwise the cells would never be null)
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
