@@ -179,6 +179,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      */
     private $incomingLinks = [];
     
+    private $autosearch_single_suggestion = false;
+    
     protected function init()
     {
         parent::init();
@@ -907,5 +909,26 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             }
         }
         return $this->tableDataSheet;
+    }
+    
+    public function getAutoSearchSingleSuggestion() : bool
+    {
+        return $this->autosearch_single_suggestion;
+    }
+    
+    /**
+     * Set to TRUE to automatically lookup if only one suggestions is found on dialog show or prefill change.
+     *
+     * @uxon-property autosearch_single_suggestion
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param boolean $value
+     * @return \exface\Core\Widgets\InputCombo
+     */
+    public function setAutoSearchSingleSuggestion($value)
+    {
+        $this->autosearch_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        return $this;
     }
 }
