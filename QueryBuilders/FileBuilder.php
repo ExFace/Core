@@ -655,23 +655,26 @@ class FileBuilder extends AbstractQueryBuilder
                 }
                 // Skip rest if we are over the limit
                 if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
+                    // increase rownr an additional time so we know more rows exist
+                    $rownr ++;
                     break;
                 }
             }
             // Otherwise add the file data to the result rows
             $result_rows[] = $this->buildResultRow($file);
         }
-        $totalCount = count($result_rows);
-        
+        $totalCount = count($result_rows) + $offset;
+        if ($rownr > $totalCount) {
+            $totalCount = $rownr;
+        }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
         if (! $pagination_applied) {
             $result_rows = $this->applyPagination($result_rows);
         }
-        
         $rowCount = count($result_rows);
         
-        return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount + $this->getOffset()), $totalCount);
+        return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount), $totalCount);
     }
     
     /**
