@@ -251,7 +251,7 @@ JS;
         $baseMapsJs = '';
         $baseSelected = $this->getWidget()->getBaseMap(0);
         foreach ($this->getWidget()->getBaseMaps() as $layer) {
-            $captionJs = json_encode($layer->getCaption());
+            $captionJs = $this->escapeString($layer->getCaption(), true, false);
             $visible = ($baseSelected === $layer);
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
@@ -267,7 +267,7 @@ JS;
         foreach ($this->getWidget()->getLayers() as $index => $layer) {
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
-                $captionJs = json_encode($layer->getCaption());
+                $captionJs = $this->escapeString($layer->getCaption(), true, false);
                 $visible = $layer->getVisibility() >= WidgetVisibilityDataType::NORMAL;
                 $autoZoom = $layer->getAutoZoomToSeeAll() === true ? 'true' : 'false';
                 
@@ -331,7 +331,7 @@ JS;
         if ($leafletVarJs === null) {
             $leafletVarJs = $this->buildJsLeafletVar();
         }
-        $caption = json_encode($layer->getCaption());
+        $caption = $this->escapeString($layer->getCaption(), true, false);
         return "{$leafletVarJs}._exfBaseMaps[{$caption}]";
     }
     
@@ -412,7 +412,7 @@ JS;
         
         // Render popup (speech bubble) with a list of data row values
         $popupTableRowsJs = '';
-        $popupCaptionJs = json_encode($layer->getCaption());
+        $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
             if ($col->isHidden() === true) {
                 continue;
@@ -421,8 +421,8 @@ JS;
                 continue;
             }
             $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-            $hint = json_encode($col->getHint() ?? '');
-            $caption = json_encode($col->getCaption() ?? '');
+            $hint = $this->escapeString($col->getHint() ?? '', true, false);
+            $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $popupTableRowsJs .= "{
                 class: \"exf-{$visibility}\",
@@ -584,7 +584,7 @@ JS;
         
         // Render popup (speech bubble) with a list of data row values
         $popupTableRowsJs = '';
-        $popupCaptionJs = json_encode($layer->getCaption());
+        $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
             if ($col->isHidden() === true) {
                 continue;
@@ -593,8 +593,8 @@ JS;
                 continue;
             }
             $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-            $hint = json_encode($col->getHint() ?? '');
-            $caption = json_encode($col->getCaption() ?? '');
+            $hint = $this->escapeString($col->getHint() ?? '', true, false);
+            $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $popupTableRowsJs .= "{
                 class: \"exf-{$visibility}\", 
@@ -969,7 +969,7 @@ JS;
     protected function buildJsClusterIcon(DataMarkersLayer $layer, string $oClusterJs) : string
     {
         $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
-        $caption = str_replace("'", "\\'", trim(json_encode($layer->getCaption()), '"'));
+        $caption = str_replace("'", "\\'", trim($this->escapeString($layer->getCaption(), true, false), '"'));
         
         /* TODO SUM values instead of counting if needed
          var markers = oCluster.getAllChildMarkers();

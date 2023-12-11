@@ -987,7 +987,7 @@ JS;
             return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
         }
         
-        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE);
+        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
             $escaped = substr($escaped, 1, -1);
         }
