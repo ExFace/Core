@@ -964,6 +964,12 @@ JS;
     /**
      * Escapes special characters in the given string value, so it can be used in JavaScript or HTML (if `$forUseInHtml` is set to TRUE).
      * 
+     * Common use cases:
+     * - inside HTML - e.g. `<div>mystring</div>` - with `$forUseInHtml=true`
+     * - in HTML attribute - e.g. `<input value="mystring">` - with `$forUseInHtml=true`
+     * - in JS config object - with `$forUseInHtml=false`
+     * - in JS config logic like value getters/setters - with `$forUseInHtml=false`
+     * 
      * By default the escaped string is automatically enclosed in double quotes. To avoid this, set 
      * `$encloseInQuotes` to `false`. It is recommended to place the result in double quotes in
      * this case: e.g. `"escaped_string"`.
