@@ -17,7 +17,6 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\DataTypes\HtmlDataType;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -984,11 +983,11 @@ JS;
         }
         
         if ($forUseInHtml === true) {
-            $escaped = htmlentities($string, ENT_QUOTES);
+            $escaped = htmlspecialchars($string, ENT_QUOTES);
             return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
         }
         
-        $escaped = json_encode($string);
+        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE);
         if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
             $escaped = substr($escaped, 1, -1);
         }
