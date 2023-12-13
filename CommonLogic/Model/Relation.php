@@ -189,9 +189,9 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyIsUid()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyIsUnspecified()
      */
-    public function getRightKeyIsUid() : bool
+    public function getRightKeyIsUnspecified() : bool
     {
         return $this->rightKeyAttributeUid === null;
     }

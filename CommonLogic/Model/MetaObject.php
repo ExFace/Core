@@ -527,17 +527,17 @@ class MetaObject implements MetaObjectInterface
                     // For example, if we are extending the FILE object, the relation to the folder should not point
                     // to the original file object, but rather to the extending object, which may have a custom base
                     // address, etc.
-                    if ($rel->getRightObjectId() === $parent->getId() && $rel->isForwardRelation()) {
+                    if ($rel->getRightObjectId() === $parent->getId()) {
                         $rel_clone = new Relation(
                             $this->getWorkbench(),
                             $rel->getCardinality(),
                             $rel->getId(),
-                            $rel->getAlias(),
+                            $rel->getAlias(), // IDEA should not the new relation have the alias of the new object?
                             $rel->getAliasModifier(),
                             $this,
                             $this->getAttribute($rel->getLeftKeyAttribute()->getAlias()),
                             $this->getId(),
-                            $rel->getRightKeyIsUid() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
+                            $rel->getRightKeyIsUnspecified() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
                         );
                     } else {
                         $rel_clone = clone $rel;
