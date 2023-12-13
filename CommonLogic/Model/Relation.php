@@ -189,6 +189,16 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyIsUid()
+     */
+    public function getRightKeyIsUid() : bool
+    {
+        return $this->rightKeyAttributeUid === null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
      */
     public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface
@@ -310,7 +320,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::copy()
      */
-    public function copy() : self
+    public function copy(MetaObjectInterface $toObject = null) : self
     {
         return clone $this;
     }

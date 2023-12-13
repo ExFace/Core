@@ -991,7 +991,16 @@ class FileBuilder extends AbstractQueryBuilder
             return true;
         }
         
-        return false;
+        // Can't read related attribute if any object in the relation path is not
+        // the same as this object (i.e. is either not a file or is a different type of file)
+        $thisObj = $this->getMainObject();
+        foreach ($attribute->getRelationPath()->getRelations() as $rel) {
+            if ($thisObj !== $rel->getRightObject()) {
+                return false;
+            }
+        }
+        
+        return true;
     }
     
     /**

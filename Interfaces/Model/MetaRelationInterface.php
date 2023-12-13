@@ -91,6 +91,13 @@ interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopie
      * @return MetaAttributeInterface
      */
     public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface;
+    
+    /**
+     * Returns TRUE if the right key of this relation is the UID of the right object and FALSE otherwise
+     * 
+     * @return bool
+     */
+    public function getRightKeyIsUid() : bool;
        
     /**
      * Returns the attribute of the left object, that holds the relation key.
