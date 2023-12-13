@@ -783,26 +783,38 @@ HTML;
         return 'filter_';
     }
     
-    public function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    /**
+     * 
+     * @param string $pathInVendorFolder
+     * @param bool $addVersionHash
+     * @return string
+     */
+    public function buildUrlToVendorFile(string $pathInVendorFolder, bool $addVersionHash = true) : string
     {
-        return 'vendor/' . $pathInVendorFolder;
+        return 'vendor/' . $pathInVendorFolder . ($addVersionHash ? '?' . $this->getFileVersionHash() : '');
     }
     
     /**
      * 
      * @param string $configOption
+     * @param bool $addVersionHash
      * @return string
      */
-    public function buildUrlToSource(string $configOption) : string
+    public function buildUrlToSource(string $configOption, bool $addVersionHash = true) : string
     {
         $path = $this->getConfig()->getOption($configOption);
         if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
             return $path;
         } else {
-            return $this->buildUrlToVendorFile($path);
+            return $this->buildUrlToVendorFile($path, $addVersionHash);
         }
     }
     
+    /**
+     * 
+     * @param string $filename
+     * @return string
+     */
     public function getFileVersionHash(string $filename = null) : string
     {
         return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install'));
