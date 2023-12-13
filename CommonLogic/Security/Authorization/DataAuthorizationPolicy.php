@@ -25,17 +25,30 @@ use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligat
 /**
  * Policy for access to data.
  * 
+ * This type of policy can be used to restrict access to ceratin objects or subsets of data: e.g.
+ * 
+ * - Make a filter get automatically applied to data every time a ceratin role reads it
+ * - Make users only see objects related to their own company/role or similar
+ * - Forbid deleting an object for certain roles.
+ * 
  * Possible targets:
  * 
  * - User role - policy applies to users with this role only
  * - Meta object - policy applies to data sheets with this meta object only
  * 
+ * **NOTE:** by default, a policy applies to the target object and to any objects extending it!
+ * You can change this by setting `apply_to_extending_objects` to `false`. 
+ * 
  * Additional conditions:
  * 
- * - `apply_to_related_objects` - defines rules to apply this policy to other objects too
  * - `operations` - restricts this policy to specific CRUD operations
  * - `add_filters` - a condition group to add to the filters of each data sheet this policy allows
  * (for the target object AND related objects if defined)
+ * - `apply_to_related_objects` - allows to apply a single rule to an object and its relatives: e.g.
+ * a rule defined for object `COMPANY` may be applied to `EMPLOYEE`, `ORDER` and any other object,
+ * that has a relation to `COMPANY`.
+ * - `apply_to_extending_objects` - controls, if the rule is applied to the specified objects only or
+ * to all objects based on them.
  * 
  * @author Andrej Kabachnik
  *
@@ -61,6 +74,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     private $filtersUxon = null;
     
     private $applyToRelations = [];
+    
+    private $applyToExtendingObjects = true;
     
     /**
      * 
@@ -116,16 +131,23 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($this->metaObjectSelector !== null) {
                 $object = $dataSheet->getMetaObject();
                 $objectMatch = false;
-                if ($object->is($this->metaObjectSelector) === true) {
-                    $objectMatch = true;
-                } elseif ($this->isApplicableToRelations()) {
-                    foreach ($this->getApplyToRelations() as $relCfg) {
-                        if ($object->isExactly($relCfg->getRelatedObjectSelector()) === true) {
-                            $objectMatch = true;
-                            $relationPathToDataObj = $relCfg->getRelationPathFromPolicyObject();
-                            break;
+                $needExactMatch = $this->isApplicableToExtendingObjects() === false;
+                switch (true) {
+                    case $needExactMatch === false && $object->is($this->metaObjectSelector) === true:
+                    case $needExactMatch === true && $object->isExactly($this->metaObjectSelector) === true:
+                        $objectMatch = true;
+                        break;
+                    case $this->isApplicableToRelations():
+                        foreach ($this->getApplyToRelations() as $relCfg) {
+                            switch (true) {
+                                case $needExactMatch === false && $object->is($relCfg->getRelatedObjectSelector()) === true:
+                                case $needExactMatch === true && $object->isExactly($relCfg->getRelatedObjectSelector()) === true:
+                                    $objectMatch = true;
+                                    $relationPathToDataObj = $relCfg->getRelationPathFromPolicyObject();
+                                    break 2;
+                            }
                         }
-                    }
+                        break;
                 }
                 
                 if ($objectMatch === false) {
@@ -279,6 +301,30 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
      * @uxon-type \exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPolicyRelation[]
      * @uxon-template [{"related_object": "", "relation_path_from_policy_object": ""}]
      * 
+     * For example, if you have an object called `COMPANY` and you need to make users of a certain
+     * role only see `ORDER`s and `TASK`s of their own company, you can create the following policy:
+     * 
+     * ```
+     *  {
+     *      "add_filters":{
+     *          "operator":"AND",
+     *          "conditions":[
+     *              {"expression": "EMPLOYEE__USER", "comparator": "==", "value": "=User()"}
+     *          ]
+     *      },
+     *      "apply_to_related_objects":[
+     *          {
+     *              "related_object": "my.App.ORDER",
+     *              "relation_path_from_policy_object": "CUSTOMER__ORDER"
+     *          }, {
+     *              "related_object": "my.App.TASK",
+     *              "relation_path_from_policy_object": "TASK[OWNER_COMPANY]"}
+     *          }
+     *      ]
+     *  }
+     *  
+     * ```
+     * 
      * @param UxonObject $arrayOfRelationPaths
      * @return DataAuthorizationPolicy
      */
@@ -306,5 +352,39 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     public function getWorkbench() : WorkbenchInterface
     {
         return $this->workbench;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isApplicableToExtendingObjects() : bool
+    {
+        return $this->applyToExtendingObjects;
+    }
+    
+    /**
+     * Apply this policy to objects that extend from the object of this policy or any of the mentioned relations
+     * 
+     * For example, if you have a base object called `FILE` and another one called `IMPORT_FILE`, which
+     * extends `FILE` and adds come special attributes or behaviors, you can control, if policies
+     * for `FILE` will also be applied to `IMPORT_FILE` or not. By default, the will apply to any
+     * extending objects too: including those, that extend `IMPORT_FILE` and any other decendant.
+     * After all, `IMPORT_FILE` is still a file!
+     * 
+     * In particular, if there is a base object for many other objects - e.g. the base object for an
+     * entire data source - this allows to define a single rule to control them all!
+     * 
+     * @uxon-property apply_to_extending_objects
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataAuthorizationPolicy
+     */
+    protected function setApplyToExtendingObjects(bool $value) : DataAuthorizationPolicy
+    {
+        $this->applyToExtendingObjects = $value;
+        return $this;
     }
 }
