@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Factories\ActionFactory;
 
 /**
  * This trait contains common methods to implement the iCanEditData interface.
@@ -12,6 +13,8 @@ trait iCanEditDataTrait {
     
     /** @var boolean */
     private $is_editable = false;
+    
+    private $editable_if_access_to_action_alias = null;
     
     private $editable_changes_reset_on_refresh = true;
     
@@ -24,7 +27,12 @@ trait iCanEditDataTrait {
      */
     public function isEditable() : bool
     {
-        return $this->is_editable;
+        $editableExplicitly = $this->is_editable;
+        if ($editableExplicitly === true || $this->editable_if_access_to_action_alias === null) {
+            return $editableExplicitly;
+        }
+        $action = ActionFactory::createFromString($this->getWorkbench(), $this->editable_if_access_to_action_alias, $this);
+        return $action->isAuthorized() === true;
     }
     
     /**
@@ -43,6 +51,7 @@ trait iCanEditDataTrait {
     public function setEditable(bool $value = true) : iCanEditData
     {
         $this->is_editable = $value;
+        
         return $this;
     }
     
@@ -75,6 +84,32 @@ trait iCanEditDataTrait {
     public function setEditableChangesResetOnRefresh(bool $value) : iCanEditData
     {
         $this->editable_changes_reset_on_refresh = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getEditableIfAccessToAction() : string
+    {
+        return $this->editable_if_access_to_action_alias;
+    }
+    
+    /**
+     * If a user has access to this action (alias), the widget will be editable.
+     * 
+     * This is typically the action, that is going to be used to save the edited data - e.g. `exface.Core.UpdateData`.
+     * 
+     * @uxon-property editable_if_access_to_action
+     * @uxon-type metamodel:action 
+     * 
+     * @param string $value
+     * @return iCanEditDataTrait
+     */
+    public function setEditableIfAccessToAction(string $value) : iCanEditDataTrait
+    {
+        $this->editable_if_access_to_action_alias = $value;
         return $this;
     }
 }
