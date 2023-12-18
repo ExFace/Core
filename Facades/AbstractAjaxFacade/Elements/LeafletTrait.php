@@ -251,7 +251,7 @@ JS;
         $baseMapsJs = '';
         $baseSelected = $this->getWidget()->getBaseMap(0);
         foreach ($this->getWidget()->getBaseMaps() as $layer) {
-            $captionJs = json_encode($layer->getCaption());
+            $captionJs = $this->escapeString($layer->getCaption(), true, false);
             $visible = ($baseSelected === $layer);
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
@@ -267,7 +267,7 @@ JS;
         foreach ($this->getWidget()->getLayers() as $index => $layer) {
             $layerInit = $this->buildJsLayer($layer);
             if ($layerInit) {
-                $captionJs = json_encode($layer->getCaption());
+                $captionJs = $this->escapeString($layer->getCaption(), true, false);
                 $visible = $layer->getVisibility() >= WidgetVisibilityDataType::NORMAL;
                 $autoZoom = $layer->getAutoZoomToSeeAll() === true ? 'true' : 'false';
                 
@@ -331,7 +331,7 @@ JS;
         if ($leafletVarJs === null) {
             $leafletVarJs = $this->buildJsLeafletVar();
         }
-        $caption = json_encode($layer->getCaption());
+        $caption = $this->escapeString($layer->getCaption(), true, false);
         return "{$leafletVarJs}._exfBaseMaps[{$caption}]";
     }
     
@@ -412,7 +412,7 @@ JS;
         
         // Render popup (speech bubble) with a list of data row values
         $popupTableRowsJs = '';
-        $popupCaptionJs = json_encode($layer->getCaption());
+        $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
             if ($col->isHidden() === true) {
                 continue;
@@ -421,8 +421,8 @@ JS;
                 continue;
             }
             $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-            $hint = json_encode($col->getHint() ?? '');
-            $caption = json_encode($col->getCaption() ?? '');
+            $hint = $this->escapeString($col->getHint() ?? '', true, false);
+            $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $popupTableRowsJs .= "{
                 class: \"exf-{$visibility}\",
@@ -584,7 +584,7 @@ JS;
         
         // Render popup (speech bubble) with a list of data row values
         $popupTableRowsJs = '';
-        $popupCaptionJs = json_encode($layer->getCaption());
+        $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
         foreach ($dataWidget->getColumns() as $col) {
             if ($col->isHidden() === true) {
                 continue;
@@ -593,8 +593,8 @@ JS;
                 continue;
             }
             $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
-            $hint = json_encode($col->getHint() ?? '');
-            $caption = json_encode($col->getCaption() ?? '');
+            $hint = $this->escapeString($col->getHint() ?? '', true, false);
+            $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
             $popupTableRowsJs .= "{
                 class: \"exf-{$visibility}\", 
@@ -892,14 +892,18 @@ JS;
         $colorJs = "''";
         $colorCss = '';
         switch (true) {
-            case ($layer instanceof ColoredDataMapLayerInterface) && $layer->hasColorScale():
-                $colorCol = $layer->getColorColumn();
+            case ($layer instanceof ColoredDataMapLayerInterface) && null !== $colorCol = $layer->getColorColumn():
                 $semanticColors = $this->getFacade()->getSemanticColors();
                 $semanticColorsJs = json_encode(! empty($semanticColors) ? $semanticColors : new \stdClass());
+                if ($layer->hasColorScale()) {
+                    $colorResolverJs = $this->buildJsScaleResolver('sVal', $layer->getColorScale(), $layer->isColorScaleRangeBased());
+                } else {
+                    $colorResolverJs = "{$oRowJs}['{$colorCol->getDataColumnName()}']";
+                }
                 $colorJs = <<<JS
 function(){
                                 var sVal = {$oRowJs}['{$colorCol->getDataColumnName()}'];
-                                var sColor = {$this->buildJsScaleResolver('sVal', $layer->getColorScale(), $layer->isColorScaleRangeBased())};
+                                var sColor = {$colorResolverJs};
                                 var oSemanticColors = $semanticColorsJs;
                                 if (oSemanticColors[sColor] !== undefined) {
                                     sColor = oSemanticColors[sColor];
@@ -918,8 +922,9 @@ JS;
         
         switch (true) {
             case ($layer instanceof DataPointsLayer):
-                $valueJs = ! $layer->hasValue() ? "''" : "'<div class=\"exf-map-point-value\" style=\"margin-left: calc({$layer->getPointSize()}px + 3px); margin-top: calc(-{$layer->getPointSize()}px * 1.5);\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
-                $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$layer->getPointSize()}px; width: {$layer->getPointSize()}px; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
+                $pointSizeCss = $layer->getPointSize() . 'px';
+                $valueJs = ! $layer->hasValue() ? "''" : "'<div class=\"exf-map-point-value\" style=\"margin-left: calc({$pointSizeCss} + 3px); margin-top: calc(-{$pointSizeCss} - 0.25rem);\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$pointSizeCss}; width: {$pointSizeCss}; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
                 $js= <<<JS
 function(){
                             var sColor = $colorJs;
@@ -964,7 +969,7 @@ JS;
     protected function buildJsClusterIcon(DataMarkersLayer $layer, string $oClusterJs) : string
     {
         $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
-        $caption = str_replace("'", "\\'", trim(json_encode($layer->getCaption()), '"'));
+        $caption = str_replace("'", "\\'", trim($this->escapeString($layer->getCaption(), true, false), '"'));
         
         /* TODO SUM values instead of counting if needed
          var markers = oCluster.getAllChildMarkers();

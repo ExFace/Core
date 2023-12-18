@@ -326,7 +326,7 @@ class Chart extends AbstractWidget implements
                     throw new WidgetConfigurationError($this, 'Error instantiating chart widget data. ' . $e->getMessage(), null, $e);
                 }
             } else {
-                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
+                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false, 'paginate' => false]), 'Data');
             }
             
             if ($this->dataPrepared === false) {
@@ -355,7 +355,8 @@ class Chart extends AbstractWidget implements
         foreach ($this->getAxes() as $axis) {
             $axis->prepareDataWidget($dataWidget);
         }
-        
+        if ($dat)
+        $dataWidget->setPaginate(false);
         return $this;
     }
 
@@ -415,6 +416,7 @@ class Chart extends AbstractWidget implements
         $data = WidgetFactory::create($this->getPage(), 'Data', $this);
         $data->setColumnsAutoAddDefaultDisplayAttributes(false);
         $data->setMetaObject($this->getMetaObject());
+        $data->setPaginate(false);
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
         // not be shown anyway. The Chart has it's own toolbars.

@@ -125,10 +125,10 @@ class JsonDataType extends TextDataType
     /**
      * 
      * @param array $json
-     * @param boolean $prettify
+     * @param bool $prettify
      * @return string
      */
-    public static function encodeJson(array $json, $prettify = false): string
+    public static function encodeJson(array $json, bool $prettify = false): string
     {
         $params = null;
         if ($prettify === true) {

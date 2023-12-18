@@ -6,8 +6,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\DataTypes\UxonSchemaNameDataType;
-use exface\Core\Factories\DataTypeFactory;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
