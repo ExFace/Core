@@ -187,9 +187,9 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
         $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
-            $hint = trim(preg_replace('/\r|\n/', ' ', $hint));
+            $hint = trim(StringDataType::stripLineBreaks($hint));
         } else {
-            $parts = explode("\n", $hint);
+            $parts = StringDataType::splitLines($hint);
             $hint = '';
             foreach ($parts as $part) {
                 if (strlen($part) > $max_hint_len) {
@@ -964,6 +964,12 @@ JS;
     /**
      * Escapes special characters in the given string value, so it can be used in JavaScript or HTML (if `$forUseInHtml` is set to TRUE).
      * 
+     * Common use cases:
+     * - inside HTML - e.g. `<div>mystring</div>` - with `$forUseInHtml=true`
+     * - in HTML attribute - e.g. `<input value="mystring">` - with `$forUseInHtml=true`
+     * - in JS config object - with `$forUseInHtml=false`
+     * - in JS config logic like value getters/setters - with `$forUseInHtml=false`
+     * 
      * By default the escaped string is automatically enclosed in double quotes. To avoid this, set 
      * `$encloseInQuotes` to `false`. It is recommended to place the result in double quotes in
      * this case: e.g. `"escaped_string"`.
@@ -983,11 +989,11 @@ JS;
         }
         
         if ($forUseInHtml === true) {
-            $escaped = htmlentities($string, ENT_QUOTES);
+            $escaped = htmlspecialchars($string, ENT_QUOTES);
             return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
         }
         
-        $escaped = json_encode($string);
+        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
             $escaped = substr($escaped, 1, -1);
         }

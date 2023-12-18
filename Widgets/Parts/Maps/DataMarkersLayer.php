@@ -2,20 +2,16 @@
 namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Interfaces\Widgets\iShowData;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
-use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
-use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\DateDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\DataPointLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngDataColumnMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\LatLngWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
+use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 
 /**
  *
@@ -26,9 +22,10 @@ class DataMarkersLayer extends AbstractDataLayer
     implements 
     MarkerMapLayerInterface, 
     LatLngDataColumnMapLayerInterface, 
-    LatLngWidgetLinkMapLayerInterface, 
-    EditableMapLayerInterface,
-    ColoredDataMapLayerInterface
+    LatLngWidgetLinkMapLayerInterface,
+    ColoredDataMapLayerInterface,
+    ValueLabeledMapLayerInterface, 
+    EditableMapLayerInterface
 {
     use DataPointLayerTrait {
         initDataWidget as initDataWidgetForPoints;
@@ -36,55 +33,9 @@ class DataMarkersLayer extends AbstractDataLayer
     
     use iHaveIconTrait;
     
-    use iHaveColorTrait;
+    use ColoredLayerTrait;
     
-    use iHaveColorScaleTrait;
-    
-    private $valueAttributeAlias = null;
-    
-    private $valueColumn = null;
-    
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getValueAttributeAlias() : ?string
-    {
-        return $this->valueAttributeAlias;
-    }
-    
-    /**
-     * Alias of the attribtue containing the data to show inside the marker (typically a number)
-     *
-     * @uxon-property value_attribute_alias
-     * @uxon-type metamodel:attribute
-     *
-     * @param string $value
-     * @return DataMarkersLayer
-     */
-    public function setValueAttributeAlias(string $value) : DataMarkersLayer
-    {
-        $this->valueAttributeAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasValue() : bool
-    {
-        return $this->getValueAttributeAlias() !== null;
-    }
-    
-    /**
-     * 
-     * @return DataColumn|NULL
-     */
-    public function getValueColumn() : ?DataColumn
-    {
-        return $this->valueColumn;
-    }
+    use ValueLabeledLayerTrait;
     
     /**
      * 
@@ -94,39 +45,10 @@ class DataMarkersLayer extends AbstractDataLayer
     protected function initDataWidget(iShowData $widget) : iShowData
     {
         $widget = $this->initDataWidgetForPoints($widget);
-        
-        if ($this->getValueAttributeAlias()) {
-            if (! $col = $widget->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
-                $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getValueAttributeAlias(),
-                    'visibility' => WidgetVisibilityDataType::PROMOTED
-                ]));
-                $widget->addColumn($col, 0);
-            }
-            $this->valueColumn = $col;
-        }
+        $widget = $this->initDataWidgetValue($widget);
+        $widget = $this->initDataWidgetColor($widget);
         
         return $widget;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
-     */
-    public function isColorScaleRangeBased() : bool
-    {
-        if (! $this->hasValue()) {
-            return false;
-        }
-        $dataType = $this->getValueColumn()->getDataType();
-        switch (true) {
-            case $dataType instanceof NumberDataType:
-            case $dataType instanceof DateDataType:
-                return true;
-        }
-        
-        return false;
     }
     
     /**
@@ -174,15 +96,5 @@ class DataMarkersLayer extends AbstractDataLayer
     protected function setAllowToMoveMarkers(bool $value) : DataMarkersLayer
     {
         return $this->setEditByMovingItems($value);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface::getColorColumn()
-     */
-    public function getColorColumn(): ?DataColumn
-    {
-        return $this->getValueAttributeAlias();
     }
 }

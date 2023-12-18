@@ -38,7 +38,7 @@ We can now create a user role `my.App.DOC_EDITORS` and give it the following per
 
 The `add_filters` condition of the policy will now ensure all CRUD operations will contain a filter of the username of the current user.
 
-### Allow access to different objects, that belong to a compana
+### Allow access to different objects, that belong to a company
 
 It is possible to restrict access to multiple objects using a single policy. This is very handy if you need users to see only data associated with their company, project or similar. 
 

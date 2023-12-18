@@ -1712,6 +1712,15 @@ class DataSheet implements DataSheetInterface
             $nestedFKeyAttr = $nestedRel->getRightKeyAttribute();
             $nestedFKeyCol = $nestedSheet->getColumns()->addFromAttribute($nestedFKeyAttr);
             $nestedFKeyCol->setValueOnAllRows($rowKey);
+            
+            // set the filter value in the nested sheet for filter to parent sheet to the new value
+            // else BEhaviors reacting on create events might fail because timestampingbehavior
+            foreach ($nestedSheet->getFilters()->getConditionsRecursive() as $cond) {
+                if ($cond->getLeftExpression()->isMetaAttribute() && $nestedFKeyAttr->isExactly($cond->getLeftExpression()->getAttribute())) {
+                    $cond->setValue($rowKey);
+                }
+            }
+            
             $counter += $nestedSheet->dataCreate(false, $transaction);
         }
         

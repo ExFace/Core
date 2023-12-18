@@ -3,7 +3,6 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
@@ -40,6 +39,8 @@ use exface\Core\Exceptions\RuntimeException;
  * @method ComparatorsDataType IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType MATCH(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType NOT_MATCH(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
@@ -161,9 +162,29 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::EQUALS_NOT:
             case self::IS_NOT:
             case self::NOT_IN:
+            case self::NOT_MATCH:
                 return true;
         }
         return false;
+    }
+    
+    /**
+     * Returns TRUE if the given comparator can be inverted and FALSE otherwise
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @return bool
+     */
+    public static function isInvertable($comparatorOrString) : bool
+    {
+        if ($comparatorOrString instanceof ComparatorDataType) {
+            $cmp = $comparatorOrString->__toString();
+        } else {
+            $cmp = $comparatorOrString;
+        }
+        switch ($cmp) {
+            case self::BETWEEN: return false;
+        }
+        return true;
     }
     
     /**
@@ -193,6 +214,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::IS_NOT: $inv = self::IS; break;
             case self::LESS_THAN: $inv = self::GREATER_THAN_OR_EQUALS; break;
             case self::LESS_THAN_OR_EQUALS: $inv = self::GREATER_THAN; break;
+            case self::MATCH: $inv = self::NOT_MATCH; break;
+            case self::NOT_MATCH: $inv = self::MATCH; break;
             default:
                 throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
         }

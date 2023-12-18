@@ -975,6 +975,39 @@
 			 */
 			isString: function(val) {
 				return (typeof val === 'string' || val instanceof String);
+			},
+			
+			/**
+			 * Replaces most dangerous characters with HTML entities:  `&` => `&amp;`, `<` => `&lt;`, etc.
+			 */
+			htmlEscape: function(text, bEscapeQuotes) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+  				var oRegEx = bEscapeQuotes ? /[&<>"']/g : /[&<>]/g;
+				bEscapeQuotes !== undefined ? bEscapeQuotes : true;
+				if (exfTools.string.isString(text)) {
+					return text.replace(oRegEx, function(m) { return map[m]; });
+				}
+				return text;
+			},
+			
+			htmlUnescape: function(text) {
+				var map = {
+					'&amp;': '&',
+					'&lt;': '<',
+					'&gt;': '>',
+					'&quot;': '"',
+					'&#039;': "'"
+				};
+  
+				if (exfTools.string.isString(text)) {
+					return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
+				}
 			}
 		}
 	}

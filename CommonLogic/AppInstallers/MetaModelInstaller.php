@@ -14,7 +14,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Behaviors\ModelValidatingBehavior;
-use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\EncryptedDataType;
@@ -170,10 +169,11 @@ class MetaModelInstaller extends AbstractAppInstaller
             $sheet = $addition['sheet'];
             
             if ($sheet->isUnfiltered()) {
-                yield $idt . $idt . 'Cannot uninstall ' . $sheet->getMetaObject()->__toString() . ': data has no app relation!';
+                yield $idt . $idt . 'Cannot uninstall ' . $sheet->getMetaObject()->__toString() . ': data has no app relation!' . PHP_EOL;
+                continue;
             }
             
-            if ($sheet->hasUIdColumn()) {
+            if (! $sheet->hasUidColumn(true)) {
                 // Read data to fill the UID column. Some data source do not support deletes via
                 // filter (or filter over relations), so it is safer to fetch the UIDs here.
                 $sheet->dataRead();
