@@ -57,7 +57,7 @@ class Model implements ModelInterface
      * 
      * NOTE: since this method creates a new instance of the object, all behaviors are instatiated as well,
      * eventually registering their events a second time. This may lead to unexpected behavior: e.g. if
-     * you disabled/changed a behavior for an object, but this object is being refreshed, it will register 
+     * you disabled/changed a behavior for an object, but this object is being refreshed, it will register
      * a new behavior, which will not be affected by the changes on the old one.
      * 
      * @param MetaObjectInterface $object
@@ -69,7 +69,7 @@ class Model implements ModelInterface
         $this->cacheObject($obj);
         return $obj;
     }
-    
+    	
     /**
      * @deprecated use MetaObjectFactory::createFromAliasAndNamespace()
      * 
@@ -142,6 +142,8 @@ class Model implements ModelInterface
      */
     private function getObjectIdFromAlias($object_alias, $namespace)
     {
+    	$object_alias = mb_strtolower($object_alias);
+    	$namespace = mb_strtolower($namespace);
         if ($id = ($this->object_library[$namespace][$object_alias] ?? null)) {
             return $id;
         } else {
@@ -153,11 +155,12 @@ class Model implements ModelInterface
      * Checks if the object is loaded already and returns the cached version.
      * Returns false if the object is not in the cache.
      *
-     * @param int $object_id            
+     * @param int $object_id
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     private function getObjectFromCache($object_id)
     {
+    	$object_id = mb_strtolower($object_id);
         if ($obj = ($this->loaded_objects[$object_id] ?? null)) {
             return $obj;
         } else {
@@ -169,13 +172,13 @@ class Model implements ModelInterface
      * Adds the object to the model cache.
      * Also sets the default namespace, if it is the first object loaded.
      *
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
      * @return boolean
      */
     private function cacheObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
     {
-        $this->loaded_objects[$obj->getId()] = $obj;
-        $this->object_library[$obj->getNamespace()][$obj->getAlias()] = $obj->getId();
+        $this->loaded_objects[mb_strtolower($obj->getId())] = $obj;
+        $this->object_library[mb_strtolower($obj->getNamespace())][mb_strtolower($obj->getAlias())] = $obj->getId();
         if (! $this->getDefaultNamespace()) {
             $this->setDefaultNamespace($obj->getNamespace());
         }
@@ -195,7 +198,7 @@ class Model implements ModelInterface
     /**
      * Returns the object part of a full alias ("CUSTOMER" from "CRM.CUSTOMER")
      *
-     * @param string $qualified_alias_with_app            
+     * @param string $qualified_alias_with_app
      * @return string
      */
     public function getObjectAliasFromQualifiedAlias($qualified_alias_with_app)
@@ -210,7 +213,7 @@ class Model implements ModelInterface
     /**
      * Returns the app part of a full alias ("CRM" from "CRM.CUSTOMER")
      *
-     * @param string $qualified_alias_with_app            
+     * @param string $qualified_alias_with_app
      * @return string
      */
     public function getNamespaceFromQualifiedAlias($qualified_alias_with_app)
