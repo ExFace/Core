@@ -1,6 +1,21 @@
 # Release history
 
-## 1.13 - in development
+## 1.14 - in development
+
+## 1.13 - 18.12.2023
+
+New features:
+
+- Copy to clipboard from right-click menu in most UI templates
+- Quick filters in right-click menu in SAP UI5/Fiori templates
+- Indicators with additional colors (e.g. to visualize status) for events in Scheduler widgets
+- WYSIWYG and preview modes in InputMarkdown widgets
+
+Improvements:
+
+- InputCombo can now be forced to actively search for a single possible value via `autosearch_single_suggestion`
+- Improved Browser cache buster in jEasyUI Facade
+- Improvements in the query builders of the UrlDataConnector
 
 ## 1.12 - 20.11.2023
 
