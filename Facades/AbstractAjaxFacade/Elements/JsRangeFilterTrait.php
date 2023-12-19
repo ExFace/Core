@@ -9,6 +9,7 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Widgets\Container;
 
 /**
  * Renders a RangeFilter as an InlineGroup with two default editors.
@@ -160,5 +161,28 @@ JS;
     public function buildJsValueGetterMethod()
     {
         throw new FacadeLogicError('Cannot use JsRangeFilterTrait::buildJsValueGetterMethod() - use buildJsValueGetter() instead!');
+    }
+    
+    /**
+     *
+     * @param string $functionName
+     * @param array $parameters
+     * @return string
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget->hasFunction($functionName, false)) {
+            return parent::buildJsCallFunction($functionName, $parameters);
+        }
+        
+        $js = '';
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $child) {
+            if ($child->hasFunction($functionName)) {
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+            }
+        }
+        
+        return $js;
     }
 }
