@@ -4,23 +4,22 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Renders a RangeFilter as an InlineGroup with two default editors.
  * 
- * @method \exface\Core\Widgets\RangeSpinnerFilter getWidget()
+ * @method \exface\Core\Widgets\SpinnerFilter getWidget()
  * @method AbstractAjaxFacade getFacade()
  * 
  * @author Andrej Kabachnik
  *
  */
-trait JsRangeSpinnerFilterTrait
+trait JsSpinnerFilterTrait
 {
-    use JsRangeFilterTrait;
+    private $inlineGroup = null;
     
     protected abstract function buildCssWidthOfStepButton() : string;
-    
-    protected abstract function buildCssWidthOfRangeSeparator() : string;
     
     /**
      *
@@ -32,23 +31,7 @@ trait JsRangeSpinnerFilterTrait
             $widget = $this->getWidget();
             $wg = WidgetFactory::create($widget->getPage(), 'InlineGroup', $widget);
             
-            $inputUxon = $widget->getInputWidget()->exportUxonObject();
-            $inputUxon->setProperty('hide_caption', true);
-            $filterFromUxon = new UxonObject([
-                'widget_type' => 'Filter',
-                'hide_caption' => true,
-                'input_widget' => $inputUxon
-            ]);
-            $filterFromUxon->setProperty('comparator', $widget->getComparatorFrom());
-            $filterToUxon = $filterFromUxon->copy();
-            $filterToUxon->setProperty('comparator', $widget->getComparatorTo());
-            
-            if ($widget->hasValueFrom() === true) {
-                $filterFromUxon->setProperty('value', $widget->getValueFrom());
-            }
-            if ($widget->hasValueTo() === true) {
-                $filterToUxon->setProperty('value', $widget->getValueTo());
-            }
+            $inputWidget = $widget->getInputWidget();
             
             $groupWidgets = new UxonObject([
                 new UxonObject([
@@ -63,15 +46,7 @@ trait JsRangeSpinnerFilterTrait
                         'function' => 'add(-' . $widget->getValueStep() . ')'
                     ]
                 ]),
-                $filterFromUxon,
-                new UxonObject([
-                    "widget_type" => "Text",
-                    "text" => '-',
-                    "align" => "center",
-                    "width" => $this->buildCssWidthOfRangeSeparator(),
-                    "multi_line" => false
-                ]),
-                $filterToUxon,
+                $inputWidget,
                 new UxonObject([
                     'widget_type' => 'Button',
                     'caption' => 'Next',
@@ -90,8 +65,25 @@ trait JsRangeSpinnerFilterTrait
             $wg->setCaption($widget->getCaption());
             
             $this->inlineGroup = $wg;
-            $this->getFacade()->getElement($this->inlineGroup)->addElementCssClass('exf-spinner-filter exf-spinner-range');
+            $this->getFacade()->getElement($this->inlineGroup)->addElementCssClass('exf-spinner-filter');
         }
         return $this->inlineGroup;
+    }
+    
+    public function addOnChangeScript($string)
+    {
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
+            $this->getFacade()->getElement($w)->addOnChangeScript($string);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsValueGetter(string $column = null)
+    {
+        return $this->getFacade()->getElement($this->getWidgetInlineGroup()->getInputWidgets()[0])->buildJsValueGetter($column);
     }
 }
