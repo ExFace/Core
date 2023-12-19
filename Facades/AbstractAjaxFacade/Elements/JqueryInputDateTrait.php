@@ -58,10 +58,13 @@ trait JqueryInputDateTrait {
         return <<<JS
 (function(sInterval){
     var sVal = {$this->buildJsValueGetter()};
-    var oDateInput = {$this->getDateFormatter()->buildJsFormatParser('sVal')};
-    var oDateResult = exfTools.date.add(oDateInput, sInterval);
-    {$this->buildJsValueSetter($this->getDateFormatter()->buildJsFormatDateObjectToInternal('oDateResult'))};
-})('{$parameters[0]}')
+    var oDate = {$this->getDateFormatter()->buildJsFormatParserToJsDate('sVal')};
+    if (oDate === null || oDate === undefined) {
+        return null;
+    }
+    oDate = exfTools.date.add(oDate, sInterval);
+    {$this->buildJsValueSetter($this->getDateFormatter()->buildJsFormatDateObjectToInternal('oDate'))};
+})('{$parameters[0]}');
      
 JS;
     }
