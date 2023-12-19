@@ -866,6 +866,16 @@ JS;
     }
     
     /**
+     *
+     * @param bool $hidden
+     * @return string
+     */
+    protected function buildJsSetHidden(bool $hidden) : string
+    {
+        return "$('#{$this->getId()}')" . ($hidden ? ".addClass('exf-hidden')" : ".removeClass('exf-hidden')");
+    }
+    
+    /**
      * Returns the selector of the UI page of the widget represented by this element.
      * 
      * @return string
@@ -1016,6 +1026,10 @@ JS;
                 return $this->buildJsSetDisabled(false);
             case $functionName === AbstractWidget::FUNCTION_DISABLE:
                 return $this->buildJsSetDisabled(true);
+            case $functionName === AbstractWidget::FUNCTION_HIDE:
+                return $this->buildJsSetHidden(true);
+            case $functionName === AbstractWidget::FUNCTION_SHOW:
+                return $this->buildJsSetHidden(false);
             case $functionName === AbstractWidget::FUNCTION_NONE:
                 return '';
         }
