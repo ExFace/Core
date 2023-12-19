@@ -5,11 +5,9 @@ use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
-use exface\Core\Widgets\Container;
 
 /**
  * Renders a RangeFilter as an InlineGroup with two default editors.
@@ -17,12 +15,11 @@ use exface\Core\Widgets\Container;
  * @method InlineGroup getWidget()
  * @method AbstractAjaxFacade getFacade()
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 trait JsRangeFilterTrait
 {
-
     private $inlineGroup = null;
     
     /**
@@ -44,19 +41,19 @@ trait JsRangeFilterTrait
                 'input_widget' => $inputUxon
             ]);
             $filterFromUxon->setProperty('comparator', $widget->getComparatorFrom());
-            $filterTo = $filterFromUxon->copy();
-            $filterTo->setProperty('comparator', $widget->getComparatorTo());
+            $filterToUxon = $filterFromUxon->copy();
+            $filterToUxon->setProperty('comparator', $widget->getComparatorTo());
             
             if ($widget->hasValueFrom() === true) {
                 $filterFromUxon->setProperty('value', $widget->getValueFrom());
             }
             if ($widget->hasValueTo() === true) {
-                $filterTo->setProperty('value', $widget->getValueTo());
+                $filterToUxon->setProperty('value', $widget->getValueTo());
             }
             
             $groupWidgets = new UxonObject([
                 $filterFromUxon,
-                $filterTo
+                $filterToUxon
             ]);
             
             $wg->setWidgets($groupWidgets);
