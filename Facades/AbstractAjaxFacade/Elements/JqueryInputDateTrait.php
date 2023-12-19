@@ -3,8 +3,6 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter;
-use exface\Core\Widgets\InputDate;
-use exface\Core\Widgets\InputDateTime;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\DataTypes\TimestampDataType;
@@ -54,4 +52,17 @@ trait JqueryInputDateTrait {
         
         return $this->formatter;
     }   
+    
+    protected function buildJsCallFunctionAddSubtract(array $parameters = []) : string
+    {
+        return <<<JS
+(function(sInterval){
+    var sVal = {$this->buildJsValueGetter()};
+    var oDateInput = {$this->getDateFormatter()->buildJsFormatParser('sVal')};
+    var oDateResult = exfTools.date.add(oDateInput, sInterval);
+    {$this->buildJsValueSetter($this->getDateFormatter()->buildJsFormatDateObjectToInternal('oDateResult'))};
+})('{$parameters[0]}')
+     
+JS;
+    }
 }

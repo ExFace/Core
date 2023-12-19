@@ -44,6 +44,15 @@ class InputDate extends Input
 {
     use SingleValueInputTrait;
     
+    /**
+     * Add an interval to the value: e.g. `add(+1d)`, `add(-1w)`
+     *
+     * @uxon-property add
+     *
+     * @var string
+     */
+    const FUNCTION_ADD = 'add';
+    
     private $format = null;
     
     /**
