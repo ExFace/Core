@@ -240,7 +240,7 @@ JS;
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
         ];
         $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
-        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
+        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES', false);
         $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
