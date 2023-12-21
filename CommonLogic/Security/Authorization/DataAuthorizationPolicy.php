@@ -21,6 +21,7 @@ use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligation;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 /**
  * Policy for access to data.
@@ -35,6 +36,7 @@ use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligat
  * 
  * - User role - policy applies to users with this role only
  * - Meta object - policy applies to data sheets with this meta object only
+ * - App - policy applies to all objects of this app
  * 
  * **NOTE:** by default, a policy applies to the target object and to any objects extending it!
  * You can change this by setting `apply_to_extending_objects` to `false`. 
@@ -65,6 +67,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $metaObjectSelector = null;
     
+    private $appUid = null;
+    
     private $conditionUxon = null;
     
     private $effect = null;
@@ -89,11 +93,14 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->workbench = $workbench;
         $this->name = $name;
-        if ($str = $targets[PolicyTargetDataType::USER_ROLE]) {
+        if (null !== $str = $targets[PolicyTargetDataType::USER_ROLE]) {
             $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
+        if (null !== $str = $targets[PolicyTargetDataType::META_OBJECT]) {
             $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
+        } 
+        if (null !== $str = $targets[PolicyTargetDataType::APP]) {
+            $this->appUid = $str;
         } 
         
         $this->conditionUxon = $conditionUxon;
@@ -176,6 +183,21 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 if (empty(array_intersect($operations, $this->getOperations()))) {
                     return PermissionFactory::createNotApplicable($this, 'Operation does not match');
                 } 
+            }
+            
+            // Match app
+            if ($this->appUid !== null) {
+                $object = $dataSheet->getMetaObject();
+                // Not applicable if app match required, but object belongs to another app
+                // Otherwise applied because apps match
+                if (strcasecmp($object->getApp()->getUid(), $this->appUid) !== 0) {
+                    return PermissionFactory::createNotApplicable($this, 'App does not match app of object');
+                } else {
+                    $applied = true;
+                }
+            } else {
+                // Applied if app target not set
+                $applied = true;
             }
             
             if ($applied === false) {
