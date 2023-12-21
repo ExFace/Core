@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
@@ -64,10 +63,13 @@ class OracleSqlConnector extends AbstractSqlConnector
      */
     protected function performDisconnect()
     {
-        try {
-            @ oci_close($this->getCurrentConnection());
-        } catch (\Throwable $e) {
-            // Do nothing if disconnect throws an error
+        if ($this->isConnected()) {
+            try {
+                @oci_close($this->getCurrentConnection());
+                $this->resetCurrentConnection();
+            } catch (\Throwable $e) {
+                // Do nothing if disconnect throws an error
+            }
         }
     }
 
