@@ -127,7 +127,7 @@ class DialogButton extends Button
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Button::getRefreshInput()
      */
-    public function getRefreshInput() : bool
+    public function getRefreshInput() : ?bool
     {
         if ($this->getCloseDialogAfterActionSucceeds() === true && $this->getInputWidget() instanceof Dialog) {
             return false;
