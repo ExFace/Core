@@ -57,6 +57,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -821,8 +822,12 @@ class DataSheet implements DataSheetInterface
         // Set explicitly defined filters
         $query->setFiltersConditionGroup($queryFilters);
         // Add filters from the contexts
-        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
-            $query->addFilterCondition($cond);
+        try {
+            foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
+                $query->addFilterCondition($cond);
+            }
+        } catch (ContextAccessDeniedError $e) {
+            // ignore if access to context denied
         }
         
         // set aggregations
