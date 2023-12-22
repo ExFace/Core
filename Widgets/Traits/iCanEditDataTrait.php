@@ -105,9 +105,9 @@ trait iCanEditDataTrait {
      * @uxon-type metamodel:action 
      * 
      * @param string $value
-     * @return iCanEditDataTrait
+     * @return iCanEditData
      */
-    public function setEditableIfAccessToAction(string $value) : iCanEditDataTrait
+    public function setEditableIfAccessToAction(string $value) : iCanEditData
     {
         $this->editable_if_access_to_action_alias = $value;
         return $this;
