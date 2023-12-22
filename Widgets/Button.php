@@ -93,7 +93,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     private $hotkey = null;
 
-    private $refresh_input = true;
+    private $refresh_input = null;
     
     private $refreshWidgetIds = [];
     
@@ -306,16 +306,15 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * Returns TRUE if the input widget is to be refreshed after the action succeeds
      * 
-     * @return bool
+     * @return bool|NULL
      */
-    public function getRefreshInput() : bool
+    public function getRefreshInput() : ?bool
     {
         return $this->refresh_input;
     }
 
     /**
-     * Set to FALSE to prevent the button from refreshing it's input widget automatically.
-     * Default: TRUE.
+     * Set to FALSE to prevent the button from refreshing it's input widget automatically or to TRUE to force refresh
      *
      * @uxon-property refresh_input
      * @uxon-type boolean
@@ -408,7 +407,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getRefreshWidgetIds(bool $includeInputWidget = true) : array
     {
-        if ($includeInputWidget && $this->getRefreshInput() === true) {
+        if ($includeInputWidget && $this->getRefreshInput() !== false) {
             return array_merge($this->refreshWidgetIds, [$this->getInputWidget()->getId()]);
         }
         return $this->refreshWidgetIds;
