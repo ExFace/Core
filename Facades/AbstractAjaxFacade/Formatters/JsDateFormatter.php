@@ -86,7 +86,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, {$formatQuoted}) : new Date({$jsInput}))), {$formatQuoted})";
     }
 
@@ -116,13 +116,13 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return "exfTools.date.format({$jsDateObject}, {$formatQuoted})";
     }
     
     public function buildJsFormatDateObject(string $jsDateObject, string $ICUFormat) : string
     {
-        $formatJs = json_encode($ICUFormat);
+        $formatJs = $this->escapeFormatString($ICUFormat);
         return "exfTools.date.format({$jsDateObject}, $formatJs)";
     }
 
@@ -136,7 +136,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return "exfTools.date.parse({$jsString}, {$formatQuoted})";
     }
 
@@ -147,7 +147,7 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return <<<JS
 function() {
                 var dateObj = exfTools.date.parse({$jsInput}, {$formatQuoted});
@@ -164,7 +164,7 @@ JS;
      */
     public function buildJsValidator(string $jsValue) : string
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         //TODO granularities als Konstanten
         $granularity = self::DATE_COMPARE_DAY;
         $dataType = $this->getDataType();
@@ -240,7 +240,7 @@ JS;
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
         ];
         $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
-        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
+        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES', false);
         $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
@@ -307,5 +307,10 @@ JS;
     {
         $this->format = $formatString;
         return $this;
+    }
+    
+    protected function escapeFormatString(string $format) : string
+    {
+        return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

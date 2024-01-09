@@ -246,7 +246,7 @@ JS;
             if (! $col->isHidden() && $col->isEditable()) {
                 $cellEl = $this->getFacade()->getElement($col->getCellWidget());
                 if ($cellEl->getWidget() instanceof Input) {
-                    $validatorJs = 'function(value){ return ' . $cellEl->buildJsValidator('value') . ' ? true : ' . json_encode($cellEl->getValidationErrorText()) . ' }';
+                    $validatorJs = 'function(value){ return ' . $cellEl->buildJsValidator('value') . ' ? true : ' . $this->escapeString($cellEl->getValidationErrorText(), true, false) . ' }';
                 }
             }
             if (! $validatorJs) {

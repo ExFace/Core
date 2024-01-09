@@ -91,6 +91,7 @@ class MySqlConnector extends AbstractSqlConnector
         try {
             if ($conn = $this->getCurrentConnection()) {
                 mysqli_close($conn);
+                $this->resetCurrentConnection();
             }
         } catch (\Throwable $e) {
             // ignore errors on close

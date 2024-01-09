@@ -52,7 +52,13 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "function(mInput){ if (mInput === null || mInput === '' || mInput === undefined) {return mInput;} return mInput === 1 || mInput === true || mInput === '{$this->getHtmlChecked()}' ? 1 : 0;}({$jsInput})";
+        return <<<JS
+function(mInput){
+    if (mInput === null || mInput === '' || mInput === undefined) {
+        return mInput;
+    }
+    return mInput === 1 || mInput === '1' || mInput === true || mInput === 'true' || mInput === '{$this->getHtmlChecked()}' ? 1 : 0;}({$jsInput})
+JS;
     }
 
     /**

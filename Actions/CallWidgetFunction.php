@@ -26,6 +26,8 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     private $widgetId = null;
 
     private $funcName = null;
+    
+    private $funcArgs = [];
 
     /**
      * 
@@ -68,8 +70,28 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
      */
     public function setFunction(string $name) : CallWidgetFunction
     {
-        $this->funcName = ($name === '' ? null : $name);
+        $name = trim($name);
+        if ($name === null || $name === '') {
+            $this->funcName = null;
+            return $this;
+        }
+        $this->funcName = StringDataType::substringBefore($name, '(', $name);
+        if ($this->funcName !== $name) {
+            $argStr = StringDataType::substringAfter($name, '(');
+            $argStr = mb_substr($argStr, 0, -1);
+            $this->funcArgs = explode(',', $argStr);
+        }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCallWidgetFunction::getFunctionArguments()
+     */
+    public function getFunctionArguments() : array
+    {
+        return $this->funcArgs;
     }
 
     /**
