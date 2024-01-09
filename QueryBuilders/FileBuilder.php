@@ -608,7 +608,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $addr = StringDataType::substringBefore($addr, $sep, $addr, false, true);
                 $addrPhs = StringDataType::findPlaceholders($addr);
                 
-                foreach ($qpart->getValues() as $rowIdx => $filename) {
+                foreach ($filenameQpart->getValues() as $rowIdx => $filename) {
                     $phVals = [];
                     foreach ($addrPhs as $ph) {
                         if ($phQpart = $this->getValue($ph)) {
@@ -655,23 +655,26 @@ class FileBuilder extends AbstractQueryBuilder
                 }
                 // Skip rest if we are over the limit
                 if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
+                    // increase rownr an additional time so we know more rows exist
+                    $rownr ++;
                     break;
                 }
             }
             // Otherwise add the file data to the result rows
             $result_rows[] = $this->buildResultRow($file);
         }
-        $totalCount = count($result_rows);
-        
+        $totalCount = count($result_rows) + $offset;
+        if ($rownr > $totalCount) {
+            $totalCount = $rownr;
+        }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
         if (! $pagination_applied) {
             $result_rows = $this->applyPagination($result_rows);
         }
-        
         $rowCount = count($result_rows);
         
-        return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount + $this->getOffset()), $totalCount);
+        return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount), $totalCount);
     }
     
     /**
@@ -988,7 +991,16 @@ class FileBuilder extends AbstractQueryBuilder
             return true;
         }
         
-        return false;
+        // Can't read related attribute if any object in the relation path is not
+        // the same as this object (i.e. is either not a file or is a different type of file)
+        $thisObj = $this->getMainObject();
+        foreach ($attribute->getRelationPath()->getRelations() as $rel) {
+            if ($thisObj !== $rel->getRightObject()) {
+                return false;
+            }
+        }
+        
+        return true;
     }
     
     /**

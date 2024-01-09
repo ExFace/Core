@@ -38,7 +38,7 @@ We can now create a user role `my.App.DOC_EDITORS` and give it the following per
 
 The `add_filters` condition of the policy will now ensure all CRUD operations will contain a filter of the username of the current user.
 
-### Allow access to different objects, that belong to a compana
+### Allow access to different objects, that belong to a company
 
 It is possible to restrict access to multiple objects using a single policy. This is very handy if you need users to see only data associated with their company, project or similar. 
 
@@ -72,6 +72,14 @@ In the following example, we are going to let users only see data for the compan
   ]
 }
 ```
+
+### Multi-dimension restrictions: e.g. permissions for companies and countries
+
+If you have roles limiting the view of a user, that are based on different objects, multiple data policies will be applied at the same time. In this case, policies are grouped by filtering scopes. Filters applied within a scope are combined by OR and the scopes themselves are combined via AND. By default, the scopes are defined by the target object of a policy.
+     
+For example, if there are policies, that allow a user to only see a certain company, and policies, limiting the view to a country, a user that has roles for Company1 and Company2 in Germany will receive the following filter: `(Company = "Company1" OR Company = "Company2") AND Country = "Germany"`.
+
+If you need the filters from multiple policies with different target objects to be combined via OR, set the same explicitly defined scope in all policies using `add_filters_in_scope`.
 
 ### Let a user see everything explicitly
 

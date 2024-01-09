@@ -48,7 +48,7 @@ trait HtmlProgressBarTrait
             $text = $value ?? '&nbsp;';
             $titleProp = '';
         } else {
-            $titleProp = 'title=' . json_encode($text);
+            $titleProp = 'title=' . $this->escapeString($text, true, true);
         }
         $progress = $progress ?? $widget->getMin();
         $color = $color ?? 'transparent';

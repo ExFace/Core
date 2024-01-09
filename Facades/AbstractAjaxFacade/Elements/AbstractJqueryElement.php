@@ -17,7 +17,6 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\DataTypes\HtmlDataType;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -867,6 +866,16 @@ JS;
     }
     
     /**
+     *
+     * @param bool $hidden
+     * @return string
+     */
+    protected function buildJsSetHidden(bool $hidden) : string
+    {
+        return "$('#{$this->getId()}')" . ($hidden ? ".addClass('exf-hidden')" : ".removeClass('exf-hidden')");
+    }
+    
+    /**
      * Returns the selector of the UI page of the widget represented by this element.
      * 
      * @return string
@@ -965,6 +974,12 @@ JS;
     /**
      * Escapes special characters in the given string value, so it can be used in JavaScript or HTML (if `$forUseInHtml` is set to TRUE).
      * 
+     * Common use cases:
+     * - inside HTML - e.g. `<div>mystring</div>` - with `$forUseInHtml=true`
+     * - in HTML attribute - e.g. `<input value="mystring">` - with `$forUseInHtml=true`
+     * - in JS config object - with `$forUseInHtml=false`
+     * - in JS config logic like value getters/setters - with `$forUseInHtml=false`
+     * 
      * By default the escaped string is automatically enclosed in double quotes. To avoid this, set 
      * `$encloseInQuotes` to `false`. It is recommended to place the result in double quotes in
      * this case: e.g. `"escaped_string"`.
@@ -984,11 +999,11 @@ JS;
         }
         
         if ($forUseInHtml === true) {
-            $escaped = htmlentities($string, ENT_QUOTES);
+            $escaped = htmlspecialchars($string, ENT_QUOTES);
             return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
         }
         
-        $escaped = json_encode($string);
+        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
             $escaped = substr($escaped, 1, -1);
         }
@@ -1011,6 +1026,10 @@ JS;
                 return $this->buildJsSetDisabled(false);
             case $functionName === AbstractWidget::FUNCTION_DISABLE:
                 return $this->buildJsSetDisabled(true);
+            case $functionName === AbstractWidget::FUNCTION_HIDE:
+                return $this->buildJsSetHidden(true);
+            case $functionName === AbstractWidget::FUNCTION_SHOW:
+                return $this->buildJsSetHidden(false);
             case $functionName === AbstractWidget::FUNCTION_NONE:
                 return '';
         }
