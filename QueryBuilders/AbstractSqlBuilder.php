@@ -2911,7 +2911,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
+            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($addr, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
         }
         
         return $addr;
