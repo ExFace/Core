@@ -31,6 +31,7 @@ use exface\Core\Events\Installer\OnBeforeUninstallEvent;
 use exface\Core\Events\Installer\OnBackupEvent;
 use exface\Core\Interfaces\Events\InstallerEventInterface;
 use exface\Core\Interfaces\InstallerInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -129,6 +130,8 @@ class DataInstaller extends AbstractAppInstaller
     
     private $salt = null;
     
+    private $dataDefs = [];
+    
     /**
      * 
      * @param SelectorInterface $selectorToInstall
@@ -158,6 +161,16 @@ class DataInstaller extends AbstractAppInstaller
             return false;
         }
         return true;
+    }
+    
+    /**
+     *
+     * @param string $selector
+     * @return bool
+     */
+    protected function isInstallableObject(string $selector) : bool
+    {
+        return array_key_exists($selector, $this->dataDefs);
     }
        
     /**
@@ -254,7 +267,7 @@ class DataInstaller extends AbstractAppInstaller
         // the objects loose their base attributes. We've had broken self-relations because
         // an object inherited the UID from a data source base object, which was not present
         // anymore when the object was loaded.
-        $dataSheets = $this->getDataSheets();
+        $dataSheets = $this->getModelSheets();
         $objects = [];
         foreach ($dataSheets as $sheet) {
             if ($sheet->getMetaObject()->is('exface.Core.APP') === true) {
@@ -329,7 +342,7 @@ class DataInstaller extends AbstractAppInstaller
         // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
         // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
         // and used in the installation process of the package
-        foreach ($this->getDataSheets() as $nr => $ds) {
+        foreach ($this->getModelSheets() as $nr => $ds) {
             $ds->dataRead();
             $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
         }
@@ -575,7 +588,7 @@ class DataInstaller extends AbstractAppInstaller
     }
     
     /**
-     *
+     * 
      * @param string $objectSelector
      * @param string $sorterAttribute
      * @param string $appRelationAttribute
@@ -584,10 +597,31 @@ class DataInstaller extends AbstractAppInstaller
      */
     protected function addDataOfObject(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
     {
+        $this->dataDefs[$objectSelector] = [
+            'sorter' => $sorterAttribute,
+            'app_relation' => $appRelationAttribute,
+            'exclude' => $excludeAttributeAliases
+        ];
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $objectSelector
+     * @param string $sorterAttribute
+     * @param string $appRelationAttribute
+     * @param string[] $excludeAttributeAliases
+     * @return DataSheetInterface
+     */
+    protected function createModelSheet(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
+    {
         $cacheKey = $objectSelector . '::' . ($appRelationAttribute ?? '') . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
         if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
-            $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
+            $ds->getSorters()
+                ->addFromString($sorterAttribute, SortingDirectionsDataType::ASC)
+                ->addFromString($ds->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::ASC);
+            
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
                     continue;
@@ -625,6 +659,19 @@ class DataInstaller extends AbstractAppInstaller
         }
         
         return $ds->copy();
+    }
+    
+    /**
+     * 
+     * @return DataSheetInterface[]
+     */
+    protected function getModelSheets() : array
+    {        
+        $sheets = array();
+        foreach ($this->dataDefs as $objAlias => $def) {
+            $sheets[] = $this->createModelSheet($objAlias, $def['sorter'], $def['app_relation'], $def['exclude']);
+        }
+        return $sheets;
     }
 
     /**

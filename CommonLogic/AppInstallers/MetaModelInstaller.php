@@ -3,9 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -22,15 +20,10 @@ use exface\Core\Exceptions\EncryptionError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
- * 
- * ## What is exported
- * 
- * By default, this installer will export the entire model of an app as JSON. You can also
- * add specific external content via `addModelDataSheet`. These data sheets (called
- * `additions`) will be exported into subfolders of the default `Model` folder (see below).
  * 
  * ## Export folder and file structure
  * 
@@ -108,19 +101,59 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * @author Andrej Kabachnik
  *
  */
-class MetaModelInstaller extends AbstractAppInstaller
+class MetaModelInstaller extends DataInstaller
 {
     const FOLDER_NAME_MODEL = 'Model';
     
     const FOLDER_NAME_PAGES = '99_PAGE';
     
-    const ENCRYPTION_CONFIG_FILE = 'Encryption.config.json';
-    
     private $objectSheet = null;
     
-    private $additions = [];
-    
     private $salt = null;
+    
+    public function __construct(SelectorInterface $selectorToInstall)
+    {
+        parent::__construct($selectorToInstall);
+        
+        $this->setDataFolderPath(self::FOLDER_NAME_MODEL);
+        
+        $this->addDataOfObject('exface.Core.APP', 'CREATED_ON', 'UID', ['PUPLISHED']);
+        $this->addDataOfObject('exface.Core.DATATYPE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.OBJECT', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.OBJECT_BEHAVIORS', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.ATTRIBUTE', 'CREATED_ON', 'OBJECT__APP');
+        $this->addDataOfObject('exface.Core.DATASRC', 'CREATED_ON', 'APP', [
+            'CONNECTION',
+            'CUSTOM_CONNECTION',
+            'QUERYBUILDER',
+            'CUSTOM_QUERY_BUILDER'
+        ]);
+        $this->addDataOfObject('exface.Core.CONNECTION', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.MESSAGE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.OBJECT_ACTION', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.UXON_PRESET', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.PAGE_TEMPLATE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.ATTRIBUTE_COMPOUND', 'CREATED_ON', 'COMPOUND_ATTRIBUTE__OBJECT__APP');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.PAGE_GROUP_PAGES', 'CREATED_ON', 'PAGE__APP');
+        $this->addDataOfObject('exface.Core.USER_ROLE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.AUTHORIZATION_POINT', 'CREATED_ON', 'APP', [
+            'DEFAULT_EFFECT',
+            'DEFAULT_EFFECT_LOCAL',
+            'COMBINING_ALGORITHM',
+            'COMBINING_ALGORITHM_LOCAL',
+            'DISABLED_FLAG'
+        ]);
+        $this->addDataOfObject('exface.Core.AUTHORIZATION_POLICY', 'CREATED_ON', 'APP', [
+            'DISABLED_FLAG'
+        ]);
+        $this->addDataOfObject('exface.Core.QUEUE', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.SCHEDULER', 'CREATED_ON', 'APP', [
+            'LAST_RUN'
+        ]);
+        $this->addDataOfObject('exface.Core.COMMUNICATION_CHANNEL', 'CREATED_ON', 'APP');
+        $this->addDataOfObject('exface.Core.COMMUNICATION_TEMPLATE', 'CREATED_ON', 'APP');
+    }
 
     /**
      *
@@ -162,30 +195,6 @@ class MetaModelInstaller extends AbstractAppInstaller
         
         $counter = 0;
         
-        // Uninstall additions first as the may depend on the apps model
-        $additionSheets = $this->getAdditions();
-        $additionSheets = array_reverse($additionSheets);
-        foreach ($additionSheets as $addition) {
-            $sheet = $addition['sheet'];
-            
-            if ($sheet->isUnfiltered()) {
-                yield $idt . $idt . 'Cannot uninstall ' . $sheet->getMetaObject()->__toString() . ': data has no app relation!' . PHP_EOL;
-                continue;
-            }
-            
-            if (! $sheet->hasUidColumn(true)) {
-                // Read data to fill the UID column. Some data source do not support deletes via
-                // filter (or filter over relations), so it is safer to fetch the UIDs here.
-                $sheet->dataRead();
-                if ($sheet->hasUidColumn(true)) {
-                    $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction);
-                }
-            } else {
-                $counter += $sheet->dataDelete($transaction);
-            }
-        }
-        
         // Uninstall the main model now
         // Make sure to load all objects before starting to delete, so that their model
         // is available at delete time for cascading deletes, etc. If not done so, relations
@@ -193,7 +202,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         // the objects loose their base attributes. We've had broken self-relations because
         // an object inherited the UID from a data source base object, which was not present
         // anymore when the object was loaded.
-        $modelSheets = $this->getCoreModelSheets();
+        $modelSheets = $this->getModelSheets();
         $objects = [];
         foreach ($modelSheets as $sheet) {
             if ($sheet->getMetaObject()->is('exface.Core.APP') === true) {
@@ -249,7 +258,7 @@ class MetaModelInstaller extends AbstractAppInstaller
     {
         $idt = $this->getOutputIndentation();
         $app = $this->getApp();
-        $dir = $destinationAbsolutePath . DIRECTORY_SEPARATOR . self::FOLDER_NAME_MODEL;
+        $dir = $this->getDataFolderPathAbsolute($destinationAbsolutePath);
         
         // Remove any old files AFTER the data sheets were read successfully
         // in order to keep old data on errors.
@@ -266,27 +275,9 @@ class MetaModelInstaller extends AbstractAppInstaller
         // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
         // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
         // and used in the installation process of the package
-        foreach ($this->getCoreModelSheets() as $nr => $ds) {
+        foreach ($this->getModelSheets() as $nr => $ds) {
             $ds->dataRead();
             $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
-        }
-        // Save additions
-        $additionCnt = [];
-        foreach ($this->getAdditions() as $addition) {
-            $ds = $addition['sheet'];
-            $subdir = $addition['subfolder'];
-            $lastUpdAlias = $addition['lastUpdateAttributeAlias'];
-            
-            if ($ds->isUnfiltered()) {
-                yield $idt . 'Backing up ALL data of ' . $ds->getMetaObject()->__toString() . PHP_EOL;
-            }
-            
-            $ds->dataRead();
-            $nr = $additionCnt[$subdir] = ($additionCnt[$subdir] ?? 0) + 1;
-            $this->exportModelFile($dir . DIRECTORY_SEPARATOR . $subdir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', false, $dirOld);
-            if (! $lastUpdAlias && $ds->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
-                $lastUpdAlias = 'MODIFIED_ON';
-            }
         }
         
         // Save some information about the package in the extras of composer.json
@@ -478,126 +469,18 @@ class MetaModelInstaller extends AbstractAppInstaller
         return $rows;
     }
     
+    /**
+     * 
+     * @param array $rows
+     * @param string $filterRowName
+     * @param string $filterRowValue
+     * @return array
+     */
     protected function filterRows(array $rows, string $filterRowName, string $filterRowValue)
     {
         $filter = new RowDataArrayFilter();
         $filter->addAnd($filterRowName, $filterRowValue, EXF_COMPARATOR_EQUALS);
         return $filter->filter($rows);
-    }
-
-    /**
-     *
-     * @param AppInterface $app            
-     * @return DataSheetInterface[]
-     */
-    protected function getCoreModelSheets() : array
-    {
-        $sheets = array();
-        $app = $this->getApp();      
-        $model = $this->getWorkbench()->model();
-        $sheets = array();
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.APP'), 'UID', ['PUPLISHED']);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.DATATYPE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT_BEHAVIORS'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE'), 'OBJECT__APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.DATASRC'), 'APP', [
-            'CONNECTION',
-            'CUSTOM_CONNECTION',
-            'QUERYBUILDER',
-            'CUSTOM_QUERY_BUILDER'
-        ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.CONNECTION'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.MESSAGE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.OBJECT_ACTION'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.UXON_PRESET'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_TEMPLATE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.ATTRIBUTE_COMPOUND'), 'COMPOUND_ATTRIBUTE__OBJECT__APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.PAGE_GROUP_PAGES'), 'PAGE__APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.USER_ROLE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POINT'), 'APP', [
-            'DEFAULT_EFFECT',
-            'DEFAULT_EFFECT_LOCAL',
-            'COMBINING_ALGORITHM',
-            'COMBINING_ALGORITHM_LOCAL',
-            'DISABLED_FLAG'
-        ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.AUTHORIZATION_POLICY'), 'APP', [
-            'DISABLED_FLAG'
-        ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.QUEUE'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.SCHEDULER'), 'APP', [
-            'LAST_RUN'
-        ]);
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.COMMUNICATION_CHANNEL'), 'APP');
-        $sheets[] = $this->createCoreModelSheet($app, $model->getObject('exface.Core.COMMUNICATION_TEMPLATE'), 'APP');
-        
-        return $sheets;
-    }
-    
-    public function addModelDataSheet(string $subfolder, DataSheetInterface $sheetToExport, string $lastUpdateAttributeAlias = null) : MetaModelInstaller
-    {
-        $this->additions[] = [
-            'sheet' => $sheetToExport,
-            'subfolder' => $subfolder,
-            'lastUpdateAttributeAlias' => $lastUpdateAttributeAlias
-        ];
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return array
-     */
-    protected function getAdditions() : array
-    {
-        return $this->additions;
-    }
-    
-    /**
-     * Returns TRUE if the given data sheet contains an addition object and NOT a core model object
-     * @param DataSheetInterface $sheet
-     * @return bool
-     */
-    protected function isAddition(DataSheetInterface $sheet) : bool
-    {
-        foreach ($this->getAdditions() as $addition) {
-            if ($sheet->getMetaObject()->isExactly($addition['sheet']->getMetaObject())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     *
-     * @param AppInterface $app            
-     * @param MetaObjectInterface $object            
-     * @param string|string[] $app_filter_attribute_alias   
-     * @param array $exclude_attribute_aliases         
-     * @return DataSheetInterface
-     */
-    protected function createCoreModelSheet($app, MetaObjectInterface $object, $app_filter_attribute_alias, array $exclude_attribute_aliases = array()) : DataSheetInterface
-    {
-        $ds = DataSheetFactory::createFromObject($object);
-        foreach ($object->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
-            if (in_array($attr->getAlias(), $exclude_attribute_aliases)){
-               continue;
-            }
-            $ds->getColumns()->addFromExpression($attr->getAlias());
-        }
-        
-        $filterAttrs = is_array($app_filter_attribute_alias) ? $app_filter_attribute_alias : [$app_filter_attribute_alias];
-        
-        foreach ($filterAttrs as $filterAttr) {
-            $ds->getFilters()->addConditionFromString($filterAttr, $app->getUid());
-        }
-        
-        $ds->getSorters()->addFromString('CREATED_ON', 'ASC');
-        $ds->getSorters()->addFromString($object->getUidAttributeAlias(), 'ASC');
-        
-        return $ds;
     }
 
     /**
@@ -612,7 +495,7 @@ class MetaModelInstaller extends AbstractAppInstaller
         $indent = $this->getOutputIndentation();
         yield $indent . "Model changes:" . PHP_EOL;
         
-        $model_source = $source_absolute_path . DIRECTORY_SEPARATOR . self::FOLDER_NAME_MODEL;
+        $model_source = $this->getDataFolderPathAbsolute($source_absolute_path);
         
         if (is_dir($model_source)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -669,17 +552,7 @@ class MetaModelInstaller extends AbstractAppInstaller
                     }
                 } catch (\Throwable $e) {
                     $ex = new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
-                    // Continue with the next sheet if an addition failed - its not critical for general operation.
-                    // In fact, additions will always fail on first install of their app because their SQL migrations
-                    // were not run yet. 
-                    // TODO #DataInstaller replace additions with a separate installer for data, that would be run
-                    // AFTER the model installer and AFTER the SQL installers of the respective app.
-                    if ($this->isAddition($data_sheet)) {
-                        yield $indent . $indent . "SKIPPED: {$data_sheet->getMetaObject()->getName()} - {$e->getMessage()}" . PHP_EOL;
-                        $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::WARNING);
-                    } else {
-                        throw $ex;
-                    }
+                    throw $ex;
                 }
             }
             
@@ -717,33 +590,17 @@ class MetaModelInstaller extends AbstractAppInstaller
      */
     protected function readModelSheetsFromFolders($absolutePath) : \Generator
     {
-        $uxons = [];
-        $additionUxons = [];
-        $folderSheetUxons = $this->readDataSheetUxonsFromFolder($absolutePath);
+        $uxons = $this->readDataSheetUxonsFromFolder($absolutePath);
         
         // Sort by leading numbers in the file names accross all folders
-        ksort($folderSheetUxons);
-        
-        // Organize the UXON objects in an array like [object_alias => [uxon1, uxon2, ...]]
-        foreach ($folderSheetUxons as $key => $uxon) {
-            $type = StringDataType::substringBefore($key, '@');
-            // Additions should be moved to the end of list in case they depend on the core model
-            foreach ($this->getAdditions() as $addition) {
-                if (StringDataType::endsWith($key, DIRECTORY_SEPARATOR . $addition['subfolder'])) {
-                    $additionUxons[$addition['subfolder'].$type][] = $uxon;
-                    continue 2;
-                }
-            }
-            $uxons[$type][] = $uxon;
-        } 
-        // Sort additions by their keys (that contain the subfolder name) to ensure, that additions
-        // are installed folder-by-folder and are not being mixed.
-        ksort($additionUxons);
-        // Append additions the $uxons array at the end - after the core sheets.
-        $uxons = array_merge($uxons, $additionUxons);
+        ksort($uxons);
         
         // For each object, combine it's UXONs into a single data sheet
-        foreach ($uxons as $array) {
+        foreach ($uxons as $key => $array) {
+            $objAlias = StringDataType::substringBefore($key, '@');
+            if (! $this->isInstallableObject($objAlias)) {
+                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $key . '": object not known to this installer!');
+            }
             $cnt = count($array);
             // Init the data sheet from the first UXON, but without any rows. We will preprocess
             // the rows later and transform expanded UXON values into strings.
@@ -812,70 +669,6 @@ class MetaModelInstaller extends AbstractAppInstaller
             
             yield $baseSheet;
         }
-    }
-    
-    protected function getAppSalt() : string
-    {
-        if ($this->salt) {
-            return $this->salt;
-        }
-        $config = ConfigurationFactory::create($this->getWorkbench());
-        $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::ENCRYPTION_CONFIG_FILE);
-        if ($config->hasOption($this->getApp()->getAliasWithNamespace())) {
-            $salt = base64_encode($config->getOption($this->getApp()->getAliasWithNamespace()));
-            $this->salt = $salt;
-            return $salt;
-        }
-        if ($this->getApp()->isInstalled()) {
-            $uid = $this->getApp()->getUid();
-        } else {
-            $filePath = $this->getApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'composer.json';
-            if (file_exists($filePath)) {
-                $json = json_decode(file_get_contents($filePath), true);
-            } else {
-                $json = [];
-            }
-            $uid = $json['extra']['app']['app_uid'] ?? null;
-        }
-        if (! $uid) {
-            throw new EncryptionError("No encryption/decryption salt can be created for the app '{$this->getApp()->getAliasWithNamespace()}' !");
-        }
-        $salt = EncryptedDataType::createSaltFromString(substr($uid, 2,32));
-        $this->salt = $salt;
-        return $this->salt;
-    }
-    
-    /**
-     * 
-     * @param string $absolutePath
-     * @return UxonObject[]
-     */
-    protected function readDataSheetUxonsFromFolder(string $absolutePath) : array
-    {
-        $folderUxons = [];
-        
-        if (is_file($absolutePath)) {
-            $folderUxons[FilePathDataType::findFileName($absolutePath) . '@' . FilePathDataType::findFolderPath($absolutePath)] = $this->readDataSheetUxonFromFile($absolutePath);
-            return $folderUxons;
-        }
-        
-        foreach (scandir($absolutePath) as $file) {
-            if ($file == '.' || $file == '..') {
-                continue;
-            }
-            if ($file === self::FOLDER_NAME_PAGES) {
-                continue;
-            }
-            $path = $absolutePath . DIRECTORY_SEPARATOR . $file;
-            $key = $file . '@' . $absolutePath;
-            if (is_dir($path)) {
-                $folderUxons = array_merge($folderUxons, $this->readDataSheetUxonsFromFolder($path));
-            } else {
-                $folderUxons[$key] = $this->readDataSheetUxonFromFile($path);
-            }
-        }
-        
-        return $folderUxons;
     }
     
     /**
@@ -1006,27 +799,6 @@ class MetaModelInstaller extends AbstractAppInstaller
         }
         
         return $sheet;
-    }
-    
-    /**
-     * 
-     * @param ConditionGroupInterface $condition_group
-     * @return bool
-     */
-    protected function checkFiltersMatchModel(ConditionGroupInterface $condition_group) : bool
-    {
-        foreach ($condition_group->getConditions() as $condition){
-            if(! $condition->getExpression()->isMetaAttribute()){
-                return false;
-            }
-        }
-        
-        foreach ($condition_group->getNestedGroups() as $subgroup){
-            if (! $this->checkFiltersMatchModel($subgroup)){
-                return false;
-            }
-        }
-        return true;
     }
     
     /**
