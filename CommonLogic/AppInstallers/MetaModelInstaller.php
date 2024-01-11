@@ -183,7 +183,6 @@ class MetaModelInstaller extends DataInstaller
     public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
-        
         $transaction = $this->getWorkbench()->data()->startTransaction();
         
         $pageInstaller = $this->getPageInstaller();
@@ -576,111 +575,6 @@ class MetaModelInstaller extends DataInstaller
     protected function getPageInstaller() : PageInstaller
     {
         return new PageInstaller($this->getSelectorInstalling(), self::FOLDER_NAME_MODEL . DIRECTORY_SEPARATOR . self::FOLDER_NAME_PAGES);
-    }
-    
-    /**
-     * Generates data sheets from the Model folder.
-     * 
-     * It is important, that this is a generator as there are sheets for things like page groups,
-     * where the meta object may not even exist at the time of reading - the objects and attributes
-     * sheets must be read and processed first to read the other sheets.
-     * 
-     * @param string $absolutePath
-     * @return DataSheetInterface[]
-     */
-    protected function readModelSheetsFromFolders($absolutePath) : \Generator
-    {
-        $uxons = $this->readDataSheetUxonsFromFolder($absolutePath);
-        
-        // Sort by leading numbers in the file names accross all folders
-        ksort($uxons);
-        
-        // For each object, combine it's UXONs into a single data sheet
-        foreach ($uxons as $key => $array) {
-            $objAlias = StringDataType::substringBefore($key, '@');
-            if (! $this->isInstallableObject($objAlias)) {
-                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $key . '": object not known to this installer!');
-            }
-            $cnt = count($array);
-            // Init the data sheet from the first UXON, but without any rows. We will preprocess
-            // the rows later and transform expanded UXON values into strings.
-            $baseUxon = $array[0];
-            // Save the rows for later processing
-            $rows = $baseUxon->getProperty('rows')->toArray();
-            $baseUxon->unsetProperty('rows');
-            $baseSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $baseUxon);
-            $baseColCount = $baseSheet->getColumns()->count();
-            // Add rows from all the other UXONs
-            if ($cnt > 1) {
-                for ($i = 1; $i < $cnt; $i++) {
-                    $partUxon = $array[$i];
-                    $partRows = $partUxon->hasProperty('rows') ? $partUxon->getProperty('rows')->toArray() : [];
-                    $partUxon->unsetProperty('rows');
-                    // Instantiate an empty data sheet to check, if it's compatible!
-                    $sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $partUxon);
-                    if (! $baseSheet->getMetaObject()->isExactly($sheet->getMetaObject())) {
-                        throw new InstallerRuntimeError($this, 'Model sheet type mismatch: model sheets with same name must have the same structure in all subfolders of the model!');
-                    }
-                    if ($sheet->getColumns()->count() !== $baseColCount) {
-                        throw new InstallerRuntimeError($this, 'Corrupted model data: all model sheets of the same type must have the same columns!');
-                    }
-                    $rows = array_merge($rows, $partRows);
-                }
-            }
-            
-            // Preprocess row values
-            foreach ($baseSheet->getColumns() as $col) {
-                // UXON values are normally transformed into JSON when exporting the model to
-                // increase readability of diffs. Need to transform them back to strings here.
-                // The check for JsonDataType is a fix upgrading older installations where the
-                // UxonDataType was not a PHP class yet.
-                $dataType = $col->getDataType();
-                switch (true) {                    
-                    case $dataType instanceof EncryptedDataType:
-                        $colName = $col->getName();
-                        foreach ($rows as $i => $row) {
-                            $val = $row[$colName];
-                            if (is_string($val) && StringDataType::startsWith($val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT)) {
-                                $salt = $this->getAppSalt();
-                                $valDecrypt = EncryptedDataType::decrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
-                                $rows[$i][$colName] = $val = $valDecrypt;
-                            }
-                            if (($dataType->getInnerDataType() instanceof JsonDataType) && is_array($val)) {
-                                $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
-                            }
-                        }
-                        break;
-                    case $dataType instanceof JsonDataType:
-                        $colName = $col->getName();
-                        foreach ($rows as $i => $row) {
-                            $val = $row[$colName];                            
-                            if (is_array($val)) {
-                                $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
-                            }
-                        }
-                        break;
-                }
-            }
-            
-            // Add all the rows to the sheet.
-            $baseSheet->addRows($rows, false, false);
-            
-            $baseSheet = $this->applyCompatibilityFixesToDataSheet($baseSheet);
-            
-            yield $baseSheet;
-        }
-    }
-    
-    /**
-     * 
-     * @param string $path
-     * @return UxonObject
-     */
-    protected function readDataSheetUxonFromFile(string $path) : UxonObject
-    {
-        $contents = file_get_contents($path);
-        $contents = $this->applyCompatibilityFixesToFileContent($path, $contents);
-        return UxonObject::fromJson($contents);
     }
     
     /**
