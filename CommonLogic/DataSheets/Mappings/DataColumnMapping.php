@@ -23,7 +23,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
     
     private $toExpression = null;
     
-    private $createRowInEmptyData = false;
+    private $createRowInEmptyData = true;
     
     /**
      * 
@@ -124,8 +124,12 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // If the sheet has no rows, setValuesByExpression() will not have an effect, so
                 // we need to add a row manually.
                 if ($toSheet->isEmpty() === true) {
-                    $log .= ' Adding a new row because the to-sheet was empty.';
-                    $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+                    if ($this->getCreateRowInEmptyData() === true) {
+                        $log .= ' Adding a new row because the to-sheet was empty.';
+                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+                    } else {
+                        $log .= ' Will not add row to empty data because `create_row_in_empty_data` is `false`.';
+                    }
                 }
                 break;
             // Formulas with data
@@ -135,9 +139,13 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // If the sheet has no rows, setValuesByExpression() will not have an effect, so
                 // we need to add a row manually. But this will only work if the from-sheet
                 // has at least one row - othewise non-static formulas will throw an error!
-                if ($toSheet->isEmpty() === true && $fromSheet->isEmpty() === false) {
-                    $log .= ' Adding a new row because the to-sheet was empty.';
-                    $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
+                if ($toSheet->isEmpty() === true) {
+                    if ($fromSheet->isEmpty() === false && $this->getCreateRowInEmptyData() === true) {
+                        $log .= ' Adding a new row because the to-sheet was empty.';
+                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
+                    } else {
+                        $log .= ' Will not add row to empty data because ' . ($fromSheet->isEmpty() ? 'from-sheet is empty.' : '`create_row_in_empty_data` is `false`.');
+                    }
                 }
                 break;
             // Data column references
@@ -159,6 +167,35 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getCreateRowInEmptyData() : bool
+    {
+        return $this->createRowInEmptyData;
+    }
+    
+    /**
+     * Set to FALSE to prevent static expressions and formulas from adding rows to empty data sheets.
+     * 
+     * A static from-expression like `=Today()` applied to an empty to-sheet will normally
+     * add a new row with the generated value. This option can explicitly disable this behavior
+     * for a single mapping. There is also a similar global setting `inherit_empty_data` for
+     * the entire mapper. 
+     *
+     * @uxon-property create_row_in_empty_data
+     * @uxon-type bool
+     *
+     * @param bool $value
+     * @return DataColumnMapping
+     */
+    public function setCreateRowInEmptyData(bool $value) : DataColumnMapping
+    {
+        $this->createRowInEmptyData = $value;
+        return $this;
     }
     
     /**
