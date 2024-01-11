@@ -179,10 +179,14 @@ class StringDataType extends AbstractDataType
      */
     public function parse($string)
     {
+        if ($this::isValueLogicalNull($string)) {
+            return $string;
+        }
+            
         $value = parent::parse($string);
         
-        if ($this->isValueEmpty($string) || $this->isValueLogicalNull($string)) {
-            return $string;
+        if ($this->isValueEmpty($value)) {
+            return $value;
         }
         
         // validate length
