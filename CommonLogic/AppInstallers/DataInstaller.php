@@ -141,26 +141,6 @@ class DataInstaller extends AbstractAppInstaller
     {
         parent::__construct($selectorToInstall);
         $this->setDataFolderPath($folderPath);
-        $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'handleInstall']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUninstallEvent::getEventName(), [$this, 'handleUninstall']);
-        $this->getWorkbench()->eventManager()->addListener(OnBackupEvent::getEventName(), [$this, 'handleBackup']);
-    }
-    
-    /**
-     * 
-     * @param InstallerEventInterface $event
-     * @return bool
-     */
-    protected function isModelInstaller(InstallerEventInterface $event) : bool
-    {
-        $installer = $event->getInstaller();
-        if (! ($installer instanceof MetaModelInstaller)) {
-            return false;
-        }
-        if (! ($installer instanceof SelectorInstallerInterface) || $installer->getSelectorInstalling() !== $this->getSelectorInstalling()) {
-            return false;
-        }
-        return true;
     }
     
     /**
@@ -171,45 +151,6 @@ class DataInstaller extends AbstractAppInstaller
     protected function isInstallableObject(string $selector) : bool
     {
         return array_key_exists($selector, $this->dataDefs);
-    }
-       
-    /**
-     * 
-     * @param OnInstallEvent $event
-     */
-    public function handleInstall(OnInstallEvent $event)
-    {
-        if (! $this->isModelInstaller($event)) {
-            return;
-        }
-        
-        $this->install($event->getSourcePath());
-    }
-     
-    /**
-     * 
-     * @param OnBeforeUninstallEvent $event
-     */
-    public function handleUninstall(OnBeforeUninstallEvent $event)
-    {
-        if (! $this->isModelInstaller($event)) {
-            return;
-        }
-        
-        $this->uninstall();
-    }
-      
-    /**
-     * 
-     * @param OnBackupEvent $event
-     */
-    public function handleBackup(OnBackupEvent $event)
-    {
-        if (! $this->isModelInstaller($event)) {
-            return;
-        }
-        
-        $this->backup($event->getDestinationPath());
     }
 
     /**
