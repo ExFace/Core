@@ -99,19 +99,24 @@ trait EnumStaticDataTypeTrait {
      */
     public static function cast($value)
     {
-        if (static::isValueEmpty($value) === true) {
-            // Let the parent data type (e.g. string or number) handle empty values
-            return parent::cast($value);
-        }
-        
-        if ($value === EXF_LOGICAL_NULL) {
-            return $value;
-        }
-        
+        // Cast according to the base type - e.g. number or string
         $value = parent::cast($value);
-        $value = trim($value);
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         
-        if (! static::isValidStaticValue($value)){
+        // Check if the casted value is part of the enum
+        $valueInEnum = static::isValidStaticValue($value);
+        
+        // Convert all sorts of empty values to NULL except if they are explicitly
+        // part of the enumeration: e.g. an empty string should become null if the
+        // enumeration does not include the empty string explicitly.
+        // TODO #null-or-NULL does the NULL constant need to pass casting?
+        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $valueInEnum === false) {
+            return null;
+        }
+        
+        if ($valueInEnum === false){
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
