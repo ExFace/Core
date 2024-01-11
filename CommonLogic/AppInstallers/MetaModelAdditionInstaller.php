@@ -92,7 +92,7 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
             return;
         }
         
-        $this->dataInstaller->install($event->getSourcePath());
+        $event->addPostprocessor($this->dataInstaller->install($event->getSourcePath()));
     }
     
     /**
@@ -118,7 +118,7 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
             return;
         }
         
-        $this->dataInstaller->backup($event->getDestinationPath());
+        $event->addPostprocessor($this->dataInstaller->backup($event->getDestinationPath()));
     }
     
     /**

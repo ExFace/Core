@@ -15,6 +15,8 @@ class OnBeforeBackupEvent extends AbstractAppInstallerEvent
 {
     private $destinationPath = null;
     
+    private $preprocessors = [];
+    
     public function __construct(AppInstallerInterface $installer, string $destinationPath)
     {
         parent::__construct($installer);
@@ -24,5 +26,16 @@ class OnBeforeBackupEvent extends AbstractAppInstallerEvent
     public function getDestinationPath() : string
     {
         return $this->destinationPath;
+    }
+    
+    public function addPreprocessor(iterable $generator) : OnBeforeBackupEvent
+    {
+        $this->preprocessors[] = $generator;
+        return $this;
+    }
+    
+    public function getPreprocessors() : array
+    {
+        return $this->preprocessors;
     }
 }

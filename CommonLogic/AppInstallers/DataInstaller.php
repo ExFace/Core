@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
@@ -21,17 +20,9 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Events\Installer\OnInstallEvent;
-use exface\Core\Interfaces\SelectorInstallerInterface;
-use exface\Core\Events\Installer\OnBeforeUninstallEvent;
-use exface\Core\Events\Installer\OnBackupEvent;
-use exface\Core\Interfaces\Events\InstallerEventInterface;
-use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -159,19 +150,119 @@ class DataInstaller extends AbstractAppInstaller
      * @return string
      */
     public function install(string $source_absolute_path) : \Iterator 
-    {
-        yield from $this->installModel($this->getSelectorInstalling(), $source_absolute_path);
+    {       
+        $modelChanged = false;
+        $indent = $this->getOutputIndentation();
+        yield $indent . $this->getName() . ":" . PHP_EOL;
+        
+        $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
+        
+        if (is_dir($srcPath)) {
+            $transaction = $this->getWorkbench()->data()->startTransaction();
+            
+            foreach ($this->readModelSheetsFromFolders($srcPath) as $data_sheet) {
+                try {
+                    
+                    // Remove columns, that are not attributes. This is important to be able to import changes on the meta model itself.
+                    // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
+                    // as columns, which would lead to an error because the model entities for these columns are not there yet.
+                    foreach ($data_sheet->getColumns() as $column) {
+                        if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
+                            $data_sheet->getColumns()->remove($column);
+                        }
+                    }
+                    
+                    if ($data_sheet->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
+                        if ($mod_col = $data_sheet->getColumns()->getByExpression('MODIFIED_ON')) {
+                            $mod_col->setIgnoreFixedValues(true);
+                        }
+                        if ($user_col = $data_sheet->getColumns()->getByExpression('MODIFIED_BY_USER')) {
+                            $user_col->setIgnoreFixedValues(true);
+                        }
+                    }
+                    
+                    // Disable timestamping behavior because it will prevent multiple installations of the same
+                    // model since the first install will set the update timestamp to something later than the
+                    // timestamp saved in the model files
+                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
+                        $behavior->disable();
+                    }
+                    // Disable model validation because it would instantiate all objects when the object sheet is being saved,
+                    // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
+                    // at this point.
+                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
+                        $behavior->disable();
+                    }
+                    
+                    // There were cases, when the attribute, that is being filtered over was new, so the filters
+                    // did not work (because the attribute was not there). The solution is to run an update
+                    // with create fallback in this case. This will cause filter problems, but will not delete
+                    // obsolete instances. This is not critical, as the probability of this case is extremely
+                    // low in any case and the next update will turn everything back to normal.
+                    if (! $this->checkFiltersMatchModel($data_sheet->getFilters())) {
+                        $data_sheet->getFilters()->removeAll();
+                        $counter = $data_sheet->dataUpdate(true, $transaction);
+                    } else {
+                        $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
+                        $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
+                    }
+                    
+                    if ($counter > 0) {
+                        $modelChanged = true;
+                        yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
+                    }
+                } catch (\Throwable $e) {
+                    throw new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
+                }
+            }
+            
+            if ($modelChanged === false) {
+                yield $indent.$indent."No changes found" . PHP_EOL;
+            }
+            
+            $transaction->commit();
+        } else {
+            yield $indent . "No {$this->getName()} files to install" . PHP_EOL;
+        }
     }
 
     /**
      *
-     * @param string $destination_absolute_path
-     *            Destination folder for meta model backup
+     * @param string $destinationAbsolutePath
      * @return string
      */
-    public function backup(string $destination_absolute_path) : \Iterator
+    public function backup(string $destinationAbsolutePath) : \Iterator
     {
-        yield from $this->backupModel($destination_absolute_path);
+        $idt = $this->getOutputIndentation();
+        $app = $this->getApp();
+        $dir = $this->getDataFolderPathAbsolute($destinationAbsolutePath);
+        
+        // Remove any old files AFTER the data sheets were read successfully
+        // in order to keep old data on errors.
+        $dirOld = null;
+        if (is_dir($dir)) {
+            $dirOld = $dir . '.tmp';
+            rename($dir, $dirOld);
+        }
+        
+        // Make sure, the destination folder is there and empty (to remove
+        // files, that are not neccessary anymore)
+        $app->getWorkbench()->filemanager()->pathConstruct($dir);
+        
+        // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
+        // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
+        // and used in the installation process of the package
+        foreach ($this->getModelSheets() as $nr => $ds) {
+            $ds->dataRead();
+            $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
+        }
+        
+        yield $idt . 'Created ' . $this->getName() . ' backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
+        
+        // Remove remaining old files
+        if ($dirOld !== null) {
+            Filemanager::deleteDir($dirOld);
+        }
     }
     
     /**
@@ -180,14 +271,14 @@ class DataInstaller extends AbstractAppInstaller
      */
     protected function getName() : string
     {
-        return  mb_strtolower($this->getDataFolderPathRelative());
+        return ucfirst(str_replace('_', ' ', StringDataType::convertCaseCamelToUnderscore($this->getDataFolderPathRelative())));
     }
 
     /**
      *
      * @return string
      */
-    public function uninstall(DataTransactionInterface $transaction = null) : \Iterator
+    public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
         if ($transaction === null) {
@@ -253,46 +344,6 @@ class DataInstaller extends AbstractAppInstaller
             yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
         } else {
             yield $idt.$idt . 'Removed ' . $this->getName() . ' successfully!' . PHP_EOL; 
-        }
-    }
-
-    /**
-     * Analyzes model data sheet and writes json files to the model folder
-     *
-     * @param string $destinationAbsolutePath
-     * @return string
-     */
-    protected function backupModel($destinationAbsolutePath) : \Iterator
-    {
-        $idt = $this->getOutputIndentation();
-        $app = $this->getApp();
-        $dir = $this->getDataFolderPathAbsolute($destinationAbsolutePath);
-        
-        // Remove any old files AFTER the data sheets were read successfully
-        // in order to keep old data on errors.
-        $dirOld = null;
-        if (is_dir($dir)) {
-            $dirOld = $dir . '.tmp';
-            rename($dir, $dirOld);
-        }
-        
-        // Make sure, the destination folder is there and empty (to remove 
-        // files, that are not neccessary anymore)
-        $app->getWorkbench()->filemanager()->pathConstruct($dir);
-        
-        // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
-        // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
-        // and used in the installation process of the package
-        foreach ($this->getModelSheets() as $nr => $ds) {
-            $ds->dataRead();
-            $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
-        }
-        
-        yield $idt . 'Created ' . $this->getName() . ' backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
-        
-        // Remove remaining old files
-        if ($dirOld !== null) {
-            Filemanager::deleteDir($dirOld);
         }
     }
     
@@ -536,7 +587,7 @@ class DataInstaller extends AbstractAppInstaller
      * @param string[] $excludeAttributeAliases
      * @return DataSheetInterface
      */
-    protected function addDataOfObject(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataSheetInterface
+    protected function addDataOfObject(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataInstaller
     {
         $this->dataDefs[$objectSelector] = [
             'sorter' => $sorterAttribute,
@@ -587,7 +638,8 @@ class DataInstaller extends AbstractAppInstaller
                     break;
                     // If we know the UID at this moment, add a filter over the relation to the app
                 case $appUid !== null:
-                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::EQUALS);
+                    // FIXME Change comparator from IS to EQUALS. It's IS only for backwards compatibilty during development
+                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::IS);
                     $this->dataSheets[$cacheKey] = $ds;
                     break;
                     // If we don't konw the UID, do not cache the sheet - maybe the UID will be already
@@ -613,97 +665,6 @@ class DataInstaller extends AbstractAppInstaller
             $sheets[] = $this->createModelSheet($objAlias, $def['sorter'], $def['app_relation'], $def['exclude']);
         }
         return $sheets;
-    }
-
-    /**
-     *
-     * @param AppSelectorInterface $app_selector            
-     * @param string $source_absolute_path            
-     * @return string
-     */
-    protected function installModel(AppSelectorInterface $app_selector, $source_absolute_path, DataTransactionInterface $transaction = null) : \Iterator
-    {
-        $modelChanged = false;
-        $indent = $this->getOutputIndentation();
-        yield $indent . $this->getName() . ":" . PHP_EOL;
-        
-        $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
-        
-        if (is_dir($srcPath)) {            
-            if ($transaction === null) {
-                $transaction = $this->getWorkbench()->data()->startTransaction();
-                $commit = true;
-            } else {
-                $commit = false;
-            }
-            
-            foreach ($this->readModelSheetsFromFolders($srcPath) as $data_sheet) {
-                try {
-                    
-                    // Remove columns, that are not attributes. This is important to be able to import changes on the meta model itself.
-                    // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
-                    // as columns, which would lead to an error because the model entities for these columns are not there yet.
-                    foreach ($data_sheet->getColumns() as $column) {
-                        if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
-                            $data_sheet->getColumns()->remove($column);
-                        }
-                    }
-                    
-                    if ($data_sheet->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
-                        if ($mod_col = $data_sheet->getColumns()->getByExpression('MODIFIED_ON')) {
-                            $mod_col->setIgnoreFixedValues(true);
-                        }
-                        if ($user_col = $data_sheet->getColumns()->getByExpression('MODIFIED_BY_USER')) {
-                            $user_col->setIgnoreFixedValues(true);
-                        }
-                    }
-                    
-                    // Disable timestamping behavior because it will prevent multiple installations of the same
-                    // model since the first install will set the update timestamp to something later than the
-                    // timestamp saved in the model files
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
-                    // Disable model validation because it would instantiate all objects when the object sheet is being saved,
-                    // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
-                    // at this point.
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
-                    
-                    // There were cases, when the attribute, that is being filtered over was new, so the filters
-                    // did not work (because the attribute was not there). The solution is to run an update
-                    // with create fallback in this case. This will cause filter problems, but will not delete
-                    // obsolete instances. This is not critical, as the probability of this case is extremely
-                    // low in any case and the next update will turn everything back to normal.
-                    if (! $this->checkFiltersMatchModel($data_sheet->getFilters())) {
-                        $data_sheet->getFilters()->removeAll();
-                        $counter = $data_sheet->dataUpdate(true, $transaction);
-                    } else {
-                        $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
-                        $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
-                    }
-                    
-                    if ($counter > 0) {
-                        $modelChanged = true;
-                        yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
-                    }
-                } catch (\Throwable $e) {
-                    throw new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
-                }
-            }
-            
-            if ($modelChanged === false) {
-                yield $indent.$indent."No changes found" . PHP_EOL;
-            }
-            
-            // Commit the transaction
-            if ($commit === true) {
-                $transaction->commit();
-            }
-        } else {
-            yield $indent . "No {$this->getName()} files to install" . PHP_EOL;
-        }
     }
     
     /**
@@ -731,11 +692,18 @@ class DataInstaller extends AbstractAppInstaller
         }
         
         // For each object, combine it's UXONs into a single data sheet
-        foreach ($uxons as $array) {
+        foreach ($uxons as $key => $array) {
             $cnt = count($array);
             // Init the data sheet from the first UXON, but without any rows. We will preprocess
             // the rows later and transform expanded UXON values into strings.
             $baseUxon = $array[0];
+            
+            $objAlias = $baseUxon->getProperty('object_alias');
+            if ($objAlias === null || ! $this->isInstallableObject($objAlias)) {
+                $this->getWorkbench()->getLogger()->warning('Skipping model sheet "' . $key . '": object not known to this installer!');
+                continue;
+            }
+            
             // Save the rows for later processing
             $rows = $baseUxon->getProperty('rows')->toArray();
             $baseUxon->unsetProperty('rows');
@@ -766,7 +734,7 @@ class DataInstaller extends AbstractAppInstaller
                 // The check for JsonDataType is a fix upgrading older installations where the
                 // UxonDataType was not a PHP class yet.
                 $dataType = $col->getDataType();
-                switch (true) {                    
+                switch (true) {
                     case $dataType instanceof EncryptedDataType:
                         $colName = $col->getName();
                         foreach ($rows as $i => $row) {
@@ -784,7 +752,7 @@ class DataInstaller extends AbstractAppInstaller
                     case $dataType instanceof JsonDataType:
                         $colName = $col->getName();
                         foreach ($rows as $i => $row) {
-                            $val = $row[$colName];                            
+                            $val = $row[$colName];
                             if (is_array($val)) {
                                 $rows[$i][$colName] = (UxonObject::fromArray($val))->toJson();
                             }
