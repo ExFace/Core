@@ -158,23 +158,43 @@ class Split extends Container implements iFillEntireContainer
         return $this;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isVertial() : bool
     {
         return $this->getOrientation() === self::ORIENTATION_VERTICAL;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isSideBySide() : bool
     {
         return $this->getOrientation() === self::ORIENTATION_HORIZONTAL;
     }
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
     public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
     {
+        // Most obvious option is to place orphans in the first split panel
         $firstPanel = $this->getWidgetFirst();
         if ($filler = $firstPanel->getFillerWidget()) {
+            // However, if it is filled by a single widget (e.g. a table or another split),
+            // orphans should go inside that filler widget
             if ($alternative = $filler->getAlternativeContainerForOrphanedSiblings()) {
                 return $alternative;
+            } else {
+                // But what to do if the filler does not have an alternative container - e.g. a DataTable?
+                // If we place the orphan in the first split panel, the filler will not be able
+                // to fill it anymore and the users expectations will no be met!
+                return null;
             }
         }
         return $firstPanel;

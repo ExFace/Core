@@ -524,7 +524,7 @@ JS;
         
         $refreshIds = '';
         $refreshNotIds = $widget->getRefreshInput() === false ? '"' . $widget->getId() . '"' : '';
-        foreach ($widget->getRefreshWidgetIds(false) as $refreshId) {
+        foreach ($widget->getRefreshWidgetIds($widget->getRefreshInput() ?? false) as $refreshId) {
             $refreshIds .= '"' . $refreshId . '", ';
         }
         
@@ -1025,7 +1025,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName())}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
             {$afterJs}
 JS;
     }

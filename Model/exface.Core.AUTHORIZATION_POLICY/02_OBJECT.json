@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-10 19:49:17",
-            "MODIFIED_ON": "2022-04-27 00:25:37",
+            "MODIFIED_ON": "2023-12-21 09:01:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea63083a80f8c8a2e30205857feb80",
@@ -133,6 +133,10 @@
                                             "hidden": true
                                         },
                                         {
+                                            "attribute_alias": "TARGET_APP_APPLICABLE",
+                                            "hidden": true
+                                        },
+                                        {
                                             "attribute_alias": "TARGET_FACADE_APPLICABLE",
                                             "hidden": true
                                         }
@@ -152,7 +156,8 @@
                                 "attribute_alias": "APP"
                             },
                             {
-                                "attribute_alias": "DESCRIPTION"
+                                "attribute_alias": "DESCRIPTION",
+                                "height": 3
                             }
                         ]
                     },
@@ -219,6 +224,19 @@
                                     "conditions": [
                                         {
                                             "value_left": "=auth_point_combo!TARGET_ACTION_APPLICABLE",
+                                            "comparator": "==",
+                                            "value_right": 0
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "attribute_alias": "TARGET_APP",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=auth_point_combo!TARGET_APP_APPLICABLE",
                                             "comparator": "==",
                                             "value_right": 0
                                         }

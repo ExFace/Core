@@ -1410,4 +1410,21 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         $this->useHiddenInput = $value;
         return parent::setHidden($value);
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::hasFunction()
+     */
+    public function hasFunction(string $functionName, bool $allowChildFunctions = true) : bool
+    {
+        $constName = 'static::FUNCTION_' . strtoupper($functionName);
+        if (defined($constName)) {
+            return true;
+        }
+        if ($allowChildFunctions) {
+            return $this->getInputWidget()->hasFunction($functionName);
+        }
+        return false;
+    }
 }

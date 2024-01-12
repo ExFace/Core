@@ -76,7 +76,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      */
     final protected function performQuery(DataQueryInterface $query)
     {
-        if (is_null($this->getCurrentConnection())) {
+        if (! $this->isConnected()) {
             $this->connect();
         }
         $query->setConnection($this);        
@@ -106,6 +106,16 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     protected function setCurrentConnection($value) : AbstractSqlConnector
     {
         $this->current_connection = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return AbstractSqlConnector
+     */
+    protected function resetCurrentConnection() : AbstractSqlConnector
+    {
+        $this->current_connection = null;
         return $this;
     }
 
