@@ -117,20 +117,22 @@ class DataAuthorizationPoint extends AbstractAuthorizationPoint
     {
         // Handle obligations
         $obligations = $permission->getObligations();
-        $oblCnt = count($obligations);
-        $dataSheet = $resource;
-        if ($oblCnt > 0) {
+        if (! empty($obligations)) {
+            $dataSheet = $resource;
             if (! $dataSheet instanceof DataSheetInterface) {
                 throw new AuthorizationRuntimeError('Cannot fulfill obligations in data authorization point: provided resource (' . $resource === null ? 'null' : get_class($resource) . ') is not a data sheet!');
             }
-            
-            $oblCondGrp = ConditionGroupFactory::createOR($dataSheet->getMetaObject());
+            $filterScopes = [];
             $unfilteredObligationFound = false;
             foreach ($obligations as $obligation) {
                 switch (true) {
+                    // Ignore obligations, that are already fulfilled regardless of their type
                     case $obligation->isFulfilled():
                         break;
                     // Handle filter obligations
+                    // If we have multiple filter obligations, group them by their scope.
+                    // Obligation filters within a scope will be combined via OR, while scopes
+                    // will be combined by AND.
                     case $obligation instanceof DataFilterObligation:
                         // If the obligation has an empty condition group, the access is unrestricted
                         // regardless of any other filtering obligations: it is an `x OR true` then.
@@ -139,21 +141,27 @@ class DataAuthorizationPoint extends AbstractAuthorizationPoint
                         if ($unfilteredObligationFound === true || $obligation->getConditionGroup()->isEmpty()) {
                             $unfilteredObligationFound = true;
                             $obligation->setFulfilled(true);
-                            break;
-                        }
-                        
-                        if ($oblCnt === 1) {
-                            $oblCondGrp = $obligation->getConditionGroup();
                         } else {
-                            $oblCondGrp = $oblCondGrp->addNestedGroup($obligation->getConditionGroup());
+                            $filterScopes[$obligation->getScope() ?? ''][] = $obligation;
                         }
-                        $obligation->setFulfilled(true);
                         break;
                 }
             }
             
-            if (! $unfilteredObligationFound && ! $oblCondGrp->isEmpty()) {
-                $dataSheet->setFilters($dataSheet->getFilters()->withAND($oblCondGrp));
+            if (! empty($filterScopes) && ! $unfilteredObligationFound) {
+                foreach ($filterScopes as $filterObligations) {
+                    $oblCnt = count($filterObligations);
+                    $scopeCondGrp = ConditionGroupFactory::createOR($dataSheet->getMetaObject());
+                    foreach ($filterObligations as $obligation) {
+                        if ($oblCnt === 1) {
+                            $scopeCondGrp = $obligation->getConditionGroup();
+                        } else {
+                            $scopeCondGrp = $scopeCondGrp->addNestedGroup($obligation->getConditionGroup());
+                        }
+                        $obligation->setFulfilled(true);
+                    }
+                    $dataSheet->setFilters($dataSheet->getFilters()->withAND($scopeCondGrp));
+                }
             }
         }
         

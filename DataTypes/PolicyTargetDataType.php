@@ -11,6 +11,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @method PolicyTargetDataType PAGE_GROUP(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyTargetDataType ACTION(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyTargetDataType OBJECT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method PolicyTargetDataType APP(\exface\Core\CommonLogic\Workbench $workbench)
  * @method PolicyTargetDataType FACADE(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
@@ -24,6 +25,7 @@ class PolicyTargetDataType extends StringDataType implements EnumDataTypeInterfa
     const PAGE_GROUP = 'PAGE_GROUP';
     const ACTION = 'ACTION';
     const META_OBJECT = 'OBJECT';
+    const APP = 'APP';
     const FACADE = 'FACADE';
     
     /**

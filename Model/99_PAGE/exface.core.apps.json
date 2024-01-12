@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 14:04:30",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-11-02 16:24:12",
+    "modified_on": "2023-12-21 09:02:54",
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
@@ -68,7 +68,7 @@
                 "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ROLES')"
             },
             {
-                "attribute_alias": "AUTHORIZATION_POLICY__UID:COUNT",
+                "attribute_alias": "AUTHORIZATION_POLICY[APP]__UID:COUNT",
                 "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
             },
             {

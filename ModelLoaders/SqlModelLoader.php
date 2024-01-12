@@ -1280,8 +1280,8 @@ SQL;
                 ->setName($row['name'])
                 ->setUid($row['oid'])
                 ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['default_effect_local'])) ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['combining_algorithm_local'])) ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
             $array[] = $authPoint;
         }
         return $array;
@@ -1346,6 +1346,7 @@ SELECT
     {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
     {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid,
     {$this->buildSqlUuidSelector('apol.target_object_action_oid')} AS target_object_action_oid,
+    {$this->buildSqlUuidSelector('apol.target_app_oid')} AS target_app_oid,
     baction.alias AS target_object_action_alias,
     capp.app_alias AS target_object_action_app
 FROM
@@ -1384,7 +1385,8 @@ SQL;
                         PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
                         PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
                         PolicyTargetDataType::ACTION => $action,
-                        PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
+                        PolicyTargetDataType::APP => $row['target_app_oid'],
+                        PolicyTargetDataType::FACADE => $row['target_facade_class_path'] ? $row['target_facade_class_path'] : null,
                     ],
                     PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
                     $row['name'],

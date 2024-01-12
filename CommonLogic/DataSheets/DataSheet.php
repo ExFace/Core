@@ -57,6 +57,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -821,8 +822,12 @@ class DataSheet implements DataSheetInterface
         // Set explicitly defined filters
         $query->setFiltersConditionGroup($queryFilters);
         // Add filters from the contexts
-        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
-            $query->addFilterCondition($cond);
+        try {
+            foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
+                $query->addFilterCondition($cond);
+            }
+        } catch (ContextAccessDeniedError $e) {
+            // ignore if access to context denied
         }
         
         // set aggregations
@@ -1030,9 +1035,19 @@ class DataSheet implements DataSheetInterface
                 // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 case $columnAttr->isWritable() === false && ($this->hasUidColumn() === true && $col === $this->getUidColumn()) === false:
                     continue 2;
+                // Update nested sheets - i.e. replace all rows in the data source, that are related to
+                // the each row of the main sheet with the nested rows here.
+                // NOTE: the attribute of a column with a subsheet will always have a
+                // relation because the attribute is the foreign keiy in the subsheet.
+                // Here we need to check, if it really is only one relation - if more,
+                // the column should go into a subsheet just like other related columns
+                // TODO this seems to work differently to dataCreate() - why?
+                case ($col->getDataType() instanceof DataSheetDataType) && $columnAttr->getRelationPath()->countRelations() <= 1:
+                    $this->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
+                    continue 2; 
                 // Update related columns, that the current query builder cannot write, as
                 // subsheets too. Similarly to dataCreate()
-                case ! $query->canReadAttribute($columnAttr):
+                case ! $columnAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($columnAttr):
                     // Move related columns to subsheets based on their objects
                     // Do it before handling nested sheets as nested sheets with
                     // multi-step relations should be moved to subsheets too!
@@ -1053,12 +1068,7 @@ class DataSheet implements DataSheetInterface
                     }
                     $relSheet->getColumns()->addFromExpression($relSheetAttrAlias)->setValues($col->getValues());
 
-                    continue 2;
-                // Update nested sheets - i.e. replace all rows in the data source, that are related to
-                // the each row of the main sheet with the nested rows here.
-                case $col->getDataType() instanceof DataSheetDataType:
-                    $this->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
-                    continue 2;                
+                    continue 2;               
                 // Skip columns with aggregate functions
                 case DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString()):
                     continue 2;
@@ -1508,16 +1518,18 @@ class DataSheet implements DataSheetInterface
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 continue;
             }
+                        
+            $columnAttr = $column->getAttribute();
             
             // Move related columns to subsheets based on their objects
             // Do it before handling nested sheets as nested sheets with
             // multi-step relations should be moved to subsheets too!
-            if (! $column->getAttribute()->getRelationPath()->isEmpty()) {
+            if (! $columnAttr->getRelationPath()->isEmpty()) {
                 // If the column contains nested data, its attribute alias is a relation. So we only need a subsheet
                 // if the relation path has more than one relation in it (otherwise it would be regular nested data).
                 // Regular related data always goes into a subsheet
                 if ($column->getDataType() instanceof DataSheetDataType) {
-                    $relPath = $column->getAttribute()->getRelationPath()->getSubpath(0, -1);
+                    $relPath = $columnAttr->getRelationPath()->getSubpath(0, -1);
                     // If it is regular nested data, put it into the $nestedSheetCols array and skip the rest for
                     // this column.
                     if ($relPath->isEmpty()) {
@@ -1526,10 +1538,10 @@ class DataSheet implements DataSheetInterface
                     }
                     // If it is nested data to put in a subsheet, make the subsheet be based on the second-last
                     // relation in the path - so that exactly one relation remains.
-                    $relSheetAttrAlias = $column->getAttribute()->getRelationPath()->getSubpath(-1)->toString();
+                    $relSheetAttrAlias = $columnAttr->getRelationPath()->getSubpath(-1)->toString();
                 } else {
-                    $relPath = $column->getAttribute()->getRelationPath();
-                    $relSheetAttrAlias = $column->getAttribute()->getAlias();
+                    $relPath = $columnAttr->getRelationPath();
+                    $relSheetAttrAlias = $columnAttr->getAlias();
                 }
                 // Do not create a subsheet if it will not have any data - that would only cause errors. This
                 // check also allow optional subsheets - no values, no subsheet.
@@ -1553,7 +1565,7 @@ class DataSheet implements DataSheetInterface
             } 
             
             // Skip columns with read-only attributes
-            if (! $column->getAttribute()->isWritable()) {
+            if (! $columnAttr->isWritable()) {
                 continue;
             }
             

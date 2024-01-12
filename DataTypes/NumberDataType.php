@@ -55,6 +55,8 @@ class NumberDataType extends AbstractDataType
                 return $string;
             // Return NULL for casting empty values as an empty string '' actually is not a number!
             case static::isValueEmpty($string) === true:
+            // NULL constant
+            // TODO #null-or-NULL the NULL constant is not a number, but do we still need it here?
             case static::isValueLogicalNull($string) === true:
                 return null;
             // Hexadecimal numbers in '0x....'-Notation

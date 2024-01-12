@@ -111,7 +111,6 @@
 	"ACTION.SETCONTEXT.NAME": "Set context",
 	
 	"ACTION.SHOWDIALOG.NAME": "Open dialog",
-	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel",
 	
 	"ACTION.SHOWDIALOGFROMFILE.NAME": "Show saved widget",
 	

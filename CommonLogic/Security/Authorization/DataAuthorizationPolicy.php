@@ -35,6 +35,7 @@ use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligat
  * 
  * - User role - policy applies to users with this role only
  * - Meta object - policy applies to data sheets with this meta object only
+ * - App - policy applies to all objects of this app
  * 
  * **NOTE:** by default, a policy applies to the target object and to any objects extending it!
  * You can change this by setting `apply_to_extending_objects` to `false`. 
@@ -65,6 +66,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $metaObjectSelector = null;
     
+    private $appUid = null;
+    
     private $conditionUxon = null;
     
     private $effect = null;
@@ -72,6 +75,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     private $operations = null;
     
     private $filtersUxon = null;
+    
+    private $filterScope = null;
     
     private $applyToRelations = [];
     
@@ -89,11 +94,14 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->workbench = $workbench;
         $this->name = $name;
-        if ($str = $targets[PolicyTargetDataType::USER_ROLE]) {
+        if (null !== $str = $targets[PolicyTargetDataType::USER_ROLE]) {
             $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
+        if (null !== $str = $targets[PolicyTargetDataType::META_OBJECT]) {
             $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
+        } 
+        if (null !== $str = $targets[PolicyTargetDataType::APP]) {
+            $this->appUid = $str;
         } 
         
         $this->conditionUxon = $conditionUxon;
@@ -178,6 +186,21 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 } 
             }
             
+            // Match app
+            if ($this->appUid !== null) {
+                $object = $dataSheet->getMetaObject();
+                // Not applicable if app match required, but object belongs to another app
+                // Otherwise applied because apps match
+                if (strcasecmp($object->getApp()->getUid(), $this->appUid) !== 0) {
+                    return PermissionFactory::createNotApplicable($this, 'App does not match app of object');
+                } else {
+                    $applied = true;
+                }
+            } else {
+                // Applied if app target not set
+                $applied = true;
+            }
+            
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             } 
@@ -192,7 +215,8 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
                 } else {
                     $condGrp = ConditionGroupFactory::createFromUxon($dataSheet->getWorkbench(), $filtersUxon, $dataSheet->getMetaObject());
                 }
-                $permission->addObligation(new DataFilterObligation($condGrp));
+                
+                $permission->addObligation(new DataFilterObligation($condGrp, $this->getFilterScope()));
             }
         } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
             $dataSheet->getWorkbench()->getLogger()->logException($e);
@@ -272,6 +296,21 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     /**
      * Add this filter condition group to every data sheet applicable
      * 
+     * If multiple policies with filters are applied, the filters will be combined
+     * via OR among policies with the same filtering scope and via AND if the scopes
+     * are different. 
+     * 
+     * If not set explicitly, the scope is the target meta object of the policy. 
+     *  
+     * For example, if there are policies, that allow a user to only see a certain
+     * company, and policies, limiting the view to a country, a user that has
+     * roles for Company1 and Company2 in Germany will receive the following filter:
+     * `(Company = "Company1" OR Company = "Company2") AND Country = "Germany"`.
+     * 
+     * If you need the filters from multiple policies with different target objects 
+     * to be combined via OR, set the same explicitly defined scope in all policies
+     * using `add_filters_in_scope`.
+     * 
      * @uxon-property add_filters
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
      * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
@@ -282,6 +321,49 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function setAddFilters(UxonObject $value) : DataAuthorizationPolicy
     {
         $this->filtersUxon = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getFilterScope() : ?string
+    {
+        if ($this->filterScope === null && $this->metaObjectSelector !== null) {
+            return $this->metaObjectSelector->__toString();
+        }
+        return $this->filterScope;
+    }
+    
+    /**
+     * Explicitly define a the filtering scope for this policy.
+     * 
+     * If multiple policies with filters are applied, the filters will be combined
+     * via OR among policies with the same filtering scope and via AND if the scopes
+     * are different. 
+     * 
+     * If not set explicitly, the scope is the target meta object of the policy.
+     * 
+     * For example, if there are policies, that allow a user to only see a certain
+     * company, and policies, limiting the view to a country, a user that has
+     * roles for Company1 and Company2 in Germany will receive the following filter:
+     * `(Company = "Company1" OR Company = "Company2") AND Country = "Germany"`.
+     * 
+     * If you need the filters from multiple policies with different target objects 
+     * to be combined via OR, set the same explicitly defined scope in all policies.
+     * The scope can be any string, that is unique for the combination of apps you
+     * are running on one workbench.
+     * 
+     * @uxon-property add_filters_in_scope
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return DataAuthorizationPolicy
+     */
+    protected function setAddFiltersInScope(string $value) : DataAuthorizationPolicy
+    {
+        $this->filterScope = $value;
         return $this;
     }
     

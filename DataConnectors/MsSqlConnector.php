@@ -189,20 +189,19 @@ class MsSqlConnector extends AbstractSqlConnector
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performDisconnect()
      */
     protected function performDisconnect()
     {
         if (($conn = $this->getCurrentConnection()) !== null) {
             @sqlsrv_close($conn);
+            $this->resetCurrentConnection();
         }
     }
     
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performQuery()
      *
      * @param SqlDataQuery $query
