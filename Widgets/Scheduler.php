@@ -66,6 +66,7 @@ class Scheduler extends Data implements iFillEntireContainer, iCanEditData
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('timeline', $this->getTimelineConfig()->exportUxonObject());
         $uxon->setProperty('items', $this->getItemConfig()->exportUxonObject());
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
         return $uxon;
     }
     

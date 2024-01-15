@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This trait contains common methods to implement the iCanEditData interface.
@@ -111,5 +112,19 @@ trait iCanEditDataTrait {
     {
         $this->editable_if_access_to_action_alias = $value;
         return $this;
+    }
+    
+    protected function exportUxonForEditableProperties() : UxonObject
+    {
+        $uxon = new UxonObject();
+        if ($this->is_editable !== null) {
+            $uxon->setProperty('editable', $this->is_editable);
+        }
+        if ($this->editable_if_access_to_action_alias !== null) {
+            $uxon->setProperty('editable_if_access_to_action', $this->editable_if_access_to_action_alias);
+        }
+        if ($this->editable_changes_reset_on_refresh !== null) {
+            $uxon->setProperty('editable_changes_reset_on_refresh', $this->editable_changes_reset_on_refresh);
+        }
     }
 }

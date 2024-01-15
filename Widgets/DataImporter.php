@@ -503,4 +503,16 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
         }
         return array_unique($colNames);
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
+        return $uxon;
+    }
 }

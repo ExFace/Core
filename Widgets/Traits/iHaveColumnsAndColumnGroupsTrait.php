@@ -9,6 +9,8 @@ use exface\Core\Widgets\DataColumnGroup;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Trait for widgets with columns organized in groups (like DataGrid, DataTable, etc.)
@@ -251,6 +253,31 @@ trait iHaveColumnsAndColumnGroupsTrait
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getDataColumnName() === $data_sheet_column_name) {
+                return $col;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByExpression()
+     */
+    public function getColumnByExpression($expressionOrString) : ?DataColumn
+    {
+        switch (true) {
+            case is_string($expressionOrString):
+                $str = $expressionOrString;
+                break;
+            case $expressionOrString instanceof ExpressionInterface:
+                $str = $expressionOrString->__toString();
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot search for column widgets by "' . gettype($expressionOrString) . '": only expression strings or objects allowed!');
+        }
+        foreach ($this->getColumns() as $col) {
+            if ($col->getExpression()->__toString() === $str) {
                 return $col;
             }
         }
