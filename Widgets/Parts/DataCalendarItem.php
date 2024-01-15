@@ -26,11 +26,11 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
         hasColorScale as hasColorScaleViaTrait;
     }
     
-    private $startTimeString = null;
+    private $startTimeExprString = null;
     
     private $startTimeColumn = null;
     
-    private $endTimeString = null;
+    private $endTimeExprString = null;
     
     private $endTimeColumn = null;
     
@@ -74,6 +74,10 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
             $uxon->setProperty('default_duration_hours', $this->defaultDurationHours);
         }
         
+        if ($this->indicator !== null) {
+            $uxon->setProperty('indicator', $this->indicator->exportUxonObject());
+        }
+        
         return $uxon;
     }
     
@@ -83,7 +87,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     protected function getStartTime() : string
     {
-        return $this->startTimeString;
+        return $this->startTimeExprString;
     }
     
     /**
@@ -91,19 +95,28 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      * 
      * @uxon-property start_time
      * @uxon-type metamodel:attribute|metamodel:formula
+     * @uxon-required true
      * 
      * @param string $value
      * @return DataCalendarItem
      */
     public function setStartTime(string $value) : DataCalendarItem
     {
-        $this->startTimeString = $value;
-        $this->startTimeColumn = $this->addDataColumn($value);
+        $this->startTimeExprString = $value;
+        $this->startTimeColumn = null;
+        $this->addDataColumn($value);
         return $this;
     }
     
+    /**
+     * 
+     * @return DataColumn
+     */
     public function getStartTimeColumn() : DataColumn
     {
+        if ($this->startTimeColumn === null) {
+            $this->startTimeColumn = $this->getDataWidget()->getColumnByExpression($this->startTimeExprString);
+        }
         return $this->startTimeColumn;
     }
     
@@ -113,7 +126,7 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     protected function getEndTime() : ?string
     {
-        return $this->endTimeString;
+        return $this->endTimeExprString;
     }
     
     /**
@@ -127,19 +140,31 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     public function setEndTime(string $value) : DataCalendarItem
     {
-        $this->endTimeString = $value;
-        $this->endTimeColumn = $this->addDataColumn($value);
+        $this->endTimeExprString = $value;
+        $this->endTimeColumn = null;
+        $this->addDataColumn($value);
         return $this;
     }
     
-    public function getEndTimeColumn() : DataColumn
+    /**
+     * 
+     * @return DataColumn|NULL
+     */
+    public function getEndTimeColumn() : ?DataColumn
     {
+        if ($this->endTimeColumn === null && $this->endTimeExprString !== null) {
+            $this->endTimeColumn = $this->getDataWidget()->getColumnByExpression($this->endTimeExprString);
+        }
         return $this->endTimeColumn;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasEndTime() : bool
     {
-        return $this->endTimeString !== null;
+        return $this->endTimeExprString !== null;
     }
     
     /**
@@ -192,7 +217,8 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function setTitle(string $expression) : DataCalendarItem
     {
         $this->titleString = $expression;
-        $this->titleColumn = $this->addDataColumn($expression);
+        $this->titleColumn = null;
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -203,7 +229,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function getTitleColumn() : DataColumn
     {
         if ($this->titleColumn === null) {
-            if ($this->getMetaObject()->hasLabelAttribute()) {
+            if ($this->titleString !== null) {
+                $this->titleColumn = $this->getDataWidget()->getColumnByExpression($this->titleString);
+            } elseif ($this->getMetaObject()->hasLabelAttribute()) {
                 $this->titleColumn = $this->addDataColumn($this->getMetaObject()->getLabelAttribute()->getAlias());
             } else {
                 foreach ($this->getDataWidget()->getColumns() as $col) {
@@ -243,7 +271,8 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     public function setSubtitle(string $expression) : DataCalendarItem
     {
         $this->subtitleString = $expression;
-        $this->subtitleColumn = $this->addDataColumn($expression);
+        $this->subtitleColumn = null;
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -253,6 +282,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     public function getSubtitleColumn() : ?DataColumn
     {
+        if ($this->subtitleColumn === null) {
+            $this->subtitleColumn = $this->getDataWidget()->getColumnByExpression($this->subtitleString);
+        }
         return $this->subtitleColumn;
     }
     
@@ -288,14 +320,18 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     public function setColor($color)
     {
-        $this->colorExpr = null;
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
-        if (! $this->colorExpr->isStatic()) {
-            $this->colorColumn = $this->addDataColumn($color);
+        if ($this->hasColorColumn()) {
+            $this->addDataColumn($color);
         }
         
         return $this;
+    }
+    
+    public function hasColorColumn() : bool
+    {
+        return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
     }
     
     /**
@@ -304,6 +340,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
      */
     public function getColorColumn() : ?DataColumn
     {
+        if ($this->colorColumn === null && $this->hasColorColumn()) {
+            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+        }
         return $this->colorColumn;
     }
 
