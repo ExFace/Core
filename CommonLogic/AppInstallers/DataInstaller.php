@@ -5,7 +5,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
@@ -116,8 +115,6 @@ class DataInstaller extends AbstractAppInstaller
     private $path = 'Data';
     
     private $dataSheets = [];
-    
-    private $subfoldersSheet = null;
     
     private $salt = null;
     
@@ -281,12 +278,7 @@ class DataInstaller extends AbstractAppInstaller
     public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
-        if ($transaction === null) {
-            $transaction = $this->getWorkbench()->data()->startTransaction();
-            $commit = true;
-        } else {
-            $commit = false;
-        }
+        $transaction = $this->getWorkbench()->data()->startTransaction();
         
         yield $idt . 'Uninstalling ' . $this->getName() . ':' . PHP_EOL;
         
@@ -336,9 +328,7 @@ class DataInstaller extends AbstractAppInstaller
         }
         unset($objects);
         
-        if ($commit === true) {
-            $transaction->commit();
-        }
+        $transaction->commit();
         
         if ($counter === 0) {
             yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
@@ -434,9 +424,10 @@ class DataInstaller extends AbstractAppInstaller
                 }
                 $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet, $filteredRows));
                 $subfolder = $this->getSubfolder($objectUid);
-                $path = $modelDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
-                $result[] = $path;
-                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
+                $folderPath = $modelDir . DIRECTORY_SEPARATOR . ($subfolder !== '' ? $subfolder . DIRECTORY_SEPARATOR : '');
+                $filePath = $folderPath . $fileName;
+                $result[] = $filePath;
+                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . ($subfolder !== '' ? $subfolder . DIRECTORY_SEPARATOR : '') . $fileName;
                 if (file_exists($prevPath)) {
                     $splitSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon)->copy();
                     $decryptedSheet = $splitSheet->copy()->removeRows()->addRows($splitSheet->getRowsDecrypted());
@@ -453,17 +444,17 @@ class DataInstaller extends AbstractAppInstaller
                         }
                     }
                     if ($changesDetected === false) {
-                        if (! is_dir($modelDir . DIRECTORY_SEPARATOR . $subfolder));
-                        mkdir($modelDir . DIRECTORY_SEPARATOR . $subfolder);
-                        rename($prevPath, $path);
+                        if (! is_dir($folderPath));
+                        mkdir($folderPath);
+                        rename($prevPath, $filePath);
                         continue;
                     }
                 }
-                $fileManager->dumpFile($path, $uxon->toJson(true));
+                $fileManager->dumpFile($filePath, $uxon->toJson(true));
             }
         } else {
-            $path = $modelDir . DIRECTORY_SEPARATOR . $fileName;
-            $result[] = $path;
+            $filePath = $modelDir . DIRECTORY_SEPARATOR . $fileName;
+            $result[] = $filePath;
             $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $fileName;
             if (file_exists($prevPath)) {
                 $decryptedSheet = $data_sheet->copy()->removeRows()->addRows($data_sheet->getRowsDecrypted());
@@ -480,14 +471,14 @@ class DataInstaller extends AbstractAppInstaller
                     }
                 }
                 if ($changesDetected === false) {
-                    rename($prevPath, $path);
+                    rename($prevPath, $filePath);
                     return $result;
                 }
             }
             $uxon = $data_sheet->exportUxonObject();
             $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
             $contents = $uxon->toJson(true);
-            $fileManager->dumpFile($path, $contents);
+            $fileManager->dumpFile($filePath, $contents);
         }
         
         return $result;
@@ -895,15 +886,6 @@ class DataInstaller extends AbstractAppInstaller
      */
     protected function getSubfolder(string $uid) : string
     {
-        if ($this->subfoldersSheet !== null) {
-            $row = $this->subfoldersSheet->getRow($this->subfoldersSheet->getUidColumn()->findRowByValue($uid));
-            $alias = $this->getApp()->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['ALIAS'];
-        }
-        
-        if (! $alias) {
-            $alias = $this->getWorkbench()->model()->getObject($uid)->getAliasWithNamespace();
-        }
-        
-        return trim($alias);
+        return '';
     }
 }
