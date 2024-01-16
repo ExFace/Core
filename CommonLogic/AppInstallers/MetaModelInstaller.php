@@ -1,25 +1,14 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Behaviors\ModelValidatingBehavior;
-use exface\Core\Interfaces\Model\ConditionGroupInterface;
-use exface\Core\DataTypes\JsonDataType;
-use exface\Core\DataTypes\EncryptedDataType;
-use exface\Core\Factories\ConfigurationFactory;
-use exface\Core\Exceptions\EncryptionError;
-use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\Factories\MetaObjectFactory;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 
 /**
@@ -177,77 +166,6 @@ class MetaModelInstaller extends DataInstaller
     }
 
     /**
-     *
-     * @return string
-     */
-    public function uninstall() : \Iterator
-    {
-        $idt = $this->getOutputIndentation();
-        $transaction = $this->getWorkbench()->data()->startTransaction();
-        
-        $pageInstaller = $this->getPageInstaller();
-        $pageInstaller->setOutputIndentation($idt);
-        $pageInstaller->setTransaction($transaction);
-        yield from $pageInstaller->uninstall();
-        
-        yield $idt . 'Uninstalling model:' . PHP_EOL;
-        
-        $counter = 0;
-        
-        // Uninstall the main model now
-        // Make sure to load all objects before starting to delete, so that their model
-        // is available at delete time for cascading deletes, etc. If not done so, relations
-        // might get broken because the data sources get removed before the objects and
-        // the objects loose their base attributes. We've had broken self-relations because
-        // an object inherited the UID from a data source base object, which was not present
-        // anymore when the object was loaded.
-        $modelSheets = $this->getModelSheets();
-        $objects = [];
-        foreach ($modelSheets as $sheet) {
-            if ($sheet->getMetaObject()->is('exface.Core.APP') === true) {
-                $appSheet = $sheet;
-                $appSheet->dataRead();
-                $counter += $appSheet->countRows();
-            }
-            if ($sheet->getMetaObject()->is('exface.Core.OBJECT') === true) {
-                $objectSheet = $sheet;
-                $objectSheet->dataRead();
-                foreach ($objectSheet->getUidColumn()->getValues() as $objectUid) {
-                    try {
-                        $objects[] = MetaObjectFactory::createFromString($this->getWorkbench(), $objectUid);
-                    } catch (\Throwable $e) {
-                        $this->getWorkbench()->getLogger()->logException(new InstallerRuntimeError($this, 'Broken object to be uninstalled: ' . $objectUid, null, $e), LoggerInterface::WARNING);
-                    }
-                }
-            }
-        }
-        // Delete all model sheets in reverse order
-        $modelSheets = array_reverse($modelSheets);
-        foreach ($modelSheets as $sheet) {
-            if ($sheet->hasUIdColumn()) {
-                // Read data to fill the UID column. Some data source do not support deletes via
-                // filter (or filter over relations), so it is safer to fetch the UIDs here.
-                $sheet->dataRead();
-                if ($sheet->hasUidColumn(true)) {
-                    $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction);
-                }
-            } else {
-                $counter += $sheet->dataDelete($transaction);
-            }
-        }
-        unset($objects);
-        
-        $transaction->commit();
-        
-        if ($counter === 0) {
-            yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
-        } else {
-            yield $idt.$idt . 'Removed app model successfully!' . PHP_EOL; 
-        }
-    }
-
-    /**
      * Analyzes model data sheet and writes json files to the model folder
      *
      * @param string $destinationAbsolutePath
@@ -301,185 +219,6 @@ class MetaModelInstaller extends DataInstaller
         if ($dirOld !== null) {
             Filemanager::deleteDir($dirOld);
         }
-    }
-
-    /**
-     * Writes JSON File of a $data_sheet to a specific location
-     *
-     * @param string $modelDir            
-     * @param DataSheetInterface $data_sheet
-     * @param string $filename_prefix            
-     * @return string[]
-     */
-    protected function exportModelFile(string $modelDir, DataSheetInterface $data_sheet, $filename_prefix = null, $split_by_object = true, string $prevExportDir = null) : array
-    {
-        if ($data_sheet->isEmpty()) {
-            return [];
-        }
-        
-        if (! file_exists($modelDir)) {
-            Filemanager::pathConstruct($modelDir);
-        }
-        
-        if ($split_by_object === true) {
-            $objectUids = [];
-            switch (true) {
-                case $data_sheet->getMetaObject()->isExactly('exface.Core.OBJECT'): 
-                    $col = $data_sheet->getUidColumn();
-                    $objectUids = $col->getValues(false);
-                    break;
-                case $data_sheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
-                    $col = $data_sheet->getColumns()->addFromExpression('COMPOUND_ATTRIBUTE__OBJECT');
-                    $removeObjectCol = true;
-                    $data_sheet->dataRead();
-                    $objectUids = array_unique($col->getValues(false));
-                    break;
-                default: 
-                    foreach ($data_sheet->getColumns() as $col) {
-                        if ($attr = $col->getAttribute()) {
-                            if ($attr->isRelation() && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') && $attr->isRequired()) {
-                                $objectUids = array_unique($col->getValues(false));
-                                break;
-                            }
-                        }
-                    }
-            }
-        }
-        $result = [];
-        $fileManager = $this->getWorkbench()->filemanager();
-        $fileName = $filename_prefix . $data_sheet->getMetaObject()->getAlias() . '.json';
-        /* @var $tsBehavior \exface\Core\Behaviors\TimeStampingBehavior */
-        $excludeAttrs = [];
-        foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $tsBehavior) {
-            if ($tsBehavior->hasUpdatedByAttribute()) {
-                $excludeAttrs[] = $tsBehavior->getUpdatedByAttribute();
-            }
-            if ($tsBehavior->hasUpdatedOnAttribute()) {
-                $excludeAttrs[] = $tsBehavior->getUpdatedOnAttribute();
-            }
-        }
-        if ($split_by_object && ! empty($objectUids)) {
-            $rows = $data_sheet->getRows();
-            if ($removeObjectCol === true) {
-                $data_sheet->getColumns()->remove($col);
-            }
-            $uxon = $data_sheet->exportUxonObject();
-            $objectColumnName = $col->getName();
-            foreach ($objectUids as $objectUid) {
-                $filteredRows = array_values($this->filterRows($rows, $objectColumnName, $objectUid));
-                if ($removeObjectCol === true) {
-                    for ($i = 0; $i < count($filteredRows); $i++) {
-                        unset($filteredRows[$i][$objectColumnName]);
-                    }
-                }
-                $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet, $filteredRows));
-                $subfolder = $this->getObjectSubfolder($objectUid);
-                $path = $modelDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
-                $result[] = $path;
-                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $subfolder . DIRECTORY_SEPARATOR . $fileName;
-                if (file_exists($prevPath)) {
-                    $splitSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon)->copy();
-                    $decryptedSheet = $splitSheet->copy()->removeRows()->addRows($splitSheet->getRowsDecrypted());
-                    $changesDetected = false;
-                    foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
-                        if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
-                            $changesDetected = true;
-                            break;
-                        }
-                        $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
-                        if (! empty($diff)) {
-                            $changesDetected = true;
-                            break;
-                        }
-                    }
-                    if ($changesDetected === false) {
-                        if (! is_dir($modelDir . DIRECTORY_SEPARATOR . $subfolder));
-                        mkdir($modelDir . DIRECTORY_SEPARATOR . $subfolder);
-                        rename($prevPath, $path);
-                        continue;
-                    }
-                }
-                $fileManager->dumpFile($path, $uxon->toJson(true));
-            }
-        } else {
-            $path = $modelDir . DIRECTORY_SEPARATOR . $fileName;
-            $result[] = $path;
-            $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $fileName;
-            if (file_exists($prevPath)) {
-                $decryptedSheet = $data_sheet->copy()->removeRows()->addRows($data_sheet->getRowsDecrypted());
-                $changesDetected = false;
-                foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
-                    if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
-                        $changesDetected = true;
-                        break;
-                    }
-                    $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
-                    if (! empty($diff)) {
-                        $changesDetected = true;
-                        break;
-                    }
-                }
-                if ($changesDetected === false) {
-                    rename($prevPath, $path);
-                    return $result;
-                }
-            }
-            $uxon = $data_sheet->exportUxonObject();
-            $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
-            $contents = $uxon->toJson(true);
-            $fileManager->dumpFile($path, $contents);
-        }
-        
-        return $result;
-    }
-    
-    protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array
-    {
-        $rows = $rows ?? $sheet->getRowsDecrypted();
-        foreach ($sheet->getColumns() as $col) {
-            $dataType = $col->getDataType();
-            switch (true) {
-                case $dataType instanceof EncryptedDataType:
-                    $colName = $col->getName();
-                    foreach ($rows as $i => $row) {
-                        $val = $row[$colName];
-                        if ($val !== null && $val !== '') {
-                            $salt = $this->getAppSalt();
-                            $valEncrypted = EncryptedDataType::encrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
-                            $rows[$i][$colName] = $valEncrypted;
-                        }
-                    }
-                    break;
-                case $dataType instanceof JsonDataType:
-                    $colName = $col->getName();
-                    foreach ($rows as $i => $row) {
-                        $val = $row[$colName];
-                        if ($val !== null && $val !== '') {
-                            try {
-                                $valUxon = UxonObject::fromAnything($val); 
-                                $rows[$i][$colName] = $valUxon->toArray();
-                            } catch (\Throwable $e) {
-                                // Ignore errors
-                            }
-                        }
-                    }
-            }
-        }
-        return $rows;
-    }
-    
-    /**
-     * 
-     * @param array $rows
-     * @param string $filterRowName
-     * @param string $filterRowValue
-     * @return array
-     */
-    protected function filterRows(array $rows, string $filterRowName, string $filterRowValue)
-    {
-        $filter = new RowDataArrayFilter();
-        $filter->addAnd($filterRowName, $filterRowValue, EXF_COMPARATOR_EQUALS);
-        return $filter->filter($rows);
     }
 
     /**
@@ -572,6 +311,10 @@ class MetaModelInstaller extends DataInstaller
         }
     }
     
+    /**
+     * 
+     * @return PageInstaller
+     */
     protected function getPageInstaller() : PageInstaller
     {
         return new PageInstaller($this->getSelectorInstalling(), self::FOLDER_NAME_MODEL . DIRECTORY_SEPARATOR . self::FOLDER_NAME_PAGES);
@@ -700,7 +443,7 @@ class MetaModelInstaller extends DataInstaller
      * @param string $uid
      * @return string
      */
-    protected function getObjectSubfolder(string $uid) : string
+    protected function getSubfolder(string $uid) : string
     {
         if ($this->objectSheet !== null) {
             $row = $this->objectSheet->getRow($this->objectSheet->getUidColumn()->findRowByValue($uid));
