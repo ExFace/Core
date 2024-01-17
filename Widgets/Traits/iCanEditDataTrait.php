@@ -126,5 +126,6 @@ trait iCanEditDataTrait {
         if ($this->editable_changes_reset_on_refresh !== null) {
             $uxon->setProperty('editable_changes_reset_on_refresh', $this->editable_changes_reset_on_refresh);
         }
+        return $uxon;
     }
 }
