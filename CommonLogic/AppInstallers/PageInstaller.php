@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Saves pages as UXON (JSON) files and imports these files back into model when needed.
@@ -96,7 +97,12 @@ class PageInstaller extends AbstractAppInstaller
         $pagesFile = [];
         $workbench = $this->getWorkbench();
         
-        $this->disableTimestampingBehavior($this->getWorkbench()->model()->getObject('exface.Core.PAGE'));
+        //$pageObj = $workbench->model()->getObject('exface.Core.PAGE');
+        //$this->disableTimestampingBehavior($pageObj);
+        $workbench->model()->clearCache();
+        $workbench->model()->getModelLoader()->clearCache();
+        $pageObj = $workbench->model()->getObject('exface.Core.PAGE');
+        $this->disableTimestampingBehavior($pageObj);
         
         yield $idt . 'Pages: ' . PHP_EOL;
         
@@ -200,11 +206,11 @@ class PageInstaller extends AbstractAppInstaller
                     // a UID, there is no place to get the UID from and, thus, we don't have
                     // anything to save. In this case, we 
                     if (! $page->getParentPageSelector()->isUid()) {
-                        $pagesCreateErrors[] = ['page' => $page, 'exception' => new RuntimeException('Parent page "' . $page->getParentPageSelector()->__toString() . '" of page "' . $page->getAliasWithNamespace() . '" not found! The parent-relationship will be lost!')];
+                        $pagesCreateErrors[] = ['page' => $page, 'critical' => false, 'exception' => new RuntimeException('Parent page "' . $page->getParentPageSelector()->__toString() . '" of page "' . $page->getAliasWithNamespace() . '" not found! The parent-relationship will be lost!')];
                         $page->setParentPageSelector(null);
                         $page->setParentPageSelectorDefault(null);
                     } else {
-                        $pagesCreateErrors[] = ['page' => $page, 'exception' => new RuntimeException('Parent page "' . $page->getParentPageSelector()->__toString() . '" of page "' . $page->getAliasWithNamespace() . '" not found! The parent-relationship will be restored once the parent page ist installed.')];
+                        $pagesCreateErrors[] = ['page' => $page, 'critical' => false, 'exception' => new RuntimeException('Parent page "' . $page->getParentPageSelector()->__toString() . '" of page "' . $page->getAliasWithNamespace() . '" not found! The parent-relationship will be restored once the parent page ist installed.')];
                     }
                     $page->setPublished(false);
                 }
@@ -214,7 +220,7 @@ class PageInstaller extends AbstractAppInstaller
                 $pagesCreatedCounter += $this->createPage($page);
             } catch (\Throwable $e) {
                 $workbench->getLogger()->logException($e);
-                $pagesCreateErrors[] = ['page' => $page, 'exception' => $e];
+                $pagesCreateErrors[] = ['page' => $page, 'critical' => true, 'exception' => $e];
             }
         }
         if ($pagesCreatedCounter) {
@@ -226,6 +232,7 @@ class PageInstaller extends AbstractAppInstaller
             foreach ($pagesCreateErrors as $err) {
                 $pageFile = $err['page'];
                 $exception = $err['exception'];
+                $this->getWorkbench()->getLogger()->logException($err['exception'], ($err['critical'] === false ? LoggerInterface::WARNING : null));
                 yield $idt.$idt.$idt . '- ' . $pageFile->getAliasWithNamespace() . ' (' . $pageFile->getId() . '): ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on ' . $exception->getLine(). PHP_EOL;
             }
         }
@@ -261,6 +268,7 @@ class PageInstaller extends AbstractAppInstaller
             foreach ($pagesUpdateErrors as $err) {
                 $pageFile = $err['page'];
                 $exception = $err['exception'];
+                $this->getWorkbench()->getLogger()->logException($err['exception']);
                 yield $idt.$idt.$idt . '- ' . $pageFile->getAliasWithNamespace() . ' (' . $pageFile->getId() . '): ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on ' . $exception->getLine(). PHP_EOL;
             }
         }
@@ -282,6 +290,7 @@ class PageInstaller extends AbstractAppInstaller
         if ($pagesDeletedErrorCounter > 0) {
             yield $idt.$idt . 'Delete errors:' . PHP_EOL;
             foreach ($pagesDeleteErrors as $pageFile) {
+                $this->getWorkbench()->getLogger()->logException($err['exception']);
                 yield $idt.$idt.$idt . '- ' . $pageFile->getAliasWithNamespace() . ' (' . $pageFile->getId() . ')' . PHP_EOL;
             }
         }

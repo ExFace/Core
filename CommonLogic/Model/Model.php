@@ -65,6 +65,10 @@ class Model implements ModelInterface
      */
     public function reloadObject(MetaObjectInterface $object)
     {
+        foreach ($object->getBehaviors()->getAll() as $behavior) {
+            $behavior->disable();
+        }
+        
         $obj = $this->getModelLoader()->loadObjectById($this, $object->getId());
         $this->cacheObject($obj);
         return $obj;
@@ -268,6 +272,25 @@ class Model implements ModelInterface
     public function setModelLoader(ModelLoaderInterface $value)
     {
         $this->model_loader = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ModelInterface::clearCache()
+     */
+    public function clearCache() : ModelInterface
+    {
+        foreach ($this->loaded_objects as $obj) {
+            foreach ($obj->getBehaviors()->getAll() as $beh) {
+                $beh->disable();
+            }
+            unset ($obj);
+        }
+        $this->object_library = [];
+        $this->loaded_objects = [];
+        $this->getModelLoader()->clearCache();
         return $this;
     }
 }
