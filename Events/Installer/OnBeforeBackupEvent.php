@@ -21,7 +21,7 @@ class OnBeforeBackupEvent extends AbstractAppInstallerEvent
         $this->destinationPath = $destinationPath;
     }
     
-    public function getSourcePath() : string
+    public function getDestinationPath() : string
     {
         return $this->destinationPath;
     }
