@@ -3,13 +3,13 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
-use exface\Core\Events\Installer\OnInstallEvent;
-use exface\Core\Events\Installer\OnBeforeUninstallEvent;
-use exface\Core\Events\Installer\OnBackupEvent;
-use exface\Core\Interfaces\SelectorInstallerInterface;
-use exface\Core\Interfaces\Events\InstallerEventInterface;
+use exface\Core\Events\Installer\OnAppInstallEvent;
+use exface\Core\Events\Installer\OnBeforeAppUninstallEvent;
+use exface\Core\Events\Installer\OnAppBackupEvent;
 
 /**
+ * @deprecated use DataInstaller instead!
+ * 
  * Allows to add additional data sheets to the MetaModelInstaller.
  * 
  * @author andrej.kabachnik
@@ -19,20 +19,15 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
 {
     private $dataInstaller = null;
     
-    private $dataSheets = [];
-    
-    private $subfolder = null;
-    
     public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer, string $subfolder)
     {
         parent::__construct($selectorToInstall);
-        $this->dataInstaller = new DataInstaller($selectorToInstall, $subfolder);
+        $this->dataInstaller = new DataInstaller($selectorToInstall, MetaModelInstaller::FOLDER_NAME_MODEL . DIRECTORY_SEPARATOR . $subfolder);
+        $this->dataInstaller->setFilenameIndexStart(1);
         
-        $this->getWorkbench()->eventManager()->addListener(OnInstallEvent::getEventName(), [$this, 'handleInstall']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUninstallEvent::getEventName(), [$this, 'handleUninstall']);
-        $this->getWorkbench()->eventManager()->addListener(OnBackupEvent::getEventName(), [$this, 'handleBackup']);
-        
-        $this->subfolder = $subfolder;
+        $this->getWorkbench()->eventManager()->addListener(OnAppInstallEvent::getEventName(), [$this, 'handleInstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeAppUninstallEvent::getEventName(), [$this, 'handleUninstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnAppBackupEvent::getEventName(), [$this, 'handleBackup']);
     }
     
     /**
@@ -67,29 +62,12 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
     
     /**
      *
-     * @param InstallerEventInterface $event
-     * @return bool
+     * @param OnAppInstallEvent $event
      */
-    protected function isModelInstaller(InstallerEventInterface $event) : bool
+    public function handleInstall(OnAppInstallEvent $event)
     {
-        $installer = $event->getInstaller();
-        if (! ($installer instanceof MetaModelInstaller)) {
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
             return false;
-        }
-        if (! ($installer instanceof SelectorInstallerInterface) || $installer->getSelectorInstalling() !== $this->getSelectorInstalling()) {
-            return false;
-        }
-        return true;
-    }
-    
-    /**
-     *
-     * @param OnInstallEvent $event
-     */
-    public function handleInstall(OnInstallEvent $event)
-    {
-        if (! $this->isModelInstaller($event)) {
-            return;
         }
         
         $event->addPostprocessor($this->dataInstaller->install($event->getSourcePath()));
@@ -97,12 +75,12 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
     
     /**
      *
-     * @param OnBeforeUninstallEvent $event
+     * @param OnBeforeAppUninstallEvent $event
      */
-    public function handleUninstall(OnBeforeUninstallEvent $event)
+    public function handleUninstall(OnBeforeAppUninstallEvent $event)
     {
-        if (! $this->isModelInstaller($event)) {
-            return;
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return false;
         }
         
         $this->dataInstaller->uninstall();
@@ -110,12 +88,12 @@ class MetaModelAdditionInstaller extends AbstractAppInstaller
     
     /**
      *
-     * @param OnBackupEvent $event
+     * @param OnAppBackupEvent $event
      */
-    public function handleBackup(OnBackupEvent $event)
+    public function handleBackup(OnAppBackupEvent $event)
     {
-        if (! $this->isModelInstaller($event)) {
-            return;
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return false;
         }
         
         $event->addPostprocessor($this->dataInstaller->backup($event->getDestinationPath()));

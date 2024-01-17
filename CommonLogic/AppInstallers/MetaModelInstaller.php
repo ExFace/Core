@@ -155,47 +155,16 @@ class MetaModelInstaller extends DataInstaller
     }
 
     /**
-     *
-     * @param string $destination_absolute_path
-     *            Destination folder for meta model backup
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::backup()
      */
-    public function backup(string $destination_absolute_path) : \Iterator
-    {
-        yield from $this->backupModel($destination_absolute_path);
-    }
-
-    /**
-     * Analyzes model data sheet and writes json files to the model folder
-     *
-     * @param string $destinationAbsolutePath
-     * @return string
-     */
-    protected function backupModel($destinationAbsolutePath) : \Iterator
+    public function backup(string $destinationAbsolutePath) : \Iterator
     {
         $idt = $this->getOutputIndentation();
         $app = $this->getApp();
-        $dir = $this->getDataFolderPathAbsolute($destinationAbsolutePath);
         
-        // Remove any old files AFTER the data sheets were read successfully
-        // in order to keep old data on errors.
-        $dirOld = null;
-        if (is_dir($dir)) {
-            $dirOld = $dir . '.tmp';
-            rename($dir, $dirOld);
-        }
-        
-        // Make sure, the destination folder is there and empty (to remove 
-        // files, that are not neccessary anymore)
-        $app->getWorkbench()->filemanager()->pathConstruct($dir);
-        
-        // Save each data sheet as a file and additionally compute the modification date of the last modified model instance and
-        // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
-        // and used in the installation process of the package
-        foreach ($this->getModelSheets() as $nr => $ds) {
-            $ds->dataRead();
-            $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
-        }
+        yield from parent::backup($destinationAbsolutePath);
         
         // Save some information about the package in the extras of composer.json
         $package_props = array(
@@ -208,17 +177,12 @@ class MetaModelInstaller extends DataInstaller
         $composer_json['extra']['app'] = $package_props;
         $packageManager->setComposerJson($app, $composer_json);
         
-        yield $idt . 'Created meta model backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
+        yield $idt . 'Updated composer.json for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
         
         // Backup pages.
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
-        
-        // Remove remaining old files
-        if ($dirOld !== null) {
-            Filemanager::deleteDir($dirOld);
-        }
     }
 
     /**
