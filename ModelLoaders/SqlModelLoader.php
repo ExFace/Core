@@ -429,7 +429,11 @@ class SqlModelLoader implements ModelLoaderInterface
                         }
                         
                         if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
-                            throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
+                            if ($this->getWorkbench()->isInstalled()) {
+                                throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
+                            } else {
+                                continue 2;
+                            }
                         }
                         
                         switch ($row['relation_cardinality']) {
