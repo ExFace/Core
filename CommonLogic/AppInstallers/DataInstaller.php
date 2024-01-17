@@ -251,7 +251,11 @@ class DataInstaller extends AbstractAppInstaller
         // and used in the installation process of the package
         foreach ($this->getModelSheets() as $nr => $ds) {
             $ds->dataRead();
-            $this->exportModelFile($dir, $ds, $this->getFilenamePrefix($nr), true, $dirOld);
+            $files = $this->exportModelFile($dir, $ds, $this->getFilenamePrefix($nr), true, $dirOld);
+            /* TODO use the output of the exporter somehow - e.g.:
+            foreach ($files as $file) {
+                yield $idt . $idt . $file;
+            }*/
         }
         
         yield $idt . 'Created ' . $this->getName() . ' backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
@@ -464,6 +468,11 @@ class DataInstaller extends AbstractAppInstaller
                     $data_sheet->dataRead();
                     $objectUids = array_unique($col->getValues(false));
                     break;
+                // Never split objects of other apps for now - this has caused problems 
+                // with DataFlow steps, that have multiple relations to meta objects
+                // TODO add a more generic way to split exported data in subfolders
+                case $data_sheet->getMetaObject()->getNamespace() !== 'exface.Core':
+                    break;
                 default: 
                     foreach ($data_sheet->getColumns() as $col) {
                         if ($attr = $col->getAttribute()) {
@@ -527,9 +536,11 @@ class DataInstaller extends AbstractAppInstaller
                         if (! is_dir($folderPath));
                         mkdir($folderPath);
                         rename($prevPath, $filePath);
+                        $result[array_key_last($result)] .= ' - no change';
                         continue;
                     }
                 }
+                $result[array_key_last($result)] .= ' - changed ' . $data_sheet->countRows();
                 $fileManager->dumpFile($filePath, $uxon->toJson(true));
             }
         } else {
@@ -552,11 +563,13 @@ class DataInstaller extends AbstractAppInstaller
                 }
                 if ($changesDetected === false) {
                     rename($prevPath, $filePath);
+                    $result[0] .= ' - no change';
                     return $result;
                 }
             }
             $uxon = $data_sheet->exportUxonObject();
             $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
+            $result[0] .= ' - changed ' . $data_sheet->countRows();
             $contents = $uxon->toJson(true);
             $fileManager->dumpFile($filePath, $contents);
         }
