@@ -22,6 +22,7 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Events\Installer\OnAppBackupEvent;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -119,6 +120,8 @@ class DataInstaller extends AbstractAppInstaller
     private $salt = null;
     
     private $dataDefs = [];
+    
+    private $filenameIndexStart = 0;
     
     /**
      * 
@@ -236,11 +239,8 @@ class DataInstaller extends AbstractAppInstaller
         
         // Remove any old files AFTER the data sheets were read successfully
         // in order to keep old data on errors.
-        $dirOld = null;
-        if (is_dir($dir)) {
-            $dirOld = $dir . '.tmp';
-            rename($dir, $dirOld);
-        }
+        $dirOld = $this->moveFolderToTemp($dir);
+        
         
         // Make sure, the destination folder is there and empty (to remove
         // files, that are not neccessary anymore)
@@ -251,15 +251,90 @@ class DataInstaller extends AbstractAppInstaller
         // and used in the installation process of the package
         foreach ($this->getModelSheets() as $nr => $ds) {
             $ds->dataRead();
-            $this->exportModelFile($dir, $ds, str_pad($nr, 2, '0', STR_PAD_LEFT) . '_', true, $dirOld);
+            $this->exportModelFile($dir, $ds, $this->getFilenamePrefix($nr), true, $dirOld);
         }
         
         yield $idt . 'Created ' . $this->getName() . ' backup for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
-        
-        // Remove remaining old files
-        if ($dirOld !== null) {
-            Filemanager::deleteDir($dirOld);
+    }
+    
+    /**
+     * 
+     * @param OnAppBackupEvent $event
+     */
+    public function handleBackupFinished(OnAppBackupEvent $event)
+    {
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return;
         }
+        $dataFolderPath = $this->getDataFolderPathAbsolute($event->getDestinationPath());
+        $event->addPostprocessor($this->getTempFolderCleaner($dataFolderPath));
+        return;
+    }
+    
+    /**
+     * 
+     * @param string $destinationPathAbsolute
+     * @return string|NULL
+     */
+    protected function moveFolderToTemp(string $destinationPathAbsolute) : ?string
+    {
+        $tmpDir = $this->getTempFolderPath($destinationPathAbsolute);
+        if ($tmpDir !== null) {
+            rename($destinationPathAbsolute, $tmpDir);
+            // Remove temp folder with possibly remaining old files after the app is installed
+            // It is important to do this after all installers were run as there may be subfolders
+            // inside this installers folder, that are handled by other installers - e.g. the
+            // UiPageInstaller run after the MetaModelInstaller or the old MetaModelAdditionInstaller.
+            $this->getWorkbench()->eventManager()->addListener(OnAppBackupEvent::getEventName(), [$this, 'handleBackupFinished']);
+        }
+        return $tmpDir;
+    }
+    
+    /**
+     * 
+     * @param string $destinationPathAbsolute
+     * @return string|NULL
+     */
+    protected function getTempFolderPath(string $destinationPathAbsolute) : ?string
+    {
+        $tmpFolder = $destinationPathAbsolute . '.tmp';
+        return is_dir($destinationPathAbsolute) || is_dir($tmpFolder) ? $tmpFolder : null;
+    }
+    
+    /**
+     * 
+     * @param string $dataFolderPath
+     * @return \Generator
+     */
+    protected function getTempFolderCleaner(string $dataFolderPath) : \Generator
+    {
+        $tmpPath = $this->getTempFolderPath($dataFolderPath);
+        if ($tmpPath !== null && is_dir($tmpPath)) {
+            Filemanager::deleteDir($tmpPath);
+            yield $this->getOutputIndentation() . 'Cleaned up temporary folders';
+        }
+        return;
+    }
+    
+    /**
+     * 
+     * @param int $fileIndex
+     * @return string
+     */
+    protected function getFilenamePrefix(int $fileIndex) : string
+    {
+        return str_pad($fileIndex + $this->filenameIndexStart, 2, '0', STR_PAD_LEFT) . '_';
+    }
+    
+    /**
+     * 
+     * @param int $firstIdx
+     * @return DataInstaller
+     */
+    public function setFilenameIndexStart(int $firstIdx) : DataInstaller
+    {
+        $this->filenameIndexStart = $firstIdx;
+        return $this;
     }
     
     /**
@@ -268,7 +343,12 @@ class DataInstaller extends AbstractAppInstaller
      */
     protected function getName() : string
     {
-        return ucfirst(str_replace('_', ' ', StringDataType::convertCaseCamelToUnderscore($this->getDataFolderPathRelative())));
+        $path = $this->getDataFolderPathRelative();
+        $folder = StringDataType::substringAfter($path, DIRECTORY_SEPARATOR, $path, false, true);
+        if (mb_strtoupper($folder) === $folder) {
+            return $folder;
+        }
+        return ucfirst(str_replace('_', ' ', StringDataType::convertCaseCamelToUnderscore($folder)));
     }
 
     /**

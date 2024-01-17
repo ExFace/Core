@@ -37,19 +37,9 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
     {
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
-            $event = new OnBeforeInstallEvent($installer, $source_absolute_path);
-            $eventMgr->dispatch($event);
-            foreach ($event->getPreprocessors() as $proc) {
-                yield from $proc;
-            }
-            
+            $eventMgr->dispatch(new OnBeforeInstallEvent($installer, $source_absolute_path));
             yield from $installer->install($source_absolute_path);
-            
-            $event = new OnInstallEvent($installer, $source_absolute_path);
-            $eventMgr->dispatch($event);
-            foreach ($event->getPostprocessors() as $proc) {
-                yield from $proc;
-            }
+            $eventMgr->dispatch(new OnInstallEvent($installer, $source_absolute_path));
         }
     }
 
@@ -79,19 +69,9 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
         
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
-            $event = new OnBeforeBackupEvent($installer, $destination_absolute_path);
-            $eventMgr->dispatch($event);
-            foreach ($event->getPreprocessors() as $proc) {
-                yield from $proc;
-            }
-            
+            $eventMgr->dispatch(new OnBeforeBackupEvent($installer, $destination_absolute_path));
             yield from $installer->backup($destination_absolute_path);
-            
-            $event = new OnBackupEvent($installer, $destination_absolute_path);
-            $eventMgr->dispatch($event);
-            foreach ($event->getPostprocessors() as $proc) {
-                yield from $proc;
-            }
+            $eventMgr->dispatch(new OnBackupEvent($installer, $destination_absolute_path));
         }
     }
 
