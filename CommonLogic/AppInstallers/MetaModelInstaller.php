@@ -260,6 +260,8 @@ class MetaModelInstaller extends DataInstaller
             
             if ($modelChanged === false) {
                 yield $indent.$indent."No changes found" . PHP_EOL;
+            } else {
+                $this->getWorkbench()->model()->clearCache();
             }
             
             // Install pages.

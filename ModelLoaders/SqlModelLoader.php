@@ -125,7 +125,7 @@ class SqlModelLoader implements ModelLoaderInterface
     
     private $nodes_loaded = [];
     
-    private $menu_tress_loaded = [];
+    private $menu_trees_loaded = [];
     
     private $messages_loaded = [];
     
@@ -428,11 +428,15 @@ class SqlModelLoader implements ModelLoaderInterface
                             }
                         }
                         
+                        if ($row['object_oid'] === '0x11ea63083a80f8c8a2e30205857feb80' && $row['attribute_alias'] === 'TARGET_APP') {
+                            $row['rev_relation_alias'] === 'AUTHORIZATION_POLICY';
+                        }
+                        
                         if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
-                            if ($this->getWorkbench()->isInstalled()) {
-                                throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
+                            if ($row['object_oid'] === '0x11ea63083a80f8c8a2e30205857feb80' && $row['attribute_alias'] === 'TARGET_APP') {
+                                $row['rev_relation_alias'] = 'AUTHORIZATION_POLICY';
                             } else {
-                                continue 2;
+                                throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
                             }
                         }
                         
@@ -1590,7 +1594,7 @@ SQL;
     {
         $treeRootNodes = $tree->getStartRootNodes();
         $orphanNodes = [];
-        $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
+        $loadedtree = $this->menu_trees_loaded[$tree->getExpandPathToPage()->getUid()];
         if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
             return $loadedtree->getRootNodes();
         }
@@ -1691,7 +1695,7 @@ SQL;
             $treeRootNodes[] = $orphan;
         }
         
-        $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
+        $this->menu_trees_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
         return $treeRootNodes;
     }
     
@@ -2114,5 +2118,24 @@ SQL;
         }
         
         return $tpls;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::clearCache()
+     */
+    public function clearCache() : ModelLoaderInterface
+    {
+        $this->data_types_by_uid = [];
+        $this->data_type_uids = [];
+        $this->connections_loaded = [];
+        $this->pages_loaded = [];
+        $this->nodes_loaded = [];
+        $this->menu_trees_loaded = [];
+        $this->messages_loaded = [];
+        $this->auth_policies_loaded = null;
+        $this->apps_loaded = null;
+        return $this;
     }
 }
