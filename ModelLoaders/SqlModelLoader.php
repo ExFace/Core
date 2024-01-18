@@ -428,16 +428,8 @@ class SqlModelLoader implements ModelLoaderInterface
                             }
                         }
                         
-                        if ($row['object_oid'] === '0x11ea63083a80f8c8a2e30205857feb80' && $row['attribute_alias'] === 'TARGET_APP') {
-                            $row['rev_relation_alias'] === 'AUTHORIZATION_POLICY';
-                        }
-                        
                         if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
-                            if ($row['object_oid'] === '0x11ea63083a80f8c8a2e30205857feb80' && $row['attribute_alias'] === 'TARGET_APP') {
-                                $row['rev_relation_alias'] = 'AUTHORIZATION_POLICY';
-                            } else {
-                                throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
-                            }
+                            throw new MetaModelLoadingFailedError('Cannot create reverse relation for object ' . $object->__toString() . '. Relation with alias "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '") from object with UID "' . $row['object_oid'] . '" not found: either the object is not there or its relation attribute is missing. Please repair the model!', '70UJ2GV');
                         }
                         
                         switch ($row['relation_cardinality']) {
