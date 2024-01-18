@@ -105,8 +105,6 @@ trait ColoredLayerTrait
      */
     protected function initDataWidgetColor(iShowData $widget) : iShowData
     {
-        $widget = $this->initDataWidgetForPoints($widget);
-        
         if (null !== $alias = $this->getColorAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($alias)) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
