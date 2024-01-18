@@ -189,6 +189,11 @@ JS;
         {$this->buildJsSurveyInitOptions('oSurvey')};
         oSurvey.render(jqContainer[0]);
         jqContainer.data('survey-config', oConfig);
+
+        oSurvey.onValueChanged.add(function(oEvent){
+            {$this->getOnChangeScript()}
+        });
+
         {$this->buildJsSurveyVar()} = oSurvey;
     }
 
