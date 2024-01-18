@@ -52,6 +52,13 @@ class NumberDataType extends AbstractDataType
         switch (true) {
             // Decimal numbers
             case is_numeric($string) === true:
+                if (is_string($string)) {
+                    // Return the string as an int if it represents an integer value or as a float if it represents a float
+                    // That is important to assure that for exanple 1.00 and 1 is treated as the same value in comparisons
+                    $float = floatval($string);
+                    $int = intval($string);
+                    return floatval($int) === $float ? $int : $float; 
+                }
                 return $string;
             // Return NULL for casting empty values as an empty string '' actually is not a number!
             case static::isValueEmpty($string) === true:
