@@ -1,9 +1,34 @@
 -- UP
 
-ALTER TABLE `exf_auth_policy`
-	ADD COLUMN `target_app_oid` BINARY(16) NULL DEFAULT NULL AFTER `target_facade_class_path`;
-ALTER TABLE `exf_auth_point`
-	ADD COLUMN `target_app_applicable` TINYINT(1) NOT NULL DEFAULT '0' AFTER `target_action_applicable`;
+SET @dbname = DATABASE();
+SET @tablename = "exf_auth_policy";
+SET @columnname = "target_app_oid";
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE
+      (table_name = @tablename)
+      AND (table_schema = @dbname)
+      AND (column_name = @columnname)
+  ) > 0,
+  "SELECT 1",
+  CONCAT("ALTER TABLE ", @tablename, " ADD ", @columnname, " binary(16) NULL AFTER `target_facade_class_path`")
+));
+	
+SET @dbname = DATABASE();
+SET @tablename = "exf_auth_point";
+SET @columnname = "target_app_applicable";
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE
+      (table_name = @tablename)
+      AND (table_schema = @dbname)
+      AND (column_name = @columnname)
+  ) > 0,
+  "SELECT 1",
+  CONCAT("ALTER TABLE ", @tablename, " ADD ", @columnname, " TINYINT NOT NULL DEFAULT '0' AFTER `target_action_applicable`")
+));
 	
 /* Insert a stub for the policy object via SQL because otherwise the model loader
 will not be able to load the APP object, that will obviously have a reverse relation
