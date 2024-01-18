@@ -259,8 +259,10 @@ class MetaModelInstaller extends DataInstaller
             }
             
             if ($modelChanged === false) {
-                yield $indent.$indent."No changes found" . PHP_EOL;
+                yield $indent.$indent . "No changes found" . PHP_EOL;
             } else {
+                // Make sure to clear the model cache after changes to ensure all objects loaded before and after this point have 
+                // consistent models
                 $this->getWorkbench()->model()->clearCache();
             }
             
