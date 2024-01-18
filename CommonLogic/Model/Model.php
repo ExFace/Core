@@ -55,19 +55,16 @@ class Model implements ModelInterface
     /**
      * Returns a copy of the given object freshly read from the meta model.
      * 
-     * NOTE: since this method creates a new instance of the object, all behaviors are instatiated as well,
-     * eventually registering their events a second time. This may lead to unexpected behavior: e.g. if
-     * you disabled/changed a behavior for an object, but this object is being refreshed, it will register
-     * a new behavior, which will not be affected by the changes on the old one.
-     * 
      * @param MetaObjectInterface $object
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function reloadObject(MetaObjectInterface $object)
     {
-        $obj = $this->getModelLoader()->loadObjectById($this, $object->getId());
-        $this->cacheObject($obj);
-        return $obj;
+        $oId = $object->getId();
+        $this->destroyObject($object);
+        $object = $this->getModelLoader()->loadObjectById($this, $oId);
+        $this->cacheObject($object);
+        return $object;
     }
     	
     /**
@@ -270,5 +267,37 @@ class Model implements ModelInterface
         $this->model_loader = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $obj
+     */
+    private function destroyObject(MetaObjectInterface $obj)
+    {
+        foreach ($obj->getBehaviors()->getAll() as $beh) {
+            $beh->disable();
+        }
+        unset ($obj);
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ModelInterface::clearCache()
+     */
+    public function clearCache() : ModelInterface
+    {
+        // Make sure to unregister any behaviors because the object instances are not destroyed right away
+        // but rather handled by the garbage collector at some later time. Thus, the behaviors remain active
+        // and will respond to events even after their objects are not used anymore. This caused errors in
+        // installers.
+        foreach ($this->loaded_objects as $obj) {
+            $this->destroyObject($obj);
+        }
+        $this->object_library = [];
+        $this->loaded_objects = [];
+        $this->getModelLoader()->clearCache();
+        return $this;
+    }
 }
-?>

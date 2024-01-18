@@ -73,5 +73,11 @@ interface ModelInterface extends WorkbenchDependantInterface
      * @return ModelInterface
      */
     public function setModelLoader(ModelLoaderInterface $value);
+    
+    /**
+     * 
+     * @return ModelInterface
+     */
+    public function clearCache() : ModelInterface;
 }
 ?>
