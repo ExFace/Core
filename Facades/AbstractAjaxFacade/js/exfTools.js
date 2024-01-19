@@ -677,10 +677,10 @@
 				mRight = exfTools.data.comparableValue(mRight);
 				
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
-					if (parseFloat(mLeft) !== NaN) {
+					if (isNaN(mLeft) === false) {
 						mLeft = parseFloat(mLeft);
 					}
-					if (parseFloat(mRight) !== NaN) {
+					if (isNaN(mRight) === false) {
 						mRight = parseFloat(mRight);
 					}
 				}
