@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iCanEditData;
-use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
@@ -12,53 +11,15 @@ use exface\Core\CommonLogic\UxonObject;
  */
 trait iCanEditDataTrait {
     
-    /** @var boolean */
-    private $is_editable = false;
-    
-    private $editable_if_access_to_action_alias = null;
+    use iCanBeEditableTrait;
     
     private $editable_changes_reset_on_refresh = true;
     
-    
-    
-    /**
-     * Returns TRUE, if the data widget contains at least one editable column or column group.
-     *
-     * @see \exface\Core\Interfaces\Widgets\iCanEditData::isEditable()
-     */
-    public function isEditable() : bool
-    {
-        $editableExplicitly = $this->is_editable;
-        if ($editableExplicitly === true || $this->editable_if_access_to_action_alias === null) {
-            return $editableExplicitly;
-        }
-        $action = ActionFactory::createFromString($this->getWorkbench(), $this->editable_if_access_to_action_alias, $this);
-        return $action->isAuthorized() === true;
-    }
-    
-    /**
-     * Set to TRUE to make the column cells editable.
-     *
-     * This makes all columns editable, that are bound to an editable model
-     * attribute or have no model binding at all. Editable column cells will
-     * automatically use the default editor widget from the bound model attribute
-     * as `cell_widget`.
-     *
-     * @uxon-property editable
-     * @uxon-type boolean
-     *
-     * @see \exface\Core\Interfaces\Widgets\iCanEditData::setEditable()
-     */
-    public function setEditable(bool $value = true) : iCanEditData
-    {
-        $this->is_editable = $value;
-        
-        return $this;
-    }
+    private $editable_if_access_to_action_alias = null;
     
     /**
      *
-     * @see \exface\Core\Interfaces\Widgets\iCanEditData::getEditableChangesResetOnRefresh()
+     * @see \exface\Core\Interfaces\Widgets\iCanBeEditable::getEditableChangesResetOnRefresh()
      */
     public function getEditableChangesResetOnRefresh() : bool
     {
@@ -74,12 +35,12 @@ trait iCanEditDataTrait {
      * is set to `false`, changes made in editable columns will "survive"
      * refreshes. On the other hand, there will be no possibility to revert
      * them, unless there is a dedicated reset-button (e.g. one with action
-     * `exface.Core.ResetWidget`). 
+     * `exface.Core.ResetWidget`).
      *
      * @uxon-property editable_changes_reset_on_refresh
      * @uxon-type boolean
      * @uxon-default true
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iCanEditData::setEditableChangesResetOnRefresh()
      */
     public function setEditableChangesResetOnRefresh(bool $value) : iCanEditData
