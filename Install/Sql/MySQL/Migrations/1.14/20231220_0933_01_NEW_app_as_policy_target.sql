@@ -14,6 +14,9 @@ SET @preparedStatement = (SELECT IF(
   "SELECT 1",
   CONCAT("ALTER TABLE ", @tablename, " ADD ", @columnname, " binary(16) NULL AFTER `target_facade_class_path`")
 ));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 	
 SET @dbname = DATABASE();
 SET @tablename = "exf_auth_point";
@@ -29,6 +32,9 @@ SET @preparedStatement = (SELECT IF(
   "SELECT 1",
   CONCAT("ALTER TABLE ", @tablename, " ADD ", @columnname, " TINYINT NOT NULL DEFAULT '0' AFTER `target_action_applicable`")
 ));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
 	
 /* Insert a stub for the policy object via SQL because otherwise the model loader
 will not be able to load the APP object, that will obviously have a reverse relation

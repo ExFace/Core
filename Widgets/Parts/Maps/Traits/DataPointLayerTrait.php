@@ -26,7 +26,7 @@ trait DataPointLayerTrait
     
     private $longitudeColumn = null;
     
-    private $longitudeLink = null;
+    private $shapeLink = null;
     
     private $tooltipAttribtueAlias = null;
     
@@ -138,7 +138,7 @@ trait DataPointLayerTrait
      */
     public function getLongitudeWidgetLink() : ?WidgetLinkInterface
     {
-        return $this->longitudeLink;
+        return $this->shapeLink;
     }
     
     /**
@@ -154,7 +154,7 @@ trait DataPointLayerTrait
      */
     protected function setLongitudeWidgetLink(string $value) : MapLayerInterface
     {
-        $this->longitudeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
+        $this->shapeLink = WidgetLinkFactory::createFromWidget($this->getMap(), $value);
         return $this;
     }
     
