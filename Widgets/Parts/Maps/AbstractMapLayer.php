@@ -33,7 +33,7 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
      * `\exface\Core\Widgets\Parts\Maps\DataMarkersLayer`).
      * 
      * @uxon-property type
-     * @uxon-type [DataLines,DataMarkers,DataPoints,DataSelectionMarker,GeoJSON]
+     * @uxon-type [DataLines,DataMarkers,DataPoints,DataShapes,DataSelectionMarker,GeoJSON]
      * @uxon-required true
      * 
      * @return MapLayerInterface
@@ -69,9 +69,9 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
      * @uxon-type boolean
      *
      * @param bool $value
-     * @return AbstractDataLayer
+     * @return AbstractMapLayer
      */
-    public function setAutoZoomToSeeAll(bool $value) : AbstractDataLayer
+    public function setAutoZoomToSeeAll(bool $value) : AbstractMapLayer
     {
         $this->autoZoomToSeeAll = $value;
         return $this;

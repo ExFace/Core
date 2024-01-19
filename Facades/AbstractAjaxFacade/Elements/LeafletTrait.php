@@ -26,6 +26,10 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
 use exface\Core\Widgets\Image;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
+use exface\Core\Exceptions\Facades\FacadeLogicError;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -69,6 +73,8 @@ use exface\Core\Widgets\DataButton;
  */
 trait LeafletTrait
 {
+    use LeafletGeoJsonTrait;
+    
     use JsValueScaleTrait;
     
     private $layerRenderers = [];
@@ -99,11 +105,16 @@ trait LeafletTrait
      */
     protected function registerDefaultLayerRenderers()
     {
-        $this->addLeafletLayerRenderer([$this, 'buildJsMarkerLayer']);
-        $this->addLeafletLayerRenderer([$this, 'buildJsPathLayer']);
+        $this->addLeafletLayerRenderer([$this, 'buildJsLayerDataMarkers']);
+        $this->addLeafletLayerRenderer([$this, 'buildJsLayerDataPaths']);
+        $this->addLeafletLayerRenderer([$this, 'buildJsLayerDataGeoJson']);
         return;
     }
     
+    /**
+     * 
+     * @param WidgetInterface $widget
+     */
     protected function fireRendererExtendedEvent(WidgetInterface $widget) 
     {
         $widget->getWorkbench()->eventManager()->dispatch(new OnFacadeWidgetRendererExtendedEvent($this->getFacade(), $widget, $this));
@@ -401,7 +412,7 @@ JS;
 JS;
     }
     
-    protected function buildJsPathLayer(MapLayerInterface $layer) : ?string
+    protected function buildJsLayerDataPaths(MapLayerInterface $layer) : ?string
     {
         if (! ($layer instanceof DataLinesLayer)) {
             return null;
@@ -573,7 +584,7 @@ JS;
      * @param MapLayerInterface $layer
      * @return string
      */
-    protected function buildJsMarkerLayer(MapLayerInterface $layer) : ?string
+    protected function buildJsLayerDataMarkers(MapLayerInterface $layer) : ?string
     {
         if (! ($layer instanceof LatLngDataColumnMapLayerInterface)) {
             return null;
@@ -811,6 +822,90 @@ JS;
     
     /**
      * 
+     * @param MapLayerInterface $layer
+     * @param AjaxFacadeElementInterface $facadeElement
+     * @return string|NULL
+     */
+    protected function buildJsLayerDataGeoJson(MapLayerInterface $layer, AjaxFacadeElementInterface $facadeElement) : ?string
+    {
+        if (! ($layer instanceof GeoJsonMapLayerInterface) || ! ($layer instanceof iUseData)) {
+            return null;
+        }
+        return $this->buildJsLayerGeoJson($layer, $facadeElement);
+    }
+    
+    /**
+     *
+     * @see LeafletGeoJsonTrait::buildJsLayerGeoJsonLoader()
+     */
+    protected function buildJsLayerGeoJsonLoader(MapLayerInterface $layer, string $aFeaturesJs, string $onLoadedJs, string $onErrorJs) : string
+    {
+        // Generate JS to run on map refresh
+        switch (true) {
+            case $link = $layer->getDataWidgetLink():
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+                if ($layer instanceof DataSelectionMarkerLayer) {
+                    $asIfForAction = ActionFactory::createFromString($layer->getWorkbench(), SaveData::class);
+                } else {
+                    $asIfForAction = null;
+                }
+                $exfRefreshJs = <<<JS
+
+                (function() {
+                    var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
+                    var aRows = oData.rows || [];
+                    var $aFeaturesJs = [];
+                    var aRowsSkipped = [];
+                    
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', $aFeaturesJs, 'aRowsSkipped')}
+
+                    $onLoadedJs
+                })();
+                
+JS;
+                    break;
+            case $layer instanceof iUseData:
+                /* @var $dataWidget \exface\Core\Widgets\Data */
+                $dataWidget = $layer->getDataWidget();
+                
+                $exfRefreshJs = <<<JS
+
+                (function() {
+                    var oParams = {
+                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
+                        element: "{$dataWidget->getId()}",
+                        object: "{$dataWidget->getMetaObject()->getId()}",
+                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
+                        data: {
+                            oId: "{$dataWidget->getMetaObject()->getId()}"
+                        }
+                    };
+                    
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
+                        
+                        var $aFeaturesJs = [];
+                        var aRowsSkipped = [];
+                        
+                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', $aFeaturesJs, 'aRowsSkipped')}    
+
+                        $onLoadedJs                   
+                    ")}
+                })();
+JS;
+        }
+        
+        return $exfRefreshJs;        
+JS;
+    }
+    
+    protected function buildJsLayerGeoJsonColor(MapLayerInterface $layer) : string
+    {
+        // TODO
+        return '';
+    }
+    
+    /**
+     * 
      * @param iUseData $layer
      * @param string $aRowsJs
      * @param string $aGeoJsonJs
@@ -819,20 +914,25 @@ JS;
      */
     protected function buildJsConvertDataRowsToGeoJSON(iUseData $layer, string $aRowsJs, string $aGeoJsonJs, string $aRowsSkippedJs) : string
     {
-        if (($layer instanceof LatLngWidgetLinkMapLayerInterface) && $link = $layer->getLatitudeWidgetLink()) {
-            $latColName = $link->getTargetWidget()->getDataColumnName();
-        } else {
-            $latColName = $layer->getLatitudeColumn()->getDataColumnName();
+        switch (true) {
+            case $layer instanceof DataShapesLayer:
+                $shapeColName = $layer->getShapesColumn()->getDataColumnName();
+                break;
+            case $layer instanceof LatLngWidgetLinkMapLayerInterface && $linkLat = $layer->getLatitudeWidgetLink() && $linkLng = $layer->getLongitudeWidgetLink():
+                $latColName = $linkLat->getTargetWidget()->getDataColumnName();
+                $lngColName = $linkLng->getTargetWidget()->getDataColumnName();
+                break;
+            case $layer instanceof LatLngDataColumnMapLayerInterface:
+                $latColName = $layer->getLatitudeColumn()->getDataColumnName();
+                $lngColName = $layer->getLongitudeColumn()->getDataColumnName();
+                break;
+            default:
+                throw new FacadeLogicError('Cannot render GeoJSON from map layer "' . get_class($layer) . '"');
         }
-        if (($layer instanceof LatLngWidgetLinkMapLayerInterface) && $link = $layer->getLongitudeWidgetLink()) {
-            $lngColName = $link->getTargetWidget()->getDataColumnName();
-        } else {
-            $lngColName = $layer->getLongitudeColumn()->getDataColumnName();
-        }
-        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
-        return <<<JS
+        
+        if ($latColName !== null && $lngColName !== null) {
+            $filterRowsJs = <<<JS
 
-                        $aRowsJs.forEach(function(oRow){
                             var fLat = parseFloat(oRow.{$latColName});
                             var fLng = parseFloat(oRow.{$lngColName});
         
@@ -840,13 +940,34 @@ JS;
                                 $aRowsSkippedJs.push(oRow);
                                 return;
                             }
-    
-                            $aGeoJsonJs.push({
-                                type: 'Feature',
-                                geometry: {
+JS;
+            $geometryJs = <<<JS
+                                {
                                     type: 'Point',
                                     coordinates: [fLng, fLat],
-                                },
+                                }
+JS;
+        } else {
+            $filterRowsJs = <<<JS
+                            
+                            var oShape = JSON.parse(oRow.{$shapeColName});
+                            if (oShape === null || oShape === undefined || oShape === {}) {
+                                $aRowsSkippedJs.push(oRow);
+                                return;
+                            }
+JS;
+
+            $geometryJs = "oShape";
+        }
+        
+        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
+        return <<<JS
+
+                        $aRowsJs.forEach(function(oRow){
+                            $filterRowsJs;
+                            $aGeoJsonJs.push({
+                                type: 'Feature',
+                                geometry: {$geometryJs},
                                 properties: {
                                     layer: {$this->getWidget()->getLayerIndex($layer)},
                                     object: '{$layer->getMetaObject()->getId()}',

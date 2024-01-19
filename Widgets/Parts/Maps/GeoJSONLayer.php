@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Map;
@@ -10,21 +9,17 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
-use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
-use exface\Core\Facades\AbstractAjaxFacade\Elements\JsValueScaleTrait;
+use exface\Core\Facades\AbstractAjaxFacade\Elements\LeafletGeoJsonTrait;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class GeoJSONLayer extends AbstractDataLayer implements iHaveColor, iHaveColorScale
+class GeoJSONLayer extends AbstractMapLayer implements GeoJsonMapLayerInterface, iHaveColor, iHaveColorScale
 {
-    use iHaveColorTrait;
-    
-    use iHaveColorScaleTrait;
-    
-    use JsValueScaleTrait;
+    use LeafletGeoJsonTrait;
     
     private $url = null;
     
@@ -69,70 +64,27 @@ class GeoJSONLayer extends AbstractDataLayer implements iHaveColor, iHaveColorSc
                 return '';
             }
             
-            $color = $this->getColor() ?? $facadeElement->getLayerBaseColor($this);
-            $styleJs = "";
-            $colorScaleJs = '';
-            if ($weight = $this->getLineWeight()) {
-                $styleJs .= "weight: $weight,";
-            }
-            if ($opacity = $this->getOpacity()) {
-                $styleJs .= "opacity: $opacity,";
-            }
-            if ($this->hasColorScale()) {
-                $scaleProp = $this->getColorScaleProperty();
-                if ($scaleProp === null) {
-                    throw new WidgetConfigurationError($this->getMap(), 'Missing map layer option color_scale_property: A GeoJSON map layer with a color_scale must know, which property of the features to use a scale base!');
-                }
-                $colorScaleJs = "oStyle.color = {$this->buildJsScaleResolver('feature.properties.' . $scaleProp, $this->getColorScale(), $this->isColorScaleRangeBased())}";
-            } else {
-                $styleJs .= "color: '$color',";
-            }
-            
-            $styleFuncJs = <<<JS
+            return $this->buildJsLayerGeoJson($layer, $facadeElement);
+        });
+    }
+    
+    protected function buildJsLayerGeoJsonColor(MapLayerInterface $layer) : string
+    {
+        $scaleProp = $layer->getColorScaleProperty();
+        if ($scaleProp === null) {
+            throw new WidgetConfigurationError($layer->getMap(), 'Missing map layer option color_scale_property: A GeoJSON map layer with a color_scale must know, which property of the features to use a scale base!');
+        }
+        return $this->buildJsScaleResolver('feature.properties.' . $scaleProp, $this->getColorScale(), $this->isColorScaleRangeBased());
+    }
+    
+    /**
+     * 
+     * @see LeafletGeoJsonTrait::buildJsLayerGeoJsonLoader()
+     */
+    protected function buildJsLayerGeoJsonLoader(MapLayerInterface $layer, string $aFeaturesJs, string $onLoadedJs, string $onErrorJs) : string
+    {
+        return <<<JS
 
-            var oStyle = { {$styleJs} };
-            $colorScaleJs
-            return oStyle;
-
-JS;
-            
-            if ($layer->getAutoZoomToSeeAll() === true){
-                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer');
-            }
-            
-            
-            return <<<JS
-            
-(function(){
-    var oLayer = L.geoJSON(null, {
-        onEachFeature: function (feature, layer) {
-            var oPopupData = [];
-            for (var prop in feature.properties) {
-                oPopupData.push({
-                    caption: prop,
-                    value: feature.properties[prop]
-                });
-            }
-            {$facadeElement->buildJsLeafletPopup("'{$this->getCaption()}'", $facadeElement->buildJsLeafletPopupList('oPopupData'), 'layer')}
-        },
-        style: function(feature) {
-            $styleFuncJs
-        },
-        pointToLayer: function(feature, latlng) {
-            var oProps = feature.properties;
-            return L.marker(latlng, { 
-                icon: new L.ExtraMarkers.icon({
-                    icon: '',
-                    markerColor: '$color',
-                    shape: 'round',
-                    prefix: 'fa',
-                    svg: true,
-                })
-            });
-        },      
-    });
-
-    oLayer._exfRefresh = function() {
         fetch('{$this->getUrl()}', {
             headers: {
                 'Accept': 'application/geo+json,application/json'
@@ -142,23 +94,16 @@ JS;
             return response.json()
         })
         .then(function(data) {
+            var $aFeaturesJs;
             if (! Array.isArray(data) && Array.isArray(data.features)) {
-                data = data.features;
+                $aFeaturesJs = data.features;
+            } else {
+                $aFeaturesJs = data;
             }
-            oLayer.addData(data);
-
-            {$autoZoomJs}
+            $onLoadedJs
         });
-    }
-
-    {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
-    oLayer._exfRefresh();
-
-    return oLayer;
-})()
 
 JS;
-        });
     }
     
     /**
@@ -193,7 +138,7 @@ JS;
      * 
      * @return float|NULL
      */
-    protected function getLineWeight() : ?float
+    public function getLineWeight() : ?float
     {
         return $this->lineWeight;
     }
@@ -220,7 +165,7 @@ JS;
      * 
      * @return float|NULL
      */
-    protected function getOpacity() : ?float
+    public function getOpacity() : ?float
     {
         return $this->opacity;
     }
