@@ -221,6 +221,7 @@ JS;
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
+        $disabledJs = $widget->isDisabled() ? 'true' : 'false';
         
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
@@ -321,6 +322,7 @@ JS;
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
+            var oWidget = jqSelf[0].exfWidget;
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
             
             try {
@@ -334,6 +336,10 @@ JS;
                 }
             } catch (e) {
                 console.warn('Cannot set tooltips for columns:', e);
+            }
+
+            if (oWidget !== undefined && oWidget.isDisabled() === true) {
+                {$this->buildJsSetDisabled(true)}
             }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
@@ -509,6 +515,7 @@ JS;
         _cols: {$columnsJson},
         _rowNumberColName: $rowNumberColName,
         _initData: [],
+        _disabled: $disabledJs,
         getJExcel: function(){
             return this._dom.jexcel;
         },
@@ -729,6 +736,51 @@ JS;
             });
 
             return aData;
+        },
+
+        setDisabled: function(bDisable) {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+            var iColNo = 1;
+            oWidget._disabled = bDisable;
+            oJExcel.getConfig().columns.forEach(function(oColCfg, iColIdx){
+                var fnDisabler;
+                var aCells = [];
+                if (oColCfg.type === 'hidden') {
+                    return;
+                }
+                iColNo++;
+                if (oColCfg.readOnly === true) {
+                    return;
+                }
+                switch (true) {
+                    case oColCfg.type === 'checkbox':
+                        fnDisabler = function(domCell){
+                            $(domCell).children('input').prop('disabled', bDisable);
+                        };
+                        break;
+                }
+                oJExcel.getColumnData(iColNo).forEach(function(mVal, iRowIdx){
+                    aCells.push(oJExcel.getCell(jexcel.getColumnName(iColNo) + (iRowIdx + 1)));
+                });
+                aCells.forEach(function(domCell, iRowIdx){
+                    if (bDisable) {
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    } else {
+                        domCell.classList.remove('readonly');
+                    }
+                    if (fnDisabler !== undefined) {
+                        fnDisabler(domCell);
+                    }
+                });
+            });
+        },
+
+        isDisabled: function(){
+            return this._disabled;
         }
     };
     
@@ -1826,5 +1878,20 @@ JS;
                 return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
+    }
+    
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $disableJs = $trueOrFalse ? 'true' : 'false';
+        return <<<JS
+        
+        (function(jqEl, bDisable){
+            if (jqEl.length === 0) {
+                return;
+            }
+            jqEl[0].exfWidget.setDisabled($disableJs);
+        })({$this->buildJsJqueryElement()}, $disableJs);
+
+JS;
     }
 }
