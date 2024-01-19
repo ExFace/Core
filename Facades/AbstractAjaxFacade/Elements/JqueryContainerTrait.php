@@ -331,4 +331,18 @@ JS;
         
         return $js;
     }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsSetDisabled()
+     */
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $js = '';
+        foreach ($this->getWidget()->getWidgets() as $w) {
+            $el = $this->getFacade()->getElement($w);
+            $js .= "\n" . $el->buildJsSetDisabled($trueOrFalse) . ';';
+        }
+        return $js;
+    }
 }
