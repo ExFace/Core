@@ -1007,11 +1007,11 @@ JS;
             $( document ).off( "{$actionperformed}.{$this->getId()}" );
             $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
                 var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
-                // Avoid errors if widget was removed already
-                if ($('#{$targetEl->getId()}').length === 0 || $('#{$this->getId()}').length === 0) {
+                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
                     return;
                 }
-                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                // Avoid errors if widget was removed already
+                if ({$this->buildJsCheckInitialized()} === false || {$targetEl->buildJsCheckInitialized()} === false) {
                     return;
                 }
                 {$thisButtonScriptJs}

@@ -349,4 +349,9 @@ interface AjaxFacadeElementInterface
      */
     public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string;
     
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsCheckInitialized() : string;
 }

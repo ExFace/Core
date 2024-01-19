@@ -1035,4 +1035,14 @@ JS;
         }
         throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsCheckInitialized()
+     */
+    public function buildJsCheckInitialized() : string
+    {
+        return "($('#{$this->getId()}').length !== 0)";
+    }
 }
