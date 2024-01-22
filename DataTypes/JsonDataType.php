@@ -97,7 +97,7 @@ class JsonDataType extends TextDataType
             if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
                 $instance = $stringOrArrayOrObject;
             } else {
-                $instance = $this::decodeJson($stringOrArrayOrObject);
+                $instance = $this::decodeJson($stringOrArrayOrObject, false);
             }
         } catch (DataTypeCastingError $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
@@ -212,6 +212,6 @@ class JsonDataType extends TextDataType
         } else {
             $obj = $json;
         }
-        return json_encode($obj, JSON_PRETTY_PRINT);
+        return json_encode($obj, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 }
