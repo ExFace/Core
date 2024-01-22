@@ -30,6 +30,7 @@ use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -43,7 +44,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
  *     	"npm-asset/leaflet-fullscreen" : "^1.0",
  *     	"npm-asset/leaflet.locatecontrol" : "~0.72",
  *     	"npm-asset/esri-leaflet" : "^3.0",
- *     	"npm-asset/leaflet.markercluster" : "^1.4"
+ *     	"npm-asset/leaflet.markercluster" : "^1.4",
+ *      "npm-asset/proj4leaflet": "^1"
  *     
  *      ```
  * 2. Add the config options to the facade:
@@ -59,6 +61,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
  *  	"LIBS.LEAFLET.LOCATECONTROL_CSS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.css",
  *  	"LIBS.LEAFLET.LOCATECONTROL_JS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.js",
  *  	"LIBS.LEAFLET.ESRI.JS": "npm-asset/esri-leaflet/dist/esri-leaflet.js",
+ *  	"LIBS.LEAFLET.PROJ4.PROJ4JS": "npm-asset/proj4/dist/proj4.js",
+ *  	"LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS": "npm-asset/proj4leaflet/src/proj4leaflet.js",
  *  
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or 
@@ -960,6 +964,18 @@ JS;
             $geometryJs = "oShape";
         }
         
+        if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition()) {
+            $projection = <<<JS
+
+                                crs: {
+                                    type: 'name',
+                                    properties: {
+                                        name: '{$layer->getProjection()->getName()}'
+                                    }
+                                },
+JS;
+        }
+        
         $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
         return <<<JS
 
@@ -973,7 +989,8 @@ JS;
                                     object: '{$layer->getMetaObject()->getId()}',
                                     draggable: {$bDraggableJs},
                                     data: oRow
-                                }
+                                },
+                                {$projection}
                             });
                         })
 
@@ -1165,6 +1182,11 @@ JS;
             if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
+                break;
+            }
+            if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() !== false) {
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4JS') . '"></script>';
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS') . '"></script>';
                 break;
             }
         }

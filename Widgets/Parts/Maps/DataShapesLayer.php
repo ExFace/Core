@@ -15,6 +15,9 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\MapProjectionInterface;
+use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 
 /**
  * 
@@ -26,7 +29,8 @@ class DataShapesLayer extends AbstractDataLayer
     GeoJsonMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
-    EditableMapLayerInterface
+    EditableMapLayerInterface,
+    CustomProjectionMapLayerInterface
 {
     
     use ColoredLayerTrait;
@@ -48,6 +52,10 @@ class DataShapesLayer extends AbstractDataLayer
     private $lineWeight = null;
     
     private $opacity = null;
+    
+    private $projection = null;
+    
+    private $projectionConfig = null;
     
     /**
      *
@@ -278,5 +286,54 @@ class DataShapesLayer extends AbstractDataLayer
         $widget = $this->initDataWidgetValue($widget);
         
         return $widget;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface::getProjection()
+     */
+    public function getProjection() : MapProjectionInterface
+    {
+        return $this->projection;
+    }
+    
+    /**
+     * The projection to be used - e.g. `EPSG:25832` or `EPSG:3857` - or empty for autodetection.
+     * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "projection": {
+     *      "name": "EPSG:25832",
+     *      "definition": "+proj=utm +zone=32 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+     *  }
+     * }
+     *  
+     * ```
+     *
+     * @uxon-property projection
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection
+     * @uxon-template {"name": "", "definition": ""}
+     *
+     * @param string $value
+     * @return DataShapesLayer
+     */
+    protected function setProjection(UxonObject $value) : DataShapesLayer
+    {
+        $this->projection = new Proj4Projection($value->getProperty('name'));
+        $this->projection->importUxonObject($value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface::hasProjectionDefinition()
+     */
+    public function hasProjectionDefinition() : bool
+    {
+        return $this->projection !== null;
     }
 }

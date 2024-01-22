@@ -6,6 +6,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 
 /**
  *
@@ -55,12 +57,22 @@ JS;
             // Add auto-zoom
             if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
                 $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
-            }            
+            }   
+            
+            if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
+                $proj = $layer->getProjection();
+                $projectionInit = "proj4.defs('{$proj->getName()}', '{$proj->getDefinition()}');";
+                $layerConstructor = 'L.Proj.geoJson';
+            } else {
+                $layerConstructor = 'L.geoJSON';
+            }
             
             return <<<JS
             
 (function(){
-    var oLayer = L.geoJSON(null, {
+    $projectionInit
+
+    var oLayer = $layerConstructor(null, {
         onEachFeature: function (feature, layer) {
             var oPopupData = [];
             for (var prop in feature.properties) {
