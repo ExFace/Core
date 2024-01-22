@@ -95,46 +95,56 @@ class JsonDataType extends TextDataType
         
         try {
             if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
-                $array = (array) $stringOrArrayOrObject;
+                $instance = $stringOrArrayOrObject;
             } else {
-                $array = $this::decodeJson($stringOrArrayOrObject);
+                $instance = $this::decodeJson($stringOrArrayOrObject);
             }
         } catch (DataTypeCastingError $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
         } catch (\Throwable $e) {
             throw $this->createValidationError('Invalid value "' . $stringOrArrayOrObject . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
         }
-        return $this::encodeJson($array, $this->getPrettify());
+        return $this::encodeJson($instance, $this->getPrettify());
     }
-
+    
     /**
+     * Decodes a JSON string into a PHP array (default!) or \stdClass object.
      * 
-     * @param string $string
+     * WARNING: handling a complex JSON as an array may have side-effects:
+     * empty objects `{}` will not be different from empty arrays `[]`, thus
+     * transforming a string into an array and back may not work as expected!
+     * 
+     * @param string $anything
+     * @param bool $toArray
      * @throws DataTypeCastingError
-     * @return array
+     * @return array|\stdClass|mixed
      */
-    public static function decodeJson(string $string): array
+    public static function decodeJson(string $anything, bool $toArray = true)
     {
-        $array = json_decode($string, true);
-        if (is_array($array)) {
-            return $array;
+        $arrayOrObj = json_decode($anything, ($toArray === true ? true : null));
+        if ($arrayOrObj === null && $anything !== null) {
+            throw new DataTypeCastingError('Cannot parse string "' . substr($anything, 0, 50) . '" as JSON: ' . json_last_error_msg() . ' in JSON decoder!');
         }
-        throw new DataTypeCastingError('Cannot parse string "' . substr($string, 0, 50) . '" as JSON: ' . json_last_error_msg() . ' in JSON decoder!');
+        return $arrayOrObj;
     }
 
     /**
      * 
-     * @param array $json
+     * @param mixed $json
      * @param bool $prettify
      * @return string
      */
-    public static function encodeJson(array $json, bool $prettify = false): string
+    public static function encodeJson($anything, bool $prettify = false): string
     {
-        $params = null;
+        $options = null;
         if ($prettify === true) {
-            $params = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
+            $options = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
         }
-        return json_encode($json, $params);
+        $result = json_encode($anything, $options);
+        if ($result === false && $anything !== false) {
+            throw new DataTypeCastingError('Cannot encode "' . gettype($anything) . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!');
+        }
+        return $result;
     }
     
     /**
