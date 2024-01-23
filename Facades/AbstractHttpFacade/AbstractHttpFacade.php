@@ -18,6 +18,8 @@ use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\InternalError;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Security\Authorization\HttpRequestAuthorizationPoint;
 
 /**
  * Common base structure for HTTP facades.
@@ -234,5 +236,35 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     protected function buildHeadersCommon() : array
     {
         return [];
+    }
+    
+    /**
+     * Conigure the authentication options for this facade
+     * 
+     * @uxon-property authentication
+     * @uxon-type \exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware
+     * @uxon-template {"basic_auth": {"disabled": false}}
+     * 
+     * @param UxonObject $uxon
+     * @return AbstractHttpFacade
+     */
+    protected function setAuthentication(UxonObject $uxon) : AbstractHttpFacade
+    {
+        // IMPORTANT: The user MUST be authenticated BEFORE the HttpRequestAuthorizationPoint
+        // checks if that user is allowed to use this facade. Since the facade configuration
+        // may be done by middleware like the RouteConfigLoader, it will not add the
+        // AuthenticationMiddleware to the list of middlewares, but rather explicitly call it
+        // when all other middleware are done - on OnHttpRequestHandlingEvent. Since the
+        // HttpRequestAuthorizationPoint uses the same event, this listener here gets a higher
+        // priority.
+        $middleware = new AuthenticationMiddleware($this);
+        $middleware->importUxonObject($uxon);
+        $this->getWorkbench()->eventManager()->addListener(OnHttpRequestHandlingEvent::getEventName(), function(OnHttpRequestHandlingEvent $event) use ($middleware) {
+            if ($event->getFacade() !== $this) {
+                return;
+            }
+            $middleware->process($event->getRequest(), new OKHandler());
+        }, HttpRequestAuthorizationPoint::getEventListenerPriority() + 1);
+        return $this;
     }
 }
