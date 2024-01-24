@@ -410,6 +410,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function buildHeadersCommon() : array
     {
-        return array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
     }
 }

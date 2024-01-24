@@ -230,12 +230,18 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     }
     
     /**
+     * Returns an array of common HTTP headers for all facades - see System.config.json > FACADES.HTTP.HEADERS.COMMON
      * 
-     * @return array
+     * Each facade can override this method and add/overwrite headers. 
+     * It is highly recommended to keep these common header though to ensure, 
+     * that important security headers can be easily added to all HTTP facades 
+     * with a single configuration.
+     * 
+     * @return string[]
      */
     protected function buildHeadersCommon() : array
     {
-        return [];
+        return array_filter($this->getWorkbench()->getCoreApp()->getConfig()->getOption('FACADES.HTTP.HEADERS.COMMON')->toArray());
     }
     
     /**
