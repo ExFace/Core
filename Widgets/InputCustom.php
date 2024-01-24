@@ -133,7 +133,7 @@ class InputCustom extends Input implements CustomWidgetInterface
      */
     public function getHtml() : ?string
     {
-        return StringDataType::replacePlaceholders($this->html, $this->getPlaceholders());
+        return StringDataType::replacePlaceholders($this->html ?? "", $this->getPlaceholders());
     }
     
     /**
