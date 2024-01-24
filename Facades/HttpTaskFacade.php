@@ -246,11 +246,14 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
     
     /**
      * 
-     * @return string[]
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
      */
     protected function buildHeadersCommon() : array
     {
-        return array_filter($this->getConfig()->getOption('FACADES.HTTPTASKFACADE.HEADERS.COMMON')->toArray());
+        $facadeHeaders = array_filter($this->getWorkbench()->getCoreApp()->getConfig()->getOption('FACADES.HTTPTASKFACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
     }
     
     /**
