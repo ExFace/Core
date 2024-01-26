@@ -171,7 +171,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     {
         if ($this->compoundFilterGroup === null) {
             if (($this->getAttribute() instanceof CompoundAttributeInterface) === false) {
-                throw new RuntimeException('TODO');
+                throw new RuntimeException('Cannot generate compound filters for attribute ' . $this->getAttribute()->__toString() . ': unsupported attribute type "' . get_class($this->getAttribute()) . '"');
             }
             
             $compoundFilterGroup = $this->getAttribute()->splitCondition($this->getCondition());
