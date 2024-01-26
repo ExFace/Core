@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\DataTypes\JsonSchemaValidationError;
+use JsonSchema\Validator;
 
 class JsonDataType extends TextDataType
 {
@@ -217,21 +218,38 @@ class JsonDataType extends TextDataType
     }
     
     /**
+     * Validate json against a specified json schema. 
      * 
      * @param string|array|\stdClass $stringOrObjectOrArray
+     * @param string|array|\stdClass $stringOrObjectOrArray
      * @param string $schema
+     * @throws JsonSchemaValidationError
      * @return bool
      */
-    public static function validateJsonSchema($stringOrObjectOrArray, string $schema) : bool
+    public static function validateJsonSchema($json, $schemaJson) : bool
     {
-        /* TODO
-        if ($hasErrors) {
-            $ex = new JsonSchemaValidationError($errors, 'msg');
-            foreach($errors as $error) {
-                $ex->addError(...);
-            }
+    	$convertIntoStdClass = function ($mixedJson) {    		
+    		switch (true){
+    			case is_string($mixedJson):
+    				return json_decode($mixedJson);
+    			case is_object($mixedJson) && $mixedJson instanceof (\stdClass):
+    				return $mixedJson;
+    			case is_array($mixedJson):
+    				return (object)$mixedJson;
+    		}
+    	};
+    	
+    	$validator = (new Validator());
+    	$validator->validate($convertIntoStdClass($json), $convertIntoStdClass($schemaJson));
+    	
+    	
+        if (count($validator->getErrors()) !== 0) {
+        	throw new JsonSchemaValidationError(
+        		$validator->getErrors(), 
+        		'Json does not match given schema',
+        		json: $json);
         }
-        */
-        return true;
+        
+        return $validator->isValid();
     }
 }
