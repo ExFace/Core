@@ -47,21 +47,28 @@ trait JqueryButtonTrait {
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
-     * @param Button $widget
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsRefreshWidgets() : string
+    protected function buildJsRefreshWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
         $widget = $this->getWidget();
         $page = $widget->getPage();
         $idSpace = $widget->getIdSpace();
-        foreach ($widget->getRefreshWidgetIds() as $widgetId) {
+        foreach ($widget->getRefreshWidgetIds($includeInputWidget) as $widgetId) {
             $idSpaceProvided = StringDataType::substringBefore($widgetId, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
             if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
                 $widgetId = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $widgetId;
             }
+            
             $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($refreshEl) === false) {
+                    continue;
+                }
+            }
+            
             $js .=  $refreshEl->buildJsRefresh(true) . ";\n";
         }
         return $js;
@@ -69,23 +76,29 @@ trait JqueryButtonTrait {
     
     /**
      * Returns the JS code to reset all neccessary widgets after the button's action succeeds.
-     *
-     * @param Button $widget
-     * @param AbstractJqueryElement $input_element
+     * 
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsResetWidgets() : string
+    protected function buildJsResetWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
         $btn = $this->getWidget();
         $page = $btn->getPage();
         $idSpace = $btn->getIdSpace();
-        foreach ($btn->getResetWidgetIds() as $id) {
+        foreach ($btn->getResetWidgetIds($includeInputWidget) as $id) {
             $idSpaceProvided = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
             if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
                 $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
             }
+            
             $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($resetElem) === false) {
+                    continue;
+                }
+            }
+            
             $js .= $resetElem->buildJsResetter() . ";\n";
         }
         return $js;
@@ -528,6 +541,11 @@ JS;
             $refreshIds .= '"' . $refreshId . '", ';
         }
         
+        $resetIds = '';
+        foreach ($widget->getResetWidgetIds(false) as $resetId) {
+            $resetIds .= '"' . $resetId . '", ';
+        }
+        
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
         $eventParamsJs = <<<JS
 
@@ -537,6 +555,7 @@ JS;
                         effects: [ $effectsJs ],
                         refresh_widgets: [ $refreshIds ],
                         refresh_not_widgets: [ $refreshNotIds ],
+                        reset_widgets: [ $resetIds ],
                     }]
 JS;
         if ($returnEventParamsOnly === true) {
