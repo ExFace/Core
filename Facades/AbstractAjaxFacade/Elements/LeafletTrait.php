@@ -31,6 +31,7 @@ use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -76,9 +77,7 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
  *        
  */
 trait LeafletTrait
-{
-    use LeafletGeoJsonTrait;
-    
+{   
     use JsValueScaleTrait;
     
     private $layerRenderers = [];
@@ -835,15 +834,59 @@ JS;
         if (! ($layer instanceof GeoJsonMapLayerInterface) || ! ($layer instanceof iUseData)) {
             return null;
         }
-        return $this->buildJsLayerGeoJson($layer, $facadeElement);
-    }
-    
-    /**
-     *
-     * @see LeafletGeoJsonTrait::buildJsLayerGeoJsonLoader()
-     */
-    protected function buildJsLayerGeoJsonLoader(MapLayerInterface $layer, string $aFeaturesJs, string $onLoadedJs, string $onErrorJs) : string
-    {
+        
+        /* @var $dataWidget \exface\Core\Widgets\Data */
+        $dataWidget = $layer->getDataWidget();
+        
+        // Render popup (speech bubble) with a list of data row values
+        $popupTableRowsJs = '';
+        $popupCaptionJs = $this->escapeString($layer->getCaption(), true, false);
+        foreach ($dataWidget->getColumns() as $col) {
+            if ($col->isHidden() === true) {
+                continue;
+            }
+            if ($col->getCellWidget() instanceof Image) {
+                continue;
+            }
+            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $hint = $this->escapeString($col->getHint() ?? '', true, false);
+            $caption = $this->escapeString($col->getCaption() ?? '', true, false);
+            $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+            $popupTableRowsJs .= "{
+                class: \"exf-{$visibility}\",
+                tooltip: $hint,
+                caption: $caption,
+                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+        }
+        
+        $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
+        
+        // Add auto-zoom
+        if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
+            $autoZoomJs = $this->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
+        }
+        
+        // Add styling and colors
+        $color = $this->buildJsLayerColor($layer, 'oRow');
+        if ($weight = $layer->getLineWeight()) {
+            $styleJs .= "weight: $weight,";
+        }
+        if ($opacity = $layer->getOpacity()) {
+            $styleJs .= "opacity: $opacity,";
+        }
+        if ($color !== '' && $color !== "''") {
+            $styleJs .= "color: $color,";
+        }
+        
+        // Define a custom projection if needed
+        if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
+            $proj = $layer->getProjection();
+            $projectionInit = "proj4.defs('{$proj->getName()}', '{$proj->getDefinition()}');";
+            $layerConstructor = 'L.Proj.geoJson';
+        } else {
+            $layerConstructor = 'L.geoJSON';
+        }
+        
         // Generate JS to run on map refresh
         switch (true) {
             case $link = $layer->getDataWidgetLink():
@@ -854,16 +897,19 @@ JS;
                     $asIfForAction = null;
                 }
                 $exfRefreshJs = <<<JS
-
+                
                 (function() {
                     var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
                     var aRows = oData.rows || [];
-                    var $aFeaturesJs = [];
+                    var aFeatures = [];
                     var aRowsSkipped = [];
                     
-                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', $aFeaturesJs, 'aRowsSkipped')}
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
 
-                    $onLoadedJs
+                    oLayer.clearLayers();
+                    oLayer.addData(aFeatures);
+                        
+                    {$autoZoomJs}
                 })();
                 
 JS;
@@ -873,7 +919,7 @@ JS;
                 $dataWidget = $layer->getDataWidget();
                 
                 $exfRefreshJs = <<<JS
-
+                
                 (function() {
                     var oParams = {
                         resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
@@ -887,25 +933,58 @@ JS;
                     
                     {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
                         
-                        var $aFeaturesJs = [];
+                        var aFeatures = [];
                         var aRowsSkipped = [];
                         
-                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', $aFeaturesJs, 'aRowsSkipped')}    
+                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
 
-                        $onLoadedJs                   
+                        oLayer.clearLayers();
+                        oLayer.addData(aFeatures);
+                            
+                        {$autoZoomJs}
                     ")}
                 })();
 JS;
         }
-        
-        return $exfRefreshJs;        
+            
+        return <<<JS
+            
+        (function(){
+            $projectionInit
+            
+            var oLayer = $layerConstructor(null, {
+                onEachFeature: function (feature, layer) {
+                    {$showPopupJs}
+                },
+                style: function(feature) {
+                    var oStyle = { {$styleJs} };
+                    return oStyle;
+                },
+                pointToLayer: function(feature, latlng) {
+                    var oProps = feature.properties.data;
+                    return L.marker(latlng, {
+                        icon: new L.ExtraMarkers.icon({
+                            icon: '',
+                            markerColor: $color,
+                            shape: 'round',
+                            prefix: 'fa',
+                            svg: true,
+                        })
+                    });
+                },
+            });
+            
+            oLayer._exfRefresh = function() {
+                {$exfRefreshJs}
+            }
+            
+            {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
+            oLayer._exfRefresh();
+            
+            return oLayer;
+        })()
+
 JS;
-    }
-    
-    protected function buildJsLayerGeoJsonColor(MapLayerInterface $layer) : string
-    {
-        // TODO
-        return '';
     }
     
     /**
@@ -1025,7 +1104,13 @@ JS;
 JS;
     }
     
-    protected function buildJsMarkerIcon(LatLngDataColumnMapLayerInterface $layer, string $oRowJs) : string
+    /**
+     * 
+     * @param MapLayerInterface $layer
+     * @param string $oRowJs
+     * @return string
+     */
+    protected function buildJsLayerColor(MapLayerInterface $layer, string $oRowJs) : string
     {
         $colorJs = "''";
         $colorCss = '';
@@ -1053,11 +1138,23 @@ JS;
             case ($layer instanceof iHaveColor) && null !== $colorCss = $layer->getColor():
                 $colorJs = "'{$colorCss}'";
                 break;
-            default: 
+            default:
                 $colorCss = $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
                 $colorJs = "'{$colorCss}'";
         }
+        return $colorJs;
+    }
+    
+    /**
+     * 
+     * @param LatLngDataColumnMapLayerInterface $layer
+     * @param string $oRowJs
+     * @return string
+     */
+    protected function buildJsMarkerIcon(LatLngDataColumnMapLayerInterface $layer, string $oRowJs) : string
+    {
         
+        $colorJs = $this->buildJsLayerColor($layer, $oRowJs);   
         switch (true) {
             case ($layer instanceof DataPointsLayer):
                 $pointSizeCss = $layer->getPointSize() . 'px';
@@ -1209,7 +1306,7 @@ JS;
     /**
      *
      * {@inheritDoc}
-     * @see exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsDataGetter()
      */
     public function buildJsDataGetter(ActionInterface $action = null) : string
     {
