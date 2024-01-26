@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\DataTypes\JsonSchemaValidationError;
 
 class JsonDataType extends TextDataType
 {
@@ -213,5 +214,24 @@ class JsonDataType extends TextDataType
             $obj = $json;
         }
         return json_encode($obj, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * 
+     * @param string|array|\stdClass $stringOrObjectOrArray
+     * @param string $schema
+     * @return bool
+     */
+    public static function validateJsonSchema($stringOrObjectOrArray, string $schema) : bool
+    {
+        /* TODO
+        if ($hasErrors) {
+            $ex = new JsonSchemaValidationError($errors, 'msg');
+            foreach($errors as $error) {
+                $ex->addError(...);
+            }
+        }
+        */
+        return true;
     }
 }
