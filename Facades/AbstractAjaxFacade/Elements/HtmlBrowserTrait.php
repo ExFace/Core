@@ -63,4 +63,13 @@ HTML;
         });
 JS;
     }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsRefresh()
+     */
+    public function buildJsRefresh()
+    {
+        return "(function(domEl){if (domEl !== undefined) domEl.contentWindow.location.reload() })(document.getElementById('{$this->getId()}'))";
+    }
 }
