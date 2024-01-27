@@ -402,7 +402,7 @@ HTML;
     {
         $middleware = parent::getMiddleware();
         
-        $middleware[] = new ContextBarApi($this);
+        $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
