@@ -587,7 +587,7 @@ HTML;
     {        
         // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
         // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
-        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
+        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
         if (! $result) {
             throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
         }
