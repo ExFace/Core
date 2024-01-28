@@ -170,7 +170,14 @@ class SqlDataQuery extends AbstractDataQuery
         $sql_tab->setNumberOfColumns(1);
         /* @var $sql_widget \exface\Core\Widgets\Html */
         $sql_widget = WidgetFactory::create($page, 'Html', $sql_tab);
-        $sql_widget->setHtml('<div style="padding:10px;">' . \SqlFormatter::format($this->getSql()) . '</div>');
+        $sql = $this->getSql();
+        // Pretty print SQLs as long as they are not too big
+        if (strlen($sql) < 5000) {
+            $sql_formatted = \SqlFormatter::format($sql);
+        } else {
+            $sql_formatted = $sql;
+        }
+        $sql_widget->setHtml('<div style="padding:10px;">' . $sql_formatted . '</div>');
         $sql_widget->setWidth('100%');
         $sql_tab->addWidget($sql_widget);
         $debug_widget->addTab($sql_tab);
