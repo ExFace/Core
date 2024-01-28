@@ -195,7 +195,15 @@ See [security docs](../Security/Securing_installation_folders.md) for a list of 
 
 ### View details of generic HTTP errors
 
-By default IIS does not show error details to users except for local users. If you need to see the details, access the app from the server itself.
+By default IIS does not show error details to users except for local users. If you need to see the details, access the app from the server itself via `http://localhost/...`.
+
+Additionally, detailed tracing can be enabled as described here: https://4sysops.com/archives/iis-failed-request-tracing/
+
+### Missing context bar / IIS changes status code from 200 to 500 WITHOUT any logging or error description
+
+Very strange behavior has been reported with the status code of certain requests (like those from the context bar) being changed to 500 although the request was processed successfully. The request contained all the data and did not leave any error traces - it was just the status code, that changed.
+
+The solution was to give the user `IUSR` full access to the entire installation folder. 
 
 ## Update PHP version
 
