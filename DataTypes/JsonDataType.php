@@ -232,7 +232,7 @@ class JsonDataType extends TextDataType
     		switch (true){
     			case is_string($mixedJson):
     				return json_decode($mixedJson);
-    			case is_object($mixedJson) && $mixedJson instanceof (\stdClass):
+    			case is_object($mixedJson) && $mixedJson instanceof \stdClass:
     				return $mixedJson;
     			case is_array($mixedJson):
     				return (object)$mixedJson;
@@ -247,7 +247,9 @@ class JsonDataType extends TextDataType
         	throw new JsonSchemaValidationError(
         		$validator->getErrors(), 
         		'Json does not match given schema',
-        		json: $json);
+        		null,
+        	    null,
+        	    $json);
         }
         
         return $validator->isValid();
