@@ -31,7 +31,7 @@ class JsonSchemaValidationError extends UnexpectedValueException
      */
     public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $json = null)
     {
-        parent::__construct($message, null, $previous);
+        parent::__construct($message, $alias, $previous);
         $this->json = $json;
         $this->errors = $validationErrors;
     }
