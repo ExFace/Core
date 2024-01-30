@@ -695,7 +695,7 @@ JS;
             var domEl = this._dom;
             var oWidget = this;
             var oColNames = this._colNames;
-            var aColHeaders = domEl.jspreadsheet('getHeaders').split(',');
+            var aColHeaders = domEl.jspreadsheet.getHeaders().split(',');
             var oColIdxCache = {};
             aDataRows.forEach(function(oRow, i){
                 var oRowIndexed = {};
