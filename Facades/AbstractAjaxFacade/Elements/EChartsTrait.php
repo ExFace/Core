@@ -2905,7 +2905,7 @@ JS;
                         },
                         "_caption": row[targetCaption]
                     };
-                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                    if (minDepth === undefined || row[targetLevel] < minDepth) {
                         minDepth = row[targetLevel];
                     }
                 }                
