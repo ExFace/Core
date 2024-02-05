@@ -81,7 +81,7 @@ class RouteConfigLoader implements MiddlewareInterface
     protected function getRouteData(string $route) : array
     {
         foreach ($this->routeData->getRows() as $row) {
-            if ($row['local_url'] && StringDataType::startsWith($route, $row[$this->routePatternAttributeAlias])) {
+            if ($row[$this->routePatternAttributeAlias] && StringDataType::startsWith($route, $row[$this->routePatternAttributeAlias])) {
                 return $row;
             }
         }
