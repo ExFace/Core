@@ -10,13 +10,14 @@ use exface\Core\DataTypes\JsonDataType;
 /**
  * Exception thrown if a value does not fit a data type's model.
  *
- * This exception should be thrown on errors in the DataType::parse() methods.
- * If a value is so much different, that it even cannot be casted to a data
- * type, a DataTypeCastingError will be raised instead of a validation error.
+ * This exception should be thrown on errors in the JsonDataType::validateJsonSchema() method.
+ * If a json differs from the schema provided it is not valid and all schema errors should be printed.
+ * 
+ * Can also be for every other json schema validation error instance to build the corresponding error entry in the log.
  * 
  * @see DataTypeCastingError
  *
- * @author Andrej Kabachnik
+ * @author Miriam Seitz
  *        
  */
 class JsonSchemaValidationError extends UnexpectedValueException
@@ -45,7 +46,13 @@ class JsonSchemaValidationError extends UnexpectedValueException
     public function getValidationErrorMessages() : array
     {
     	foreach ($this->errors as $error){
-    		$messages[] = $error['message'];
+    		switch (true) {
+    			case is_array($error):
+	    			$messages[] = $error['message'];    
+	    			break;
+    			case is_string($error):
+    				$messages[] = $error;
+    		}
     	}
         
         return $messages;
