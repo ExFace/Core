@@ -20,7 +20,7 @@ use exface\Core\CommonLogic\UxonObject;
  * be easily accessed by subsequent request handlers.
  * 
  * This allows to use different facade configuration depending on the route - like in
- * the DataFlowFacade (object `axenox.ETL.webservice_route`). One of the most important use 
+ * the DataFlowFacade (object `axenox.ETL.webservice`). One of the most important use 
  * cases is the configuration of available authentication options - see 
  * `AbstractHttpFacade::setAuthentication()`
  * 
@@ -81,7 +81,7 @@ class RouteConfigLoader implements MiddlewareInterface
     protected function getRouteData(string $route) : array
     {
         foreach ($this->routeData->getRows() as $row) {
-            if ($row['in_url'] && StringDataType::startsWith($route, $row[$this->routePatternAttributeAlias])) {
+            if ($row['local_url'] && StringDataType::startsWith($route, $row[$this->routePatternAttributeAlias])) {
                 return $row;
             }
         }
