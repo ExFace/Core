@@ -113,7 +113,8 @@ HTML;
         $disableJs = $this->getWidget()->isDisabled() ? "{$oSurveyJs}.mode = 'display';" : '';
         return <<<JS
         
-    $oSurveyJs.locale = '{$this->getSurveyLocale()}';    
+    $oSurveyJs.locale = '{$this->getSurveyLocale()}';  
+    $oSurveyJs.focusFirstQuestionAutomatic = false;  
     $disableJs
 JS;
     }
