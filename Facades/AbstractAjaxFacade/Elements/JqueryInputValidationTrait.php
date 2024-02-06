@@ -47,12 +47,15 @@ trait JqueryInputValidationTrait {
         
         $valJs = $valJs ?? $this->buildJsValueGetter();
         if ($constraintsJs !== '') {
-            return "(function(){ 
+            return <<<JS
+                    
+                    (function(){ 
                         var val = {$valJs}; 
                         var bConstraintsOK = true;
                         $constraintsJs;
                         return bConstraintsOK; 
-                    })()";
+                    })()
+JS;
         } else {
             return 'true';
         }
@@ -71,7 +74,10 @@ trait JqueryInputValidationTrait {
         // required_if check does not work for inTable widgets
         if ($this->getWidget()->isInTable()) {
             if ($this->getWidget()->isRequired() === true) {
-                return "if ($valueJs == null || $valueJs === '') { $onFailJs }";
+                return <<<JS
+
+                        if ($valueJs === undefined || $valueJs == null || $valueJs === '') { $onFailJs }
+JS;
             }
         }
         if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {

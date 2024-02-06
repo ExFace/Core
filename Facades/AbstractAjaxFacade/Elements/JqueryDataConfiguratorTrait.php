@@ -2,11 +2,10 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\DataConfigurator;
 
 /**
  * 
- * @method DataConfigurator getWidget()
+ * @method \exface\Core\Widgets\DataConfigurator getWidget()
  * 
  * @author Andrej Kabachnik
  *
