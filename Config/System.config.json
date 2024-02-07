@@ -80,6 +80,12 @@
             "token_lifetime_seconds": 86400,
             "token_refresh_interval": 3600,
             "id": "REMEMBERME_AUTH"
+        },
+        {
+            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\ApiKeyAuthenticator",
+            "token_lifetime_seconds": 86400,
+            "token_refresh_interval": 3600,
+            "id": "API_KEY_AUTH"
         }
     ],
     
