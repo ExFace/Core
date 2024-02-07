@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2023-12-20 10:01:28",
+    "modified_on": "2024-02-07 17:51:50",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -42,7 +42,12 @@
                                                 "caption": "Is part of app"
                                             },
                                             {
-                                                "attribute_alias": "DISABLED_FLAG"
+                                                "attribute_alias": "DISABLED_FLAG",
+                                                "caption": "On"
+                                            },
+                                            {
+                                                "attribute_alias": "MODIFICATION_FLAG",
+                                                "caption": "Modified"
                                             },
                                             {
                                                 "attribute_alias": "DEFAULT_EFFECT"
@@ -102,7 +107,7 @@
                                 ]
                             },
                             {
-                                "caption": "Disabled Policies",
+                                "caption": "Locally modified policies",
                                 "widgets": [
                                     {
                                         "widget_type": "DataTable",
@@ -113,7 +118,7 @@
                                         "paginate": false,
                                         "filters": [
                                             {
-                                                "attribute_alias": "DISABLED_FLAG",
+                                                "attribute_alias": "MODIFICATION_FLAG",
                                                 "value": 1,
                                                 "comparator": "==",
                                                 "input_widget": {
@@ -122,6 +127,10 @@
                                             }
                                         ],
                                         "columns": [
+                                            {
+                                                "attribute_alias": "DISABLED_FLAG",
+                                                "caption": "On"
+                                            },
                                             {
                                                 "attribute_alias": "EFFECT"
                                             },
@@ -134,9 +143,24 @@
                                             {
                                                 "attribute_alias": "APP__NAME",
                                                 "caption": "Is part of app"
+                                            },
+                                            {
+                                                "attribute_alias": "MODIFIED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "MODIFIED_BY_USER__USERNAME"
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "MODIFIED_ON",
+                                                "direction": "desc"
                                             }
                                         ],
                                         "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.DisableAuthorizationPolicy"
+                                            },
                                             {
                                                 "action_alias": "exface.Core.EnableAuthorizationPolicy"
                                             }
@@ -225,7 +249,8 @@
                                 "attribute_alias": "NAME"
                             },
                             {
-                                "attribute_alias": "DISABLED_FLAG"
+                                "attribute_alias": "DISABLED_FLAG",
+                                "caption": "On"
                             },
                             {
                                 "attribute_alias": "AUTHORIZATION_POINT__LABEL"
