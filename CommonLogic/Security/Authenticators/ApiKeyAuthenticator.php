@@ -7,12 +7,17 @@ use exface\Core\Widgets\Form;
 use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\PasswordDataType;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Security\ApiKeyAuthenticationTokenInterface;
 
 /**
- * Authenticates API keys against registered API Keys within PowerUI.
+ * Compares provided API key with those stored in the `USER_API_KEY` meta object.
  * 
- * Initial ApiKeyAuthToken has no username. 
- * The username is loaded from the registered API Key (User who registered API key) and set within authenticate.
+ * The provided tokes may or may not have a username. You can authenticate by using
+ * the API key only - in this case, the username will be automatically determined.
+ * 
+ * After authentication the resulting authenticated token will have the correct
+ * username in any case!
  * 
  * @author miriam.seitz
  *
@@ -28,49 +33,52 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
      */
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {       
-    	if ($token instanceof ApiKeyAuthToken === false){
-    		throw new AuthenticationFailedError($this, 'Invalid token for this authentication. Please check configuration.');
+    	if (($token instanceof ApiKeyAuthenticationTokenInterface) === false){
+    		throw new AuthenticationFailedError($this, 'Invalid token for this authentication. Please check configuration.', null, null, $token);
     	}
     	
-    	$correspondingApiKey = $this->getCorrespondingApiKey($token);
-    	if ($correspondingApiKey === null) {    		
-    		throw new AuthenticationFailedError($this, 'API key not found!');
+    	$username = $token->getUsername();
+    	$usernameVerified = null;
+    	
+    	// Read add tokens, that could match, with corresponding usernames
+    	$keySheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_API_KEY');
+    	$usernameCol = $keySheet->getColumns()->addFromExpression('USER__USERNAME');
+    	$keyCol = $keySheet->getColumns()->addFromExpression('KEY_HASH');
+    	
+    	$keyType = $keyCol->getDataType();
+    	if (($keyType instanceof PasswordDataType) === false){
+    	    throw new AuthenticationFailedError($this, 'Corrupted datatype of corresponding API key. '
+    	        . 'Type of requested API keys \'' . $keyType . '\'. API key type must always be of type ' . get_class(PasswordDataType::class));
     	}
     	
-    	$authenticatedToken = new ApiKeyAuthToken($token->getApiKey(), $correspondingApiKey['USER__USERNAME']);
+    	// If the token already contains a user, read tokens of this user only!
+    	if (null !== $username) {
+    	    $keySheet->getFilters()->addConditionFromAttribute($usernameCol->getAttribute(), $username, ComparatorDataType::EQUALS);
+    	}
+    	
+    	// $keySheet->getFilters()->addConditionFromAttribute($key->getAttribute(), $keyType->hash($token->getApiKey()));
+    	$keySheet->dataRead();
+    	
+    	// Check if any of the read keys match the one from the token
+    	foreach ($keySheet->getRows() as $keyResult) {
+    	    if ($keyType->verify($token->getApiKey(), $keyResult[$keyCol->getName()])) {
+    	        if ($usernameVerified !== null) {
+    	            throw new AuthenticationFailedError($this, 'Ambiguous API key provided!', null, null, $token);
+    	        }
+    	        $usernameVerified = $keyResult[$usernameCol->getName()];
+    	    }
+    	}
+    	
+    	// If no user could be verified, the login attempt failed
+    	if ($usernameVerified === null) {    		
+    		throw new AuthenticationFailedError($this, 'API key not found!', null, null, $token);
+    	}
+    	
+    	$authenticatedToken = new ApiKeyAuthToken($token->getApiKey(), $usernameVerified);
     	$this->checkAuthenticatorDisabledForUsername($authenticatedToken->getUsername());
+    	$this->authenticatedToken = $authenticatedToken;
         return $authenticatedToken;
     }
-    
-	/**
-	 * Loads datasheet of all registered api keys and trys to verify token.
-	 * 
-	 * @param AuthenticationTokenInterface $token
-	 * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
-	 * @throws AuthenticationFailedError
-	 */
-    private function getCorrespondingApiKey(AuthenticationTokenInterface $token) : ?array
-	{
-		$keys = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_API_KEY');
-		$key = $keys->getColumns()->addFromExpression('KEY_HASH');
-		$keys->getColumns()->addFromExpression('USER__USERNAME');
-        $keyType = $key->getDataType();
-        
-        if ($keyType instanceof PasswordDataType === false){
-        	throw new AuthenticationFailedError($this, 'Corrupted datatype of corresponding API key. '
-        		. 'Type of requested API keys \'' . $keyType . '\'. API key type must always be of type ' . get_class(PasswordDataType::class));
-        }
-        
-        // $keyResult->getFilters()->addConditionFromAttribute($key->getAttribute(), $keyType->hash($token->getApiKey()));
-        $keys->dataRead();
-        foreach ($keys->getRows() as $keyResult) {
-        	if ($keyType->verify($token->getApiKey(), $keyResult[$key->getAttribute()->getAlias()]))
-        		return $keyResult;
-        }
-        
-        return null;
-	}
-
     
     /**
      *
@@ -98,7 +106,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isSupported()
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool {
-        return ($token instanceof ApiKeyAuthToken) && $this->isSupportedFacade($token);
+        return ($token instanceof ApiKeyAuthenticationTokenInterface) && $this->isSupportedFacade($token);
     }
     
     /**

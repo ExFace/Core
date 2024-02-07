@@ -2,15 +2,15 @@
 namespace exface\Core\CommonLogic\Security\AuthenticationToken;
 
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Interfaces\Security\ApiKeyAuthenticationTokenInterface;
 
 /**
- * Authentication token for the typical username+apiKey authentication.
+ * Authentication token for API keys and access tokens with or without a username.
  * 
  * @author Andrej Kabachnik
  *
  */
-class ApiKeyAuthToken implements AuthenticationTokenInterface
+class ApiKeyAuthToken implements ApiKeyAuthenticationTokenInterface
 {
     private $username = null;
     
@@ -33,7 +33,8 @@ class ApiKeyAuthToken implements AuthenticationTokenInterface
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\ApiKeyAuthenticationTokenInterface::getApiKey()
      */
     public function getApiKey(): string
     {
