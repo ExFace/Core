@@ -56,7 +56,8 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, '{$this->getFormat()}')), \"{$this->getFormat()}\")";
+        $jsFormat = $this->escapeFormatString($this->getFormat());
+        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, {$jsFormat})), {$jsFormat})";
     }
     
      /**
@@ -84,7 +85,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "exfTools.time.formatObject({$jsDateObject}, \"{$this->getFormat()}\")";
+        return "exfTools.time.formatObject({$jsDateObject}, {$this->escapeFormatString($this->getFormat())})";
     }
     
     /**
@@ -97,7 +98,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "function(){var sTime = exfTools.time.parse({$jsString}, '{$this->getFormat()}'); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
+        return "function(){var sTime = exfTools.time.parse({$jsString}, {$this->escapeFormatString($this->getFormat())}); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
     }
         
     /**
@@ -109,7 +110,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "(exfTools.time.parse({$jsInput}, '{$this->getFormat()}') || '')";
+        return "(exfTools.time.parse({$jsInput}, {$this->escapeFormatString($this->getFormat())}) || '')";
     }
     
     /**
@@ -119,7 +120,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsValidator(string $jsValue) : string
     {
-        $formatQuoted = json_encode($this->getFormat());
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return <<<JS
 function() {
                 var mVal = {$jsValue};
@@ -173,5 +174,10 @@ JS;
     {
         $this->format = $formatString;
         return $this;
+    }
+    
+    protected function escapeFormatString(string $format) : string
+    {
+        return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

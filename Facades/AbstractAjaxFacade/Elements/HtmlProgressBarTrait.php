@@ -48,7 +48,7 @@ trait HtmlProgressBarTrait
             $text = $value ?? '&nbsp;';
             $titleProp = '';
         } else {
-            $titleProp = 'title=' . json_encode($text);
+            $titleProp = 'title=' . $this->escapeString($text, true, true);
         }
         $progress = $progress ?? $widget->getMin();
         $color = $color ?? 'transparent';
@@ -97,18 +97,16 @@ HTML;
         $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
         
         return <<<JS
-function() {
-    var val = {$value_js};
-    
+function(val) {    
     if (val === undefined || val === null || val === '') return '';
 
     var colorMap = [ {$colorMapJs} ];
     var textMap = {$textMapJs};
     var html = {$tpl};
     var numVal = parseFloat(val);    
-    var color = colorMap[colorMap.length-1][1] || 'transparent';
+    var colorBase = '{$widget->getColor()}';
+    var color = colorMap.length > 0 ? colorMap[colorMap.length-1][1] : (colorBase || 'transparent');
     var oSemanticColors = $semanticColorsJs;
-
     var c = [];
     for (var i in colorMap) {
         c = colorMap[i];
@@ -138,7 +136,7 @@ function() {
     }
     
     return html;
-}()
+}({$value_js})
 JS;
     }
 }

@@ -22,7 +22,9 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 /**
  * A query builder to access Excel files (or similar spreadsheets).
  * 
- * **WARNING:** currently only reading is supported
+ * **WARNING:** currently only reading is supported and only that of entire worksheets.
+ * The pagination is virtual, so even if the first 10 rows are requested, all rows will
+ * be read from the Excel and filtered in-memory.
  * 
  * ## Data source configuration
  * 
@@ -52,6 +54,11 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * left to right.
  * - single cell coordinates (e.g. `B3`) will add the value of the cell to each row - handy for reading header data for
  * a table.
+ * 
+ * ## Known issues and TODOs
+ * 
+ * TODO Add real pagination using read-filters
+ * TODO Add writing capabilities
  *
  * @author Andrej Kabachnik
  *        
@@ -81,6 +88,26 @@ class ExcelBuilder extends FileContentsBuilder
      * @uxon-type boolean
      */
     const DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND = 'excel_error_if_sheet_not_found';
+    
+    /**
+     * Set to TRUE to read only data, no formatting information, etc. - this consumes less memory.
+     *
+     * @uxon-property excel_read_data_only
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default false
+     */
+    const DAP_EXCEL_READ_DATA_ONLY = 'excel_read_data_only';
+    
+    /**
+     * Set to FALSE to skip reading empty cells saving some more memory on large files.
+     *
+     * @uxon-property excel_read_empty_cells
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default true
+     */
+    const DAP_EXCEL_READ_EMPTY_CELLS = 'excel_read_empty_cells';
     
     /**
      * 
@@ -127,6 +154,7 @@ class ExcelBuilder extends FileContentsBuilder
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result_rows = [];
+        $mainObj = $this->getMainObject();
         
         $query = $this->buildQuery();
         $query = $data_connection->query($query);
@@ -148,12 +176,25 @@ class ExcelBuilder extends FileContentsBuilder
             $excelPath = $query->getPathAbsolute();
         }
         
-        $spreadsheet = IOFactory::load($excelPath);
-        $sheetName = $this->getSheetForObject($this->getMainObject());
+        $dapReadDataOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_DATA_ONLY)) ?? false;
+        $dapReadEmptyCells = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_EMPTY_CELLS)) ?? true;
+        $dapErrorIfNoSheet = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND)) ?? true;
+        
+        $sheetName = $this->getSheetForObject($mainObj);
+        
+        $reader = IOFactory::createReaderForFile($excelPath);
+        // Add performance-related settings
+        $reader->setReadDataOnly($dapReadDataOnly);
+        $reader->setReadEmptyCells($dapReadEmptyCells);
+        // Make sure, only our target sheet is read as this will save memory on files with many large sheets
+        $reader->setLoadSheetsOnly($sheetName);
+        // Do read
+        $spreadsheet = $reader->load($excelPath);
+        // Get the sheet
         $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
         if (! $sheet) {
-            if (BooleanDataType::cast($this->getMainObject()->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND) ?? true)) {
+            if ($dapErrorIfNoSheet) {
                 throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
             } else {
                 return new DataQueryResultData([], 0, false, 0);
@@ -206,6 +247,11 @@ class ExcelBuilder extends FileContentsBuilder
                 $result_rows[$row_nr][$alias] = $val;
             }
         }
+        
+        // Free up memory as PHPSreadsheet is known to consume a lot of it
+        unset($sheet);
+        unset($spreadsheet);
+        unset($reader);
         
         $resultTotalRows = count($result_rows);
         

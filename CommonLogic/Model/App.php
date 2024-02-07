@@ -44,6 +44,7 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\AppInstallers\MetaModelInstaller;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -450,12 +451,17 @@ class App implements AppInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null)
     {
-        $app_installer = new AppInstallerContainer($this->getSelector());
-        // Add the injected installer
-        if ($injected_installer) {
-            $app_installer->addInstaller($injected_installer);
+        $installerContainer = new AppInstallerContainer($this->getSelector());
+        
+        // Add the model installer by default
+        $installerContainer->addInstaller(new MetaModelInstaller($this->getSelector()));
+        
+        // DEPRECATED! Add the injected installer if provided
+        if ($injected_installer !== null) {
+            $installerContainer->addInstaller($injected_installer);
         }
-        return $app_installer;
+        
+        return $installerContainer;
     }
     
     /**

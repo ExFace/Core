@@ -148,8 +148,6 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
         switch ($condition->getComparator()) {
             case ComparatorDataType::EQUALS:
             case ComparatorDataType::EQUALS_NOT:
-            case ComparatorDataType::IS:
-            case ComparatorDataType::IS_NOT:
                 $group = ConditionGroupFactory::createAND($this->getObject(), $condition->willIgnoreEmptyValues());
                 if ($condition->isEmpty() === false) {
                     $valueParts = $this->splitValue($condition->getValue());
@@ -158,6 +156,35 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
                 }
                 foreach ($this->getComponents() as $idx => $comp) {
                     $group->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[$idx], $condition->getComparator());
+                }
+                break;
+            // In case of non-exact comparison the use might search for a part of the value.
+            // So not all compound parts will be present. This is a bit complicated. 
+            // If we have a compond value `xxx-yyy-z` the user might search search for 
+            // `x`, `y` `xxx-y`, `x-y`, etc. For now we assume, that having exactly one
+            // part like `x` means, it can be anywhere. If there are multiple parts,
+            // they are assumed to start with the first one. Not sure, if this is a
+            // a notable problem...
+            case ComparatorDataType::IS:
+            case ComparatorDataType::IS_NOT:
+                $group = ConditionGroupFactory::createAND($this->getObject(), $condition->willIgnoreEmptyValues());
+                if ($condition->isEmpty() === false) {
+                    $valueParts = array_filter($this->splitValue($condition->getValue()), function($val){
+                        return $val !== '' && $val !== null;
+                    });
+                } else {
+                    $valueParts = [];
+                }
+                if (count($valueParts) === 1) {
+                    $orGroup = ConditionGroupFactory::createOR($this->getObject(), $condition->willIgnoreEmptyValues());
+                    foreach ($this->getComponents() as $idx => $comp) {
+                        $orGroup->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[0], $condition->getComparator());
+                    }
+                    $group->addNestedGroup($orGroup);
+                } else {
+                    foreach ($this->getComponents() as $idx => $comp) {
+                        $group->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[$idx], $condition->getComparator());
+                    }
                 }
                 break;
             case ComparatorDataType::IN:

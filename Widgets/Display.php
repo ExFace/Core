@@ -100,14 +100,14 @@ class Display extends Value implements iDisplayValue, iHaveColor, iHaveColorScal
      * {@inheritdoc}
      * @see iHaveColor::getColor()
      */
-    public function getColor($value = null) : ?string
+    public function getColor($widgetValue = null) : ?string
     {
-        if ($value !== null) {
-            return static::findColor($value, $this->getColorScale());
+        if ($widgetValue !== null) {
+            return static::findColor($widgetValue, $this->getColorScale());
         }
         
         if ($this->hasColorScale() && $this->color === null) {
-            return static::findColor($value);
+            return static::findColor($widgetValue);
         }
         
         return $this->color;

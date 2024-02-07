@@ -266,4 +266,10 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return CommunicationTemplateInterface[]
      */
     public function loadCommunicationTemplates(array $selectors) : array;
+    
+    /**
+     * 
+     * @return ModelLoaderInterface
+     */
+    public function clearCache() : ModelLoaderInterface;
 }

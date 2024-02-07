@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use cebe\markdown\GithubMarkdown;
+use exface\Core\DataTypes\MarkdownDataType;
 
 /**
  * Shows markdown contents rendered as HTML.
@@ -34,18 +35,7 @@ class Markdown extends Html
      * @see \exface\Core\Widgets\Html::getHtml()
      */
     public function getHtml(){
-        return $this->rebaseRelativeLinks(self::convertMarkdownToHtml($this->getMarkdown()));
-    }
-
-    /**
-     * 
-     * @param string $markdown
-     * @return string
-     */
-    public static function convertMarkdownToHtml(string $markdown) : string
-    {
-        $parser = new GithubMarkdown();
-        return $parser->parse($markdown);
+        return $this->rebaseRelativeLinks(MarkdownDataType::convertMarkdownToHtml($this->getMarkdown()));
     }
     
     /**

@@ -111,7 +111,6 @@
 	"ACTION.SETCONTEXT.NAME": "Set context",
 
 	"ACTION.SHOWDIALOG.NAME": "Open dialog",
-	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Abbrechen",
 	
 	"ACTION.SHOWDIALOGFROMFILE.NAME": "Widget aus Datei anzeigen",
 
@@ -300,9 +299,6 @@
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND": "Zusammengesetztes Attribut",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER": "Trenner",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT": "Damit Werte des zusammengesetzen Attributs korrekt verwendet werden können (insb. als Filter oder bei Schreib-Operationen), müssen Präfixe und Suffixe der Teil-Attribute so gesetzt werden, dass sie als eindeutige Trenner funktioniern - also innerhalb des Wertes eines Teil-Attributs nie vorkommen.\n\nZ.B.: wenn die Id einer Auftragsposition aus Auftragsnummer und Positionsnummer besteht, würde der Präfix \"--\" an der Pos.Nr. solche Ids produzieren: 123--1, 123--2, etc. Diese können problemlos wieder in Einzelteile zerlegt werden, da ein doppeltes Minus weder in der Auftragsnummer noch in der Positionsnummer vorkommen kann.",
-    "PAGE.OBJECTS.APP_ALIAS": "App Alias",
-    "PAGE.OBJECTS.COPY_OBJECT": "Objekt kopieren",
-    "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Objekt mit Attributen kopieren",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
@@ -414,7 +410,8 @@
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.TITLE": "Zw.-ablage",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.HINT": "Kopieren, Einfügen, etc.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY": "Kopieren",
-	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "Kopieren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_VALUE": "Wert kopieren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "In Zwischenablage kopieren",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE": "Einfügen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_HINT": "Einfügen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_DIALOG_TITLE": "Hier einfügen - z.B. Strg+V drücken!",

@@ -95,7 +95,11 @@
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{\"DELIMITER\":\",\",\"ENCLOSURE\":\"'\",\"HAS_HEADER_ROW\":false}",
+            "DATA_ADDRESS_PROPS": {
+                "DELIMITER": ",",
+                "ENCLOSURE": "'",
+                "HAS_HEADER_ROW": false
+            },
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "LOG_ENTRY",
             "DATA_ADDRESS": "[#logfile#]"

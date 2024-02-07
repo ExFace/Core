@@ -20,6 +20,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -89,6 +90,9 @@ class Condition implements ConditionInterface
         $this->exface = $exface;
         $this->ignoreEmptyValues = $ignoreEmptyValues;
         
+        if ($comparator !== null) {
+            $this->setComparator($comparator);
+        }
         if ($leftExpression !== null) {
             $this->setExpression($leftExpression);
         }
@@ -174,7 +178,14 @@ class Condition implements ConditionInterface
                 throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
             }
         }
-        if ($this->ignoreEmptyValues === true && $this->getDataType()->isValueEmpty($value)) {
+        $cmp = $this->comparator;
+        // If the value empty according to its data type, concider this condition not empty
+        // only if it should explicitly support empty values AND never for IN comparators
+        // (not sure, what exactly IN(nothing) or NOT_IN(nothing) are supposed to mean)
+        // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
+        // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
+        // like in a Prefill of an InputComboTable with multi-select
+        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
             return $this;
         }
         $this->value_set = true;
@@ -278,7 +289,8 @@ class Condition implements ConditionInterface
             $comparator = EXF_COMPARATOR_IN;
         } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && $base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = EXF_COMPARATOR_IN;
@@ -587,6 +599,25 @@ class Condition implements ConditionInterface
                     }
                 }
                 return ! $resposeOnFound;
+            case ComparatorDataType::MATCH:
+            case ComparatorDataType::NOT_MATCH:
+                $resposeOnFound = $comparator === ComparatorDataType::MATCH ? true : false;
+                if ($rightVal === null && $leftVal === null) {
+                    return $resposeOnFound;
+                }
+                if ($rightVal === null || $leftVal === null) {
+                    return ! $resposeOnFound;
+                }
+                $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                $leftParts = is_array($leftVal) ? $leftVal : explode($listDelimiter, $leftVal);
+                $rightPartsTrimmed = array_map('trim', $rightParts);
+                $leftPartsTrimmed = array_map('trim', $leftParts);
+                $intersectArray = array_intersect($rightPartsTrimmed, $leftPartsTrimmed);
+                if (! empty($intersectArray)) {
+                    return $resposeOnFound;
+                } else {
+                    return ! $resposeOnFound;
+                }
             default:
                 throw new RuntimeException('Invalid comparator "' . $comparator . '" used in condition "' . $this->toString() . '"!');
         }

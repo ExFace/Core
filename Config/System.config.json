@@ -76,6 +76,10 @@
             ]
     	},
         {
+            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\ApiKeyAuthenticator",
+            "id": "API_KEY_AUTH"
+        },
+        {
             "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
             "token_lifetime_seconds": 86400,
             "token_refresh_interval": 3600,
@@ -106,6 +110,17 @@
     },
     
     "FACADES.ROUTES": {},
+    
+    "FACADES.HTTP.HEADERS.COMMON": {
+		"X-Frame-Options": "SAMEORIGIN",
+		"Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+		"X-Content-Type-Options": "nosniff",
+		"X-XSS-Protection": "1; mode=block",
+		"Access-Control-Expose-Headers": "",
+		"Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": 0
+	},
     
     "FACADES.ABSTRACTPWAFACADE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js",
     "FACADES.ABSTRACTPWAFACADE.SERVICEWORKER_FILENAME": "ServiceWorker.js",
@@ -151,8 +166,6 @@
     	"exface/Core/Facades/AbstractPWAFacade/exfPWA.js"
     ],
     
-    "FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
-    
     "FACADES.HTTPTASKFACADE.ALLOW_HTTP_BASIC_AUTH": true,
     "FACADES.HTTPTASKFACADE.HEADERS.COMMON": {
 		"Access-Control-Allow-Origin": "",
@@ -170,10 +183,7 @@
 		"Access-Control-Allow-Credentials": "false",
 		"Access-Control-Allow-Methods": "GET, POST",
 		"Access-Control-Allow-Headers": "",
-		"Access-Control-Expose-Headers": "",
-		"Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": 0
+		"Access-Control-Expose-Headers": ""
 	},
 	
 	"FACADES.HTTPFILESERVERFACADE.ALLOW_HTTP_BASIC_AUTH": false,
@@ -185,15 +195,13 @@
 		"Access-Control-Expose-Headers": ""
 	},
 	
-	"FACADES.DOCSFACADE.HEADERS.COMMON": {
+	"FACADES.DOCSFACADE.BASE_URL_REWRITE": {},
+    "FACADES.DOCSFACADE.HEADERS.COMMON": {
 		"Access-Control-Allow-Origin": "",
 		"Access-Control-Allow-Credentials": "false",
 		"Access-Control-Allow-Methods": "GET",
 		"Access-Control-Allow-Headers": "",
-		"Access-Control-Expose-Headers": "",
-		"Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": 0
+		"Access-Control-Expose-Headers": ""
 	},
 	
     "INSTALLER.SERVER_INSTALLER.CLASS": ""

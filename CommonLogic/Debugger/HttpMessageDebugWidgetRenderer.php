@@ -250,7 +250,7 @@ MD;
                 case stripos($contentType, 'json') !== false:
                     $json = $message->getBody()->__toString();
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        $jsonArray = JsonDataType::decodeJson($json);
+                        $jsonArray = JsonDataType::decodeJsonAsArray($json);
                         array_walk_recursive($jsonArray, function($val, $key){
                             if (is_string($val) && mb_strlen($val) > self::MAX_PARAM_PRINT_SIZE) {
                                 return $this->prettifyTruncateValue($val);

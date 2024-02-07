@@ -184,4 +184,18 @@ class ArrayDataType extends AbstractDataType
         }
         return $output;
     }
+    
+    /**
+     * Returns unique values from an array of strings or scalars using case insensitive compare
+     * 
+     * @param string[] $array
+     * @return string[]
+     */
+    public static function filterUniqueCaseInsensitive(array $array) : array
+    {
+        return array_intersect_key(
+            $array,
+            array_unique(array_map( "mb_strtolower", $array ))
+        );
+    }
 }

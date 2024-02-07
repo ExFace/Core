@@ -41,6 +41,8 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Factories\ConditionFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -565,22 +567,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
-                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
+                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface: 
+                    $qpartChilds = $qpart->getCompoundChildren();
+                    $qpartChildFirstInDB = null;
+                    $qpartChildsFormulas = [];
+                    foreach ($qpartChilds as $i => $compQpart) {
+                        $compAttr = $compQpart->getAttribute();
+                        if ($compAttr->hasCalculation()) {
+                            if ($compAttr->getCalculationExpression()->isStatic()) {
+                                $qpartChildsFormulas[$i] = $compAttr->getCalculationExpression();
+                            } else {
+                                throw new QueryBuilderException('Cannot read compound attribute ' . $compAttr->__toString() . ' via SQL: compounds with calculated non-static components are not supported!');
+                            }
+                        } elseif ($qpartChildFirstInDB === null) {
+                            $qpartChildFirstInDB = $compQpart;
+                        }
+                    }
                     foreach ($rows as $nr => $row) {
                         $compValues = [];
                         if ($qpart->hasAggregator() === true) {
                             switch ($qpart->getAggregator()->getFunction()->__toString()) {
+                                // Counting compounds is fairly easy - just count the first
+                                // part coming from the DB (= not calculated)
                                 case AggregatorFunctionsDataType::COUNT:
-                                    $compQpart = $qpart->getCompoundChildren()[0];
-                                    $rows[$nr][$qpart->getColumnKey()] = $row[$compQpart->getColumnKey()];
+                                    $rows[$nr][$qpart->getColumnKey()] = $row[$qpartChildFirstInDB->getColumnKey()];
                                     unset ($rows[$nr][$compQpart->getColumnKey()]);
                                     break;
                                 default:
                                     throw new RuntimeException('Cannot read compound attributes with aggregator' . $this->getAggregator()->exportString() . '!');
                             }
                         } else {
-                            foreach ($qpart->getCompoundChildren() as $component) {
-                                $compValues[] = $row[$component->getColumnkey()];
+                            foreach ($qpartChilds as $i => $compQpart) {
+                                if (array_key_exists($i, $qpartChildsFormulas)) {
+                                    $compValues[] = $qpartChildsFormulas[$i]->evaluate();
+                                } else {
+                                    $compValues[] = $row[$compQpart->getColumnkey()];
+                                }
                             }
                             $rows[$nr][$qpart->getColumnKey()] = $qpart->getAttribute()->mergeValues($compValues);
                         }
@@ -1035,6 +1057,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($qparts as $qpart) {
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             $attr = $qpart->getAttribute();
+            if (! $this->canReadAttribute($attr)) {
+                continue;
+            }
             if (! $queries[$attr->getRelationPath()->toString()]) {
                 $q = clone $this;
                 if ($attr->getRelationPath()->toString()) {
@@ -1060,12 +1085,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @param mixed $value
      * @param DataTypeInterface $data_type
-     * @param string $sql_data_type
-     * @return string
+     * @param string[] $dataAddressProps
+     * @param bool $parse
+     * @return string|mixed
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        $value = $data_type->parse($value);
+        $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
         switch (true) {
             case $data_type instanceof StringDataType:
                 // JSON values are strings too, but their columns should be null even if the value is an
@@ -1361,6 +1387,22 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        
+        // Some aggregators require customized subselects - handle them here
+        if (($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator()) {
+            $aggr = $qpart->getAggregator()->getFunction()->__toString();
+            // MIN_OF and MAX_OF basically do subselect with LIMIT 1 ordered by the first argument of the aggregator
+            if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
+                $relq->setLimit(1, 0);
+                $relq->addSorter(
+                    $qpart->getAggregator()->getArguments()[0], 
+                    $aggr === AggregatorFunctionsDataType::MAX_OF ? SortingDirectionsDataType::DESC : SortingDirectionsDataType::ASC,
+                    false
+                );
+                $relq_attribute_alias = DataAggregation::stripAggregator($relq_attribute_alias);
+            }
+        }
+        
         $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
@@ -1496,6 +1538,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case AggregatorFunctionsDataType::MAX:
             case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
+                break; 
+            case AggregatorFunctionsDataType::MAX_OF:
+            case AggregatorFunctionsDataType::MIN_OF:
+                // MIN_OF/MAX_OF is handled in buildSqlSelectSubselect()
+                $output = $sql;
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
@@ -1908,6 +1955,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         
+        // If the attribute has no data address AND is a static calculation, generate a 
+        // static WHERE clause that compares the result of the static expression evaluation 
+        // and the value provided. This ensures, that such comparisons behave roughly the 
+        // same as those with real SQL addresses. This is required for compound attributes 
+        // with static components!
+        if (empty($select) && empty($customWhereClause) && empty($customWhereAddress) && $attr->hasCalculation() && $attr->getCalculationExpression()->isStatic()) {
+            $staticVal = $attr->getCalculationExpression()->evaluate();
+            return $this->buildSqlWhereComparator("'{$this->escapeString($staticVal)}'", $comp, $val, $qpart->getDataType(), $qpart->getDataAddressProperties(), $delimiter, $qpart->isValueDataAddress());
+        }
+        
         // Doublecheck that the filter actually can be used
         if (! ($select || $customWhereClause) || $val === '') {
             if ($val === '') {
@@ -2024,6 +2081,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             continue;
                         }
                         // Normalize non-empty values
+                        $val = trim($val);
                         $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
                     }
                     
@@ -2132,7 +2190,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $data_type instanceof StringDataType:
             case $data_type instanceof DateDataType:
             case $data_type instanceof TimeDataType:
-                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps);
+                $output = $this->prepareInputValue($value, $data_type, $dataAddressProps, false);
                 break;
             default:
                 $output = $this->escapeString($value);
@@ -2884,7 +2942,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
+            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($addr, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
         }
         
         return $addr;

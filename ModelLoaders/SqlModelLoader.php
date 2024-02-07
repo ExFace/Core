@@ -125,7 +125,7 @@ class SqlModelLoader implements ModelLoaderInterface
     
     private $nodes_loaded = [];
     
-    private $menu_tress_loaded = [];
+    private $menu_trees_loaded = [];
     
     private $messages_loaded = [];
     
@@ -429,7 +429,7 @@ class SqlModelLoader implements ModelLoaderInterface
                         }
                         
                         if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
-                            throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
+                            throw new MetaModelLoadingFailedError('Cannot create reverse relation for object ' . $object->__toString() . '. Relation with alias "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '") from object with UID "' . $row['object_oid'] . '" not found: either the object is not there or its relation attribute is missing. Please repair the model!', '70UJ2GV');
                         }
                         
                         switch ($row['relation_cardinality']) {
@@ -1280,8 +1280,8 @@ SQL;
                 ->setName($row['name'])
                 ->setUid($row['oid'])
                 ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), ($row['default_effect_local'] ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), ($row['combining_algorithm_local'] ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['default_effect_local'])) ? $row['default_effect_local'] : $row['default_effect_in_app'])))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['combining_algorithm_local'])) ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
             $array[] = $authPoint;
         }
         return $array;
@@ -1346,6 +1346,7 @@ SELECT
     {$this->buildSqlUuidSelector('apol.target_user_role_oid')} AS target_user_role_oid,
     {$this->buildSqlUuidSelector('apol.target_object_oid')} AS target_object_oid,
     {$this->buildSqlUuidSelector('apol.target_object_action_oid')} AS target_object_action_oid,
+    {$this->buildSqlUuidSelector('apol.target_app_oid')} AS target_app_oid,
     baction.alias AS target_object_action_alias,
     capp.app_alias AS target_object_action_app
 FROM
@@ -1367,23 +1368,25 @@ SQL;
         }
         
         foreach (($this->auth_policies_loaded[$username][$authPoint->getUid()] ?? []) as $row) {
-            $action = null;
-            if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
-            }
-            if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
-                $action = $row['target_action_class_path'];
-            } else if ($row['target_object_action_oid'] !== null) {
-                $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
-            }
+            //make sure to not throw exception outside of the try catch as it would skip adding and evaluating any further policies!
             try {
+                $action = null;
+                if ($row['target_object_action_oid'] !== null && $row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {                    
+                    throw new RuntimeException('Invalid authorization policy configuration for "' . $row['name'] . '": policies cannot have object action and action prototype values at the same time!');
+                }
+                if ($row['target_action_class_path'] !== null && $row['target_action_class_path'] !== '') {
+                    $action = $row['target_action_class_path'];
+                } else if ($row['target_object_action_oid'] !== null) {
+                    $action = $row['target_object_action_app'] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['target_object_action_alias'];
+                }            
                 $authPoint->addPolicy(
                     [
                         PolicyTargetDataType::USER_ROLE => $row['target_user_role_oid'],
                         PolicyTargetDataType::PAGE_GROUP => $row['target_page_group_oid'],
                         PolicyTargetDataType::META_OBJECT => $row['target_object_oid'],
                         PolicyTargetDataType::ACTION => $action,
-                        PolicyTargetDataType::FACADE => $row['target_facade_class_path'],
+                        PolicyTargetDataType::APP => $row['target_app_oid'],
+                        PolicyTargetDataType::FACADE => $row['target_facade_class_path'] ? $row['target_facade_class_path'] : null,
                     ],
                     PolicyEffectDataType::fromValue($this->getWorkbench(), $row['effect']),
                     $row['name'],
@@ -1583,7 +1586,7 @@ SQL;
     {
         $treeRootNodes = $tree->getStartRootNodes();
         $orphanNodes = [];
-        $loadedtree = $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()];
+        $loadedtree = $this->menu_trees_loaded[$tree->getExpandPathToPage()->getUid()];
         if ($loadedtree !== null && $loadedtree->isLoaded() === true && $loadedtree->getStartRootNodes() === $treeRootNodes) {
             return $loadedtree->getRootNodes();
         }
@@ -1684,7 +1687,7 @@ SQL;
             $treeRootNodes[] = $orphan;
         }
         
-        $this->menu_tress_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
+        $this->menu_trees_loaded[$tree->getExpandPathToPage()->getUid()] = $tree;
         return $treeRootNodes;
     }
     
@@ -2107,5 +2110,24 @@ SQL;
         }
         
         return $tpls;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::clearCache()
+     */
+    public function clearCache() : ModelLoaderInterface
+    {
+        $this->data_types_by_uid = [];
+        $this->data_type_uids = [];
+        $this->connections_loaded = [];
+        $this->pages_loaded = [];
+        $this->nodes_loaded = [];
+        $this->menu_trees_loaded = [];
+        $this->messages_loaded = [];
+        $this->auth_policies_loaded = null;
+        $this->apps_loaded = null;
+        return $this;
     }
 }

@@ -36,9 +36,9 @@ class FileLink extends \exface\Core\CommonLogic\Model\Formula
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
 
         if ($makeOneTimeLink) {
-            return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, false, $properties);
+            return HttpFileServerFacade::buildUrlToOneTimeLink($object, $uid, $properties, false);
         }
-        return HttpFileServerFacade::buildUrlToDownloadData($object, $uid, false, $properties);
+        return HttpFileServerFacade::buildUrlToDownloadData($object, $uid, $properties, true, false);
     }
     
     /**

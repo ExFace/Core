@@ -86,7 +86,7 @@ trait JqueryContainerTrait {
      *
      * @return string
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         $widget = $this->getWidget();
         
@@ -324,11 +324,25 @@ JS;
         
         $js = '';
         foreach ($this->getWidget()->getWidgets() as $child) {
-            if ($child->hasFunction($functionName, false)) {
+            if ($child->hasFunction($functionName)) {
                 $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
             }
         }
         
+        return $js;
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsSetDisabled()
+     */
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $js = '';
+        foreach ($this->getWidget()->getWidgets() as $w) {
+            $el = $this->getFacade()->getElement($w);
+            $js .= "\n" . $el->buildJsSetDisabled($trueOrFalse) . ';';
+        }
         return $js;
     }
 }

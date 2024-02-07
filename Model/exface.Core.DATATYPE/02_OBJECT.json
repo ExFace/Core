@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2021-07-28 17:29:55",
+            "MODIFIED_ON": "2023-11-04 08:53:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32360000000000000000000000000000",
@@ -149,6 +149,69 @@
                                         "attribute_alias": "DEFAULT_DISPLAY_UXON",
                                         "width": "max",
                                         "height": "50%"
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Attributes",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.ATTRIBUTE",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "DATATYPE",
+                                                "comparator": "==",
+                                                "required": true,
+                                                "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT__APP"
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT"
+                                            },
+                                            {
+                                                "attribute_alias": "CUSTOM_DATA_TYPE",
+                                                "input_widget": {
+                                                    "widget_type": "Input",
+                                                    "height": 1,
+                                                    "width": 1
+                                                }
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "OBJECT__NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT__APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "CUSTOM_DATA_TYPE_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "DEFAULT_DISPLAY_FLAG"
+                                            },
+                                            {
+                                                "attribute_alias": "DEFAULT_EDITOR_FLAG"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                                "bind_to_double_click": true
+                                            }
+                                        ]
                                     }
                                 ]
                             }
