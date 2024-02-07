@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * Renders a dialog to create a copy of the input object.
@@ -100,23 +101,31 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         if ($widget instanceof iContainOtherWidgets) {
             $copyRelAliases = $this->getCopyRelationAliases();
             foreach ($widget->getWidgetsRecursive() as $child) {
-                if ($child instanceof iShowData) {
-                    $relFilters = $child->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject());
-                    /* @var $relFilter \exface\Core\Widgets\Filter */
-                    foreach ($relFilters as $relFilter) {
-                        if (! $relFilter->isBoundToAttribute()) {
-                            continue;
-                        }
-                        $fltrAttr = $relFilter->getAttribute();
-                        $relPath = $fltrAttr->getRelationPath()->copy();
-                        if ($fltrAttr->isRelation()) {
-                            $relPath->appendRelation($fltrAttr->getRelation());
-                            
-                        }
-                        $revRelPath = $relPath->reverse();
-                        if (! in_array($revRelPath->toString(), $copyRelAliases)) {
-                            $child->setDoNotPrefill(true);
-                        }
+                switch (true) {
+                    case $child instanceof iShowData:
+                        $dataChild = $child;
+                        break;
+                    case $child instanceof iUseData:
+                        $dataChild = $child->getData();
+                        break;
+                    default:
+                        continue 2;
+                }
+                $relFilters = $dataChild->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject());
+                /* @var $relFilter \exface\Core\Widgets\Filter */
+                foreach ($relFilters as $relFilter) {
+                    if (! $relFilter->isBoundToAttribute()) {
+                        continue;
+                    }
+                    $fltrAttr = $relFilter->getAttribute();
+                    $relPath = $fltrAttr->getRelationPath()->copy();
+                    if ($fltrAttr->isRelation()) {
+                        $relPath->appendRelation($fltrAttr->getRelation());
+                        
+                    }
+                    $revRelPath = $relPath->reverse();
+                    if (! in_array($revRelPath->toString(), $copyRelAliases)) {
+                        $dataChild->setDoNotPrefill(true);
                     }
                 }
             }
