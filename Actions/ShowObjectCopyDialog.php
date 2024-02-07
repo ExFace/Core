@@ -6,14 +6,18 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetMapperFactory;
-use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Renders a dialog to create a copy of the input object.
  * 
- * Dialog rendering works just like in `ShowObjectEditDialog`, but the save-button creates a copy
- * instead of modifying the selected object by calling the `CopyData` action.
+ * Dialog rendering works just like in `ShowObjectEditDialog`, but
+ * - save-button creates a copy instead of modifying the selected object by calling the `CopyData` action
+ * - all other buttons like those for editing related objects are removed similarly to 
+ * `ShowObjectInfoDialog`
+ * - any data widgets showing related objects are empty if those related objects are not to
+ * be copied
  * 
  * By default the object being shown is copied and all related objects, marked for copying in
  * the metamodel of their relation attributes. However, you can also specify the related objects
@@ -21,9 +25,9 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * In this case, the `CopyData` action will perform a deep-copy.
  * 
  * Also note, that by default the editors of non-copyable attributes will remain empty (since they
- * should not be copied). However, this behavior is automatically disable if the action has `input_mappers`.
- * So, if for any reason, you need a prefill for non-copyable attributes, use input mappers to define the
- * values explicitly.
+ * should not be copied). However, this behavior is automatically disabled if the action has 
+ * `input_mappers`. So, if for any reason, you need a prefill for non-copyable attributes, use 
+ * input mappers to define the values explicitly.
  * 
  * @author Andrej Kabachnik
  *
@@ -43,6 +47,10 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         $this->setIcon(Icons::CLONE_);
         $this->setSaveActionAlias('exface.Core.CopyData');
         $this->setPrefillWithFilterContext(false);
+        // Remove any buttons as they often assume, that the UID if present in the dialog
+        // is the UID of the edited object - which it is NOT in this case, but rather the
+        // UID of the object being copied, which is not to be changed.
+        $this->setDisableButtons(true);
     }
 
     /**
@@ -85,19 +93,36 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
             ));
         }
         
-        $this->getWorkbench()->eventManager()->addListener(OnBeforePrefillEvent::getEventName(), [$this, 'onBeforePrefillCheckIfCopyable']);
-        
-        return parent::prefillWidget($task, $widget);
-    }
-    
-    public function onBeforePrefillCheckIfCopyable(OnBeforePrefillEvent $event)
-    {
-        $widget = $event->getWidget();
-        if ($widget instanceof iShowData) {
-            foreach ($widget->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject()) as $filter) {
-                
+        // Now make sure any data widgets inside the dialog, that show related objects
+        // are empty if those related objects are not to be copied. If the are to be
+        // copied, they need to be shown, but cannot be edited because all the buttons
+        // were removed in `init()`
+        if ($widget instanceof iContainOtherWidgets) {
+            $copyRelAliases = $this->getCopyRelationAliases();
+            foreach ($widget->getWidgetsRecursive() as $child) {
+                if ($child instanceof iShowData) {
+                    $relFilters = $child->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject());
+                    /* @var $relFilter \exface\Core\Widgets\Filter */
+                    foreach ($relFilters as $relFilter) {
+                        if (! $relFilter->isBoundToAttribute()) {
+                            continue;
+                        }
+                        $fltrAttr = $relFilter->getAttribute();
+                        $relPath = $fltrAttr->getRelationPath()->copy();
+                        if ($fltrAttr->isRelation()) {
+                            $relPath->appendRelation($fltrAttr->getRelation());
+                            
+                        }
+                        $revRelPath = $relPath->reverse();
+                        if (! in_array($revRelPath->toString(), $copyRelAliases)) {
+                            $child->setDoNotPrefill(true);
+                        }
+                    }
+                }
             }
         }
+        
+        return parent::prefillWidget($task, $widget);
     }
     
     /**
