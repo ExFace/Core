@@ -51,6 +51,11 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
  *        "username": "kmts_vht_sued",
  *        "password_http_header": "test_pwd",
  *        "disabled": false
+ *      },
+ *      OR
+ *      "header_as_key": {
+ *        "key_http_header": "Api-Key",
+ *        "disabled": false
  *      }
  *    }
  *  }
@@ -346,9 +351,9 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
     }
     
     /**
-     * Authenticate using the value of an HTTP header as password for a predefined user
+     * Authenticate using the value of an HTTP header as an API key to match agains registered API keys.
      *
-     * @uxon-property header_as_password
+     * @uxon-property header_as_api_key
      * @uxon-type object
      * @uxon-template {"key_http_header": "", "disabled": false}
      *
