@@ -47,15 +47,12 @@ trait JqueryInputValidationTrait {
         
         $valJs = $valJs ?? $this->buildJsValueGetter();
         if ($constraintsJs !== '') {
-            return <<<JS
-                    
-                    (function(){ 
-                        var val = {$valJs}; 
+            return "(function(){
+                        var val = {$valJs};
                         var bConstraintsOK = true;
                         $constraintsJs;
-                        return bConstraintsOK; 
-                    })()
-JS;
+                        return bConstraintsOK;
+                    })()";
         } else {
             return 'true';
         }
@@ -76,12 +73,15 @@ JS;
             if ($this->getWidget()->isRequired() === true) {
                 return <<<JS
 
-                        if ($valueJs === undefined || $valueJs == null || $valueJs === '') { $onFailJs }
+                        if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs }
 JS;
             }
         }
         if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
-            return "if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs == null || $valueJs === '') { $onFailJs } }";
+            return <<<JS
+
+                        if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs } }
+JS;
         }
         return '';
     }
