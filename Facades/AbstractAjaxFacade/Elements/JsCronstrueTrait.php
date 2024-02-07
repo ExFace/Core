@@ -44,7 +44,7 @@ trait JsCronstrueTrait
             $localeJs = '';
         }
         return <<<JS
-($value_js ? cronstrue.toString($value_js, { verbose: true, use24HourTimeFormat: true {$localeJs} }) : $value_js)
+(function(val) { return (! val ? val : cronstrue.toString(val, { verbose: true, use24HourTimeFormat: true {$localeJs} }))})($value_js)
 JS;
     }
         
