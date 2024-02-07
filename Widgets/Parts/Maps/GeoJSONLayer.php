@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Maps;
 
 use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Map;
@@ -10,15 +9,20 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
+use exface\Core\Widgets\Traits\iHaveColorTrait;
 use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\JsValueScaleTrait;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class GeoJSONLayer extends AbstractDataLayer implements iHaveColor, iHaveColorScale
+class GeoJSONLayer extends AbstractMapLayer implements GeoJsonMapLayerInterface, iHaveColor, iHaveColorScale
 {
     use iHaveColorTrait;
     
@@ -69,42 +73,61 @@ class GeoJSONLayer extends AbstractDataLayer implements iHaveColor, iHaveColorSc
                 return '';
             }
             
-            $color = $this->getColor() ?? $facadeElement->getLayerBaseColor($this);
-            $styleJs = "";
-            $colorScaleJs = '';
-            if ($weight = $this->getLineWeight()) {
-                $styleJs .= "weight: $weight,";
+            return $this->buildJsLayerGeoJson($layer, $facadeElement);
+        });
+    }
+    
+    protected function buildJsLayerGeoJson(MapLayerInterface $layer, AjaxFacadeElementInterface $facadeElement)
+    {
+        if (! ($layer instanceof GeoJsonMapLayerInterface)) {
+            return null;
+        }
+        
+        $color = $layer->getColor() ?? $facadeElement->getLayerBaseColor($layer);
+        $styleJs = "";
+        $colorScaleJs = '';
+        if ($weight = $layer->getLineWeight()) {
+            $styleJs .= "weight: $weight,";
+        }
+        if ($opacity = $layer->getOpacity()) {
+            $styleJs .= "opacity: $opacity,";
+        }
+        if ($layer->hasColorScale()) {
+            $scaleProp = $layer->getColorScaleProperty();
+            if ($scaleProp === null) {
+                throw new WidgetConfigurationError($layer->getMap(), 'Missing map layer option color_scale_property: A GeoJSON map layer with a color_scale must know, which property of the features to use a scale base!');
             }
-            if ($opacity = $this->getOpacity()) {
-                $styleJs .= "opacity: $opacity,";
-            }
-            if ($this->hasColorScale()) {
-                $scaleProp = $this->getColorScaleProperty();
-                if ($scaleProp === null) {
-                    throw new WidgetConfigurationError($this->getMap(), 'Missing map layer option color_scale_property: A GeoJSON map layer with a color_scale must know, which property of the features to use a scale base!');
-                }
-                $colorScaleJs = "oStyle.color = {$this->buildJsScaleResolver('feature.properties.' . $scaleProp, $this->getColorScale(), $this->isColorScaleRangeBased())}";
-            } else {
-                $styleJs .= "color: '$color',";
-            }
-            
-            $styleFuncJs = <<<JS
-
+            $colorScaleJs .= "oStyle.color = " . $this->buildJsScaleResolver('feature.properties.' . $scaleProp, $this->getColorScale(), $this->isColorScaleRangeBased());
+        } else {
+            $styleJs .= "color: '$color',";
+        }
+        
+        $styleFuncJs = <<<JS
+        
             var oStyle = { {$styleJs} };
             $colorScaleJs
             return oStyle;
-
-JS;
             
-            if ($layer->getAutoZoomToSeeAll() === true){
-                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer');
+JS;
+            // Add auto-zoom
+            if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
+                $autoZoomJs = $facadeElement->buildJsAutoZoom('oLayer', $layer->getAutoZoomMax());
             }
             
+            if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
+                $proj = $layer->getProjection();
+                $projectionInit = "proj4.defs('{$proj->getName()}', '{$proj->getDefinition()}');";
+                $layerConstructor = 'L.Proj.geoJson';
+            } else {
+                $layerConstructor = 'L.geoJSON';
+            }
             
             return <<<JS
             
 (function(){
-    var oLayer = L.geoJSON(null, {
+    $projectionInit
+    
+    var oLayer = $layerConstructor(null, {
         onEachFeature: function (feature, layer) {
             var oPopupData = [];
             for (var prop in feature.properties) {
@@ -113,14 +136,14 @@ JS;
                     value: feature.properties[prop]
                 });
             }
-            {$facadeElement->buildJsLeafletPopup("'{$this->getCaption()}'", $facadeElement->buildJsLeafletPopupList('oPopupData'), 'layer')}
+            {$facadeElement->buildJsLeafletPopup("'{$layer->getCaption()}'", $facadeElement->buildJsLeafletPopupList('oPopupData'), 'layer')}
         },
         style: function(feature) {
             $styleFuncJs
         },
         pointToLayer: function(feature, latlng) {
             var oProps = feature.properties;
-            return L.marker(latlng, { 
+            return L.marker(latlng, {
                 icon: new L.ExtraMarkers.icon({
                     icon: '',
                     markerColor: '$color',
@@ -129,10 +152,41 @@ JS;
                     svg: true,
                 })
             });
-        },      
+        },
     });
-
+    
     oLayer._exfRefresh = function() {
+        {$this->buildJsLayerGeoJsonLoader($layer, 'aFeatures', <<<JS
+            
+        oLayer.clearLayers();
+        oLayer.addData(aFeatures);
+            
+        {$autoZoomJs}
+        
+JS, '')}
+    }
+    
+    {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
+    oLayer._exfRefresh();
+    
+    return oLayer;
+})()
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param MapLayerInterface $layer
+     * @param string $aFeaturesJs
+     * @param string $onLoadedJs
+     * @param string $onErrorJs
+     * @return string
+     */
+    protected function buildJsLayerGeoJsonLoader(MapLayerInterface $layer, string $aFeaturesJs, string $onLoadedJs, string $onErrorJs) : string
+    {
+        return <<<JS
+
         fetch('{$this->getUrl()}', {
             headers: {
                 'Accept': 'application/geo+json,application/json'
@@ -142,23 +196,16 @@ JS;
             return response.json()
         })
         .then(function(data) {
+            var $aFeaturesJs;
             if (! Array.isArray(data) && Array.isArray(data.features)) {
-                data = data.features;
+                $aFeaturesJs = data.features;
+            } else {
+                $aFeaturesJs = data;
             }
-            oLayer.addData(data);
-
-            {$autoZoomJs}
+            $onLoadedJs
         });
-    }
-
-    {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
-    oLayer._exfRefresh();
-
-    return oLayer;
-})()
 
 JS;
-        });
     }
     
     /**
@@ -193,7 +240,7 @@ JS;
      * 
      * @return float|NULL
      */
-    protected function getLineWeight() : ?float
+    public function getLineWeight() : ?float
     {
         return $this->lineWeight;
     }
@@ -220,7 +267,7 @@ JS;
      * 
      * @return float|NULL
      */
-    protected function getOpacity() : ?float
+    public function getOpacity() : ?float
     {
         return $this->opacity;
     }

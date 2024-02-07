@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-29 11:42:56",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2023-04-04 17:44:57",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-11-27 16:08:38",
     "contents": {
         "object_alias": "exface.Core.PAGE",
         "widget_type": "DataTree",
@@ -159,7 +159,11 @@
                 "action_alias": "exface.Core.ShowPageQrCode"
             },
             {
-                "action_alias": "exface.Core.RestorePageMenuPosition"
+                "action": {
+                    "alias": "exface.Core.RestorePageMenuPosition",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                }
             },
             {
                 "action_alias": "exface.Core.DeleteObject"

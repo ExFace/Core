@@ -168,6 +168,8 @@ class LoginPrompt extends Container implements iFillEntireContainer, iShowMessag
                 }
             } else {
                 $loginPrompt = $provider->createLoginWidget($loginPrompt);
+                //populate login form with standard login prompts
+                $loginPrompt->getMessageList();
                 $loginFormCreated = true;
             }
             

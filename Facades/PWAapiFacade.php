@@ -223,11 +223,14 @@ class PWAapiFacade extends HttpTaskFacade
     }
     
     /**
-     *
-     * @return string[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\HttpTaskFacade::buildHeadersCommon()
      */
     protected function buildHeadersCommon() : array
     {
-        return array_filter($this->getConfig()->getOption('FACADES.PWAAPIFACADE.HEADERS.COMMON')->toArray());
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADES.PWAAPIFACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
     }
 }

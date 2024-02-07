@@ -242,8 +242,12 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
         if ($this->getLimit() > 0 && $this->isAggregatedToSingleRow() === false) {
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
-            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
+            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . $limitRows . ' ROWS ONLY';
         }
 
         if ($useEnrichment) {
@@ -610,11 +614,11 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
         switch (true) {
             case $data_type instanceof StringDataType:
-                $value = $data_type->parse($value);
+                $value = $parse ? $data_type->parse($value) : $data_type::cast($value);
                 // JSON values are strings too, but their columns should be null even if the value is an
                 // empty object or empty array (otherwise the cells would never be null)
                 if (($data_type instanceof JsonDataType) && $data_type::isValueEmpty($value) === true) {
@@ -624,7 +628,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 }
                 break;
             case $data_type instanceof DateTimeDataType:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ($data_type->getShowMilliseconds()) {
                     $format = 121;
                 } else {
@@ -641,13 +645,13 @@ class MsSqlBuilder extends AbstractSqlBuilder
                 // Use CONVERT() instead of string dates like '2023-06-20'
                 // See https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16
                 // But do not convert non-strings like `NULL` or custom SQL statements
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
                 if ("'" === mb_substr($value, 0, 1)) {
                     $value = "CONVERT(date, {$value}, 23)";
                 }
                 break;
             default:
-                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps);
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
         }
         return $value;
     }

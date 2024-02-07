@@ -98,19 +98,37 @@ trait EnumDynamicDataTypeTrait {
         }
     }
     
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::parse()
+     */
     public function parse($string)
     {
-        if ($string === null || $string === '') {
-            return $string;
+        // Do not cast the value to aviod type mismatches with array keys (e.g. do not normalize numbers!)
+        $value = trim($string);
+        
+        $valueInArray = array_key_exists($value, $this->values);
+        
+        // Convert all sorts of empty values to NULL except if they are explicitly
+        // part of the enumeration: e.g. an empty string should become null if the
+        // enumeration does not include the empty string explicitly.
+        // TODO #null-or-NULL does the NULL constant need to pass parsing?
+        if (($this->isValueEmpty($value) || static::isValueLogicalNull($value)) && $valueInArray === false) {
+            return null;
         }
         
-        if (false === array_key_exists($string, $this->values)) {
+        if (false === $valueInArray) {
             throw $this->createValidationError('Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
         }
         
-        return $string;
+        return $value;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getShowValues() : bool
     {
         return $this->showValues;

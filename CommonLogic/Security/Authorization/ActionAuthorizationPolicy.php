@@ -34,6 +34,8 @@ use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Policy for access to actions.
@@ -44,6 +46,23 @@ use exface\Core\CommonLogic\Selectors\FacadeSelector;
  * - Object action - policy only applies to this particular action model
  * - Action prototype - policy applies to all actions of this prototype
  * - Meta object - policy applies to all actions on this meta object
+ * - App - policy applies to actions, objects or pages of this app only - see details below.
+ * 
+ * **NOTE:** It is important to understand, that policies targeting an app
+ * can have different effects depending on what apps are taken into account
+ * at the moment an action is performed. 
+ * 
+ * By default, a policy targeting an app will be applied to all actions, that belong
+ * to that app - regardless of the object they are performed upon or the page they
+ * are triggered in. However, you can customize this behavior using the following 
+ * additional conditions:
+ * 
+ * - `apply_if_target_app_matches_action_app` - default - means, a policy targeting an app is
+ * applied to actions, that belong to that app.
+ * - `apply_if_target_app_matches_object_app` - means, a policy targeting
+ * an app is applied to actions, performed upon objects of that app.
+ * - `apply_if_target_app_matches_page_app` - means, a policy targeting an app is
+ * applied to actions performed on pages of that app
  * 
  * Additional conditions:
  * 
@@ -77,6 +96,8 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $facadeSelector = null;
     
+    private $appUid = null;
+    
     private $conditionUxon = null;
     
     private $effect = null;
@@ -91,6 +112,12 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     
     private $httpTasks = null;
     
+    private $appUidAppliesToAction = true;
+    
+    private $appUidAppliesToObject = false;
+    
+    private $appUidAppliesToPage = false;
+    
     /**
      * 
      * @param WorkbenchInterface $workbench
@@ -103,19 +130,22 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     {
         $this->workbench = $workbench;
         $this->name = $name;
-        if ($str = $targets[PolicyTargetDataType::USER_ROLE]) {
+        if (null !== $str = $targets[PolicyTargetDataType::USER_ROLE]) {
             $this->userRoleSelector = new UserRoleSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::ACTION]) {
+        if (null !== $str = $targets[PolicyTargetDataType::ACTION]) {
             $this->actionSelector =  new ActionSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::META_OBJECT]) {
+        if (null !== $str = $targets[PolicyTargetDataType::META_OBJECT]) {
             $this->metaObjectSelector = new MetaObjectSelector($this->workbench, $str);
         }        
-        if ($str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
+        if (null !== $str = $targets[PolicyTargetDataType::PAGE_GROUP]) {
             $this->pageGroupSelector = new UiPageGroupSelector($this->workbench, $str);
         }
-        if ($str = $targets[PolicyTargetDataType::FACADE]) {
+        if (null !== $str = $targets[PolicyTargetDataType::APP]) {
+            $this->appUid = $str;
+        }
+        if (null !== $str = $targets[PolicyTargetDataType::FACADE]) {
             $this->facadeSelector =  new FacadeSelector($this->workbench, $str);
         }
         
@@ -147,6 +177,13 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         try {
             if ($action === null) {
                 throw new InvalidArgumentException('Cannot evalute action access policy: no action provided!');
+            }
+            
+            // Stop early if action explicitly excluded
+            foreach ($this->getExcludeActions() as $selector) {
+                if ($action->isExactly($selector)) {
+                    return PermissionFactory::createNotApplicable($this, 'Action excluded explicitly');
+                }
             }
             
             // Match action
@@ -252,12 +289,11 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             
             // Match meta object
             if ($this->metaObjectSelector !== null) {
-                try {
-                    $object = $action->getMetaObject();
-                } catch (ActionObjectNotSpecifiedError $e) {
+                $object = $this->findObject($action);
+                if ($object === null) {
                     return PermissionFactory::createNotApplicable($this, 'Meta object required, but action has none');
                 }
-                if ($object === null || $object->is($this->metaObjectSelector) === false) {
+                if ($object->is($this->metaObjectSelector) === false) {
                     return PermissionFactory::createNotApplicable($this, 'Meta object does not match');
                 } else {
                     $applied = true;
@@ -267,16 +303,9 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             // Match page
-            if ($this->pageGroupSelector !== null) {
-                if ($action !== null && $action->isDefinedInWidget()) {
-                    $page = $action->getWidgetDefinedIn()->getPage();
-                } elseif ($task !== null && $task->isTriggeredOnPage()) {
-                    $page = $task->getPageTriggeredOn();
-                } else {
-                    $page = null;
-                }
-                
-                if ($page->isInGroup($this->pageGroupSelector) === false) {
+            if ($this->pageGroupSelector !== null) {            
+                $page = $this->findPage($action, $task);
+                if ($page !== null && $page->isInGroup($this->pageGroupSelector) === false) {
                     return PermissionFactory::createNotApplicable($this, 'Page group does not match');
                 } else {
                     $applied = true;
@@ -285,10 +314,38 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            foreach ($this->getExcludeActions() as $selector) {
-                if ($action->isExactly($selector)) {
-                    return PermissionFactory::createNotApplicable($this, 'Action excluded explicitly');
+            // Match app
+            if ($this->appUid !== null && $action !== null) {
+                $appMatch = null;
+                $appApplicableTo = '';
+                if ($this->appUidAppliesToAction === true) {
+                    $appApplicableTo .= ($appApplicableTo !== '' ? ', ' : '') . 'action';
+                    if (strcasecmp($action->getApp()->getUid(), $this->appUid) === 0) {
+                        $appMatch = 'action';
+                    }
                 }
+                if ($this->appUidAppliesToObject === true) {
+                    $appApplicableTo .= ($appApplicableTo !== '' ? ', ' : '') . 'object';
+                    $object = $this->findObject($action);
+                    if ($object !== null && strcasecmp($object->getApp()->getUid(), $this->appUid) === 0) {
+                        $appMatch = 'object';
+                    }
+                }
+                if ($this->appUidAppliesToPage === true) {
+                    $appApplicableTo .= ($appApplicableTo !== '' ? ', ' : '') . 'page';
+                    $page = $this->findPage($action, $task);
+                    if ($page !== null && $page->hasApp() && strcasecmp($page->getApp()->getUid(), $this->appUid) === 0) {
+                        $appMatch = 'page';
+                    }
+                }
+                
+                if ($appMatch === null) {
+                    return PermissionFactory::createNotApplicable($this, 'App does not match ' . $appApplicableTo);
+                } else {
+                    $applied = true;
+                }
+            } else {
+                $applied = true;
             }
             
             if ($applied === false) {
@@ -304,6 +361,39 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         
         // If all targets are applicable, the permission is the effect of this condition.
         return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this);
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param TaskInterface $task
+     * @return UiPageInterface|NULL
+     */
+    protected function findPage(ActionInterface $action = null, TaskInterface $task = null) : ?UiPageInterface
+    {
+        if ($action !== null && $action->isDefinedInWidget()) {
+            $page = $action->getWidgetDefinedIn()->getPage();
+        } elseif ($task !== null && $task->isTriggeredOnPage()) {
+            $page = $task->getPageTriggeredOn();
+        } else {
+            $page = null;
+        }
+        return $page;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @return MetaObjectInterface|NULL
+     */
+    protected function findObject(ActionInterface $action) : ?MetaObjectInterface
+    {
+        try {
+            $object = $action->getMetaObject();
+        } catch (ActionObjectNotSpecifiedError $e) {
+            return null;
+        }
+        return $object;
     }
     
     /**
@@ -533,5 +623,68 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function getHttpTaskRestriction() : ?bool
     {
         return $this->httpTasks;
+    }
+    
+    protected function getApplyIfTargetAppMatchesActionApp() : bool
+    {
+        return $this->appUidAppliesToAction;
+    }
+    
+    /**
+     * Set to TRUE to apply policies with an app as target to actions, that belong to that app
+     * 
+     * @uxon-property apply_if_target_app_matches_action_app
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setApplyIfTargetAppMatchesActionApp(bool $value) : ActionAuthorizationPolicy
+    {
+        $this->appUidAppliesToAction = $value;
+        return $this;
+    }
+    
+    protected function getApplyIfTargetAppMatchesObjectApp() : bool
+    {
+        return $this->appUidAppliesToObject;
+    }
+    
+    /**
+     * Set to TRUE to apply policies with an app as target to actions, dealing with an object of that app
+     *
+     * @uxon-property apply_if_target_app_matches_object_app
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setApplyIfTargetAppMatchesObjectApp(bool $value) : ActionAuthorizationPolicy
+    {
+        $this->appUidAppliesToObject = $value;
+        return $this;
+    }
+    
+    protected function getApplyIfTargetAppMatchesPageApp() : bool
+    {
+        return $this->appUidAppliesToObject;
+    }
+    
+    /**
+     * Set to TRUE to apply policies with an app as target to actions, called on a page of that app
+     *
+     * @uxon-property apply_if_target_app_matches_page_app
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ActionAuthorizationPolicy
+     */
+    protected function setApplyIfTargetAppMatchesPageApp(bool $value) : ActionAuthorizationPolicy
+    {
+        $this->appUidAppliesToObject = $value;
+        return $this;
     }
 }

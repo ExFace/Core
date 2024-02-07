@@ -148,7 +148,7 @@
 		return _string;
 	};
 	
-	function _findKey (_exp, ParseParams) {
+	function _normalizeDateInterval (sInterval, ParseParams) {
 		var langObject = _mDateParseDefaultParams.lang;
 		if (ParseParams !== undefined) {
 			if (ParseParams.lang) {
@@ -157,12 +157,33 @@
 		}
 		for (var key in langObject) {
 			if (!langObject.hasOwnProperty(key)) continue;
-			var _result = langObject[key].findIndex(item => _exp.toLowerCase() === item.toLowerCase());
+			var _result = langObject[key].findIndex(item => sInterval.toLowerCase() === item.toLowerCase());
 			if (_result !== -1) {
 				return key;
 			}
 		}
 		return null;
+	};
+	
+	/**
+	 * Returns an array like ['-1d', '-1', 'd'] for the expresison '-1d'
+	 * 
+	 * @param {string} sExpr
+	 * @param {object} [oParserParams]
+	 * @returns {array}
+	 */
+	function _matchDateRelative (sExpr, oParserParams) {
+		return (new RegExp("^([+\-]?\\d{0,3})(" + _buildRegexString(oParserParams) + ")$", "i")).exec(sExpr);
+	};
+	
+	/**
+	 * Returns an array like ['-1h', '-1', 'h'] for the expresison '-1h'
+	 *
+	 * @param {string} sExpr
+	 * @returns {array}
+	 */
+	function _matchTimeRelative (sExpr) {
+		return /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sExpr);
 	};
 	
 	function _dataRowsCompare(row1, row2) {
@@ -215,7 +236,7 @@
 				// date ist ein String und wird zu einem date-Objekt geparst
 				
 				// Variablen initialisieren
-				var oMatches = null;
+				var aMatches = null;
 				var bParsed = false;
 				var bValid = false;
 				var sTime = undefined;
@@ -223,7 +244,7 @@
 				var iYYYY, iMM, iDD;
 				var sHH, sMM, sSS;
 				var aTime;
-				var sDiffKey, sDiffExp, iDiffNumber;
+				var sIntervalType, iIntervals;
 				
 				if (sDate === '' || sDate === null) {
 					return null;
@@ -237,11 +258,11 @@
 				}
 
 				// hh:mm:ss , Thh:mm:ss
-				if (!bParsed && (oMatches = /(\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
-					sTime = oMatches[1];
-				} else if (!bParsed && (oMatches = / (\d{2}:\d{2})/.exec(sDate)) != null) {
+				if (!bParsed && (aMatches = /(\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
+					sTime = aMatches[1];
+				} else if (!bParsed && (aMatches = / (\d{2}:\d{2})/.exec(sDate)) != null) {
 				// hh:mm
-					sTime = oMatches[1];
+					sTime = aMatches[1];
 				}
 				if (sTime != undefined) {					
 					aTime = sTime.split(':');
@@ -254,66 +275,66 @@
 				}
 				
 				// dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
-				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
-					iYYYY = Number(oMatches[3]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d
-				if (!bParsed && (oMatches = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					iYYYY = Number(oMatches[1]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[3]);
+				if (!bParsed && (aMatches = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[1]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[3]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy
-				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
-					iYYYY = 2000 + Number(oMatches[3]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d
-				if (!bParsed && (oMatches = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					iYYYY = 2000 + Number(oMatches[1]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[3]);
+				if (!bParsed && (aMatches = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[1]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[3]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
-				if (!bParsed && (oMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					iYYYY = moment().year;
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = moment().year();
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyyyy
-				if (!bParsed && (oMatches = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
-					iYYYY = Number(oMatches[3]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyy
-				if (!bParsed && (oMatches = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					iYYYY = 2000 + Number(oMatches[3]);
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMM
-				if (!bParsed && (oMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					iYYYY = (new Date()).getFullYear();
-					iMM = Number(oMatches[2]);
-					iDD = Number(oMatches[1]);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = moment().year();
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
 					bParsed = true;
 					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
@@ -328,27 +349,27 @@
 					sYYYY = sYYYY.padStart(4, '0');
 					return new Date(sYYYY + '-' + sMM + '-' + sDD + sTime);
 				}
+				
 				// check for +/-?, digit?, expession in _mDateParseDefaultParams.lang?
-				oMatches = (new RegExp("^([+\-]?\\d{0,3})(" + _buildRegexString(oParserParams) + ")$", "i")).exec(sDate);
+				aMatches = _matchDateRelative(sDate, oParserParams);
 				oMoment = null;
-				if (!bParsed && (oMatches !== null)) {
+				if (! bParsed && (aMatches !== null)) {
 					oMoment = moment();
-					sDiffKey = null;
-					sDiffExp = oMatches[2];
-					iDiffNumber = Number(oMatches[1]);
-					if (iDiffNumber !== 0 && sDiffExp === '') {
-						sDiffKey ="day";
+					sIntervalType = aMatches[2];
+					iIntervals = Number(aMatches[1]);
+					if (iIntervals !== 0 && sIntervalType === '') {
+						sIntervalType ="day";
 					}
-					if (iDiffNumber === 0 && sDiffExp === '') {
-						sDiffKey = "now";
+					if (iIntervals === 0 && sIntervalType === '') {
+						sIntervalType = "now";
 					}
-					if (iDiffNumber === 0 && sDiffExp !== '') {
-						iDiffNumber = 1;
+					if (iIntervals === 0 && sIntervalType !== '') {
+						iIntervals = 1;
 					}
-					if (sDiffKey === null) {
-						sDiffKey = _findKey(sDiffExp, oParserParams);
-					}
-					switch (sDiffKey) {
+					
+					sIntervalType = _normalizeDateInterval(sIntervalType, oParserParams);
+						
+					switch (sIntervalType) {
 						case "now": break;
 						case "yesterday":
 							oMoment.subtract(1, 'days');
@@ -357,16 +378,16 @@
 							oMoment.add(1, 'days');
 							break;
 						case "day":							
-							oMoment.add(iDiffNumber, 'days');							
+							oMoment.add(iIntervals, 'days');							
 							break;
 						case "week":
-							oMoment.add(iDiffNumber, 'weeks');
+							oMoment.add(iIntervals, 'weeks');
 							break;
 						case "month":
-							oMoment.add(iDiffNumber, 'months');							
+							oMoment.add(iIntervals, 'months');							
 							break;
 						case "year":
-							oMoment.add(iDiffNumber, 'years');
+							oMoment.add(iIntervals, 'years');
 							break;
 						default: oMoment = null;
 					}
@@ -374,18 +395,18 @@
 				}
 				
 				// (+/-)? ... (H/h/M/m/S/s)?
-		        if (! bParsed && (oMatches = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
+		        if (! bParsed && (aMatches = _matchTimeRelative(sDate)) != null) {
 		            oMoment = moment();
-		            switch (oMatches[2].toUpperCase()) {
+		            switch (aMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	oMoment.add(Number(oMatches[1]), 'hours');
+		                	oMoment.add(Number(aMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	oMoment.add(Number(oMatches[1]), 'minutes');
+		                	oMoment.add(Number(aMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	oMoment.add(Number(oMatches[1]), 'seconds');
+		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
 		            bParsed = true;
@@ -420,6 +441,77 @@
 			
 			validate: function (sDate) {				
 				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
+			},
+			
+			/**
+			 * Compares two given date strings with the given comparator and granularity.
+			 * Supported comparators are '==', '<=', '<', '>=', '>'.
+			 * Supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'.
+			 *
+			 * @param {string} sDate1
+			 * @param {string} sDate2
+			 * @param {string} sComparator
+			 * @param {string} sGranularity
+			 * 
+			 * @return {bool}			 *
+			 */
+			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
+				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
+				var supportedComparators = ['==', '<=', '<', '>=', '>'];
+				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
+				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
+				if (supportedComparators.includes(sComparator) !== true) {
+					console.error("Comparator '" + sComparator + "' is not supported in date compare, supported comparators are '==', '<=', '<', '>=', '>' !")
+					return false;
+				}
+				if (supportedGranularity.includes(sGranularity) !== true) {
+					console.error("Granularity '" + sGranularity + "' is not supported in date compare, supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'seconds', 'millisecond' !")
+					return false;
+				}
+				oParsedDate1 = this.parse(sDate1);
+				if (oParsedDate1 === null) {
+					console.error("Date '" + sDate1 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oParsedDate2 = this.parse(sDate2);
+				if (oParsedDate2 === null) {
+					console.error("Date '" + sDate2 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oMomentDate1 = moment(oParsedDate1);
+				oMomentDate2 = moment(oParsedDate2);
+				switch (sComparator) {
+					case '==': return oMomentDate1.isSame(oMomentDate2, sGranularity);
+					case '<': return oMomentDate1.isBefore(oMomentDate2, sGranularity);
+					case '<=': return oMomentDate1.isSameOrBefore(oMomentDate2, sGranularity);
+					case '>': return oMomentDate1.isAfter(oMomentDate2, sGranularity);
+					case '>=': return oMomentDate1.isSameOrAfter(oMomentDate2, sGranularity);
+					default: return false;
+				}
+			},
+			
+			/**
+			 * Adds an interval to a JS date object: e.g. +1d, -1w.
+			 * 
+			 * Intervals follow the syntax of relative dates.
+			 * 
+			 * @param {Date} oDate
+			 * @param {string} sInterval
+			 * @returns {Date}
+			 */
+			add(oDate, sInterval) {
+				var aMatches = _matchDateRelative(sInterval || '1day');
+				var iNumber = Number(aMatches[1]);
+				var sIntervalType = aMatches[2];
+				var sIntervalKey;
+				switch (sIntervalType) {
+					case "week": sIntervalKey = 'weeks'; break;
+					case "month": sIntervalKey = 'months'; break;
+					case "year": sIntervalKey = 'years'; break;
+					case "day":		
+					default: sIntervalKey = 'days'; break;
+				}
+				return moment(oDate).add(iNumber, sIntervalKey).toDate();
 			}
 		},
 		
@@ -472,7 +564,7 @@
 		        if (sTimeFormat !== undefined) {
 					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
 					if (oMoment.isValid()) {
-						if (sTimeFormat.indexOf('a') !== '-1') {
+						if (sTimeFormat.indexOf('a') !== -1) {
 							return oMoment.format('hh:mm:ss a');
 						} else {
 							return oMoment.format('HH:mm:ss');
@@ -585,10 +677,10 @@
 				mRight = exfTools.data.comparableValue(mRight);
 				
 				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
-					if (parseFloat(mLeft) !== NaN) {
+					if (isNaN(mLeft) === false) {
 						mLeft = parseFloat(mLeft);
 					}
-					if (parseFloat(mRight) !== NaN) {
+					if (isNaN(mRight) === false) {
 						mRight = parseFloat(mRight);
 					}
 				}
@@ -625,6 +717,24 @@
 			                return false;
 			            }();
 						if (sComparator === '![') {
+							bResult = ! bResult;
+						}
+	                    break;
+					case '][':
+	                case '!][':
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+								for (var j = 0; j < leftValues.length; j++) {
+				                    if (rightValues[i].trim().toLowerCase() === leftValues[j].trim().toLowerCase()) {
+				                        return true;
+				                    }
+								}
+			                }
+			                return false;
+			            }();
+						if (sComparator === '!][') {
 							bResult = ! bResult;
 						}
 	                    break;
@@ -910,6 +1020,40 @@
 			 */
 			isString: function(val) {
 				return (typeof val === 'string' || val instanceof String);
+			},
+			
+			/**
+			 * Replaces most dangerous characters with HTML entities:  `&` => `&amp;`, `<` => `&lt;`, etc.
+			 */
+			htmlEscape: function(text, bEscapeQuotes) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+  				var oRegEx = bEscapeQuotes ? /[&<>"']/g : /[&<>]/g;
+				bEscapeQuotes !== undefined ? bEscapeQuotes : true;
+				if (exfTools.string.isString(text)) {
+					return text.replace(oRegEx, function(m) { return map[m]; });
+				}
+				return text;
+			},
+			
+			htmlUnescape: function(text) {
+				var map = {
+					'&amp;': '&',
+					'&lt;': '<',
+					'&gt;': '>',
+					'&quot;': '"',
+					'&#039;': "'"
+				};
+  
+				if (exfTools.string.isString(text)) {
+					return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
+				}
+				return text;
 			}
 		}
 	}

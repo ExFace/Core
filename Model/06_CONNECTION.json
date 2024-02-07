@@ -60,7 +60,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local Folders",
-            "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/LocalFileConnector.php",
             "CONFIG": null,
             "READONLY": 0,
             "ALIAS": "LOCAL_FOLDERS"
@@ -74,7 +74,7 @@
             "APP": "0x31000000000000000000000000000000",
             "TIME_ZONE": null,
             "LABEL": "Local Vendor Folders",
-            "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/LocalFileConnector.php",
             "CONFIG": {
                 "use_vendor_folder_as_base": 1
             },
@@ -177,7 +177,9 @@
             "TIME_ZONE": null,
             "LABEL": "Objects with FileBehavior",
             "CONNECTOR": "exface\/Core\/DataConnectors\/DataSourceFileContentsConnector.php",
-            "CONFIG": "$$~~KYpFY++9dNq1piLL678fOG1N7an\/yCUWmUxgbYdDP\/RkrI546A4sk6FIqWug+5SCBQCiaXY0pAG\/F+2E136Q2IGXcVt9bjt90w==",
+            "CONFIG": {
+  				"error_if_file_not_found": false
+			},
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
         }

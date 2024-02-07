@@ -168,7 +168,9 @@ Make sure the configuration file `System.config.json` exists and add the followi
 
 Now it is time to install the workbench via [Composer](Install_via_Composer.md) or the [deployer app](https://github.com/axenox/deployer/blob/1.x-dev/Docs/index.md) (if you already have a build server).
 
-## Add mime types to IIS configuration if required for facades
+## Important options in IIS configuration
+
+### Additional mime types if required for facades (e.g. UI5)
 
 Different web facades use different file types and extensions. When installing a facade, check if all required files are allowed to be downloaded from the IIS - if not, add them to the MIME type mapping of IIS:
 
@@ -181,9 +183,27 @@ For exampe, the `exface.UI5Facade` based on SAP UI5 uses `.properties` files for
 
 To find out if MIME types are missing, look for `404`-errors in your browsers network debug tools (i.e. richt click > Inspect element).
 
+### Request timeout for long-running actions
+
+PHP's `max_execution_time` will not have direct effect on IIS, only on PHP itself. If you need long-running HTTP requests - e.g. for actions with heavy processing - increase the `Activity Timeout` in `IIS Manager > your server > FastSGI > PHP application > Edit`.
+
 ## Securing sensitive folders
 
 See [security docs](../Security/Securing_installation_folders.md) for a list of folders to restrict access to.
+
+## Troubleshooting
+
+### View details of generic HTTP errors
+
+By default IIS does not show error details to users except for local users. If you need to see the details, access the app from the server itself via `http://localhost/...`.
+
+Additionally, detailed tracing can be enabled as described here: https://4sysops.com/archives/iis-failed-request-tracing/
+
+### Missing context bar / IIS changes status code from 200 to 500 WITHOUT any logging or error description
+
+Very strange behavior has been reported with the status code of certain requests (like those from the context bar) being changed to 500 although the request was processed successfully. The request contained all the data and did not leave any error traces - it was just the status code, that changed.
+
+The solution was to give the user `IUSR` full access to the entire installation folder. 
 
 ## Update PHP version
 

@@ -402,7 +402,7 @@ HTML;
     {
         $middleware = parent::getMiddleware();
         
-        $middleware[] = new ContextBarApi($this);
+        $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
@@ -534,9 +534,12 @@ HTML;
      * Returns an array of data rows with sanitized values, that are safe to put publish as HTML
      * 
      * @param DataSheetInterface $data_sheet
+     * @param bool $decrypt
+     * @param bool $forceHtmlEntities
+     * @param bool $stripHtmlTags
      * @return array
      */
-    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, $forceHtmlEntities = true) : array
+    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, bool $forceHtmlEntities = true, bool $stripHtmlTags = false) : array
     {
         $rows = $decrypt ? $data_sheet->getRowsDecrypted() : $data_sheet->getRows();
         if (empty($rows)) {
@@ -554,11 +557,16 @@ HTML;
                     // FIXME #xss-protection sanitize JSON here!
                     break;
                 case $colType instanceof StringDataType:
-                    if ($forceHtmlEntities) {
+                    if ($forceHtmlEntities === true || $stripHtmlTags === true) {
                         foreach ($rows as $i => $row) {
                             $val = $row[$colName];
                             if ($val !== null && $val !== '') {
-                                $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
+                                if ($stripHtmlTags === true) {
+                                    $rows[$i][$colName] = strip_tags($val);
+                                }
+                                if ($forceHtmlEntities === true) {
+                                    $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
+                                }
                             }
                         }
                     }
@@ -579,7 +587,7 @@ HTML;
     {        
         // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
         // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
-        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
+        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
         if (! $result) {
             throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
         }
@@ -775,26 +783,38 @@ HTML;
         return 'filter_';
     }
     
-    public function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    /**
+     * 
+     * @param string $pathInVendorFolder
+     * @param bool $addVersionHash
+     * @return string
+     */
+    public function buildUrlToVendorFile(string $pathInVendorFolder, bool $addVersionHash = true) : string
     {
-        return 'vendor/' . $pathInVendorFolder;
+        return 'vendor/' . $pathInVendorFolder . ($addVersionHash ? '?' . $this->getFileVersionHash() : '');
     }
     
     /**
      * 
      * @param string $configOption
+     * @param bool $addVersionHash
      * @return string
      */
-    public function buildUrlToSource(string $configOption) : string
+    public function buildUrlToSource(string $configOption, bool $addVersionHash = true) : string
     {
         $path = $this->getConfig()->getOption($configOption);
         if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
             return $path;
         } else {
-            return $this->buildUrlToVendorFile($path);
+            return $this->buildUrlToVendorFile($path, $addVersionHash);
         }
     }
     
+    /**
+     * 
+     * @param string $filename
+     * @return string
+     */
     public function getFileVersionHash(string $filename = null) : string
     {
         return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install'));
@@ -821,7 +841,9 @@ HTML;
      */
     protected function buildHeadersCommon() : array
     {
-        return array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
     }
     
     /**
@@ -1074,5 +1096,21 @@ HTML;
         }
         $this->sematic_colors = $array;
         return $this;
+    }
+    
+    public function getExternalScripts () : string
+    {
+        if ($this->getConfig()->hasOption('FACADE.EXTERNAL.SCRIPTS') === false) {
+            return '';
+        }
+        $scripts = $this->getConfig()->getOption('FACADE.EXTERNAL.SCRIPTS') ?? [];
+        if (empty($scripts)) {
+            return '';
+        }
+        $html = '';
+        foreach ($scripts as $script) {
+            $html .= "<script src=$script></script>\n";
+        }
+        return $html;
     }
 }

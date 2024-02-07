@@ -26,7 +26,7 @@ class HttpRequestAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function register() : AuthorizationPointInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnHttpRequestHandlingEvent::getEventName(), [$this, 'authorizeEvent']);
+        $this->getWorkbench()->eventManager()->addListener(OnHttpRequestHandlingEvent::getEventName(), [$this, 'authorizeEvent'], static::getEventListenerPriority());
         return $this;
     }
         
@@ -83,6 +83,16 @@ class HttpRequestAuthorizationPoint extends AbstractAuthorizationPoint
         foreach ($this->getPolicies($userOrToken) as $policy) {
             yield $policy->authorize($userOrToken, $facade, $request);
         }
+    }
+    
+    /**
+     * Returns the priority of the listener for the OnHttpRequestHandlingEvent
+     * 
+     * @return int
+     */
+    public static function getEventListenerPriority() : int
+    {
+        return 0;
     }
     
     /**

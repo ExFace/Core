@@ -22,6 +22,8 @@ class ShowMassEditDialog extends ShowDialog
 {
 
     private $affected_counter_widget = NULL;
+    
+    private $show_affected_counter_message = true;
 
     /**
      * 
@@ -67,9 +69,11 @@ class ShowMassEditDialog extends ShowDialog
         }
         
         // Add a message widget that displays what exactly we are editing here
-        $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
-        $this->setAffectedCounterWidget($counter_widget);
-        $dialog->addWidget($counter_widget, 0);
+        if ($this->getShowAffectedCounterMessage() === TRUE) {
+            $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
+            $this->setAffectedCounterWidget($counter_widget);
+            $dialog->addWidget($counter_widget, 0);
+        }
         
         // Add a default save button that uses filter contexts
         // TODO make this button configurable via UXON
@@ -140,6 +144,28 @@ class ShowMassEditDialog extends ShowDialog
     {
         $this->affected_counter_widget = $widget;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to hide the hint showing how many entries are affected by the mass edit.
+     * Default is TRUE.
+     *
+     * @uxon-property show_affected_counter_message
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return \exface\Core\Actions\UpdateData
+     */
+    public function setShowAffectedCounterMessage(bool $value) : ShowMassEditDialog
+    {
+        $this->show_affected_counter_message = $value;
+        return $this;
+    }
+    
+    protected function getShowAffectedCounterMessage() : bool
+    {
+        return $this->show_affected_counter_message;
     }
 }
 ?>

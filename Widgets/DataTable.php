@@ -579,6 +579,8 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
             $uxon->setProperty('row_details', $this->getRowDetailsContainer()->exportUxonObject());
         }
         
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
+        
         return $uxon;
     }
     

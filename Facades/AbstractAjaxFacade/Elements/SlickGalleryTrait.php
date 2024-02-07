@@ -305,7 +305,7 @@ JS
                     'script' => <<<JS
                         var aRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), DownloadFile::class, $widget))}.rows || [];
                         aRows.forEach(function(oRow) {
-                            var sUrl = oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                            var sUrl = {$this->buildJsUrlForImage('oRow')};
                             var a;
 
                             if (! sUrl) {
@@ -487,36 +487,77 @@ JS;
 JS;
     }
     
+    protected function buildJsUrlForHttpFileFacade(string $oRowJs, string $widthJs = null, string $heightJs = null) : string
+    {
+        $widget = $this->getWidget();
+        // If there is no explicit thumbnail URL column, use the uid to generate a URL to the
+        // HttpFileServerFacade.
+        // IMPORTANT: the UID must not contain slashes - even if they are URL encoded (%2F) as
+        // many servers (like Apache) will disallow this for security reasons. So if the UID
+        // contains a slash, encode it as Base64 first and prefix it by `base64,` - similarly
+        // to a DataURI.
+        if (! $widget->hasUidColumn()) {
+            throw new WidgetConfigurationError($widget, 'Cannot generate thumbnails for ' . $this->getWidget() . ' automatically: neither a `thumbnail_url_attribute_alias` is specified, nor does the widget have UID column!');
+        }
+        return <<<JS
+                    function(){
+                        var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
+                        if (sUid == null) {
+                            sUid = '';
+                        }
+                        if (sUid.includes('/')){
+                            sUid = 'base64,' + btoa(sUid);
+                        }
+                        return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(sUid));
+                    }()
+JS;
+    }
+    
+    /**
+     * 
+     * @param string $oRowJs
+     * @return string
+     */
+    protected function buildJsUrlForImage(string $oRowJs) : string
+    {
+        $widget = $this->getWidget();
+        if (null !== $col = $widget->getImageUrlColumn()) {
+            if (($urlType = $col->getDataType()) && $urlType instanceof UrlDataType) {
+                $base = $urlType->getBaseUrl();
+            }
+            return "'{$base}' + {$oRowJs}['{$col->getDataColumnName()}']";
+        }
+        return $this->buildJsUrlForHttpFileFacade($oRowJs);
+    }
+    
+    /**
+     * 
+     * @param string $oRowJs
+     * @param string $widthJs
+     * @param string $heightJs
+     * @return string
+     */
+    protected function buildJsUrlForThumbnail(string $oRowJs, string $widthJs = null, string $heightJs = null) : string
+    {
+        $widget = $this->getWidget();
+        if (null !== $col = $widget->getThumbnailUrlColumn()) {
+            if (($urlType = $col->getDataType()) && $urlType instanceof UrlDataType) {
+                $base = $urlType->getBaseUrl();
+            }
+            return "'{$base}' + {$oRowJs}['{$col->getDataColumnName()}']";
+        } 
+        return $this->buildJsUrlForHttpFileFacade($oRowJs, $widthJs, $heightJs);
+    }
+    
+    /**
+     * 
+     * @param string $jqSlickJs
+     * @param string $oDataJs
+     * @return string
+     */
     protected function buildJsSlickSlidesFromData(string $jqSlickJs, string $oDataJs) : string
     {
         $widget = $this->getWidget();
-        
-        if (($urlType = $widget->getImageUrlColumn()->getDataType()) && $urlType instanceof UrlDataType) {
-            $base = $urlType->getBaseUrl();
-        }
-        
-        if ($widget->hasCustomThumbnails()) {
-            $thumbJs = "'{$base}' + oRow['{$widget->getThumbnailUrlColumn()->getDataColumnName()}']";
-        } else {
-            // If there is no explicit thumbnail URL column, use the uid to generate a URL to the
-            // HttpFileServerFacade. 
-            // IMPORTANT: the UID must not contain slashes - even if they are URL encoded (%2F) as
-            // many servers (like Apache) will disallow this for security reasons. So if the UID
-            // contains a slash, encode it as Base64 first and prefix it by `base64,` - similarly
-            // to a DataURI.
-            $thumbJs = <<<JS
-                        function(){
-                            var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
-                            if (sUid == null) {
-                                sUid = '';
-                            }
-                            if (sUid.includes('/')){
-                                sUid = 'base64,' + btoa(sUid);
-                            }
-                            return '{$base}' + ('{$widget->buildUrlForThumbnail('[#~uid#]', 260, 190)}').replace('[#~uid#]', encodeURIComponent(sUid));
-                        }()
-JS;
-        }
         
         if ($widget->hasMimeTypeColumn()) {
             $mimeTypeJs = "oRow['{$widget->getMimeTypeColumn()->getDataColumnName()}']";
@@ -549,8 +590,8 @@ JS;
                     $jqSlickJs.slick('slickRemove', null, null, true);
     
     				aRows.forEach(function(oRow, i) {
-                        var sSrc = {$thumbJs};
-                        var sSrcLarge = '{$base}' + oRow['{$widget->getImageUrlColumn()->getDataColumnName()}'];
+                        var sSrc = {$this->buildJsUrlForThumbnail('oRow', '260', '190')};
+                        var sSrcLarge = {$this->buildJsUrlForImage('oRow')};
                         var sTitle = '';
                         var sTooltip = '';
                         var sMimeType = {$mimeTypeJs};
@@ -715,7 +756,7 @@ JS;
         $('#{$this->getIdOfSlick()}-dropzone').show();
     })
 
-    $('#{$this->getId()}').on('dragleave', function(){console.log('leave');
+    $('#{$this->getId()}').on('dragleave', function(){
         $('#{$this->getIdOfSlick()}-dropzone').hide();
         $('#{$this->getIdOfSlick()}-nodata').show();
     })*/
@@ -762,7 +803,7 @@ JS;
             }
 
             $('#{$this->getIdOfSlick()}-nodata').hide();
-            if (file.type.startsWith('image')){console.log('preview');
+            if (file.type.startsWith('image')){
                 // If upload preview is available, use it - otherwise use an <img> with src set to the object URL
                 if (file.preview && file.preview.toDataURL().length > 1614) {
                     $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);

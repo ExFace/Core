@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 interface iHaveColumns extends WidgetInterface
 {
@@ -57,6 +58,13 @@ interface iHaveColumns extends WidgetInterface
      * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumnByDataColumnName(string $data_sheet_column_name) : ?DataColumn;
+    
+    /**
+     * 
+     * @param ExpressionInterface|string $expressionOrString
+     * @return DataColumn|NULL
+     */
+    public function getColumnByExpression($expressionOrString) : ?DataColumn;
     
     /**
      * 

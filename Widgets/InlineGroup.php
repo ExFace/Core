@@ -136,7 +136,7 @@ class InlineGroup extends Container
      */
     public function addWidget(AbstractWidget $widget, $position = NULL, $addSeparator = true)
     {
-        if (! $widget instanceof Value && ! $widget instanceof Filter) {
+        if (! $widget instanceof Value && ! $widget instanceof Filter && ! $widget instanceof Button) {
             throw new WidgetConfigurationError($this, 'Cannot use widget "' . $widget->getWidgetType() . '" in a ' . $this->getWidgetType() . ': only value-widgets are supported!');
         }
         $widget->setHideCaption(true);

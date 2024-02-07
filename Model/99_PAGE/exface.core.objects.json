@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2013-06-20 19:21:06",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-01-22 15:54:41",
+    "modified_on": "2024-02-07 12:11:29",
     "contents": {
         "object_alias": "exface.Core.OBJECT",
         "widget_type": "DataTable",
@@ -51,8 +51,7 @@
                 "attribute_alias": "NAME"
             },
             {
-                "attribute_alias": "APP__ALIAS",
-                "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.APP_ALIAS')"
+                "attribute_alias": "APP__ALIAS"
             },
             {
                 "attribute_alias": "ALIAS"
@@ -108,15 +107,26 @@
                 "icon": "clone",
                 "buttons": [
                     {
-                        "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
+                        "caption": "Copy object",
                         "action_alias": "exface.Core.ShowObjectCopyDialog"
                     },
                     {
-                        "caption": "=Translate('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
+                        "caption": "Copy object incl. attributes",
                         "action": {
                             "alias": "exface.Core.ShowObjectCopyDialog",
                             "copy_related_objects": [
                                 "ATTRIBUTE"
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Copy object incl. attributes, behaviors and actions",
+                        "action": {
+                            "alias": "exface.Core.ShowObjectCopyDialog",
+                            "copy_related_objects": [
+                                "ATTRIBUTE",
+                                "OBJECT_BEHAVIORS",
+                                "OBJECT_ACTION"
                             ]
                         }
                     }

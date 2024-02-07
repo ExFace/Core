@@ -113,7 +113,8 @@ HTML;
         $disableJs = $this->getWidget()->isDisabled() ? "{$oSurveyJs}.mode = 'display';" : '';
         return <<<JS
         
-    $oSurveyJs.locale = '{$this->getSurveyLocale()}';    
+    $oSurveyJs.locale = '{$this->getSurveyLocale()}';  
+    $oSurveyJs.focusFirstQuestionAutomatic = false;  
     $disableJs
 JS;
     }
@@ -189,6 +190,11 @@ JS;
         {$this->buildJsSurveyInitOptions('oSurvey')};
         oSurvey.render(jqContainer[0]);
         jqContainer.data('survey-config', oConfig);
+
+        oSurvey.onValueChanged.add(function(oEvent){
+            {$this->getOnChangeScript()}
+        });
+
         {$this->buildJsSurveyVar()} = oSurvey;
     }
 
@@ -205,7 +211,15 @@ JS;
      */
     public function buildJsValueGetter()
     {
-        return "JSON.stringify({$this->buildJsSurveyVar()}.data)";
+        return <<<JS
+        function() {
+            if ({$this->buildJsSurveyVar()} != null) {
+                return JSON.stringify({$this->buildJsSurveyVar()}.data);
+            }
+            return '';
+        }()
+
+JS;
     }
     
     /**

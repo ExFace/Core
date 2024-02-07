@@ -7,24 +7,8 @@ namespace exface\Core\Interfaces\Widgets;
  * @author Andrej Kabachnik
  *
  */
-interface iCanEditData extends iShowData
+interface iCanEditData extends iShowData, iCanBeEditable
 {
-    /**
-     * Returns true, if the data table contains at least one editable column
-     *
-     * @return boolean
-     */
-    public function isEditable() : bool;
-    
-    /**
-     * Set to TRUE to make the table editable or add a column with an editor.
-     * FALSE by default.
-     *
-     * @param bool $value
-     * @return iShowData
-     */
-    public function setEditable(bool $value = true) : iCanEditData;
-    
     /**
      *
      * @return bool

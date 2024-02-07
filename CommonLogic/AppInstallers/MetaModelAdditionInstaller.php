@@ -3,14 +3,13 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Exceptions\AppNotFoundError;
-use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Events\Installer\OnAppInstallEvent;
+use exface\Core\Events\Installer\OnBeforeAppUninstallEvent;
+use exface\Core\Events\Installer\OnAppBackupEvent;
 
 /**
+ * @deprecated use DataInstaller instead!
+ * 
  * Allows to add additional data sheets to the MetaModelInstaller.
  * 
  * @author andrej.kabachnik
@@ -18,93 +17,86 @@ use exface\Core\Factories\DataSheetFactory;
  */
 class MetaModelAdditionInstaller extends AbstractAppInstaller
 {
-    private $modelInstaller = null;
+    private $dataInstaller = null;
     
-    private $appInstalled = null;
-    
-    private $dataSheets = [];
-    
-    public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer)
+    public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer, string $subfolder)
     {
         parent::__construct($selectorToInstall);
-        $this->modelInstaller = $this->findModelInstaller($installerContainer);
-        if ($this->modelInstaller === null) {
-            throw new RuntimeException('Cannot initialize MetaModelAdditionInstaller: no MetaModelInstaller found!');
-        }
+        $this->dataInstaller = new DataInstaller($selectorToInstall, MetaModelInstaller::FOLDER_NAME_MODEL . DIRECTORY_SEPARATOR . $subfolder);
+        $this->dataInstaller->setFilenameIndexStart(1);
+        
+        $this->getWorkbench()->eventManager()->addListener(OnAppInstallEvent::getEventName(), [$this, 'handleInstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeAppUninstallEvent::getEventName(), [$this, 'handleUninstall']);
+        $this->getWorkbench()->eventManager()->addListener(OnAppBackupEvent::getEventName(), [$this, 'handleBackup']);
     }
     
-    public function addModelDataSheet(string $subfolder, DataSheetInterface $sheetToExport, string $lastUpdateAttributeAlias = null) : MetaModelAdditionInstaller
+    /**
+     * Add an object to be exported with the app model replacing all rows on a target system when deploying
+     *
+     * @param string $objectSelector
+     * @param string $sorterAttribute
+     * @param string $appRelationAttribute
+     * @param string[] $excludeAttributeAliases
+     * @return MetaModelAdditionInstaller
+     */
+    public function addDataToReplace(string $objectSelector, string $sorterAttribute, string $appRelationAttribute, array $excludeAttributeAliases = []) : MetaModelAdditionInstaller
     {
-        $this->modelInstaller->addModelDataSheet($subfolder, $sheetToExport, $lastUpdateAttributeAlias);
+        $this->dataInstaller->addDataToReplace($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases);
         return $this;
     }
     
     /**
+     * Add an object to be exported with the app model replacing only rows with matching UIDs on a target system when deploying
      * 
-     * @param string $subfolder
      * @param string $objectSelector
-     * @param string $appRelationAttribute
      * @param string $sorterAttribute
-     * @return DataSheetInterface
+     * @param string $appRelationAttribute
+     * @param string[] $excludeAttributeAliases
+     * @return MetaModelAdditionInstaller
      */
-    protected function createModelDataSheet(string $objectSelector, string $appRelationAttribute, string $sorterAttribute, array $excludeAttributeAliases = []) : DataSheetInterface
+    public function addDataToMerge(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : MetaModelAdditionInstaller
     {
-        $cacheKey = $objectSelector . '::' . $appRelationAttribute . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
-        if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
-            $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
-            foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
-                if (in_array($attr->getAlias(), $excludeAttributeAliases)){
-                    continue;
-                }
-                $ds->getColumns()->addFromExpression($attr->getAlias());
-            }
-            
-            try {
-                $appUid = $this->getApp()->getUid();
-            } catch (AppNotFoundError $e) {
-                $appUid = null;
-            }
-            
-            // It is very important to filter over app UID - otherwise we might uninstall EVERYTHING
-            // when uninstalling an app, that is broken (this actually happened!)
-            // If we know the UID at this moment, cache the sheet in case we are uninstalling and
-            // we will need the sheet again after its model was removed.
-            // If we don't konw the UID, do not cache the sheet - maybe the UID will be already
-            // there next time (e.g. if we need the sheet after the app was installed)
-            if ($appUid !== null) {
-                $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::EQUALS);
-                $this->dataSheets[$cacheKey] = $ds;
-            } else {
-                // If we do not have an app UID, make sure the filter NEVER matches anything, so the
-                // installer will not have any effect!
-                $ds->getFilters()->addConditionFromString($appRelationAttribute, '0x0', ComparatorDataType::EQUALS);
-            }
-        }
-        
-        return $ds->copy();
+        $this->dataInstaller->addDataToMerge($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases);
+        return $this;
     }
     
     /**
-     * 
-     * @param InstallerContainerInterface $container
-     * @return MetaModelInstaller|NULL
+     *
+     * @param OnAppInstallEvent $event
      */
-    protected function findModelInstaller(InstallerContainerInterface $container) : ?MetaModelInstaller
+    public function handleInstall(OnAppInstallEvent $event)
     {
-        $found = null;
-        foreach ($container->getInstallers() as $installer) {
-            if ($installer instanceof MetaModelInstaller) {
-                $found = $installer;
-                break;
-            }
-            if ($installer instanceof InstallerContainerInterface) {
-                if ($found = $this->findModelInstaller($installer)) {
-                    break;
-                }
-            }
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return false;
         }
-        return $found;
+        
+        $event->addPostprocessor($this->dataInstaller->install($event->getSourcePath()));
+    }
+    
+    /**
+     *
+     * @param OnBeforeAppUninstallEvent $event
+     */
+    public function handleUninstall(OnBeforeAppUninstallEvent $event)
+    {
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return false;
+        }
+        
+        $this->dataInstaller->uninstall();
+    }
+    
+    /**
+     *
+     * @param OnAppBackupEvent $event
+     */
+    public function handleBackup(OnAppBackupEvent $event)
+    {
+        if ($event->getAppSelector() !== $this->getSelectorInstalling()) {
+            return false;
+        }
+        
+        $event->addPostprocessor($this->dataInstaller->backup($event->getDestinationPath()));
     }
     
     /**

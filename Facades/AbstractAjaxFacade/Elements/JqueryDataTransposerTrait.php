@@ -273,7 +273,6 @@ trait JqueryDataTransposerTrait {
     		}
 
     		for (fld in newColVals){
-                console.log('Test');
                 oColOrig = oResult.oColModelsOriginal[fld];
                 sRowKey = newRowId+fld;
                 oColOrig.iTransposedToSubrow = subRowCounter++;

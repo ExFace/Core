@@ -81,6 +81,15 @@ abstract class AbstractWidget implements WidgetInterface
 	const FUNCTION_ENABLE = 'enable';
 	
 	/**
+	 * Disable the widget if enabled
+	 *
+	 * @uxon-property disable
+	 *
+	 * @var string
+	 */
+	const FUNCTION_DISABLE = 'disable';
+	
+	/**
 	 * Do not do anything - used to explicitly disable function executed by default
 	 *
 	 * @uxon-property none
@@ -90,13 +99,22 @@ abstract class AbstractWidget implements WidgetInterface
 	const FUNCTION_NONE = 'none';
 	
 	/**
-	 * Disable the widget if enabled
+	 * Hide the widget
 	 *
-	 * @uxon-property disable
+	 * @uxon-property hide
 	 *
 	 * @var string
 	 */
-	const FUNCTION_DISABLE = 'disable';
+	const FUNCTION_HIDE = 'hide';
+	
+	/**
+	 * Show the widget if hidden
+	 *
+	 * @uxon-property show
+	 *
+	 * @var string
+	 */
+	const FUNCTION_SHOW = 'show';
 
     private $id_specified = null;
 
@@ -930,10 +948,13 @@ abstract class AbstractWidget implements WidgetInterface
         // Input specific formatting 
         if ($this instanceof iTakeInput && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->isDisabled() !== true) {
             $attr = $this->getAttribute();
-            if ($dataTypeHint = $attr->getDataType()->getInputFormatHint()) {
-                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . $dataTypeHint;
+            $msg = $attr->getDataType()->getValidationErrorMessage();
+            if ($validationHint = ($msg ? StringDataType::endSentence(($msg->getHint() ? $msg->getHint() : $msg->getTitle())) . ' ' : '')) {
+                $hint .= ($hint ? "\n\n" : '') . $validationHint;
             }
-            
+            if ($formatHint = $attr->getDataType()->getInputFormatHint()) {
+                $hint .= ($hint ? "\n\n" : '') . $this->translate('LOCALIZATION.DATATYPE.FORMAT_HINT') . StringDataType::endSentence($formatHint);
+            }
             if ($this->isRequired() === true) {
                 $hint .= ($hint ? "\n\n" : '') . $this->translate('WIDGET.INPUT.REQUIRED_HINT');
             }
@@ -946,7 +967,7 @@ abstract class AbstractWidget implements WidgetInterface
         
         // Dev-hint
         if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = rtrim(rtrim($hint), '.') .  ".\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
+            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hint: attribute alias '{$this->getAttributeAlias()}'"; 
         }
         return $hint;
     }

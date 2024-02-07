@@ -40,6 +40,12 @@ class DebugWidgetProcessor
      */
     public function __invoke(array $record)
     {
+        // Can't render any widget if the workbench was not fully installed yet. 
+        // This can happen if the InitDB scripts fail.
+        if (false === $this->workbench->isInstalled()) {
+            return $record;
+        }
+        
         $sender = $record['context'][$this->sourceContextKey];
         $debugWidgetData = null;
         if ($sender && ($sender instanceof iCanGenerateDebugWidgets)) {

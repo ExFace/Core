@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\SankeyChartSeries;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library.
@@ -1745,6 +1746,8 @@ JS;
             $onZero = '';
         }
         
+        $isNumericAxisJs = $axis->getDataColumn()->getDataType() instanceof NumberDataType ? 'true' : 'false';
+        
         //initially hide all axes, so they are only shown after calculation for the gaps and everything is done
         return <<<JS
         
@@ -1767,6 +1770,10 @@ JS;
             fontFamily: '{$this->baseAxisLabelFont()}',
             fontSize: {$this->baseAxisLabelFontSize()},
             formatter: function(a) {
+                var bIsNumber = $isNumericAxisJs;
+                if (bIsNumber && Number.isInteger(a)){
+                    return a;
+                }
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             },
             {$rotate}
@@ -2536,7 +2543,7 @@ JS;
     var formatNames = [];
     for (var i = 0; i < newNames.length; i++) {
         var formatted = {$nameFormatterJs}
-        formatNames.push(formatted);
+        formatNames.push(exfTools.string.htmlUnescape !== undefined ? exfTools.string.htmlUnescape(formatted) : formatted);
     }
     //newNames = formatNames;
     if (baseColor == 'undefined') {
@@ -2898,7 +2905,7 @@ JS;
                         },
                         "_caption": row[targetCaption]
                     };
-                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                    if (minDepth === undefined || row[targetLevel] < minDepth) {
                         minDepth = row[targetLevel];
                     }
                 }                
@@ -3360,14 +3367,14 @@ JS;
                     tooltip = tooltip + tooltipPart + '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>';
                     currentAxis = axisIndex;
                 }
-                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>' + tooltipPart;
+                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td style="text-align: right">'+ value + '</td></tr>' + tooltipPart;
             } else {
                 if (axisIndex !== currentAxis) {
                     tooltipPart += '<tr><th align = "left" colspan = "3">' + axisValueLabel + '</th></tr>';
                     currentAxis = axisIndex;
                 }
-                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
-                }
+                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td style="text-align: right">'+ value + '</td></tr>';
+            }
         });
         if (stacked === true) {
             tooltip += tooltipPart + '</tbody></table>';
