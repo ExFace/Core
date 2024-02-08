@@ -12,20 +12,20 @@ use exface\Core\DataTypes\StringDataType;
  * @author andrej.kabachnik
  *
  */
-class PWAInstaller extends MetaModelAdditionInstaller
+class PWAInstaller extends DataInstaller
 {
     /**
      *
      * @param SelectorInterface $selectorToInstall
      * @param InstallerContainerInterface $installerContainer
      */
-    public function __construct(SelectorInterface $selectorToInstall, InstallerContainerInterface $installerContainer, string $subfolder = 'PWA')
+    public function __construct(SelectorInterface $selectorToInstall, string $subfolder = 'PWA')
     {
-        parent::__construct($selectorToInstall, $installerContainer, $subfolder);
-        $this->addModelDataSheet($subfolder, $this->createModelDataSheet('exface.Core.PWA', 'MODIFIED_ON', 'APP', [
+        parent::__construct($selectorToInstall, MetaModelInstaller::FOLDER_NAME_MODEL . DIRECTORY_SEPARATOR . $subfolder);
+        $this->addDataToReplace('exface.Core.PWA', 'CREATED_ON', 'APP', [
             'REGENERATE_AFTER',
             'GENERATED_ON'
-        ]));
+        ]);
     }
     
     /**
@@ -37,7 +37,7 @@ class PWAInstaller extends MetaModelAdditionInstaller
     {
         $indent = '  ';
         yield from parent::install($source_absolute_path);
-        $pwaSheet = $this->createModelDataSheet('exface.Core.PWA', 'MODIFIED_ON', 'APP');
+        $pwaSheet = $this->createModelSheet('exface.Core.PWA', 'CREATED_ON', 'APP');
         $pwaSheet->dataRead();
         foreach ($pwaSheet->getRows() as $row) {
             $pwa = PWAFactory::createFromString($this->getWorkbench(), $row['UID']);

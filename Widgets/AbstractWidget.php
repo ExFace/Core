@@ -81,6 +81,15 @@ abstract class AbstractWidget implements WidgetInterface
 	const FUNCTION_ENABLE = 'enable';
 	
 	/**
+	 * Disable the widget if enabled
+	 *
+	 * @uxon-property disable
+	 *
+	 * @var string
+	 */
+	const FUNCTION_DISABLE = 'disable';
+	
+	/**
 	 * Do not do anything - used to explicitly disable function executed by default
 	 *
 	 * @uxon-property none
@@ -90,13 +99,22 @@ abstract class AbstractWidget implements WidgetInterface
 	const FUNCTION_NONE = 'none';
 	
 	/**
-	 * Disable the widget if enabled
+	 * Hide the widget
 	 *
-	 * @uxon-property disable
+	 * @uxon-property hide
 	 *
 	 * @var string
 	 */
-	const FUNCTION_DISABLE = 'disable';
+	const FUNCTION_HIDE = 'hide';
+	
+	/**
+	 * Show the widget if hidden
+	 *
+	 * @uxon-property show
+	 *
+	 * @var string
+	 */
+	const FUNCTION_SHOW = 'show';
 
     private $id_specified = null;
 

@@ -29,7 +29,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      * {@inheritdoc}
      * 
      * @triggers \exface\Core\Events\Installer\OnBeforeInstallEvent
-     * @triggers \exface\Core\Events\DataSheet\OnInstallEvent
+     * @triggers \exface\Core\Events\Installer\OnInstallEvent
      * 
      * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
@@ -37,7 +37,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
     {
         $eventMgr = $this->getWorkbench()->eventManager();
         foreach ($this->getInstallers() as $installer) {
-            $eventMgr->dispatch(new OnBeforeInstallEvent($installer, $source_absolute_path));            
+            $eventMgr->dispatch(new OnBeforeInstallEvent($installer, $source_absolute_path));
             yield from $installer->install($source_absolute_path);
             $eventMgr->dispatch(new OnInstallEvent($installer, $source_absolute_path));
         }
@@ -55,7 +55,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      * {@inheritdoc}
      * 
      * @triggers \exface\Core\Events\Installer\OnBeforeBackupEvent
-     * @triggers \exface\Core\Events\DataSheet\OnBackupEvent
+     * @triggers \exface\Core\Events\Installer\OnBackupEvent
      * 
      * @see \exface\Core\Interfaces\InstallerInterface::backup()
      */
@@ -79,7 +79,7 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
      * Makes every installer uninstall iterating in reverse order (last installer uninstalling first)
      * 
      * @triggers \exface\Core\Events\Installer\OnBeforeUninstallEvent
-     * @triggers \exface\Core\Events\DataSheet\OnUninstallEvent
+     * @triggers \exface\Core\Events\Installer\OnUninstallEvent
      * 
      * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */

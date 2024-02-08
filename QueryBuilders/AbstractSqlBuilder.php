@@ -42,6 +42,7 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Factories\ConditionFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -566,22 +567,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey], false, $tz, false);
                     }
                     break;
-                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface:
+                case $qpart->isCompound() && $qpart->getAttribute() instanceof CompoundAttributeInterface: 
+                    $qpartChilds = $qpart->getCompoundChildren();
+                    $qpartChildFirstInDB = null;
+                    $qpartChildsFormulas = [];
+                    foreach ($qpartChilds as $i => $compQpart) {
+                        $compAttr = $compQpart->getAttribute();
+                        if ($compAttr->hasCalculation()) {
+                            if ($compAttr->getCalculationExpression()->isStatic()) {
+                                $qpartChildsFormulas[$i] = $compAttr->getCalculationExpression();
+                            } else {
+                                throw new QueryBuilderException('Cannot read compound attribute ' . $compAttr->__toString() . ' via SQL: compounds with calculated non-static components are not supported!');
+                            }
+                        } elseif ($qpartChildFirstInDB === null) {
+                            $qpartChildFirstInDB = $compQpart;
+                        }
+                    }
                     foreach ($rows as $nr => $row) {
                         $compValues = [];
                         if ($qpart->hasAggregator() === true) {
                             switch ($qpart->getAggregator()->getFunction()->__toString()) {
+                                // Counting compounds is fairly easy - just count the first
+                                // part coming from the DB (= not calculated)
                                 case AggregatorFunctionsDataType::COUNT:
-                                    $compQpart = $qpart->getCompoundChildren()[0];
-                                    $rows[$nr][$qpart->getColumnKey()] = $row[$compQpart->getColumnKey()];
+                                    $rows[$nr][$qpart->getColumnKey()] = $row[$qpartChildFirstInDB->getColumnKey()];
                                     unset ($rows[$nr][$compQpart->getColumnKey()]);
                                     break;
                                 default:
                                     throw new RuntimeException('Cannot read compound attributes with aggregator' . $this->getAggregator()->exportString() . '!');
                             }
                         } else {
-                            foreach ($qpart->getCompoundChildren() as $component) {
-                                $compValues[] = $row[$component->getColumnkey()];
+                            foreach ($qpartChilds as $i => $compQpart) {
+                                if (array_key_exists($i, $qpartChildsFormulas)) {
+                                    $compValues[] = $qpartChildsFormulas[$i]->evaluate();
+                                } else {
+                                    $compValues[] = $row[$compQpart->getColumnkey()];
+                                }
                             }
                             $rows[$nr][$qpart->getColumnKey()] = $qpart->getAttribute()->mergeValues($compValues);
                         }
@@ -1934,6 +1955,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         
+        // If the attribute has no data address AND is a static calculation, generate a 
+        // static WHERE clause that compares the result of the static expression evaluation 
+        // and the value provided. This ensures, that such comparisons behave roughly the 
+        // same as those with real SQL addresses. This is required for compound attributes 
+        // with static components!
+        if (empty($select) && empty($customWhereClause) && empty($customWhereAddress) && $attr->hasCalculation() && $attr->getCalculationExpression()->isStatic()) {
+            $staticVal = $attr->getCalculationExpression()->evaluate();
+            return $this->buildSqlWhereComparator("'{$this->escapeString($staticVal)}'", $comp, $val, $qpart->getDataType(), $qpart->getDataAddressProperties(), $delimiter, $qpart->isValueDataAddress());
+        }
+        
         // Doublecheck that the filter actually can be used
         if (! ($select || $customWhereClause) || $val === '') {
             if ($val === '') {
@@ -2911,7 +2942,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // If no tag matched, throw an error!
-            throw new QueryBuilderException('Multi-dialect SQL data address does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
+            throw new QueryBuilderException('Multi-dialect SQL data address "' . StringDataType::truncate($addr, 50, false, true, true) . '" does not contain a statement for with any of the supported dialect-tags: `@' . implode(':`, `@', $this->getSqlDialects()) . ':`', '7DGRY8R');
         }
         
         return $addr;

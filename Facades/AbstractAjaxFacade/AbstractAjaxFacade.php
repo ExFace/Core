@@ -402,7 +402,7 @@ HTML;
     {
         $middleware = parent::getMiddleware();
         
-        $middleware[] = new ContextBarApi($this);
+        $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
@@ -587,7 +587,7 @@ HTML;
     {        
         // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
         // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
-        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
+        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
         if (! $result) {
             throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
         }
@@ -841,7 +841,9 @@ HTML;
      */
     protected function buildHeadersCommon() : array
     {
-        return array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
     }
     
     /**

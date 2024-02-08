@@ -11,6 +11,11 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 /**
  * Trait for parts of Data widgets (e.g. DataCalendarItem, DataTimeline, etc.).
  * 
+ * Most parts of data widgets include the definition of special roles for certain attributes
+ * or expressions: e.g. which attribute is the color of something, etc. This trait offers
+ * a simple way to ensure, these column are always included in the data widget - just call
+ * the method `addDataColumn()`.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -63,6 +68,19 @@ trait DataWidgetPartTrait
     }
     
     /**
+     * Adds a column to the data widget if there is no such column already and returns this column
+     * 
+     * Use this method to automatically add columns defined in the query part.
+     * This way, the user will not be forced to define the column twice: in the
+     * data widget and in the query part.
+     * 
+     * IMPORTANT: do not cache the returned column for use in `getColumnXXX()`
+     * methods if `addDataColumn()` is called from a UXON property setter!!!
+     * Instead, wait till the entire data widget is initialized and cache
+     * the column then - e.g. when your `getColumnXXX()` method is first called.
+     * The reason for this is, that if the widget part adds a column AND there
+     * is also such a column defined in the data widget explicitly, the auto-added
+     * column will be replaced and the cache version will become an orphan.
      * 
      * @param string $expression
      * @return DataColumn

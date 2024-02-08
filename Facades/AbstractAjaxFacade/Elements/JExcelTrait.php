@@ -105,7 +105,7 @@ trait JExcelTrait
                         
     !function(){
         var jqExcel = {$this->buildJsJqueryElement()};
-        var aData = jqExcel.jexcel('getData');
+        var aData = jqExcel.jspreadsheet('getData');
         if (aData.length > {$this->getMinSpareRows()}) {
             return;
         }
@@ -221,6 +221,7 @@ JS;
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
+        $disabledJs = $widget->isDisabled() ? 'true' : 'false';
         
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
@@ -276,7 +277,7 @@ JS;
                         var oJExcel = oWidget.getJExcel();
                         var aCells = [];
                         oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
-                            aCells.push(oJExcel.getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1)));
+                            aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
                         });
                         $conditionsJs
 JS;
@@ -321,6 +322,7 @@ JS;
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
+            var oWidget = jqSelf[0].exfWidget;
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
             
             try {
@@ -334,6 +336,10 @@ JS;
                 }
             } catch (e) {
                 console.warn('Cannot set tooltips for columns:', e);
+            }
+
+            if (oWidget !== undefined && oWidget.isDisabled() === true) {
+                {$this->buildJsSetDisabled(true)}
             }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
@@ -385,7 +391,7 @@ JS;
         onblur: function(el) {
             var oSel = $(el).data('_exfSelection');
             if (oSel.x1 !== null) {
-                $(el).jexcel('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
+                $(el).jspreadsheet('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
             }
         },
         onundo: function(el, historyRecord) {
@@ -417,13 +423,13 @@ JS;
             var iXStart = parseInt(x);
             var iXEnd = iXStart;
             var oColOpts = {};
-            el.jexcel.parseCSV(data).forEach(function(aRow){
+            el.jspreadsheet.parseCSV(data).forEach(function(aRow){
                 aPastedData.push(aRow[0].split("\\t"));
             });
             iXEnd = iXStart + aPastedData[0].length;
 
             for (var i = iXStart; i <= iXEnd; i++) {
-                oColOpts = el.jexcel.options.columns[i];
+                oColOpts = el.jspreadsheet.options.columns[i];
                 if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
                     oDropdownVals[i - iXStart] = oColOpts.source;
                 }
@@ -464,8 +470,8 @@ JS;
             var oDropdownVals = {};
             var aSelectedData = [];
 
-            el.jexcel.getSelectedColumns().forEach(function(iX, iCol){
-                var oColOpts = el.jexcel.getColumnOptions(iX);
+            el.jspreadsheet.getSelectedColumns().forEach(function(iX, iCol){
+                var oColOpts = el.jspreadsheet.getColumnOptions(iX);
                 if (oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
                     oDropdownVals[iCol] = oColOpts.source;
                 }
@@ -509,8 +515,9 @@ JS;
         _cols: {$columnsJson},
         _rowNumberColName: $rowNumberColName,
         _initData: [],
+        _disabled: $disabledJs,
         getJExcel: function(){
-            return this._dom.jexcel;
+            return this._dom.jspreadsheet;
         },
         getDom: function(){
             return this._dom;
@@ -627,7 +634,7 @@ JS;
                 
                 aRow.forEach(function(mValue, iColIdx) {
                     var mValidated;                    
-                    var oCell = oWidget.getJExcel().getCell(jexcel.getColumnName(iColIdx) + (iRowIdx + 1));
+                    var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
                     aCells.push(oCell);
                     mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
                     if (mValidated !== '' && mValidated !== null && mValidated !== undefined) {
@@ -685,10 +692,10 @@ JS;
         },
         convertDataToArray: function(aDataRows) {
             var aData = [];
-            var jExcel = $(this._dom);
+            var domEl = this._dom;
             var oWidget = this;
             var oColNames = this._colNames;
-            var aColHeaders = jExcel.jexcel('getHeaders').split(',');
+            var aColHeaders = domEl.jspreadsheet.getHeaders().split(',');
             var oColIdxCache = {};
             aDataRows.forEach(function(oRow, i){
                 var oRowIndexed = {};
@@ -729,6 +736,51 @@ JS;
             });
 
             return aData;
+        },
+
+        setDisabled: function(bDisable) {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+            var iColNo = 1;
+            oWidget._disabled = bDisable;
+            oJExcel.getConfig().columns.forEach(function(oColCfg, iColIdx){
+                var fnDisabler;
+                var aCells = [];
+                if (oColCfg.type === 'hidden') {
+                    return;
+                }
+                iColNo++;
+                if (oColCfg.readOnly === true) {
+                    return;
+                }
+                switch (true) {
+                    case oColCfg.type === 'checkbox':
+                        fnDisabler = function(domCell){
+                            $(domCell).children('input').prop('disabled', bDisable);
+                        };
+                        break;
+                }
+                oJExcel.getColumnData(iColNo).forEach(function(mVal, iRowIdx){
+                    aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColNo) + (iRowIdx + 1)));
+                });
+                aCells.forEach(function(domCell, iRowIdx){
+                    if (bDisable) {
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    } else {
+                        domCell.classList.remove('readonly');
+                    }
+                    if (fnDisabler !== undefined) {
+                        fnDisabler(domCell);
+                    }
+                });
+            });
+        },
+
+        isDisabled: function(){
+            return this._disabled;
         }
     };
     
@@ -946,7 +998,7 @@ JS;
                                 sFirstVal = 0;
                             }
                             aData[0][$idx] = (sFirstVal + fDif){$toFixedJs};
-                            jqSelf.jexcel('setData', aData);
+                            jqSelf.jspreadsheet('setData', aData);
                         }
 
 JS;
@@ -972,7 +1024,7 @@ JS;
         return <<<JS
 
                         var jqSelf = {$this->buildJsJqueryElement()};
-                        var aData = jqSelf.jexcel('getData');
+                        var aData = jqSelf.jspreadsheet('getData');
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
                         
@@ -1466,7 +1518,7 @@ JS;
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
         rows: (aRows || []).filter(function(oRow, i){
-            return {$this->buildJsJqueryElement()}.jexcel('getSelectedRows', true).indexOf(i) >= 0;
+            return {$this->buildJsJqueryElement()}.jspreadsheet('getSelectedRows', true).indexOf(i) >= 0;
         })
     }
 
@@ -1478,7 +1530,7 @@ JS;
             var jqEl = {$this->buildJsJqueryElement()};
             var aRows;
             if (jqEl.length === 0) return {};
-            aRows = {$this->buildJsConvertArrayToData("jqEl.jexcel('getData', false)")};
+            aRows = {$this->buildJsConvertArrayToData("jqEl.jspreadsheet('getData', false)")};
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
 
@@ -1517,7 +1569,7 @@ JS;
             aData.push([]);
         }
     }
-    jqCtrl.jexcel('setData', aData);
+    jqCtrl.jspreadsheet('setData', aData);
     {$this->buildJsResetSelection('jqCtrl')};
     jqCtrl[0].exfWidget.refreshConditionalProperties();
 }()
@@ -1574,7 +1626,7 @@ JS;
      */
     public function buildJsDataResetter() : string
     {
-        return "(function(){ {$this->buildJsJqueryElement()}.jexcel('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
+        return "(function(){ {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
     }
     
     /**
@@ -1596,7 +1648,7 @@ JS;
      */
     public function buildJsDestroy() : string
     {
-        return "jexcel.destroy({$this->buildJsJqueryElement()}[0], false); $('.exf-partof-{$this->getId()}').remove();";
+        return "jspreadsheet.destroy({$this->buildJsJqueryElement()}[0], false); $('.exf-partof-{$this->getId()}').remove();";
     }
     
     /**
@@ -1682,7 +1734,7 @@ JS;
                 $linkedColIdxsJs .= $colIdx . ',';
                 $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
                 $addLocalValuesToRowJs .= <<<JS
-                $oExcelElJs.jexcel.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
 
 JS;
             }    
@@ -1720,7 +1772,7 @@ JS;
         return <<<JS
 (function(){
     var aAllRows = {$this->buildJsDataGetter()}.rows;
-    var aSelectedIdxs = $('#{$this->getId()}').jexcel('getSelectedRows', true);
+    var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
     var aVals = [];
     aSelectedIdxs.forEach(function(iRowIdx){
         aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
@@ -1826,5 +1878,20 @@ JS;
                 return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
+    }
+    
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $disableJs = $trueOrFalse ? 'true' : 'false';
+        return <<<JS
+        
+        (function(jqEl, bDisable){
+            if (jqEl.length === 0) {
+                return;
+            }
+            jqEl[0].exfWidget.setDisabled($disableJs);
+        })({$this->buildJsJqueryElement()}, $disableJs);
+
+JS;
     }
 }

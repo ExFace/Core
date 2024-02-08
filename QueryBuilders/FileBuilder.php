@@ -608,7 +608,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $addr = StringDataType::substringBefore($addr, $sep, $addr, false, true);
                 $addrPhs = StringDataType::findPlaceholders($addr);
                 
-                foreach ($qpart->getValues() as $rowIdx => $filename) {
+                foreach ($filenameQpart->getValues() as $rowIdx => $filename) {
                     $phVals = [];
                     foreach ($addrPhs as $ph) {
                         if ($phQpart = $this->getValue($ph)) {

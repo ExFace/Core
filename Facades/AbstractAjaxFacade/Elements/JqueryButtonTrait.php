@@ -47,21 +47,28 @@ trait JqueryButtonTrait {
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
-     * @param Button $widget
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsRefreshWidgets() : string
+    protected function buildJsRefreshWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
         $widget = $this->getWidget();
         $page = $widget->getPage();
         $idSpace = $widget->getIdSpace();
-        foreach ($widget->getRefreshWidgetIds() as $widgetId) {
+        foreach ($widget->getRefreshWidgetIds($includeInputWidget) as $widgetId) {
             $idSpaceProvided = StringDataType::substringBefore($widgetId, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
             if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
                 $widgetId = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $widgetId;
             }
+            
             $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($refreshEl) === false) {
+                    continue;
+                }
+            }
+            
             $js .=  $refreshEl->buildJsRefresh(true) . ";\n";
         }
         return $js;
@@ -69,23 +76,29 @@ trait JqueryButtonTrait {
     
     /**
      * Returns the JS code to reset all neccessary widgets after the button's action succeeds.
-     *
-     * @param Button $widget
-     * @param AbstractJqueryElement $input_element
+     * 
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsResetWidgets() : string
+    protected function buildJsResetWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
         $btn = $this->getWidget();
         $page = $btn->getPage();
         $idSpace = $btn->getIdSpace();
-        foreach ($btn->getResetWidgetIds() as $id) {
+        foreach ($btn->getResetWidgetIds($includeInputWidget) as $id) {
             $idSpaceProvided = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
             if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
                 $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
             }
+            
             $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($resetElem) === false) {
+                    continue;
+                }
+            }
+            
             $js .= $resetElem->buildJsResetter() . ";\n";
         }
         return $js;
@@ -524,8 +537,13 @@ JS;
         
         $refreshIds = '';
         $refreshNotIds = $widget->getRefreshInput() === false ? '"' . $widget->getId() . '"' : '';
-        foreach ($widget->getRefreshWidgetIds(false) as $refreshId) {
+        foreach ($widget->getRefreshWidgetIds($widget->getRefreshInput() ?? false) as $refreshId) {
             $refreshIds .= '"' . $refreshId . '", ';
+        }
+        
+        $resetIds = '';
+        foreach ($widget->getResetWidgetIds(false) as $resetId) {
+            $resetIds .= '"' . $resetId . '", ';
         }
         
         $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
@@ -537,6 +555,7 @@ JS;
                         effects: [ $effectsJs ],
                         refresh_widgets: [ $refreshIds ],
                         refresh_not_widgets: [ $refreshNotIds ],
+                        reset_widgets: [ $resetIds ],
                     }]
 JS;
         if ($returnEventParamsOnly === true) {
@@ -1007,11 +1026,11 @@ JS;
             $( document ).off( "{$actionperformed}.{$this->getId()}" );
             $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
                 var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
-                // Avoid errors if widget was removed already
-                if ($('#{$targetEl->getId()}').length === 0 || $('#{$this->getId()}').length === 0) {
+                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
                     return;
                 }
-                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                // Avoid errors if widget was removed already
+                if ({$this->buildJsCheckInitialized()} === false || {$targetEl->buildJsCheckInitialized()} === false) {
                     return;
                 }
                 {$thisButtonScriptJs}
@@ -1025,7 +1044,7 @@ JS;
         return <<<JS
 
             {$beforeJs}
-            {$targetEl->buildJsCallFunction($action->getFunctionName())}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
             {$afterJs}
 JS;
     }

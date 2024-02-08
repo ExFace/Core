@@ -23,8 +23,14 @@ class CoreInstaller extends AbstractAppInstaller
     {
         $indent = $this->getOutputIndentation();
         // Install model DB
-        $modelLoaderInstaller = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
+        $modelLoader = $this->getWorkbench()->model()->getModelLoader();
+        $modelLoaderInstaller = $modelLoader->getInstaller();
         yield from $modelLoaderInstaller->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $modelLoaderInstaller->getSelectorInstalling()->getFolderRelativePath());
+        $this->getWorkbench()->model()->clearCache();
+        // Clear all model caches to force the workbench to load everything again. This is important because
+        // Objects may have been loaded previously (e.g. the exface.Core.APP object is required to instatiate
+        // the installers.
+        $modelLoader->clearCache();        
         
         // Add required files to root folder
         yield $indent . $this->createApiPhp($source_absolute_path);

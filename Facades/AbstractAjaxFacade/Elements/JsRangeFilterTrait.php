@@ -5,23 +5,22 @@ use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Renders a RangeFilter as an InlineGroup with two default editors.
  * 
- * @method InlineGroup getWidget()
+ * @method \exface\Core\Widgets\RangeFilter getWidget()
  * @method AbstractAjaxFacade getFacade()
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 trait JsRangeFilterTrait
 {
-
     private $inlineGroup = null;
     
     /**
@@ -43,19 +42,19 @@ trait JsRangeFilterTrait
                 'input_widget' => $inputUxon
             ]);
             $filterFromUxon->setProperty('comparator', $widget->getComparatorFrom());
-            $filterTo = $filterFromUxon->copy();
-            $filterTo->setProperty('comparator', $widget->getComparatorTo());
+            $filterToUxon = $filterFromUxon->copy();
+            $filterToUxon->setProperty('comparator', $widget->getComparatorTo());
             
             if ($widget->hasValueFrom() === true) {
                 $filterFromUxon->setProperty('value', $widget->getValueFrom());
             }
             if ($widget->hasValueTo() === true) {
-                $filterTo->setProperty('value', $widget->getValueTo());
+                $filterToUxon->setProperty('value', $widget->getValueTo());
             }
             
             $groupWidgets = new UxonObject([
                 $filterFromUxon,
-                $filterTo
+                $filterToUxon
             ]);
             
             $wg->setWidgets($groupWidgets);
@@ -116,11 +115,11 @@ trait JsRangeFilterTrait
         $facade = $this->getFacade();
         
         if ($column === '~value_from') {
-            return $facade->getElement($this->getWidgetInlineGroup()->getWidget(0))->buildJsValueGetter();
+            return $facade->getElement($this->getWidgetInlineGroup()->getInputWidgets()[0])->buildJsValueGetter();
         }
         
         if ($column === '~value_to') {
-            return $facade->getElement($this->getWidgetInlineGroup()->getWidget(2))->buildJsValueGetter();
+            return $facade->getElement($this->getWidgetInlineGroup()->getInputWidgets()[1])->buildJsValueGetter();
         }
         
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $w) {
@@ -160,5 +159,28 @@ JS;
     public function buildJsValueGetterMethod()
     {
         throw new FacadeLogicError('Cannot use JsRangeFilterTrait::buildJsValueGetterMethod() - use buildJsValueGetter() instead!');
+    }
+    
+    /**
+     *
+     * @param string $functionName
+     * @param array $parameters
+     * @return string
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget->hasFunction($functionName, false)) {
+            return parent::buildJsCallFunction($functionName, $parameters);
+        }
+        
+        $js = '';
+        foreach ($this->getWidgetInlineGroup()->getWidgets() as $child) {
+            if ($child->hasFunction($functionName)) {
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+            }
+        }
+        
+        return $js;
     }
 }
