@@ -170,6 +170,9 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($node->getName());
         $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
+        if($node->getIcon() != null) {
+            $tile->setIcon($node->getIcon());
+        }
         $hint = $node->getIntro() ?? $node->getDescription();
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
