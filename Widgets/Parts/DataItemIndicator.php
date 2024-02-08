@@ -65,14 +65,18 @@ class DataItemIndicator implements WidgetPartInterface, iHaveColor, iHaveColorSc
      */
     public function setColor($color)
     {
-        $this->colorExpr = null;
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
-        if (! $this->colorExpr->isStatic()) {
-            $this->colorColumn = $this->addDataColumn($color);
+        if ($this->hasColorColumn()) {
+            $this->addDataColumn($color);
         }
         
         return $this;
+    }
+    
+    public function hasColorColumn() : bool
+    {
+        return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
     }
     
     /**
@@ -81,6 +85,9 @@ class DataItemIndicator implements WidgetPartInterface, iHaveColor, iHaveColorSc
      */
     public function getColorColumn() : ?DataColumn
     {
+        if ($this->colorColumn === null && $this->hasColorColumn()) {
+            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+        }
         return $this->colorColumn;
     }
 

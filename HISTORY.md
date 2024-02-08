@@ -1,6 +1,10 @@
 # Release history
 
-## 1.14 - in development
+## 1.15 - in development
+
+## 1.14 - 12.01.2023
+
+- TODO
 
 ## 1.13 - 18.12.2023
 

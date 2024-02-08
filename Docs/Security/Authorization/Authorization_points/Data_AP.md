@@ -73,6 +73,14 @@ In the following example, we are going to let users only see data for the compan
 }
 ```
 
+### Multi-dimension restrictions: e.g. permissions for companies and countries
+
+If you have roles limiting the view of a user, that are based on different objects, multiple data policies will be applied at the same time. In this case, policies are grouped by filtering scopes. Filters applied within a scope are combined by OR and the scopes themselves are combined via AND. By default, the scopes are defined by the target object of a policy.
+     
+For example, if there are policies, that allow a user to only see a certain company, and policies, limiting the view to a country, a user that has roles for Company1 and Company2 in Germany will receive the following filter: `(Company = "Company1" OR Company = "Company2") AND Country = "Germany"`.
+
+If you need the filters from multiple policies with different target objects to be combined via OR, set the same explicitly defined scope in all policies using `add_filters_in_scope`.
+
 ### Let a user see everything explicitly
 
 If you have a lot of policies, it can be hard to ensure, that key users really see everything. You can tell a policy to provide unfiltered access explicitly by specifying `add_filters` without conditions! Of course, these policies can also apply to related objects as described above.

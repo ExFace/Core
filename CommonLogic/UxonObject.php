@@ -66,6 +66,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function toJson($prettify = false)
     {
+        // IDE Add `| JSON_UNESCAPED_UNICODE` here?
         $options = $prettify ? JSON_PRETTY_PRINT : null;
         // Force number to be numbers and not numeric strings to make sure
         // the JSON looks the same on different systems (e.g. Microsoft IIS would

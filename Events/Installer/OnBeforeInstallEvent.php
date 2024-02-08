@@ -21,6 +21,10 @@ class OnBeforeInstallEvent extends AbstractAppInstallerEvent
         $this->srcPath = $srcPath;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getSourcePath() : string
     {
         return $this->srcPath;

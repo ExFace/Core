@@ -85,8 +85,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function setTitle(string $expression) : DataSchedulerResource
     {
+        $this->titleColumn = null;
         $this->titleString = $expression;
-        $this->titleColumn = $this->addDataColumn($expression);
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -97,7 +98,9 @@ class DataSchedulerResource implements WidgetPartInterface
     public function getTitleColumn() : DataColumn
     {
         if ($this->titleColumn === null) {
-            if ($this->getMetaObject()->hasLabelAttribute()) {
+            if ($this->titleString !== null) {
+                $this->titleColumn = $this->getDataWidget()->getColumnByExpression($this->titleString);
+            } elseif ($this->getMetaObject()->hasLabelAttribute()) {
                 $this->titleColumn = $this->addDataColumn($this->getMetaObject()->getLabelAttribute()->getAlias());
             } else {
                 foreach ($this->getDataWidget()->getColumns() as $col) {
@@ -136,8 +139,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function setSubtitle(string $expression) : DataSchedulerResource
     {
+        $this->subtitleColumn = null;
         $this->subtitleString = $expression;
-        $this->subtitleColumn = $this->addDataColumn($expression);
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -147,6 +151,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function getSubtitleColumn() : ?DataColumn
     {
+        if ($this->subtitleColumn === null && $this->subtitleString !== null) {
+            $this->subtitleColumn = $this->getDataWidget()->getColumnByExpression($this->subtitleString);
+        }
         return $this->subtitleColumn;
     }
     
@@ -182,14 +189,22 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function setColor($color)
     {
-        $this->colorExpr = null;
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
-        if (! $this->colorExpr->isStatic()) {
+        if ($this->hasColorColumn()) {
             $this->colorColumn = $this->addDataColumn($color);
         }
         
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasColorColumn() : bool
+    {
+        return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
     }
     
     /**
@@ -198,6 +213,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function getColorColumn() : ?DataColumn
     {
+        if ($this->colorColumn === null && $this->hasColorColumn()) {
+            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+        }
         return $this->colorColumn;
     }
     

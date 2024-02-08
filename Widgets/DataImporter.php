@@ -25,6 +25,9 @@ use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Widgets\Traits\iCanEditDataTrait;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\Widgets\iCanBeEditable;
+use exface\Core\Widgets\Traits\iCanBeEditableTrait;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -114,7 +117,16 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
  * @author Andrej Kabachnik
  *        
  */
-class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons, iCanWrapText, iCanBeRequired
+class DataImporter extends AbstractWidget implements 
+    iHaveColumns, 
+    iHaveColumnGroups, 
+    iFillEntireContainer, 
+    iTakeInput, 
+    iHaveToolbars, 
+    iHaveButtons, 
+    iCanWrapText, 
+    iCanBeRequired,
+    iCanBeEditable
 {
     use iHaveColumnsAndColumnGroupsTrait;
     
@@ -124,7 +136,7 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     
     use DataTableTrait;
     
-    use iCanEditDataTrait;
+    use iCanBeEditableTrait;
     
     /**
      * Empty the table
@@ -502,5 +514,17 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }
         return array_unique($colNames);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
+        return $uxon;
     }
 }

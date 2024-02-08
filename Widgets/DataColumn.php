@@ -33,6 +33,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
+use exface\Core\Factories\ActionFactory;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -86,6 +87,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $cellWidgetUxon = null;
 
     private $editable = null;
+    
+    private $editable_if_access_to_action_alias = null;
     
     private $default_sorting_direction = null;
 
@@ -300,6 +303,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                     case $this->isEditable() === true:
                         $uxon = $attr->getDefaultEditorUxon();
                         $fallbackWidgetType = 'Input';
+                        if ($this->isBoundToAttribute() && $this->getAttribute()->isEditable() === false) {
+                            $uxon->setProperty('disabled', false);
+                        }
                         break;
                     // Otherwise use the default display widget
                     default:
@@ -400,6 +406,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $this->editable;
         }
         
+        if ($this->editable_if_access_to_action_alias !== null) {
+            $action = ActionFactory::createFromString($this->getWorkbench(), $this->editable_if_access_to_action_alias, $this);
+            return $action->isAuthorized() === true;
+        }
+        
         $groupIsEditable = $this->getDataColumnGroup()->isEditable();
         if ($groupIsEditable === true) {
             if ($this->isBoundToAttribute()) {
@@ -435,6 +446,32 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($this->editable === true) {
             $this->getDataColumnGroup()->setEditable(true);
         }
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getEditableIfAccessToAction() : string
+    {
+        return $this->editable_if_access_to_action_alias;
+    }
+    
+    /**
+     * If a user has access to this action (alias), the widget will be editable.
+     *
+     * This is typically the action, that is going to be used to save the edited data - e.g. `exface.Core.UpdateData`.
+     *
+     * @uxon-property editable_if_access_to_action
+     * @uxon-type metamodel:action
+     *
+     * @param string $value
+     * @return DataColumn
+     */
+    public function setEditableIfAccessToAction(string $value) : DataColumn
+    {
+        $this->editable_if_access_to_action_alias = $value;
         return $this;
     }
     
@@ -759,6 +796,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         }
         if ($this->isCalculated()) {
             $uxon->setProperty('calculation', $this->getCalculationExpression()->toString());
+        }
+        if ($this->editable_if_access_to_action_alias !== null) {
+            $uxon->setProperty('editable_if_access_to_action', $this->editable_if_access_to_action_alias);
         }
         return $uxon;
     }
