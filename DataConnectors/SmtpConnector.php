@@ -50,8 +50,8 @@ use exface\Core\Interfaces\Communication\UserRecipientInterface;
  *      "host": "SMTP.yourdomain.com",
  *      "port": 25,
  *      "tls": true,
- *      "user": "andrej_ka@gmx.de",
- *      "password": "m3$5p5D4gx.3"
+ *      "user": "you@yourdomain.com",
+ *      "password": "yourSmptPassword"
  *  }
  *  
  * ```
