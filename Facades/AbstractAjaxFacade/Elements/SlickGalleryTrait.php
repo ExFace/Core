@@ -501,14 +501,13 @@ JS;
         }
         return <<<JS
                     function(){
-                        var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
-                        if (sUid === null) {
-                            sUid = '';
+                        var mUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
+                        if (mUid === null) {
+                            mUid = '';
+                        } else if ((typeof mUid === 'string' || mUid instanceof String) && mUid.includes('/')){
+                            mUid = 'base64,' + btoa(mUid);
                         }
-                        if (sUid.toString().includes('/')){
-                            sUid = 'base64,' + btoa(sUid);
-                        }
-                        return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(sUid));
+                        return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(mUid));
                     }()
 JS;
     }
