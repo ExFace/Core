@@ -502,10 +502,10 @@ JS;
         return <<<JS
                     function(){
                         var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
-                        if (sUid == null) {
+                        if (sUid === null) {
                             sUid = '';
                         }
-                        if (sUid.includes('/')){
+                        if (sUid.toString().includes('/')){
                             sUid = 'base64,' + btoa(sUid);
                         }
                         return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(sUid));
