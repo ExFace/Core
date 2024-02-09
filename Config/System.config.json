@@ -76,6 +76,10 @@
             ]
     	},
         {
+            "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\ApiKeyAuthenticator",
+            "id": "API_KEY_AUTH"
+        },
+        {
             "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\RememberMeAuthenticator",
             "token_lifetime_seconds": 86400,
             "token_refresh_interval": 3600,

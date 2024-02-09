@@ -19,6 +19,7 @@ use exface\Core\Exceptions\SecurityException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
@@ -49,6 +50,11 @@ use exface\Core\CommonLogic\UxonObject;
  *      "header_as_password": {
  *        "username": "kmts_vht_sued",
  *        "password_http_header": "test_pwd",
+ *        "disabled": false
+ *      },
+ *      OR
+ *      "header_as_key": {
+ *        "key_http_header": "Api-Key",
  *        "disabled": false
  *      }
  *    }
@@ -338,6 +344,30 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
                 function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($usr, $pwdHeader) {
                     $pwd = $request->getHeaderLine($pwdHeader);
                     return new MetamodelUsernamePasswordAuthToken($usr, $pwd, $facade);
+                }
+            );
+        }
+        return $this;
+    }
+    
+    /**
+     * Authenticate using the value of an HTTP header as an API key to match agains registered API keys.
+     *
+     * @uxon-property header_as_api_key
+     * @uxon-type object
+     * @uxon-template {"key_http_header": "", "disabled": false}
+     *
+     * @param UxonObject $uxon
+     * @return AuthenticationMiddleware
+     */
+    protected function setHeaderAsApiKey(UxonObject $uxon) : AuthenticationMiddleware
+    {
+        if ($uxon->getProperty('disabled') !== true) {
+            $keyHeader = $uxon->getProperty('key_http_header');
+            $this->addTokenExtractor(
+                function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($keyHeader) {
+                    $pwd = $request->getHeaderLine($keyHeader);
+                    return new ApiKeyAuthToken($pwd, null, $facade);
                 }
             );
         }
