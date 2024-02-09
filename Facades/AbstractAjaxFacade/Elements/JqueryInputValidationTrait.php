@@ -31,6 +31,10 @@ trait JqueryInputValidationTrait {
     /**
      * Returns an inline JS expression, that evaluates to FALSE if validation fails and TRUE if it passes.
      * 
+     * WARNING: You cannot just use `return {$this->buildJsValidator()};` because in case of a 
+     * leading linebreak this will not work for some strange reason. Put the validator call in 
+     * parenthes instead: `return ({$this->buildJsValidator()});`
+     * 
      * NOTE: The parameter $valJs is required for in-table inputs, where the validation must
      * be integrated into the table code!
      * 
@@ -42,17 +46,21 @@ trait JqueryInputValidationTrait {
      */
     public function buildJsValidator(?string $valJs = null) : string
     {
-        $constraintsJs = $this->buildJsValidatorCheckRequired('val', 'bConstraintsOK = false;')
-        . $this->buildJsValidatorConstraints('val', 'bConstraintsOK = false;', $this->getWidget()->getValueDataType());
+        $constraintsJs = <<<JS
         
+                        {$this->buildJsValidatorCheckRequired('val', 'bConstraintsOK = false;')}
+                        {$this->buildJsValidatorConstraints('val', 'bConstraintsOK = false;', $this->getWidget()->getValueDataType())}
+JS;
         $valJs = $valJs ?? $this->buildJsValueGetter();
-        if ($constraintsJs !== '') {
-            return "(function(){ 
-                        var val = {$valJs}; 
+        if (trim($constraintsJs) !== '') {
+            return <<<JS
+
+                    (function(val){
                         var bConstraintsOK = true;
                         $constraintsJs;
-                        return bConstraintsOK; 
-                    })()";
+                        return bConstraintsOK;
+                    })({$valJs})
+JS;
         } else {
             return 'true';
         }
@@ -71,11 +79,17 @@ trait JqueryInputValidationTrait {
         // required_if check does not work for inTable widgets
         if ($this->getWidget()->isInTable()) {
             if ($this->getWidget()->isRequired() === true) {
-                return "if ($valueJs == null || $valueJs === '') { $onFailJs }";
+                return <<<JS
+
+                        if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs }
+JS;
             }
         }
         if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
-            return "if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs == null || $valueJs === '') { $onFailJs } }";
+            return <<<JS
+
+                        if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs } }
+JS;
         }
         return '';
     }
