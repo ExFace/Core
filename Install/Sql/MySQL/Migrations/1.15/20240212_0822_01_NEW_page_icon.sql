@@ -1,7 +1,7 @@
 -- UP
 
 ALTER TABLE `exf_page`
-	ADD COLUMN `icon` varchar(100) NULL;
+	ADD COLUMN `icon` varchar(300) NULL;
 	
 -- DOWN
 

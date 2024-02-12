@@ -78,7 +78,7 @@ trait iHaveIconTrait {
     /**
      * 
      * {@inheritdoc}
-     * @see iHaveIcon::getIconSet()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIconSet()
      */
     public function getIconSet() : ?string
     {
@@ -92,10 +92,11 @@ trait iHaveIconTrait {
      * @uxon-type string
      * @uxon-default fa
      *
-     * @see iHaveIcon::setIconSet()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconSet()
      */
     public function setIconSet(string $iconSetCode) : iHaveIcon
     {
-        return $this->iconSet;
+        $this->iconSet = $iconSetCode;
+        return $this;
     }
 }
