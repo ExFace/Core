@@ -3,6 +3,8 @@ namespace exface\Core\Interfaces\Widgets;
 
 interface iHaveIcon
 {
+    const ICON_SET_SVG = 'svg';
+    
     /**
      * Returs the name of the icon to be used
      *

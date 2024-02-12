@@ -295,15 +295,25 @@ class Relation implements MetaRelationInterface
     public function getReversedRelation() : MetaRelationInterface
     {
         if ($this->isForwardRelation()) {
-            // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
-            // alias of the object it leads to (in our case, the current object)
+            // If it is a regular relation, it will be a reverse one from the point of view 
+            // of the related object. That is identified by the alias of the object it leads 
+            // to (in our case, the current object)
+            $thisModifier = $this->getAliasModifier();
             if ($this->getCardinality()->__toString() === RelationCardinalityDataType::ONE_TO_ONE
             && $this->getRightKeyAttribute()->isRelation() 
-            && $this->getRightKeyAttribute()->getRelation()->getAlias() === $this->getAliasModifier()
+            // IDEA Will this ever happen?? Isn't $thisModifier always empty for forward
+            // relations? Not sure, what exactly this branch was for...
+            && $this->getRightKeyAttribute()->getRelation()->getAlias() === $thisModifier
             ) {
                 $reverse = $this->getRightKeyAttribute()->getRelation();
             } else {
-                $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $this->getAliasModifier());
+                // It is a bit strange, that the current modifier is passed here to
+                // to the right object when getting the reverse relation. It seems
+                // more corret to pass the alias of this relation as modifier, which
+                // is done in case the modifier is empty. However, we did not dare
+                // to change this code entirely - perhaps, tha current modifier is
+                // important for some 1-to-1 relations or similar.
+                $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $thisModifier !== '' ? $thisModifier : $this->getAlias());
             }
         } elseif ($this->isReverseRelation()) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. 
