@@ -113,7 +113,7 @@ trait JqueryFilterTrait {
     {
         $widget = $this->getWidget();
         $constraintsJs = '';
-        if ($widget->isRequired() === true || $widget->getRequiredIf()) {
+        if ($widget->isRequired() === true) {
             $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
         }
         
@@ -122,7 +122,7 @@ trait JqueryFilterTrait {
             return <<<JS
 
                     (
-                    (function(val){console.log('required filter', val);
+                    (function(val){
                         var bConstraintsOK = true;
                         $constraintsJs;
                         return bConstraintsOK;

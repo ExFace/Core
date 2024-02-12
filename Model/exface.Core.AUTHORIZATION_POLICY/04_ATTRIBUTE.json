@@ -725,7 +725,7 @@
         },
         {
             "CREATED_ON": "2020-04-07 06:01:22",
-            "MODIFIED_ON": "2020-05-11 07:19:12",
+            "MODIFIED_ON": "2024-02-07 16:44:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea789534babc3cac460205857feb80",
@@ -740,7 +740,13 @@
             "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
-            "DEFAULT_DISPLAY_UXON": null,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "toggle-on",
+                    "toggle-off"
+                ]
+            },
             "COMMENTS": "",
             "NAME": "Disabled",
             "RELATION_CARDINALITY": "",
@@ -853,6 +859,56 @@
             "DATA_ADDRESS_PROPS": {
                 "SQL_DATA_TYPE": "binary"
             },
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2024-02-07 16:37:18",
+            "MODIFIED_ON": "2024-02-07 17:28:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ee916dc7031b4a916d025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": {
+                "widget_type": "Icon",
+                "icon_scale": [
+                    "",
+                    "pencil"
+                ]
+            },
+            "COMMENTS": "",
+            "NAME": "Modified locally",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 0,
+            "ALIAS": "MODIFICATION_FLAG",
+            "DATATYPE": "0x37000000000000000000000000000000",
+            "DATA_ADDRESS": "(CASE WHEN [#DISABLED_FLAG#] = 1 OR [#APP#] IS NULL THEN 1 ELSE 0 END) ",
+            "OBJECT": "0x11ea63083a80f8c8a2e30205857feb80",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
