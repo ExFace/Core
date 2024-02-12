@@ -116,7 +116,16 @@ class NavTiles extends WidgetGrid
             $this->tilesBuilt = true;
             
         }
-        return parent::getWidgets();
+        $widgets = parent::getWidgets();
+        
+        // If hide_caption is true, need to hide the caption of the first
+        // tile container too! Otherwise the caption of the overall widget
+        // is gone, but that of the first container is still there.
+        if ($this->getHideCaption() === true && ! empty($widgets)) {
+            $widgets[0]->setHideCaption(true);
+        }
+        
+        return $widgets;
     }
     
     /**
