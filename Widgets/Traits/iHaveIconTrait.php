@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\DataTypes\StringDataType;
 
 trait iHaveIconTrait {
     
@@ -82,6 +83,20 @@ trait iHaveIconTrait {
      */
     public function getIconSet() : ?string
     {
+        if ($this->iconSet === null && $this->icon !== null) {
+            $icon = $this->getIcon();
+            if (StringDataType::startsWith($icon, '<svg')) {
+                return iHaveIcon::ICON_SET_SVG;
+            }
+            /* IDEA Not sure, if the core should determine font awesome. SVG is pretty
+             * obvious, but FA might be subject to facade individuality.
+            $firstThree = mb_strtolower(mb_substr($icon, 0, 3));  
+            switch ($firstThree) {
+                case 'fa ':
+                case 'fa-':
+                    return iHaveIcon::ICON_SET_FONT_AWESOME;
+            }*/
+        }
         return $this->iconSet;
     }
     
@@ -96,6 +111,7 @@ trait iHaveIconTrait {
      */
     public function setIconSet(string $iconSetCode) : iHaveIcon
     {
-        return $this->iconSet;
+        $this->iconSet = $iconSetCode;
+        return $this;
     }
 }
