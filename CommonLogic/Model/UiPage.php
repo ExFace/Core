@@ -1048,6 +1048,8 @@ class UiPage implements UiPageInterface, iHaveIcon
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('icon', $this->getIcon());
+        $uxon->setProperty('icon_set', $this->getIconSet());
+        $uxon->setProperty('show_icon', $this->getShowIcon());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
         $uxon->setProperty('created_by_user_selector', $this->getCreatedByUserSelector()->toString());
@@ -1384,6 +1386,8 @@ class UiPage implements UiPageInterface, iHaveIcon
             'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
             'ICON' => $this->getIcon(),
+            'ICON_SET' => $this->getIconSet(),
+            'SHOW_ICON' => $this->getShowIcon(),
             'INTRO' => $this->getIntro(),
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,

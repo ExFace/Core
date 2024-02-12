@@ -1,9 +1,9 @@
 -- UP
 
 ALTER TABLE [exf_page]
-	ADD [icon] varchar(300) NULL;
+	ADD [show_icon] tinyint NULL;
 
 -- DOWN
 
 ALTER TABLE [exf_page]
-	DROP COLUMN [icon];
+	DROP COLUMN [show_icon];
