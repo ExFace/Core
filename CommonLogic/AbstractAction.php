@@ -56,6 +56,7 @@ use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -72,6 +73,8 @@ abstract class AbstractAction implements ActionInterface
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
+	
+	use iHaveIconTrait;
 
     private $id = null;
 
@@ -264,36 +267,6 @@ abstract class AbstractAction implements ActionInterface
             'alias',
             'object_alias'
         ]);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIcon()
-     */
-    public function getIcon()
-    {
-        return $this->icon;
-    }
-
-    /**
-     * Sets the icon to be used for this action.
-     * 
-     * This icon will be used on buttons and menu items with this action unless they have
-     * their own icons defined.
-     * 
-     * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
-     *
-     * @uxon-property icon
-     * @uxon-type icon
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIcon()
-     */
-    public function setIcon($value)
-    {
-        $this->icon = $value;
     }
 
     /**

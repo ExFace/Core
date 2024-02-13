@@ -10,8 +10,6 @@ trait iHaveIconTrait {
     
     private $iconSet = null;
     
-    private $showIcon = null;
-    
     /**
      *
      * {@inheritdoc}
@@ -23,7 +21,7 @@ trait iHaveIconTrait {
     }
 
     /**
-     * The name of the icon to be displayed.
+     * The name of the icon to be displayed in buttons, menus, etc.
      * 
      * Refer to the documentation of the facade for supported icon names. Most
      * facades will support font awesome icons, SVG icons and some poprietary icon 
@@ -65,33 +63,7 @@ trait iHaveIconTrait {
             $this->showIcon = true;
         }
         return $this;
-    }    
-    
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getShowIcon()
-     */
-    public function getShowIcon(bool $default = null) : ?bool
-    {
-        return $this->showIcon ?? $default;
-    }
-    
-    /**
-     * Force the icon to show (TRUE) or hide (FALSE)
-     * 
-     * The default depends on the facade used.
-     * 
-     * @uxon-property show_icon
-     * @uxon-type boolean 
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setShowIcon()
-     */
-    public function setShowIcon(bool $value) : iHaveIcon
-    {
-        $this->showIcon = $value;
-        return $this;
-    }
+    } 
     
     /**
      * 
