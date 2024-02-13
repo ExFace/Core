@@ -31,7 +31,6 @@ use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Translation\UxonTranslator;
-use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
@@ -52,8 +51,6 @@ class UiPage implements UiPageInterface, iHaveIcon
     use ImportUxonObjectTrait;
     
     use UiMenuItemTrait;
-    
-    use iHaveIconTrait;
 
     const WIDGET_ID_SEPARATOR = '_';
 
@@ -1047,15 +1044,19 @@ class UiPage implements UiPageInterface, iHaveIcon
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
-        $uxon->setProperty('icon', $this->getIcon());
-        $uxon->setProperty('icon_set', $this->getIconSet());
-        $uxon->setProperty('show_icon', $this->getShowIcon());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
         $uxon->setProperty('created_by_user_selector', $this->getCreatedByUserSelector()->toString());
         $uxon->setProperty('created_on', $this->getCreatedOn());
         $uxon->setProperty('modified_by_user_selector', $this->getModifiedByUserSelector()->toString());
         $uxon->setProperty('modified_on', $this->getModifiedOn());
+        
+        if (null !== ($val = $this->getIcon()) && $val !== '') {
+            $uxon->setProperty('icon', $val);
+        }
+        if (null !== ($val = $this->getIconSet()) && $val !== '') {
+            $uxon->setProperty('icon_set', $val);
+        }
         
         $contents = trim($this->getContents());
         if (! $contents) {
@@ -1387,7 +1388,6 @@ class UiPage implements UiPageInterface, iHaveIcon
             'DESCRIPTION' => $this->getDescription(),
             'ICON' => $this->getIcon(),
             'ICON_SET' => $this->getIconSet(),
-            'SHOW_ICON' => $this->getShowIcon(),
             'INTRO' => $this->getIntro(),
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
