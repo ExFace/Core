@@ -445,7 +445,7 @@ class CallAction extends AbstractAction implements iCallOtherActions
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return parent::getIcon() ?? $this->getActions()[0]->getIcon();
     }

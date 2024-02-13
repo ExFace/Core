@@ -27,7 +27,7 @@ class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return parent::getIcon() ?? Icons::RECYCLE;
     }
