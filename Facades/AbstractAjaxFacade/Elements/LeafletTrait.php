@@ -1158,7 +1158,11 @@ JS;
         switch (true) {
             case ($layer instanceof DataPointsLayer):
                 $pointSizeCss = $layer->getPointSize() . 'px';
-                $valueJs = ! $layer->hasValue() ? "''" : "'<div class=\"exf-map-point-value\" style=\"margin-left: calc({$pointSizeCss} + 3px); margin-top: calc(-{$pointSizeCss} - 0.25rem);\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                if ($layer->hasValue()) {
+                    $valueJs = "'<div class=\"exf-map-point-value exf-map-point-{$layer->getValuePosition()}\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                } else {
+                    $valueJs = "''";
+                }
                 $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$pointSizeCss}; width: {$pointSizeCss}; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
                 $js= <<<JS
 function(){
