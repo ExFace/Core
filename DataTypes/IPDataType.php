@@ -5,6 +5,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Formulas\SubstringAfter;
 
 /**
  * 
@@ -378,6 +379,7 @@ class IPDataType extends TextDataType
                 // Header can contain multiple IPs of proxies that are passed through.
                 // Only the IP address added by the last proxy (last IP in the list) can be trusted.
                 $clientIP = trim(end(explode(",", $server["HTTP_X_FORWARDED_FOR"])));
+                $clientIP = static::stripPort($clientIP);
                 
                 // Validating the IP address is important in the last step since
                 // the HTTP headers can be set to any arbitrary value.
@@ -477,5 +479,25 @@ class IPDataType extends TextDataType
             }
         }
         throw new DataTypeValidationError($this, "Value '{$ip}' is not a valid input for IpDataType.");
+    }
+    
+    /**
+     * 
+     * @param string $ip4or6
+     * @return string
+     */
+    public static function findPort(string $ip4or6) : string
+    {
+        return static::substringAfter($ip4or6, ':', $ip4or6, false, true);
+    }
+    
+    /**
+     *
+     * @param string $ip4or6
+     * @return string
+     */
+    public static function stripPort(string $ip4or6) : string
+    {
+        return static::substringBefore($ip4or6, ':', $ip4or6, false, true);
     }
 }
