@@ -1462,6 +1462,9 @@ SQL;
         $uiPage->setName($row['name']);
         $uiPage->setDescription($row['description'] ?? '');
         $uiPage->setIntro($row['intro'] ?? '');
+        $uiPage->setIcon($row['icon'] ?? '');
+        $uiPage->setIconSet($row['icon_set'] ?? '');
+        $uiPage->setShowIcon($row['show_icon'] ?? '');
         
         $uiPage->setMenuIndex(intval($row['menu_index']));
         $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
@@ -1562,6 +1565,9 @@ SQL;
             $parentNode,
             $row['description'],
             $row['intro'],
+            $row['icon'],
+            $row['icon_set'],
+            $row['show_icon'],
             $row['group_oids'] ? explode(',', $row['group_oids']) : null,
             $row['app_oid']
         );
@@ -1817,6 +1823,9 @@ SQL;
                 p.alias,
                 p.description,
                 p.intro,
+                p.icon,
+                p.icon_set,
+                p.show_icon,
                 p.published,
                 p.menu_index,
                 p.created_on,

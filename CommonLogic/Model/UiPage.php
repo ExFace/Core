@@ -31,6 +31,8 @@ use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -45,11 +47,13 @@ use exface\Core\CommonLogic\Translation\UxonTranslator;
  * @author Andrej Kabachnik
  *
  */
-class UiPage implements UiPageInterface
+class UiPage implements UiPageInterface, iHaveIcon
 {
     use ImportUxonObjectTrait;
     
     use UiMenuItemTrait;
+    
+    use iHaveIconTrait;
 
     const WIDGET_ID_SEPARATOR = '_';
 
@@ -1043,6 +1047,9 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
+        $uxon->setProperty('icon', $this->getIcon());
+        $uxon->setProperty('icon_set', $this->getIconSet());
+        $uxon->setProperty('show_icon', $this->getShowIcon());
         $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_selector', $this->getReplacesPageSelector());
         $uxon->setProperty('created_by_user_selector', $this->getCreatedByUserSelector()->toString());
@@ -1378,6 +1385,9 @@ class UiPage implements UiPageInterface
             'DEFAULT_MENU_INDEX' => $this->getMenuIndexDefault(),
             'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
+            'ICON' => $this->getIcon(),
+            'ICON_SET' => $this->getIconSet(),
+            'SHOW_ICON' => $this->getShowIcon(),
             'INTRO' => $this->getIntro(),
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
