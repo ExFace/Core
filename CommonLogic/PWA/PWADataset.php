@@ -196,7 +196,7 @@ class PWADataset implements PWADatasetInterface
      */
     public function isIncremental() : bool
     {
-        return $this->findIncrementAttribute() !== null;
+        return $this->getIncrementAttribute() !== null;
     }
     
     /**
