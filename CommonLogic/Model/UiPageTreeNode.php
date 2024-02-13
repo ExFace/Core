@@ -12,15 +12,11 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
-use exface\Core\Interfaces\AppInterface;
-use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 class UiPageTreeNode implements UiPageTreeNodeInterface, iHaveIcon
 {
     use UiMenuItemTrait;
-    
-    use iHaveIconTrait;
     
     private $exface = null;
     

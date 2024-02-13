@@ -164,7 +164,6 @@ class UiPageTreeFactory extends AbstractStaticFactory
         string $intro = null,
         string $icon = null,
         string $icon_set = null,
-        bool $show_icon = null,
         array $pageGroupSelectors = null,
         $appSelectorOrString = null) : UiPageTreeNode
     {
@@ -181,9 +180,6 @@ class UiPageTreeFactory extends AbstractStaticFactory
         }
         if ($icon_set !== null) {
             $node->setIconSet($icon_set);
-        }
-        if ($show_icon !== null) {
-            $node->setShowIcon($show_icon);
         }
         if ($pageGroupSelectors !== null) {
             foreach ($pageGroupSelectors as $selectorOrString) {

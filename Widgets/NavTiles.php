@@ -179,19 +179,11 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($node->getName());
         $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
-        if($node->getIcon() != null) {
+        if($node->getIcon() !== null) {
             $tile->setIcon($node->getIcon());
         }
-        if($node->getIconSet() != null) {
+        if($node->getIconSet() !== null) {
             $tile->setIconSet($node->getIconSet());
-        }
-        if($node->getShowIcon() === false | $node->getShowIcon() === true) {
-            // if there is no icon set by the user, UI5 tries to display a default icon. Here we are hiding that default icon.
-            if($node->getIcon() === null | $node->getIcon() === '') {
-                $tile->setShowIcon(false);
-            } 
-            // else the show_icon attribute set by the user is applied
-            else $tile->setShowIcon($node->getShowIcon());
         }
         $hint = $node->getIntro() ?? $node->getDescription();
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
