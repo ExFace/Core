@@ -13,10 +13,14 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
-class UiPageTreeNode implements UiPageTreeNodeInterface
+class UiPageTreeNode implements UiPageTreeNodeInterface, iHaveIcon
 {
     use UiMenuItemTrait;
+    
+    use iHaveIconTrait;
     
     private $exface = null;
     
@@ -42,7 +46,6 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     private $published = true;
     
-    
     /**
      * 
      * @param WorkbenchInterface $exface
@@ -61,7 +64,6 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
         if ($parentNode !== null) {
             $this->parentNode = $parentNode;
         }
-        
     }
     
     /**
@@ -182,12 +184,12 @@ class UiPageTreeNode implements UiPageTreeNodeInterface
     
     /**
      * 
-     * @param string $descpription
+     * @param string $description
      * @return UiMenuItemInterface
      */
-    public function setDescription (string $descpription) : UiMenuItemInterface
+    public function setDescription (string $description) : UiMenuItemInterface
     {
-        $this->description = $descpription;
+        $this->description = $description;
         return $this;
     }
     
