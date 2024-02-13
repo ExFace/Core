@@ -109,6 +109,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     
     private $disabledIfInputInvalid = true;
     
+    private $showIcon = null;
+    
     /**
      * 
      * @var string[]
@@ -922,6 +924,33 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function setDisabledIfInputInvalid(bool $value) : Button
     {
         $this->disabledIfInputInvalid = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param bool $default
+     * @return bool|NULL
+     */
+    public function getShowIcon(bool $default = null) : ?bool
+    {
+        return $this->showIcon ?? $default;
+    }
+    
+    /**
+     * Force the icon to show (TRUE) or hide (FALSE)
+     *
+     * The default depends on the facade used.
+     *
+     * @uxon-property show_icon
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return iHaveIcon
+     */
+    public function setShowIcon(bool $value) : iHaveIcon
+    {
+        $this->showIcon = $value;
         return $this;
     }
 }
