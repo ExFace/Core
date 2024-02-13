@@ -222,7 +222,7 @@ class ObjectBasketContext extends AbstractContext
         return $i;
     }
 
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return Icons::SHOPPING_BASKET;
     }
