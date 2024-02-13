@@ -39,7 +39,7 @@ class FavoritesContext extends ObjectBasketContext
         return parent::setScope($context_scope);
     }
     
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return Icons::STAR;
     }
