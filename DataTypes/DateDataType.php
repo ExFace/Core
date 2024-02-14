@@ -782,4 +782,15 @@ class DateDataType extends AbstractDataType
         
         return $text;
     }
+    
+    /**
+     * 
+     * @param string $value
+     * @return int
+     */
+    public static function convertToUnixTimestamp(string $value) : int
+    {
+        $value = static::cast($value);
+        return strtotime($value);
+    }
 }
