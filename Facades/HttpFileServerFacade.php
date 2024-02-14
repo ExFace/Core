@@ -100,6 +100,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $cachePath = $this->getFileCachePath($objSel, $uid, $params);
         if (file_exists($cachePath) === true) {
             $cachedBinary = file_get_contents($cachePath);
+            if (empty($cachedBinary)) {
+                $cachedBinary = null;
+            }
         }
         
         // Decode UID if it is Base64 - this will be the case if the UID has special characters
@@ -169,7 +172,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         $binary = null;
-        $plain = null;
         $headers = array_merge($headers, [
             'Expires' => 0,
             'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
@@ -182,8 +184,12 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 $headers['Content-Transfer-Encoding'] = 'binary';
                 break;
             default:
-                $plain = $cachedBinary ?? $colContents->getValue(0);
+                $binary = $cachedBinary ?? $colContents->getValue(0);
                 break;
+        }
+        
+        if (empty($binary)) {
+            throw new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '" on file storage!');
         }
         
         // Create a response
@@ -201,7 +207,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
             } else {
                 list($width, $height) = explode('x', $resize);
                 try {
-                    $binary = $this->resizeImage($binary ?? $plain, $width, $height);
+                    $binary = $this->resizeImage($binary, $width, $height);
                 } catch (\Throwable $e) {
                     if ($colFilename !== null) {
                         $text = $colFilename->getValue(0);
@@ -221,7 +227,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
             file_put_contents($cachePath, $binary);
         }
                         
-        return new Response(200, $headers, stream_for($binary ?? $plain));        
+        return new Response(200, $headers, stream_for($binary));        
     }
     
     protected function getFileCachePath(string $objSel, string $uid, array $params) : string
@@ -232,7 +238,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $filename = 'original';
         }
         $cacheFolder = $this->getWorkbench()->filemanager()->getPathToCacheFolder()
-            . DIRECTORY_SEPARATOR . 'ResizedImages'
+            . DIRECTORY_SEPARATOR . 'HttpFileServerFacade'
             . DIRECTORY_SEPARATOR . $objSel
             . DIRECTORY_SEPARATOR . $uid
             . DIRECTORY_SEPARATOR;
