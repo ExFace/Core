@@ -24,6 +24,8 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Behaviors\TimeStampingBehavior;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -93,10 +95,22 @@ class HttpFileServerFacade extends AbstractHttpFacade
     
     protected function createResponseFromObjectUid(string $objSel, string $uid, array $params, ServerRequestInterface $originalRequest = null) : ResponseInterface
     {
+        // Check file cache
+        $cachePath = $this->getFileCachePath($objSel, $uid, $params);
+        if (file_exists($cachePath) === true) {
+            $cachedBinary = file_get_contents($cachePath);
+        }
+        
+        // Decode UID if it is Base64 - this will be the case if the UID has special characters
+        // like slashes - they might be considered insecure by some servers, so the request
+        // will not be processed if they are not encoded
         if (StringDataType::startsWith($uid, 'base64,')) {
             $uid = base64_decode(substr($uid, 7));
         }
+        
         $headers = $this->buildHeadersCommon();
+        
+        // Create a data sheet to read file data
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objSel);
         if (! $ds->getMetaObject()->hasUidAttribute()) {
             $e = new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!');
@@ -104,13 +118,22 @@ class HttpFileServerFacade extends AbstractHttpFacade
             return $this->createResponseFromError($e, $originalRequest);
         }
         
+        // Add columns for important file attributes
         $colFilename = null;
         $colMime = null;
         $colContents = null;
         $attr = $this->findAttributeForContents($ds->getMetaObject());
+        $contentType = $attr->getDataType();
         if ($attr) {
-            $colContents = $ds->getColumns()->addFromAttribute($attr);
+            // Only add content column if there is no cache. Reading files
+            // may take quite a long time, so if we have a cache, we can quickly
+            // check other file attributes an only read the contens if the
+            // cache is stale.
+            if ($cachedBinary === null) {
+                $colContents = $ds->getColumns()->addFromAttribute($attr);
+            }
         } else {
+            // Throw error if no matching file data could be found
             $e = new FacadeRuntimeError('Cannot find file contents attribute for object ' . $ds->getMetaObject()->__toString());
             $this->getWorkbench()->getLogger()->logException($e);
             return $this->createResponseFromError($e, $originalRequest);
@@ -123,6 +146,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
         if ($attr) {
             $colFilename = $ds->getColumns()->addFromAttribute($attr);
         }
+        $attr = $this->findAttributeForMTime($ds->getMetaObject());
+        if ($attr) {
+            $colMTime = $ds->getColumns()->addFromAttribute($attr);
+        }
         
         $ds->getFilters()->addConditionFromAttribute($ds->getMetaObject()->getUidAttribute(), $uid, ComparatorDataType::EQUALS);
         $ds->dataRead();
@@ -132,7 +159,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
             return $this->createResponseFromError($e, $originalRequest);
         }
         
-        $contentType = $colContents->getDataType();
+        // Compare cache file timestamp with last update time of file object
+        // If the file was modified later than the cache, delete the cache
+        // and restart request handling
+        if ($cachedBinary !== null && $colMTime !== null && strtotime($colMTime->getValue(0)) > filemtime($cachePath)) {
+            unlink($cachePath);
+            return $this->createResponseFromObjectUid($objSel, $uid, $params, $originalRequest);
+        }
+        
         $binary = null;
         $plain = null;
         $headers = array_merge($headers, [
@@ -140,13 +174,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
             'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
             'Pragma' => 'public'
         ]);
+        
         switch (true) {
             case $contentType instanceof BinaryDataType:
-                $binary = $colContents->getDataType()->convertToBinary($colContents->getValue(0));
+                $binary = $cachedBinary ?? $contentType->convertToBinary($colContents->getValue(0));
                 $headers['Content-Transfer-Encoding'] = 'binary';
                 break;
             default:
-                $plain = $colContents->getValue(0);
+                $plain = $cachedBinary ?? $colContents->getValue(0);
                 break;
         }
         
@@ -160,24 +195,47 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         // Resize images
         if (null !== $resize = $params['resize'] ?? null) {
-            list($width, $height) = explode('x', $resize);
-            try {
-                $newImage = $this->resizeImage($binary ?? $plain, $width, $height);
-                $binary = $newImage;
-            } catch (\Throwable $e) {
-                if ($colFilename !== null) {
-                    $text = $colFilename->getValue(0);
-                    $text = strtoupper(FilePathDataType::findExtension($text));
-                } else {
-                    $text = 'FILE';
-                }                
-                $headers['Content-Type'] = 'image/jpeg';
-                $headers['Content-Disposition'] = 'attachment; filename=placeholder.jpg';
-                $binary = $this->createPlaceholderImage($text, $width, $height);
+            if (file_exists($cachePath)) {
+                $binary = file_get_contents($cachePath);
+            } else {
+                list($width, $height) = explode('x', $resize);
+                try {
+                    $binary = $this->resizeImage($binary ?? $plain, $width, $height);
+                } catch (\Throwable $e) {
+                    if ($colFilename !== null) {
+                        $text = $colFilename->getValue(0);
+                        $text = strtoupper(FilePathDataType::findExtension($text));
+                    } else {
+                        $text = 'FILE';
+                    }                
+                    $headers['Content-Type'] = 'image/jpeg';
+                    $headers['Content-Disposition'] = 'attachment; filename=placeholder.jpg';
+                    $binary = $this->createPlaceholderImage($text, $width, $height);
+                }
             }
+        }
+        
+        if ($cachedBinary === null) {
+            Filemanager::pathConstruct(FilePathDataType::findFolderPath($cachePath));
+            file_put_contents($cachePath, $binary);
         }
                         
         return new Response(200, $headers, stream_for($binary ?? $plain));        
+    }
+    
+    protected function getFileCachePath(string $objSel, string $uid, array $params) : string
+    {
+        if (null !== $resize = $params['resize'] ?? null) {
+            $filename = $resize;
+        } else {
+            $filename = 'original';
+        }
+        $cacheFolder = $this->getWorkbench()->filemanager()->getPathToCacheFolder()
+            . DIRECTORY_SEPARATOR . 'ResizedImages'
+            . DIRECTORY_SEPARATOR . $objSel
+            . DIRECTORY_SEPARATOR . $uid
+            . DIRECTORY_SEPARATOR;
+        return $cacheFolder . $filename;
     }
     
     /**
@@ -331,12 +389,28 @@ class HttpFileServerFacade extends AbstractHttpFacade
         if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
             return $fileBehavior->getFilenameAttribute();
         }
-        
-        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
-            return ($attr->getDataType() instanceof BinaryDataType);
-        });
             
-            return $attrs->count() === 1 ? $attrs->getFirst() : null;
+        return null;
+    }
+    
+    /**
+     *
+     * @param MetaObjectInterface $object
+     * @return MetaAttributeInterface|NULL
+     */
+    protected function findAttributeForMTime(MetaObjectInterface $object) : ?MetaAttributeInterface
+    {
+        $attr = null;
+        if ($behavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
+            $attr = $behavior->getTimeModifiedAttribute();
+            if ($attr !== null) {
+                return $attr;
+            }
+        }
+        if ($behavior = $object->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class)->getFirst()) {
+            $attr = $behavior->getUpdatedOnAttribute();
+        }  
+        return $attr;
     }
     
     /**
