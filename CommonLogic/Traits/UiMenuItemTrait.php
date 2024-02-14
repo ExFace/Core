@@ -253,4 +253,9 @@ trait UiMenuItemTrait
         $this->appSelector = $selector;
         return $this;
     }
+    
+    public function hasIcon() : bool
+    {
+        return $this->getIcon() !== null && $this->getIcon() !== '';
+    }
 }

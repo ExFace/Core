@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * Common interface for anything, that can be put into a UI menu - pages, page tree nodes, etc.
@@ -16,7 +17,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterface
+interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterface, iHaveIcon
 {    
     /**
      * 
@@ -205,4 +206,10 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return bool
      */
     public function hasApp() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasIcon() : bool;
 }

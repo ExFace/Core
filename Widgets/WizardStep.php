@@ -273,6 +273,11 @@ class WizardStep extends Form implements iHaveIcon
      */
     public function getShowIcon(bool $default = null) : ?bool
     {
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->getIcon() !== null && $this->showIcon !== false) {
+            return true;
+        }
         return $this->showIcon ?? $default;
     }
     

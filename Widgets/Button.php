@@ -48,7 +48,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     use iUseInputWidgetTrait;
     
     use iHaveIconTrait {
-        getIcon as getIconViaTrait;
+        getIcon as getIconSetExplicitly;
     }
     
     use iHaveColorTrait;
@@ -298,7 +298,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getIcon() : ?string
     {
-        $icon = $this->getIconViaTrait();
+        $icon = $this->getIconSetExplicitly();
         if (! $icon && $this->getAction()) {
             return $this->getAction()->getIcon();
         }
@@ -934,6 +934,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getShowIcon(bool $default = null) : ?bool
     {
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->getIconSetExplicitly() !== null && $this->showIcon !== false) {
+            return true;
+        }
         return $this->showIcon ?? $default;
     }
     
