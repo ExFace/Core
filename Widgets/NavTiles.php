@@ -179,11 +179,11 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($node->getName());
         $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
-        if($node->getIcon() !== null) {
+        if($node->hasIcon()) {
             $tile->setIcon($node->getIcon());
-        }
-        if($node->getIconSet() !== null) {
-            $tile->setIconSet($node->getIconSet());
+            if(null !== $iconSet = $node->getIconSet()) {
+                $tile->setIconSet($iconSet);
+            }
         }
         $hint = $node->getIntro() ?? $node->getDescription();
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
