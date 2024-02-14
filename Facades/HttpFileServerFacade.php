@@ -26,6 +26,7 @@ use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Behaviors\TimeStampingBehavior;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -162,7 +163,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         // Compare cache file timestamp with last update time of file object
         // If the file was modified later than the cache, delete the cache
         // and restart request handling
-        if ($cachedBinary !== null && $colMTime !== null && strtotime($colMTime->getValue(0)) > filemtime($cachePath)) {
+        if ($cachedBinary !== null && $colMTime !== null && DateDataType::convertToUnixTimestamp($colMTime->getValue(0)) > filemtime($cachePath)) {
             unlink($cachePath);
             return $this->createResponseFromObjectUid($objSel, $uid, $params, $originalRequest);
         }
