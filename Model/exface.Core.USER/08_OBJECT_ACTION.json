@@ -447,7 +447,7 @@
         },
         {
             "CREATED_ON": "2024-02-13 12:28:04",
-            "MODIFIED_ON": "2024-02-13 12:41:30",
+            "MODIFIED_ON": "2024-02-14 11:51:20",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eea1ddf42f67a2a1dd025041000001",
@@ -463,10 +463,18 @@
                 "widget": {
                     "widget_type": "Dialog",
                     "object_alias": "exface.Core.USER",
+                    "width": 2,
+                    "columns_in_grid": 1,
                     "widgets": [
+                        {
+                            "type": "info",
+                            "widget_type": "Message",
+                            "text": "You can paste lists of users in this spreadsheet to quickly create their accounts. Rows with existing usernames will produce errors. To quickly change user data use the \"Mass edit\" button."
+                        },
                         {
                             "widget_type": "DataImporter",
                             "editable": true,
+                            "caption": "Quickly create multiple users by filling the spreadsheet or pasing from Excel",
                             "columns": [
                                 {
                                     "attribute_alias": "USERNAME",
@@ -490,6 +498,10 @@
                                 },
                                 {
                                     "attribute_alias": "POSITION",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "LOCALE",
                                     "editable": true
                                 },
                                 {
