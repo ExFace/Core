@@ -13,6 +13,10 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\ImageUrlDataType;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -182,6 +186,20 @@ class PWADataset implements PWADatasetInterface
         $ds = $this->getDataSheet()->copy();
         
         if ($incrementValue !== null && null !== $incrementAttr = $this->getIncrementAttribute()) {
+            /* TODO add filters for every related object, that also has the increment attribute
+            $processedRelations = [];
+            foreach ($ds->getColumns() as $col) {
+                // col: Artikel__Hersteller__Kuerzel
+                // incr alias: ZeitAend
+                // col object: Hersteller
+                // Hersteller__ZeitAend exists -> Add filter over Artikel__Hersteller__ZeitAend
+                if ($col->getMetaObject()->hasAttribute($incrementAttr->getAlias())) {
+                    $relationPath = $col->getAttribute()->getRelationPath();
+                    $processedRelations[] = $relationPath->toString();
+                    $colIncrementAttribute = $ds->getMetaObject()->getAttribute(RelationPath::relationPathAdd($relationPath->toString(), $incrementAttr->getAlias()));
+                    $ds->getFilters()->addConditionFromAttribute($colIncrementAttribute, $incrementValue, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+                }
+            }*/
             $ds->getFilters()->addConditionFromAttribute($incrementAttr, $incrementValue, ComparatorDataType::GREATER_THAN_OR_EQUALS);
         }
         
@@ -240,5 +258,27 @@ class PWADataset implements PWADatasetInterface
             }
         }
         return $columnsArray;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getIncrementValue()
+     */
+    public function getIncrementValue(DataSheetInterface $data) : ?string
+    {
+        $incrAttr = $this->getIncrementAttribute();
+        $incrType = $incrAttr->getDataType();
+        switch (true) {
+            case $incrType instanceof DateTimeDataType:
+                $newIncrement = DateTimeDataType::now();
+                break;
+            case $incrType instanceof NumberDataType:
+                // TODO not sure about this one - never tried it
+                $incrCol = $data->getColumns()->getByAttribute($incrType);
+                $newIncrement = $incrCol->aggregate(AggregatorFunctionsDataType::MAX) + 1;
+                break;
+        }
+        return $newIncrement;
     }
 }
