@@ -223,6 +223,16 @@ class SecurityManager implements SecurityManagerInterface
         $authenticators = [];
         $systemConfig = $workbench->getConfig();
         $authenticatorsUxon = $systemConfig->getOption('SECURITY.AUTHENTICATORS');
+        /*
+        if ($authenticatorsUxon->isArray()) {
+            $authUxonNormalized = new UxonObject();
+            foreach ($authenticatorsUxon as $pos => $authConfig) {
+                
+            }
+        } else {
+            $authUxonNormalized = $authenticatorsUxon;
+        }*/
+            
         $authenticatorsUxonChanged = false;
         foreach ($authenticatorsUxon as $pos => $authConfig) {
             switch (true) {
