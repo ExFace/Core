@@ -265,7 +265,7 @@ class PWADataset implements PWADatasetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getIncrementValue()
      */
-    public function getIncrementValue(DataSheetInterface $data) : ?string
+    public function getIncrementValue(DataSheetInterface $data, bool $assumeDataIsFresh = true) : ?string
     {
         $incrAttr = $this->getIncrementAttribute();
         $incrType = $incrAttr->getDataType();
