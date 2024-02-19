@@ -4,6 +4,11 @@ namespace exface\Core\DataTypes;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
+ * A date with time
+ * 
+ * ## Time zone handling
+ * 
+ * The system assumes
  * 
  * @author andrej.kabachnik
  *
@@ -17,6 +22,8 @@ class DateTimeDataType extends DateDataType
     private $showSeconds = false;
     
     private $showMilliseconds = false;
+    
+    private $timeZoneDependent = true;
     
     /**
      * 
@@ -126,6 +133,31 @@ class DateTimeDataType extends DateDataType
     public function setShowMilliseconds(bool $value) : DateTimeDataType
     {
         $this->showMilliseconds = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isTimeZoneDependent() : bool
+    {
+        return $this->timeZoneDependent;
+    }
+    
+    /**
+     * Set to FALSE to make values of this type ignore time zones completely
+     *
+     * @uxon-property time_zone_dependent
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return TimeDataType
+     */
+    public function setTimeZoneDependent(bool $value) : TimeDataType
+    {
+        $this->timeZoneDependent = $value;
         return $this;
     }
 }
