@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\DataTypes\UrlDataType;
+use exface\UrlDataConnector\QueryBuilders\HtmlUrlBuilder;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -135,7 +137,9 @@ class PWAapiFacade extends HttpTaskFacade
                         'uid_column_name' => ($ds->hasUidColumn() ? $ds->getUidColumn()->getName() : null),
                         'username' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername(),
                         'version' => $pwa->getVersion(),
-                        'incremental' => $set->isIncremental()
+                        'incremental' => $set->isIncremental(),
+                        'incrementalUrl' => $this->buildUrlToGetOfflineData($set) .
+                            ($set->isIncremental() ? '&increment_of_prev_sync=' . $set->getIncrementValue($ds) : ''),
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {
@@ -217,7 +221,8 @@ class PWAapiFacade extends HttpTaskFacade
      */
     protected function buildUrlToGetOfflineData(PWADatasetInterface $dataSet) : string
     {
-        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA . "?dataset={$dataSet->getUid()}";
+        return $this->buildUrlToFacade(true) . "/{$dataSet->getPWA()->getUrl()}/" . self::ROUTE_DATA
+            . "?dataset={$dataSet->getUid()}";
     }
     
     /**
