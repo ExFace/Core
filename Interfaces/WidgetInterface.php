@@ -232,7 +232,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * or in any unit compatible with the current facade (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * @param WidgetDimension|string $value            
+     * @param WidgetDimension|string|NULL $value            
      * @return WidgetInterface
      */
     public function setHeight($value);

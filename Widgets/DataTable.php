@@ -136,6 +136,8 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
     private $freeze_columns = 0;
     
     private $select_single_result = false;
+    
+    private $height_in_rows = null;
 
     function hasRowDetails()
     {
@@ -654,5 +656,53 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
             $visibleCnt++;
             return $visibleCnt <= $frozen ? true : false;
         }
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getHeightInRows() : ?int
+    {
+        return $this->height_in_rows;
+    }
+    
+    /**
+     * Abjust the height of the widget to always show this number of rows
+     * 
+     * @uxon-property height_in_rows
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return DataTable
+     */
+    public function setHeightInRows(int $value) : DataTable
+    {
+        $this->setHeight(null);
+        $this->height_in_rows = $value;
+        return $this;
+    }
+    
+    /**
+     * Sets the height of the widget.
+     * Set to `1` for default widget height in a facade or `max` for maximum height possible.
+     *
+     * The height can be specified either in
+     * - facade-specific relative units (e.g. `height: 2` makes the widget twice as high
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `height: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `height: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property height
+     * @uxon-type string
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\WidgetInterface::setHeight()
+     */
+    public function setHeight($value)
+    {
+        $this->height_in_rows = null;
+        return parent::setHeight($value);
     }
 }
