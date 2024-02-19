@@ -26,6 +26,8 @@ class TimeDataType extends AbstractDataType
     
     private $timeZone = null;
     
+    private $timeZoneDependent = false;
+    
     /**
      * 
      * {@inheritDoc}
@@ -360,6 +362,31 @@ class TimeDataType extends AbstractDataType
     public function setFormatToTimeZone(string $value) : DateDataType
     {
         $this->timeZone = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isTimeZoneDependent() : bool
+    {
+        return $this->timeZoneDependent;
+    }
+    
+    /**
+     * Set to TRUE if this time is to be adjusted with respect to time zone differences
+     * 
+     * @uxon-property time_zone_dependent
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return TimeDataType
+     */
+    public function setTimeZoneDependent(bool $value) : TimeDataType
+    {
+        $this->timeZoneDependent = $value;
         return $this;
     }
     
