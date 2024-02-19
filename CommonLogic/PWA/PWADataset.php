@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\PWA;
 
+use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\PWA\PWAInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -17,6 +18,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 class PWADataset implements PWADatasetInterface
 {
@@ -29,7 +31,8 @@ class PWADataset implements PWADatasetInterface
     private $actions =  [];
     
     private $uid = null;
-    
+    private bool $forceIncremental = false;
+
     /**
      * 
      * @param PWAInterface $pwa
@@ -178,33 +181,94 @@ class PWADataset implements PWADatasetInterface
     
     /**
      * 
+
+    /**
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::readData()
      */
     public function readData(int $limit = null, int $offset = null, string $incrementValue = null) : DataSheetInterface
     {
         $ds = $this->getDataSheet()->copy();
-        
+
         if ($incrementValue !== null && null !== $incrementAttr = $this->getIncrementAttribute()) {
-            /* TODO add filters for every related object, that also has the increment attribute
-            $processedRelations = [];
-            foreach ($ds->getColumns() as $col) {
-                // col: Artikel__Hersteller__Kuerzel
-                // incr alias: ZeitAend
-                // col object: Hersteller
-                // Hersteller__ZeitAend exists -> Add filter over Artikel__Hersteller__ZeitAend
-                if ($col->getMetaObject()->hasAttribute($incrementAttr->getAlias())) {
-                    $relationPath = $col->getAttribute()->getRelationPath();
-                    $processedRelations[] = $relationPath->toString();
-                    $colIncrementAttribute = $ds->getMetaObject()->getAttribute(RelationPath::relationPathAdd($relationPath->toString(), $incrementAttr->getAlias()));
-                    $ds->getFilters()->addConditionFromAttribute($colIncrementAttribute, $incrementValue, ComparatorDataType::GREATER_THAN_OR_EQUALS);
-                }
-            }*/
-            $ds->getFilters()->addConditionFromAttribute($incrementAttr, $incrementValue, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+            // load only data since last increment
+            $conditions = new ConditionGroup($ds->getWorkbench(), EXF_LOGICAL_OR, $ds->getMetaObject());
+            $conditions->addConditionFromAttribute(
+                $incrementAttr,
+                $incrementValue,
+                ComparatorDataType::GREATER_THAN_OR_EQUALS);
+
+            // check relations to find changes there even if the parent sheet was not updated
+            // only one of the relation objects has to be newer then last increment for us to load the data again
+            $incrementAttributeAliases = $this->getRelationAttributesToFilter($ds, $incrementAttr, $incrementValue);
+            $relatedObjectsConditionGroup = new ConditionGroup($ds->getWorkbench(), EXF_LOGICAL_OR, $ds->getMetaObject());
+            foreach ($incrementAttributeAliases as $alias)
+            {
+                $relatedObjectsConditionGroup->addConditionFromString(
+                    $alias,
+                    $incrementValue,
+                    ComparatorDataType::GREATER_THAN_OR_EQUALS);
+            }
+
+            $conditions->addNestedGroup($relatedObjectsConditionGroup);
+            $ds->getFilters()->addNestedGroup($conditions);
         }
-        
+
         $ds->dataRead($limit, $offset);
         return $ds;
+    }
+
+    /**
+     * Finds all relation objects, that also has the increment attribute and returns the relation path for it
+     *
+     * e.g. Artikel__Hersteller__Kuerzel -> Hersteller
+     * Increment: ZeitAend
+     * Filter: Artikel__Hersteller__ZeitAend
+     *
+     * @param DataSheetInterface $datasheet
+     * @param MetaAttributeInterface|null $incrementAttribute
+     * @param string $incrementValue
+     * @return array
+     */
+    public function getRelationAttributesToFilter(
+        DataSheetInterface $datasheet, ?MetaAttributeInterface $incrementAttribute): array
+    {
+        $processedRelations = [];
+        $relationIncrementAttributeAliases = [];
+        $incrementAttributeAlias = $incrementAttribute->getAlias();
+        foreach ($datasheet->getColumns() as $column) {
+            // only add if increment attribute present
+            if ($column->isAttribute()
+                && $this->isIncrementalRelationColumn($datasheet->getMetaobject(), $column, $incrementAttributeAlias)) {
+                // build full relation path with parent object
+                $relationIncrementObjectAlias = $column->getAttribute()->getRelationPath()->toString();
+
+                // build filter for each object in relation path that has not yet been processed
+                while(str_contains($relationIncrementObjectAlias, RelationPath::RELATION_SEPARATOR)) {
+                    $relationPath = RelationPath::relationPathAdd($relationIncrementObjectAlias, $incrementAttributeAlias);
+                    // only add new relation objects
+                    if (in_array($relationPath, $processedRelations) === false){
+                        $relationIncrementAttributeAliases[] = $relationPath;
+                        $processedRelations[] = $relationIncrementObjectAlias;
+                    }
+
+                    // Artikel__Hersteller --> Artikel
+                    $indexOfLastSeparator = strrpos($relationIncrementObjectAlias,RelationPath::RELATION_SEPARATOR);
+                    $lastRelationInChain = substr($relationIncrementObjectAlias, $indexOfLastSeparator);
+                    $relationIncrementObjectAlias = str_replace($lastRelationInChain, '', $relationIncrementObjectAlias);
+                }
+
+                // also add direct paths
+                if (in_array($relationIncrementObjectAlias, $processedRelations) === false){
+                    $relationPath = RelationPath::relationPathAdd($relationIncrementObjectAlias, $incrementAttributeAlias);
+                    $relationIncrementAttributeAliases[] = $relationPath;
+                    $processedRelations[] = $relationIncrementObjectAlias;
+                }
+            }
+        }
+
+        return $relationIncrementAttributeAliases;
     }
     
     /**
@@ -214,11 +278,108 @@ class PWADataset implements PWADatasetInterface
      */
     public function isIncremental() : bool
     {
-        return $this->getIncrementAttribute() !== null;
+        $incrementalAttribute =  $this->getIncrementAttribute();
+        switch (true) {
+            case $this->forceIncremental:
+                return true;
+            case $incrementalAttribute === null
+                || $this->dataSheet->getUidColumn() === null:
+                return false;
+            // has only incremental relations
+            default:
+                $incrementAttributeAlias = $incrementalAttribute->getAlias();
+                foreach ($this->dataSheet->getColumns() as $column) {
+                    if ($column->isAttribute()
+                        && $column->getAttribute()->getRelationPath()->isEmpty() === false
+                        && $this->isIncrementalRelationColumn(
+                            $this->dataSheet->getMetaObject(), $column, $incrementAttributeAlias) === false) {
+                        return false;
+                    }
+                }
+                return true;
+        }
     }
     
     /**
      * 
+     * Configure if a dataset should be forced to be incrementally synchronized.
+     * This means all columns in the datasheet that cannot be requested incremental
+     * will not be recognized when searching for changes!
+     *
+     * @uxon-proeprty: force_incremental_sync
+     * @param bool $forced
+     * @return PWADatasetInterface
+     */
+    public function setForcedIncremental(bool $forced) : PWADatasetInterface
+    {
+        $this->forceIncremental = $forced;
+        return $this;
+    }
+
+    /**
+     *  Check all necessary properties of the column to see if it is incremental.
+     *
+     *  e.g. only forward relations [$ds: Lagerort, $colAttr: Lagerbereich__Lager__Name]
+     *  Filter:
+     *  - Lagerbereich__Lager__ZeitAend
+     *  - Lagerbereich__ZeitAend
+     *  - ZeitAend
+     *  --> Incremental ✓
+     *
+     *  e.g.  1-1 relation to a View. [$ds: Lagerplatz, $colAttr: Lagerplatzliste__Lager__Name]
+     *
+     * Filter:
+     *  - Lagerplatzliste__Lager__ZeitAend*
+     *  - ZeitAend
+     *
+     *  *Lagerplatzliste on itself has no ZeitAend, we will not know if the view changed
+     *  --> NOT incremental x
+     *
+     *  e.g. backward relation.[$ds: Lagerort, $colAttr: Lagerplatz__Id:COUNT]
+     *  Filter:
+     *  - ~~Lagerplatz__ZeitAend*~~
+     *  - ZeitAend
+     *
+     *  *As soon as we use an Aggregate Subselect in the SQL the Filter would be applied to that subselect
+     *  as well, thus only counting elements since last increment!
+     *  --> NOT incremental x
+     *
+     * @param MetaObjectInterface $dataSheetObject
+     * @param DataColumnInterface $column
+     * @param string $incrementAttributeAlias
+     * @return bool
+     * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::isIncrementalRelationColumn()
+     */
+    public function isIncrementalRelationColumn(
+        MetaObjectInterface $dataSheetObject,
+        DataColumnInterface $column,
+        string $incrementAttributeAlias) : bool
+    {
+        $attribute = $column->getAttribute();
+        if ($column->isAttribute() === false) {
+            return false;
+        }
+
+        if ($attribute->getRelationPath()->isEmpty()) {
+            return false;
+        }
+
+        $relationPaths = $attribute->getRelationPath();
+        foreach ($relationPaths->getRelations() as $relation) {
+            switch (true) {
+                // contains relations without incremental attribute
+                case $relation->getLeftObject()->hasAttribute($incrementAttributeAlias) === false ||
+                    $relation->getRightObject()->hasAttribute($incrementAttributeAlias) === false:
+                case $relation->isReverseRelation():
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\PWA\PWADatasetInterface::getIncrementAttribute()
      */
@@ -226,10 +387,7 @@ class PWADataset implements PWADatasetInterface
     {
         $obj = $this->getMetaObject();
         $tsBehavior = $obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class)->getFirst();
-        if ($tsBehavior === null) {
-            return null;
-        }
-        return $tsBehavior->getUpdatedOnAttribute();
+        return $tsBehavior?->getUpdatedOnAttribute();
     }
     
     /**
@@ -274,8 +432,8 @@ class PWADataset implements PWADatasetInterface
                 $newIncrement = DateTimeDataType::now();
                 break;
             case $incrType instanceof NumberDataType:
-                // TODO not sure about this one - never tried it
-                $incrCol = $data->getColumns()->getByAttribute($incrType);
+                // TODO find a use case to test this!
+                $incrCol = $data->getColumns()->getByAttribute($incrAttr);
                 $newIncrement = $incrCol->aggregate(AggregatorFunctionsDataType::MAX) + 1;
                 break;
         }
