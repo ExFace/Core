@@ -7,6 +7,8 @@ class WidgetDimension
 {
     const MAX = 'max';
     
+    const AUTO = 'auto';
+    
     private $exface;
 
     private $value = NULL;
@@ -130,7 +132,7 @@ class WidgetDimension
      */
     public function isAuto() : bool
     {
-        return is_string($this->value) && strcasecmp($this->value, 'auto') === 0;
+        return is_string($this->value) && strcasecmp($this->value, self::AUTO) === 0;
     }
 }
 ?>

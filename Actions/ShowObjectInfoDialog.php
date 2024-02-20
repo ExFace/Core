@@ -8,6 +8,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\CommonLogic\WidgetDimension;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -157,6 +158,7 @@ class ShowObjectInfoDialog extends ShowDialog
             if ($dialog->countWidgetsVisible() < $this->getShowSmallDialogIfLessAttributesThen()) {
                 $dialog->setColumnsInGrid(1);
                 $dialog->setMaximized(false);
+                $dialog->setHeight(WidgetDimension::AUTO);
             }
         }
         
