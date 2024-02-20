@@ -32,6 +32,17 @@ class DataShapesLayer extends AbstractDataLayer
     EditableMapLayerInterface,
     CustomProjectionMapLayerInterface
 {
+    const VALUE_POSITION_LEFT = 'left';
+    
+    const VALUE_POSITION_RGHT = 'right';
+    
+    const VALUE_POSITION_TOP = 'top';
+    
+    const VALUE_POSITION_BOTTOM = 'bottom';
+    
+    const VALUE_POSITION_CENTER = 'center';
+    
+    const VALUE_POSITION_TOOLTIP = 'tooltip';
     
     use ColoredLayerTrait;
     
@@ -56,6 +67,8 @@ class DataShapesLayer extends AbstractDataLayer
     private $projection = null;
     
     private $projectionConfig = null;
+    
+    private $valuePosition = self::VALUE_POSITION_TOOLTIP;
     
     /**
      *
@@ -335,5 +348,30 @@ class DataShapesLayer extends AbstractDataLayer
     public function hasProjectionDefinition() : bool
     {
         return $this->projection !== null;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getValuePosition() : string
+    {
+        return $this->valuePosition;
+    }
+    
+    /**
+     * Where to show the value relatively to the center of the shape - center (default), right, left, top, bottom or center
+     *
+     * @uxon-property value_position
+     * @uxon-type [tooltip,right,left,top,bottom,center]
+     * @uxon-default tooltip
+     *
+     * @param string $value
+     * @return DataPointsLayer
+     */
+    public function setValuePosition(string $value) : DataShapesLayer
+    {
+        $this->valuePosition = $value;
+        return $this;
     }
 }

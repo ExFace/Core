@@ -32,6 +32,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -868,10 +869,10 @@ JS;
         
         // Add styling and colors
         $color = $this->buildJsLayerColor($layer, 'oRow');
-        if ($weight = $layer->getLineWeight()) {
+        if (null !== $weight = $layer->getLineWeight()) {
             $styleJs .= "weight: $weight,";
         }
-        if ($opacity = $layer->getOpacity()) {
+        if (null !== $opacity = $layer->getOpacity()) {
             $styleJs .= "opacity: $opacity,";
         }
         if ($color !== '' && $color !== "''") {
@@ -946,6 +947,35 @@ JS;
                 })();
 JS;
         }
+        
+        if (($layer instanceof ValueLabeledMapLayerInterface) && $layer->hasValue()) {
+            if ($layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP) {
+                $layerCaption = '';
+                if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
+                    $layerCaptionJs = $this->escapeString($layerCaption . ' ');
+                }
+                $tooltipJs = <<<JS
+
+                    layer.bindTooltip({$layerCaptionJs} + feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                        permanent: false, 
+                        direction: '{$layer->getValuePosition()}',
+                        className: 'exf-map-shape-tooltip'
+                    }).openTooltip();
+
+JS;
+            } else {
+                $tooltipJs = <<<JS
+
+                    layer.bindTooltip(feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                        permanent: true, 
+                        direction: 'center',
+                        className: 'exf-map-shape-title'
+                    }).openTooltip();
+JS;
+            }
+        } else {
+            $tooltipJs = '';
+        }
             
         return <<<JS
             
@@ -955,6 +985,14 @@ JS;
             var oLayer = $layerConstructor(null, {
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
+                    {$tooltipJs}
+                    
+                    layer.on('mouseover',function(ev) {
+                        $(ev.target.getElement()).addClass('exf-map-shape-selected');
+                    });
+                    layer.on('mouseout',function(ev) {
+                        $(ev.target.getElement()).removeClass('exf-map-shape-selected');
+                    })
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
