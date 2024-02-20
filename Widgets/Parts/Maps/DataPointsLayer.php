@@ -102,6 +102,7 @@ class DataPointsLayer extends AbstractDataLayer
      * 
      * @uxon-property value_position
      * @uxon-type [right,left,top,bottom,center]
+     * @uxon-default right
      * 
      * @param string $value
      * @return DataPointsLayer
