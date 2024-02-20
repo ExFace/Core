@@ -160,6 +160,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         if ($ds->isEmpty()) {
             $e = new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '"');
+            $this->getWorkbench()->getLogger()->logException($e);
             return $this->createResponseFromError($e, $originalRequest);
         }
         
