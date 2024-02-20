@@ -1052,7 +1052,7 @@ JS;
         }
         
         if ($latColName !== null && $lngColName !== null) {
-            $filterRowsJs = <<<JS
+            $filteredRowsJs = <<<JS
 
                             var fLat = parseFloat(oRow.{$latColName});
                             var fLng = parseFloat(oRow.{$lngColName});
@@ -1069,12 +1069,22 @@ JS;
                                 }
 JS;
         } else {
-            $filterRowsJs = <<<JS
+            $filteredRowsJs = <<<JS
                             
-                            var oShape = JSON.parse(oRow.{$shapeColName});
-                            if (oShape === null || oShape === undefined || oShape === {}) {
+                            var sShape = oRow.{$shapeColName};
+                            var oShape;
+                            if (sShape === null || sShape === undefined || sShape === '') {
                                 $aRowsSkippedJs.push(oRow);
                                 return;
+                            }
+                            try {
+                                oShape = JSON.parse(sShape);
+                            } catch (e) {
+                                $aRowsSkippedJs.push(oRow);
+                                console.warn('Cannot parse data as map shape:', e, oRow); 
+                            }
+                            if (oShape === {}) {
+                                $aRowsSkippedJs.push(oRow);
                             }
 JS;
 
@@ -1097,7 +1107,7 @@ JS;
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
-                            $filterRowsJs;
+                            $filteredRowsJs;
                             $aGeoJsonJs.push({
                                 type: 'Feature',
                                 geometry: {$geometryJs},
