@@ -28,6 +28,8 @@ use exface\Core\Interfaces\Communication\RecipientInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Communication\UserRecipientInterface;
+use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Sends emails via SMTP
@@ -103,6 +105,8 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
     private $errorIfEmptyTo = false;
     
     private $errorIfEmptyBody = false;
+    
+    private $ignorePatterns = [];
     
     /**
      * 
@@ -364,7 +368,59 @@ MD;
                     break;
             }
         }
-        return array_unique($addrs);
+        
+        $addrs = array_unique($addrs);
+        
+        foreach ($this->getIgnoreAddressPatterns() as $pattern) {
+            $addrs = array_filter($addrs, function(string $email) use ($pattern) {
+                return preg_match($pattern, $email) !== 1;
+            });
+        }
+        
+        return $addrs;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getIgnoreAddressPatterns() : array
+    {
+        return $this->ignorePatterns;
+    }
+    
+    /**
+     * Email address patterns to ignore: e.g. `/.*@mydomain\.com/i`
+     * 
+     * Recipients of any kind will be ignored if their email address matches
+     * any of the provided regular expressions.
+     * 
+     * @uxon-property ignore_address_patterns
+     * @uxon-type array
+     * @uxon-template ["/.*@mydomain\\.com/i"]
+     * 
+     * @param string|UxonObject $value
+     * @throws UnexpectedValueException
+     * @return SmtpConnector
+     */
+    public function setIgnoreAddressPatterns($value) : SmtpConnector
+    {
+        switch (true) {
+            case $value instanceof UxonObject:
+                $array = $value->toArray();
+                break;
+            case is_array($value):
+                $array = $value;
+                break;
+            default: throw new UnexpectedValueException('Invalid value "' . $value . '" for ignore_address_patterns for SMTP connector: must be an array of strings or regular expressions!');
+        }
+        foreach ($array as $pattern) {
+            if (! RegularExpressionDataType::isRegex($pattern)) {
+                throw new UnexpectedValueException('Invalid value "' . $pattern . '" for ignore_address_patterns for SMTP connector: each pattern must be a valid regular expression like `/.*@mydomain\.com/i`!');
+            }
+        }
+        $this->ignorePatterns = $array;
+        return $this;
     }
     
     /**
