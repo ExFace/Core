@@ -56,10 +56,10 @@ class DataUrlParamReader implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $task = $this->getTask($request, $this->taskAttributeName, $this->facade);
-        $data = $request->getQueryParams()[$this->urlParamData];
+        $data = $request->getQueryParams()[$this->urlParamData] ?? null;
         
         if (is_null($data)) {
-            $data = $request->getParsedBody()[$this->urlParamData];
+            $data = $request->getParsedBody()[$this->urlParamData] ?? null;
         }
         
         if ($data === null || $data === '') {

@@ -80,6 +80,8 @@ opcache.huge_code_pages=1
 
 ### File uploads and large data
 
+#### Upload size
+
 If file uploads of significant size are a topic, check the following configuration
 
 ```
@@ -88,6 +90,10 @@ post_max_size=100M
 ```
 
 Most facades upload files as part of regular data (encoded as base64). On the one hand, this means, it does not matter whether you upload a file or past some large text into an input field. On the other hand, you need to mak sure, POST requests can be large enough.
+
+#### Actions with a lot of data
+
+Large editable tables, trees and Gantt widgets may send a lot of data to the server. This might hit the `max_input_vars` limit in `php.ini`. If so, increase `max_input_vars `.
 
 ### Reducing file storage I/O
 
