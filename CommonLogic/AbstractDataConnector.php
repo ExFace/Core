@@ -613,7 +613,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function getTimeZone() : ?string
     {
-        return $this->property;
+        return $this->timeZone;
     }
     
     /**
@@ -627,7 +627,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function setTimeZone(string $value) : AbstractDataConnector
     {
-        $this->property = $value;
+        $this->timeZone = $value;
         return $this;
     }
     

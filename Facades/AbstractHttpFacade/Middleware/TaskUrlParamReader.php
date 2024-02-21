@@ -65,11 +65,11 @@ class TaskUrlParamReader implements MiddlewareInterface
         }
         
         if (is_null($value)) {
-            $value = $request->getQueryParams()[$this->paramName];
+            $value = $request->getQueryParams()[$this->paramName] ?? null;
         }
         
         if (is_null($value)) {
-            $value = $request->getParsedBody()[$this->paramName];
+            $value = $request->getParsedBody()[$this->paramName] ?? null;
         }
         
         if (! is_null($value)) {

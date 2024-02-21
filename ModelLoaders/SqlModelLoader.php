@@ -1299,7 +1299,7 @@ SQL;
         // use this array instead of querying the DB every time. This should be faster as most authorization
         // points will be required for every request anyway, so we simply save DB queries here.
         $username = $userOrToken->getUsername();
-        if (null === $this->auth_policies_loaded[$username] ?? null) {
+        if (null === $this->auth_policies_loaded || null === $this->auth_policies_loaded[$username] ?? null) {
             if ($userOrToken->isAnonymous()) {
                 // Load all policies of the anonymous user
                 // + all policies without a user group
