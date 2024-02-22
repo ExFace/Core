@@ -21,6 +21,8 @@ class Gantt extends DataTree
     
     private $startDate = null;
     
+    private $childrenMoveWithParent = true;
+    
     /**
      *
      * @return DataTimeline
@@ -100,11 +102,37 @@ class Gantt extends DataTree
         return $this->setTasks($uxon);
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getStartDate() : ?string
     {
         return $this->startDate;
     }
     
+    /**
+     * @uxon-property children_move_with_parent
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return Gantt
+     */
+    protected function setChildrenMoveWithParent(bool $trueOrFalse) : Gantt
+    {
+        $this->childrenMoveWithParent = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getChildrenMoveWithParent() : bool
+    {
+        return $this->childrenMoveWithParent;
+    }
+
     /**
      * The left-most date in the scheduler: can be a real date or a relative date - e.g. `-2w`.
      *
