@@ -309,4 +309,28 @@ JS;
      * @return string
      */
     protected abstract function buildJsSurveyModelGetter() : string;
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryInputValidationTrait::buildJsValidator()
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        // Always validate the form - even if the widget is not required explicitly. Otherwise required
+        // fields inside the form will not produce validation errors if the InputForm is not explicitly
+        // marked as required
+        return "{$this->buildJsSurveyVar()}.validate()";
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidationError()
+     */
+    public function buildJsValidationError()
+    {
+        // No need to do anything here - the .validate() method of Survey.js already shows the errors
+        return '';
+    }
 }

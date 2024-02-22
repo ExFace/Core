@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -131,7 +129,7 @@ class InputForm extends InputFormDesigner
                 // Ignore empty values because if value is a live-references as the ref would get overwritten
                 // even without a meaningfull prefill value
                 if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setFormConfig($value);
+                    $this->setFormConfig($value ?? '');
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'form_config', $valuePointer));
                 }
             }
