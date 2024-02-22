@@ -16,9 +16,11 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  * @author Andrej Kabachnik
  *
  */
-class InputForm extends Input implements iFillEntireContainer
+class InputForm extends InputFormDesigner
 {
     private $formConfigAttributeAlias = null;
+    
+    private $formConfigValue = null;
     
     private $formWidgets = [];
     
@@ -31,9 +33,63 @@ class InputForm extends Input implements iFillEntireContainer
         return $this->formConfigAttributeAlias;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function isFormConfigBoundToAttribute() : bool
     {
         return $this->formConfigAttributeAlias !== null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
+     */
+    public function getFormConfigDataColumnName()
+    {
+        return $this->isFormConfigBoundToAttribute() ? DataColumn::sanitizeColumnName($this->getFormConfigAttributeAlias()) : $this->getDataColumnName();
+    }
+    
+    /**
+     * Alias of the attribute containing the configuration for the form to be rendered
+     *
+     * @uxon-property form_config_attribute_alias
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
+     *
+     * @param string $value
+     * @return InputForm
+     */
+    public function setFormConfigAttributeAlias(string $value) : InputForm
+    {
+        $this->formConfigAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFormConfig() : ?string
+    {
+        return $this->formConfigValue;
+    }
+    
+    /**
+     * Static value for the form configuration
+     * 
+     * @uxon-property form_config
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return InputForm
+     */
+    public function setFormConfig(string $value) : InputForm
+    {
+        $this->formConfigValue = $value;
+        return $this;
     }
     
     /**
@@ -75,48 +131,12 @@ class InputForm extends Input implements iFillEntireContainer
                 // Ignore empty values because if value is a live-references as the ref would get overwritten
                 // even without a meaningfull prefill value
                 if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setValue($value, false);
+                    $this->setFormConfig($value);
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'form_config', $valuePointer));
                 }
             }
         }
         return;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
-     */
-    public function getFormConfigDataColumnName()
-    {
-        return $this->isFormConfigBoundToAttribute() ? DataColumn::sanitizeColumnName($this->getFormConfigAttributeAlias()) : $this->getDataColumnName();
-    }
-    
-    /**
-     * Alias of the attribute containing the configuration for the form to be rendered
-     * 
-     * @uxon-property form_config_attribute_alias
-     * @uxon-type metamodel:attribute
-     * @uxon-required true
-     * 
-     * @param string $value
-     * @return InputForm
-     */
-    public function setFormConfigAttributeAlias(string $value) : InputForm
-    {
-        $this->formConfigAttributeAlias = $value;
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
-     */
-    public function getAlternativeContainerForOrphanedSiblings(): ?iContainOtherWidgets
-    {
-        return null;
     }
     
     /**
