@@ -95,12 +95,12 @@ HTML;
     
     protected function buildJsSurveyVar() : string
     {
-        return "$('#{$this->getId()}').data('exf_survey')";
+        return "$('#{$this->getId()}')[0].exf_survey";
     }
     
     protected function buildJsCreatorVar() : string
     {
-        return "$('#{$this->getId()}').data('exf_survey_creator')";
+        return "$('#{$this->getId()}')[0].exf_survey_creator";
     }
     
     /**
@@ -108,7 +108,7 @@ HTML;
      * @param string $oSurveyJs
      * @return string
      */
-    protected function buildJsSurveyInitOptions(string $oSurveyJs = 'oSurvey') : string
+    protected function buildJsSurveyInit(string $oSurveyJs = 'oSurvey') : string
     {
         $disableJs = $this->getWidget()->isDisabled() ? "{$oSurveyJs}.mode = 'display';" : '';
         return <<<JS
@@ -123,9 +123,14 @@ JS;
     {
         return <<<JS
 
-Survey.StylesManager.applyTheme("default");
+Survey.StylesManager.applyTheme({$this->buildJsSurveyTheme()});
 
 JS;
+    }
+    
+    protected function buildJsSurveyTheme() : string
+    {
+        return '"default"';
     }
     
     public function buildJsSetDisabled(bool $trueOrFalse) : string
@@ -187,7 +192,7 @@ JS;
 
     if (oSurvey === null || oConfigCurrent !== oConfig) {
         oSurvey = new Survey.Model(oConfig);
-        {$this->buildJsSurveyInitOptions('oSurvey')};
+        {$this->buildJsSurveyInit('oSurvey')};
         oSurvey.render(jqContainer[0]);
         jqContainer.data('survey-config', oConfig);
 
@@ -239,6 +244,64 @@ JS;
     public function buildJsCreatorValueGetter() : string
     {
         return "{$this->buildJsCreatorVar()}.text";
+    }
+    
+    /**
+     * 
+     * @param string $oOptionsJs
+     * @return string
+     */
+    protected function buildJsCreatorOptions(string $oOptionsJs = 'oOptions') : string
+    {
+        return <<<JS
+        
+                $oOptionsJs.showLogicTab = true;
+JS;
+    }
+    
+    /**
+     * Returns the JS code to setup the SurveyCreator global
+     * 
+     * @return string
+     */
+    protected function buildJsCreatorSetup() : string
+    {
+        return <<<JS
+        
+                SurveyCreator.StylesManager.applyTheme({$this->buildJsSurveyTheme()});
+                SurveyCreator.localization.currentLocale = "{$this->getSurveyLocale()}";
+
+JS;
+    }
+    
+    protected function buildJsCreatorInit(string $oCreatorJs = 'oCreator') : string
+    {
+        return <<<JS
+        
+                //Show toolbox in the right container. It is shown on the left by default
+                $oCreatorJs.showToolbox = "left";
+                //Show property grid in the right container, combined with toolbox
+                $oCreatorJs.showPropertyGrid = "right";
+                
+                $oCreatorJs.onQuestionAdded.add(function(_, options) {
+                    options.question.hideNumber = true
+                    switch (options.question.jsonObj.type) {
+                        case 'text':
+                            options.question.titleLocation = 'left';
+                            break;
+                        case 'dropdown':
+                            options.question.titleLocation = 'left';
+                            break;
+                        case 'boolean':
+                            options.question.titleLocation = 'left';
+                            break;
+                        case 'file':
+                            options.question.titleLocation = 'left';
+                            break;
+                    }
+                });
+                
+JS;
     }
     
     /**
