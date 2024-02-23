@@ -91,7 +91,7 @@ trait JsConditionalPropertyTrait {
      * @throws WidgetConfigurationError
      * @return string
      */
-    private function buildJsConditionalPropertyValue(ExpressionInterface $expr, ConditionalProperty $conditionalProperty) : string
+    protected function buildJsConditionalPropertyValue(ExpressionInterface $expr, ConditionalProperty $conditionalProperty) : string
     {
         switch (true) {
             case $expr->isReference() === true:
