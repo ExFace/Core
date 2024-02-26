@@ -410,7 +410,8 @@ abstract class AbstractPWA implements PWAInterface
                 'OBJECT' => $set->getMetaObject()->getId(),
                 'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson($dataSheetJson),
                 'USER_DEFINED_FLAG' => 0,
-                'ROWS_AT_GENERATION_TIME' => $rowCnt
+                'ROWS_AT_GENERATION_TIME' => $rowCnt,
+                'INCREMENTAL_FLAG' => $set->isIncremental(),
             ]), false, false);
         }
         yield 'Generated ' . $newDataSets->countRows() . ' offline data sets' . PHP_EOL;
