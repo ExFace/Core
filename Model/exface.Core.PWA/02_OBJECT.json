@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2022-12-27 17:34:13",
-            "MODIFIED_ON": "2023-05-15 12:10:06",
+            "MODIFIED_ON": "2024-02-20 11:12:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11edbb694cebd4babb69747827435ce5",
@@ -339,6 +339,9 @@
                                             },
                                             {
                                                 "attribute_alias": "OFFLINE_STRATEGY"
+                                            },
+                                            {
+                                                "attribute_alias": "INCREMENTAL_FLAG"
                                             },
                                             {
                                                 "attribute_alias": "ROWS_AT_GENERATION_TIME"
