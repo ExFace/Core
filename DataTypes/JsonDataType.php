@@ -246,9 +246,10 @@ class JsonDataType extends TextDataType
         if (count($validator->getErrors()) !== 0) {
         	throw new JsonSchemaValidationError(
         		$validator->getErrors(), 
-        		'Json does not match given schema',
+        		'Given json does not match given schema',
         		null,
         	    null,
+                'Invalid json schema',
         	    $json);
         }
         

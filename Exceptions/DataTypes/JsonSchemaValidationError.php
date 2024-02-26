@@ -22,6 +22,7 @@ use exface\Core\DataTypes\JsonDataType;
  */
 class JsonSchemaValidationError extends UnexpectedValueException
 {
+    private $context;
     private $errors = [];
     private $json;
     
@@ -30,9 +31,10 @@ class JsonSchemaValidationError extends UnexpectedValueException
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface::__construct()
      */
-    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $json = null)
+    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $context = null, $json = null)
     {
         parent::__construct($message, $alias, $previous);
+        $this->context = $context;
         $this->json = $json;
         $this->errors = $validationErrors;
     }
@@ -57,15 +59,20 @@ class JsonSchemaValidationError extends UnexpectedValueException
         
         return $messages;
     }
-    
-    public function getErrors() : array 
+
+    public function getContext() : ?string
     {
-    	return $this->errors;
+        return $this->context;
     }
     
-    public function getJson() : string 
+    public function getJson() : ?string
     {
     	return JsonDataType::prettify($this->json);
+    }
+
+    public function getErrors() : array
+    {
+        return $this->errors;
     }
     
     public function createDebugWidget(DebugMessage $debugWidget)
