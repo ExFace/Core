@@ -439,22 +439,35 @@ JS;
                 return selectedCells;
             }
 
-            aPastedData.forEach(function(aRow) {
-                var aValRows, mVal, oValRow;
+            aPastedData.forEach(function(aRow) {                
+                console.log('Kopieren');
+                var aValRows, mVal, oValRow, bKeyFound;
                 for (var iCol in oDropdownVals) {
+                    bKeyFound = false;
                     aValRows = oDropdownVals[iCol];
                     mVal = aRow[iCol];
                     for (var i = 0; i < aValRows.length; i++) {
                         oValRow = aValRows[i];
                         if (oValRow.name == mVal) {
                             aRow[iCol] = oValRow.id;
+                            bKeyFound = true;
                             break;
                         }
+                    }
+                    if (bKeyFound === false) {
+                        aRow[iCol] = '';
                     }
                 }
                 aProcessedData.push(aRow.join("\t"));
             });
 
+            // If a single value is pasted and it does not represent a valid dropdown value
+            // we have to return false, else the original value will still be pasted into the cell
+            // even when we did overwrite it with an empty string.
+            // Seems like an unfortunate implemantation in the jspreadsheet library.
+            if (aProcessedData.length === 1 && aProcessedData[0] === '') {
+                return false;
+            }
             return aProcessedData.join("\\r\\n");
         },
 
