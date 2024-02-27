@@ -239,7 +239,7 @@ class FilterContext extends AbstractContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return 'filter';
     }

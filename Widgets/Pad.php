@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * A Pad is a container with margins/paddings, that allows to place smaller content in the center of the screen.
@@ -13,6 +14,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 class Pad extends Container implements iFillEntireContainer
 {
     private $centerContent = true;
+    
+    private $backgroundImage = null;
     
     public function getCenterContent() : bool
     {
@@ -42,6 +45,39 @@ class Pad extends Container implements iFillEntireContainer
                 return $alternative;
             }
         }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getBackgroundImageURL() : ?string
+    {
+        return FilePathDataType::normalize($this->backgroundImage, '/');
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasBackgroundImage() : bool
+    {
+        return $this->backgroundImage !== null;
+    }
+    
+    /**
+     * Sets an image as background - the image is set via URI relative to workbench root
+     * 
+     * @uxon-property background_image
+     * @uxon-type uri
+     * 
+     * @param string $value
+     * @return Pad
+     */
+    public function setBackgroundImage(string $value) : Pad
+    {
+        $this->backgroundImage = $value;
         return $this;
     }
 }

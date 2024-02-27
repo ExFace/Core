@@ -58,6 +58,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Default implementation of DataSheetInterface
@@ -2369,6 +2370,11 @@ class DataSheet implements DataSheetInterface
         return new UxonObject($arr);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
     public function importUxonObject(UxonObject $uxon)
     {
         
@@ -2417,14 +2423,26 @@ class DataSheet implements DataSheetInterface
         }
         
         if ($uxon->hasProperty('rows_limit')) {
-            $this->setRowsLimit($uxon->getProperty('rows_limit'));
+            $val = $uxon->getProperty('rows_limit');
+            if ($val === '') {
+                $val = null;
+            }
+            $this->setRowsLimit($val);
         } elseif ($uxon->hasProperty('rows_on_page')) {
             // Still support old property name rows_on_page
-            $this->setRowsLimit($uxon->getProperty('rows_on_page'));
+            $val = $uxon->getProperty('rows_on_page');
+            if ($val === '') {
+                $val = null;
+            }
+            $this->setRowsLimit($val);
         }
         
         if ($uxon->hasProperty('rows_offset')) {
-            $this->setRowsOffset($uxon->getProperty('rows_offset'));
+            $val = $uxon->getProperty('rows_offset');
+            if ($val === '') {
+                $val = 0;
+            }
+            $this->setRowsOffset($val);
         } elseif ($uxon->hasProperty('row_offset')) {
             // Still support old property name row_offset
             $this->setRowsOffset($uxon->getProperty('row_offset'));
@@ -2439,10 +2457,12 @@ class DataSheet implements DataSheetInterface
         }
         
         if (null !== $val = $uxon->getProperty('auto_sort')) {
+            $val = BooleanDataType::cast($val);
             $this->setAutoSort($val);
         }
         
         if (null !== $val = $uxon->getProperty('auto_count')) {
+            $val = BooleanDataType::cast($val);
             $this->setAutoCount($val);
         }
     }

@@ -15,21 +15,26 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * the native date formatting in the data source. It also makes sure, dates are formatted
  * according to the users locale and language whenever they are shown to the user.
  * 
+ * ## Display formats
+ * 
  * By default, the short date notation of the current locale is used to display dates 
  * (e.g. `31.12.2021` for most european countries). However, a custom display format can be 
  * defined in the configuration of a particular data type model using its `format` property. 
  * The standardized ICU syntax is supported - see `format` property for details.
  * 
- * The format supported in date inputs depends on the widget and the facade used. In most
- * cases, the internal format (see below), the current display format and the following shorthand 
- * date formats are supported:
+ * ## Supported input formats
  * 
- * - +/- {n} days (e.g. `+1` for tomorrow, `-1` for yesterday, `0` for today)
- * - +/- {n}w weeks (e.g. `+1w` for next week)
- * - +/- {n}m months (e.g. `-3m` for three months ago)
- * - +/- {n}y years (e.g. `-1y` for the same date last year)
- * - dd.MM, dd-MM, dd/MM, d.M, d-M, d/M (e.g. `30.09` or `30/9`) for the current year
- * - ddMMyyyy, ddMMyy, ddMM (e.g. `30092015`, `300915` or `3009`)
+ * The syntax supported in date inputs depends on the widget and the facade used. In most
+ * cases, the internal format (see below), the current display format and the following 
+ * shorthand date formats are supported:
+ * 
+ * - `+/-{n}` days (e.g. `+1` for tomorrow, `-1` for yesterday, `0` for today)
+ * - `+/-{n}w` weeks (e.g. `+1w` for next week)
+ * - `+/-{n}m` months (e.g. `-3m` for three months ago)
+ * - `+/-{n}y` years (e.g. `-1y` for the same date last year)
+ * - `dd.MM`, `dd-MM`, `dd/MM`, `d.M`, `d-M`, `d/M` (e.g. `30.09` or `30/9`) 
+ * for the current year
+ * - `ddMMyyyy`, `ddMMyy`, `ddMM` (e.g. `30092015`, `300915` or `3009`)
  * 
  * Internally the workbench always operates with the `yyyy-MM-dd` format (e.g. `2021-12-31`).
  * The internal format cannot be changed!
@@ -56,6 +61,8 @@ class DateDataType extends AbstractDataType
     private $format = null;
     
     private $timeZone = null;
+    
+    private $timeZoneDependent = false;
     
     private $min = null;
     
@@ -236,7 +243,11 @@ class DateDataType extends AbstractDataType
      */
     protected function getIntlDateFormatter() : \IntlDateFormatter
     {
-        return self::createIntlDateFormatter($this->getLocale(), $this->getFormat(), $this->getFormatToTimeZone());
+        return self::createIntlDateFormatter(
+            $this->getLocale(), 
+            $this->getFormat(), 
+            ($this->isTimeZoneDependent() ? $this->getFormatToTimeZone() : null)
+        );
     }
     
     /**
@@ -676,6 +687,34 @@ class DateDataType extends AbstractDataType
     }
     
     /**
+     *
+     * @return bool
+     */
+    public function isTimeZoneDependent() : bool
+    {
+        return $this->timeZoneDependent;
+    }
+    
+    /**
+     * Set to TRUE if this date is to be adjusted with respect to time zone differences
+     * 
+     * This is normally not needed for dates, but rather for dates with time
+     * handled by the `DateTimeDataType`.
+     * 
+     * @uxon-property time_zone_dependent
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return TimeDataType
+     */
+    public function setTimeZoneDependent(bool $value) : TimeDataType
+    {
+        $this->timeZoneDependent = $value;
+        return $this;
+    }
+    
+    /**
      * 
      * @param WorkbenchInterface $workbench
      * @return string
@@ -781,5 +820,16 @@ class DateDataType extends AbstractDataType
         }
         
         return $text;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return int
+     */
+    public static function convertToUnixTimestamp(string $value) : int
+    {
+        $value = static::cast($value);
+        return strtotime($value);
     }
 }

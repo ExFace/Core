@@ -24,6 +24,16 @@ class DataPointsLayer extends AbstractDataLayer
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface
 {
+    const VALUE_POSITION_LEFT = 'left';
+    
+    const VALUE_POSITION_RGHT = 'right';
+    
+    const VALUE_POSITION_TOP = 'top';
+    
+    const VALUE_POSITION_BOTTOM = 'bottom';
+    
+    const VALUE_POSITION_CENTER = 'center';
+    
     use DataPointLayerTrait {
         initDataWidget as initDataWidgetForPoints;
     }
@@ -32,7 +42,9 @@ class DataPointsLayer extends AbstractDataLayer
     
     use ValueLabeledLayerTrait;
     
-    private $size = 10;
+    private $size = null;
+    
+    private $valuePosition = self::VALUE_POSITION_RGHT;
     
     /**
      *
@@ -54,6 +66,9 @@ class DataPointsLayer extends AbstractDataLayer
      */
     public function getPointSize() : int
     {
+        if ($this->size === null) {
+            return $this->getValuePosition() === self::VALUE_POSITION_CENTER ? 30 : 10;
+        }
         return $this->size;
     }
     
@@ -70,6 +85,31 @@ class DataPointsLayer extends AbstractDataLayer
     public function setPointSize(int $value) : DataPointsLayer
     {
         $this->size = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getValuePosition() : string
+    {
+        return $this->valuePosition;
+    }
+    
+    /**
+     * Where to show the value relatively to the point - right (default), left, top, bottom or center
+     * 
+     * @uxon-property value_position
+     * @uxon-type [right,left,top,bottom,center]
+     * @uxon-default right
+     * 
+     * @param string $value
+     * @return DataPointsLayer
+     */
+    public function setValuePosition(string $value) : DataPointsLayer
+    {
+        $this->valuePosition = $value;
         return $this;
     }
 }

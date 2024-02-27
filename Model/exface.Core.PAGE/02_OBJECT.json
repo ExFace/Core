@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2023-06-22 13:11:54",
+            "MODIFIED_ON": "2024-02-13 13:36:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -118,6 +118,20 @@
                                     },
                                     {
                                         "attribute_alias": "ALIAS"
+                                    },
+                                    {
+                                        "widget_type": "InlineGroup",
+                                        "caption": "Icon \/ Icon set",
+                                        "separator": "\/",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "ICON"
+                                            },
+                                            {
+                                                "attribute_alias": "ICON_SET",
+                                                "width": "25%"
+                                            }
+                                        ]
                                     },
                                     {
                                         "attribute_alias": "PUBLISHED"

@@ -19,6 +19,9 @@ use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
  */
 class MySqlConnector extends AbstractSqlConnector
 {
+    const ERROR_CODE_GONE_AWAY = 2006;
+    
+    const ERRRO_CODE_CONTRAINT = 1062;
 
     private $dbase = null;
 
@@ -31,6 +34,8 @@ class MySqlConnector extends AbstractSqlConnector
     private $socket = null;
     
     private $multiqueryResults = null;
+    
+    private $reconnects = 0;
 
     /**
      *
@@ -147,6 +152,12 @@ class MySqlConnector extends AbstractSqlConnector
                 $query->setResultResource($result);
             }
         } catch (\mysqli_sql_exception $e) {
+            if ($e->getCode() == self::ERROR_CODE_GONE_AWAY && $this->reconnects === 0) {
+                $this->disconnect();
+                $this->connect();
+                $this->reconnects++;
+                return $this->performQuerySql($query);
+            }
             throw $this->createQueryError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), null, $e);
         }
         return $query;
@@ -165,7 +176,7 @@ class MySqlConnector extends AbstractSqlConnector
         $sqlErrorNo = $sqlErrorNo ?? $sqlException->getCode() ?? null;
         
         switch ($sqlErrorNo) {
-            case 1062:
+            case self::ERRRO_CODE_CONTRAINT:
                 return new DataQueryConstraintError($query, $message, '73II64M', $sqlException);
             default:
                 return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);

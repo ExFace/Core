@@ -38,10 +38,15 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
             if ($sheet->countRows() > self::MAX_DATA_ROWS) {
                 $truncated = $sheet->copy()->removeRows();
                 $name .= ' (first ' . self::MAX_DATA_ROWS . ' of ' . $sheet->countRows() . ' rows)';
+                $cnt = 1;
                 foreach ($sheet->getRows() as $i => $row) {
                     $truncated->addRow($row, false, false, $i);
+                    $cnt++;
+                    if ($cnt > self::MAX_DATA_ROWS) {
+                        break;
+                    }
                 }
-                $innerTabs = $sheet->createDebugWidget($innerTabs);
+                $innerTabs = $truncated->createDebugWidget($innerTabs);
             } else {
                 $name .= ' (' . $sheet->countRows() . ' rows)';
                 $innerTabs = $sheet->createDebugWidget($innerTabs);

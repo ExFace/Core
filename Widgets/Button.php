@@ -48,7 +48,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     use iUseInputWidgetTrait;
     
     use iHaveIconTrait {
-        getIcon as getIconViaTrait;
+        getIcon as getIconSetExplicitly;
     }
     
     use iHaveColorTrait;
@@ -108,6 +108,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $hiddenIfInputInvalid = false;
     
     private $disabledIfInputInvalid = true;
+    
+    private $showIcon = null;
     
     /**
      * 
@@ -296,7 +298,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getIcon() : ?string
     {
-        $icon = $this->getIconViaTrait();
+        $icon = $this->getIconSetExplicitly();
         if (! $icon && $this->getAction()) {
             return $this->getAction()->getIcon();
         }
@@ -922,6 +924,38 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function setDisabledIfInputInvalid(bool $value) : Button
     {
         $this->disabledIfInputInvalid = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param bool $default
+     * @return bool|NULL
+     */
+    public function getShowIcon(bool $default = null) : ?bool
+    {
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->getIconSetExplicitly() !== null && $this->showIcon !== false) {
+            return true;
+        }
+        return $this->showIcon ?? $default;
+    }
+    
+    /**
+     * Force the icon to show (TRUE) or hide (FALSE)
+     *
+     * The default depends on the facade used.
+     *
+     * @uxon-property show_icon
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return iHaveIcon
+     */
+    public function setShowIcon(bool $value) : iHaveIcon
+    {
+        $this->showIcon = $value;
         return $this;
     }
 }

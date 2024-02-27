@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2023-10-20 19:30:50",
+            "MODIFIED_ON": "2024-02-05 16:02:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
@@ -486,6 +486,53 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.ResetUserAuthenticator"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "API Keys",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.USER_API_KEY",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "USER",
+                                                "required": true,
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "EXPIRES"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCreateDialog",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=user_uid_field",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DeleteObject",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "icon": "minus"
                                             }
                                         ]
                                     }

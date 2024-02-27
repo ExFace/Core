@@ -1299,7 +1299,7 @@ SQL;
         // use this array instead of querying the DB every time. This should be faster as most authorization
         // points will be required for every request anyway, so we simply save DB queries here.
         $username = $userOrToken->getUsername();
-        if (null === $this->auth_policies_loaded[$username] ?? null) {
+        if (null === $this->auth_policies_loaded || null === $this->auth_policies_loaded[$username] ?? null) {
             if ($userOrToken->isAnonymous()) {
                 // Load all policies of the anonymous user
                 // + all policies without a user group
@@ -1462,6 +1462,12 @@ SQL;
         $uiPage->setName($row['name']);
         $uiPage->setDescription($row['description'] ?? '');
         $uiPage->setIntro($row['intro'] ?? '');
+        if (null !== $val = $row['icon']) {
+            $uiPage->setIcon($val);
+        }
+        if (null !== $val = $row['icon_set']) {
+            $uiPage->setIconSet($val);
+        }
         
         $uiPage->setMenuIndex(intval($row['menu_index']));
         $uiPage->setMenuVisible($row['menu_visible'] ? true : false);
@@ -1562,6 +1568,8 @@ SQL;
             $parentNode,
             $row['description'],
             $row['intro'],
+            $row['icon'],
+            $row['icon_set'],
             $row['group_oids'] ? explode(',', $row['group_oids']) : null,
             $row['app_oid']
         );
@@ -1817,6 +1825,8 @@ SQL;
                 p.alias,
                 p.description,
                 p.intro,
+                p.icon,
+                p.icon_set,
                 p.published,
                 p.menu_index,
                 p.created_on,

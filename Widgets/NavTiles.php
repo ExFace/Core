@@ -116,7 +116,16 @@ class NavTiles extends WidgetGrid
             $this->tilesBuilt = true;
             
         }
-        return parent::getWidgets();
+        $widgets = parent::getWidgets();
+        
+        // If hide_caption is true, need to hide the caption of the first
+        // tile container too! Otherwise the caption of the overall widget
+        // is gone, but that of the first container is still there.
+        if ($this->getHideCaption() === true && ! empty($widgets)) {
+            $widgets[0]->setHideCaption(true);
+        }
+        
+        return $widgets;
     }
     
     /**
@@ -170,6 +179,12 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($node->getName());
         $tile->setSubtitle($node->getDescription());
         $tile->setWidth('0.5');
+        if($node->hasIcon()) {
+            $tile->setIcon($node->getIcon());
+            if(null !== $iconSet = $node->getIconSet()) {
+                $tile->setIconSet($iconSet);
+            }
+        }
         $hint = $node->getIntro() ?? $node->getDescription();
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([

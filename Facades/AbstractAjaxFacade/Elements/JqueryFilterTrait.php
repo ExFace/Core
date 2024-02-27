@@ -97,13 +97,42 @@ trait JqueryFilterTrait {
     }
     
     /**
+     * A filter is valid as long as it is not empty while being required - all other validations
+     * like checking data type constraints do not apply as a user may search for parts of a value.
      * 
-     * {@inheritdoc}
+     * It is also important to validate hidden filters too because their validity is checked
+     * before making lazy data requests. This is another difference compared to regular inputs
+     * as used in forms, etc.
+     * 
+     * IDEA On the other hand, checking data type constraints might be a good idea when using
+     * ceratin comparators like EQUALS or EQUALS_NOT - i.e. when partial values are not accepted.
+     * 
      * @see AbstractJqueryElement::buildJsValidator()
      */
     public function buildJsValidator(?string $valJs = null) : string
     {
-        return $this->getInputElement()->buildJsValidator();
+        $widget = $this->getWidget();
+        $constraintsJs = '';
+        if ($widget->isRequired() === true) {
+            $constraintsJs = "if (val === undefined || val === null || val === '') { bConstraintsOK = false }";
+        }
+        
+        $valJs = $valJs ?? $this->buildJsValueGetter();
+        if ($constraintsJs !== '') {
+            return <<<JS
+
+                    (
+                    (function(val){
+                        var bConstraintsOK = true;
+                        $constraintsJs;
+                        return bConstraintsOK;
+                    })($valJs) 
+                    && {$this->getInputElement()->buildJsValidator()}
+                    )
+JS;
+        } else {
+            return $this->getInputElement()->buildJsValidator();
+        }
     }
     
     /**

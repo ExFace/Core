@@ -642,7 +642,7 @@ self.addEventListener('sync', function(event) {
 						return _pwa.model.remove(sPwaUrl);
 					}
 					if (! oResponse.ok) {
-						throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
+						throw 'Failed to update offline data for PWA ' + sPwaUrl;
 					} 
 					return oResponse
 					.json()

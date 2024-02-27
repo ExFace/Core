@@ -754,20 +754,8 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Sets the height of the widget.
-     * Set to `1` for default widget height in a facade or `max` for maximum height possible.
-     *
-     * The height can be specified either in
-     * - facade-specific relative units (e.g. `height: 2` makes the widget twice as high
-     * as the default width of a widget in the current facade)
-     * - percent (e.g. `height: 50%` will make the widget take up half the available space)
-     * - any other facade-compatible units (e.g. `height: 200px` will work in CSS-based facades)
-     *
-     * @uxon-property height
-     * @uxon-type string
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::setHeight()
      */
     public function setHeight($value)

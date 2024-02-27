@@ -3,6 +3,8 @@ namespace exface\Core\Interfaces\Widgets;
 
 interface iHaveIcon
 {
+    const ICON_SET_SVG = 'svg';
+    
     /**
      * Returs the name of the icon to be used
      *
@@ -21,23 +23,6 @@ interface iHaveIcon
      * @return boolean
      */
     public function setIcon(string $value) : iHaveIcon;
-    
-    /**
-     * 
-     * @param bool|NULL $default
-     * @return bool|NULL
-     */
-    public function getShowIcon(bool $default = null) : ?bool;
-    
-    /**
-     * Force the icon to show (TRUE) or hide (FALSE)
-     * 
-     * The default depends on the facade used.
-     * 
-     * @param bool $value
-     * @return iHaveIcon
-     */
-    public function setShowIcon(bool $value) : iHaveIcon;
     
     /**
      * 
