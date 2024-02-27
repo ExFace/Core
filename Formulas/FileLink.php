@@ -8,13 +8,23 @@ use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\FormulaError;
 
 /**
- * Produces a a link for a file fromn the given object and uid.
- * Opening that link will load the file with the given properties from the server.
- * If the fourth parameter is set to `true` the link will only work one time but without authentification.
+ * Produces a a link for a file fromn the given object and UID.
  * 
- * E.g. 
- * - `=FileLink('example.App.Image', '1', 'resize=300x180', true)` => https://myserver.com/mypath/api/files/otl/1234567890ACBDFE
- *
+ * Opening that link will load the file with the given properties from the server.
+ * 
+ * If the fourth parameter is set to `true` the link will only work one time but 
+ * without authentification.
+ * 
+ * Examples: 
+ * 
+ * - `=FileLink('example.App.Image', '8978')` => https://myserver.com/api/files/example.App.Image/8978
+ * - `=FileLink('example.App.Image', '8978', 'resize=300x180')` => https://myserver.com/api/files/example.App.Image/8978?resize=300x180
+ * - `=FileLink('example.App.Image', '8978', 'resize=300x180', true)` => https://myserver.com/api/files/otl/1234567890ACBDFE
+ * 
+ * There is also a comparable formula `=ThumbnailURL`, which is simpler to use for
+ * thumbnails. It does not have the one-time-link feature though.
+ * 
+ * 
  * @author Ralf Mulansky
  *        
  */
@@ -28,10 +38,10 @@ class FileLink extends \exface\Core\CommonLogic\Model\Formula
     public function run(string $objectAlias = '', string $uid = '', string $properties = null, bool $makeOneTimeLink = false)
     {
         if ($objectAlias === '') {
-            throw new FormulaError('Can not evaluate OneTimeLink formula. Object alias with namespace is needed!');
+            throw new FormulaError('Can not evaluate FileLink formula: no valid object provided!');
         }
         if ($uid === '') {
-            throw new FormulaError('Can not evaluate OneTimeLink formula. Uid is needed!');
+            throw new FormulaError('Can not evaluate FileLink formula: no UID value provided!');
         }
         $object = MetaObjectFactory::createFromString($this->getWorkbench(), $objectAlias);
 

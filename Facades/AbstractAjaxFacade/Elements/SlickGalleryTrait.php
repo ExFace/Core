@@ -165,6 +165,8 @@ JS;
 
     $("#{$this->getIdOfSlick()}").append({$this->escapeString($this->buildHtmlNoDataOverlay(), true, false)});
 
+    $("#{$this->getIdOfSlick()}").find('.slick-track').height({$this->getSlickThumbHeight()});
+
 JS;
     }
     
@@ -501,14 +503,13 @@ JS;
         }
         return <<<JS
                     function(){
-                        var sUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
-                        if (sUid == null) {
-                            sUid = '';
+                        var mUid = oRow['{$widget->getUidColumn()->getDataColumnName()}'];
+                        if (mUid === null) {
+                            mUid = '';
+                        } else if ((typeof mUid === 'string' || mUid instanceof String) && mUid.includes('/')){
+                            mUid = 'base64,' + btoa(mUid);
                         }
-                        if (sUid.includes('/')){
-                            sUid = 'base64,' + btoa(sUid);
-                        }
-                        return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(sUid));
+                        return ('{$widget->buildUrlForImage('[#~uid#]', $widthJs, $heightJs)}').replace('[#~uid#]', encodeURIComponent(mUid));
                     }()
 JS;
     }
@@ -590,7 +591,7 @@ JS;
                     $jqSlickJs.slick('slickRemove', null, null, true);
     
     				aRows.forEach(function(oRow, i) {
-                        var sSrc = {$this->buildJsUrlForThumbnail('oRow', '260', '190')};
+                        var sSrc = {$this->buildJsUrlForThumbnail('oRow', $this->getSlickThumbWidth(), $this->getSlickThumbHeight())};
                         var sSrcLarge = {$this->buildJsUrlForImage('oRow')};
                         var sTitle = '';
                         var sTooltip = '';
@@ -620,6 +621,24 @@ JS;
                 })();
 
 JS;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    protected function getSlickThumbWidth() : int
+    {
+        return 260;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    protected function getSlickThumbHeight() : int
+    {
+        return 190;
     }
     
     /**

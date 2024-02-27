@@ -635,7 +635,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      * 
      * @uxon-property apply_if_target_app_matches_action_app
      * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-default true
      * 
      * @param bool $value
      * @return ActionAuthorizationPolicy
@@ -656,7 +656,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
      *
      * @uxon-property apply_if_target_app_matches_object_app
      * @uxon-type boolean
-     * @uxon-default true
+     * @uxon-default false
      *
      * @param bool $value
      * @return ActionAuthorizationPolicy

@@ -121,13 +121,21 @@ class PWAapiFacade extends HttpTaskFacade
                 ]);
 
                 try {
-                    $ds = $pwa->getDataset($dataSetUid)->readData();
+                    /* @var $set \exface\Core\CommonLogic\PWA\PWADataset */
+                    $set = $pwa->getDataset($dataSetUid);
+                    if ($set->isIncremental() && array_key_exists("increment_of_prev_sync", $request->getQueryParams())) {
+                        $lastIncrement = $request->getQueryParams()['increment_of_prev_sync'];
+                        $ds = $set->readData(null, null, $lastIncrement);
+                    } else {
+                        $ds = $set->readData();
+                    }
                     $result = [
                         'uid' => $dataSetUid,
                         'status' => 'fresh',
                         'uid_column_name' => ($ds->hasUidColumn() ? $ds->getUidColumn()->getName() : null),
                         'username' => $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername(),
-                        'version' => $pwa->getVersion()
+                        'version' => $pwa->getVersion(),
+                        'incremental' => $set->isIncremental()
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {

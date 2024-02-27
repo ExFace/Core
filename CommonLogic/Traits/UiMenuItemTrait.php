@@ -15,8 +15,12 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use exface\Core\Exceptions\UiPage\UiPageLoadingError;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
-trait UiMenuItemTrait {
+trait UiMenuItemTrait 
+{
+    
+    use iHaveIconTrait;
     
     private $groupSelectors = [];
     
@@ -248,5 +252,10 @@ trait UiMenuItemTrait {
     {
         $this->appSelector = $selector;
         return $this;
+    }
+    
+    public function hasIcon() : bool
+    {
+        return $this->getIcon() !== null && $this->getIcon() !== '';
     }
 }

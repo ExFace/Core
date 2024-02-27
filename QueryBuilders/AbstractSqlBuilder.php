@@ -554,7 +554,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         unset ($rows[$nr][$colKey]);
                     }
                     break;
-                case $dataType instanceof TimeDataType && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
+                case $dataType instanceof TimeDataType && ($dataType->isTimeZoneDependent() === true) && null !== $tz = $this->getTimeZoneInSQL($tzWorkbench, $tzQuery, $qpart->getDataAddressProperty(self::DAP_SQL_TIME_ZONE)):
                     $colKey = $qpart->getColumnKey();
                     for ($i = 0; $i < $rowCnt; $i++) {
                         $rows[$i][$colKey] = $dataType::cast($rows[$i][$colKey]);
@@ -1117,7 +1117,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($data_type::isValueEmpty($value) === true) {
                     $value = 'NULL';
                 } else {
-                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[self::DAP_SQL_TIME_ZONE] ?? null)) {
+                    if ($data_type->isTimeZoneDependent() === true && null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[self::DAP_SQL_TIME_ZONE] ?? null)) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
                     $value = "'" . $this->escapeString($value) . "'";

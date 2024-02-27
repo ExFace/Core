@@ -131,7 +131,9 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         $this->ensureMigrationsTableExists($connection);
         try {
             $connection->transactionStart();
-            $up_result = $this->runSqlMultiStatementScript($connection, $migration->getUpScript(), false);
+            $script = $migration->getUpScript();
+            $script = $this->addFunctions($script);
+            $up_result = $this->runSqlMultiStatementScript($connection, $script, false);
             $up_result_string = $this->stringifyQueryResults($up_result);
             foreach ($up_result as $query) {
                 $query->freeResult();
@@ -159,13 +161,15 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     {
         $this->ensureMigrationsTableExists($connection);
         $time = new \DateTime();
-        if (empty($migration->getDownScript())) {
+        $downScript = $migration->getDownScript();
+        if (empty($downScript)) {
             $this->getWorkbench()->getLogger()->debug('SQL ' . $migration->getMigrationName() . ' has no down script');
             $migration->setDown(DateTimeDataType::formatDateNormalized($time), '');
         }
         try {
             $connection->transactionStart();
-            $down_result = $this->runSqlMultiStatementScript($connection, $migration->getDownScript());
+            $downScript = $this->addFunctions($downScript);
+            $down_result = $this->runSqlMultiStatementScript($connection, $downScript);
             $down_result_string = $this->stringifyQueryResults($down_result);
             foreach ($down_result as $query) {
                 $query->freeResult();
@@ -206,6 +210,8 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
                 $sql_script = $this->buildSqlMigrationDownFailed($migration, new \DateTime());
             }
             
+            // TODO remove function that might have been added before the migration failed.
+            
             $connection->transactionStart();
             $connection->runSql($sql_script)->freeResult();
             $connection->transactionCommit();
@@ -228,6 +234,53 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             throw new InstallerRuntimeError($this, 'Migration ' . $migration->getMigrationName() . ' failure log error: ' . $e->getMessage(), null, $e);
         }
         return $migration;
+    }
+    
+    protected function addFunctions(string $script) : string
+    {
+        $prefix = '';
+        $postfix = '';
+        
+        foreach ($this->findFunctions($script) as $funcName) {
+            $prefix .= $this->getFunctionCreateScript($funcName);
+            $postfix .= $this->getFunctionDropScript($funcName);
+        }
+        
+        // Error if there is no trailing delimiter (;)???
+        
+        return $prefix . $script . $postfix;
+    }
+    
+    protected function findFunctions(string $script) : array
+    {
+        // TODO Search via RegEx for `CALL some_function(` in $script. The array must contain some_function
+        return [];
+    }
+    
+    protected function getFunctionCreateScript(string $funcName) : string
+    {
+        $folder = $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath()
+        . DIRECTORY_SEPARATOR . 'QueryBuilders'
+        . DIRECTORY_SEPARATOR . 'SqlFunctions'
+        . DIRECTORY_SEPARATOR . $this->getSqlDbType()
+        . DIRECTORY_SEPARATOR;
+        
+        $sql = file_get_contents($folder . $funcName . '.sql');
+        if ($sql === '' || $sql === false) {
+            // TODO throw something
+        }
+        
+        return $sql;
+    }
+    
+    /**
+     * 
+     * @param string $funcName
+     * @return string
+     */
+    protected function getFunctionDropScript(string $funcName) : string
+    {
+        return "DROP PROCEDURE IS EXISTS {$funcName}"; 
     }
 
     /**

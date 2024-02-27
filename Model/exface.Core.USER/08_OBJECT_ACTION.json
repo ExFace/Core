@@ -444,6 +444,109 @@
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2024-02-13 12:28:04",
+            "MODIFIED_ON": "2024-02-14 11:51:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eea1ddf42f67a2a1dd025041000001",
+            "OBJECT": "0x31343400000000000000000000000000",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowUserImportDialog",
+            "NAME": "Mass import",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "alias": "exface.Core.ShowDialog",
+                "prefill_disabled": true,
+                "icon": "table",
+                "widget": {
+                    "widget_type": "Dialog",
+                    "object_alias": "exface.Core.USER",
+                    "width": 2,
+                    "columns_in_grid": 1,
+                    "widgets": [
+                        {
+                            "type": "info",
+                            "widget_type": "Message",
+                            "text": "You can paste lists of users in this spreadsheet to quickly create their accounts. Rows with existing usernames will produce errors. To quickly change user data use the \"Mass edit\" button."
+                        },
+                        {
+                            "widget_type": "DataImporter",
+                            "editable": true,
+                            "caption": "Quickly create multiple users by filling the spreadsheet or pasing from Excel",
+                            "columns": [
+                                {
+                                    "attribute_alias": "USERNAME",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "EMAIL",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "FIRST_NAME",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "LAST_NAME",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "COMPANY",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "POSITION",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "LOCALE",
+                                    "editable": true
+                                },
+                                {
+                                    "attribute_alias": "USER_ROLE_USERS__USER_ROLE",
+                                    "editable": true,
+                                    "cell_widget": {
+                                        "required": false,
+                                        "widget_type": "InputComboTable",
+                                        "lazy_loading": false,
+                                        "multi_select": true
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "USER_AUTHENTICATOR__AUTHENTICATOR",
+                                    "editable": true,
+                                    "cell_widget": {
+                                        "required": false,
+                                        "widget_type": "InputComboTable",
+                                        "lazy_loading": false,
+                                        "multi_select": true
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "USER_AUTHENTICATOR__AUTHENTICATOR_USERNAME",
+                                    "editable": true,
+                                    "cell_widget": {
+                                        "widget_type": "Input",
+                                        "required": false
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "action_alias": "exface.Core.CreateData",
+                            "visibility": "promoted",
+                            "align": "opposite"
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

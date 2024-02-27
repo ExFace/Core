@@ -181,7 +181,7 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         $icon = parent::getIcon();
         if ($icon === Icons::MOUSE_POINTER && $this->isButtonPress()) {

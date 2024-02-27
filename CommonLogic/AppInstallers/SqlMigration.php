@@ -61,7 +61,7 @@ class SqlMigration
     {
         $instance = new self($row['migration_name'], $row['up_script'], $row['down_script']);
         $instance->id = $row['id'];
-        $instance->migration_name = !empty($row['migration_name']) ? $row['migration_name'] : '';
+        $instance->migration_name = !empty($row['migration_name']) ? trim($row['migration_name']) : '';
         $instance->up_datetime = !empty($row['up_datetime']) ? $row['up_datetime'] : '';
         $instance->up_script = !empty($row['up_script']) ? $row['up_script'] : '';
         $instance->up_result = !empty($row['up_result']) ? $row['up_result'] : '';
@@ -319,8 +319,8 @@ class SqlMigration
      */
     public function equals(SqlMigration $otherMigration): bool
     {
-        $thisFileName = pathinfo($this->getMigrationName(), PATHINFO_FILENAME);
-        $otherFileName = pathinfo($otherMigration->getMigrationName(), PATHINFO_FILENAME);
+        $thisFileName = trim(pathinfo($this->getMigrationName(), PATHINFO_FILENAME));
+        $otherFileName = trim(pathinfo($otherMigration->getMigrationName(), PATHINFO_FILENAME));
         return $thisFileName === $otherFileName;
     }
     

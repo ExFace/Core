@@ -32,6 +32,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
+use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -868,10 +869,10 @@ JS;
         
         // Add styling and colors
         $color = $this->buildJsLayerColor($layer, 'oRow');
-        if ($weight = $layer->getLineWeight()) {
+        if (null !== $weight = $layer->getLineWeight()) {
             $styleJs .= "weight: $weight,";
         }
-        if ($opacity = $layer->getOpacity()) {
+        if (null !== $opacity = $layer->getOpacity()) {
             $styleJs .= "opacity: $opacity,";
         }
         if ($color !== '' && $color !== "''") {
@@ -946,6 +947,35 @@ JS;
                 })();
 JS;
         }
+        
+        if (($layer instanceof ValueLabeledMapLayerInterface) && $layer->hasValue()) {
+            if ($layer->getValuePosition() === DataShapesLayer::VALUE_POSITION_TOOLTIP) {
+                $layerCaption = '';
+                if (! $layer->getHideCaption() && null !== $layerCaption = $layer->getCaption()) {
+                    $layerCaptionJs = $this->escapeString($layerCaption . ' ');
+                }
+                $tooltipJs = <<<JS
+
+                    layer.bindTooltip({$layerCaptionJs} + feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                        permanent: false, 
+                        direction: '{$layer->getValuePosition()}',
+                        className: 'exf-map-shape-tooltip'
+                    }).openTooltip();
+
+JS;
+            } else {
+                $tooltipJs = <<<JS
+
+                    layer.bindTooltip(feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                        permanent: true, 
+                        direction: 'center',
+                        className: 'exf-map-shape-title'
+                    }).openTooltip();
+JS;
+            }
+        } else {
+            $tooltipJs = '';
+        }
             
         return <<<JS
             
@@ -955,6 +985,14 @@ JS;
             var oLayer = $layerConstructor(null, {
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
+                    {$tooltipJs}
+                    
+                    layer.on('mouseover',function(ev) {
+                        $(ev.target.getElement()).addClass('exf-map-shape-selected');
+                    });
+                    layer.on('mouseout',function(ev) {
+                        $(ev.target.getElement()).removeClass('exf-map-shape-selected');
+                    })
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
@@ -1014,7 +1052,7 @@ JS;
         }
         
         if ($latColName !== null && $lngColName !== null) {
-            $filterRowsJs = <<<JS
+            $filteredRowsJs = <<<JS
 
                             var fLat = parseFloat(oRow.{$latColName});
                             var fLng = parseFloat(oRow.{$lngColName});
@@ -1031,12 +1069,22 @@ JS;
                                 }
 JS;
         } else {
-            $filterRowsJs = <<<JS
+            $filteredRowsJs = <<<JS
                             
-                            var oShape = JSON.parse(oRow.{$shapeColName});
-                            if (oShape === null || oShape === undefined || oShape === {}) {
+                            var sShape = oRow.{$shapeColName};
+                            var oShape;
+                            if (sShape === null || sShape === undefined || sShape === '') {
                                 $aRowsSkippedJs.push(oRow);
                                 return;
+                            }
+                            try {
+                                oShape = JSON.parse(sShape);
+                            } catch (e) {
+                                $aRowsSkippedJs.push(oRow);
+                                console.warn('Cannot parse data as map shape:', e, oRow); 
+                            }
+                            if (oShape === {}) {
+                                $aRowsSkippedJs.push(oRow);
                             }
 JS;
 
@@ -1059,7 +1107,7 @@ JS;
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
-                            $filterRowsJs;
+                            $filteredRowsJs;
                             $aGeoJsonJs.push({
                                 type: 'Feature',
                                 geometry: {$geometryJs},
@@ -1158,7 +1206,11 @@ JS;
         switch (true) {
             case ($layer instanceof DataPointsLayer):
                 $pointSizeCss = $layer->getPointSize() . 'px';
-                $valueJs = ! $layer->hasValue() ? "''" : "'<div class=\"exf-map-point-value\" style=\"margin-left: calc({$pointSizeCss} + 3px); margin-top: calc(-{$pointSizeCss} - 0.25rem);\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                if ($layer->hasValue()) {
+                    $valueJs = "'<div class=\"exf-map-point-value exf-map-point-{$layer->getValuePosition()}\">' + {$oRowJs}['{$layer->getValueColumn()->getDataColumnName()}'] + '</div>'";
+                } else {
+                    $valueJs = "''";
+                }
                 $pointJs = "'<div class=\"exf-map-point\" style=\"height: {$pointSizeCss}; width: {$pointSizeCss}; background-color: ' + sColor + '; border-radius: 50%;\"></div>'";
                 $js= <<<JS
 function(){

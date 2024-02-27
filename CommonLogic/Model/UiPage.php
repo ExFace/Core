@@ -31,6 +31,7 @@ use exface\Core\Events\Widget\OnUiPageInitializedEvent;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Translation\UxonTranslator;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -45,7 +46,7 @@ use exface\Core\CommonLogic\Translation\UxonTranslator;
  * @author Andrej Kabachnik
  *
  */
-class UiPage implements UiPageInterface
+class UiPage implements UiPageInterface, iHaveIcon
 {
     use ImportUxonObjectTrait;
     
@@ -1050,6 +1051,13 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('modified_by_user_selector', $this->getModifiedByUserSelector()->toString());
         $uxon->setProperty('modified_on', $this->getModifiedOn());
         
+        if (null !== ($val = $this->getIcon()) && $val !== '') {
+            $uxon->setProperty('icon', $val);
+        }
+        if (null !== ($val = $this->getIconSet()) && $val !== '') {
+            $uxon->setProperty('icon_set', $val);
+        }
+        
         $contents = trim($this->getContents());
         if (! $contents) {
             // contents == null
@@ -1378,6 +1386,8 @@ class UiPage implements UiPageInterface
             'DEFAULT_MENU_INDEX' => $this->getMenuIndexDefault(),
             'DEFAULT_MENU_PARENT' => $this->getParentPageSelectorDefault() !== null ? $this->getPageUidFromSelector($this->getParentPageSelectorDefault()) : null,
             'DESCRIPTION' => $this->getDescription(),
+            'ICON' => $this->getIcon(),
+            'ICON_SET' => $this->getIconSet(),
             'INTRO' => $this->getIntro(),
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,

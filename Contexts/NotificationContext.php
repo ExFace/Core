@@ -86,7 +86,7 @@ class NotificationContext extends AbstractContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return Icons::ENVELOPE_O;
     }

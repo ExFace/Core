@@ -48,6 +48,7 @@ use exface\Core\DataTypes\NumberDataType;
  *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
  *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
  *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
+ *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a", "#6e7074", "#546570", "#c4ccd3"],
  *      ```
  * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
@@ -80,8 +81,13 @@ use exface\Core\DataTypes\NumberDataType;
  *
  * For an example of how to use the ECahrtsTrait in a facade, see the file
  * `exface\JEasyUIFacade\Facades\Elements\EuiChart.php` which shows the implamantation for the JeasyUI Facade.
- *
- * It is recommended to add
+ * 
+ * ## Theming
+ * 
+ * The colors of chart series alternate automatically. A list of available colors is defined in the
+ * configuration option `WIDGET.CHART.COLORS` in each facade. Additionally a `theme.js` file can
+ * be used as described in the docs of eCharts - see the UI5 implementation UI5Chart.php for an
+ * example.
  *
  * ## Updating the custom ECharts build
  *
@@ -155,7 +161,14 @@ trait EChartsTrait
      */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '" class="exf-chart" style="' . $style . '"></div>';
+        $hint = $this->buildHintText($this->getWidget()->getHint());
+        if ($hint) {
+            $hint = $this->escapeString($hint, true, false);
+            $hint = str_replace("\\n", "\n", $hint);
+        } else {
+            $hint = '""';
+        }
+        return '<div id="' . $this->getId() . '" class="exf-chart" style="' . $style . '" title=' . $hint . '></div>';
     }
     
     /**
@@ -1043,6 +1056,8 @@ JS;
             $visualMapJs = "visualMap: [{$visualMapConfig}],";
         }
         $colorScheme = $this->getWidget()->getColorScheme() ?? 'null';
+        $colors = $this->getColorSchemeColors();
+        $colorsJs = ! empty($colors) ? json_encode($colors) : 'null';
         return <<<JS
         
 {
@@ -1057,7 +1072,7 @@ JS;
         var iCnt = 0;
         var oChart = {$this->buildJsEChartsVar()};
         var oOpts = oChart.getOption() || {};
-        var aColors = oOpts.color || ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
+        var aColors = ({$colorsJs} || oOpts.color) || [];
         var jqCharts = $('.exf-chart');
         var iColorScheme = $colorScheme;
         
@@ -2905,7 +2920,7 @@ JS;
                         },
                         "_caption": row[targetCaption]
                     };
-                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                    if (minDepth === undefined || row[targetLevel] < minDepth) {
                         minDepth = row[targetLevel];
                     }
                 }                
@@ -3612,4 +3627,16 @@ JS;
         return false;
     }
     
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getColorSchemeColors() : array
+    {
+        $config = $this->getFacade()->getConfig();
+        if ($config->hasOption('WIDGET.CHART.COLORS')) {
+            return $config->getOption('WIDGET.CHART.COLORS')->toArray();
+        }
+        return [];
+    }
 }

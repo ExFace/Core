@@ -43,7 +43,7 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
         return [];
     }
     
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return parent::getIcon() ?? Icons::CLOCK_O;
     }

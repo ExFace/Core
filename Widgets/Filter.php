@@ -26,6 +26,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\DataTypes\TextDataType;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -309,18 +310,30 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
                 }
                 
                 // Try to use the default editor UXON of the attribute
-                if ($attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true) {
-                    $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
-                    if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
+                switch (true) {
+                    case $attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true:
+                        $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
+                        if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
+                            $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        }
+                        break;
+                    // If the attribute is some large text, JSON, HTML or similar, create a simple input
+                    // as default editor - don't use custom inputs like InputJson, etc.
+                    case $attr->getDataType() instanceof TextDataType:
+                        $defaultEditorUxon = new UxonObject([
+                            'widget_type' => 'Input',
+                            'attribute_alias' => $this->getAttributeAlias(),
+                            'height' => 1
+                        ]);
+                        break;
+                    default: 
+                        $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
+                        // Make sure to keep the attribute alias of the filter exactly as it was set.
+                        // Otherwise modifiers like an aggregator will get lost because the default
+                        // editor "thinks" it is a regular input for the attribute
                         $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
-                    }
-                } else {
-                    $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
-                    // Make sure to keep the attribute alias of the filter exactly as it was set.
-                    // Otherwise modifiers like an aggregator will get lost because the default
-                    // editor "thinks" it is a regular input for the attribute
-                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 }
+                
                 break;
             case $this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false:
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');

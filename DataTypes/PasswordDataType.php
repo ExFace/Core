@@ -57,6 +57,7 @@ class PasswordDataType extends StringDataType
     }
     
     /**
+     * Matches that a password matches a hash.
      * 
      * @param string $password
      * @param string $hash

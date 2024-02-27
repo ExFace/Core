@@ -14,7 +14,6 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -64,6 +63,8 @@ class StateMachineState implements iHaveIcon
     private $startState = null;
     
     private $endState = false;
+    
+    private $showIcon = null;
     
     public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
@@ -673,6 +674,38 @@ class StateMachineState implements iHaveIcon
     public function setEndState(bool $value) : StateMachineState
     {
         $this->endState = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @param bool $default
+     * @return bool|NULL
+     */
+    public function getShowIcon(bool $default = null) : ?bool
+    {
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->getIcon() !== null && $this->showIcon !== false) {
+            return true;
+        }
+        return $this->showIcon ?? $default;
+    }
+    
+    /**
+     * Force the icon to show (TRUE) or hide (FALSE)
+     *
+     * The default depends on the facade used.
+     *
+     * @uxon-property show_icon
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return iHaveIcon
+     */
+    public function setShowIcon(bool $value) : iHaveIcon
+    {
+        $this->showIcon = $value;
         return $this;
     }
 }

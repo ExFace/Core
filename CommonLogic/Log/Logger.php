@@ -165,10 +165,32 @@ class Logger implements LoggerInterface
             if (LogLevelDataType::compareLogLevels($level, self::ERROR) < 0) {
                 return;
             }
+            
             // Make sure not to enqueue duplicates in case of recursion
-            foreach ($this->queue as $queued) {
-                if ($queued['level'] === $level && $queued['message' === $message] && $queued['sender'] === $sender) {
-                    return;
+            if ($sender instanceof \Throwable) {
+                // If the logged item is an exception, a duplicate would be the same
+                // level, message, file and line number.
+                foreach ($this->queue as $queued) {
+                    // If the already queued item is NOT an excepation, it cannot be a duplicate
+                    if (! ($queued['sender'] instanceof \Throwable)) {
+                        continue;
+                    }
+                    // Same goes for the case when it does not have the same level or message
+                    if (! ($queued['level'] === $level && $queued['message' === $message])) {
+                        continue;
+                    }
+                    // For excpetions with equal levels and message, compare the file an line
+                    $queuedEx = $queued['sender'];
+                    if ($queuedEx->getFile() === $sender->getFile() && $queuedEx->getLine() === $sender->getLine()) {
+                        return;
+                    }
+                }
+            } else {
+                // For all other senders simply compare the sender: e.g. is it the same data sheet
+                foreach ($this->queue as $queued) {
+                    if ($queued['level'] === $level && $queued['message' === $message] && $queued['sender'] === $sender) {
+                        return;
+                    }
                 }
             }
             $this->queue[] = [
@@ -227,6 +249,8 @@ class Logger implements LoggerInterface
         
         // See if logging the current recored produced any errors in the queue and try to
         // process this queue now
+        
+        // TODO For recursive errors (same message) do not add them all to the queue. Leave only one!
         if (! empty($this->queue)) {
             if (count($this->queue) > 30) {
                 $this->queue = [];

@@ -11,8 +11,8 @@ use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Factories\TaskFactory;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * This is a basic implementation of common context methods intended to be used
@@ -24,6 +24,8 @@ use exface\Core\Factories\ResultFactory;
 abstract class AbstractContext implements ContextInterface
 {
     use AliasTrait;
+    
+    use iHaveIconTrait;
 
     private $selector = null;
     
@@ -203,27 +205,6 @@ abstract class AbstractContext implements ContextInterface
     public function getContextBarPopup(Container $container)
     {
         return $container;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIcon()
-     */
-    public function getIcon()
-    {
-        return $this->icon;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIcon()
-     */
-    public function setIcon($icon)
-    {
-        $this->icon = $icon;
-        return $this;
     }
     
     /**

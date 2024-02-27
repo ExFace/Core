@@ -151,7 +151,7 @@ return $debug_widget;
                 $messageHeaders .= "| ----------- | ----- |" . PHP_EOL;
                 foreach ($message->getHeaders() as $header => $values) {
                     foreach ($values as $value) {
-                        if ($this->isHeaderSensitive($header)) {
+                        if ($this->isSensitiveData($header)) {
                             $value = '***';
                         }
                         $value = $this->escapeMardownTableCellContents($value ?? '');
@@ -189,6 +189,9 @@ return $debug_widget;
             $mdTable  = "| Server parameter | Value |" . PHP_EOL;
             $mdTable .= "| ----------- | ----- |" . PHP_EOL;
             foreach ($message->getServerParams() as $param => $value) {
+                if ($this->isSensitiveData($param)) {
+                    $value = '***';
+                }
                 if (is_array($value) || is_object($value)) {
                     $value = JsonDataType::encodeJson($value);
                 }
@@ -366,7 +369,7 @@ MD;
      * @param string $headerName
      * @return bool
      */
-    protected function isHeaderSensitive(string $headerName) : bool
+    protected function isSensitiveData(string $headerName) : bool
     {
         switch (true) {
             case strcasecmp($headerName, 'Authorization') === 0:

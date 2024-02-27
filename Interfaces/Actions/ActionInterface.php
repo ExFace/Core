@@ -23,6 +23,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * Common interface for all actions.
@@ -47,7 +48,14 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
  * @author Andrej Kabachnik
  *
  */
-interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface, iCanGenerateDebugWidgets
+interface ActionInterface extends 
+    WorkbenchDependantInterface, 
+    AliasInterface, 
+    iCanBeCopied, 
+    iCanBeConvertedToUxon, 
+    TaskHandlerInterface, 
+    iCanGenerateDebugWidgets,
+    iHaveIcon
 {
     
     /**
@@ -73,19 +81,6 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @return AppInterface
      */
     public function getApp();
-
-    /**
-     *
-     * @return string
-     */
-    public function getIcon();
-
-    /**
-     *
-     * @param string $value            
-     * @return ActionInterface
-     */
-    public function setIcon($value);
 
     /**
      * Sets the alias of the action.
