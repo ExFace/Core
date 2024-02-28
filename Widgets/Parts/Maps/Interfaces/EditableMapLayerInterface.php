@@ -8,8 +8,6 @@ namespace exface\Core\Widgets\Parts\Maps\Interfaces;
  */
 interface EditableMapLayerInterface extends MapLayerInterface
 {    
-    
-    
     /**
      *
      * @return bool
@@ -32,5 +30,5 @@ interface EditableMapLayerInterface extends MapLayerInterface
      *
      * @return bool
      */
-    public function hasEditByMovingItems() : bool;
+    public function hasEditByChangingItems() : bool;
 }

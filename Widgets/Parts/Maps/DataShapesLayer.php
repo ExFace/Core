@@ -59,9 +59,9 @@ class DataShapesLayer extends AbstractDataLayer
     
     private $addShapes = false;
     
-    private $addMarkerMax = null;
+    private $addShapesMax = null;
     
-    private $draggable = false;
+    private $changeShapes = false;
     
     private $lineWeight = null;
     
@@ -157,7 +157,7 @@ class DataShapesLayer extends AbstractDataLayer
      */
     public function isEditable() : bool
     {
-        return $this->hasEditByAddingItems() || $this->hasEditByMovingItems();
+        return $this->hasEditByAddingItems() || $this->hasEditByChangingItems();
     }
     
     /**
@@ -170,7 +170,7 @@ class DataShapesLayer extends AbstractDataLayer
     }
     
     /**
-     * Set to TRUE to allow adding markers
+     * Set to TRUE to allow adding shapes
      *
      * @uxon-property edit_by_adding_items
      * @uxon-type boolean
@@ -194,39 +194,31 @@ class DataShapesLayer extends AbstractDataLayer
         if ($this->hasEditByAddingItems() === false) {
             return 0;
         }
-        if ($link = $this->getLatitudeWidgetLink()) {
-            $w = $link->getTargetWidget();
-            if (($w instanceof iSupportMultiSelect) && $w->getMultiSelect() === true) {
-                return null;
-            } else {
-                return 1;
-            }
-        }
-        return null;
+        return $this->addShapesMax;
     }
     
     /**
      *
      * @return bool
      */
-    public function hasEditByMovingItems() : bool
+    public function hasEditByChangingItems() : bool
     {
-        return $this->draggable;
+        return $this->changeShapes;
     }
     
     /**
-     * Set to TRUE to allow moving markers
-     *
-     * @uxon-property edit_by_moving_items
+     * Set to TRUE to allow changin or moving shapes
+     * 
+     * @uxon-property edit_by_changing_items
      * @uxon-type boolean
      * @uxon-default false
      *
      * @param bool $value
      * @return MapLayerInterface
      */
-    public function setEditByMovingItems(bool $value) : MapLayerInterface
+    public function setEditByChangingItems(bool $value) : MapLayerInterface
     {
-        $this->draggable = $value;
+        $this->changeShapes = $value;
         return $this;
     }
     
