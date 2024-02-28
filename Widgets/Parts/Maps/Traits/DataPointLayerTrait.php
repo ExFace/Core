@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 
 /**
  *
@@ -259,8 +260,8 @@ trait DataPointLayerTrait
     }
     
     /**
-     * 
-     * @return bool
+     *
+     * @see EditableMapLayerInterface::isEditable()
      */
     public function isEditable() : bool
     {
@@ -268,8 +269,8 @@ trait DataPointLayerTrait
     }
     
     /**
-     * 
-     * @return bool
+     *
+     * @see EditableMapLayerInterface::hasEditByAddingItems()
      */
     public function hasEditByAddingItems() : bool
     {
@@ -293,8 +294,8 @@ trait DataPointLayerTrait
     }
     
     /**
-     * 
-     * @return int|NULL
+     *
+     * @see EditableMapLayerInterface::hasEditByAddingItemsMax()
      */
     public function hasEditByAddingItemsMax() : ?int
     {
@@ -309,7 +310,16 @@ trait DataPointLayerTrait
                 return 1;
             }
         }
-        return null;
+        return $this->addMarkerMax;
+    }
+    
+    /**
+     *
+     * @see EditableMapLayerInterface::hasEditByChangingItems()
+     */
+    public function hasEditByChangingItems() : bool
+    {
+        return $this->hasEditByMovingItems();
     }
     
     /**
