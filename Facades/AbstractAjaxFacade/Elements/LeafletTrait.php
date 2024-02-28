@@ -192,7 +192,7 @@ HTML;
 
     {$this->buildJsLeafletControlLocate()}
     {$this->buildJsLeafletControlScale()}
-
+    {$this->buildJsMapDrop()}
     {$this->buildJsLayers()}
     {$this->buildJsLeafletDrawInit('oMap')}
 })();
@@ -1343,6 +1343,15 @@ JS;
                 break;
             }
             
+            if ($layer->isDropTarget()) {
+                if ($layer instanceof GeoJsonMapLayerInterface) {
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.JS') . '"></script>';
+                    /*$includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.HELPERS') . '"></script>';
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.BOOLEAN_POINT_IN_POLYGON') . '"></script>';
+                    */
+                }
+            }
+            
             if ($this->hasLeafletDraw() === true) {
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
@@ -1457,6 +1466,99 @@ JS;
     public function buildJsLeafletResize() : string
     {
         return "{$this->buildJsLeafletVar()}.invalidateSize()";
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsMapDrop() : string
+    {
+        $widget = $this->getWidget();
+        
+        $dropLayers = [];
+        $dropScripts = [];
+        foreach ($widget->getLayers() as $layer) {
+            $dropLayers[] = $layer;
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
+                $dropLayers[] = $layer;
+                $dropDataBuilderJs = '';
+                /* @var $dropPart \exface\Core\Widgets\Parts\DragAndDrop\DropToAction */
+                foreach ($layer->getDropToActions() as $dropPart) {
+                    $dropTriggerEl = $this->getFacade()->getElement($dropPart->getActionTrigger());
+                    $dropScripts[] = $dropTriggerEl->buildJsClickFunction($dropPart->getAction(), 'oRequestData');
+                    foreach ($dropPart->getIncludeTargetColumnMappings() as $map) {
+                        $dropDataBuilderJs .= "\n
+                    oDroppedData.rows[0]['{$map->getToExpression()->__toString()}'] = oTargetRow['{$map->getFromExpression()->__toString()}'];";
+                    }
+                }
+            }
+        }
+        
+        if (empty($dropLayers)) {
+            return '';
+        }
+        
+        if (count($dropScripts) > 1) {
+            throw new FacadeRuntimeError('Multiple drop zones in a map currently not supported');
+        }
+        
+        $onDropJs = $dropScripts[0];
+        
+        return <<<JS
+        setTimeout(() => {
+            const wrapperDiv = document.getElementById('{$this->getIdLeaflet()}');
+            
+             wrapperDiv.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                const oMap = {$this->buildJsLeafletVar()};
+                // Get the coordinates where the element was dropped
+                var latlng = oMap.mouseEventToLatLng(e);
+                
+                const layers = oMap._layers;
+                const shapes = Object.values(layers).filter(item => item?.feature && item?.feature?.geometry?.type === 'Polygon');
+                const point = turf.point([latlng?.lng, latlng?.lat]);
+                const matchingPolygon = shapes.forEach(shape => {
+                    const polygon = turf.polygon(shape?.feature?.geometry?.coordinates);
+                    if(turf.booleanPointInPolygon(point, polygon)) {
+                        shape.setStyle({ weight: 6 })
+                        e.dataTransfer.dropEffect = "copy";
+                    } else {
+                        shape.setStyle({ weight: 3 })
+                    }
+                })
+            });
+            
+            // Add event listener for drop event on the map
+            wrapperDiv.addEventListener('drop', function (e) {
+                e.preventDefault()
+                const oMap = {$this->buildJsLeafletVar()};
+                // Get the coordinates where the element was dropped
+                var latlng = oMap.mouseEventToLatLng(e);
+                
+                const layers = oMap._layers;
+                const shapes = Object.values(layers).filter(item => item?.feature && item?.feature?.geometry?.type === 'Polygon');
+                const point = turf.point([latlng?.lng, latlng?.lat]);
+                shapes.forEach(s => {
+                    s.setStyle({ weight: 3 })
+                });
+                const matchingPolygon = shapes.find(shape => {
+                    const polygon = turf.polygon(shape?.feature?.geometry?.coordinates);
+                    return turf.booleanPointInPolygon(point, polygon);
+                });
+                var oTargetRow = (matchingPolygon?.feature?.properties?.data || {});  
+                var oDroppedData = oRequestData = JSON.parse(e.dataTransfer.getData('dataSheet') || '{}');   
+                {$dropDataBuilderJs}       
+
+                $(wrapperDiv).removeClass('mouseDown');
+                console.log('Dropped data', oDroppedData);
+                console.log('Dropped target', oTargetRow);
+                
+                {$onDropJs}
+            });
+        }, 100);
+JS;
     }
     
     protected function hasLeafletDraw() : bool
