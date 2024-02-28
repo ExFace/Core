@@ -25,6 +25,7 @@ use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
+use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -236,6 +237,16 @@ class Map extends AbstractWidget implements
         
         foreach ($this->getLayers() as $layer) {
             yield from $layer->getWidgets();
+            
+            // Make sure to include triggers of drop actions also, so the ActionAuthorizationPoint
+            // can check if the task data really corresponds to the trigger model for the action
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
+                if ($layer instanceof DataShapesLayer) {
+                    foreach ($layer->getDropToActions() as $dropPart) {
+                        yield $dropPart->getActionTrigger();
+                    }
+                }
+            }
         }
         
         foreach ($this->getToolbars() as $toolbar) {
