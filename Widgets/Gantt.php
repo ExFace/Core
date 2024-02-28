@@ -4,6 +4,8 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
+use exface\Core\Widgets\Parts\ConditionalProperty;
+use exface\Core\Widgets\Parts\ConditionalPropertyCondition;
 
 /**
  * 
@@ -20,6 +22,8 @@ class Gantt extends DataTree
     private $schedulerResourcePart = null;
     
     private $startDate = null;
+    
+    private $childrenMoveWithParentIf = null;
     
     /**
      *
@@ -100,11 +104,46 @@ class Gantt extends DataTree
         return $this->setTasks($uxon);
     }
     
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getStartDate() : ?string
     {
         return $this->startDate;
     }
     
+    /**
+     * @uxon-property children_move_with_parent_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $uxon
+     * @return DataCalendarItem
+     */
+    protected function setChildrenMoveWithParentIf(UxonObject $uxon) : Gantt
+    {
+        $this->childrenMoveWithParentIf = $uxon;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getChildrenMoveWithParentIf() : ?ConditionalProperty
+    {
+        if ($this->childrenMoveWithParentIf === null) {
+            return null;
+        }
+        
+        if (! ($this->childrenMoveWithParentIf instanceof ConditionalProperty)) {
+            $this->childrenMoveWithParentIf = new ConditionalProperty($this, 'childrenMoveWithParentIf', $this->childrenMoveWithParentIf);
+        }
+        
+        return $this->childrenMoveWithParentIf;
+    }
+
     /**
      * The left-most date in the scheduler: can be a real date or a relative date - e.g. `-2w`.
      *
