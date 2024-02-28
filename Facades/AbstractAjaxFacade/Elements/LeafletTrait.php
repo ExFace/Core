@@ -33,6 +33,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -159,7 +161,8 @@ HTML;
         return <<<JS
 
 (function(){
-    {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
+    var oMap;
+    oMap = {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
         {$this->buildJsMapOptions()}
     })
     .setView([{$lat}, {$lon}], {$zoom})
@@ -191,6 +194,7 @@ HTML;
     {$this->buildJsLeafletControlScale()}
 
     {$this->buildJsLayers()}
+    {$this->buildJsLeafletDrawInit('oMap')}
 })();
 
 JS;
@@ -1103,7 +1107,7 @@ JS;
 JS;
         }
         
-        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
+        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByChangingItems() ? 'true' : 'false';
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
@@ -1327,7 +1331,7 @@ JS;
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
         
-        foreach ($this->getWidget()->getLayers() as $layer) {
+        foreach ($widget->getLayers() as $layer) {
             if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
@@ -1337,6 +1341,11 @@ JS;
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4JS') . '"></script>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS') . '"></script>';
                 break;
+            }
+            
+            if ($this->hasLeafletDraw() === true) {
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
+                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
             }
         }
         
@@ -1448,6 +1457,73 @@ JS;
     public function buildJsLeafletResize() : string
     {
         return "{$this->buildJsLeafletVar()}.invalidateSize()";
+    }
+    
+    protected function hasLeafletDraw() : bool
+    {
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            if (($layer instanceof DataShapesLayer) && $layer->isEditable() === true) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    protected function buildJsLeafletDrawInit(string $oMapJs) : string
+    {
+        if (! $this->hasLeafletDraw()) {
+            return '';
+        }
+        
+        $editableLayer = null;
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            if (($layer instanceof DataShapesLayer) && $layer->isEditable() === true) {
+                if ($editableLayer !== null) {
+                    throw new FacadeRuntimeError('Multiple editable map layers currently not supported!');
+                }
+                $editableLayer = $layer;
+            }
+        }
+        
+        $errorColor = $this->getFacade()->getSemanticColors()['~ERROR'] ?? '#e1e100';
+        
+        return <<<JS
+
+(function(oMap){
+    var editableLayers = oMap._exfLayers[{$this->getWidget()->getLayerIndex($editableLayer)}].layer;
+    var oDrawOpts = {
+        position: 'topright',
+        draw: {
+            polyline: false,
+            polygon: {
+                clickable: true,
+                allowIntersection: false, // Restricts shapes to simple polygons
+                drawError: {
+                    color: '{$errorColor}', // Color the shape will turn when intersects
+                    message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                },
+                shapeOptions: {
+                    color: '#0000ff'
+                }
+            },
+            circle: false, // Turns off this drawing tool
+            simpleShape: false,
+            rectangle: {
+                shapeOptions: {
+                    clickable: false
+                }
+            },
+            marker: false,
+        },
+        edit: {
+            featureGroup: editableLayers, //REQUIRED!!
+            remove: false
+        }
+    };
+    const drawControl = new L.Control.Draw(oDrawOpts);
+    oMap.addControl(drawControl);
+})($oMapJs);
+JS;
     }
     
     /**
