@@ -18,6 +18,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapProjectionInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\DragAndDrop\DropToAction;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 
 /**
  * 
@@ -30,7 +32,8 @@ class DataShapesLayer extends AbstractDataLayer
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
-    CustomProjectionMapLayerInterface
+    CustomProjectionMapLayerInterface,
+    iCanBeDragAndDropTarget
 {
     const VALUE_POSITION_LEFT = 'left';
     
@@ -69,6 +72,8 @@ class DataShapesLayer extends AbstractDataLayer
     private $projectionConfig = null;
     
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
+    
+    private $dropToActions = [];
     
     /**
      *
@@ -373,5 +378,42 @@ class DataShapesLayer extends AbstractDataLayer
     {
         $this->valuePosition = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getDropToActions() : array
+    {
+        return $this->dropToActions;
+    }
+    
+    /**
+     * Actions to be performed when something is dropped on this layer
+     * 
+     * @uxon-property drop_to_action
+     * @uxon-type \exface\Core\Widgets\Parts\DragAndDrop\DropToAction[]
+     * @uxon-template [{"object_alias": "", "action":{"alias": ""}}]
+     * 
+     * @param UxonObject $arrayOfWidgetParts
+     * @return DataShapesLayer
+     */
+    public function setDropToAction(UxonObject $arrayOfWidgetParts) : DataShapesLayer
+    {
+        foreach ($arrayOfWidgetParts->getPropertiesAll() as $partUxon) {
+            $this->dropToActions[] = new DropToAction($this->getMap(), $partUxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeDragAndDropTarget::isDropTarget()
+     */
+    public function isDropTarget(): bool
+    {
+        return ! empty($this->dropToActions);
     }
 }

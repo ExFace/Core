@@ -15,6 +15,7 @@ use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -95,7 +96,14 @@ use exface\Core\Interfaces\Widgets\iCanEditData;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu, iTakeInput, iCanWrapText
+class DataTable extends Data implements 
+    iCanEditData, 
+    iFillEntireContainer, 
+    iSupportMultiSelect, 
+    iHaveContextMenu, 
+    iTakeInput, 
+    iCanWrapText,
+    iCanBeDragAndDropSource
 {
     use DataTableTrait;
     use EditableTableTrait;
@@ -138,6 +146,8 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
     private $select_single_result = false;
     
     private $height_in_rows = null;
+    
+    private $drag_to_other_widgets = false;
 
     function hasRowDetails()
     {
@@ -704,5 +714,40 @@ class DataTable extends Data implements iCanEditData, iFillEntireContainer, iSup
     {
         $this->height_in_rows = null;
         return parent::setHeight($value);
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeDragAndDropSource
+     */
+    public function isDragSource() : bool
+    {
+        return $this->getDragToOtherWidgets() === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getDragToOtherWidgets() : bool
+    {
+        return $this->drag_to_other_widgets;
+    }
+    
+    /**
+     * Set to TRUE to enable users to drag rows to widgets, that accept drop actions
+     * 
+     * @uxon-property drag_to_other_widgets
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataTable
+     */
+    public function setDragToOtherWidgets(bool $value) : DataTable
+    {
+        $this->drag_to_other_widgets = $value;
+        return $this;
     }
 }

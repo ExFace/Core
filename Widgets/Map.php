@@ -24,6 +24,7 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -37,7 +38,8 @@ class Map extends AbstractWidget implements
     iHaveHeader, 
     iHaveConfigurator, 
     iFillEntireContainer,
-    iCanAutoloadData
+    iCanAutoloadData,
+    iCanBeDragAndDropTarget
 {
     use iHaveButtonsAndToolbarsTrait;
     use PrefillValueTrait;
@@ -806,5 +808,20 @@ class Map extends AbstractWidget implements
     {
         $this->coordinateSystem = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeDragAndDropTarget::isDropTarget()
+     */
+    public function isDropTarget(): bool
+    {
+        foreach ($this->getLayers() as $layer) {
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget() === true) {
+                return true;
+            }
+        }
+        return false;
     }
 }
