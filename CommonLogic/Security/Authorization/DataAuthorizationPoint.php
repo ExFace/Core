@@ -148,7 +148,17 @@ class DataAuthorizationPoint extends AbstractAuthorizationPoint
                 }
             }
             
-            if (! empty($filterScopes) && ! $unfilteredObligationFound) {
+            // If an unfiltered obligation is found, there MUST not be any restrictions,
+            // so just mark all obligations as fulfilled
+            if ($unfilteredObligationFound === true) {
+                foreach ($filterScopes as $filterObligations) {
+                    foreach ($filterObligations as $obligation) {
+                        $obligation->setFulfilled(true);
+                    }
+                }
+            } 
+            // Otherwise add filters for every obligation in every scope
+            else {
                 foreach ($filterScopes as $filterObligations) {
                     $oblCnt = count($filterObligations);
                     $scopeCondGrp = ConditionGroupFactory::createOR($dataSheet->getMetaObject());
