@@ -35,6 +35,7 @@ use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -342,7 +343,7 @@ JS;
         if ($leafletVarJs === null) {
             $leafletVarJs = $this->buildJsLeafletVar();
         }
-        return "{$leafletVarJs}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
+        return "{$leafletVarJs}._exfLayers.find(function(oLayerData){return oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
     }
     
     public function buildJsBaseMapGetter(BaseMapInterface $layer, string $leafletVarJs = null) : string
@@ -619,7 +620,7 @@ JS;
                 class: \"exf-{$visibility}\", 
                 tooltip: $hint, 
                 caption: $caption, 
-                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+                value: {$formatter->buildJsFormatter("feature.properties?.data['{$col->getDataColumnName()}']")} },";
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
@@ -861,7 +862,7 @@ JS;
                 class: \"exf-{$visibility}\",
                 tooltip: $hint,
                 caption: $caption,
-                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+                value: {$formatter->buildJsFormatter("feature.properties?.data['{$col->getDataColumnName()}']")} },";
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
@@ -892,8 +893,54 @@ JS;
             $layerConstructor = 'L.geoJSON';
         }
         
+        $drawInitJs = '';
+        if (($layer instanceof EditableMapLayerInterface) && $layer->isEditable()) {
+            if (($layer instanceof GeoJsonWidgetLinkMapLayerInterface) && $link = $layer->getShapesWidgetLink()) {
+                $onDrawJs = $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueSetter('JSON.stringify(oFeature.geometry)');
+            }
+            $drawInitJs = <<<JS
+            oMap.on('draw:edited', function (e) {
+                var layers = e.layers;
+                layers.eachLayer(function (oLayer) {
+                    var oFeature = oLayer.toGeoJSON();
+                    oFeature.properties.data = {};
+                    {$onDrawJs}
+                });
+            });
+            oMap.on('draw:created', function (e) {
+                var oParentLayer = {$this->buildJsLayerGetter($layer, 'oMap')}.layer;
+                var oFeature = e.layer.toGeoJSON();
+                oFeature.properties.data = {};
+                {$onDrawJs}
+                oParentLayer.clearLayers();
+                oParentLayer.addData(oFeature);
+            });
+
+JS;
+        }
+        
         // Generate JS to run on map refresh
         switch (true) {
+            case ($layer instanceof GeoJsonWidgetLinkMapLayerInterface) && null !== $link = $layer->getShapesWidgetLink():
+                $shapesEl = $this->getFacade()->getElement($link->getTargetWidget());
+                $exfRefreshJs = <<<JS
+
+                (function() {
+                    var aRows = [{
+                        {$shapesEl->getWidget()->getDataColumnName()}: {$shapesEl->buildJsValueGetter()}
+                    }];
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                    
+                    oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
+                })();
+                
+JS;
+                    
+                    break;
             case $link = $layer->getDataWidgetLink():
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
                 if ($layer instanceof DataSelectionMarkerLayer) {
@@ -908,7 +955,6 @@ JS;
                     var aRows = oData.rows || [];
                     var aFeatures = [];
                     var aRowsSkipped = [];
-                    
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
 
                     oLayer.clearLayers();
@@ -960,7 +1006,7 @@ JS;
                 }
                 $tooltipJs = <<<JS
 
-                    layer.bindTooltip({$layerCaptionJs} + feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                    layer.bindTooltip({$layerCaptionJs} + feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: false, 
                         direction: '{$layer->getValuePosition()}',
                         className: 'exf-map-shape-tooltip'
@@ -970,7 +1016,7 @@ JS;
             } else {
                 $tooltipJs = <<<JS
 
-                    layer.bindTooltip(feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                    layer.bindTooltip(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: true, 
                         direction: 'center',
                         className: 'exf-map-shape-title'
@@ -983,9 +1029,10 @@ JS;
             
         return <<<JS
             
-        (function(){
+        (function(oMap){
             $projectionInit
-            
+            $drawInitJs
+
             var oLayer = $layerConstructor(null, {
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
@@ -1020,11 +1067,11 @@ JS;
                 {$exfRefreshJs}
             }
             
-            {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
+            oMap.on('exfRefresh', oLayer._exfRefresh);
             oLayer._exfRefresh();
             
             return oLayer;
-        })()
+        })({$facadeElement->buildJsLeafletVar()})
 
 JS;
     }
