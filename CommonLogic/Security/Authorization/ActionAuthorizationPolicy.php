@@ -355,7 +355,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             $action->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
-            $action->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission due to error: ' . $e->getMessage(), null, $e));
+            $action->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission for policy "' . $this->getName() . '" due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         
