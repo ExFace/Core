@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\PWA;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\Interfaces\PWA\PWAInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
@@ -404,14 +405,18 @@ abstract class AbstractPWA implements PWAInterface
                 $rowCnt = null;
                 $this->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot estimate size of offline data set: ' . $e->getMessage(), null, $e));
             }
+
             $newDataSets->addRow(array_merge($row, [
                 'PWA' => $this->getUid(),
                 'DESCRIPTION' => $this->getDescriptionOf($set),
                 'OBJECT' => $set->getMetaObject()->getId(),
-                'DATA_SHEET_UXON' => $set->getDataSheet()->exportUxonObject()->toJson($dataSheetJson),
+                'DATA_SHEET_UXON' => $dataSheetJson,
                 'USER_DEFINED_FLAG' => 0,
                 'ROWS_AT_GENERATION_TIME' => $rowCnt,
-                'INCREMENTAL_FLAG' => $set->isIncremental(),
+                'DATA_SET_UXON' => $set->exportUxonObject()->toJson(),
+                'INCREMENTAL_FLAG' => $set->IsIncremental(),
+                'COLUMNS' => ($set->getDataSheet()->getColumns())->count(),
+                'INCREMENTAL_COLUMNS' => ($incCols = $set->getIncrementalColumns()) === null ? 0 : count($incCols),
             ]), false, false);
         }
         yield 'Generated ' . $newDataSets->countRows() . ' offline data sets' . PHP_EOL;
