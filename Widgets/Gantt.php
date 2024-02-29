@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
 use exface\Core\Widgets\Parts\ConditionalProperty;
-use exface\Core\Widgets\Parts\ConditionalPropertyCondition;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * 
@@ -25,7 +25,7 @@ class Gantt extends DataTree
     
     private $childrenMoveWithParentIf = null;
     
-    private $childrenMoveWithParent = true;
+    private $childrenMoveWithParent = null;
     
     /**
      *
@@ -116,14 +116,20 @@ class Gantt extends DataTree
     }
     
     /**
+     * Move child bars with parent bar only if the child row matches these conditions
+     * 
      * @uxon-property children_move_with_parent
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param bool $trueOrFalse
      * @return Gantt
      */
     protected function setChildrenMoveWithParent(bool $trueOrFalse) : Gantt
     {
+        if ($this->childrenMoveWithParentIf !== null && $trueOrFalse === false) {
+            throw new WidgetConfigurationError($this, 'Cannot set `children_move_with_parent` to `false` while `children_move_with_parent_if` defined!');
+        }
         $this->childrenMoveWithParent = $trueOrFalse;
         return $this;
     }
@@ -134,12 +140,15 @@ class Gantt extends DataTree
      */
     public function getChildrenMoveWithParent() : bool
     {
-        if ($this->getChildrenMoveWithParentIf() !== null) {
+        if ($this->childrenMoveWithParentIf !== null) {
             return true;
-        } else return $this->childrenMoveWithParent;
+        }
+        return $this->childrenMoveWithParent ?? true;
     }
     
     /**
+     * Move child bars with parent bar only if the child row matches these conditions
+     * 
      * @uxon-property children_move_with_parent_if
      * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
      * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
@@ -149,6 +158,9 @@ class Gantt extends DataTree
      */
     protected function setChildrenMoveWithParentIf(UxonObject $uxon) : Gantt
     {
+        if ($this->childrenMoveWithParent === false) {
+            throw new WidgetConfigurationError($this, 'Cannot set `children_move_with_parent_if` if `children_move_with_parent` is set to `false`');
+        }
         $this->childrenMoveWithParentIf = $uxon;
         return $this;
     }
