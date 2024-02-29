@@ -31,7 +31,15 @@ class PWADataset implements PWADatasetInterface
     private $actions =  [];
     
     private $uid = null;
+
+    private array $columnsByIncremental = [
+        'incremental' => null,
+        'notIncremental' => null
+    ];
+
     private bool $forceIncremental = false;
+
+    private ?bool $isIncremental = null;
 
     /**
      * 
@@ -51,10 +59,52 @@ class PWADataset implements PWADatasetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
-    public function exportUxonObject()
+    public function exportUxonObject(): UxonObject
     {
-        // TODO
-        return new UxonObject();
+        $arr = [];
+        $arr['object_alias'] = $this->getMetaObject()->getAliasWithNamespace();
+        $arr['has_uid_columns'] = $this->dataSheet->getUidColumn() !== null;
+        $arr['incremental_attribute'] = $this->getIncrementAttribute()?->getAlias();
+        $arr['column_count'] = ($this->getDataSheet()->getColumns())->count();
+        $arr['estimated_rows'] = $this->estimateRows();
+
+        if ($this->isIncremental === null){
+            $this->isIncremental();
+        }
+
+        if (key_exists('columns', $this->columnsByIncremental)) {
+            $cols = [];
+            foreach ($this->columnsByIncremental['columns'] as $col) {
+                $colArray = $col->exportUxonObject()->toArray();
+                $colArray['increment_attribute'] = (($col->getMetaObject())
+                    ->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class)->getFirst())
+                    ?->getUpdatedOnAttribute();
+            }
+
+            if (empty($cols) === false) {
+                $arr['incremental_columns'] = $cols;
+            }
+        } else {
+            $cols = [];
+            foreach ($this->getIncrementalColumns() as $col) {
+                $cols[] = $col->exportUxonObject()->toArray();
+            }
+
+            if (empty($cols) === false) {
+                $arr['incremental_columns'] = $cols;
+            }
+
+            $cols = [];
+            foreach ($this->getNonIncrementalColumns() as $col) {
+                $cols[] = $col->exportUxonObject()->toArray();
+            }
+
+            if (empty($cols) === false) {
+                $arr['non_incremental_columns'] = $cols;
+            }
+        }
+
+        return new UxonObject($arr);
     }
 
     /**
@@ -178,9 +228,6 @@ class PWADataset implements PWADatasetInterface
     {
         return $this->getDataSheet()->copy()->setAutoCount(true)->countRowsInDataSource();
     }
-    
-    /**
-     * 
 
     /**
      *
@@ -253,7 +300,7 @@ class PWADataset implements PWADatasetInterface
                         $processedRelations[] = $relationIncrementObjectAlias;
                     }
 
-                    // Artikel__Hersteller --> Artikel
+                    // LagerLE__LagerQuant__Artikelstamm --> LagerLE__LagerQuant  --> LagerLE
                     $indexOfLastSeparator = strrpos($relationIncrementObjectAlias,RelationPath::RELATION_SEPARATOR);
                     $lastRelationInChain = substr($relationIncrementObjectAlias, $indexOfLastSeparator);
                     $relationIncrementObjectAlias = str_replace($lastRelationInChain, '', $relationIncrementObjectAlias);
@@ -278,13 +325,20 @@ class PWADataset implements PWADatasetInterface
      */
     public function isIncremental() : bool
     {
+        $isIncremental = $this->isIncremental;
+        if ($isIncremental !== null) {
+            return $this->isIncremental;
+        }
+
+        $isIncremental = true;
         $incrementalAttribute =  $this->getIncrementAttribute();
         switch (true) {
-            case $this->forceIncremental:
-                return true;
-            case $incrementalAttribute === null
-                || $this->dataSheet->getUidColumn() === null:
-                return false;
+            case $incrementalAttribute === null:
+                $this->columnsByIncremental['columns'] = $this->getDataSheet()->getColumns()->getAll();
+                $isIncremental = false;
+                break;
+            case $this->dataSheet->getUidColumn() === null:
+                $isIncremental = false;
             // has only incremental relations
             default:
                 $incrementAttributeAlias = $incrementalAttribute->getAlias();
@@ -293,13 +347,28 @@ class PWADataset implements PWADatasetInterface
                         && $column->getAttribute()->getRelationPath()->isEmpty() === false
                         && $this->isIncrementalRelationColumn(
                             $this->dataSheet->getMetaObject(), $column, $incrementAttributeAlias) === false) {
-                        return false;
+                        $this->columnsByIncremental['notIncremental'][] = $column;
+                        $isIncremental = false;
+                    } else {
+                        $this->columnsByIncremental['incremental'][] = $column;
                     }
                 }
-                return true;
         }
+
+        $this->isIncremental = $this->forceIncremental ? true : $isIncremental;
+        return $this->isIncremental;
     }
-    
+
+    public function getIncrementalColumns() : ?array
+    {
+        return $this->columnsByIncremental['incremental'];
+    }
+
+    public function getNonIncrementalColumns() : ?array
+    {
+        return $this->columnsByIncremental['notIncremental'];
+    }
+
     /**
      * 
      * Configure if a dataset should be forced to be incrementally synchronized.
@@ -310,7 +379,7 @@ class PWADataset implements PWADatasetInterface
      * @param bool $forced
      * @return PWADatasetInterface
      */
-    public function setForcedIncremental(bool $forced) : PWADatasetInterface
+    public function forceIncrementalSync(bool $forced) : PWADatasetInterface
     {
         $this->forceIncremental = $forced;
         return $this;
