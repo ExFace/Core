@@ -1343,7 +1343,7 @@ JS;
                 break;
             }
             
-            if ($layer->isDropTarget()) {
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
                 if ($layer instanceof GeoJsonMapLayerInterface) {
                     $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.JS') . '"></script>';
                     /*$includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.HELPERS') . '"></script>';
