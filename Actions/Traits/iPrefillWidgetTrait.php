@@ -232,7 +232,9 @@ trait iPrefillWidgetTrait
                     $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                     // Improve performance by disabling the row counter
                     $freshData->setAutoCount(false);
+                    $log .= '   - Reading fresh data with filter `' . $freshData->getFilters()->__toString() . '`' . PHP_EOL;
                     $freshData->dataRead();
+                    $logSheets['Missing data loaded'] = $freshData;
                     // Merge and overwrite existing values unless refresh `only_missing_values`
                     if ($refresh === iPrefillWidget::REFRESH_ONLY_MISSING_VALUES) {
                         $log .= '   - Refreshing only missing values' . PHP_EOL;
