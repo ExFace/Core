@@ -322,7 +322,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
                     break;
                 // IDEA add generic obligations here
                 default:
-                    throw new AuthorizationRuntimeError('Obligation "' . get_class($obligation) . '" not supported in authorization point "' . $this->getName() . '"');
+                    throw new AuthorizationRuntimeError('Obligation "' . get_class($obligation) . '" could not be fulfilled in authorization point "' . $this->getName() . '"');
             }
         }
         return $permission;
