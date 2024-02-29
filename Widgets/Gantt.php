@@ -25,6 +25,8 @@ class Gantt extends DataTree
     
     private $childrenMoveWithParentIf = null;
     
+    private $childrenMoveWithParent = true;
+    
     /**
      *
      * @return DataTimeline
@@ -111,6 +113,30 @@ class Gantt extends DataTree
     public function getStartDate() : ?string
     {
         return $this->startDate;
+    }
+    
+    /**
+     * @uxon-property children_move_with_parent
+     * @uxon-type boolean
+     *
+     * @param bool $trueOrFalse
+     * @return Gantt
+     */
+    protected function setChildrenMoveWithParent(bool $trueOrFalse) : Gantt
+    {
+        $this->childrenMoveWithParent = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getChildrenMoveWithParent() : bool
+    {
+        if ($this->getChildrenMoveWithParentIf() !== null) {
+            return true;
+        } else return $this->childrenMoveWithParent;
     }
     
     /**
