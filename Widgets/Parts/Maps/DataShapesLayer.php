@@ -8,7 +8,6 @@ use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
-use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
@@ -20,6 +19,7 @@ use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\DragAndDrop\DropToAction;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 
 /**
  * 
@@ -29,6 +29,7 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 class DataShapesLayer extends AbstractDataLayer 
     implements
     GeoJsonMapLayerInterface,
+    GeoJsonWidgetLinkMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
@@ -110,8 +111,9 @@ class DataShapesLayer extends AbstractDataLayer
     }
     
     /**
-     *
-     * @return WidgetLinkInterface|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface::getShapesWidgetLink()
      */
     public function getShapesWidgetLink() : ?WidgetLinkInterface
     {
