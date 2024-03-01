@@ -257,7 +257,7 @@ class ConditionGroup implements ConditionGroupInterface
      * Operators are defined by the EXF_LOGICAL_xxx constants.
      * 
      * @uxon-property operator
-     * @uxon-type [AND,OR]
+     * @uxon-type [AND,OR,XOR]
      * 
      * @param string $value
      * @return ConditionGroupInterface            
