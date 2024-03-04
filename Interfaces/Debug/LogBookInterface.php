@@ -17,6 +17,14 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
     /**
      * 
      * @param string|int $section
+     * @param int $lineNo
+     * @return LogBookInterface
+     */
+    public function removeLine($section, int $lineNo) : LogBookInterface;
+    
+    /**
+     * 
+     * @param string|int $section
      * @return LogBookInterface
      */
     public function addLineSpacing($section = null) : LogBookInterface;
@@ -77,4 +85,26 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return string
      */
     public function getId() : string;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @return string[]
+     */
+    public function getLinesInSection($section = null) : array;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @return string[]
+     */
+    public function getCodeBlocksInSection($section = null) : array;
+    
+    /**
+     * 
+     * @param string $placeholder
+     * @param string $value
+     * @return LogBookInterface
+     */
+    public function addPlaceholderValue(string $placeholder, string $value) : LogBookInterface;
 }

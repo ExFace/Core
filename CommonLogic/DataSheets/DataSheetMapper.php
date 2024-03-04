@@ -30,6 +30,9 @@ use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToVariableMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -185,6 +188,7 @@ class DataSheetMapper implements DataSheetMapperInterface
             $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
             $logbook->addIndent(1);
         }
+        $diagram = 'flowchart LR';
         
         // Make sure, the from-sheet has everything needed
         $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns, $logbook);
@@ -256,9 +260,21 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         // Apply mappers
         if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
-        foreach ($this->getMappings() as $map){
+        $diagram .= "\n\tFromSheet(From-sheet) -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
+        $lastClass = null;
+        $lastMapCnt = 1;
+        foreach ($this->getMappings() as $i => $map) {
             try {
                 $toSheet = $map->map($fromSheet, $toSheet, $logbook);
+                $mapClass = get_class($map);
+                if ($lastClass === $mapClass) {
+                    $lastMapCnt++;
+                } else {
+                    $diagram .= " Map{$i}[\"{$lastMapCnt}x {$this->getMappingType($map)}\"]";
+                    $diagram .= "\n\t Map{$i} -->|" . DataLogBook::buildMermaidTitleForData($toSheet) . "|";
+                    $lastClass = $mapClass;
+                    $lastMapCnt = 1;
+                }
             } catch (\Throwable $e) {
                 if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
                 if ($e instanceof DataMappingExceptionInterface) {
@@ -267,6 +283,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 throw new DataMappingFailedError($map, $fromSheet, $toSheet, $e->getMessage(), null, $e);
             }
         }
+        $diagram .= " ToSheet(To-sheet)";
         if ($logbook !== null) $logbook->addIndent(-1);
         
         // Make sure the to-sheet is empty if the from-sheet was empty and the empty state is to be inherited
@@ -290,6 +307,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         if ($logbook !== null) {
             $logbook->addIndent(-1);
+            $logbook->addCodeBlock($diagram, 'mermaid');
             $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
         }
         
@@ -1183,5 +1201,18 @@ class DataSheetMapper implements DataSheetMapperInterface
             $this->addMapping(new VariableToColumnMapping($this, $prop));
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @param DataMappingInterface $mapping
+     * @return string
+     */
+    protected function getMappingType(DataMappingInterface $mapping) : string
+    {
+        $class = PhpClassDataType::findClassNameWithoutNamespace(get_class($mapping));
+        $name = StringDataType::convertCasePascalToUnderscore($class);
+        $name = StringDataType::substringAfter($name, 'data_', $name);
+        return $name;
     }
 }
