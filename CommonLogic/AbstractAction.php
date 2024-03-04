@@ -57,6 +57,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1076,6 +1077,7 @@ abstract class AbstractAction implements ActionInterface
     protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
         $logbook = $this->getLogBook($task);
+        $diagram = 'flowchart LR';
         // Get the current input data
         if ($task->hasInputData()) {
             // If the task has some, use it
@@ -1085,30 +1087,47 @@ abstract class AbstractAction implements ActionInterface
             if ($this->hasInputDataPreset()) {
                 $logbook->addDataSheet('Input preset', $this->getInputDataPreset());
                 $sheet = $this->getInputDataPreset()->importRows($sheet);
+                $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "| Task";
             } 
+            $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
             $logbook->addDataSheet('Input preset', $sheet);
+            $diagram .= "\n\t InputPreset[Input Preset] -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
+            $diagram .= "\n\t Task -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
         
         // Apply the input mappers
-        $logbook->removeSection('Input mapper');
-        $logbook->addSection('Input mapper');
+        $logbook->removeSection('Input data');
+        $logbook->addSection('Input data');
+        $logbook->addCodeBlock('[#input_diagram#]', 'mermaid');
         $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
-        
+
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
             $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
+            $diagram .= " InputMapping";
+            $diagram .= "\n\t subgraph InputMapping[input_mapper]";
+            $mapperDiagrams = $logbook->getCodeBlocksInSection();
+            if (count($mapperDiagrams) === 2) {
+                $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
+                $logbook->removeLine(null, array_key_last($mapperDiagrams));
+            }
+            $diagram .= "\n\t end";
+            $diagram .= "\n\t InputMapping -->|" . DataLogBook::buildMermaidTitleForData($inputData) . "|";
         } else {
             $inputData = $sheet;
             $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
+        $diagram .= " Action[Action `{$this->getName()}`]";
+        $logbook->addPlaceholderValue('input_diagram', $diagram);
+        
         $logbook->addDataSheet('Final input data', $inputData);
         $logbook->setIndentActive(0);
         

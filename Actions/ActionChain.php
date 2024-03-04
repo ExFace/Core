@@ -19,6 +19,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * This action chains other actions and performs them one after another.
@@ -219,7 +220,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         // Prepare the flow diagram in mermaid.js syntax
         // Place the nodes from left to right, if there are max. 3 nodes and top-down if there are more
         $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR') . PHP_EOL;
-        $diagram .= "{$lbId}T(Task) -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}0" . PHP_EOL;
+        $diagram .= "{$lbId}T(Task) -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| {$lbId}0" . PHP_EOL;
         $logbook->setIndentActive(1);
         foreach ($this->getActions() as $idx => $action) {
             // Skip show-dialog actions. It does not make sense to really perform them within the chain.
@@ -260,7 +261,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             if ($skip === false) {
                 if ($idx > 0) {
                     // id0[alias] -->|N| id1[alias]
-                    $diagram .= " -->|{$inputSheet->countRows()}x {$inputSheet->getMetaObject()->getAlias()}| {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
+                    $diagram .= " -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
                 }
                 try {
                     $lastResult = $action->handle($t, $tx);
@@ -317,7 +318,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 break;
         }
         
-        $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|{$chainResult->getData()->countRows()}x {$chainResult->getData()->getMetaObject()->getAlias()}|" : '';
+        $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|" . DataLogBook::buildMermaidTitleForData($chainResult) . "|" : '';
         $diagram .= " -->{$chainResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
         $logbook->setFlowDiagram($diagram);
         

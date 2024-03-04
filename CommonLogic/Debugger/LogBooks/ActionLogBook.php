@@ -260,4 +260,46 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->addException($e, $indent);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addPlaceholderValue()
+     */
+    public function addPlaceholderValue(string $placeholder, string $value): LogBookInterface
+    {
+        $this->logBook->addPlaceholderValue($placeholder, $value);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeLine()
+     */
+    public function removeLine($section, int $lineNo): LogBookInterface
+    {
+        $this->logBook->removeLine($section, $lineNo);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getCodeBlocksInSection()
+     */
+    public function getCodeBlocksInSection($section = null): array
+    {
+        return $this->logBook->getCodeBlocksInSection($section);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getLinesInSection()
+     */
+    public function getLinesInSection($section = null): array
+    {
+        return $this->logBook->getLinesInSection($section);
+    }
 }
