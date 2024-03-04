@@ -318,7 +318,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 break;
         }
         
-        $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|" . DataLogBook::buildMermaidTitleForData($chainResult) . "|" : '';
+        $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|" . DataLogBook::buildMermaidTitleForData($chainResult->getData()) . "|" : '';
         $diagram .= " -->{$chainResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
         $logbook->setFlowDiagram($diagram);
         
