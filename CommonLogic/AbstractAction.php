@@ -464,7 +464,7 @@ abstract class AbstractAction implements ActionInterface
             return $this->getInputDataSheet($result->getTask());
         }));
         
-        $this->getWorkbench()->getLogger()->debug('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
+        $this->getWorkbench()->getLogger()->notice('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers

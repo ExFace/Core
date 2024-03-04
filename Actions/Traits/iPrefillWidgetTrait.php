@@ -61,7 +61,7 @@ trait iPrefillWidgetTrait
                 $logSheets,
                 $log
             );
-            $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $sheet->getMetaObject()->getAliasWithNamespace(), [], $event);
+            $this->getWorkbench()->getLogger()->notice('Prefill data loaded for object ' . $sheet->getMetaObject()->getAliasWithNamespace(), [], $event);
             $this->getWorkbench()->EventManager()->dispatch($event);
             $widget->prefill($sheet);
         }

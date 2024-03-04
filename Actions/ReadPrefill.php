@@ -238,7 +238,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $logSheets,
             $log
         );
-        $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $mainSheet->getMetaObject()->getAliasWithNamespace(), [], $event);
+        $this->getWorkbench()->getLogger()->notice('Prefill data loaded for object ' . $mainSheet->getMetaObject()->getAliasWithNamespace(), [], $event);
         $this->getWorkbench()->EventManager()->dispatch($event);
         
         // Send back the result
