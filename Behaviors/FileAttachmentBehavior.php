@@ -23,6 +23,19 @@ use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 
 /**
+ * Marks an object as attachment - a link between a document and a file
+ * 
+ * ## Deleting files (or not)
+ * 
+ * Normally, when an attachment is deleted, the attached file is deleted too. 
+ * Thechnically the file is deleted after the attachment link. However, since 
+ * most file storages do not support transactions, this may theoretically
+ * lead to attachments loosing their files - e.g. if the transaction is rolled
+ * back after the file was deleted.
+ * 
+ * If files are really critical, deleting them can be disabled completely by
+ * setting `delete_files_when_attachments_deleted` to `false`. This will force
+ * files to be kept even if the attachments are deleted.
  * 
  * ## Examples
  * 
@@ -76,6 +89,8 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     private $timeModifiedAttributeAlias = null;
     
     private $overrideFileAttributes = [];
+    
+    private $deleteFileWhenAttachmentDeleted = true;
     
     private $pendingSheets = [];
     
@@ -392,10 +407,14 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $mgr = $this->getWorkbench()->eventManager();
         $mgr->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeDataSave']);
         $mgr->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeDataSave']);
-        $mgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onBeforeDataDelete']);
         $mgr->addListener(OnCreateDataEvent::getEventName(), [$this, 'onDataSave']);
         $mgr->addListener(OnUpdateDataEvent::getEventName(), [$this, 'onDataSave']);
-        $mgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onDataDelete']);
+        
+        if ($this->getDeleteFilesWhenAttachmentsDeleted() === true) {
+            $mgr->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onBeforeDataDelete']);
+            $mgr->addListener(OnDeleteDataEvent::getEventName(), [$this, 'onDataDelete']);
+        }
+        
         return $this;
     }
     
@@ -409,10 +428,14 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $mgr = $this->getWorkbench()->eventManager();
         $mgr->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'onBeforeDataSave']);
         $mgr->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'onBeforeDataSave']);
-        $mgr->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onBeforeDataDelete']);
         $mgr->removeListener(OnCreateDataEvent::getEventName(), [$this, 'onDataSave']);
         $mgr->removeListener(OnUpdateDataEvent::getEventName(), [$this, 'onDataSave']);
-        $mgr->removeListener(OnDeleteDataEvent::getEventName(), [$this, 'onDataDelete']);
+        
+        if ($this->getDeleteFilesWhenAttachmentsDeleted() === true) {
+            $mgr->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'onBeforeDataDelete']);
+            $mgr->removeListener(OnDeleteDataEvent::getEventName(), [$this, 'onDataDelete']);
+        }
+        
         return $this;
     }
     
@@ -637,5 +660,38 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $this->inProgress = false;
         
         return;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getDeleteFilesWhenAttachmentsDeleted() : bool
+    {
+        return $this->deleteFileWhenAttachmentDeleted;
+    }
+    
+    /**
+     * Set to FALSE to keep files after the attachment object is deleted.
+     * 
+     * By default attached files are deleted from the file storage when the attachment
+     * object is deleted. This can be disabled to keep all uploaeded files - even if they
+     * are "detached" from their objects. This can be helpful to ensure, that files are
+     * never deleted. 
+     * 
+     * If an orphaned file is uploaded again to the same path, it will be overwritten, so
+     * duplicates should not happen.
+     * 
+     * @uxon-property delete_files_when_attachments_deleted
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return FileAttachmentBehavior
+     */
+    protected function setDeleteFilesWhenAttachmentsDeleted(bool $value) : FileAttachmentBehavior
+    {
+        $this->deleteFileWhenAttachmentDeleted = $value;
+        return $this;
     }
 }
