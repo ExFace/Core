@@ -873,7 +873,7 @@ JS;
         }
         
         // Add styling and colors
-        $color = $this->buildJsLayerColor($layer, 'oRow');
+        $color = $this->buildJsLayerColor($layer, 'feature.properties.data');
         if (null !== $weight = $layer->getLineWeight()) {
             $styleJs .= "weight: $weight,";
         }
