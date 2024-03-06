@@ -116,8 +116,6 @@ class StateMachineBehavior extends AbstractBehavior
                 $behavior->enable();
         }
         
-        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram'], $prio);
-        
         return $this;
     }
     
@@ -135,8 +133,6 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($this->behaviors as $behavior) {
             $behavior->disable();
         }
-        
-        $this->getWorkbench()->eventManager()->removeListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
@@ -454,6 +450,8 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         $this->stateIndex = array_keys($this->states);
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
