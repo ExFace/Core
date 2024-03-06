@@ -31,6 +31,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -1182,7 +1183,13 @@ MERMAID;
                 if ($targetStateId === $state->getStateId() && ! $actionAlias) {
                     continue;
                 }
-                $actionAlias = '<span title="' . $actionAlias . '">' . StringDataType::substringAfter($actionAlias, '.', '', false, true) . '</span>';
+                $actionSelector = new ActionSelector($this->getWorkbench(), $actionAlias);
+                if ($actionSelector->isAlias()) {
+                    $transitionText = StringDataType::substringAfter($actionAlias, '.', $actionAlias, false, true);
+                } else {
+                    $transitionText = $actionAlias;
+                }
+                $actionAlias = '<span title="' . $actionAlias . '">' . $transitionText . '</span>';
                 $mm .= <<<MERMAID
                
     {$state->getStateId()} --> {$targetStateId} : {$actionAlias}

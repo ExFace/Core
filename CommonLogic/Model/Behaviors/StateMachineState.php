@@ -14,6 +14,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -96,6 +97,11 @@ class StateMachineState implements iHaveIcon
             $this->buttons = [];
             foreach ($this->getTransitions() as $stateId => $actionAlias) {
                 if ($actionAlias === '' || $actionAlias === null) {
+                    $actionSelector = new ActionSelector($this->stateMachine->getWorkbench(), $actionAlias);
+                } else {
+                    $actionSelector = null;
+                }
+                if ($actionSelector !== null && $actionSelector->isAlias()) {
                     $state = $this->getStateMachine()->getState($stateId);
                     $btnUxon = new UxonObject([
                         "action" => [
