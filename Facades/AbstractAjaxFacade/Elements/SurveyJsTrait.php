@@ -3,6 +3,8 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputFormDesigner;
 use exface\Core\DataTypes\LocaleDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Helps implement InputForm and InputFormDesigner widgets with Survey JS and jQuery.
@@ -311,6 +313,13 @@ JS;
     protected abstract function buildJsSurveyModelGetter() : string;
     
     /**
+     * 
+     * @param string $valueJs
+     * @return string
+     */
+    protected abstract function buildJsSurveyModelSetter(string $valueJs) : string;
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\JqueryInputValidationTrait::buildJsValidator()
@@ -340,5 +349,46 @@ JS;
     {
         // No need to do anything here - the .validate() method of Survey.js already shows the errors
         return '';
+    }
+    
+    /**
+     * @return void
+     */
+    protected function registerSurveyLiveConfigAtLinkedElement()
+    {
+        $widget = $this->getWidget();
+        if ($widget->isFormConfigBoundByReference() === true) {
+            $link = $widget->getFormConfigExpression()->getWidgetLink($widget);
+            $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
+            
+            $col = $link->getTargetColumnId();
+            if (! StringDataType::startsWith($col, '~')) {
+                $col = DataColumn::sanitizeColumnName($col);
+            }
+            if ($link->isOnlyIfNotEmpty()) {
+                $getAndSetValueJs = <<<JS
+                
+(function() {
+    var mVal = {$linkedEl->buildJsValueGetter($col, $link->getTargetRowNumber())};
+    if (mVal !== undefined && mVal !== '' && mVal != null) {
+        {$this->buildJsSurveyModelSetter('mVal')};
+    }
+})();
+JS;
+        
+            } else {
+                $getAndSetValueJs = '
+					   ' . $this->buildJsSurveyModelSetter($linkedEl->buildJsValueGetter($col, $link->getTargetRowNumber())) . ';';
+            }
+            
+            // If the link targets a specific row, activate it with every refresh,
+            // otherwise it targets the current value, so only activate it if the value changes
+            if (null !== $link->getTargetRowNumber()) {
+                $linkedEl->addOnRefreshScript($getAndSetValueJs);
+            } else {
+                $linkedEl->addOnChangeScript($getAndSetValueJs);
+            }
+        }
+        return;
     }
 }

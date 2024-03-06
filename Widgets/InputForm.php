@@ -7,6 +7,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * Configurable form to collect structured data and save it in singe attribute
@@ -20,13 +23,15 @@ class InputForm extends InputFormDesigner
     
     private $formConfigValue = null;
     
+    private $formConfigExpr = null;
+    
     private $formWidgets = [];
     
     /**
      * 
      * @return string
      */
-    public function getFormConfigAttributeAlias() : string
+    public function getFormConfigAttributeAlias() : ?string
     {
         return $this->formConfigAttributeAlias;
     }
@@ -38,6 +43,15 @@ class InputForm extends InputFormDesigner
     public function isFormConfigBoundToAttribute() : bool
     {
         return $this->formConfigAttributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isFormConfigBoundByReference() : bool
+    {
+        return ! $this->isFormConfigBoundToAttribute() && $this->getFormConfigExpression() && $this->getFormConfigExpression()->isReference();
     }
     
     /**
@@ -76,10 +90,27 @@ class InputForm extends InputFormDesigner
     }
     
     /**
-     * Static value for the form configuration
+     * 
+     * @return ExpressionInterface|NULL
+     */
+    public function getFormConfigExpression() : ?ExpressionInterface
+    {
+        if ($this->formConfigExpr === null) {
+            if ($this->isFormConfigBoundToAttribute()) {
+                $this->formConfigExpr = ExpressionFactory::createForObject($this->getMetaObject(), $this->getFormConfigAttributeAlias());
+            }
+            if ($this->formConfigValue !== null && Expression::detectCalculation($this->formConfigValue)) {
+                $this->formConfigExpr = ExpressionFactory::createForObject($this->getMetaObject(), $this->formConfigValue);
+            }
+        }
+        return $this->formConfigExpr;
+    }
+    
+    /**
+     * Widget link or static value for the form configuration
      * 
      * @uxon-property form_config
-     * @uxon-type string
+     * @uxon-type metamodel:widget_link|string
      * 
      * @param string $value
      * @return InputForm
@@ -87,6 +118,7 @@ class InputForm extends InputFormDesigner
     public function setFormConfig(string $value) : InputForm
     {
         $this->formConfigValue = $value;
+        $this->formConfigExpr = null;
         return $this;
     }
     
@@ -128,7 +160,7 @@ class InputForm extends InputFormDesigner
                 }
                 // Ignore empty values because if value is a live-references as the ref would get overwritten
                 // even without a meaningfull prefill value
-                if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
+                if ($this->isFormConfigBoundByReference() === false || ($value !== null && $value != '')) {
                     $this->setFormConfig($value ?? '');
                     $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'form_config', $valuePointer));
                 }
