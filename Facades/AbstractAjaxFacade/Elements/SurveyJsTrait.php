@@ -320,7 +320,15 @@ JS;
         // Always validate the form - even if the widget is not required explicitly. Otherwise required
         // fields inside the form will not produce validation errors if the InputForm is not explicitly
         // marked as required
-        return "{$this->buildJsSurveyVar()}.validate()";
+        $bRequiredJs = $this->getWidget()->isRequired() === true ? 'false' : 'true';
+        return <<<JS
+(function(oSurvey){
+    if (oSurvey === undefined) {
+        return $bRequiredJs;
+    }
+    return oSurvey.validate()
+})({$this->buildJsSurveyVar()})
+JS;
     }
     
     /**
