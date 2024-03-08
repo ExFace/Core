@@ -1090,7 +1090,7 @@ JS;
             case $layer instanceof DataShapesLayer:
                 $shapeColName = $layer->getShapesColumn()->getDataColumnName();
                 break;
-            case $layer instanceof LatLngWidgetLinkMapLayerInterface && $linkLat = $layer->getLatitudeWidgetLink() && $linkLng = $layer->getLongitudeWidgetLink():
+            case $layer instanceof LatLngWidgetLinkMapLayerInterface && ($linkLat = $layer->getLatitudeWidgetLink()) && ($linkLng = $layer->getLongitudeWidgetLink()):
                 $latColName = $linkLat->getTargetWidget()->getDataColumnName();
                 $lngColName = $linkLng->getTargetWidget()->getDataColumnName();
                 break;
