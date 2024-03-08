@@ -143,6 +143,11 @@ class ActionLogBook implements DataLogBookInterface
         return $this;
     }
     
+    public function getSectionActive() : ?string
+    {
+        return $this->logBook->getSectionActive();
+    }
+    
     /**
      * 
      * {@inheritDoc}

@@ -323,10 +323,12 @@ abstract class AbstractAction implements ActionInterface
         }
         
         $logbook = $this->getLogBook($task);
-        $logbook->addSection('Output mapper');
+        $logbook->addSection('Output data');
         $logbook->setIndentActive(1);
         if ($result instanceof ResultData) {
-            $logbook->addDataSheet('Output data', $result->getData());
+            $resultData = $result->getData();
+            $logbook->addDataSheet('Result data', $resultData);
+            $logbook->addLine("Action result contains data with {$resultData->countRows()} rows of **{$resultData->getMetaObject()->__toString()}**");
             if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
                 $result->setData($mapper->map($result->getData(), null, $logbook));
                 $logbook->addDataSheet('Output data (mapped)', $result->getData());
@@ -334,7 +336,7 @@ abstract class AbstractAction implements ActionInterface
                 $logbook->addLine('No output mapper found for object ' . $result->getData()->getMetaObject()->__toString());
             }
         } else {
-            $logbook->addLine('Result has no data - nothing to map.');
+            $logbook->addLine('Result has no data.');
         }
         $logbook->setIndentActive(0);
         
@@ -1103,12 +1105,19 @@ abstract class AbstractAction implements ActionInterface
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
         
-        // Apply the input mappers
+        // Replace the `Input data` section of the logbook
+        // Make sure to restore the previously active section afterwards as very action might have
+        // already started working with the logbook before calling `getInputDataSheet()`. This will
+        // make sure, all the input calculation stuff is not in the middle of something else
+        // Similarly, replacing the section prevents it from appearing as many times as 
+        // `getInputDataSheet()` is called
+        $prevSection = $logbook->getSectionActive();
         $logbook->removeSection('Input data');
         $logbook->addSection('Input data');
         $logbook->addCodeBlock('[#input_diagram#]', 'mermaid');
         $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
 
+        // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
             $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
@@ -1129,7 +1138,12 @@ abstract class AbstractAction implements ActionInterface
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         
         $logbook->addDataSheet('Final input data', $inputData);
-        $logbook->setIndentActive(0);
+        
+        if ($prevSection !== null && $prevSection !== 'Input data') {
+            $logbook->setSectionActive($prevSection);
+        } else {
+            $logbook->setIndentActive(0);
+        }
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
