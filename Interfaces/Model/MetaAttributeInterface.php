@@ -493,7 +493,19 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      */
     public function setValueListDelimiter($string);
     
+    /**
+     * 
+     * @param string $delimitedString
+     * @return string[]
+     */
+    public function explodeValueList(string $delimitedString) : array;
     
+    /**
+     * 
+     * @param array $values
+     * @return string
+     */
+    public function implodeValueList(array $values) : string;
     
     /**
      * Returns a copy of the UXON object for the default editor widget for this attribute.
