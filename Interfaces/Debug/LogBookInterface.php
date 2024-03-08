@@ -6,6 +6,7 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
 {
     /**
+     * Add a line to the logbook optionally defining the indent (relative to previous) and a section
      * 
      * @param string $text
      * @param int|null $indent
@@ -42,6 +43,12 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function setSectionActive($section) : LogBookInterface;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getSectionActive() : ?string;
     
     /**
      * 

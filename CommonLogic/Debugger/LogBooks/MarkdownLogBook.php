@@ -67,6 +67,7 @@ class MarkdownLogBook implements LogBookInterface
     {
         $this->lines[$title] = [];
         $this->currentSection = $title;
+        $this->setIndentActive(0);
         return $this;
     }
     
@@ -79,6 +80,11 @@ class MarkdownLogBook implements LogBookInterface
     {
         $this->currentSection = $this->getSectionKey($section);
         return $this;
+    }
+    
+    public function getSectionActive() : ?string
+    {
+        return $this->currentSection;
     }
     
     /**
