@@ -1,8 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
-use exface\Core\DataTypes\UrlDataType;
-use exface\UrlDataConnector\QueryBuilders\HtmlUrlBuilder;
+use exface\Core\DataTypes\DateTimeDataType;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -140,6 +139,7 @@ class PWAapiFacade extends HttpTaskFacade
                         'incremental' => $set->isIncremental(),
                         'incrementalUrl' => $this->buildUrlToGetOfflineData($set) .
                             ($set->isIncremental() ? '&increment_of_prev_sync=' . $set->getIncrementValue($ds) : ''),
+                        'last_sync' => DateTimeDataType::now(),
                     ];
                     $result = array_merge($result, $ds->exportUxonObject()->toArray());
                 } catch (PWADatasetNotFoundError $e) {
