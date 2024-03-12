@@ -11,8 +11,9 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2012-10-17 11:49:11",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2021-06-22 07:56:39",
+    "modified_by_user_selector": "0x11edb424effd2980b424025041000001",
+    "modified_on": "2024-03-12 09:57:17",
+    "icon": "cog",
     "contents": {
         "widget_type": "NavTiles",
         "object_alias": "exface.Core.PAGE",

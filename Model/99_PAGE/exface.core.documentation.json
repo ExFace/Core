@@ -10,8 +10,9 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2017-10-23 14:42:50",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-05-02 11:12:47",
+    "modified_by_user_selector": "0x11edb424effd2980b424025041000001",
+    "modified_on": "2024-03-12 09:56:42",
+    "icon": "book",
     "contents": {
         "widget_type": "NavTiles",
         "object_alias": "exface.Core.PAGE"
