@@ -15,6 +15,8 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Facades\HttpTaskFacade;
 use exface\Core\CommonLogic\AppInstallers\SchedulerInstaller;
 use exface\Core\Facades\PWAapiFacade;
+use exface\Core\DataTypes\ServerSoftwareDataType;
+use exface\Core\CommonLogic\AppInstallers\IISServerInstaller;
 
 class CoreApp extends App
 {
@@ -95,16 +97,6 @@ RewriteRule ^data/\..*$ - [F,NC]
 ");
         $installer->addInstaller($htaccessInstaller);
         
-        // Web.config for IIS servers
-        
-        $webconfigInstaller = new FileContentInstaller($this->getSelector());
-        $webconfigInstaller
-        ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
-        ->setFileTemplatePath('default.Web.config')
-        ->setMarkerBegin("\n<!-- BEGIN [#marker#] -->")
-        ->setMarkerEnd("<!-- END [#marker#] -->");
-        $installer->addInstaller($webconfigInstaller);
-        
         // robot.txt
         
         $robotsTxtInstaller = new FileContentInstaller($this->getSelector());
@@ -155,6 +147,15 @@ Disallow: /
         
         // Server installer (e.g. for Microsoft IIS)
         $serverInstallerClass = $this->getWorkbench()->getConfig()->getOption("INSTALLER.SERVER_INSTALLER.CLASS");
+        // Autodetect server installer if not set explicitly
+        if ($serverInstallerClass === null) {
+            switch (true) {
+                case ServerSoftwareDataType::isServerIIS():
+                    $serverInstallerClass = '\\' . ltrim(IISServerInstaller::class, "\\");
+                    break;
+                // TODO add installers for apache and nginx here!
+            }
+        }
         if ($serverInstallerClass != null) {
             $serverInstaller = new $serverInstallerClass($this->getSelector());
             $installer->addInstaller($serverInstaller);
