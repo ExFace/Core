@@ -41,7 +41,7 @@ class ActionLogBook implements DataLogBookInterface
         try {
             $this->logBook->addLine('Action object: ' . $action->getMetaObject()->__toString());
         } catch (\Throwable $e) {
-            // Ignore actions without an object
+            $this->logBook->addLine('Action object not found');
         }
     }
     
@@ -178,7 +178,7 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function addCodeBlock(string $code, string $type = '', $section = null) : LogBookInterface
     {
-        $this->logBook->addCodeBlock($code, $type);
+        $this->logBook->addCodeBlock($code, $type, $section);
         return $this;
     }
     
