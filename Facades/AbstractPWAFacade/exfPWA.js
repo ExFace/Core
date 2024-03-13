@@ -82,7 +82,62 @@ self.addEventListener('sync', function(event) {
 			});
 		});
 		return target;
-	}
+	};
+
+	var _deepMerge = function mergeObjects(target, ...sources) {
+		// The last argument may be an array containing excludes
+		// Restore it if it is not an array!
+		var aIgnoredProps = sources.pop();
+		if (! Array.isArray(aIgnoredProps)) {
+			sources.push(aIgnoredProps);
+			aIgnoredProps = [];
+		}
+		sources.forEach((source) => {
+			Object.keys(source).forEach((key) => {
+				if (aIgnoredProps.includes(key)) {
+					return;
+				}
+
+				if (Array.isArray(target[key]) && Array.isArray(source[key]) && key === 'rows') {
+					let targetArray = target[key];
+					let sourceArray = source[key];
+
+
+					let newEntries = [];
+					for (let i = 0; i < sourceArray.length; i++) {
+						let foundElementIndex = Array.prototype.findIndex.call(
+							targetArray,
+							(entry) => entry[target.uid_column_name] === sourceArray[i][source.uid_column_name]);
+						if (foundElementIndex) {
+							targetArray[foundElementIndex] = sourceArray[i];
+						} else {
+							// needs to be added
+							newEntries.push(sourceArray[i]);
+						}
+					}
+
+					// add remaining entries
+					if (newEntries.length > 0) {
+						targetArray.concat(newEntries);
+					}
+
+					target[key] = targetArray;
+				}
+				else {
+					target[key] = source[key];
+				}
+			});
+		});
+		return target;
+	};
+
+	var getIdentifier = function (identifiers, sourceObject) {
+		for (let i = 0; i < identifiers.length; i++){
+			if (Object.keys(sourceObject).includes(identifiers[i])){
+				return identifiers[i];
+			}
+		}
+	};
 	
 	var _date = {
 		now : function() {
@@ -157,13 +212,13 @@ self.addEventListener('sync', function(event) {
 		/**
 		 * @return {promise}
 		 */
-		syncAll : async function(fnCallback) {
+		syncAll : async function({fnCallback = () => {}, doReSync = false} = {}) {
 			var deferreds = [];
 			var data = await _dataTable.toArray();		
 			data.forEach(function(oDataSet){
 				deferreds.push(
 			    	_pwa
-			    	.data.sync(oDataSet.uid)
+			    	.data.sync(oDataSet.uid, doReSync)
 			    );
 			});
 			// Can't pass a literal array, so use apply.
@@ -758,8 +813,8 @@ self.addEventListener('sync', function(event) {
 				})
 			},
 		
-			syncAll : function(sPwaUid) {
-				if (sPwaUid !== undefined) {
+			syncAll : function({sPwaUid = null, doReSync = false} = {}) {
+				if (sPwaUid !== null) {
 					_dataTable
 					.filter(function(oDataSet){
 						return oDataSet.pwa_uid === sPwaUid;
@@ -767,7 +822,7 @@ self.addEventListener('sync', function(event) {
 					.toArray(function(aSets){
 						aPromises = [];
 						aSets.forEach(function(oDataSet) {
-							aPromises.push(_pwa.data.sync(oDataSet.uid));
+							aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
 						});
 						
 						return Promise.all(aPromises);
@@ -777,38 +832,52 @@ self.addEventListener('sync', function(event) {
 					.toArray(function(aSets){
 						aPromises = [];
 						aSets.forEach(function(oDataSet) {
-							aPromises.push(_pwa.data.sync(oDataSet.uid));
+							aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
 						});
 						
 						return Promise.all(aPromises);
 					});
 				} 
 			},
-		
-			sync : function (sDataSetUid) {
+
+            sync : function (sDataSetUid, doReSync) {
+				if(doReSync === undefined){
+					doReSync = false;
+				}
+
 				var oDataSet;
 				return _dataTable
 				.get(sDataSetUid)
 				.then(function(oRow){
 					oDataSet = oRow;
-					if (oRow === undefined) {
+					if (oDataSet === undefined) {
 						Promise.reject('Faild syncing data set ' + sDataSetUid + ': data set not found in browser!');
 					}
-					return fetch(oDataSet.url);
+					var url = oDataSet.url;
+					if (doReSync === false && oDataSet.incremental === true) {
+						url = oDataSet.incrementalUrl;
+					}
+					return fetch(url);
 				})
 				.then(function(oResponse) {
-					if (oResponse.status == 404) {
-						return _pwa.data.remove(oDataSet.uid)
+					if (oResponse.status === 404) {
+						return _pwa.data.remove(oDataSet.uid);
 					}
 					if (! oResponse.ok) {
 						throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
-					} 
+					}
+
 					return oResponse
 					.json()
 					.then(function(oDataUpdate) {
-						oDataSet.sync_last = (+ new Date());
-						// TODO merge rows in case of incremental updates instead of overwriting them
-						_merge(oDataSet, oDataUpdate);
+						if (doReSync === false && oDataUpdate.incremental === true) {
+							// merges containing arrays
+							_deepMerge(oDataSet, oDataUpdate);
+						}
+						else {
+							// overrides properties
+							_merge(oDataSet, oDataUpdate);
+						}
 						return _dataTable
 						.update(oDataSet.uid, oDataSet)
 						.then(function(){
