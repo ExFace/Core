@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2023-01-02 08:45:35",
-            "MODIFIED_ON": "2023-03-07 16:59:25",
+            "MODIFIED_ON": "2024-03-05 15:06:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11eda34a71852896a34a025041000001",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -152,6 +152,39 @@
                                             {
                                                 "attribute_alias": "TRIGGER_WIDGET_ID",
                                                 "direction": "asc"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Data set",
+                                "widgets": [
+                                    {
+                                        "widget_type": "SplitVertical",
+                                        "panels": [
+                                            {
+                                                "widgets": [
+                                                    {
+                                                        "widget_type": "Markdown",
+                                                        "width": "100%",
+                                                        "height": "50%",
+                                                        "html": "## Verification of non incremental data sets\n\nSometimes a data set should be incremental because of the hugh amount of data in `estimated_rows`.\nFirst check some general information about the data set using the following Information:\n\n| Aspect | Description |\n| ------ | ------ |\n| incremental_attribute | If we have no `incremental_attribute` on the data sheet it cannot be incremental and we cannot validate which columns are incremental or not  |\n| has_uid_column | If the data sheet has no `uid_column` it cannot be incremental |\n| non_incremental_columns | If there are non incremental columns follow the steps below |\n\n## Make non incremental columns incremental\n\nIn case just a few columns are not incremental, it is possible to verfiy if these columns could easily be made inremental.\n\n- Check if the relation object of the column contains the `increment_attribute`, add if missing\n- Check if the relation object of the column is a 1-n relation, meaning more than one object can be connected via the attribute\n  - see how it is used\n  - was it wrong configured and can be turned into a 1-1 relation?\n  - can it be used aggregated (MIN, MAX, SUM, etc.)?\n  - can it be removed?"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "height": "50%",
+                                                "widgets": [
+                                                    {
+                                                        "widget_type": "InputUxon",
+                                                        "attribute_alias": "DATA_SET_UXON",
+                                                        "disabled": true,
+                                                        "height": "100%",
+                                                        "width": "100%",
+                                                        "hide_caption": true
+                                                    }
+                                                ]
                                             }
                                         ]
                                     }
