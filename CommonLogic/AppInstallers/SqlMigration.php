@@ -37,6 +37,8 @@ class SqlMigration
     
     private $failed_logId = null;
 
+    private $is_from_db = false;
+
 
     /**
      *
@@ -74,6 +76,7 @@ class SqlMigration
         $instance->failed_flag = (bool)$row['failed_flag'];
         $instance->failed_message = !empty($row['failed_message']) ? $row['failed_message'] : '';
         $instance->skip_flag = (bool)$row['skip_flag'];
+        $instance->is_from_db = true;
         return $instance;
     }
 
@@ -352,6 +355,11 @@ class SqlMigration
         $this->down_datetime = $dateTime;
         $this->down_result = $result;
         return $this;
+    }
+
+    public function isFromDb()
+    {
+        return $this->is_from_db;
     }
 }
 ?>

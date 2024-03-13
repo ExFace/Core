@@ -993,6 +993,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $modelConnection = $this->getDataConnection();
             $dbInstaller = new MySqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
+                ->setFoldersWithFunctions(['Functions'])
                 ->setFoldersWithMigrations(['InitDB','Migrations'])
                 ->setFoldersWithStaticSql(['Views'])
                 ->setDataConnection($modelConnection);

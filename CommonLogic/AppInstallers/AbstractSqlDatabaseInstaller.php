@@ -23,7 +23,7 @@ use exface\Core\DataTypes\JsonDataType;
  * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
  * 
- * ## How does int work?
+ * ## How does it work?
  * 
  * The installer can basically do the following things:
  * 
@@ -99,6 +99,8 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     private $data_connection = null;
     
     private $dataSourceSelector = null;
+
+    private $sql_function_folders = [];
     
     private $sql_migration_folders = [];
     
@@ -361,7 +363,27 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
             return [];
         }
     }
-    
+
+    /**
+     *
+     * @return array
+     */
+    protected function getFoldersWithFunctios() : array
+    {
+        return $this->sql_function_folders;
+    }
+
+    /**
+     * Function to set the folders which contain Sql files that contain helper functions for other sql scripts
+     *
+     * @param array $pathsRelativeToSqlFolder
+     * @return AbstractSqlDatabaseInstaller
+     */
+    public function setFoldersWithFunctions(array $pathsRelativeToSqlFolder) : AbstractSqlDatabaseInstaller
+    {
+        $this->sql_function_folders = $pathsRelativeToSqlFolder;
+        return $this;
+    }
     
     /**
      * 
