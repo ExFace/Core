@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Interfaces\Debug\DataLogBookInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * 
@@ -47,6 +48,7 @@ trait iPrefillWidgetTrait
     {
         $logBook = $this->getLogBook($task);
         $logBook->addSection('Prefilling widget "' . $widget->getWidgetType() . '"');
+        $logBook->addCodeBlock('[#diagram_prefill#]', 'mermaid');
         $prefillSheets = $this->getPrefillDataFromTask($widget, $task, $logBook);
         
         // Add data from the filter contexts if possible.
@@ -90,10 +92,12 @@ trait iPrefillWidgetTrait
     {
         $logBook->addLine('Prefill from task data');
         $logBook->addIndent(+1);
+        $diagram = 'flowchart LR';
         // Start with the prefill data already stored in the widget
         if ($widget->isPrefilled()) {
             $logBook->addLine('Using current widget prefill data as base.');
             $data_sheet = $widget->getPrefillData()->copy();
+            $diagram .= "\n\t WidgetPrefill(Widget prefill data) -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| ReceivedPrefill";
             $logBook->addDataSheet('Current prefill data in widget', $data_sheet);
         }
         
@@ -101,6 +105,7 @@ trait iPrefillWidgetTrait
         $logBook->addLine('Property `prefill_with_input_data` is `' . ($this->getPrefillWithInputData() ? 'true' : 'false') . '`.');
         if ($this->getPrefillWithInputData() === true && ($task->hasInputData() === true || $this->hasInputDataPreset() === true)) {
             $input_data = $this->getInputDataSheet($task);
+            $diagram .= "\n\t InputPrefill(Task input data) -->|" . DataLogBook::buildMermaidTitleForData($input_data) . "| ReceivedPrefill";
             $logBook->setIndentActive(1);
             $logBook->addLine('Input data found:');
             $logBook->addIndent(1);
@@ -131,6 +136,7 @@ trait iPrefillWidgetTrait
         // task's prefill data and the `prefill_data` preset from the action's config.
         $logBook->addLine('Property `prefill_with_prefill_data` is `' . ($this->getPrefillWithPrefillData() ? 'true' : 'false') . '`.');
         if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task))) {
+            $diagram .= "\n\t PrefillData(Task prefill data) -->|" . DataLogBook::buildMermaidTitleForData($prefill_data) . "| ReceivedPrefill";
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
@@ -165,6 +171,7 @@ trait iPrefillWidgetTrait
         // See if the data should be re-read from the data source
         if ($data_sheet) {
             $logBook->addLine('Potential prefill data found - now finding out if a refresh/read is needed.');
+            $diagram .= "\n\t ReceivedPrefill[Merge data] -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| ";
             $refresh = $this->getPrefillDataRefresh();
             $logBook->addLine('Property `prefill_data_refresh` is `' . $refresh . '`:');
             $logBook->addIndent(1);
@@ -241,9 +248,12 @@ trait iPrefillWidgetTrait
                         $logBook->addLine('Refreshing all data');
                     }
                     $data_sheet->merge($freshData, $refresh !== iPrefillWidget::REFRESH_ONLY_MISSING_VALUES);
+                    $diagram .= "RefreshPrefill";
+                    $diagram .= "\n\t RefreshPrefill[Refresh data] -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| Prefill";
                     break;
                 default:
                     $logBook->addLine('Will not refresh');
+                    $diagram .= "Prefill";
             }
         }
         $logBook->addIndent(-1);
@@ -264,6 +274,7 @@ trait iPrefillWidgetTrait
             $result_sheets[] = $prefill_data;
         }
         
+        $logBook->addPlaceholderValue('diagram_prefill', $diagram);
         $logBook->addIndent(-1);
         
         return $result_sheets;
