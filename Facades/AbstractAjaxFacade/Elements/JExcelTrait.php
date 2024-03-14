@@ -601,12 +601,15 @@ JS;
             var fnValidator = this.getColumnModel(iCol).validator;
             if (fnValidator === null || fnValidator === undefined) {
                 return true;
-            }
+            }            
             return fnValidator(mValue);
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
             var oCol;
+            if (mValue === '\u0000') {
+                mValue = '';
+            }
             bParseValue = bParseValue === undefined ? false : true;
             if (bParseValue === true) {
                 oCol = this.getColumnModel(iCol);
