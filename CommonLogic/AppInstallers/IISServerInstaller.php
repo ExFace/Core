@@ -38,7 +38,7 @@ class IISServerInstaller extends AbstractAppInstaller
                 $this->webConfigVersion = '10+';
                 break;
         }
-        $webconfigInstaller = new FileContentInstaller($this->getSelector());
+        $webconfigInstaller = new FileContentInstaller($this->getSelectorInstalling());
         $webconfigInstaller
         ->setFilePath(Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), 'Web.config']))
         ->setFileTemplatePath($tpl)
@@ -54,7 +54,7 @@ class IISServerInstaller extends AbstractAppInstaller
      */
     public function backup(string $absolute_path) : \Iterator
     {
-        yield from $this->webConfigInstaller::backup($absolute_path);
+        yield from $this->webConfigInstaller->backup($absolute_path);
     }
     
     /**
@@ -64,7 +64,7 @@ class IISServerInstaller extends AbstractAppInstaller
      */
     public function uninstall() : \Iterator
     {
-        yield from $this->webConfigInstaller::uninstall();
+        yield from $this->webConfigInstaller->uninstall();
     }
 
     /**
@@ -77,11 +77,11 @@ class IISServerInstaller extends AbstractAppInstaller
         $indentOuter = $this->getOutputIndentation();
         $indent = $indentOuter . $indentOuter;
         
-        yield $indentOuter . "Server configuration for Microsoft IIS " . ServerSoftwareDataType::getServerSoftwareVersion() ?? 'UNKNOWN VERSION';
+        yield $indentOuter . "Server configuration for Microsoft IIS " . ServerSoftwareDataType::getServerSoftwareVersion() ?? 'UNKNOWN VERSION' . PHP_EOL;
         
         $this->webConfigInstaller->setOutputIndentation($indent);
-        yield $indent . 'Using web.config template for IIS ' . $this->webConfigVersion;
-        yield from $this->webConfigInstaller::install($source_absolute_path);
+        yield $indent . 'Using web.config template for IIS ' . $this->webConfigVersion . PHP_EOL;
+        yield from $this->webConfigInstaller->install($source_absolute_path);
         $this->webConfigInstaller->setOutputIndentation($indentOuter);
         
         $fm = $this->getWorkbench()->filemanager();
