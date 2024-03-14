@@ -276,6 +276,16 @@ class ActionLogBook implements DataLogBookInterface
         $this->logBook->addPlaceholderValue($placeholder, $value);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getPlaceholderValue()
+     */
+    public function getPlaceholderValue(string $placeholder) : ?string
+    {
+        return $this->logBook->getPlaceholderValue($placeholder);
+    }
 
     /**
      * 
