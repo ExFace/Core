@@ -418,11 +418,13 @@ JS;
         */
         onbeforepaste: function(el, data, x, y, style, processedData) {
             var oDropdownVals = {};
+            var oDropdownFiters = {};
             var aPastedData = [];
             var aProcessedData = [];
             var iXStart = parseInt(x);
             var iXEnd = iXStart;
             var oColOpts = {};
+
             el.jspreadsheet.parseCSV(data).forEach(function(aRow){
                 aPastedData.push(aRow[0].split("\\t"));
             });
@@ -431,7 +433,11 @@ JS;
             for (var i = iXStart; i <= iXEnd; i++) {
                 oColOpts = el.jspreadsheet.options.columns[i];
                 if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
-                    oDropdownVals[i - iXStart] = oColOpts.source;
+                    if (typeof(oColOpts.filter) == 'function') {
+                        oDropdownVals[i - iXStart] = oColOpts.filter(el, null, (i - iXStart), null, oColOpts.source);
+                    } else {
+                        oDropdownVals[i - iXStart] = oColOpts.source;
+                    }
                 }
             };
 
@@ -439,8 +445,7 @@ JS;
                 return selectedCells;
             }
 
-            aPastedData.forEach(function(aRow) {                
-                console.log('Kopieren');
+            aPastedData.forEach(function(aRow) {  
                 var aValRows, mVal, oValRow, bKeyFound;
                 for (var iCol in oDropdownVals) {
                     bKeyFound = false;
@@ -1310,7 +1315,7 @@ JS;
 JS;
                         $filterJs = <<<JS
 
-filter: function(instance, cell, c, r, source) {
+filter: function(instance, cell, x, y, source) {
 {$conditionJs}
             aSourceNew = exfTools.data.filterRows(source, oConditionGroup);
             return aSourceNew;
