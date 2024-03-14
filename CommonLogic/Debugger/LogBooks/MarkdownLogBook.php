@@ -241,7 +241,7 @@ class MarkdownLogBook implements LogBookInterface
      */
     public function addIndent(int $positiveOrNegative) : LogBookInterface
     {
-        $this->currentIndent = $this->currentIndent + $positiveOrNegative;
+        $this->currentIndent = max($this->currentIndent + $positiveOrNegative, 0);
         return $this;
     }
     
@@ -280,6 +280,11 @@ class MarkdownLogBook implements LogBookInterface
     {
         $this->placeholders[$placeholder] = $value;
         return $this;
+    }
+    
+    public function getPlaceholderValue(string $placeholder) : ?string
+    {
+        return $this->placeholders[$placeholder] ?? null;
     }
 
     /**

@@ -98,6 +98,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // Otherwise get the input/prefill data and refresh it if neccessary
         if ($targetWidget !== null) {
             $logBook->addSection('Prefilling widget "' . $targetWidget->getWidgetType() . '"');
+            $logBook->addCodeBlock('[#diagram_prefill#]', 'mermaid');
             $prefillSheets = $this->getPrefillDataFromTask($targetWidget, $task, $logBook);
             $mainSheet = $prefillSheets[0];
             $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $task, $logBook, $mainSheet);

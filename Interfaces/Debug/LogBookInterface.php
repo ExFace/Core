@@ -114,4 +114,11 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function addPlaceholderValue(string $placeholder, string $value) : LogBookInterface;
+    
+    /**
+     * 
+     * @param string $placeholder
+     * @return string|NULL
+     */
+    public function getPlaceholderValue(string $placeholder) : ?string;
 }

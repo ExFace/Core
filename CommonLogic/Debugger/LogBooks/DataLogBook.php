@@ -90,6 +90,9 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
         $rows = $dataSheet->countRows();
         $cols = $dataSheet->getColumns()->count();
         $filters = $dataSheet->getFilters()->countConditions() + $dataSheet->getFilters()->countNestedGroups();
+        if (empty($rows) && empty($cols) && empty($filters)) {
+            return "\"{$obj}\nblank\"";
+        }
         return "\"{$obj}\n{$rows} row(s), {$cols} col(s), {$filters} filter(s)\"";
     }
 }
