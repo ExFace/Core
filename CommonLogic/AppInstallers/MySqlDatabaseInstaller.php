@@ -231,7 +231,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $remove_function_script = $this->getRemoveFunctionScript($functions);
             $connection->transactionStart();
             if (empty($remove_function_script) === false) {
-                $connection->runSql($remove_function_script)->freeResult();
+                $connection->runSql($remove_function_script, true)->freeResult();
             }
 
             $connection->runSql($sql_script)->freeResult();
