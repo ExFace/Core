@@ -238,6 +238,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
         
         // Fire the event, log it to make it appear in the tracer
+        $logBook->addDataSheet('Final prefill', $mainSheet);
         $event = new OnPrefillDataLoadedEvent(
             $targetWidget,
             $mainSheet,
