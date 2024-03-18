@@ -1406,7 +1406,7 @@ JS;
     protected function getAllowDeleteRows() : bool
     {
         $widget = $this->getWidget();
-        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows());
+        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows() === true);
     }
     
     /**
@@ -1416,7 +1416,7 @@ JS;
     protected function getAllowToDragRows() : bool
     {
         $widget = $this->getWidget();
-        return ($widget instanceof DataSpreadSheet) && $widget->getAllowToDeleteRows();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowToDragRows() === true;
     }
     
     /**
@@ -1426,7 +1426,7 @@ JS;
     protected function getAllowEmptyRows() : bool
     {
         $widget = $this->getWidget();
-        return ($widget instanceof DataSpreadSheet) && $widget->getAllowEmptyRows();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowEmptyRows() === true;
     }
      
     /**
