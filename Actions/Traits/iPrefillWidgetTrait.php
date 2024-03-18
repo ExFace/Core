@@ -59,7 +59,8 @@ trait iPrefillWidgetTrait
             $prefillSheets[0] = $mainSheetWithContext;
         }
         
-        foreach ($prefillSheets as $sheet) {
+        foreach ($prefillSheets as $i => $sheet) {
+            $logBook->addDataSheet(($i > 0 ? 'Secondary prefill' : 'Final prefill'), $sheet);
             $event = new OnPrefillDataLoadedEvent($widget, $sheet, $this, $logBook);
             $this->getWorkbench()->EventManager()->dispatch($event);
             $widget->prefill($sheet);
@@ -201,7 +202,7 @@ trait iPrefillWidgetTrait
                     // Ask the widget for expected data to see if a refresh is required
                     $colsBefore = $data_sheet->getColumns()->count();
                     $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
-                    $logBook->addLine('Getting required prefill columns from wiget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
+                    $logBook->addLine('Getting required prefill columns from widget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
                     switch (true) {
                         // Don't read the data source if we have all data required. This is a controlversal
                         // decision, but that's the way it was done in former versions. On the one hand,
@@ -236,7 +237,7 @@ trait iPrefillWidgetTrait
                 // expected data
                 $colsBefore = $data_sheet->getColumns()->count();
                 $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
-                $logBook->addLine('Getting required prefill columns from wiget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
+                $logBook->addLine('Getting required prefill columns from widget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
             }
             
             // Refresh data if required
@@ -271,7 +272,7 @@ trait iPrefillWidgetTrait
                     $diagram .= "Prefill";
             }
         } else {
-            $diagram .= "\n\t CollectPrefill -->|No data| Prefill";
+            $diagram .= "\n\t CollectPrefill -.->|No data| Prefill";
         }
         
         $logBook->addIndent(-1);
