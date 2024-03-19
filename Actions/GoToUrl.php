@@ -58,9 +58,11 @@ use exface\Core\DataTypes\UrlDataType;
 class GoToUrl extends AbstractAction implements iShowUrl
 {
 
-    protected $url = null;
+    private $url = null;
 
-    protected $open_in_new_window = false;
+    private $open_in_new_window = false;
+    
+    private $open_in_browser_widget = null;
 
     /**
      * @var boolean
@@ -207,6 +209,30 @@ class GoToUrl extends AbstractAction implements iShowUrl
             }
         }
         return $url;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getOpenInBrowserWidget() : ?string
+    {
+        return $this->open_in_browser_widget;
+    }
+    
+    /**
+     * Id of the Browser widget, that should be used to open the URL
+     * 
+     * @uxon-propert open_in_browser_widget
+     * @uxon-type uxon:$..id
+     * 
+     * @param string $value
+     * @return GoToUrl
+     */
+    public function setOpenInBrowserWidget(string $value) : GoToUrl
+    {
+        $this->open_in_browser_widget = $value;
+        return $this;
     }
 }
 ?>
