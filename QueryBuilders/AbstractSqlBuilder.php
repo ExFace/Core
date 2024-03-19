@@ -2016,7 +2016,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         switch (true) {
             // always use the equals comparator for foreign keys! It's faster!
-            case $attr->isRelation() && $compIsOrIsNot && ($type instanceof StringDataType):
+            case $attr->isRelation() && $compIsOrIsNot && ! ($type instanceof StringDataType):
             case $this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && $compIsOrIsNot:
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             case ($type instanceof NumberDataType) && is_numeric($val) && $compIsOrIsNot:
