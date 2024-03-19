@@ -3,13 +3,22 @@ namespace exface\Core\Interfaces\Actions;
 
 interface iShowUrl extends iNavigate
 {
-
-    public function setUrl($value);
-
-    public function getUrl();
+    /**
+     * 
+     * @return string
+     */
+    public function getUrl() : string;
     
-    public function getOpenInNewWindow();
+    /**
+     * 
+     * @return bool
+     */
+    public function getOpenInNewWindow() : bool;
     
-    public function setOpenInNewWindow($value);
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getOpenInBrowserWidget() : ?string;
 }
 	

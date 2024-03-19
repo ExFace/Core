@@ -137,7 +137,7 @@ trait JqueryButtonTrait {
                 default: 
                     $value = $oRowJs . "['" . $ph . "']";
             }
-            if ($fnSanitizrJs !== null) {
+            if ($fnSanitizrJs !== null && ! array_key_exists($ph, $commonPhVals)) {
                 $value = $fnSanitizrJs . '(' . $value . ')';
             }
             $output .= "\n{$sValJs} = {$sValJs}.replace('[#{$ph}#]', {$value});";
@@ -155,6 +155,12 @@ trait JqueryButtonTrait {
         $phVals = [];
         foreach ($phs as $ph) {
             switch (true) {
+                case $ph === 'api':
+                    $phVals[$ph] = $this->getWorkbench()->getUrl() . 'api';
+                    break;
+                case $ph === 'facade':
+                    $phVals[$ph] = $this->getFacade()->buildUrlToFacade(true);
+                    break;
                 case StringDataType::startsWith($ph, 'element_id:', false):
                     $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
                     switch ($widgetId) {
