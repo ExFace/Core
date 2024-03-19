@@ -132,7 +132,7 @@ trait JqueryButtonTrait {
         foreach ($placeholders as $ph) {
             switch (true) {
                 case array_key_exists($ph, $commonPhVals):
-                    $value = $commonPhVals[$ph];
+                    $value = "'{$commonPhVals[$ph]}'";
                     break;
                 default: 
                     $value = $oRowJs . "['" . $ph . "']";
