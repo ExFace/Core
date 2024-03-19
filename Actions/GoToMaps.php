@@ -38,11 +38,11 @@ class GoToMaps extends GoToUrl
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iShowUrl::getUrl()
+     * @see \exface\Core\Actions\GoToUrl::buildUrl()
      */
-    public function getUrl()
+    protected function buildUrl() : ?string
     {
-        if ($url = parent::getUrl()) {
+        if (null !== $url = parent::buildUrl()) {
             return $url;
         }
         

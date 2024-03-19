@@ -83,7 +83,16 @@ class GoToUrl extends AbstractAction implements iShowUrl
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowUrl::getUrl()
      */
-    public function getUrl()
+    public function getUrl() : string
+    {
+        return $this->buildUrl();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function buildUrl() : ?string
     {
         return $this->url;
     }
