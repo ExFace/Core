@@ -53,7 +53,10 @@ HTML;
         return <<<JS
 
         $('#{$this->getId()}').ready(function () {
-            {$this->buildJsBusyIconShow()}
+            var startUrl = '{$this->getWidget()->getValueWithDefaults()}';
+            if (startUrl !== '') {
+                {$this->buildJsBusyIconShow()}
+            }
         });
         $('#{$this->getId()}').on('load', function () {
             {$this->buildJsBusyIconHide()}
@@ -71,5 +74,14 @@ JS;
     public function buildJsRefresh()
     {
         return "(function(domEl){if (domEl !== undefined) domEl.contentWindow.location.reload() })(document.getElementById('{$this->getId()}'))";
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsValueSetter()
+     */
+    public function buildJsValueSetter($valueJs)
+    {
+        return "document.getElementById('{$this->getId()}').src = {$valueJs}";
     }
 }
