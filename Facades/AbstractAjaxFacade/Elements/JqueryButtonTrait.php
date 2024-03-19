@@ -118,28 +118,61 @@ trait JqueryButtonTrait {
      * Placeholders must be in the general ExFace syntax [#placholder#], while the value object must have a property for every
      * placeholder with the same name (without "[#" and "#]"!).
      *
-     * @param string $js_var
-     *            - e.g. result (the variable must be already instantiated!)
-     * @param string $js_values_array
-     *            - e.g. values = {placeholder = "someId"}
-     * @param string $string_with_placeholders
-     *            - e.g. http://localhost/pages/[#placeholder#]
-     * @param string $js_sanitizer_function
-     *            - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without parentheses!!!
+     * @param string $sValJs - e.g. result (the variable must be already instantiated!)
+     * @param string $oRowJs - e.g. values = {placeholder = "someId"}
+     * @param string $originalStringWithPlaceholders - e.g. http://localhost/pages/[#placeholder#]
+     * @param string $fnSanitizrJs - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without parentheses!!!
      * @return string - e.g. result = result.replace('[#placeholder#]', values['placeholder']);
      */
-    protected function buildJsPlaceholderReplacer($js_var, $js_values_object, $string_with_placeholders, $js_sanitizer_function = null)
+    protected function buildJsPlaceholderReplacer(string $sValJs, string $oRowJs, string $originalStringWithPlaceholders, string $fnSanitizrJs = null)
     {
         $output = '';
-        $placeholders = StringDataType::findPlaceholders($string_with_placeholders);
+        $placeholders = StringDataType::findPlaceholders($originalStringWithPlaceholders);
+        $commonPhVals = $this->getCommonPlaceholderValues($placeholders);
         foreach ($placeholders as $ph) {
-            $value = $js_values_object . "['" . $ph . "']";
-            if ($js_sanitizer_function) {
-                $value = $js_sanitizer_function . '(' . $value . ')';
+            switch (true) {
+                case array_key_exists($ph, $commonPhVals):
+                    $value = $commonPhVals[$ph];
+                    break;
+                default: 
+                    $value = $oRowJs . "['" . $ph . "']";
             }
-            $output .= $js_var . " = " . $js_var . ".replace('[#" . $ph . "#]', " . $value . ");";
+            if ($fnSanitizrJs !== null) {
+                $value = $fnSanitizrJs . '(' . $value . ')';
+            }
+            $output .= "\n{$sValJs} = {$sValJs}.replace('[#{$ph}#]', {$value});";
         }
         return $output;
+    }
+    
+    /**
+     * 
+     * @param string[] $phs
+     * @return string[]
+     */
+    protected function getCommonPlaceholderValues(array $phs) : array
+    {
+        $phVals = [];
+        foreach ($phs as $ph) {
+            switch (true) {
+                case StringDataType::startsWith($ph, 'element_id:', false):
+                    $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
+                    switch ($widgetId) {
+                        case '~input':
+                            $phVals[$ph] = $this->getInputElement()->getId();
+                            break;
+                        case '~self':
+                            $phVals[$ph] = $this->getId();
+                            break;
+                        case '~parent':
+                            $phVals[$ph] = $this->getFacade()->getElement($this->getWidget()->getParent())->getId();
+                            break;
+                        default:
+                            $phVals[$ph] = $this->getFacade()->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
+                    }
+            }
+        }
+        return $phVals;
     }
 
     /**
@@ -809,10 +842,16 @@ JS;
         $output = $this->buildJsRequestDataCollector($action, $input_element) . "
 					var " . $action->getAlias() . "Url='" . $action->getUrl() . "';
 					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "{$jsRequestData}.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
-        if ($action->getOpenInNewWindow()) {
-            $output .= $input_element->buildJsBusyIconShow() . "window.open(" . $action->getAlias() . "Url);" . $input_element->buildJsBusyIconHide();
-        } else {
-            $output .= $input_element->buildJsBusyIconShow() . "window.location.href = " . $action->getAlias() . "Url;";
+        
+        switch (true) {
+            case $action->getOpenInNewWindow() === true:
+                $output .= $input_element->buildJsBusyIconShow() . "window.open(" . $action->getAlias() . "Url);" . $input_element->buildJsBusyIconHide();
+                break;
+            case null !== $browserId = $action->getOpenInBrowserWidget():
+                $output .= $this->getFacade()->getElementByWidgetId($browserId, $this->getWidget()->getPage())->buildJsValueSetter("{$action->getAlias()}Url");
+                break;
+            default:
+                $output .= $input_element->buildJsBusyIconShow() . "window.location.href = " . $action->getAlias() . "Url;";
         }
         return $output;
     }
@@ -829,26 +868,10 @@ JS;
         $facade = $this->getFacade();
         $script = $action->buildScript($facade, $inputEl->getWidget());
         $phs = StringDataType::findPlaceholders($script);
-        $phVals = [];
-        foreach ($phs as $ph) {
-            switch (true) {
-                case $ph === 'widget_id': $phVals[$ph] = $inputEl->getId(); break;
-                case StringDataType::startsWith($ph, 'element_id:', false):
-                    $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
-                    switch ($widgetId) {
-                        case '~input':
-                            $phVals[$ph] = $inputEl->getId();
-                            break;
-                        case '~self':
-                            $phVals[$ph] = $this->getId();
-                            break;
-                        case '~parent':
-                            $phVals[$ph] = $facade->getElement($this->getWidget()->getParent())->getId();
-                            break;
-                        default: 
-                            $phVals[$ph] = $facade->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
-                    }
-            }
+        $phVals = $this->getCommonPlaceholderValues($phs);
+        // Backwards compatibility with older scripts
+        if (in_array('widget_id', $phs) === true) {
+            $phVals['widget_id'] = $this->getInputElement()->getId();
         }
         if (! empty($phVals)) {
             $script = StringDataType::replacePlaceholders($script, $phVals);
