@@ -42,7 +42,6 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\Factories\ConditionFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -2012,17 +2011,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $qpart->getComparator();
+        $type = $qpart->getDataType();
+        $compIsOrIsNot = ($comp === ComparatorDataType::IS || $comp === ComparatorDataType::IS_NOT);
         
         switch (true) {
             // always use the equals comparator for foreign keys! It's faster!
-            case $attr->isRelation() && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
-            case $this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+            case $attr->isRelation() && $compIsOrIsNot && ($type instanceof StringDataType):
+            case $this->getMainObject()->hasUidAttribute() && $attr->isExactly($this->getMainObject()->getUidAttribute()) && $compIsOrIsNot:
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            case ($qpart->getDataType() instanceof NumberDataType) && is_numeric($val) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+            case ($type instanceof NumberDataType) && is_numeric($val) && $compIsOrIsNot:
             // also use equals for the BOOLEAN data type
-            case ($qpart->getDataType() instanceof BooleanDataType) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+            case ($type instanceof BooleanDataType) && $compIsOrIsNot:
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            case ($qpart->getDataType() instanceof DateDataType) && ($comp == ComparatorDataType::IS || $comp == ComparatorDataType::IS_NOT):
+            case ($type instanceof DateDataType) && $compIsOrIsNot:
                 $comp = $comp === ComparatorDataType::IS ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
                 break;
         }
