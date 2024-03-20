@@ -41,7 +41,7 @@ class ActionLogBook implements DataLogBookInterface
         try {
             $this->logBook->addLine('Action object: ' . $action->getMetaObject()->__toString());
         } catch (\Throwable $e) {
-            // Ignore actions without an object
+            $this->logBook->addLine('Action object not found');
         }
     }
     
@@ -143,6 +143,11 @@ class ActionLogBook implements DataLogBookInterface
         return $this;
     }
     
+    public function getSectionActive() : ?string
+    {
+        return $this->logBook->getSectionActive();
+    }
+    
     /**
      * 
      * {@inheritDoc}
@@ -173,7 +178,7 @@ class ActionLogBook implements DataLogBookInterface
      */
     public function addCodeBlock(string $code, string $type = '', $section = null) : LogBookInterface
     {
-        $this->logBook->addCodeBlock($code, $type);
+        $this->logBook->addCodeBlock($code, $type, $section);
         return $this;
     }
     
@@ -259,5 +264,57 @@ class ActionLogBook implements DataLogBookInterface
     {
         $this->logBook->addException($e, $indent);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addPlaceholderValue()
+     */
+    public function addPlaceholderValue(string $placeholder, string $value): LogBookInterface
+    {
+        $this->logBook->addPlaceholderValue($placeholder, $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getPlaceholderValue()
+     */
+    public function getPlaceholderValue(string $placeholder) : ?string
+    {
+        return $this->logBook->getPlaceholderValue($placeholder);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeLine()
+     */
+    public function removeLine($section, int $lineNo): LogBookInterface
+    {
+        $this->logBook->removeLine($section, $lineNo);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getCodeBlocksInSection()
+     */
+    public function getCodeBlocksInSection($section = null): array
+    {
+        return $this->logBook->getCodeBlocksInSection($section);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getLinesInSection()
+     */
+    public function getLinesInSection($section = null): array
+    {
+        return $this->logBook->getLinesInSection($section);
     }
 }

@@ -31,6 +31,7 @@ use exface\Core\Events\Facades\OnCliCommandReceivedEvent;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -296,30 +297,6 @@ class ConsoleFacade extends Application implements FacadeInterface
      */
     static public function isPhpScriptRunInCli()
     {
-        if ( defined('STDIN') )
-        {
-            return true;
-        }
-        
-        if ( php_sapi_name() === 'cli' )
-        {
-            return true;
-        }
-        
-        if ( array_key_exists('SHELL', $_ENV) ) {
-            return true;
-        }
-        
-        if ( empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0)
-        {
-            return true;
-        }
-        
-        if ( !array_key_exists('REQUEST_METHOD', $_SERVER) )
-        {
-            return true;
-        }
-        
-        return false;
+        return ServerSoftwareDataType::isCLI();
     }
 }

@@ -8,8 +8,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Widgets\DebugMessage;
-use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Event fired after prefill data was computed for a widget
@@ -26,9 +25,7 @@ class OnPrefillDataLoadedEvent extends OnBeforePrefillEvent implements DataSheet
 {
     private $action = null;
     
-    private $sourceSheets = [];
-    
-    private $explanation = null;
+    private $logBook = null;
     
     /**
      * 
@@ -38,12 +35,11 @@ class OnPrefillDataLoadedEvent extends OnBeforePrefillEvent implements DataSheet
      * @param array $potentialPrefillSheets
      * @param string $explanation
      */
-    public function __construct(WidgetInterface $widget, DataSheetInterface $prefillSheet, iPrefillWidget $action = null, array $potentialPrefillSheets = [], string $explanation = '')
+    public function __construct(WidgetInterface $widget, DataSheetInterface $prefillSheet, iPrefillWidget $action = null, LogBookInterface $logBook = null)
     {
         parent::__construct($widget, $prefillSheet);
         $this->action = $action;
-        $this->sourceSheets = $potentialPrefillSheets;
-        $this->explanation = $explanation;
+        $this->logBook = $logBook;
     }
     
     /**
@@ -63,29 +59,14 @@ class OnPrefillDataLoadedEvent extends OnBeforePrefillEvent implements DataSheet
     {
         return $this->action;
     }
-
-    /**
-     * 
-     * @return DataSheetInterface[]
-     */
-    protected function getPotentialSourceSheets() : array
-    {
-        return $this->sourceSheets;
-    }
     
     /**
      * 
-     * @return string
+     * @return LogBookInterface|NULL
      */
-    protected function getExplanation() : string
+    public function getLogBook() : ?LogBookInterface
     {
-        return $this->explanation;
-    }
-    
-    public function addExplanation(string $markdown) : OnPrefillDataLoadedEvent
-    {
-        $this->explanation .= $markdown;
-        return $this;
+        return $this->logBook;
     }
     
     /**
@@ -95,34 +76,9 @@ class OnPrefillDataLoadedEvent extends OnBeforePrefillEvent implements DataSheet
      */
     public function createDebugWidget(DebugMessage $debugWidget)
     {
-        // Add a tab with the data sheet UXON
-        $prefillTab = $debugWidget->createTab();
-        $prefillTab->setCaption('Prefill');
-        $debugWidget->addTab($prefillTab);
-        
-        $innerTabs = WidgetFactory::createFromUxonInParent($prefillTab, new UxonObject([
-            'widget_type' => 'DebugMessage'
-        ]));
-        $prefillTab->addWidget($innerTabs);
-        
-        $firstTab = $innerTabs->createTab();
-        $firstTab->setCaption('Explanation');
-        $firstTab->setColumnsInGrid(1);
-        $firstTab->addWidget(WidgetFactory::createFromUxonInParent($firstTab, new UxonObject([
-            'widget_type' => 'Markdown',
-            'value' => '## Prefill for action ' . ($this->getAction() ? $this->getAction()->getAliasWithNamespace() : 'unknown') . PHP_EOL . PHP_EOL . $this->getExplanation(),
-            'width' => 'max'
-        ])));
-        $innerTabs->addTab($firstTab);
-        
-        $this->getDataSheet()->createDebugWidget($innerTabs);
-        $innerTabs->getWidget(($innerTabs->countWidgets()-1))->setCaption('Final prefill data');
-        
-        foreach ($this->getPotentialSourceSheets() as $name => $sheet) {
-            $sheet->createDebugWidget($innerTabs);
-            $innerTabs->getWidget(($innerTabs->countWidgets()-1))->setCaption($name);
+        if (null !== $logBook = $this->getLogBook()) {
+            return $logBook->createDebugWidget($debugWidget);
         }
-        
         return $debugWidget;
     }
 }

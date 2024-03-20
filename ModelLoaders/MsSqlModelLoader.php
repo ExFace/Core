@@ -79,9 +79,10 @@ SQL;
             $modelConnection = $this->getDataConnection();
             $dbInstaller = new MsSqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
-            ->setFoldersWithMigrations(['InitDB','Migrations'])
-            ->setFoldersWithStaticSql(['Views'])
-            ->setDataConnection($modelConnection);
+                ->setFoldersWithFunctions(['Functions'])
+                ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setFoldersWithStaticSql(['Views'])
+                ->setDataConnection($modelConnection);
             
             $installer->addInstaller($dbInstaller);
             $this->installer = $installer;

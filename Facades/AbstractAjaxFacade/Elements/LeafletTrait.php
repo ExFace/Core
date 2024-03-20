@@ -33,6 +33,9 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 
 /**
  * This trait helps render Map widgets with Leaflet JS.
@@ -159,7 +162,8 @@ HTML;
         return <<<JS
 
 (function(){
-    {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
+    var oMap;
+    oMap = {$this->buildJsLeafletVar()} = L.map('{$this->getIdLeaflet()}', {
         {$this->buildJsMapOptions()}
     })
     .setView([{$lat}, {$lon}], {$zoom})
@@ -189,8 +193,9 @@ HTML;
 
     {$this->buildJsLeafletControlLocate()}
     {$this->buildJsLeafletControlScale()}
-
+    {$this->buildJsMapDrop()}
     {$this->buildJsLayers()}
+    {$this->buildJsLeafletDrawInit('oMap')}
 })();
 
 JS;
@@ -338,7 +343,7 @@ JS;
         if ($leafletVarJs === null) {
             $leafletVarJs = $this->buildJsLeafletVar();
         }
-        return "{$leafletVarJs}._exfLayers.find(function(oLayerData){oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
+        return "{$leafletVarJs}._exfLayers.find(function(oLayerData){return oLayerData.index === {$this->getWidget()->getLayerIndex($layer)}})";
     }
     
     public function buildJsBaseMapGetter(BaseMapInterface $layer, string $leafletVarJs = null) : string
@@ -615,7 +620,7 @@ JS;
                 class: \"exf-{$visibility}\", 
                 tooltip: $hint, 
                 caption: $caption, 
-                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+                value: {$formatter->buildJsFormatter("feature.properties?.data['{$col->getDataColumnName()}']")} },";
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
@@ -857,7 +862,7 @@ JS;
                 class: \"exf-{$visibility}\",
                 tooltip: $hint,
                 caption: $caption,
-                value: {$formatter->buildJsFormatter("feature.properties.data['{$col->getDataColumnName()}']")} },";
+                value: {$formatter->buildJsFormatter("feature.properties?.data['{$col->getDataColumnName()}']")} },";
         }
         
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
@@ -868,7 +873,7 @@ JS;
         }
         
         // Add styling and colors
-        $color = $this->buildJsLayerColor($layer, 'oRow');
+        $color = $this->buildJsLayerColor($layer, 'feature.properties.data');
         if (null !== $weight = $layer->getLineWeight()) {
             $styleJs .= "weight: $weight,";
         }
@@ -888,8 +893,54 @@ JS;
             $layerConstructor = 'L.geoJSON';
         }
         
+        $drawInitJs = '';
+        if (($layer instanceof EditableMapLayerInterface) && $layer->isEditable()) {
+            if (($layer instanceof GeoJsonWidgetLinkMapLayerInterface) && $link = $layer->getShapesWidgetLink()) {
+                $onDrawJs = $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueSetter('JSON.stringify(oFeature.geometry)');
+            }
+            $drawInitJs = <<<JS
+            oMap.on('draw:edited', function (e) {
+                var layers = e.layers;
+                layers.eachLayer(function (oLayer) {
+                    var oFeature = oLayer.toGeoJSON();
+                    oFeature.properties.data = {};
+                    {$onDrawJs}
+                });
+            });
+            oMap.on('draw:created', function (e) {
+                var oParentLayer = {$this->buildJsLayerGetter($layer, 'oMap')}.layer;
+                var oFeature = e.layer.toGeoJSON();
+                oFeature.properties.data = {};
+                {$onDrawJs}
+                oParentLayer.clearLayers();
+                oParentLayer.addData(oFeature);
+            });
+
+JS;
+        }
+        
         // Generate JS to run on map refresh
         switch (true) {
+            case ($layer instanceof GeoJsonWidgetLinkMapLayerInterface) && null !== $link = $layer->getShapesWidgetLink():
+                $shapesEl = $this->getFacade()->getElement($link->getTargetWidget());
+                $exfRefreshJs = <<<JS
+
+                (function() {
+                    var aRows = [{
+                        {$shapesEl->getWidget()->getDataColumnName()}: {$shapesEl->buildJsValueGetter()}
+                    }];
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                    
+                    oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}
+                })();
+                
+JS;
+                    
+                    break;
             case $link = $layer->getDataWidgetLink():
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
                 if ($layer instanceof DataSelectionMarkerLayer) {
@@ -904,7 +955,6 @@ JS;
                     var aRows = oData.rows || [];
                     var aFeatures = [];
                     var aRowsSkipped = [];
-                    
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
 
                     oLayer.clearLayers();
@@ -956,7 +1006,7 @@ JS;
                 }
                 $tooltipJs = <<<JS
 
-                    layer.bindTooltip({$layerCaptionJs} + feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                    layer.bindTooltip({$layerCaptionJs} + feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: false, 
                         direction: '{$layer->getValuePosition()}',
                         className: 'exf-map-shape-tooltip'
@@ -966,7 +1016,7 @@ JS;
             } else {
                 $tooltipJs = <<<JS
 
-                    layer.bindTooltip(feature.properties.data['{$layer->getValueColumn()->getDataColumnName()}'], {
+                    layer.bindTooltip(feature.properties?.data['{$layer->getValueColumn()->getDataColumnName()}'], {
                         permanent: true, 
                         direction: 'center',
                         className: 'exf-map-shape-title'
@@ -979,9 +1029,10 @@ JS;
             
         return <<<JS
             
-        (function(){
+        (function(oMap){
             $projectionInit
-            
+            $drawInitJs
+
             var oLayer = $layerConstructor(null, {
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
@@ -1016,11 +1067,11 @@ JS;
                 {$exfRefreshJs}
             }
             
-            {$facadeElement->buildJsLeafletVar()}.on('exfRefresh', oLayer._exfRefresh);
+            oMap.on('exfRefresh', oLayer._exfRefresh);
             oLayer._exfRefresh();
             
             return oLayer;
-        })()
+        })({$facadeElement->buildJsLeafletVar()})
 
 JS;
     }
@@ -1039,7 +1090,7 @@ JS;
             case $layer instanceof DataShapesLayer:
                 $shapeColName = $layer->getShapesColumn()->getDataColumnName();
                 break;
-            case $layer instanceof LatLngWidgetLinkMapLayerInterface && $linkLat = $layer->getLatitudeWidgetLink() && $linkLng = $layer->getLongitudeWidgetLink():
+            case $layer instanceof LatLngWidgetLinkMapLayerInterface && ($linkLat = $layer->getLatitudeWidgetLink()) && ($linkLng = $layer->getLongitudeWidgetLink()):
                 $latColName = $linkLat->getTargetWidget()->getDataColumnName();
                 $lngColName = $linkLng->getTargetWidget()->getDataColumnName();
                 break;
@@ -1103,7 +1154,7 @@ JS;
 JS;
         }
         
-        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByMovingItems() ? 'true' : 'false';
+        $bDraggableJs = ($layer instanceof EditableMapLayerInterface) && $layer->hasEditByChangingItems() ? 'true' : 'false';
         return <<<JS
 
                         $aRowsJs.forEach(function(oRow){
@@ -1327,7 +1378,7 @@ JS;
             '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.EXTRA_MARKERS_JS') . '"></script>'
         ]; 
         
-        foreach ($this->getWidget()->getLayers() as $layer) {
+        foreach ($widget->getLayers() as $layer) {
             if (($layer instanceof MarkerMapLayerInterface) && $layer->isClusteringMarkers() !== false) {
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_CSS') . '"/>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.MARKERCLUSTER_JS') . '"></script>';
@@ -1337,6 +1388,20 @@ JS;
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4JS') . '"></script>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS') . '"></script>';
                 break;
+            }
+            
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
+                if ($layer instanceof GeoJsonMapLayerInterface) {
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.JS') . '"></script>';
+                    /*$includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.HELPERS') . '"></script>';
+                    $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.TRUF.BOOLEAN_POINT_IN_POLYGON') . '"></script>';
+                    */
+                }
+            }
+            
+            if ($this->hasLeafletDraw() === true) {
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
+                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
             }
         }
         
@@ -1448,6 +1513,166 @@ JS;
     public function buildJsLeafletResize() : string
     {
         return "{$this->buildJsLeafletVar()}.invalidateSize()";
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsMapDrop() : string
+    {
+        $widget = $this->getWidget();
+        
+        $dropLayers = [];
+        $dropScripts = [];
+        foreach ($widget->getLayers() as $layer) {
+            $dropLayers[] = $layer;
+            if (($layer instanceof iCanBeDragAndDropTarget) && $layer->isDropTarget()) {
+                $dropLayers[] = $layer;
+                $dropDataBuilderJs = '';
+                /* @var $dropPart \exface\Core\Widgets\Parts\DragAndDrop\DropToAction */
+                foreach ($layer->getDropToActions() as $dropPart) {
+                    $dropTriggerEl = $this->getFacade()->getElement($dropPart->getActionTrigger());
+                    $dropScripts[] = $dropTriggerEl->buildJsClickFunction($dropPart->getAction(), 'oRequestData');
+                    foreach ($dropPart->getIncludeTargetColumnMappings() as $map) {
+                        $dropDataBuilderJs .= "\n
+                    oDroppedData.rows[0]['{$map->getToExpression()->__toString()}'] = oTargetRow['{$map->getFromExpression()->__toString()}'];";
+                    }
+                }
+            }
+        }
+        
+        if (empty($dropLayers)) {
+            return '';
+        }
+        
+        if (count($dropScripts) > 1) {
+            throw new FacadeRuntimeError('Multiple drop zones in a map currently not supported');
+        }
+        
+        $onDropJs = $dropScripts[0];
+        
+        return <<<JS
+        setTimeout(() => {
+            const wrapperDiv = document.getElementById('{$this->getIdLeaflet()}');
+            
+             wrapperDiv.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                const oMap = {$this->buildJsLeafletVar()};
+                // Get the coordinates where the element was dropped
+                var latlng = oMap.mouseEventToLatLng(e);
+                
+                const layers = oMap._layers;
+                const shapes = Object.values(layers).filter(item => item?.feature && item?.feature?.geometry?.type === 'Polygon');
+                const point = turf.point([latlng?.lng, latlng?.lat]);
+                const matchingPolygon = shapes.forEach(shape => {
+                    const polygon = turf.polygon(shape?.feature?.geometry?.coordinates);
+                    if(turf.booleanPointInPolygon(point, polygon)) {
+                        shape.setStyle({ weight: 6 })
+                        e.dataTransfer.dropEffect = "copy";
+                    } else {
+                        shape.setStyle({ weight: 3 })
+                    }
+                })
+            });
+            
+            // Add event listener for drop event on the map
+            wrapperDiv.addEventListener('drop', function (e) {
+                e.preventDefault()
+                const oMap = {$this->buildJsLeafletVar()};
+                // Get the coordinates where the element was dropped
+                var latlng = oMap.mouseEventToLatLng(e);
+                
+                const layers = oMap._layers;
+                const shapes = Object.values(layers).filter(item => item?.feature && item?.feature?.geometry?.type === 'Polygon');
+                const point = turf.point([latlng?.lng, latlng?.lat]);
+                shapes.forEach(s => {
+                    s.setStyle({ weight: 3 })
+                });
+                const matchingPolygon = shapes.find(shape => {
+                    const polygon = turf.polygon(shape?.feature?.geometry?.coordinates);
+                    return turf.booleanPointInPolygon(point, polygon);
+                });
+                var oTargetRow = (matchingPolygon?.feature?.properties?.data || {});  
+                var oDroppedData = oRequestData = JSON.parse(e.dataTransfer.getData('dataSheet') || '{}');   
+                {$dropDataBuilderJs}       
+
+                $(wrapperDiv).removeClass('mouseDown');
+                console.log('Dropped data', oDroppedData);
+                console.log('Dropped target', oTargetRow);
+                
+                {$onDropJs}
+            });
+        }, 100);
+JS;
+    }
+    
+    protected function hasLeafletDraw() : bool
+    {
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            if (($layer instanceof DataShapesLayer) && $layer->isEditable() === true) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    protected function buildJsLeafletDrawInit(string $oMapJs) : string
+    {
+        if (! $this->hasLeafletDraw()) {
+            return '';
+        }
+        
+        $editableLayer = null;
+        foreach ($this->getWidget()->getLayers() as $layer) {
+            if (($layer instanceof DataShapesLayer) && $layer->isEditable() === true) {
+                if ($editableLayer !== null) {
+                    throw new FacadeRuntimeError('Multiple editable map layers currently not supported!');
+                }
+                $editableLayer = $layer;
+            }
+        }
+        
+        $errorColor = $this->getFacade()->getSemanticColors()['~ERROR'] ?? '#e1e100';
+        
+        return <<<JS
+
+(function(oMap){
+    var editableLayers = oMap._exfLayers[{$this->getWidget()->getLayerIndex($editableLayer)}].layer;
+    var oDrawOpts = {
+        position: 'topright',
+        draw: {
+            polyline: false,
+            polygon: {
+                clickable: true,
+                allowIntersection: false, // Restricts shapes to simple polygons
+                drawError: {
+                    color: '{$errorColor}', // Color the shape will turn when intersects
+                    message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                },
+                shapeOptions: {
+                    color: '#0000ff'
+                }
+            },
+            circle: false, // Turns off this drawing tool
+            simpleShape: false,
+            rectangle: {
+                shapeOptions: {
+                    clickable: false
+                }
+            },
+            marker: false,
+        },
+        edit: {
+            featureGroup: editableLayers, //REQUIRED!!
+            remove: false
+        }
+    };
+    const drawControl = new L.Control.Draw(oDrawOpts);
+    oMap.addControl(drawControl);
+})($oMapJs);
+JS;
     }
     
     /**

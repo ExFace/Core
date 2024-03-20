@@ -549,13 +549,53 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             
             // Get external roles the user should have according to the remote
             $externalRolesData = $this->getExternalRolesForUser($user, $token);
-            // Get current workbench roles the user actually has, that were added by this authenticator previously
-            $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
-            $newRolesSheet->getFilters()->addConditionFromString('USER', $user->getUid(), ComparatorDataType::EQUALS);
-            $newRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_EXTERNAL__AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            
+            // Get current workbench user-role-relations, that were added by this authenticator previously
+            $localRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
+            $localRolesCol = $localRolesSheet->getColumns()->addFromExpression('USER_ROLE__USER_ROLE_USERS__UID:LIST_DISTINCT');
+            // Filter: ext. roles, that have connections with this user
+            $localRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_USERS__USER', $user->getUid(), ComparatorDataType::EQUALS);
+            // AND ext. role belongs to this authenticator
+            $localRolesSheet->getFilters()->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
+            // AND ext. role is active
+            $localRolesSheet->getFilters()->addConditionFromString('ACTIVE_FLAG', 1, ComparatorDataType::EQUALS);
+            
+            /* Example:
+             * User 1 has Role1, Role2, Role3, Role 4
+             * Role1 is a logcal role (e.g. Admin)
+             * Role2 is synced with authenticator 1 external role ExtRole1
+             * Role3 is synced with authenticator 1 external role ExtRole2 BUT DISABLED!
+             * Role4 is synced with authenticator 2
+             * 
+             * Cases:
+             * 1. When syncing with authenticator 1, it provides provide ExtRole1 and ExtRole2
+             *   - Nothing happens, the user keeps all local roles
+             * 2. When syncing with authenticator 1, it provides provide ExtRole1 only
+             *   - Nothing happens because the mapping to ExtRole2 is inactive, thus Role2 is
+             *   basically concidered local-only
+             * 3. When syncing with authenticator 1, it provides no roles at all
+             *   - User loses Role1, but keeps all other roles - in particular Role2 because
+             *   the ExtRole2 mapping is disabled
+             * 4. The ExtRole2 mapping is set active and the user is synced with authenticator 1
+             *   - User loses Role2 because it is now actively synced             * 
+            */
+            
             // Delete roles assigned by this sync previously
-            $newRolesSheet->dataDelete($transaction);
+            $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
+            $deleteCol = $deleteSheet->getColumns()->addFromUidAttribute();
+            $deleteUids = [];
+            foreach ($localRolesCol->getValues() as $userRoleUsersUIDs) {
+                // $userRoleUsersUIDs can be `0x123` or `0x123,0x124,...`
+                foreach ($localRolesCol->getAttribute()->explodeValueList($userRoleUsersUIDs) as $uid) {
+                    $deleteUids[] = $uid;
+                }
+            }
+            $deleteUids = array_unique($deleteUids);
+            $deleteCol->setValues($deleteUids);
+            $deleteSheet->dataDelete($transaction);
+            
             // Add roles matching the current external roles (see above) 
+            $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');;
             foreach ($externalRolesData->getRows() as $row) {
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([

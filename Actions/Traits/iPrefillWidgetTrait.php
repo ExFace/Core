@@ -11,6 +11,9 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Events\Widget\OnPrefillDataLoadedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\Interfaces\Debug\DataLogBookInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * 
@@ -34,6 +37,8 @@ trait iPrefillWidgetTrait
     
     private $prefill_data_refresh = iPrefillWidget::REFRESH_AUTO;
     
+    abstract protected function getLogBook(TaskInterface $task) : ActionLogBook;
+    
     /**
      * Prefills the widget of this action with any available data: the action's input data, prefill data from the request and filter contexts.
      *
@@ -41,27 +46,22 @@ trait iPrefillWidgetTrait
      */
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
-        $log = '';
-        $logSheets = [];
-        $prefillSheets = $this->getPrefillDataFromTask($widget, $task, $log, $logSheets);
+        $logBook = $this->getLogBook($task);
+        $logBook->addSection('Prefilling widget "' . $widget->getWidgetType() . '"');
+        $logBook->addCodeBlock('[#diagram_prefill#]', 'mermaid');
+        $prefillSheets = $this->getPrefillDataFromTask($widget, $task, $logBook);
         
         // Add data from the filter contexts if possible.
         // Do this ONLY for the main prefill sheet
         // Do this AFTER the regular prefill data was fully read because otherwise the filter values
         // will get eventually overwritten!
-        if ($mainSheetWithContext = $this->getPrefillDataFromFilterContext($widget, ($prefillSheets[0] ?? null), $task, $log)) {
+        if ($mainSheetWithContext = $this->getPrefillDataFromFilterContext($widget, $task, $logBook, ($prefillSheets[0] ?? null))) {
             $prefillSheets[0] = $mainSheetWithContext;
         }
         
-        foreach ($prefillSheets as $sheet) {
-            $event = new OnPrefillDataLoadedEvent(
-                $widget, 
-                $sheet,
-                $this,
-                $logSheets,
-                $log
-            );
-            $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $sheet->getMetaObject()->getAliasWithNamespace(), [], $event);
+        foreach ($prefillSheets as $i => $sheet) {
+            $logBook->addDataSheet(($i > 0 ? 'Secondary prefill' : 'Final prefill'), $sheet);
+            $event = new OnPrefillDataLoadedEvent($widget, $sheet, $this, $logBook);
             $this->getWorkbench()->EventManager()->dispatch($event);
             $widget->prefill($sheet);
         }
@@ -83,104 +83,126 @@ trait iPrefillWidgetTrait
      *
      * @param WidgetInterface $widget
      * @param TaskInterface $task
-     * @param string $log
-     * @param array $logSheets
+     * @param DataLogBookInterface $logBook
      * 
      * @throws ActionInputMissingError
      * 
      * @return DataSheetInterface[]
      */
-    protected function getPrefillDataFromTask(WidgetInterface $widget, TaskInterface $task, string &$log = '', array &$logSheets = []) : array
+    protected function getPrefillDataFromTask(WidgetInterface $widget, TaskInterface $task, DataLogBookInterface $logBook) : array
     {
-        $log = '';
-        $logSheets = [];
+        $logBook->addLine('Prefill from task data');
+        $logBook->addIndent(+1);
+        $diagram = 'flowchart LR';
+        $diagram .= "\n\t InputPrefill(\"Task input\")";
+        $diagram .= "\n\t PrefillData(\"Task prefill\")";
+        $diagram .= "\n\t CollectPrefill[\"Collect\ntask data\"]";
+        $diagram .= "\n\t Prefill(\"Prefill\ndata\")";
         
         // Start with the prefill data already stored in the widget
         if ($widget->isPrefilled()) {
-            $log .= '- Using current widget prefill data as base.' . PHP_EOL;
+            $logBook->addLine('Using current widget prefill data as base.');
             $data_sheet = $widget->getPrefillData()->copy();
-            $logSheets['Current prefill data in widget'] = $data_sheet;
+            
+            $diagram .= "\n\t WidgetPrefill(Widget prefill data) -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| CollectPrefill";
+            $logBook->addDataSheet('Current prefill data in widget', $data_sheet);
         }
         
         // Add (merge) input data if not explicitly disabled
-        $log .= '- Property `prefill_with_input_data` is `' . ($this->getPrefillWithInputData() ? 'true' : 'false') . '`.' . PHP_EOL;
+        $logBook->addLine('Property `prefill_with_input_data` is `' . ($this->getPrefillWithInputData() ? 'true' : 'false') . '`.');
         if ($this->getPrefillWithInputData() === true && ($task->hasInputData() === true || $this->hasInputDataPreset() === true)) {
             $input_data = $this->getInputDataSheet($task);
-            $logSheets['Input data'] = $input_data;
-            $log .= '- Input data found:' . PHP_EOL;
-            $log .= '   - Object: "' . $input_data->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
-            $log .= '   - Rows: ' . $input_data->countRows() . PHP_EOL;
-            $log .= '   - Filters: ' . ($input_data->getFilters()->countConditions() + $input_data->getFilters()->countNestedGroups()) . PHP_EOL;
+            
+            $diagram .= "\n\t InputPrefill -->|" . DataLogBook::buildMermaidTitleForData($input_data) . "| CollectPrefill";
+            $logBook->setIndentActive(1);
+            $logBook->addLine('Input data found:');
+            $logBook->addIndent(1);
+            $logBook->addLine('Object: ' . $input_data->getMetaObject()->__toString());
+            $logBook->addLine('Rows: ' . $input_data->countRows());
+            $logBook->addLine('Filters: ' . ($input_data->getFilters()->countConditions() + $input_data->getFilters()->countNestedGroups()));
+            
             if (! $data_sheet || $data_sheet->isEmpty()) {
-                $log .= '   - Using input data for prefill.' . PHP_EOL;
+                $logBook->addLine('Using input data for prefill.');
                 $data_sheet = $input_data->copy();
             } else {
                 try {
                     $data_sheet = $data_sheet->merge($input_data);
-                    $log .= '   - Merged input data with current prefill data of the widget.' . PHP_EOL;
+                    $logBook->addLine('Merged input data with current prefill data of the widget.');
                 } catch (DataSheetMergeError $e) {
                     // If anything goes wrong, use the input data to prefill. It is more important for an action, than
                     // other prefill sources.
                     $data_sheet = $input_data->copy();
-                    $log .= '- Merging input data with current prefill data of the widget failed - using just the input data instead!' . PHP_EOL;
+                    $logBook->addLine('Merging input data with current prefill data of the widget failed - using just the input data instead!');
                 }
             }
+            $logBook->addIndent(-1);
         } else {
-            $log .= '   - No input data to use.' . PHP_EOL;
+            $diagram .= "\n\t InputPrefill -.->|No data| CollectPrefill";
+            $logBook->addLine('No input data to use.', +1);
         }
         
         // Add (merge) prefill data if not explicitly disabled. The prefill data is a merge from the
         // task's prefill data and the `prefill_data` preset from the action's config.
-        $log .= '- Property `prefill_with_prefill_data` is `' . ($this->getPrefillWithPrefillData() ? 'true' : 'false') . '`.' . PHP_EOL;
+        $logBook->addLine('Property `prefill_with_prefill_data` is `' . ($this->getPrefillWithPrefillData() ? 'true' : 'false') . '`.');
         if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task))) {
+            $logBook->addDataSheet('Provided prefill data', $prefill_data);
+            $logBook->addLine('Prefill data found:');
+            $logBook->addIndent(1);
+            $logBook->addLine('Object: ' . $prefill_data->getMetaObject()->__toString());
+            $logBook->addLine('Rows: ' . $prefill_data->countRows());
+            $logBook->addLine('Filters: ' . ($prefill_data->getFilters()->countConditions() + $prefill_data->getFilters()->countNestedGroups()));
+            
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
-            $logSheets['Provided prefill data'] = $prefill_data;
-            $log .= '- Prefill data found:' . PHP_EOL;
-            $log .= '   - Object: "' . $prefill_data->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
-            $log .= '   - Rows: ' . $prefill_data->countRows() . PHP_EOL;
-            $log .= '   - Filters: ' . ($prefill_data->getFilters()->countConditions() + $prefill_data->getFilters()->countNestedGroups()) . PHP_EOL;
             if ($prefill_data->isBlank()) {
-                $log .= '   - Cannot use prefill data - data sheet is blank (no rows, no filters)!' . PHP_EOL;
+                $diagram .= "\n\t PrefillData -.->|No data| CollectPrefill";
+                $logBook->addLine('Cannot use prefill data - data sheet is blank (no rows, no filters)!');
             } else {
+                $diagram .= "\n\t PrefillData -->|" . DataLogBook::buildMermaidTitleForData($prefill_data) . "| CollectPrefill";
                 if (! $data_sheet || $data_sheet->isEmpty()) {
-                    $log .= '   - Using prefill data for prefill.' . PHP_EOL;
+                    $logBook->addLine('Using prefill data for prefill.');
                     $data_sheet = $prefill_data->copy();
                 } else {
                     try {
                         $data_sheet = $data_sheet->merge($prefill_data);
-                        $log .= '   - Merged prefill data with data collected above (input data, current prefill).' . PHP_EOL;
+                        $logBook->addLine('Merged prefill data with data collected above (input data, current prefill).');
                     } catch (DataSheetMergeError $e) {
                         // Do not use the prefill data if it cannot be merged with the input data
                         $prefill_data_merge_failed = true;
-                        $log .= '   - Merging prefill data failed - will try to use prefill data additionally below.' . PHP_EOL;
+                        
+                        $diagram .= "\n\t PrefillData -->|" . DataLogBook::buildMermaidTitleForData($prefill_data) . "| PrefillSecondary(\"Secondary\nprefill data\")";
+                        $logBook->addLine('Merging prefill data failed - will try to use prefill data additionally below.');
                     }
                 }
             }
+            $logBook->addIndent(-1);
         } else {
-            $log .= '   - No prefill data to use' . PHP_EOL;
+            $logBook->addLine('No prefill data to use', +1);
         }
         
         // See if the data should be re-read from the data source
         if ($data_sheet) {
-            $log .= '- Potential prefill data found - now finding out if a refresh/read is needed.' . PHP_EOL;
+            $logBook->addLine('Potential prefill data found - now finding out if a refresh/read is needed.');
+            $diagram .= "\n\t CollectPrefill -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| ";
+            
             $refresh = $this->getPrefillDataRefresh();
-            $log .= '- Property `prefill_data_refresh` is `' . $refresh . '`:' . PHP_EOL;
+            
+            $logBook->addLine('Property `prefill_data_refresh` is `' . $refresh . '`:');
+            $logBook->addIndent(1);
             
             // If `prefill_data_refresh` is set to `auto`, pick one of the other options
             // according to the current situation.
             if ($refresh === iPrefillWidget::REFRESH_AUTO) {
                 // Silently ignore empty prefills, those without UIDs and non-readable data
                 if ($data_sheet->countRows() === 0 || ! $data_sheet->hasUidColumn(true) || ! $data_sheet->getMetaObject()->isReadable()) {
-                    $log .= '   - No refresh for empty prefills, those without UIDs and non-readable data' . PHP_EOL;
+                    $logBook->addLine('No refresh for empty prefills, those without UIDs and non-readable data');
                     $refresh = iPrefillWidget::REFRESH_NEVER;
                 } else {
                     // Ask the widget for expected data to see if a refresh is required
                     $colsBefore = $data_sheet->getColumns()->count();
-                    $log .= '   - Getting required prefill columns from wiget: ';
                     $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
-                    $log .= 'found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.' . PHP_EOL;
+                    $logBook->addLine('Getting required prefill columns from widget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
                     switch (true) {
                         // Don't read the data source if we have all data required. This is a controlversal
                         // decision, but that's the way it was done in former versions. On the one hand,
@@ -193,7 +215,7 @@ trait iPrefillWidgetTrait
                         // will probably require additional fields causing a refresh anyway. So this option
                         // basically saves a data source request for simple use-cases.
                         case $data_sheet->isFresh():
-                            $log .= '   - Prefill data is fresh' . PHP_EOL;
+                            $logBook->addLine('Prefill data is fresh');
                             $refresh = iPrefillWidget::REFRESH_NEVER;
                             break;
                             // Only refresh missing values if input data was used and a mapper was applied.
@@ -202,7 +224,7 @@ trait iPrefillWidgetTrait
                             // values because the user was probably too lazy to mapp all required columns.
                             case $input_data && $this->getInputMapperUsed($input_data) !== null:
                                 $refresh = iPrefillWidget::REFRESH_ONLY_MISSING_VALUES;
-                                $log .= '   - An `input_mapper` was used' . PHP_EOL;
+                                $logBook->addLine('An `input_mapper` was used');
                                 break;
                                 // Refresh in all other cases
                             default:
@@ -214,9 +236,8 @@ trait iPrefillWidgetTrait
                 // If $refresh is not `auto` and not explicitly disabled, ask the widget for
                 // expected data
                 $colsBefore = $data_sheet->getColumns()->count();
-                $log .= '   - Getting required prefill columns from wiget: ';
                 $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
-                $log .= 'found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.' . PHP_EOL;
+                $logBook->addLine('Getting required prefill columns from widget: found ' . ($data_sheet->getColumns()->count() - $colsBefore) . ' additional columns.');
             }
             
             // Refresh data if required
@@ -228,25 +249,33 @@ trait iPrefillWidgetTrait
                     if (! $data_sheet->hasUidColumn(true)) {
                         throw new ActionInputMissingError($this, 'Cannot refresh prefill data for action "' . $this->getAliaswithNamespace() . '": UID values for every prefill row required!');
                     }
+                    $diagram .= "RefreshPrefill";
                     $freshData = $data_sheet->copy();
                     $freshData->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                     // Improve performance by disabling the row counter
                     $freshData->setAutoCount(false);
-                    $log .= '   - Reading fresh data with filter `' . $freshData->getFilters()->__toString() . '`' . PHP_EOL;
+                    $logBook->addLine('Reading fresh data with filter `' . $freshData->getFilters()->__toString() . '`');
                     $freshData->dataRead();
-                    $logSheets['Missing data loaded'] = $freshData;
+                    $logBook->addDataSheet('Missing data loaded', $freshData);
                     // Merge and overwrite existing values unless refresh `only_missing_values`
                     if ($refresh === iPrefillWidget::REFRESH_ONLY_MISSING_VALUES) {
-                        $log .= '   - Refreshing only missing values' . PHP_EOL;
+                        $diagram .= "\n\t RefreshPrefill[\"Read missing\ndata\"] -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| Prefill";
+                        $logBook->addLine('Refreshing only missing values');
                     } else {
-                        $log .= '   - Refreshing all data' . PHP_EOL;
+                        $diagram .= "\n\t RefreshPrefill[\"Refresh\nall data\"] -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| Prefill";
+                        $logBook->addLine('Refreshing all data');
                     }
                     $data_sheet->merge($freshData, $refresh !== iPrefillWidget::REFRESH_ONLY_MISSING_VALUES);
                     break;
                 default:
-                    $log .= '   - Will not refresh' . PHP_EOL;
+                    $logBook->addLine('Will not refresh');
+                    $diagram .= "Prefill";
             }
+        } else {
+            $diagram .= "\n\t CollectPrefill -.->|No data| Prefill";
         }
+        
+        $logBook->addIndent(-1);
         
         // Add the combined prefill data to the result array and add the explicit prefill
         // data additionally if they could not be merged.
@@ -254,47 +283,59 @@ trait iPrefillWidgetTrait
         // data and we want to avoid the possibly costly count operation in further processing.
         $result_sheets = [];
         if ($data_sheet) {
-            $log .= '- Regular prefill data prepared.' . PHP_EOL;
+            $logBook->addLine('Regular prefill data prepared.');
             $data_sheet->setAutoCount(false);
             $result_sheets[] = $data_sheet;
         }
-        if ($prefill_data_merge_failed) {
-            $log .= '- Additional prefill data prepared because merging input and prefill data failed.' . PHP_EOL;
+        if ($prefill_data_merge_failed === true) {
+            $logBook->addLine('Additional prefill data prepared because merging input and prefill data failed.');
             $prefill_data->setAutoCount(false);
             $result_sheets[] = $prefill_data;
         }
+        
+        $logBook->addPlaceholderValue('diagram_prefill', $diagram);
+        $logBook->addIndent(-1);
+        
         return $result_sheets;
     }
     
     /**
      * 
-     * @param DataSheetInterface $data_sheet
      * @param WidgetInterface $widget
      * @param TaskInterface $task
+     * @param DataLogBookInterface $logBook
+     * @param DataSheetInterface $data_sheet
      * 
-     * @return DataSheetInterface
+     * @return DataSheetInterface|NULL
      */
-    protected function getPrefillDataFromFilterContext(WidgetInterface $widget, DataSheetInterface $data_sheet = null, TaskInterface $task = null, string &$log = '') : ?DataSheetInterface
+    protected function getPrefillDataFromFilterContext(WidgetInterface $widget, TaskInterface $task, DataLogBookInterface $logBook, DataSheetInterface $data_sheet = null) : ?DataSheetInterface
     {
-        $log = trim($log) . PHP_EOL;
-        $log .= '- Property `prefill_with_filter_context` is `' . ($this->getPrefillWithFilterContext($task) ? 'true' : 'false') . '`' . PHP_EOL;
+        $logBook->addLine('Prefill from filter context');
+        $logBook->addIndent(1);
+        $logBook->addLine('Property `prefill_with_filter_context` is `' . ($this->getPrefillWithFilterContext($task) ? 'true' : 'false') . '`');
+        $widgetObj = $widget->getMetaObject();
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
-        if ($this->getPrefillWithFilterContext($task) && $widget && $context_conditions = $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($widget->getMetaObject())) {
+        if ($this->getPrefillWithFilterContext($task) && $widget && $context_conditions = $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($widgetObj)) {
+            $diagram = $logBook->getPlaceholderValue('diagram_prefill');
+            $diagram .= "\n\t FilterContext(Filter context)";
             if (! $data_sheet || $data_sheet->isBlank()) {
-                $log .= '   - Creating new data sheet for the widgets object since no usable data found so far' . PHP_EOL;
-                $data_sheet = DataSheetFactory::createFromObject($widget->getMetaObject());
+                $noDataProvided = true;
+                $logBook->addLine('Creating new data sheet for the widgets object since no usable data found so far');
+                $data_sheet = DataSheetFactory::createFromObject($widgetObj);
             }
+            $dataObj = $data_sheet->getMetaObject();
             
             // Make sure, the context object fits the data sheet object.
             // TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
             // Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
-            if ($widget->getMetaObject()->is($data_sheet->getMetaObject())) {
+            if ($noDataProvided === true || $widgetObj->is($dataObj)) {
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {
-                    $log .= '   - Found condition "' . $condition->toString() . '" - ';
+                    $condStr = $condition->toString();
+                    $log = 'Found condition "' . $condStr . '" - ';
                     /*
-                     * if ($widget && $condition->getExpression()->getMetaObject()->getId() == $widget->getMetaObject()->getId()){
+                     * if ($widget && $condition->getExpression()->getMetaObject()->getId() == $widgetObj->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
                      * // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
                      * // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)
@@ -345,6 +386,11 @@ trait iPrefillWidgetTrait
                                          $col->setValueOnAllRows($value);
                                      }
                                  }
+                                 if ($noDataProvided === true) {
+                                    $diagram .= "\n\t FilterContext -->|\"{$condStr}\"| FilterDataCreate";
+                                 } else {
+                                     $diagram .= "\n\t FilterContext --->|\"{$condStr}\"| Prefill";
+                                 }
                                  $log .= 'applied';
                              } else {
                                  $log .= 'value empty - ignoring';
@@ -357,12 +403,30 @@ trait iPrefillWidgetTrait
                      } else {
                          $log .= 'not applicable';
                      }
-                     $log .= PHP_EOL;
+                     $logBook->addLine($log);
                 }
+                if (strpos($diagram, 'FilterContext -') === false) {
+                    if ($noDataProvided === true) {
+                        $diagram .= "\n\t FilterContext -.->|Not applicable| FilterDataCreate";
+                    } else {
+                        $diagram .= "\n\t FilterContext -..->|Not applicable| Prefill";
+                    }
+                }
+                if ($noDataProvided) {
+                    $diagram .= "\n\t FilterDataCreate[\"Create\ncontext data\"] -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| Prefill";
+                } 
+                // If the diagram includes a refresh step in its input section, make all arrows longer!
+                if (strpos($diagram, 'RefreshPrefill') !== false) {
+                    $diagram = str_replace(['FilterContext -.', 'FilterContext --'], ['FilterContext -..', 'FilterContext ---'], $diagram);
+                }
+                $logBook->addPlaceholderValue('diagram_prefill', $diagram);
             } else {
-                $log .= '   - No filter context data to use.' . PHP_EOL;
+                $logBook->addLine('Context prefill not possible: object of potential prefill data (' . $dataObj->__toString() . ') does not match widget object(' . $widgetObj->__toString() . ')');
             }
+        } else {
+            $logBook->addLine('No context conditions found for widget object ' . $widgetObj->__toString());
         }
+        $logBook->addIndent(-1);
         return $data_sheet;
     }
     

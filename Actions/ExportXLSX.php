@@ -4,9 +4,6 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\BooleanDataType;
@@ -17,17 +14,13 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\CommonLogic\Utils\XLSXWriter;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\DataTypes\NumberEnumDataType;
-use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 
 /**
  * Exports data to an Excel file (XLSX).

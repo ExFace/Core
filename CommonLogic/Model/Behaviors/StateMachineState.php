@@ -14,6 +14,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -96,6 +97,11 @@ class StateMachineState implements iHaveIcon
             $this->buttons = [];
             foreach ($this->getTransitions() as $stateId => $actionAlias) {
                 if ($actionAlias === '' || $actionAlias === null) {
+                    $actionSelector = new ActionSelector($this->stateMachine->getWorkbench(), $actionAlias);
+                } else {
+                    $actionSelector = null;
+                }
+                if ($actionSelector !== null && $actionSelector->isAlias()) {
                     $state = $this->getStateMachine()->getState($stateId);
                     $btnUxon = new UxonObject([
                         "action" => [
@@ -294,8 +300,14 @@ class StateMachineState implements iHaveIcon
      * The transition validation is done automatically with every DataSheet operation, so it is
      * a pretty solid restriction.
      * 
+     * Possible transition notations: 
+     * 
+     * - `50: ""` or simply `50` if `transitions` is an array - transition to state 50 is allowed
+     * - `50: "Start processing"` - transition to state 50 is allowed and has a name
+     * - `50: "my.APP.GoToState50"` - transition is a specific action - see blow.
+     * 
      * Use an empty object to forbid any transitions from a state (including to itself!). Set to
-     * an list containing only the key of this state to forbid any transitions, but still allow
+     * a list containing only the key of this state to forbid any transitions, but still allow
      * changing data in this state.
      * 
      * Additionally an action can be specified for each transition. In contrast to the state
@@ -320,19 +332,19 @@ class StateMachineState implements iHaveIcon
      *      "10": {
      *          "name": "Draft",
      *          "transitions": {
-     *              "10": "",
      *              "50": "my.App.Approve"
      *          }
      *      },
      *      "50": {
      *          "Approved",
      *          "transitions": {
-     *              "50": "",
      *              "99": "my.App.Submit"
      *          }
      *      },
      *      "99": {
      *          "name": "Submitted",
+     *          "disable_editing": true,
+     *          "end_state": true,
      *          "transitions": {}
      *      }
      *  }
@@ -341,7 +353,7 @@ class StateMachineState implements iHaveIcon
      *  
      * @uxon-property transitions
      * @uxon-type metamodel:action[]
-     * @uxon-template {"10": "", "": ""}
+     * @uxon-template {"100": "", "": ""}
      *
      * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState

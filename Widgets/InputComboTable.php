@@ -21,6 +21,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
 
 /**
  * An InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.

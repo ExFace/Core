@@ -956,6 +956,28 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::explodeValueList()
+     */
+    public function explodeValueList(string $delimitedString) : array
+    {
+        $array = explode($this->getValueListDelimiter(), $delimitedString);
+        array_walk($array, 'trim');
+        return $array;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::implodeValueList()
+     */
+    public function implodeValueList(array $values) : string
+    {
+        return implode($this->getValueListDelimiter(), $values);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCustomDataTypeUxon()
      */
     public function getCustomDataTypeUxon()

@@ -69,7 +69,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             if ($request->getAttribute($this->getRequestAttributeForFacade()) === null) {
                 // Log the request as-is
                 if ($workbench->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') === true) {
-                    $workbench->getLogger()->debug('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
+                    $workbench->getLogger()->notice('HTTP request to "' . $request->getUri()->getPath() . '" received', [], new HttpMessageDebugWidgetRenderer($request));
                 }
                 
                 // Save the facade in the request attributes, to mark the request as being processed

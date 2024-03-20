@@ -148,7 +148,10 @@ class PrefillModel implements PrefillModelInterface
             $widget = $action->getWidget();
             $widget->getWorkbench()->eventManager()->addListener(OnPrefillDataLoadedEvent::getEventName(), function(OnPrefillDataLoadedEvent $event) use ($widget) {
                 if ($event->getWidget() === $widget) {
-                    $event->addExplanation('- Removing all values from the prefill data rows and filters to make sure there are no hard-coded values in the UI5 view. The real values will be loaded via `ReadPrefill` action later on.' . PHP_EOL);
+                    $logBook = $event->getLogBook();
+                    if ($logBook !== null) {
+                        $logBook->addLine('Removing all values from the prefill data rows and filters to make sure there are no hard-coded values in the UI5 view. The real values will be loaded via `ReadPrefill` action later on.');
+                    }
                     // Empty all values
                     foreach ($event->getDataSheet()->getColumns() as $col) {
                         $col->setValueOnAllRows('');

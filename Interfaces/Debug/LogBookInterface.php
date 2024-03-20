@@ -6,6 +6,7 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
 {
     /**
+     * Add a line to the logbook optionally defining the indent (relative to previous) and a section
      * 
      * @param string $text
      * @param int|null $indent
@@ -13,6 +14,14 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function addLine(string $text, int $indent = null, $section = null) : LogBookInterface;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @param int $lineNo
+     * @return LogBookInterface
+     */
+    public function removeLine($section, int $lineNo) : LogBookInterface;
     
     /**
      * 
@@ -34,6 +43,12 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return LogBookInterface
      */
     public function setSectionActive($section) : LogBookInterface;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getSectionActive() : ?string;
     
     /**
      * 
@@ -77,4 +92,33 @@ interface LogBookInterface extends iCanGenerateDebugWidgets, \Stringable
      * @return string
      */
     public function getId() : string;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @return string[]
+     */
+    public function getLinesInSection($section = null) : array;
+    
+    /**
+     * 
+     * @param string|int $section
+     * @return string[]
+     */
+    public function getCodeBlocksInSection($section = null) : array;
+    
+    /**
+     * 
+     * @param string $placeholder
+     * @param string $value
+     * @return LogBookInterface
+     */
+    public function addPlaceholderValue(string $placeholder, string $value) : LogBookInterface;
+    
+    /**
+     * 
+     * @param string $placeholder
+     * @return string|NULL
+     */
+    public function getPlaceholderValue(string $placeholder) : ?string;
 }
