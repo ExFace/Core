@@ -22,6 +22,8 @@ use exface\Core\DataTypes\ComparatorDataType;
  * defines the action, that the preview should show and the latter allows to define, what
  * data to use as example.
  * 
+ * For more details see a working example in Administration > Metamodel > Printing templates
+ * 
  * @author Andrej Kabachnik
  *
  */
