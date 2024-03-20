@@ -1039,11 +1039,23 @@ JS;
                     {$tooltipJs}
                     
                     layer.on('mouseover',function(ev) {
-                        $(ev.target.getElement()).addClass('exf-map-shape-selected');
+                        $(ev.target.getElement()).addClass('exf-map-shape-hover');
                     });
                     layer.on('mouseout',function(ev) {
-                        $(ev.target.getElement()).removeClass('exf-map-shape-selected');
+                        $(ev.target.getElement()).removeClass('exf-map-shape-hover');
                     })
+                    layer.on('click', function (e) {
+                            var jqIcon = $(e.target.getElement());
+                            if (jqIcon.hasClass('exf-map-shape-selected')) {
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = null;
+                                jqIcon.removeClass('exf-map-shape-selected');
+                            } else {
+                                $('#{$this->getIdLeaflet()} .leaflet-interactive').removeClass('exf-map-shape-selected');
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
+                                jqIcon.addClass('exf-map-shape-selected');
+                            }
+                            {$this->getOnChangeScript()}
+                        });
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
