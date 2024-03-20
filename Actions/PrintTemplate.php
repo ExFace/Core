@@ -51,7 +51,9 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * and a configuration for its contents:
  * 
  * - `data_sheet` to load the data 
- * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`, `[#~data:=Formula()#]`..
+ * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
+ * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
  * 
