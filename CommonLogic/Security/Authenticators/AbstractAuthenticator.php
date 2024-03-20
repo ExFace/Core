@@ -592,7 +592,9 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             }
             $deleteUids = array_unique($deleteUids);
             $deleteCol->setValues($deleteUids);
-            $deleteSheet->dataDelete($transaction);
+            if ($deleteSheet->countRows() !== 0) {
+                $deleteSheet->dataDelete($transaction);
+            }
             
             // Add roles matching the current external roles (see above) 
             $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');;
