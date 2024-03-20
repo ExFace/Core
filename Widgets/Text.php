@@ -60,9 +60,9 @@ class Text extends Display implements iShowText, iCanWrapText
     }
     
     /**
-     * Sets the style of the text: normal, big, small.
+     * Sets the size of the text: normal, big, small.
      * 
-     * @uxon-property style
+     * @uxon-property size
      * @uxon-type [normal,big,small]
      * @uxon-default normal
      * 
