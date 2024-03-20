@@ -28,6 +28,7 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Events\BehaviorEventInterface;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -299,7 +300,7 @@ class Tracer extends Profiler
     {
         try {
             $msg = $this->getLapName($event);
-            $this->getWorkbench()->getLogger()->debug($msg, array());
+            $this->getWorkbench()->getLogger()->debug($msg . ' time measurement started', array());
             $this->start($event->getAction(), $msg, 'action');
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
@@ -325,7 +326,7 @@ class Tracer extends Profiler
         
         try {
             $duration = $ms !== null ? ' in ' . $ms . ' ms' : '';
-            $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' finished' . $duration . '.', array());
+            $this->getWorkbench()->getLogger()->debug($this->getLapName($event) . ' time measurement ended' . $duration . '.', array());
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
         }
@@ -356,7 +357,7 @@ class Tracer extends Profiler
             } else {
                 $duration = '';
             }
-            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $event->getReceipt());
+            $this->getWorkbench()->getLogger()->info($name . $duration, array(), $event->getReceipt());
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
@@ -387,7 +388,7 @@ class Tracer extends Profiler
             } else {
                 $duration = '';
             }
-            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $event->getLogbook());
+            $this->getWorkbench()->getLogger()->info($name . $duration, array(), $event->getLogbook());
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
@@ -423,7 +424,11 @@ class Tracer extends Profiler
             } else {
                 $duration = '';
             }
-            $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $query);
+            if (! $event->getConnection()->isExactly(DataConnectionSelector::METAMODEL_CONNECTION_UID)) {
+                $this->getWorkbench()->getLogger()->info($name . $duration, array(), $query);
+            } else {
+                $this->getWorkbench()->getLogger()->debug($name . $duration, array(), $query);
+            }
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
         }
@@ -461,6 +466,6 @@ class Tracer extends Profiler
      * @return void
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
-        $this->getWorkbench()->getLogger()->debug('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->getWorkbench()->getLogger()->info('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
     }
 }

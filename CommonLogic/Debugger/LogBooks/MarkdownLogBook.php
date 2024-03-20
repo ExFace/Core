@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\DataTypes\StringDataType;
 
 class MarkdownLogBook implements LogBookInterface
 {
@@ -21,6 +22,8 @@ class MarkdownLogBook implements LogBookInterface
     private $currentSection = null;
     
     private $currentIndent = 0;
+    
+    private $placeholders = [];    
     
     /**
      * 
@@ -64,6 +67,7 @@ class MarkdownLogBook implements LogBookInterface
     {
         $this->lines[$title] = [];
         $this->currentSection = $title;
+        $this->setIndentActive(0);
         return $this;
     }
     
@@ -76,6 +80,11 @@ class MarkdownLogBook implements LogBookInterface
     {
         $this->currentSection = $this->getSectionKey($section);
         return $this;
+    }
+    
+    public function getSectionActive() : ?string
+    {
+        return $this->currentSection;
     }
     
     /**
@@ -171,6 +180,9 @@ class MarkdownLogBook implements LogBookInterface
                 $str .= $this->convertIndentToString($lineProps['indent']) . $lineProps['text'] . PHP_EOL;
             }
         }
+        if (! empty($this->placeholders)) {
+            $str = StringDataType::replacePlaceholders($str, $this->placeholders, false);
+        }
         return $str;
     }
     
@@ -229,7 +241,7 @@ class MarkdownLogBook implements LogBookInterface
      */
     public function addIndent(int $positiveOrNegative) : LogBookInterface
     {
-        $this->currentIndent = $this->currentIndent + $positiveOrNegative;
+        $this->currentIndent = max($this->currentIndent + $positiveOrNegative, 0);
         return $this;
     }
     
@@ -241,6 +253,76 @@ class MarkdownLogBook implements LogBookInterface
     public function addException(\Throwable $e, int $indent = null) : LogBookInterface
     {
         $this->addLine('**Exception** ' . $e->getMessage() . ' in '. $e->getFile() . ' on line ' . $e->getLine(), $indent);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getLines()
+     */
+    public function getLinesInSection($section = null): array
+    {
+        $sectionKey = $this->getSectionKey($section);
+        $lines = [];
+        foreach ($this->lines[$sectionKey] as $i => $line) {
+            $lines[$i] = $line['text'];
+        }
+        return $lines;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::addPlaceholderValue()
+     */
+    public function addPlaceholderValue(string $placeholder, string $value): LogBookInterface
+    {
+        $this->placeholders[$placeholder] = $value;
+        return $this;
+    }
+    
+    public function getPlaceholderValue(string $placeholder) : ?string
+    {
+        return $this->placeholders[$placeholder] ?? null;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getCodeBlocksInSection()
+     */
+    public function getCodeBlocksInSection($section = null): array
+    {
+        $blocks = [];
+        foreach ($this->getLinesInSection($section) as $no => $line) {
+            if ($this->isCodeBlock($line)) {
+                $blocks[$no] = $line;
+            }
+        }
+        return $blocks;
+    }
+    
+    /**
+     * 
+     * @param string $line
+     * @return bool
+     */
+    protected function isCodeBlock(string $line) : bool
+    {
+        return strpos(trim($line), '```') === 0;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::removeLine()
+     */
+    public function removeLine($section, int $lineNo): LogBookInterface
+    {
+        $lines = $this->lines[$this->getSectionKey($section)];
+        unset($lines[$lineNo]);
+        $this->lines[$this->getSectionKey($section)] = array_values($lines);
         return $this;
     }
 }

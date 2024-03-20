@@ -57,6 +57,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -322,10 +323,12 @@ abstract class AbstractAction implements ActionInterface
         }
         
         $logbook = $this->getLogBook($task);
-        $logbook->addSection('Output mapper');
+        $logbook->addSection('Output data');
         $logbook->setIndentActive(1);
         if ($result instanceof ResultData) {
-            $logbook->addDataSheet('Output data', $result->getData());
+            $resultData = $result->getData();
+            $logbook->addDataSheet('Result data', $resultData);
+            $logbook->addLine("Action result contains data with {$resultData->countRows()} rows of **{$resultData->getMetaObject()->__toString()}**");
             if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
                 $result->setData($mapper->map($result->getData(), null, $logbook));
                 $logbook->addDataSheet('Output data (mapped)', $result->getData());
@@ -333,7 +336,7 @@ abstract class AbstractAction implements ActionInterface
                 $logbook->addLine('No output mapper found for object ' . $result->getData()->getMetaObject()->__toString());
             }
         } else {
-            $logbook->addLine('Result has no data - nothing to map.');
+            $logbook->addLine('Result has no data.');
         }
         $logbook->setIndentActive(0);
         
@@ -463,7 +466,7 @@ abstract class AbstractAction implements ActionInterface
             return $this->getInputDataSheet($result->getTask());
         }));
         
-        $this->getWorkbench()->getLogger()->debug('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
+        $this->getWorkbench()->getLogger()->notice('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -1076,6 +1079,7 @@ abstract class AbstractAction implements ActionInterface
     protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
         $logbook = $this->getLogBook($task);
+        $diagram = 'flowchart LR';
         // Get the current input data
         if ($task->hasInputData()) {
             // If the task has some, use it
@@ -1085,32 +1089,61 @@ abstract class AbstractAction implements ActionInterface
             if ($this->hasInputDataPreset()) {
                 $logbook->addDataSheet('Input preset', $this->getInputDataPreset());
                 $sheet = $this->getInputDataPreset()->importRows($sheet);
+                $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "| Task";
             } 
+            $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
             $logbook->addDataSheet('Input preset', $sheet);
+            $diagram .= "\n\t InputPreset[Input Preset] -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
+            $diagram .= "\n\t Task -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
         
-        // Apply the input mappers
-        $logbook->removeSection('Input mapper');
-        $logbook->addSection('Input mapper');
+        // Replace the `Input data` section of the logbook
+        // Make sure to restore the previously active section afterwards as very action might have
+        // already started working with the logbook before calling `getInputDataSheet()`. This will
+        // make sure, all the input calculation stuff is not in the middle of something else
+        // Similarly, replacing the section prevents it from appearing as many times as 
+        // `getInputDataSheet()` is called
+        $prevSection = $logbook->getSectionActive();
+        $logbook->removeSection('Input data');
+        $logbook->addSection('Input data');
+        $logbook->addCodeBlock('[#input_diagram#]', 'mermaid');
         $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
-        
+
+        // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
             $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
+            $diagram .= " InputMapping";
+            $diagram .= "\n\t subgraph InputMapping[input_mapper]";
+            $mapperDiagrams = $logbook->getCodeBlocksInSection();
+            if (count($mapperDiagrams) === 2) {
+                $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
+                $logbook->removeLine(null, array_key_last($mapperDiagrams));
+            }
+            $diagram .= "\n\t end";
+            $diagram .= "\n\t InputMapping -->|" . DataLogBook::buildMermaidTitleForData($inputData) . "|";
         } else {
             $inputData = $sheet;
             $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
+        $diagram .= " Action[Action `{$this->getName()}`]";
+        $logbook->addPlaceholderValue('input_diagram', $diagram);
+        
         $logbook->addDataSheet('Final input data', $inputData);
-        $logbook->setIndentActive(0);
+        
+        if ($prevSection !== null && $prevSection !== 'Input data') {
+            $logbook->setSectionActive($prevSection);
+        } else {
+            $logbook->setIndentActive(0);
+        }
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));

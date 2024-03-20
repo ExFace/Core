@@ -11,6 +11,23 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
+/**
+ * Runs a custom script (e.g. JavaScript) if supported by the current facade
+ * 
+ * Which scripts and lanuages are supported depends on the facade used. Most JavaScript based
+ * facades support custom JavaScript.
+ * 
+ * ## Available placeholders
+ * 
+ * - `[#element_id:~self#]` - the id of the facade element triggering the script - e.g. the DOM
+ * element id of a button. Example use: `$('#[#element_id:~self#]').hide()`.
+ * - `[#element_id:~parent#]` - the id of the facade element of the parent widget
+ * - `[#element_id:~input#]` - the id of the facade element of the input widget - e.g. the DOM
+ * element id of a table. Example use: `$('#[#element_id:~input#]')`.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
 {
 
@@ -50,6 +67,14 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
     /**
      * Script to run when action is called.
      * 
+     * ## Available placeholders
+     * 
+     * - `[#element_id:~self#]` - the id of the facade element triggering the script - e.g. the DOM
+     * element id of a button. Example use: `$('#[#element_id:~self#]').hide()`.
+     * - `[#element_id:~parent#]` - the id of the facade element of the parent widget
+     * - `[#element_id:~input#]` - the id of the facade element of the input widget - e.g. the DOM
+     * element id of a table. Example use: `$('#[#element_id:~input#]')`.
+     * 
      * @uxon-property script
      * @uxon-type string
      * 
@@ -80,6 +105,11 @@ class CustomFacadeScript extends AbstractAction implements iRunFacadeScript
         return '';
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRunFacadeScript::getIncludes()
+     */
     public function getIncludes(FacadeInterface $facade) : array
     {
         return array();

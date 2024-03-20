@@ -31,7 +31,7 @@ use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligat
  * - Make users only see objects related to their own company/role or similar
  * - Forbid deleting an object for certain roles.
  * 
- * Possible targets:
+ * ## Possible targets:
  * 
  * - User role - policy applies to users with this role only
  * - Meta object - policy applies to data sheets with this meta object only
@@ -40,16 +40,30 @@ use exface\Core\CommonLogic\Security\Authorization\Obligations\DataFilterObligat
  * **NOTE:** by default, a policy applies to the target object and to any objects extending it!
  * You can change this by setting `apply_to_extending_objects` to `false`. 
  * 
- * Additional conditions:
+ * ## Additional conditions:
  * 
  * - `operations` - restricts this policy to specific CRUD operations
  * - `add_filters` - a condition group to add to the filters of each data sheet this policy allows
- * (for the target object AND related objects if defined)
+ * - `add_filters_in_scope` - similar to `add_filters`, but defining a filtering scope explicitly
  * - `apply_to_related_objects` - allows to apply a single rule to an object and its relatives: e.g.
  * a rule defined for object `COMPANY` may be applied to `EMPLOYEE`, `ORDER` and any other object,
  * that has a relation to `COMPANY`.
  * - `apply_to_extending_objects` - controls, if the rule is applied to the specified objects only or
  * to all objects based on them.
+ * 
+ * ## Permissions for subsets of data via filters
+ * 
+ * A common use case of data policies is to limit the visibility of data: e.g. a user should only
+ * see the orders of his or her company. This can be achieved using permitting permissions with 
+ * `add_filters` or `add_filters_in_scope`. These filters will be automatically applied to read/write
+ * operations on the object of the policy.
+ * 
+ * Filters can also be applied to related objects via `apply_to_extending_objects`: e.g. allowing 
+ * a user to see only a certain company and
+ * - only order placed by that company
+ * - only order positions of orders placed by that company
+ * 
+ * Each of these addtional restrictions needs to be an item in `apply_to_extending_objects`.
  * 
  * @author Andrej Kabachnik
  *
@@ -379,10 +393,6 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     /**
      * Apply this policy (including possible filters) to related objects too.
      * 
-     * @uxon-property apply_to_related_objects
-     * @uxon-type \exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPolicyRelation[]
-     * @uxon-template [{"related_object": "", "relation_path_from_policy_object": ""}]
-     * 
      * For example, if you have an object called `COMPANY` and you need to make users of a certain
      * role only see `ORDER`s and `TASK`s of their own company, you can create the following policy:
      * 
@@ -397,7 +407,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
      *      "apply_to_related_objects":[
      *          {
      *              "related_object": "my.App.ORDER",
-     *              "relation_path_from_policy_object": "CUSTOMER__ORDER"
+     *              "relation_path_from_policy_object": "ORDER"
      *          }, {
      *              "related_object": "my.App.TASK",
      *              "relation_path_from_policy_object": "TASK[OWNER_COMPANY]"}
@@ -406,6 +416,25 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
      *  }
      *  
      * ```
+     * 
+     * In this case, an employee of a copany will only be able to see orders placed by his company.
+     * However, that user will still be able to see all order positions (`ORDERPOS`). To restrict 
+     * those too, add
+     * 
+     * ```
+     *          {
+     *              "related_object": "my.App.ORDERPOS",
+     *              "relation_path_from_policy_object": "ORDER__ORDERPOS"
+     *          }
+     * ```
+     * 
+     * Assuming each order position is linked to a `PRODUCT`, you may or may not want to limit visibility
+     * of products. If you do, the user will not see any products, that were never ordered by his
+     * company though!
+     * 
+     * @uxon-property apply_to_related_objects
+     * @uxon-type \exface\Core\CommonLogic\Security\Authorization\DataAuthorizationPolicyRelation[]
+     * @uxon-template [{"related_object": "", "relation_path_from_policy_object": ""}]
      * 
      * @param UxonObject $arrayOfRelationPaths
      * @return DataAuthorizationPolicy

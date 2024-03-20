@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 /**
  * Data type for binary data (e.g. media file contents, etc.).
@@ -26,11 +27,13 @@ use exface\Core\Exceptions\RuntimeException;
  * @author Andrej Kabachnik
  *
  */
-class BinaryDataType extends StringDataType
+class BinaryDataType extends AbstractDataType
 {
     const ENCODING_BASE64 = 'base64';
     const ENCODING_HEX = 'hex';
     const ENCODING_BINARY = 'binary';
+    
+    private $lengthMax = null;
     
     private $encoding = self::ENCODING_BASE64;
     
@@ -61,7 +64,40 @@ class BinaryDataType extends StringDataType
                 }
                 break;
         }
+        
+        // validate length
+        $length = mb_strlen($string);
+        if ($this->getMaxSizeInBytes() > 0 && $length < $this->getMaxSizeInBytes()){
+            $excValue = '';
+            if (! $this->isSensitiveData()) {
+                $excValue = '"' . StringDataType::truncate($string, 60, false, false, true) . '" (' . $length . ')';
+            }
+            throw $this->createValidationError('The size of the binary ' . $excValue . ' is larger, than the maximum for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+        }
         return $string;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $text = '';
+        if ($this->getMaxSizeInBytes() > 0) {
+            $lengthCond = ' ≤ ' . $this->getMaxSizeInMB();
+        }
+        if ($lengthCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
     }
     
     /**
@@ -94,7 +130,7 @@ class BinaryDataType extends StringDataType
     }
     
     /**
-     * Maximum size of data in bytes (same as `length_max`)
+     * Maximum size of data in bytes (similar to `length_max` for strings)
      * 
      * @uxon-property max_size
      * @uxon-type integer
@@ -102,9 +138,10 @@ class BinaryDataType extends StringDataType
      * @param int $bytes
      * @return BinaryDataType
      */
-    public function setMaxSize(int $bytes) : BinaryDataType
+    public function setLengthMax(int $bytes) : BinaryDataType
     {
-        return $this->setLengthMax($bytes);
+        $this->lengthMax = $bytes;
+        return $this;
     }
     
     /**
@@ -113,7 +150,7 @@ class BinaryDataType extends StringDataType
      */
     public function getMaxSizeInBytes() : ?int
     {
-        return $this->getLengthMax();
+        return $this->lengthMax;
     }
     
     /**
@@ -125,7 +162,7 @@ class BinaryDataType extends StringDataType
         if ($this->getMaxSizeInBytes() === null) {
             return null;
         }
-        return $this->getMaxSizeInBytes() / 1000000;
+        return $this->getMaxSizeInBytes() / 1024 / 1024;
     }
     
     /**

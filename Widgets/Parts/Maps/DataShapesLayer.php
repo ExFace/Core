@@ -8,7 +8,6 @@ use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
-use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
@@ -18,6 +17,9 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapProjectionInterface;
 use exface\Core\Widgets\Parts\Maps\Projection\Proj4Projection;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\DragAndDrop\DropToAction;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
+use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 
 /**
  * 
@@ -27,10 +29,12 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 class DataShapesLayer extends AbstractDataLayer 
     implements
     GeoJsonMapLayerInterface,
+    GeoJsonWidgetLinkMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
-    CustomProjectionMapLayerInterface
+    CustomProjectionMapLayerInterface,
+    iCanBeDragAndDropTarget
 {
     const VALUE_POSITION_LEFT = 'left';
     
@@ -56,9 +60,9 @@ class DataShapesLayer extends AbstractDataLayer
     
     private $addShapes = false;
     
-    private $addMarkerMax = null;
+    private $addShapesMax = null;
     
-    private $draggable = false;
+    private $changeShapes = false;
     
     private $lineWeight = null;
     
@@ -69,6 +73,8 @@ class DataShapesLayer extends AbstractDataLayer
     private $projectionConfig = null;
     
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
+    
+    private $dropToActions = [];
     
     /**
      *
@@ -105,8 +111,9 @@ class DataShapesLayer extends AbstractDataLayer
     }
     
     /**
-     *
-     * @return WidgetLinkInterface|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface::getShapesWidgetLink()
      */
     public function getShapesWidgetLink() : ?WidgetLinkInterface
     {
@@ -152,7 +159,7 @@ class DataShapesLayer extends AbstractDataLayer
      */
     public function isEditable() : bool
     {
-        return $this->hasEditByAddingItems() || $this->hasEditByMovingItems();
+        return $this->hasEditByAddingItems() || $this->hasEditByChangingItems();
     }
     
     /**
@@ -165,7 +172,7 @@ class DataShapesLayer extends AbstractDataLayer
     }
     
     /**
-     * Set to TRUE to allow adding markers
+     * Set to TRUE to allow adding shapes
      *
      * @uxon-property edit_by_adding_items
      * @uxon-type boolean
@@ -189,39 +196,31 @@ class DataShapesLayer extends AbstractDataLayer
         if ($this->hasEditByAddingItems() === false) {
             return 0;
         }
-        if ($link = $this->getLatitudeWidgetLink()) {
-            $w = $link->getTargetWidget();
-            if (($w instanceof iSupportMultiSelect) && $w->getMultiSelect() === true) {
-                return null;
-            } else {
-                return 1;
-            }
-        }
-        return null;
+        return $this->addShapesMax;
     }
     
     /**
      *
      * @return bool
      */
-    public function hasEditByMovingItems() : bool
+    public function hasEditByChangingItems() : bool
     {
-        return $this->draggable;
+        return $this->changeShapes;
     }
     
     /**
-     * Set to TRUE to allow moving markers
-     *
-     * @uxon-property edit_by_moving_items
+     * Set to TRUE to allow changin or moving shapes
+     * 
+     * @uxon-property edit_by_changing_items
      * @uxon-type boolean
      * @uxon-default false
      *
      * @param bool $value
      * @return MapLayerInterface
      */
-    public function setEditByMovingItems(bool $value) : MapLayerInterface
+    public function setEditByChangingItems(bool $value) : MapLayerInterface
     {
-        $this->draggable = $value;
+        $this->changeShapes = $value;
         return $this;
     }
     
@@ -373,5 +372,42 @@ class DataShapesLayer extends AbstractDataLayer
     {
         $this->valuePosition = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getDropToActions() : array
+    {
+        return $this->dropToActions;
+    }
+    
+    /**
+     * Actions to be performed when something is dropped on this layer
+     * 
+     * @uxon-property drop_to_action
+     * @uxon-type \exface\Core\Widgets\Parts\DragAndDrop\DropToAction[]
+     * @uxon-template [{"object_alias": "", "action":{"alias": ""}}]
+     * 
+     * @param UxonObject $arrayOfWidgetParts
+     * @return DataShapesLayer
+     */
+    public function setDropToAction(UxonObject $arrayOfWidgetParts) : DataShapesLayer
+    {
+        foreach ($arrayOfWidgetParts->getPropertiesAll() as $partUxon) {
+            $this->dropToActions[] = new DropToAction($this->getMap(), $partUxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeDragAndDropTarget::isDropTarget()
+     */
+    public function isDropTarget(): bool
+    {
+        return ! empty($this->dropToActions);
     }
 }

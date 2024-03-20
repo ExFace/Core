@@ -77,4 +77,22 @@ class DataLogBook extends MarkdownLogBook implements DataLogBookInterface
     {
         return $this->dataSheets;
     }
+    
+    /**
+     *
+     * @param DataSheetInterface $dataSheet
+     * @param string|NULL $caption
+     * @return string
+     */
+    public static function buildMermaidTitleForData(DataSheetInterface $dataSheet) : string
+    {
+        $obj = $dataSheet->getMetaObject()->getAliasWithNamespace();
+        $rows = $dataSheet->countRows();
+        $cols = $dataSheet->getColumns()->count();
+        $filters = $dataSheet->getFilters()->countConditions() + $dataSheet->getFilters()->countNestedGroups();
+        if (empty($rows) && empty($cols) && empty($filters)) {
+            return "\"{$obj}\nblank\"";
+        }
+        return "\"{$obj}\n{$rows} row(s), {$cols} col(s), {$filters} filter(s)\"";
+    }
 }

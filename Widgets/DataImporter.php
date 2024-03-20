@@ -23,9 +23,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
-use exface\Core\Widgets\Traits\iCanEditDataTrait;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
-use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Interfaces\Widgets\iCanBeEditable;
 use exface\Core\Widgets\Traits\iCanBeEditableTrait;
 
@@ -154,6 +152,17 @@ class DataImporter extends AbstractWidget implements
     private $displayOnly = false;
     
     private $required = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->initColumns();
+    }
     
     /**
      * Set to TRUE to force the user to fill all required fields of at least one row.

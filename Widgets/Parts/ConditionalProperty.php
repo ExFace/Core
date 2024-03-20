@@ -7,6 +7,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Widgets\Input;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 
 /**
@@ -129,6 +131,85 @@ class ConditionalProperty implements WidgetPartInterface
         }
         
         return $uxon;
+    }
+    
+    /**
+     * Logical operator of the group: AND, OR, etc.
+     * 
+     * @uxon-property operator
+     * @uxon-type [AND,OR,XOR]
+     * 
+     * @param string $logicalOp
+     * @throws WidgetLogicError
+     * @return ConditionalProperty
+     */
+    protected function setOperator(string $logicalOp) : ConditionalProperty
+    {
+        $logicalOp = mb_strtoupper($logicalOp);
+        if ($this->conditionGroup === null) {
+            $this->conditionGroup = ConditionGroupFactory::createForObject($this->getBaseObject(), $logicalOp);
+        } elseif ($this->conditionGroup->getOperator() !== $logicalOp) {
+            throw new WidgetLogicError($this->getWidget(), 'Cannot change the logical operator of a conditional property after it has been initialized!');
+        }
+        return $this;
+    }
+    
+    /**
+     * Array of conditions
+     *
+     * @uxon-property conditions
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalPropertyCondition[]
+     * @uxon-template [{"value_left": "", "comparator": "==", "value_right": ""}]
+     *
+     * @param UxonObject $arrayOfConditions
+     * @throws WidgetLogicError
+     * @return ConditionalProperty
+     */
+    protected function setConditions(UxonObject $arrayOfConditions) : ConditionalProperty
+    {
+        if ($this->conditionGroup === null) {
+            $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), new UxonObject([
+                'conditions' => $arrayOfConditions->toArray()
+            ]), $this->getBaseObject());
+        } else {
+            $this->conditionGroup = ConditionGroupFactory::createFromUxon(
+                $this->getWorkbench(), 
+                $this->conditionGroup->exportUxonObject()->extend(new UxonObject([
+                    'conditions' => $arrayOfConditions->toArray()
+                ])),
+                $this->getBaseObject()
+            );
+        }
+        return $this;
+    }
+    
+    /**
+     * Groups of conditions with their own logical operators - e.g. `AND(cond2, cond3)`
+     *
+     * @uxon-property condition_groups
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup[]
+     * @uxon-template [{"operator": "","conditions": [{"value_left": "", "comparator": "==", "value_right": ""}]}]
+     * 
+     * @param UxonObject $arrayOfCondGroups
+     * @throws WidgetLogicError
+     * @return ConditionalProperty
+     */
+    protected function setConditionGroups(UxonObject $arrayOfCondGroups) : ConditionalProperty
+    {
+        if ($this->conditionGroup === null) {
+            $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), new UxonObject([
+                'condition_groups' => $arrayOfCondGroups->toArray()
+            ]), $this->getBaseObject());
+        } else {
+            $this->conditionGroup = ConditionGroupFactory::createFromUxon(
+                $this->getWorkbench(),
+                $this->conditionGroup->exportUxonObject()->extend(new UxonObject([
+                    'condition_groups' => $arrayOfCondGroups->toArray()
+                ])),
+                $this->getBaseObject()
+                );
+        }
+        return $this;
     }
     
     /**

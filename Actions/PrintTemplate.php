@@ -20,6 +20,7 @@ use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\TranslationPlaceholders;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
+use exface\Core\Interfaces\Actions\iRenderTemplate;
 
 /**
  * This action prints data using a text-based template (e.g. HTML)
@@ -50,7 +51,9 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * and a configuration for its contents:
  * 
  * - `data_sheet` to load the data 
- * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`, `[#~data:=Formula()#]`..
+ * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
+ * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
  * 
@@ -93,7 +96,7 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * @author Andrej Kabachnik
  *
  */
-class PrintTemplate extends AbstractAction
+class PrintTemplate extends AbstractAction implements iRenderTemplate
 {
     private $downloadable = true;
     
@@ -105,7 +108,7 @@ class PrintTemplate extends AbstractAction
     
     private $template = null;
     
-    private $placeholders = null;
+    private $dataPlaceholders = null;
     
     /**
      * 
@@ -151,11 +154,11 @@ class PrintTemplate extends AbstractAction
      * @param DataSheetInterface $inputData
      * @return string[]
      */
-    protected function renderTemplate(DataSheetInterface $inputData) : array
+    public function renderTemplate(DataSheetInterface $inputData) : array
     {
         $contents = [];
         $mainTpl = $this->getTemplate();
-        $mainPhUxon = $this->getDataPlaceholdersUxon();
+        $dataPhsUxon = $this->getDataPlaceholdersUxon();
         
         $baseRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $baseRenderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench(), '~config:'));
@@ -163,11 +166,11 @@ class PrintTemplate extends AbstractAction
         
         foreach (array_keys($inputData->getRows()) as $rowNo) {
             // Extend base renderer with placeholders for the current input data row
-            $inputRowRenderer = $baseRenderer->copy();
-            $inputRowRenderer->addPlaceholder(new DataRowPlaceholders($inputData, $rowNo, '~input:'));
-            $inputRowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo));
+            $currentRowRenderer = $baseRenderer->copy();
+            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($inputData, $rowNo, '~input:'));
+            $currentRowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo));
             
-            if ($mainPhUxon) {
+            if ($dataPhsUxon !== null) {
                 // Prepare a renderer for the data_placeholders config
                 $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
                 $dataTplRenderer->addPlaceholder(
@@ -183,20 +186,20 @@ class PrintTemplate extends AbstractAction
                 // Create group-resolver with resolvers for every data_placeholder and use
                 // it as the default resolver for the input row renderer
                 $phResolver = new PlaceholderGroup();
-                foreach ($mainPhUxon->getPropertiesAll() as $ph => $phConfig) {
-                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $inputRowRenderer));
+                foreach ($dataPhsUxon->getPropertiesAll() as $ph => $phConfig) {
+                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $currentRowRenderer));
                 }
-                $inputRowRenderer->setDefaultPlaceholderResolver($phResolver);
+                $currentRowRenderer->setDefaultPlaceholderResolver($phResolver);
             }
             // placeholders for the resulting file
-            $filePath = $this->getFilePathAbsolute($inputRowRenderer);
-            $inputRowRenderer->addPlaceholder(new ArrayPlaceholders([
+            $filePath = $this->getFilePathAbsolute($currentRowRenderer);
+            $currentRowRenderer->addPlaceholder(new ArrayPlaceholders([
                 'name' => FilePathDataType::findFileName($filePath, true),
                 'name_without_ext' => FilePathDataType::findFileName($filePath, false)
             ], '~file:'));
             
             // Render the template for the current input row
-            $mainTplRendered = $inputRowRenderer->render($mainTpl);
+            $mainTplRendered = $currentRowRenderer->render($mainTpl);
             if (array_key_exists($filePath, $contents)) {
                 $contents[$filePath] .= $mainTplRendered;
             } else {
@@ -335,14 +338,14 @@ class PrintTemplate extends AbstractAction
     
     protected function getDataPlaceholdersUxon() : ?UxonObject
     {
-        return $this->placeholders;
+        return $this->dataPlaceholders;
     }
     
     /**
      * Additional data placeholders to be provided to the template
      * 
      * @uxon-property data_placeholders
-     * @uxon-type \exface\Core\Templates\Placeholders\DataSheetPlaceholders[]
+     * @uxon-type \exface\Core\Templates\Placeholders\DataSheetPlaceholder[]
      * @uxon-template {"": {"row_template": "", "data_sheet": {"object_alias": "", "columns": [{"attribute_alias": ""}], "filters": {"operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}}}}
      * 
      * @param UxonObject $value
@@ -350,7 +353,7 @@ class PrintTemplate extends AbstractAction
      */
     public function setDataPlaceholders(UxonObject $value) : PrintTemplate
     {
-        $this->placeholders = $value;
+        $this->dataPlaceholders = $value;
         return $this;
     }
     

@@ -39,6 +39,8 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -85,6 +87,7 @@ class Data
     use iHaveContextualHelpTrait;
     use iHaveConfiguratorTrait;
     use iCanAutoloadDataTrait;
+    use iTrackIncomingLinksTrait;
 
     // properties
     private $paginate = true;
@@ -129,11 +132,22 @@ class Data
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->initColumns();
+        $this->getWorkbench()->eventManager()->addListener(OnWidgetLinkedEvent::getEventName(), [$this, 'handleWidgetLinkedEvent']);
+    }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)

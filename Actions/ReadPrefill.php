@@ -64,9 +64,8 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $mainSheet = null;
-        $log = '';
-        $logSheets = [];
         $targetWidget = $this->getWidgetToReadFor($task);
+        $logBook = $this->getLogBook($task);
         
         // If the prefill is read for a widget opened by a trigger (e.g. a button),
         // any mappers or checks used on the original action of the button must be
@@ -98,31 +97,38 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // Normally, if we know, which widget to prefill, use the normal prefill logic from the iPrefillWidgetTrait
         // Otherwise get the input/prefill data and refresh it if neccessary
         if ($targetWidget !== null) {
-            $prefillSheets = $this->getPrefillDataFromTask($targetWidget, $task, $log, $logSheets);
+            $logBook->addSection('Prefilling widget "' . $targetWidget->getWidgetType() . '"');
+            $logBook->addCodeBlock('[#diagram_prefill#]', 'mermaid');
+            $prefillSheets = $this->getPrefillDataFromTask($targetWidget, $task, $logBook);
             $mainSheet = $prefillSheets[0];
-            $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $log);
+            $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $task, $logBook, $mainSheet);
         } else {
-            $log .= '- Cannot determine widget to prefill - falling back to use of input/prefill data only!' . PHP_EOL;
+            $logBook->addSection('Reading prefill data without target widget');
+            $logBook->addLine('Cannot determine widget to prefill - falling back to use of input/prefill data only!');
             try {
                 $mainSheet = $this->getInputDataSheet($task);
-                $logSheets['Input data'] = $mainSheet;
-                $log .= '- Input data found:' . PHP_EOL;
-                $log .= '   - Object: "' . $mainSheet->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
-                $log .= '   - Rows: ' . $mainSheet->countRows() . PHP_EOL;
-                $log .= '   - Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()) . PHP_EOL;
+                $logBook->addDataSheet('Input data', $mainSheet);
+                $logBook->addLine('Input data found:');
+                $logBook->addIndent(+1);
+                $logBook->addLine('Object: ' . $mainSheet->getMetaObject()->__toString());
+                $logBook->addLine('Rows: ' . $mainSheet->countRows());
+                $logBook->addLine('Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()));
+                $logBook->addIndent(-1);
             } catch (ActionInputMissingError $e) {
-                $log .= '- No input data to use' . PHP_EOL;
+                $logBook->addLine('No input data to use');
                 // ignore missing data - continue with the next if
             }
             if ($mainSheet === null || $mainSheet->isBlank() && $task->hasPrefillData()) {
                 $mainSheet = $task->getPrefillData();
-                $logSheets['Input data'] = $mainSheet;
-                $log .= '- Prefill data found:' . PHP_EOL;
-                $log .= '   - Object: "' . $mainSheet->getMetaObject()->getAliasWithNamespace() . '"' . PHP_EOL;
-                $log .= '   - Rows: ' . $mainSheet->countRows() . PHP_EOL;
-                $log .= '   - Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()) . PHP_EOL;
+                $logBook->addDataSheet('Input data', $mainSheet);
+                $logBook->addLine('Prefill data found:');
+                $logBook->addIndent(+1);
+                $logBook->addLine('Object: "' . $mainSheet->getMetaObject()->__toString());
+                $logBook->addLine('Rows: ' . $mainSheet->countRows());
+                $logBook->addLine('Filters: ' . ($mainSheet->getFilters()->countConditions() + $mainSheet->getFilters()->countNestedGroups()));
+                $logBook->addIndent(-1);
             } else {
-                $log .= '- No input data to use' . PHP_EOL;
+                $logBook->addLine('No input data to use');
             }
             
             // We don't need the total row count for prefills.
@@ -132,8 +138,8 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $canLoadMoreData = $mainSheet->hasUidColumn(true);
             
             if ($mainSheet->isEmpty()) {
-                $log .= '- Did not find any prefill data till now - use filter context only.' . PHP_EOL;
-                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $log);
+                $logBook->addLine('Did not find any prefill data till now - use filter context only.');
+                $mainSheet = $this->getPrefillDataFromFilterContext($targetWidget, $mainSheet, $task, $logBook);
                 $canLoadMoreData = false;
             } else {
                 if ($mainSheet->hasUidColumn(true)) {
@@ -145,10 +151,10 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             
             // Reed data if it is not fresh
             if ($canLoadMoreData === true && $mainSheet->isFresh() === false) {
-                $log .= '- Refreshing data' . PHP_EOL;
+                $logBook->addLine('Refreshing data');
                 $mainSheet->dataRead();
             } else {
-                $log .= '- Refresh is not required or not possible' . PHP_EOL;
+                $logBook->addLine('Refresh is not required or not possible');
             }
         }
         // Check the prefill data again if it is still valid because actual input data
@@ -168,14 +174,15 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
         
         if ($mainSheet === null) {
-            $log .= '- No prefill data found so far: creating an empty data sheet.' . PHP_EOL;
+            $logBook->addLine('No prefill data found so far: creating an empty data sheet.');
             $mainSheet = DataSheetFactory::createFromObject($this->getMetaObject());
             $mainSheet->setAutoCount(false);
         }
         
         $prefillWithDefaults = $this->getPrefillWithDefaults($task);
-        $log .= '- Property `prefill_with_input_data` is `' . ($prefillWithDefaults === null ? 'null' : ($prefillWithDefaults ? 'true' : 'false')) . '`.' . PHP_EOL;
+        $logBook->addLine('Property `prefill_with_input_data` is `' . ($prefillWithDefaults === null ? 'null' : ($prefillWithDefaults ? 'true' : 'false')) . '`.');
         if ($prefillWithDefaults !== false) {
+            $logBook->addIndent(+1);
             $defaults = [];
             // Add event listeners to see, what the prefill would do
             // 1) Before a widget is prefilled, remember its default value
@@ -201,26 +208,26 @@ class ReadPrefill extends ReadData implements iPrefillWidget
             $targetWidget->prefill($mainSheet);
             // If there are $defaults, place the respective values in every empty cell of the data
             // columns used by widgets with default values
-            $log .= '   - Found ' . count($defaults) . ' default values.' . PHP_EOL;
+            $logBook->addLine('Found ' . count($defaults) . ' default values.');
             if (! empty($defaults)) {
                 $defaultsRow = [];
                 foreach ($defaults as $vals) {
                     $defaultsRow = array_merge($defaultsRow, $vals);
                 }
                 if ($mainSheet->isEmpty()) {
-                    $log .= '   - Adding row with defaults to empty data sheet.' . PHP_EOL;
+                    $logBook->addLine('Adding row with defaults to empty data sheet.');
                     $mainSheet->addRow($defaultsRow);
                 } else {
                     foreach ($defaultsRow as $colName => $default) {
                         if ($col = $mainSheet->getColumns()->get($colName)) {
-                            $log .= '   - Replacing empty values in column "' . $colName . '" with defaults.' . PHP_EOL;
+                            $logBook->addLine('Replacing empty values in column "' . $colName . '" with defaults.');
                             foreach ($col->getValues() as $rowNo => $val) {
                                 if ($val === '' || $val === null) {
                                     $mainSheet->setCellValue($colName, $rowNo, $default);
                                 }
                             }
                         } else {
-                            $log .= '   - Adding new column "' . $colName . '" with defaults.' . PHP_EOL;
+                            $logBook->addLine('Adding new column "' . $colName . '" with defaults.');
                             foreach (array_keys($mainSheet->getRows()) as $rowNo) {
                                 $mainSheet->setCellValue($colName, $rowNo, $default);
                             }
@@ -231,14 +238,13 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         }
         
         // Fire the event, log it to make it appear in the tracer
+        $logBook->addDataSheet('Final prefill', $mainSheet);
         $event = new OnPrefillDataLoadedEvent(
             $targetWidget,
             $mainSheet,
             $this,
-            $logSheets,
-            $log
+            $logBook
         );
-        $this->getWorkbench()->getLogger()->debug('Prefill data loaded for object ' . $mainSheet->getMetaObject()->getAliasWithNamespace(), [], $event);
         $this->getWorkbench()->EventManager()->dispatch($event);
         
         // Send back the result
