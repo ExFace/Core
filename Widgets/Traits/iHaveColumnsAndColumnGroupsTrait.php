@@ -15,6 +15,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 /**
  * Trait for widgets with columns organized in groups (like DataGrid, DataTable, etc.)
  * 
+ * Make sure to call initColumns() in the init() of the widget that uses the trait!
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -30,9 +32,8 @@ trait iHaveColumnsAndColumnGroupsTrait
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::init()
      */
-    protected function init()
+    protected function initColumns()
     {
-        parent::init();
         // Add the main column group
         if (empty($this->getColumnGroups()) === true && $this->getColumnsAutoAddDefaultDisplayAttributes() === true) {
             $this->addColumnGroup($this->getPage()->createWidget('DataColumnGroup', $this));
