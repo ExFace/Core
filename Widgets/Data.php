@@ -41,6 +41,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -787,6 +788,31 @@ class Data
     public function hasAggregations()
     {
         return empty($this->getAggregations()) === FALSE;
+    }
+    
+    /**
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    public function hasAggregationOverAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        foreach ($this->getAggregations() as $aggrAlias) {
+            if ($attribute->getAlias() === $aggrAlias) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
+    public function hasAggregationOverColumn(DataColumn $col) : bool
+    {
+        return $col->isBoundToAttribute() && $this->hasAggregationOverAttribute($col->getAttribute());
     }
     
     /**
