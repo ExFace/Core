@@ -414,10 +414,13 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
-     * Sets preset input data for the action.
+     * A static preset for the input data of the action.
      * 
-     * The preset will be merged with the task input data when the action is performed
-     * or used as input data if the task will not provide any data.
+     * This can be used to give the action input data even if there is no input widget
+     * or that widget does not provide any data.
+     * 
+     * If regular input data is present too, the preset will be merged with the task 
+     * data when the action is performed.
      * 
      * @uxon-property input_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
