@@ -119,7 +119,9 @@ class DataLookupDialog extends Dialog
             
             if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
                 $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
-                if (! $data_table->getColumnByAttributeAlias($labelAlias) && ! $data_table->getColumnByDataColumnName(MetaAttributeInterface::OBJECT_LABEL_ALIAS)) {
+                if (! $data_table->getColumnByAttributeAlias($labelAlias) 
+                    && ! $data_table->getColumnByDataColumnName(MetaAttributeInterface::OBJECT_LABEL_ALIAS)
+                ) {
                     $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
                 }
             }

@@ -104,6 +104,7 @@ class ShowLookupDialog extends ShowDialog
                 if ($targetWidget instanceof iUseInputWidget) {
                     $inputWidget = $targetWidget->getInputWidget();
                     $tableObj = $data_table->getMetaObject();
+                    
                     // Inherit filters from calling widget
                     // When inheriting filters, it is important to keept their id space. If this is not
                     // done explicitly, the filter will have a new id space - the one of the lookup
@@ -131,6 +132,35 @@ class ShowLookupDialog extends ShowDialog
                         default:
                             break;
                     }
+                    
+                    // Inherit aggregations from calling widget
+                    $aggrAttrs = [];
+                    switch (true) {
+                        // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            $aggrAttrs = $inputWidget->getTable()->getAggregations();
+                            if (! empty($aggrAttrs)) {
+                                $data_table->setAggregateByAttributeAlias(implode(',', $aggrAttrs));
+                                // Make sure to remove all columns, that are not aggregated or
+                                // aggregated over as they will remain empty
+                                foreach ($data_table->getColumns() as $col) {
+                                    if (! $col->hasAggregator() && ! $data_table->hasAggregationOverColumn($col)) {
+                                        $data_table->setColumnsAutoAddDefaultDisplayAttributes(false);
+                                        foreach ($data_table->getFilters() as $filter) {
+                                            if ($filter->getAttribute()->isExactly($col->getAttribute())) {
+                                                $data_table->getConfiguratorWidget()->getFilterTab()->removeWidget($filter);
+                                            }
+                                        }
+                                        $data_table->removeColumn($col);
+                                    }
+                                }
+                            }
+                            break;
+                        // TODO inherit aggregations from other types of input widgets?
+                        default:
+                            break;
+                    }
+                    
                     // Inherit columns from calling widget
                     $cols = [];
                     switch (true) {
@@ -142,30 +172,20 @@ class ShowLookupDialog extends ShowDialog
                         case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
                             $cols = $inputWidget->getTable()->getColumns();
                             break;
-                        // TODO inherit columns from other types of input widgets? Is it a good idea to
-                        // inherit columns from tables? Could be a lot...
-                        default:
-                            break;
-                    }
-                    // Inherit aggregations from calling widget
-                    $aggr = [];
-                    switch (true) {
-                        // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
-                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
-                            $aggr = $inputWidget->getTable()->getAggregations();
-                            $data_table->setAggregateByAttributeAlias(implode(',', $aggr));
-                            break;
-                        // TODO inherit aggregations from other types of input widgets?
+                            // TODO inherit columns from other types of input widgets? Is it a good idea to
+                            // inherit columns from tables? Could be a lot...
                         default:
                             break;
                     }
                     foreach ($cols as $col) {
-                        if (! $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
-                            $widgetType = $data_table->getColumnDefaultWidgetType();
-                            $colUxon = $col->exportUxonObject();
-                            $colUxon->setProperty('widget_type', $widgetType);
-                            $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
+                        if (null !== $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
+                            continue;
                         }
+                        
+                        $widgetType = $data_table->getColumnDefaultWidgetType();
+                        $colUxon = $col->exportUxonObject();
+                        $colUxon->setProperty('widget_type', $widgetType);
+                        $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
                     }
                 }
             }
