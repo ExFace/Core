@@ -23,6 +23,8 @@ class HttpRequestHandler implements HttpMiddlewareBusInterface
     private $middleware = [];
     private $fallbackHandler = null;
     private $logger = null;
+
+    private $request = null;
     
     /**
      * 
@@ -53,6 +55,7 @@ class HttpRequestHandler implements HttpMiddlewareBusInterface
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
+        $this->request = $request;
         // Last middleware in the queue has called on the request handler.
         if (empty($this->middleware)) {
             return $this->fallbackHandler->handle($request);
@@ -123,5 +126,10 @@ class HttpRequestHandler implements HttpMiddlewareBusInterface
         }
         
         return;
+    }
+
+    public function getRequest()
+    {
+        return $this->request;
     }
 }

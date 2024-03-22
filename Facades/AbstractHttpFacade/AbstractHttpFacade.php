@@ -108,9 +108,8 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
                     $e = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $e->getMessage(), null, $e);
                     break;
             }
-            
             $this->getWorkbench()->getLogger()->logException($e);
-            $response = $this->createResponseFromError($e, $request);
+            $response = $this->createResponseFromError($e, $handler?->getRequest() ?? $request);
         }
         
         return $response;
@@ -210,13 +209,12 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
             '/' . preg_quote('/' . $this->getUrlRouteDefault(), '/') . '[\/?]' . '/'
         ];
     }
-    
+
     /**
      * Creates and returns an HTTP response from the given exception.
      *
      * @param \Throwable $exception
      * @param ServerRequestInterface|NULL $request
-     * 
      * @return ResponseInterface
      */
     protected function createResponseFromError(\Throwable $exception, ServerRequestInterface $request = null) : ResponseInterface
