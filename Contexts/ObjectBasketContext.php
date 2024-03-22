@@ -12,6 +12,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -26,6 +27,7 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
  */
 class ObjectBasketContext extends AbstractContext
 {
+    use ImportUxonObjectTrait;
 
     private $favorites = array();
 
@@ -138,28 +140,26 @@ class ObjectBasketContext extends AbstractContext
     {
         return $this->getWorkbench()->getContext()->getScopeSession();
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
-     */
-    public function importUxonObject(UxonObject $uxon)
+    
+    protected function setBasket(UxonObject $uxonArray) : ObjectBasketContext
     {
-        foreach ($uxon as $object_id => $data_uxon) {
+        foreach ($uxonArray as $object_id => $data_uxon) {
             $this->favorites[strtolower($object_id)] = $data_uxon;
         }
+        return $this;
     }
 
     /**
      * The favorites context is exported to the following UXON structure:
      *  {
-     *      object_id1: {
-     *          uid1: { data sheet },
-     *          uid2: { data sheet },
-     *          ...
+     *      basket: {
+     *          object_id1: {
+     *              uid1: { data sheet },
+     *              uid2: { data sheet },
+     *              ...
+     *          }
+     *          object_id2: ...
      *      }
-     *      object_id2: ...
      *  }
      *
      * {@inheritdoc}
@@ -167,16 +167,19 @@ class ObjectBasketContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
+        $basketUxon = new UxonObject();
         foreach ($this->favorites as $object_id => $data_sheet) {
             if ($data_sheet instanceof DataSheetInterface){
                 if (! $data_sheet->isEmpty()) {
-                    $uxon->setProperty($object_id, $data_sheet->exportUxonObject());
+                    $basketUxon->setProperty($object_id, $data_sheet->exportUxonObject());
                 }
             } else {
-                $uxon->setProperty($object_id, $data_sheet);
+                $basketUxon->setProperty($object_id, $data_sheet);
             }
         }
+        
+        $uxon = new UxonObject();
+        $uxon->setProperty('basket', $basketUxon);
         return $uxon;
     }
 
