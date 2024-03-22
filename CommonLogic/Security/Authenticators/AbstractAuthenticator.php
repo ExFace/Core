@@ -377,7 +377,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Checks if a user with the username given in the token does  already exists, if so returns true.
+     * Checks if a user with the username given in the token does already exist, if so returns true.
      *
      * @param WorkbenchInterface $exface
      * @param AuthenticationTokenInterface $token
@@ -559,31 +559,33 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             $localRolesSheet->getFilters()->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
             // AND ext. role is active
             $localRolesSheet->getFilters()->addConditionFromString('ACTIVE_FLAG', 1, ComparatorDataType::EQUALS);
-            
+             
             /* Example:
              * User 1 has Role1, Role2, Role3, Role 4
-             * Role1 is a logcal role (e.g. Admin)
+             * Role1 is a logical role (e.g. Admin)
              * Role2 is synced with authenticator 1 external role ExtRole1
              * Role3 is synced with authenticator 1 external role ExtRole2 BUT DISABLED!
              * Role4 is synced with authenticator 2
              * 
              * Cases:
-             * 1. When syncing with authenticator 1, it provides provide ExtRole1 and ExtRole2
+             * 1. When syncing with authenticator 1, it provides ExtRole1 and ExtRole2
              *   - Nothing happens, the user keeps all local roles
-             * 2. When syncing with authenticator 1, it provides provide ExtRole1 only
+             * 2. When syncing with authenticator 1, it provides ExtRole1 only
              *   - Nothing happens because the mapping to ExtRole2 is inactive, thus Role2 is
              *   basically concidered local-only
              * 3. When syncing with authenticator 1, it provides no roles at all
              *   - User loses Role1, but keeps all other roles - in particular Role2 because
              *   the ExtRole2 mapping is disabled
              * 4. The ExtRole2 mapping is set active and the user is synced with authenticator 1
-             *   - User loses Role2 because it is now actively synced             * 
+             *   - User loses Role2 because it is now actively synced 
             */
             
             // Delete roles assigned by this sync previously
             $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
             $deleteCol = $deleteSheet->getColumns()->addFromUidAttribute();
             $deleteUids = [];
+            
+            $localRolesSheet->dataRead();
             foreach ($localRolesCol->getValues() as $userRoleUsersUIDs) {
                 // $userRoleUsersUIDs can be `0x123` or `0x123,0x124,...`
                 foreach ($localRolesCol->getAttribute()->explodeValueList($userRoleUsersUIDs) as $uid) {
@@ -597,7 +599,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             }
             
             // Add roles matching the current external roles (see above) 
-            $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');;
+            $newRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
             foreach ($externalRolesData->getRows() as $row) {
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([
