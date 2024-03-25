@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2024-03-17 16:01:36",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-03-19 17:35:00",
+    "modified_on": "2024-03-25 16:51:28",
     "contents": {
         "object_alias": "exface.Core.OBJECT_ACTION",
         "widget_type": "SplitHorizontal",
@@ -121,7 +121,8 @@
                                 "hide_caption": true
                             },
                             {
-                                "caption": "Example for preview",
+                                "caption": "Label or UID to use in preview",
+                                "hint": "UID or label of the data item to load into the preview",
                                 "widget_type": "Input",
                                 "data_column_name": "_PREVIEW_LABEL",
                                 "width": "100%"
@@ -137,6 +138,19 @@
                                     "open_in_browser_widget": "preview_browser",
                                     "print_action_selector_attribute": "ALIAS_WITH_NS",
                                     "preview_label_attribute": "_PREVIEW_LABEL"
+                                }
+                            },
+                            {
+                                "caption": "Perform action",
+                                "hint": "Call the action regularly and download the result instead of just rendering a preview. ",
+                                "icon": "print",
+                                "align": "right",
+                                "action": {
+                                    "alias": "exface.Core.PrintPreview",
+                                    "open_in_new_window": true,
+                                    "print_action_selector_attribute": "ALIAS_WITH_NS",
+                                    "preview_label_attribute": "_PREVIEW_LABEL",
+                                    "call_action_instead_of_preview": true
                                 }
                             },
                             {
