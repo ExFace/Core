@@ -40,9 +40,9 @@ class TaskFactory extends AbstractStaticFactory
      * @param DataSheetInterface $inputData
      * @return TaskInterface
      */
-    public static function createFromDataSheet(DataSheetInterface $inputData, WidgetInterface $triggerWidget = null) : TaskInterface
+    public static function createFromDataSheet(DataSheetInterface $inputData, WidgetInterface $triggerWidget = null, FacadeInterface $facade = null) : TaskInterface
     {
-        $task = new GenericTask($inputData->getWorkbench());
+        $task = new GenericTask($inputData->getWorkbench(), $facade);
         $task->setInputData($inputData);
         if (! is_null($triggerWidget)) {
             $task->setWidgetIdTriggeredBy($triggerWidget->getId());
