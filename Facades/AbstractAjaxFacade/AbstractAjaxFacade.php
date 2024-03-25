@@ -66,6 +66,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\MessageTypeDataType;
+use function GuzzleHttp\Psr7\stream_for;
 
 /**
  * 
@@ -458,7 +459,7 @@ HTML;
                 }
                 break;
                 
-            case $result instanceof ResultFileInterface:
+            case $result instanceof ResultFileInterface && $result->isDownloadable():
                 $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
                 $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
@@ -467,7 +468,18 @@ HTML;
                     "success" => $message,
                     "download" => $url
                 ];
-                break;   
+                break;
+                
+            case $result instanceof ResultFileInterface && ! $result->isDownloadable():
+                $headers = array_merge($headers, [
+                    'Expires' => 0,
+                    'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+                    'Pragma' => 'public'
+                ]);
+                $headers['Content-Transfer-Encoding'] = 'binary';
+                $headers['Content-Disposition'] = 'inline; filename=' . $result->getFilename();
+                $headers['Content-Type'] = $result->getMimeType();
+                return new Response(200, $headers, stream_for($result->getResourceHandle())); 
                 
             case $result instanceof ResultUriInterface:
                 if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
