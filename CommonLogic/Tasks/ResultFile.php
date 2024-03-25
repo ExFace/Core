@@ -55,7 +55,11 @@ class ResultFile extends ResultMessage implements ResultFileInterface
         return $this;
     }
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getFilename()
+     */
     public function getFilename() : string
     {
         return FilePathDataType::findFileName($this->getPathAbsolute());
