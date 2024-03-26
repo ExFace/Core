@@ -295,10 +295,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
             throw new FacadeRuntimeError('Cannot provide download link for file "' . $absolutePath . '"');
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
+        $relativePath = ltrim($relativePath, "/");
         if ($relativeToSiteRoot) {
-            return ltrim($relativePath, "/");
+            return $relativePath;
         } else {
-            return $workbench->getUrl() . ltrim($relativePath, "/");
+            return $workbench->getUrl() . $relativePath;
         }
     }    
     
