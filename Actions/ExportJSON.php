@@ -269,7 +269,7 @@ class ExportJSON extends ReadData implements iExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute());
+        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute(), $this->isDownloadable());
         
         if ($errorMessage !== null) {
             $result->setMessage($errorMessage);

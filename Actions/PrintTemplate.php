@@ -143,7 +143,7 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
         foreach ($contents as $filePath => $fileContents) {
             file_put_contents($filePath, $fileContents);
         }
-        $result = ResultFactory::createFileResult($task, $filePath);
+        $result = ResultFactory::createFileResult($task, $filePath, $this->isDownloadable());
         
         return $result;
     }
