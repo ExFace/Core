@@ -91,15 +91,11 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $type = trim(StringDataType::substringBefore($data_type, '(', $data_type));
         if ($type !== $data_type) {
             $details = explode(',', substr($data_type, (strlen($type)+1), -1));
+            $length = $length ?? trim($details[0]);
+            $number_scale = $number_scale ?? trim($details[1]);
         }
         
-        switch (mb_strtoupper($type)) {
-            case 'TINYINT':
-                $type = 'INT';
-                break;
-        }
-        
-        return parent::guessDataType($object, $type, trim($details[0]), trim($details[1]));
+        return parent::guessDataType($object, $type, $length, $number_scale);
     }
     
     /**
@@ -141,21 +137,8 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $uxon = parent::getDataTypeConfig($type, $source_data_type, $length, $scale);
         
         $source_data_type = strtoupper($source_data_type);
-        $srcTypeParts = explode('(', $source_data_type);
-        if (count($srcTypeParts) > 1) {
-            $source_data_type = $srcTypeParts[0];
-            $srcTypeOptions = rtrim($srcTypeParts[1], ")");
-        }
-        
         $source_data_type = mb_strtoupper($source_data_type);
         switch (true) {
-            /* TODO how to give a MAX to a hex number?
-            case StringDataType::endsWith($source_data_type, 'BINARY') && $srcTypeOptions:
-                $uxon->setProperty('size_max', $srcTypeOptions);
-                break;*/
-            case StringDataType::endsWith($source_data_type, 'CHAR') && $srcTypeOptions:
-                $uxon->setProperty('length_max', $srcTypeOptions);
-                break;
             case $source_data_type === 'TINYBLOB':
             case $source_data_type === 'TINYTEXT':
                 $uxon->setProperty('length_max', 255);
