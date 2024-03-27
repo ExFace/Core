@@ -159,7 +159,8 @@ use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
  */
 class InputComboTable extends InputCombo implements iCanPreloadData
 {
-
+    use iTrackIncomingLinksTrait;
+    
     private $text_column_id = null;
 
     private $value_column_id = null;
@@ -182,10 +183,14 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     
     private $autosearch_single_suggestion = false;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
     protected function init()
     {
         parent::init();
-        
         $this->getWorkbench()->eventManager()->addListener(OnWidgetLinkedEvent::getEventName(), [$this, 'handleWidgetLinkedEvent']);
     }
 
