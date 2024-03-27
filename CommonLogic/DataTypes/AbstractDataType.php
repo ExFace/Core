@@ -330,6 +330,11 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
+     * Returns the UXON configuration of the data type
+     * 
+     * This UXON corresponds to the data type config in Administration > Metamodel > Data types
+     * and the custom data type configuration in each attribute. It does not include default
+     * editor and display widgets as they are defined separately!
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
@@ -337,8 +342,8 @@ abstract class AbstractDataType implements DataTypeInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->setProperty('name', $this->getName());
-        
+        // IDEA add default_editor_widget and default_display_widget here? Are they part of the config UXON? In the model
+        // administration UI they actually are not.
         return $uxon;
     }
     
