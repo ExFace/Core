@@ -2178,23 +2178,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
-        // IDEA some data type specific procession here
         switch (true) {
             case $data_type instanceof BooleanDataType:
                 $output = $value ? 1 : 0;
                 break;
             case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
                 return EXF_LOGICAL_NULL;
+            // No need to check if the value is valid JSON to search for it - any string is OK
             case $data_type instanceof JsonDataType:
                 $output =  "'" . $this->escapeString($value) . "'";
                 break;
-            case $data_type instanceof StringDataType:
-            case $data_type instanceof DateDataType:
-            case $data_type instanceof TimeDataType:
+            // In most cases apply the same checks and formatting as for INSERT/UPDATE statements
+            default:
                 $output = $this->prepareInputValue($value, $data_type, $dataAddressProps, false);
                 break;
-            default:
-                $output = $this->escapeString($value);
         }
         return $output;
     }
