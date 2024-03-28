@@ -278,6 +278,28 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if (null !== $val = $this->getLengthMin()) {
+            if ($val > 0) {
+                $uxon->setProperty('length_min', $val);
+            }
+        }
+        if (null !== $val = $this->getLengthMax()) {
+            $uxon->setProperty('length_max', $val);
+        }
+        if (null !== $val = $this->regexValidator) {
+            $uxon->setProperty('validation_regex', $this->regexValidator);
+        }
+        return $uxon;
+    }
+    
+    /**
      * Returns an array of ExFace-placeholders found in a string.
      * E.g. will return ["name", "id"] for string "Object [#name#] has the id [#id#]"
      *

@@ -24,6 +24,8 @@ interface MapLayerInterface extends iHaveCaption, iHaveVisibility
      * @return \Generator
      */
     public function getWidgets() : \Generator;
+
+    public function getShowPopupOnClick(): bool;
     
     public function prepareDataSheetToRead(DataSheetInterface $sheet) : DataSheetInterface;
     
