@@ -87,6 +87,10 @@ class Map extends AbstractWidget implements
     
     private $showScale = true;
 
+    private $doubleClickToZoom = true;
+
+    private $showPopupOnClick = true;
+
     /**
      * @var bool
      */
@@ -286,6 +290,37 @@ class Map extends AbstractWidget implements
         $this->hide_header = $value;
         return $this;
     }
+
+
+
+    /**
+     * 
+     * Show popup on click event with provided information
+     * 
+     * @uxon-property show_popup_on_click
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean $value
+     * @return Map
+     *
+     */
+    protected function setShowPopupOnClick(bool $value) : Map
+    {
+        $this->showPopupOnClick = $value;
+        return $this;
+    }
+
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowPopupOnClick() : bool
+    {
+        return $this->showPopupOnClick;
+    }
+
 
     /**
      * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is fetched from
@@ -634,6 +669,26 @@ class Map extends AbstractWidget implements
     public function getZoom() : ?int
     {
         return $this->zoom;
+    }
+
+    public function getDoubleClickToZoom() : ?bool
+    {
+        return $this->doubleClickToZoom;
+    }
+
+    /**
+     * Enable double click to zoom feature on map
+     * 
+     * @uxon-property double_click_to_zoom
+     * @uxon-type boolean
+     * 
+     * @param boolean $value
+     * @return Map
+     */
+    protected function setDoubleClickToZoom(bool $value) : Map
+    {
+        $this->doubleClickToZoom = $value;
+        return $this;
     }
     
     /**
