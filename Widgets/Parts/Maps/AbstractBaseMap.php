@@ -16,6 +16,8 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
     private $maxZoom = null;
     
     private $minZoom = 0;
+
+    private $doubleClickToZoom = true;
     
     /**
      *
@@ -52,6 +54,32 @@ abstract class AbstractBaseMap extends AbstractMapLayer implements BaseMapInterf
         // TODO
         return $uxon;
     }
+
+    /**
+     * 
+     * @return boolean
+     */
+    public function getDoubleClickToZoom() : ?int
+    {
+        return $this->doubleClickToZoom;
+    }
+
+    /**
+     * Enable double click to zoom feature on map
+     * 
+     * @uxon-property double_click_to_zoom
+     * @uxon-type boolean
+     * @uxon-defaul true
+     * 
+     * @param int $value
+     * @return Map
+     */
+    protected function setDoubleClickToZoom(int $value) : AbstractBaseMap
+    {
+        $this->doubleClickToZoom = $value;
+        return $this;
+    }
+    
     
     /**
      * 
