@@ -27,6 +27,10 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
     
     private $toExpression = null;
     
+    private $duplicateRows = false;
+    
+    private $createRowInEmptyData = true;
+    
     /**
      * 
      * @return string
@@ -95,6 +99,47 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
     }
     
     /**
+     * Set this to true if the variable probably contains an arry of values and
+     * you want every row in the data sheet to be copied and filled with values of tha variable once for each copy.
+     * 
+     * Meaning if you have 4 rows in your data sheet and 2 values in your saved variable the result will have 8 rows,
+     * 4 rows for each value in the variable.
+     *
+     * @uxon-property duplicate_rows
+     * @uxon-type bool
+     * @uxon-default false
+     *
+     * @param string $string
+     * @return VariableToColumnMapping
+     */
+    public function setDuplicateRows(bool $trueOrFalse) : VariableToColumnMapping
+    {
+        $this->duplicateRows = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * Set to FALSE to prevent variables from adding rows to empty data sheets.
+     *
+     * A variable mapping applied to an empty to-sheet will normally add as many rows to an empty
+     * data sheet as values are saved in the variable add a new row with the generated value.
+     * This option can explicitly disable this behavior for a single mapping.
+     * There is also a similar global setting `inherit_empty_data` for the entire mapper.
+     *
+     * @uxon-property create_row_in_empty_data
+     * @uxon-type bool
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return VariableToColumnMapping
+     */
+    public function setCreateRowInEmptyData(bool $value) : VariableToColumnMapping
+    {
+        $this->createRowInEmptyData = $value;
+        return $this;
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
@@ -105,7 +150,7 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
         $varVal = $this->readVariable($varName);
         $toExpr = $this->getToExpression();
         
-        if ($logbook !== null) $logbook->addLine("Variable `{$varName}` -> column `{$toExpr->__toString()}`");
+        $log = "Variable `{$varName}` -> column `{$toExpr->__toString()}`";        
         
         if (! $newCol = $toSheet->getColumns()->getByExpression($toExpr)) {
             $newCol = $toSheet->getColumns()->addFromExpression($toExpr);
@@ -113,11 +158,27 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
         switch (true) {
             // Arrays
             case is_array($varVal):
-                if ($toSheet->isEmpty() === true) {
+                if ($toSheet->isEmpty() === true && $this->createRowInEmptyData === false) {
+                    $log .= " Will not add row to empty data because `create_row_in_empty_data` is `false`.";
+                    break;                    
+                }
+                if ($toSheet->isEmpty() === true && $this->createRowInEmptyData === true) {
+                    $log .= " Adding new rows because the to-sheet was empty.";
                     foreach ($varVal as $rowVal) {
                         $toSheet->addRow([$newCol->getName() => $rowVal]);
-                    } 
+                    }                
+                } elseif ($this->duplicateRows === true) {
+                    $toSheetNew = $toSheet->copy();
+                    $toSheetNew->removeRows();
+                    $log .= " Duplicating rows because because `duplicate_rows` is `true` and values saved in variable is an array.";
+                    foreach ($varVal as $val) {
+                        $toSheetCopy = $toSheet->copy();
+                        $toSheetCopy->getColumns()->getByExpression($toExpr)->setValueOnAllRows($val);
+                        $toSheetNew->addRows($toSheetCopy->getRows());
+                    }
+                    $toSheet->removeRows()->addRows($toSheetNew->getRows());
                 } elseif ($toSheet->countRows() === count($varVal)) {
+                    $log .= " Row counts matches values count. Setting values for rows.";
                     $newCol->setValues($varVal);
                 } else {
                     throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map array variable "' . $varName . '" with ' . count($varVal) . ' values to column "' . $toExpr->__toString() . '" with ' . $toSheet->countRows() . ' rows!');
@@ -126,10 +187,12 @@ class VariableToColumnMapping extends AbstractDataSheetMapping
             // Scalars
             default:
                 $newCol->setValueOnAllRows($varVal);
-                if ($toSheet->isEmpty() === true) {
+                if ($toSheet->isEmpty() === true && $this->createRowInEmptyData === true) {
+                    $log .= " Adding new row because the to-sheet was empty.";
                     $toSheet->addRow([$newCol->getName() => $varVal]);
                 }
         }
+        if ($logbook !== null) $logbook->addLine($log);
         
         return $toSheet;
     }
