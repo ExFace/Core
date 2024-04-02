@@ -908,23 +908,82 @@ JS;
                 $onDrawJs = $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueSetter('JSON.stringify(oFeature.geometry)');
             }
             $drawInitJs = <<<JS
-            oMap.on('draw:edited', function (e) {
-                var layers = e.layers;
-                layers.eachLayer(function (oLayer) {
-                    var oFeature = oLayer.toGeoJSON();
-                    oFeature.properties.data = {};
-                    {$onDrawJs}
-                });
-            });
-            oMap.on('draw:created', function (e) {
+
+            // Callback when a shape is created
+            oMap.on('pm:create', function (e) {
+                // Delete old shape when new shape is created
                 var oParentLayer = {$this->buildJsLayerGetter($layer, 'oMap')}.layer;
                 var oFeature = e.layer.toGeoJSON();
                 oFeature.properties.data = {};
+                oFeature.properties.draggable = true;
                 {$onDrawJs}
+                e.layer.remove();
                 oParentLayer.clearLayers();
                 oParentLayer.addData(oFeature);
             });
 
+
+            // When user presses on drag mode
+            oMap.on("pm:globaldragmodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        // Save the new coords of adjusted shape in model
+                        item.on('pm:dragdisable', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+
+                    // disable drag function for non-editable shapes
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disableLayerDrag) {
+                        item?.pm?.disableLayerDrag();
+                    }
+                })
+            });
+
+            // When user presses on edit mode
+            oMap.on("pm:globaleditmodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    // enable callback for edit action
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        item.on('pm:update', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+                    // disable edit function for non-editable shapes
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disable) {
+                        item?.pm?.disable();
+                    }
+                })
+            });
+
+            // When user presses on rotate mode
+            oMap.on("pm:globalrotatemodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    // enable callback for rotate action
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        item.on('pm:rotatedisable', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disableRotate) {
+                        item?.pm?.disableRotate();
+                    }
+                })
+            });
+            
+            
 JS;
         }
         
@@ -944,6 +1003,7 @@ JS;
                     
                     oLayer.clearLayers();
                     oLayer.addData(aGeoJson);
+                    oLayer.bringToFront();
                     {$autoZoomJs}
                 })();
                 
@@ -968,7 +1028,7 @@ JS;
 
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
-                        
+                    oLayer.bringToBack();
                     {$autoZoomJs}
                 })();
                 
@@ -1000,7 +1060,7 @@ JS;
 
                         oLayer.clearLayers();
                         oLayer.addData(aFeatures);
-                            
+                        oLayer.bringToBack();
                         {$autoZoomJs}
                     ")}
                 })();
@@ -1088,7 +1148,6 @@ JS;
                     });
 
                     layer.on('mousedown', function (e) {
-                        console.log('mouse down', e);
                         // right click
                         const { originalEvent } = e;
                         if (originalEvent.which === 3 || originalEvent.button === 2)
@@ -1121,6 +1180,10 @@ JS;
             
             oLayer._exfRefresh = function() {
                 {$exfRefreshJs}
+                if (oMap?.pm?.disableDraw) {
+                    oMap.pm.disableDraw();
+                    oMap.pm.disableGlobalEditMode();
+                }
             }
             
             oMap.on('exfRefresh', oLayer._exfRefresh);
@@ -1457,7 +1520,9 @@ JS;
             
             if ($this->hasLeafletDraw() === true) {
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.JS') . '"></script>';
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
+                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.CSS') . '"/>';
             }
         }
         
@@ -1725,8 +1790,19 @@ JS;
             remove: false
         }
     };
-    const drawControl = new L.Control.Draw(oDrawOpts);
-    oMap.addControl(drawControl);
+
+    // Adjust which controls on geoman to be shown
+    oMap.pm.addControls({
+        drawMarker: false,
+        drawPolygon: true,
+        editMode: true,
+        drawPolyline: false,
+        removalMode: false,
+        drawText: false,
+        drawCircleMarker: false,
+        rotateMode: true,
+        cutPolygon: false,
+    });
 })($oMapJs);
 JS;
     }
