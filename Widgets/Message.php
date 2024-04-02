@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\DataTypes\MessageTypeDataType;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * A message is a special type of text widget, which is meant to communicate some information to the user.
@@ -14,9 +16,10 @@ use exface\Core\DataTypes\MessageTypeDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Message extends Text
+class Message extends Text implements iHaveIcon
 {
-
+    use iHaveIconTrait;
+    
     private $type = NULL;
 
     /**
