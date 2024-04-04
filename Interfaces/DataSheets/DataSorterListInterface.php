@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\EntityListInterface;
 
 interface DataSorterListInterface extends EntityListInterface

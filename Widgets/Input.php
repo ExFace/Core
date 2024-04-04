@@ -18,7 +18,7 @@ use exface\Core\CommonLogic\UxonObject;
  * table columns and so on.
  * 
  * Inputs will validate the received data against their `value_data_type` and display errors
- * and/or hints if this validation fails.
+ * and/or hints if this validation fails. You can also add custom validation via `invalid_if`.
  * 
  * Generic inputs like `Input` or `InputHidden` can optionally accept multiple values separated
  * by a delimiter. Use `multiple_values_allowed` and `multiple_values_delimiter` to control this.
@@ -30,11 +30,53 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class Input extends Value implements iTakeInput, iHaveDefaultValue
+class Input extends Value implements iTakeInput, iHaveDefaultValue, iCanBeRequired
 {
+    /**
+     * Focus the input
+     *
+     * @uxon-property focus
+     *
+     * @var string
+     */
+    const FUNCTION_FOCUS = 'focus';
+    
+    /**
+     * Empty the input
+     * 
+     * Inputs are emptied automatically on some ocasions:
+     * - when a `hidden_if` hides the widget
+     * - when a `disabled_if` disables the widget - unless the `value` is a link to another widget
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
+    
+    /**
+     * Mark the input as required
+     *
+     * @uxon-property require
+     *
+     * @var string
+     */
+    const FUNCTION_REQUIRE = 'require';
+    
+    /**
+     * Make the input optional (not required)
+     *
+     * @uxon-property unrequire
+     *
+     * @var string
+     */
+    const FUNCTION_UNREQUIRE = 'unrequire';
+    
     private $required = null;
     
     private $requiredIf = null;
+    
+    private $invalidIf = null;
 
     private $readonly = false;
 
@@ -43,6 +85,8 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     private $allowMultipleValues = false;
     
     private $multiValueDelimiter = null;
+    
+    private $disableValidation = false;
 
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
@@ -109,11 +153,13 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * E.g. make an `Input` required if a checkbox is checked:
      *
      * ```json
-     *  "widget_type": "Input"
-     *  "required_if": {
-     *      "value_left": "id_of_checkbox",
-     *      "comparator": "==",
-     *      "value_right": "1"
+     *  {
+     *      "widget_type": "Input",
+     *      "required_if": {
+     *          "value_left": "=id_of_checkbox",
+     *          "comparator": "==",
+     *          "value_right": "1"
+     *      }
      *  }
      *
      * ```
@@ -128,6 +174,53 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function setRequiredIf(UxonObject $uxon): iCanBeRequired
     {
         $this->requiredIf = $uxon;
+        return $this;
+    }   
+    
+    /**
+     *
+     * @return ConditionalProperty|NULL
+     */
+    public function getInvalidIf(): ?ConditionalProperty
+    {
+        if ($this->invalidIf === null) {
+            return null;
+        }
+        
+        if (! ($this->invalidIf instanceof ConditionalProperty)) {
+            $this->invalidIf = new ConditionalProperty($this, 'invalid_if', $this->invalidIf);
+        }
+        
+        return $this->invalidIf;
+    }
+    
+    /**
+     * Sets a condition to make the widget invalid.
+     *
+     * E.g. make an `Input` invalid if its value is less than that of another one:
+     *
+     * ```json
+     *  {
+     *      "widget_type": "Input",
+     *      "invalid_if": {
+     *          "value_left": "=~self",
+     *          "comparator": "<",
+     *          "value_right": "=id_of_other_input"
+     *      }
+     *  }
+     *
+     * ```
+     *
+     * @uxon-property invalid_if
+     * @uxon-type \exface\Core\Widgets\Parts\ConditionalProperty
+     * @uxon-template {"operator": "AND", "conditions": [{"value_left": "", "comparator": "", "value_right": ""}]}
+     *
+     * @param UxonObject $value
+     * @return \exface\Core\Widgets\AbstractWidget
+     */
+    public function setInvalidIf(UxonObject $uxon): Input
+    {
+        $this->invalidIf = $uxon;
         return $this;
     }    
 
@@ -176,9 +269,9 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
-        return parent::setDisabled($trueOrFalseOrNull);
+        return parent::setDisabled($trueOrFalseOrNull, $reason);
     }
 
     /**
@@ -225,8 +318,8 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         if (! $this->getIgnoreDefaultValue() && $default_expr = $this->getDefaultValueExpression()) {
             if ($data_sheet = $this->getPrefillData()) {
                 $value = $default_expr->evaluate($data_sheet, 0);
-            } elseif ($default_expr->isConstant()) {
-                $value = $default_expr->getRawValue();
+            } elseif ($default_expr->isStatic()) {
+                $value = $default_expr->evaluate();
             }
         }
         return $value;
@@ -428,6 +521,67 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function setMultipleValuesDelimiter(string $value) : Input
     {
         $this->multiValueDelimiter = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHiddenIf()
+     */
+    public function getHiddenIf() : ?ConditionalProperty
+    {
+        $condProp = parent::getHiddenIf();
+        if ($condProp !== null && $condProp->getFunctionOnTrue() === null) {
+            $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
+        }
+        return $condProp;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getDisabledIf()
+     */
+    public function getDisabledIf() : ?ConditionalProperty
+    {
+        $condProp = parent::getDisabledIf();
+        if ($condProp !== null && $condProp->getFunctionOnTrue() === null && $this->getCalculationWidgetLink() === null) {
+            $condProp->setFunctionOnTrue(self::FUNCTION_EMPTY);
+        }
+        return $condProp;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getDisableValidation() : bool
+    {
+        return $this->disableValidation;
+    }
+    
+    /**
+     * Set to TRUE to disable data-type specific validation like min/max values etc.
+     * 
+     * Normally a widget will validate input automatically and make sure it fits the constraints defined in the data type
+     * of its attributes. However, you can disable this for a specific widget to allow any input the widget type allows.
+     * 
+     * For example, if you have a date attribute, that must be a future date, you will set `min:0` in the data type
+     * customization. Any input for this attribute will now accept future dates only. However, this will also be true
+     * for filters, where you still need past days too. Filters will turn off this type of validation automatically, but
+     * you can also do it manually if required.
+     * 
+     * @uxon-property disable_validation
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Input
+     */
+    public function setDisableValidation(bool $value) : Input
+    {
+        $this->disableValidation = $value;
         return $this;
     }
 }

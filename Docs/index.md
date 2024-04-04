@@ -1,7 +1,7 @@
 # Documentation
 
 1. [Installation](Installation/index.md)
-2. [Getting started](Getting_started/index.md)
+2. [Walkthrough Tutorial](Tutorials/BookClub_walkthrough/index.md)
 3. [Understanding the meta model](understanding_the_metamodel/index.md)
 4. [Creating your own models](creating_metamodels/index.md)
 5. [Creating UIs](Creating_UIs/index.md)

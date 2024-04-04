@@ -162,6 +162,8 @@ class UiPageTreeFactory extends AbstractStaticFactory
         UiPageTreeNodeInterface $parentNode = null,
         string $description = null,
         string $intro = null,
+        string $icon = null,
+        string $icon_set = null,
         array $pageGroupSelectors = null,
         $appSelectorOrString = null) : UiPageTreeNode
     {
@@ -172,6 +174,12 @@ class UiPageTreeFactory extends AbstractStaticFactory
         }
         if ($intro !== null) {
             $node->setIntro($intro);
+        }
+        if ($icon !== null) {
+            $node->setIcon($icon);
+        }
+        if ($icon_set !== null) {
+            $node->setIconSet($icon_set);
         }
         if ($pageGroupSelectors !== null) {
             foreach ($pageGroupSelectors as $selectorOrString) {

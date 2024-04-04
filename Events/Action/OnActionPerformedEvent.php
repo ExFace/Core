@@ -5,8 +5,9 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Events\TaskEventInterface;
 use exface\Core\Interfaces\Events\ResultEventInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Events\ActionRuntimeEventInterface;
 
 /**
  * Event fired after an action is performed but before the transaction is autocommitted.
@@ -16,11 +17,13 @@ use exface\Core\Interfaces\Events\ResultEventInterface;
  * @author Andrej Kabachnik
  *        
  */
-class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInterface, ResultEventInterface
+class OnActionPerformedEvent extends AbstractActionEvent implements ActionRuntimeEventInterface, ResultEventInterface
 {
     private $result = null;
     
     private $transaction = null;
+    
+    private $inputDataCallback = null;
     
     /**
      * 
@@ -28,11 +31,12 @@ class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInt
      * @param ResultInterface $result
      * @param DataTransactionInterface $transaction
      */
-    public function __construct(ActionInterface $action, ResultInterface $result, DataTransactionInterface $transaction)
+    public function __construct(ActionInterface $action, ResultInterface $result, DataTransactionInterface $transaction, callable $inputDataResolver)
     {
         parent::__construct($action);
         $this->result = $result;
         $this->transaction = $transaction;
+        $this->inputDataCallback = $inputDataResolver;
     }
 
     /**
@@ -62,6 +66,17 @@ class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInt
     public function getTransaction() : DataTransactionInterface
     {
         return $this->transaction;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\ActionRuntimeEventInterface::getActionInputData()
+     */
+    public function getActionInputData() : DataSheetInterface
+    {
+        $callback = $this->inputDataCallback;
+        return $callback();
     }
 
     /**

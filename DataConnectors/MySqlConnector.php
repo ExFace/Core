@@ -8,6 +8,9 @@ use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\MySqlModelBuilder;
+use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 
 /**
  * Data source connector for MySQL databases
@@ -16,12 +19,23 @@ use exface\Core\ModelBuilders\MySqlModelBuilder;
  */
 class MySqlConnector extends AbstractSqlConnector
 {
+    const ERROR_CODE_GONE_AWAY = 2006;
+    
+    const ERRRO_CODE_CONTRAINT = 1062;
 
     private $dbase = null;
 
     private $connection_method = 'SET CHARACTER SET';
 
     private $use_persistant_connection = false;
+    
+    private $affectedRows = null;
+    
+    private $socket = null;
+    
+    private $multiqueryResults = null;
+    
+    private $reconnects = 0;
 
     /**
      *
@@ -35,14 +49,11 @@ class MySqlConnector extends AbstractSqlConnector
         $conn = null;
         
         $this->enableErrorExceptions();
-        
+        $e = null;
         while (! $conn && $safe_count < 3) {
             try {
-                if ($this->getUsePersistantConnection()) {
-                    $conn = mysqli_pconnect($this->getHost(), $this->getUser(), $this->getPassword(), $this->getDbase());
-                } else {
-                    $conn = mysqli_connect($this->getHost(), $this->getUser(), $this->getPassword(), $this->getDbase());
-                }
+                $host = ($this->getUsePersistantConnection() ? 'p:' : '') . $this->getHost();
+                $conn = mysqli_connect($host, $this->getUser(), $this->getPassword(), $this->getDbase(), $this->getPort(), $this->getSocket());
             } catch (\mysqli_sql_exception $e) {
                 // Do nothing, try again later
             }
@@ -85,6 +96,7 @@ class MySqlConnector extends AbstractSqlConnector
         try {
             if ($conn = $this->getCurrentConnection()) {
                 mysqli_close($conn);
+                $this->resetCurrentConnection();
             }
         } catch (\Throwable $e) {
             // ignore errors on close
@@ -100,22 +112,74 @@ class MySqlConnector extends AbstractSqlConnector
      */
     protected function performQuerySql(SqlDataQuery $query)
     {
+        $conn = $this->getCurrentConnection();
+        $this->affectedRows = null;
         try {
-            $result = mysqli_query($this->getCurrentConnection(), $query->getSql());
+            if ($query->isMultipleStatements()) {
+                $this->multiqueryResults = [];
+                if (mysqli_multi_query($conn, $query->getSql())) {
+                    $idx = 0;
+                    do {
+                        $idx++;
+                        $this->multiqueryResults[$idx] = [];
+                        $this->affectedRows += mysqli_affected_rows($conn);
+                        $result = mysqli_store_result($conn);
+                        if ($result) {
+                            $this->multiqueryResults[$idx] = mysqli_fetch_assoc($result);
+                        } elseif (mysqli_errno($conn)) {
+                            throw $this->createQueryError($query, 'Error in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
+                        }
+                        if (mysqli_more_results($conn)) {
+                            // Free the memory of the current result if it is not emtpy
+                            // Note, an empty result here might come for a query that does not
+                            // do anything and does not neccessarily indicate an error!
+                            if ($result) {
+                                mysqli_free_result($result);
+                            }
+                            
+                            if(! mysqli_next_result($conn)) {
+                                throw $this->createQueryError($query, 'Failed to get next SQL result in query ' . $idx . ' of a multi-query statement. ' . $this->getLastError(), mysqli_errno($conn));
+                            }
+                        } else {
+                            break;
+                        }
+                    } while (true);
+                }
+            } else {
+                $result = mysqli_query($conn, $query->getSql());
+            }
             if ($result instanceof \mysqli_result) {
                 $query->setResultResource($result);
             }
         } catch (\mysqli_sql_exception $e) {
-            throw new DataQueryFailedError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), $this->getErrorCode($e), $e);
+            if ($e->getCode() == self::ERROR_CODE_GONE_AWAY && $this->reconnects === 0) {
+                $this->disconnect();
+                $this->connect();
+                $this->reconnects++;
+                return $this->performQuerySql($query);
+            }
+            throw $this->createQueryError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), null, $e);
         }
         return $query;
     }
     
-    protected function getErrorCode(\Exception $sqlException) : string
+    /**
+     * 
+     * @param DataQueryInterface $query
+     * @param string $message
+     * @param string $sqlErrorNo
+     * @param \Exception $sqlException
+     * @return DataQueryExceptionInterface
+     */
+    protected function createQueryError(DataQueryInterface $query, string $message, string $sqlErrorNo = null, \Exception $sqlException = null) : DataQueryExceptionInterface
     {
-        switch ($sqlException->getCode()) {
-            case 1062: return '73II64M';
-            default: return '6T2T2UI';
+        $sqlErrorNo = $sqlErrorNo ?? $sqlException->getCode() ?? null;
+        
+        switch ($sqlErrorNo) {
+            case self::ERRRO_CODE_CONTRAINT:
+                return new DataQueryConstraintError($query, $message, '73II64M', $sqlException);
+            default:
+                return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);
         }
     }
 
@@ -132,16 +196,31 @@ class MySqlConnector extends AbstractSqlConnector
      */
     public function makeArray(SqlDataQuery $query)
     {
-        $rs = $query->getResultResource();
-        if (! ($rs instanceof \mysqli_result))
-            return array();
-        $array = array();
-        while ($row = mysqli_fetch_assoc($rs)) {
-            $array[] = $row;
+        $array = [];
+        if ($query->isMultipleStatements() && ! empty($this->multiqueryResults)) {
+            // For multi-query results return the last non-empty result
+            foreach (array_reverse($this->multiqueryResults) as $rows) {
+                if (! empty($rows)) {
+                    return $rows;
+                }
+            }
+        } else {
+            $rs = $query->getResultResource();
+            if (! ($rs instanceof \mysqli_result)) {
+                return [];
+            }
+            while ($row = mysqli_fetch_assoc($rs)) {
+                $array[] = $row;
+            }
         }
         return $array;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getInsertId()
+     */
     public function getInsertId(SqlDataQuery $query)
     {
         try {
@@ -151,8 +230,17 @@ class MySqlConnector extends AbstractSqlConnector
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getAffectedRowsCount()
+     */
     public function getAffectedRowsCount(SqlDataQuery $query)
     {
+        if ($this->affectedRows !== null) {
+            return $this->affectedRows;
+        }
+        
         try {
             $cnt = mysqli_affected_rows($this->getCurrentConnection());
             // mysqli_affected_rows() can return -1 in case of an error accoring to the docs. It seems,
@@ -172,6 +260,11 @@ class MySqlConnector extends AbstractSqlConnector
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionStart()
+     */
     public function transactionStart()
     {
         if (! $this->transactionIsStarted()) {
@@ -190,6 +283,11 @@ class MySqlConnector extends AbstractSqlConnector
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionCommit()
+     */
     public function transactionCommit()
     {
         // Do nothing if the autocommit option is set for this connection
@@ -198,13 +296,19 @@ class MySqlConnector extends AbstractSqlConnector
         }
         
         try {
-            return mysqli_commit($this->getCurrentConnection());
+            mysqli_commit($this->getCurrentConnection());
+            $this->setTransactionStarted(false);
         } catch (\mysqli_sql_exception $e) {
             throw new DataConnectionCommitFailedError($this, "Commit failed: " . $e->getMessage(), '6T2T2O9', $e);
         }
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionRollback()
+     */
     public function transactionRollback()
     {
         // Throw error if trying to rollback a transaction with autocommit enabled
@@ -213,13 +317,19 @@ class MySqlConnector extends AbstractSqlConnector
         }
         
         try {
-            return mysqli_rollback($this->getCurrentConnection());
+            mysqli_rollback($this->getCurrentConnection());
+            $this->setTransactionStarted(false);
         } catch (\Throwable $e) {
             throw new DataConnectionRollbackFailedError($this, "Rollback failed: " . $e->getMessage(), '6T2T2S1', $e);
         }
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::freeResult()
+     */
     public function freeResult(SqlDataQuery $query)
     {
         if ($query->getResultResource() instanceof \mysqli_result) {
@@ -347,6 +457,30 @@ class MySqlConnector extends AbstractSqlConnector
         $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getSocket() : ?string
+    {
+        return $this->socket;
+    }
+    
+    /**
+     * Specifies the socket or named pipe that should be used.
+     * 
+     * @uxon-property socket
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return MySqlConnector
+     */
+    public function setSocket(string $value) : MySqlConnector
+    {
+        $this->socket = $value;
+        return $this;
+    }
 
     /**
      *
@@ -359,6 +493,9 @@ class MySqlConnector extends AbstractSqlConnector
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('dbase', $this->getDbase());
         $uxon->setProperty('use_persistant_connection', $this->getUsePersistantConnection());
+        if ($this->socket !== null) {
+            $uxon->setProperty('socket', $this->socket);
+        }
         return $uxon;
     }
 
@@ -374,12 +511,12 @@ class MySqlConnector extends AbstractSqlConnector
      *
      * @see \exface\Core\DataConnectors\AbstractSqlConnector::setCurrentConnection()
      */
-    protected function setCurrentConnection($mysqli_connection_instance)
+    protected function setCurrentConnection($mysqli_connection_instance) : AbstractSqlConnector
     {
         if (! ($mysqli_connection_instance instanceof \mysqli)) {
             throw new DataConnectionFailedError($this, 'Connection to MySQL failed: instance of \mysqli expected, "' . gettype($mysqli_connection_instance) . '" given instead!');
         }
-        parent::setCurrentConnection($mysqli_connection_instance);
+        return parent::setCurrentConnection($mysqli_connection_instance);
     }
 
     /**

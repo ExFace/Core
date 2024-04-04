@@ -17,6 +17,13 @@ interface FacadeInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @param string|FacadeSelectorInterface $aliasOrSelector            
      */
     public function is($aliasOrSelector) : bool;
+    
+    /**
+     * 
+     * @param string|FacadeSelectorInterface $selectorOrString
+     * @return bool
+     */
+    public function isExactly($selectorOrString) : bool;
 
     /**
      * Returns the app, that contains the facade

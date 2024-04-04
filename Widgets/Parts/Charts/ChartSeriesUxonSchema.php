@@ -25,7 +25,7 @@ class ChartSeriesUxonSchema extends UxonSchema
      */
     public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : string
     {
-        $name = $rootPrototypeClass;
+        $name = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'type') === 0) {

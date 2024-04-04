@@ -19,14 +19,7 @@ use exface\Core\DataTypes\TimeDataType;
  * }
  * ```
  * 
- * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
- * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
- * to be added to the facade:
- * 
- * ```
- *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
- *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
- * ```
+ * NOTE: This formatter requires the exfTools JS library to be available!
  * 
  * @method TimeDataType getDataType()
  * 
@@ -63,7 +56,8 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, '{$this->getFormat()}')), \"{$this->getFormat()}\")";
+        $jsFormat = $this->escapeFormatString($this->getFormat());
+        return "exfTools.time.format((! {$jsInput} ? {$jsInput} : exfTools.time.parse({$jsInput}, {$jsFormat})), {$jsFormat})";
     }
     
      /**
@@ -91,7 +85,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "exfTools.time.formatObject({$jsDateObject}, \"{$this->getFormat()}\")";
+        return "exfTools.time.formatObject({$jsDateObject}, {$this->escapeFormatString($this->getFormat())})";
     }
     
     /**
@@ -104,7 +98,7 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "function(){var sTime = exfTools.time.parse({$jsString}, '{$this->getFormat()}'); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
+        return "function(){var sTime = exfTools.time.parse({$jsString}, {$this->escapeFormatString($this->getFormat())}); return sTime ? new Date('1970-01-01 ' + sTime) : null}()";
     }
         
     /**
@@ -116,7 +110,24 @@ class JsTimeFormatter extends JsDateFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "(exfTools.time.parse({$jsInput}, '{$this->getFormat()}') || '')";
+        return "(exfTools.time.parse({$jsInput}, {$this->escapeFormatString($this->getFormat())}) || '')";
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Formatters\JsDateFormatter::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        return <<<JS
+function() {
+                var mVal = {$jsValue};
+                return mVal === null || mVal === '' || mVal === undefined || exfTools.time.parse(mVal, {$formatQuoted}) !== null;
+            }()
+            
+JS;
     }
     
     /**
@@ -163,5 +174,10 @@ class JsTimeFormatter extends JsDateFormatter
     {
         $this->format = $formatString;
         return $this;
+    }
+    
+    protected function escapeFormatString(string $format) : string
+    {
+        return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

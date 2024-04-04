@@ -15,6 +15,8 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * A query builder for Oracle SQL. 
@@ -30,6 +32,7 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
  */
 class OracleSqlBuilder extends AbstractSqlBuilder
 {
+    const MAX_BUILD_RUNS = 5;
     
     /**
      * 
@@ -38,9 +41,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
         parent::__construct($selector);
-        $reservedWords = $this->getReservedWords();
-        $reservedWords[] = 'COMMENT';
-        $this->setReservedWords($reservedWords);
+        $this->setReservedWords(['ACCESS', 'ADD', 'ALL', 'ALTER', 'AND', 'ANY', 'AS', 'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CHAR', 'CHECK', 'CLUSTER', 'COLUMN', 'COLUMN_VALUE', 'COMMENT', 'COMPRESS', 'CONNECT', 'CREATE', 'CURRENT', 'DATE', 'DECIMAL', 'DEFAULT', 'DELETE', 'DESC', 'DISTINCT', 'DROP', 'ELSE', 'EXCLUSIVE', 'EXISTS', 'FILE', 'FLOAT', 'FOR', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IDENTIFIED', 'IMMEDIATE', 'IN', 'INCREMENT', 'INDEX', 'INITIAL', 'INSERT', 'INTEGER', 'INTERSECT', 'INTO', 'IS', 'LEVEL', 'LIKE', 'LOCK', 'LONG', 'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY', 'NESTED_TABLE_ID (See Note 1 at the end of this list)', 'NOAUDIT', 'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL', 'NUMBER', 'OF', 'OFFLINE', 'ON', 'ONLINE', 'OPTION', 'OR', 'ORDER', 'PCTFREE', 'PRIOR', 'PUBLIC', 'RAW', 'RENAME', 'RESOURCE', 'REVOKE', 'ROW', 'ROWID', 'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SIZE', 'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE', 'THEN', 'TO', 'TRIGGER', 'UID', 'UNION', 'UNIQUE', 'UPDATE', 'USER', 'VALIDATE', 'VALUES', 'VARCHAR', 'VARCHAR2', 'VIEW', 'WHENEVER', 'WHERE', 'WITH']);
     }
     
     /**
@@ -63,8 +64,10 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return 28;
     }
     
-    public function buildSqlQuerySelect()
+    public function buildSqlQuerySelect(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $where = '';
         $having = '';
         $group_by = '';
@@ -105,7 +108,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             
             // Object data source property SQL_SELECT_WHERE -> WHERE
-            if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+            if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
                 $where = $this->appendCustomWhere($where, $custom_where);
             }
             
@@ -188,7 +191,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // Check if we need some UIDs from the core tables to join the enrichments afterwards
                 if ($first_rel = $qpart->getFirstRelation()) {
                     if ($first_rel->isForwardRelation()) {
-                        $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
+                        $first_rel_qpart = $this->addAttribute($first_rel->getAlias())->excludeFromResult(true);
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                         $core_selects[$this->buildSqlDataAddress($first_rel_qpart->getAttribute())] = $this->buildSqlSelect($first_rel_qpart, null, null, $this->buildSqlDataAddress($first_rel_qpart->getAttribute()), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
@@ -228,13 +231,17 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $core_query = "
 								SELECT " . $distinct . $core_select . $select_comment . " FROM " . $core_from . $core_join . $where . $group_by . $having . $order_by;
             
+            $limitRows = $this->getLimit();
             // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
+            if ($this->isSubquery() === false) {
+                $limitRows += 1;
+            }
             $query = "\n SELECT " . $distinct . $enrichment_select . $select_comment . " FROM
 				(SELECT *
 					FROM
 						(SELECT exftbl.*, ROWNUM EXFRN
 							FROM (" . $core_query . ") exftbl
-		         			WHERE ROWNUM <= " . ($this->getLimit()+ 1 + $this->getOffset()) . "
+		         			WHERE ROWNUM <= " . ($limitRows + $this->getOffset()) . "
 						)
          			WHERE EXFRN > " . $this->getOffset() . "
          		) exfcoreq " . $enrichment_join . $enrichment_order_by;
@@ -253,7 +260,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $joins = $this->buildSqlJoins($this->getFilters());
             
             // Object data source property SQL_SELECT_WHERE -> WHERE
-            if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+            if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
                 $where = $this->appendCustomWhere($where, $custom_where);
             }
             $where = $where ? "\n WHERE " . $where : '';
@@ -278,7 +285,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 elseif (! $group_by || $qpart->getAggregator() || $this->isAggregatedBy($qpart)) {
                     $select .= ', ' . $this->buildSqlSelect($qpart);
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
-                } elseif ($this->isObjectGroupSafe($qpartAttr->getObject()) === true) {
+                } elseif ($this->isObjectGroupSafe($qpartAttr->getObject(), null, null, $qpartAttr->getRelationPath()) === true) {
                     $rels = $qpart->getUsedRelations();
                     $first_rel = false;
                     if (! empty($rels)) {
@@ -316,11 +323,26 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 $query = "\n SELECT " . $distinct . $select . $select_comment . " FROM " . $from . $join . $where . $group_by . $having . $order_by;
             }
         }
+        
+        // See if changes to the query occur while the query was built (e.g. query parts are
+        // added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than X times to avoid infinite recursion.
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQuerySelect($buildRun+1);
+        }
+        
         return $query;
     }
 
-    public function buildSqlQueryTotals()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQueryTotals()
+     */
+    public function buildSqlQueryTotals(int $buildRun = 0)
     {
+        $this->setDirty(false);
+        
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
@@ -343,7 +365,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($this->getFilters()));
         
         // Object data source property SQL_SELECT_WHERE -> WHERE
-        if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
+        if ($custom_where = $this->getMainObject()->getDataAddressProperty(static::DAP_SQL_SELECT_WHERE)) {
             $totals_where = $this->appendCustomWhere($totals_where, $custom_where);
         }
         
@@ -372,6 +394,13 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $totals_query = "\n SELECT COUNT(*) AS EXFCNT FROM " . $totals_from . $totals_join . $totals_where . $totals_group_by . $totals_having;
         }
         
+        // See if changes to the query occur while the query was built (e.g. query parts are
+        // added for placeholders, etc.) and rerun the query builder if required.
+        // However, do not run it more than X times to avoid infinite recursion.
+        if ($this->isDirty() && $buildRun < self::MAX_BUILD_RUNS) {
+            return $this->buildSqlQueryTotals($buildRun+1);
+        }
+        
         return $totals_query;
     }
 
@@ -388,10 +417,10 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      * @param \exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart            
      * @return string
      */
-    protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart, $select_from = null)
+    protected function buildSqlOrderBy(QueryPartSorter $qpart, $select_from = null) : string
     {
-        if ($qpart->getDataAddressProperty("SQL_ORDER_BY")) {
-            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty("SQL_ORDER_BY");
+        if ($qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY)) {
+            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY);
         } else {
             $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
@@ -412,7 +441,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         
         switch ($aggregator->getFunction()->getValue()) {
             case AggregatorFunctionsDataType::LIST_ALL:
-                $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ? $function_arguments[0] : "', '") . ") WITHIN GROUP (order by " . $sql . ")";
+                $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ?? $this->buildSqlGroupByListDelimiter($qpart)) . ") WITHIN GROUP (order by " . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
@@ -441,29 +470,31 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      * {@inheritDoc}
      * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
      */
-    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, array $dataAddressProps = [], bool $parse = true)
     {
-        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
-            $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
-        } else {
-            $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
+        switch (true) {
+            case $data_type instanceof DateTimeDataType:
+            case $data_type instanceof TimestampDataType:
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
+                        $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                    }
+                    $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
+                }
+                break;
+            case $data_type instanceof DateDataType:
+                if ($data_type::isValueEmpty($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd')";
+                }
+                break;
+            default: 
+                $value = parent::prepareInputValue($value, $data_type, $dataAddressProps, $parse);
         }
         return $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
-     */
-    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
-    {
-        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
-            $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";
-        } else {
-            $output = parent::prepareWhereValue($value, $data_type);
-        }
-        return $output;
     }
 
     /**
@@ -483,8 +514,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $this->isWritable())
+        if (! $this->isWritable()) {
             return new DataQueryResultData([], 0);
+        }
         
         $values = array();
         $columns = array();
@@ -498,18 +530,18 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $qpartAddress = $this->buildSqlDataAddress($qpart);
-            if (! $qpart->getDataAddressProperty('SQL_INSERT') && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
+            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID
             if ($attr->isUidForObject()) {
                 $uid_qpart = $qpart;
             }
-            $column = $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') ? $qpart->getDataAddressProperty('SQL_INSERT_DATA_ADDRESS') : $qpartAddress;
+            $column = $qpart->getDataAddressProperty(static::DAP_SQL_INSERT_DATA_ADDRESS) ? $qpart->getDataAddressProperty(static::DAP_SQL_INSERT_DATA_ADDRESS) : $qpartAddress;
             $columns[$column] = $column;
-            $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
+            $custom_insert_sql = $qpart->getDataAddressProperty(static::DAP_SQL_INSERT);
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperties()->toArray());
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     $values[$row][$column] = str_replace(array(
@@ -530,7 +562,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             // This is important because the UID will mostly not be marked as a mandatory attribute in order to preserve the
             // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
             // show up as a value here. Still that value is required!
-            if ($uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_INSERT')) {
+            if ($uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty(static::DAP_SQL_INSERT)) {
                 $last_uid_sql_var = '@last_uid';
                 $columns[] = $this->buildSqlDataAddress($this->getMainObject()->getUidAttribute());
                 foreach ($values as $nr => $row) {
@@ -555,7 +587,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
         if (count($values) > 1) {
             foreach ($values as $nr => $vals) {
-                $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
+                $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
                 $query = $data_connection->runSql($sql);
                 
                 // Now get the primary key of the last insert.
@@ -576,7 +608,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
             }
         } else {
-            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject()) . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
+            $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($this->getMainObject(), static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode('), (', $values) . ')';
             $query = $data_connection->runSql($sql);
             // Now get the primary key of the last insert.
             if ($last_uid_sql_var) {

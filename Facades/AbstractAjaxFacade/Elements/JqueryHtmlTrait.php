@@ -15,19 +15,23 @@ trait JqueryHtmlTrait {
     public function buildHtml()
     {
         $output = '';
-        if ($this->getWidget()->getCss()) {
-            $output .= '<style>' . $this->getWidget()->getCss() . '</style>';
+        $widget = $this->getWidget();
+        if ($widget->getCss()) {
+            $output .= '<style>' . $widget->getCss() . '</style>';
         }
         if ($caption = $this->getCaption()) {
             $output .= '<label for="' . $this->getId() . '">' . $caption . '</label>';
         }
         
         $style = '';
-        if ($this->getWidget()->getMargins()) {
+        if ($widget->getMargins()) {
             $style .= 'margin: 10px;';
         }
+        if ($widget->getInline() === true) {
+            $style .= 'display: inline-block;';
+        }
         
-        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $this->getWidget()->getHtml() . '</div>';
+        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $widget->getHtml() . '</div>';
         return $this->buildHtmlGridItemWrapper($output);
     }
     

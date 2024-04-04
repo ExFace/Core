@@ -36,7 +36,7 @@ class UnderflowException extends \UnderflowException implements ErrorExceptionIn
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

@@ -17,8 +17,10 @@ use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 /**
  * Policy for access to facades.
@@ -98,31 +100,23 @@ class FacadeAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
             /* @var $selector \exface\Core\CommonLogic\Selectors\FacadeSelector */
             if (($selector = $this->facadeSelector) !== null) {
-                switch(true) {
-                    case $selector->isFilepath():
-                        $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
-                        $facadeClassPath = FilePathDataType::normalize(get_class($facade));
-                        $applied =  $selectorClassPath === $facadeClassPath;
-                        break;
-                    case $selector->isClassname():
-                        $applied = trim(get_class($facade), "\\") === trim($selector->toString(), "\\");
-                        break;
-                    case $selector->isAlias():
-                        $applied = $facade->getAliasWithNamespace() === $selector->toString();
-                        break;                    
-                }
+                $applied = $facade->isExactly($selector);
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $facade->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
+            $facade->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission for policy "' . $this->getName() . '" due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

@@ -41,9 +41,15 @@ class PhpFilePathDataType extends FilePathDataType
             throw new \InvalidArgumentException('Cannot get class from file "' . $absolute_path . '" - file not found!');
             return null;
         }
+        
         $fp = fopen($absolute_path, 'r');
         $class = $namespace = $buffer = '';
         $i = 0;
+        
+        // In PHP8 the namespace is not a separate token type T_NAME_QUALIFIED, so we need to use
+        // it if it is defined or fall back to T_STRING for prior PHP versions
+        $T_NAME_QUALIFIED = (defined('T_NAME_QUALIFIED') ? constant('T_NAME_QUALIFIED') : T_STRING);
+        
         while (! $class) {
             if (feof($fp)) {
                 break;
@@ -65,7 +71,7 @@ class PhpFilePathDataType extends FilePathDataType
             for (; $i < count($tokens); $i ++) {
                 if ($tokens[$i][0] === T_NAMESPACE) {
                     for ($j = $i + 1; $j < count($tokens); $j ++) {
-                        if ($tokens[$j][0] === T_STRING) {
+                        if ($tokens[$j][0] === $T_NAME_QUALIFIED) {
                             $namespace .= '\\' . $tokens[$j][1];
                         } else if ($tokens[$j] === '{' || $tokens[$j] === ';') {
                             break;

@@ -18,6 +18,8 @@ use exface\Core\Factories\ExpressionFactory;
  */
 trait EditableTableTrait
 {    
+    use iCanEditDataTrait;
+    
     private $required = false;
     
     private $readOnly = false;

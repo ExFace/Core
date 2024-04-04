@@ -8,7 +8,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
@@ -40,6 +39,25 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Events\Action\OnActionInputValidatedEvent;
+use exface\Core\Events\Action\OnActionFailedEvent;
+use exface\Core\Interfaces\Actions\ActionEffectInterface;
+use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\Actions\ActionEffect;
+use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Factories\ActionEffectFactory;
+use exface\Core\CommonLogic\Tasks\ResultData;
+use exface\Core\CommonLogic\Actions\ActionDataCheckList;
+use exface\Core\Interfaces\Actions\ActionDataCheckListInterface;
+use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
+use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\Widgets\DebugMessage;
+use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -52,10 +70,12 @@ use exface\Core\Events\Action\OnActionInputValidatedEvent;
  *        
  */
 abstract class AbstractAction implements ActionInterface
-{
+{    
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
+	
+	use iHaveIconTrait;
 
     private $id = null;
 
@@ -81,9 +101,15 @@ abstract class AbstractAction implements ActionInterface
      */
     private $input_data_preset = null;
     
+    private $input_data_uxon = null;
+    
     private $input_mappers = [];
     
     private $input_mappers_used = [];
+    
+    private $output_mappers = [];
+    
+    private $input_checks = null;
 
     /**
      * @var string
@@ -117,6 +143,12 @@ abstract class AbstractAction implements ActionInterface
     private $result_object_alias = null;
     
     private $triggerWidgetRequired = null;
+    
+    private $customEffects = [];
+    
+    private $logBooks = [];
+    
+    private $offlineStrategy = null;
 
     /**
      *
@@ -131,6 +163,7 @@ abstract class AbstractAction implements ActionInterface
         if ($trigger_widget) {
             $this->setWidgetDefinedIn($trigger_widget);
         }
+        $this->input_checks = new ActionDataCheckList($this->getWorkbench(), $this);
         $this->init();
     }
 
@@ -198,7 +231,6 @@ abstract class AbstractAction implements ActionInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            //$this->id = md5($this->exportUxonObject()->toJson());
             $this->id = uniqid();
         }
         return $this->id;
@@ -225,47 +257,17 @@ abstract class AbstractAction implements ActionInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
+        // Set the object first as other properties might rely on it (e.g. the input_mappers)
+        if ($uxon->hasProperty('object_alias')) {
+            $this->setObjectAlias($uxon->getProperty('object_alias'));
+        }
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault($uxon, array(
-            'alias'
-        ));
-    }
-
-    public function hasProperty($name)
-    {
-        return method_exists($this, 'set' . StringDataType::convertCaseUnderscoreToPascal($name));
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIcon()
-     */
-    public function getIcon()
-    {
-        return $this->icon;
-    }
-
-    /**
-     * Sets the icon to be used for this action.
-     * 
-     * This icon will be used on buttons and menu items with this action unless they have
-     * their own icons defined.
-     * 
-     * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
-     *
-     * @uxon-property icon
-     * @uxon-type icon
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIcon()
-     */
-    public function setIcon($value)
-    {
-        $this->icon = $value;
+        return $this->importUxonObjectDefault($uxon, [
+            'alias',
+            'object_alias'
+        ]);
     }
 
     /**
@@ -305,10 +307,38 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
+            return $this->getInputDataSheet($task);
+        }));
         
         // Call the action's logic
-        $result = $this->perform($task, $transaction);
+        try {
+            $result = $this->perform($task, $transaction);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnActionFailedEvent($this, $task, $e, $transaction, function() use ($task) {
+                return $this->getInputDataSheet($task);
+            }));
+            $this->getWorkbench()->getLogger()->warning('Action "' . $this->getAliasWithNamespace() . '" failed', [], $this->getLogBook($task));
+            throw $e;
+        }
+        
+        $logbook = $this->getLogBook($task);
+        $logbook->addSection('Output data');
+        $logbook->setIndentActive(1);
+        if ($result instanceof ResultData) {
+            $resultData = $result->getData();
+            $logbook->addDataSheet('Result data', $resultData);
+            $logbook->addLine("Action result contains data with {$resultData->countRows()} rows of **{$resultData->getMetaObject()->__toString()}**");
+            if ($this->hasOutputMappers() && $mapper = $this->getOutputMapper($result->getData()->getMetaObject())) {
+                $result->setData($mapper->map($result->getData(), null, $logbook));
+                $logbook->addDataSheet('Output data (mapped)', $result->getData());
+            } else {
+                $logbook->addLine('No output mapper found for object ' . $result->getData()->getMetaObject()->__toString());
+            }
+        } else {
+            $logbook->addLine('Result has no data.');
+        }
+        $logbook->setIndentActive(0);
         
         // Do finalizing stuff like dispatching the OnAfterActionEvent, autocommit, etc.
         $this->performAfter($result, $transaction);
@@ -354,6 +384,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputDataPreset(DataSheetInterface $data_sheet) : ActionInterface
     {
+        $this->input_data_uxon = null;
         $this->input_data_preset = $data_sheet;
         return $this;
     }
@@ -365,6 +396,10 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getInputDataPreset() : DataSheetInterface
     {        
+        if ($this->input_data_preset === null && $this->input_data_uxon !== null) {
+            // Don't pass $this->getMetaObject() to the factory here as it may in-turn call getInputDataPreset()!
+            $this->input_data_preset = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->input_data_uxon);
+        }
         return $this->input_data_preset;
     }
     
@@ -375,14 +410,17 @@ abstract class AbstractAction implements ActionInterface
      */
     public function hasInputDataPreset() : bool
     {
-        return is_null($this->input_data_preset) ? false : true;
+        return $this->input_data_uxon !== null || $this->input_data_preset !== null;
     }
     
     /**
-     * Sets preset input data for the action.
+     * A static preset for the input data of the action.
      * 
-     * The preset will be merged with the task input data when the action is performed
-     * or used as input data if the task will not provide any data.
+     * This can be used to give the action input data even if there is no input widget
+     * or that widget does not provide any data.
+     * 
+     * If regular input data is present too, the preset will be merged with the task 
+     * data when the action is performed.
      * 
      * @uxon-property input_data_sheet
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
@@ -392,7 +430,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputDataSheet(UxonObject $uxon) : ActionInterface
     {
-        return $this->setInputDataPreset(DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject()));
+        $this->input_data_preset = null;
+        $this->input_data_uxon = $uxon;
+        return $this;
     }
 
     /**
@@ -425,7 +465,11 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function performAfter(ResultInterface $result, DataTransactionInterface $transaction) : ActionInterface
     {
-        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction, function() use ($result) {
+            return $this->getInputDataSheet($result->getTask());
+        }));
+        
+        $this->getWorkbench()->getLogger()->notice('Action "' . $this->getAliasWithNamespace() . '" performed', [], $this->getLogBook($result->getTask()));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -434,9 +478,9 @@ abstract class AbstractAction implements ActionInterface
         // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on and the action COULD have modified data
-        // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
-        // it within the action (some data source simply do give relieable feedback).
-        if ($this->getAutocommit() && ($this instanceof iModifyData)) {
+        // We cannot rely on $result->isDataModified() at this point as it is not allways possible 
+        // to determine it within the action (some data source simply do not give relieable feedback).
+        if ($this->getAutocommit() && (($this instanceof iModifyData) || $result->isDataModified())) {
             $transaction->commit();
         }
         
@@ -608,20 +652,36 @@ abstract class AbstractAction implements ActionInterface
     {
         $uxon = new UxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        if ($this->getWidgetDefinedIn()) {
-            $uxon->setProperty('trigger_widget', WidgetLinkFactory::createForWidget($this->getWidgetDefinedIn())->exportUxonObject());
-        }
+        /*if ($this->isDefinedInWidget()) {
+            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->getId());
+        }*/
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
         }
         $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
-        if (empty($this->getInputMappers())){
-            $input_mappers = new UxonObject();
-            foreach ($this->getInputMappers() as $nr => $mapper){
-                $input_mappers->setProperty($nr, $mapper->exportUxonObject());
+        if (! empty($this->getInputMappers())){
+            $inner_uxon = new UxonObject();
+            foreach ($this->getInputMappers() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
             }
-            $uxon->setProperty('input_mappers', $input_mappers);
+            $uxon->setProperty('input_mappers', $inner_uxon);
+        }
+        
+        if (! empty($this->getOutputMappers())){
+            $inner_uxon = new UxonObject();
+            foreach ($this->getOutputMappers() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
+            }
+            $uxon->setProperty('output_mappers', $inner_uxon);
+        }
+        
+        if (! empty($this->getInputChecks())){
+            $inner_uxon = new UxonObject();
+            foreach ($this->getInputChecks() as $nr => $check){
+                $inner_uxon->setProperty($nr, $check->exportUxonObject());
+            }
+            $uxon->setProperty('input_checks', $inner_uxon);
         }
         
         return $uxon;
@@ -725,10 +785,11 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         $copy->input_mappers_used = [];
+        $copy->logBooks = [];
         return $copy;
     }
     
@@ -768,7 +829,7 @@ abstract class AbstractAction implements ActionInterface
                 case $selector->isFilepath():
                     $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
                     $actionClassPath = FilePathDataType::normalize(get_class($this));
-                    return $selectorClassPath === $actionClassPath;
+                    return strcasecmp($selectorClassPath, $actionClassPath) === 0;
                 case $selector->isClassname():
                     return ltrim(get_class($this), "\\") === ltrim($selector->toString(), "\\");
                 case $selector->isAlias():
@@ -787,26 +848,28 @@ abstract class AbstractAction implements ActionInterface
      */
     public function is($actionOrSelectorOrString) : bool
     {
-        if ($actionOrSelectorOrString instanceof ActionInterface){
-            $class = get_class($actionOrSelectorOrString);
-            return $this instanceof $class;
-        } elseif (is_string($actionOrSelectorOrString)){
-            if ($this->isExactly($actionOrSelectorOrString)) {
-                return true;
-            }
-            if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
-                $selector = $actionOrSelectorOrString;
-            } else {
-                $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
-            }
-            if ($selector->isClassname()) {
-                $class_name = $selector->toString();
-            } else {
-                $class_name = get_class(ActionFactory::create($selector));
-            }
-            return $this instanceof $class_name;
-        } else {
-            throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
+        switch (true) {
+            case $actionOrSelectorOrString instanceof ActionInterface:
+                $class = get_class($actionOrSelectorOrString);
+                return $this instanceof $class;
+            case is_string($actionOrSelectorOrString):
+            case $actionOrSelectorOrString instanceof ActionSelectorInterface:
+                if ($actionOrSelectorOrString instanceof ActionSelectorInterface) {
+                    $selector = $actionOrSelectorOrString;
+                } else {
+                    $selector = new ActionSelector($this->getWorkbench(), $actionOrSelectorOrString);
+                }
+                if ($this->isExactly($selector)) {
+                    return true;
+                }
+                if ($selector->isClassname()) {
+                    $class_name = $selector->toString();
+                } else {
+                    $class_name = get_class(ActionFactory::create($selector));
+                }
+                return $this instanceof $class_name;
+            default:
+                throw new UnexpectedValueException('Invalid value "' . gettype($actionOrSelectorOrString) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
     }
     
@@ -958,6 +1021,9 @@ abstract class AbstractAction implements ActionInterface
         if ($uxon->hasProperty('from_object_alias')) {
             $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
         } else {
+            // The short notation for mappers allows to omit the from-object. In this case, the best-guess
+            // will be assumed. If the action is defined in a widget, we will probably map from that
+            // widgets object. Otherwise we can simply assume, that we map from the actions object.
             if ($this->isDefinedInWidget() && $calling_widget = $this->getWidgetDefinedIn()) {
                 if ($calling_widget instanceof iUseInputWidget) {
                     $from_object = $calling_widget->getInputWidget()->getMetaObject();
@@ -965,8 +1031,7 @@ abstract class AbstractAction implements ActionInterface
                     $from_object = $calling_widget->getMetaObject();
                 }
             } else {
-                $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', []);
-                return $this;
+                $from_object = $this->getMetaObject();
             }
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
@@ -1016,33 +1081,75 @@ abstract class AbstractAction implements ActionInterface
      */
     protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
+        $logbook = $this->getLogBook($task);
+        $diagram = 'flowchart LR';
         // Get the current input data
         if ($task->hasInputData()) {
             // If the task has some, use it
             $sheet = $task->getInputData();
+            $logbook->addDataSheet('Task data', $sheet);
             // Merge it with the preset if it exists
             if ($this->hasInputDataPreset()) {
+                $logbook->addDataSheet('Input preset', $this->getInputDataPreset());
                 $sheet = $this->getInputDataPreset()->importRows($sheet);
+                $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "| Task";
             } 
+            $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
+            $logbook->addDataSheet('Input preset', $sheet);
+            $diagram .= "\n\t InputPreset[Input Preset] -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
-            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());    
+            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
+            $diagram .= "\n\t Task -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
         
+        // Replace the `Input data` section of the logbook
+        // Make sure to restore the previously active section afterwards as very action might have
+        // already started working with the logbook before calling `getInputDataSheet()`. This will
+        // make sure, all the input calculation stuff is not in the middle of something else
+        // Similarly, replacing the section prevents it from appearing as many times as 
+        // `getInputDataSheet()` is called
+        $prevSection = $logbook->getSectionActive();
+        $logbook->removeSection('Input data');
+        $logbook->addSection('Input data');
+        $logbook->addCodeBlock('[#input_diagram#]', 'mermaid');
+        $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
+
         // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
-            $inputData = $mapper->map($sheet);
+            $inputData = $mapper->map($sheet, null, $logbook);
             $this->input_mappers_used[] = [$inputData, $mapper];
+            $diagram .= " InputMapping";
+            $diagram .= "\n\t subgraph InputMapping[input_mapper]";
+            $mapperDiagrams = $logbook->getCodeBlocksInSection();
+            if (count($mapperDiagrams) === 2) {
+                $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
+                $logbook->removeLine(null, array_key_last($mapperDiagrams));
+            }
+            $diagram .= "\n\t end";
+            $diagram .= "\n\t InputMapping -->|" . DataLogBook::buildMermaidTitleForData($inputData) . "|";
         } else {
             $inputData = $sheet;
+            $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
+        }
+        $diagram .= " Action[Action `{$this->getName()}`]";
+        $logbook->addPlaceholderValue('input_diagram', $diagram);
+        
+        $logbook->addDataSheet('Final input data', $inputData);
+        
+        if ($prevSection !== null && $prevSection !== 'Input data') {
+            $logbook->setSectionActive($prevSection);
+        } else {
+            $logbook->setIndentActive(0);
         }
         
-        // Validate the input data and dispatch an event for event-based validation
+        // Validate the input data and dispatch events for event-based validation
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $inputData = $this->validateInputData($inputData);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
         
@@ -1088,11 +1195,21 @@ abstract class AbstractAction implements ActionInterface
         if ($this->getInputRowsMax() !== null && $sheet->countRows() > $this->getInputRowsMax()) {
             throw new ActionInputError($this, 'Too many rows of input data for action ' . $this->getAliasWithNamespace() . ': max. ' . $this->getInputRowsMax() . ' allowed, received ' . $sheet->countRows() . ' instead.');
         }
-        if (true === $this->hasInputObjectRestriction() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
+        if (true === $this->hasInputObjectRestriction() && ! $sheet->isBlank() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
         
-        
+        if ($this->getInputChecks()->isDisabled() === false) {
+            foreach ($this->getInputChecks() as $check) {
+                if ($check->isApplicable($sheet)) {
+                    try {
+                        $check->check($sheet);
+                    } catch (DataCheckExceptionInterface $e) {
+                        throw new ActionInputError($this, $e->getMessage(), null, $e);
+                    }
+                }
+            }
+        }
         
         return $sheet;
     }
@@ -1259,5 +1376,463 @@ abstract class AbstractAction implements ActionInterface
         $this->hint = $value;
         return $this;
     }
+    
+    /**
+     * By default, an action returns the effects specified in its model (via `effects` or `effected_objects`)
+     * and those, that can be derived from the UI model **if** the action is known to change data!
+     * 
+     * Override this method to change the default effeects of an action. See the following actions
+     * for examples:
+     * 
+     * @see \exface\Core\Actions\GenerateModelFromDataSource
+     * @see \exface\Core\Actions\CustomDataSourceQuery
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffects()
+     */
+    public function getEffects() : array
+    {
+        $effects = $this->getEffectsSpecifiedExplicitly();
+        if ($this instanceof iModifyData) {
+            $effects = array_merge($effects,  $this->getEffectsFromModel());
+        }
+        return $effects;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasEffectOn()
+     */
+    public function hasEffectOn(MetaObjectInterface $object) : bool
+    {
+        foreach ($this->getEffects() as $effect) {
+            if ($effect->getEffectedObject()->is($object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getEffectsOn()
+     */
+    public function getEffectsOn(MetaObjectInterface $object) : array
+    {
+        $result = [];
+        foreach ($this->getEffects() as $effect) {
+            if ($effect->getEffectedObject()->is($object)) {
+                $result[] = $effect;
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * @return ActionEffectInterface[]
+     */
+    protected function getEffectsSpecifiedExplicitly() : array
+    {
+        return $this->customEffects;
+    }
+    
+    /**
+     * 
+     * @return ActionEffectInterface[]
+     */
+    protected function getEffectsFromModel() : array
+    {
+        $button = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
+        $name = $button ? $button->getCaption() : $this->getName();
+        $effects = [];
+        $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name);
+        if ($button) {
+            $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
+        }
+        return $effects;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $prevLevelObject
+     * @param string $prevLevelName
+     * @return array
+     */
+    protected function getEffectsFromTriggerWidget(iTriggerAction $button, MetaObjectInterface $prevLevelObject, string $prevLevelName, MetaRelationPathInterface $prevLevelRelPath = null) : array
+    {
+        $effects = [];
+        
+        if (! ($name = $button->getCaption())) {
+            $name = $prevLevelName;
+        }
+        $thisLevelObject = $button->getMetaObject();
+        
+        // Add effect on the object of the button triggering this action - if it is based on a different object.
+        if ($thisLevelObject !== $prevLevelObject) {
+            if ($prevLevelObject !== $button->getMetaObject()) {
+                $name .= ' > ' . $prevLevelName;
+            }
+            $effectUxon = new UxonObject([
+                'name' => $name,
+                'effected_object' => $thisLevelObject->getAliasWithNamespace()
+            ]);
+            $relationFromPrev = null;
+            if ($prevLevelRelPath && $relationFromPrev = $prevLevelObject->findRelation($thisLevelObject, true)) {
+                $relPathFromPrev = $prevLevelRelPath->copy()->appendRelation($relationFromPrev);
+                $effectUxon->setProperty('relation_path_to_effected_object', $relPathFromPrev->toString());
+            }
+            $effects[] = new ActionEffect($this, $effectUxon);
+        }
+        
+        // Add effect on the object of the input widget of the trigger button - if different
+        // Also see if the input dialog has a button as parent (= is part of a widget shown by an action)
+        // and call this method recursively for that button
+        if ($inputWidget = $button->getInputWidget()) {
+            $inputObject = $inputWidget->getMetaObject();
+            
+            // Try to find a relation to the object of the input widget
+            $inputObjectRelPath = null;
+            if ($prevLevelRelPath) {
+                switch (true) {
+                    // If it's the same object, as the previous level - use the injected relation path
+                    case $inputObject === $prevLevelObject:
+                        $inputObjectRelPath = $prevLevelRelPath;
+                        break;
+                    // If it's the same object, as that of the button, use the relation path determined above
+                    case $inputObject === $thisLevelObject:
+                        $inputObjectRelPath = $relPathFromPrev;
+                        break;
+                    // Try to find a relation from the object of the button
+                    case $relationToInput = $thisLevelObject->findRelation($inputObject, true):
+                        if ($relationFromPrev) {
+                            $inputObjectRelPath = $relPathFromPrev->copy()->appendRelation($relationToInput);
+                        } elseif ($prevLevelRelPath->getEndObject()->isExactly($thisLevelObject)) {
+                            $inputObjectRelPath = $prevLevelRelPath->copy()->appendRelation($relationToInput);
+                        }
+                        break;
+                    // Use no relation path if all above fails
+                    default:
+                        $inputObjectRelPath = null;
+                }
+            }
+            
+            // If the input widgets object had not been added already (= it is different from the button and previous 
+            // level objects) - add an effect for it
+            if ($inputObject !== $button->getMetaObject() && $inputObject !== $prevLevelObject) {
+                $effectUxon = new UxonObject([
+                    'name' => $name,
+                    'effected_object' => $inputObject->getAliasWithNamespace()
+                ]);
+                if ($inputObjectRelPath) {
+                    $effectUxon->setProperty('relation_path_to_effected_object', $inputObjectRelPath->toString());
+                }
+                $effects[] = new ActionEffect($this, $effectUxon);
+            }
+            
+            // If the input widget was shown by an action triggered by a button in-turn, get effects of that button
+            // recursively
+            /* @var $inputDialogTrigger \exface\Core\Widgets\Button */
+            if ($inputDialogTrigger = $inputWidget->getParentByClass(Button::class)) {
+                if ($inputDialogTrigger->hasAction()) {
+                    // Double check if the relation path found so far actually connects the actions object and
+                    // this levels object. If so, pass it on to the next level.
+                    // This is important for deeply nested buttons when the relation path can only be determined
+                    // upto a certain depth or after a certain depth. Both cases are useless for the effects, but
+                    // produce relation paths here. Doing the checks earlier in the code would make the logic
+                    // overcomplicated, so we just check it once here - right before passing on to the next level.
+                    $relPath = $relPathFromPrev ?? $prevLevelRelPath;
+                    if ($relPath && (! $relPath->getStartObject()->isExactly($this->getMetaObject()) || ! $relPath->getEndObject()->isExactly($thisLevelObject))) {
+                        $relPath = null;
+                    }
+                    $effects = array_merge(
+                        $effects, 
+                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPath)
+                    );
+                }
+            }
+        }
+        
+        return $effects;
+    }
+    
+    /**
+     * Objects and relations that may be affected by the action (in addition to those determined by the action logic automatically).
+     * 
+     * Most effects of an action can be determined automatically. If not, you can add them
+     * here manually. For example:
+     * 
+     * - If actions in a dashboard do not cause some of the data widgets to update, add the
+     * meta objects of these widgets to the actions `effects` to trigger the update.
+     * - CLI command actions mostly cannot determine their effects automatically - add them here!
+     * - Actions like `CallWebService`, `CustomFacadeScript`, etc. mostly do not "know" their 
+     * effects - add them here too!
+     * 
+     * **HINT:** If you do not need advanced effects properties like relaiton paths or names, using 
+     * the flat `effected_objects` array is simpler!
+     * 
+     * Every action can have one or more effects, each indicating that it modifies the state of a 
+     * meta object - e.g. by changing its data in the data source. Knowing the action effects allows 
+     * the workbench to better understand, what actions really do and how this might affect the UI. 
+     * In particular, they indicate, what data might have changed and needs reloading after an action 
+     * was performed. 
+     * 
+     * **NOTE:** an effect on a specific object, does not guarantee, that the action will actually 
+     * change it every time it is performed - it only means, the action **can** modify that object.
+     * 
+     * Whether the modification takes place or not depends on the logic of the action, the input
+     * data, behaviors of other effected objects etc. - in many cases, we can't even really know
+     * for sure, what will happen because actions may trigger logic in external systems, DB-triggers, 
+     * etc. - things not known to the workbench at all.
+     * 
+     * This is why action effects are part of the action model and can be added manually to actions
+     * to tell the workbench, that the action is likely to effect an object even if that is 
+     * not obvious.
+     * 
+     * @uxon-property effects
+     * @uxon-type \exface\Core\CommonLogic\Actions\ActionEffect[]
+     * @uxon-template [{"name": "", "effected_object": ""}]
+     * 
+     * @param UxonObject $uxonArray
+     * @return ActionInterface
+     */
+    protected function setEffects(UxonObject $uxonArray) : ActionInterface
+    {
+        foreach ($uxonArray as $uxon) {
+            $this->customEffects[] = new ActionEffect($this, $uxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * Aliases of meta objects, that may be affected by this action (apart from the obvious input and action objects).
+     * 
+     * Examples: 
+     * 
+     * - If actions in a dashboard do not cause some of the data widgets to update, add the
+     * meta objects of these widgets to the actions `effects` to trigger the update.
+     * - CLI command actions mostly cannot determine their effects automatically - add them here!
+     * - WebService actions also often do not "know" their effects - add them here too!
+     * 
+     * This property is a simplified shortcut for `effects`. Refer to the documentation of the
+     * `effects` property for more details.
+     * 
+     * @uxon-property effected_objects
+     * @uxon-type metamodel:object[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject $uxonArray
+     * @return ActionInterface
+     */
+    protected function setEffectedObjects(UxonObject $uxonArray) : ActionInterface
+    {
+        foreach ($uxonArray->getPropertiesAll() as $objectAlias) {
+            $this->customEffects[] = new ActionEffect($this, new UxonObject([
+                'effected_object' => $objectAlias
+            ]));
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addEffect()
+     */
+    public function addEffect(MetaObjectInterface $effectedObject, string $name = null, MetaRelationPathInterface $relationPathFromActionObject = null) : ActionInterface
+    {
+        $uxon = new UxonObject();
+        if ($name !== null) {
+            $uxon->setProperty('name', $name);
+        }
+        if ($relationPathFromActionObject !== null) {
+            $uxon->setProperty('relation_path_to_effected_object', $relationPathFromActionObject->toString());
+        } else {
+            $uxon->setProperty('effected_object', $effectedObject->getAliasWithNamespace());
+        }
+        $this->customEffects[] = new ActionEffect($this, $uxon);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMappers()
+     */
+    public function getOutputMappers() : array
+    {
+        return $this->output_mappers;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOutputMapper()
+     */
+    public function getOutputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
+    {
+        foreach ($this->getOutputMappers() as $mapper){
+            if ($mapper->getFromMetaObject()->is($fromObject)){
+                return $mapper;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasOutputMappers()
+     */
+    public function hasOutputMappers() : bool
+    {
+        return ! empty($this->getOutputMappers());
+    }
+    
+    /**
+     * Allows to apply output mappers depending on the object of the actions result data - similarly as `input_mappers`.
+     * 
+     * A mapper will be applied if the result data of the action is based on the from-object
+     * of the mapper.
+     *
+     * @uxon-property output_mappers
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper[]
+     * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMappers()
+     */
+    public function setOutputMappers(UxonObject $uxon)
+    {
+        foreach ($uxon as $instance){
+            $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());
+            $this->addOutputMapper($mapper);
+        }
+    }
+    
+    /**
+     * Allows to transform the actions result data similarly to the `input_mapper`.
+     * 
+     * In contrast to `output_mappers` this mapper will take whatever object the action is based on
+     * and map it to the mappers `to_object_alias` (or itself if `to_object_alias` is not set).
+     *
+     * @uxon-property output_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
+     *
+     * @see setOutputMappers()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOutputMapper()
+     */
+    public function setOutputMapper(UxonObject $uxon)
+    {
+        if ($uxon->hasProperty('from_object_alias')) {
+            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
+        } else {
+            $from_object = $this->getMetaObject();
+        }
+        if ($uxon->hasProperty('to_object_alias')) {
+            $to_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('to_object_alias'));
+        } else {
+            $to_object = $this->getMetaObject();
+        }
+        $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $to_object);
+        return $this->addOutputMapper($mapper);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addOutputMapper()
+     */
+    public function addOutputMapper(DataSheetMapperInterface $mapper)
+    {
+        $this->output_mappers[] = $mapper;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputChecks()
+     */
+    public function getInputChecks() : ActionDataCheckListInterface
+    {
+        return $this->input_checks;
+    }
+    
+    /**
+     * Check input data against these conditions before the action is performed
+     * 
+     * If any of these conditions are not met, an error will be raised before the action and
+     * it will not be performed. Each check may contain it's own error message to make the
+     * errors better understandable for the user.
+     * 
+     * @uxon-property input_invalid_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
+     * @param UxonObject $arrayOfDataChecks
+     * @return AbstractAction
+     */
+    protected function setInputInvalidIf(UxonObject $arrayOfDataChecks) : AbstractAction
+    {
+        $this->getInputChecks()->removeAll();
+        foreach($arrayOfDataChecks as $uxon) {
+            $this->getInputChecks()->add(new DataCheck($this->getWorkbench(), $uxon));
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return ActionLogBook
+     */
+    protected function getLogBook(TaskInterface $task) : ActionLogBook
+    {
+        foreach ($this->logBooks as $lb) {
+            if ($lb->getTask() === $task) {
+                return $lb;
+            }
+        }
+        $lb = new ActionLogBook('Action', $this, $task);
+        $this->logBooks[] = $lb;
+        return $lb;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $error_message)
+    {
+        foreach ($this->logBooks as $logbook) {
+            $error_message = $logbook->createDebugWidget($error_message);
+        }
+        return $error_message;
+    }
+    
+    /**
+     *
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getOfflineStrategy()
+     */
+    public function getOfflineStrategy() : ?string
+    {
+        return $this->offlineStrategy;
+    }
+    
+    /**
+     * What to do with this action offline: make always available (`presync`), `enqueue` when triggered, `skip`, etc.
+     * 
+     * @uxon-property offline_strategy
+     * @uxon-type [enqueue,presync,use_cache,skip,online_only,client_side]
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setOffline()
+     */
+    public function setOfflineStrategy(string $value) : ActionInterface
+    {
+        $this->offlineStrategy = OfflineStrategyDataType::cast($value);
+        return $this;
+    }
 }
-?>

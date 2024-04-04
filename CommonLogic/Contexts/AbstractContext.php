@@ -9,6 +9,10 @@ use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\Constants\Colors;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * This is a basic implementation of common context methods intended to be used
@@ -20,6 +24,8 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 abstract class AbstractContext implements ContextInterface
 {
     use AliasTrait;
+    
+    use iHaveIconTrait;
 
     private $selector = null;
     
@@ -204,27 +210,6 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIcon()
-     */
-    public function getIcon()
-    {
-        return $this->icon;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIcon()
-     */
-    public function setIcon($icon)
-    {
-        $this->icon = $icon;
-        return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Contexts\ContextInterface::getName()
      */
     public function getName()
@@ -285,6 +270,27 @@ abstract class AbstractContext implements ContextInterface
     {
         null;
     }
- 
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
+    public function handle(TaskInterface $task, string $operation = null): ResultInterface
+    {
+        if ($operation === null || ! method_exists($this, $operation)){
+            throw new ContextRuntimeError($this, 'Invalid operation "' . $operation . '" for context "' . $this->getAlias() . '": method not found!');
+        }
+        $return_value = call_user_func([$this, $operation]);
+        if (is_string($return_value)){
+            $result = ResultFactory::createMessageResult($task, $return_value);
+        } elseif ($return_value instanceof ContextInterface) {
+            $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $operation)));
+            $result = ResultFactory::createMessageResult($task, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.API.RESULT', ['%operation_name%' => $operation_name]));
+        } else {
+            $result = ResultFactory::createTextContentResult($task, $return_value);
+        }
+        $result->setContextModified(true);
+        return $result;
+    }
 }
-?>

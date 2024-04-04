@@ -17,8 +17,6 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
  */
 class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
 {
-    private $preventCreate = false;
-    
     private $updateIfUidExists = null;
     
     /**
@@ -52,8 +50,7 @@ class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
      */
     public function preventCreate() : OnBeforeCreateDataEvent
     {
-        $this->preventCreate = true;
-        return $this;
+        return $this->preventDefault();
     }
     
     /**
@@ -62,6 +59,6 @@ class OnBeforeCreateDataEvent extends AbstractDataSheetEvent
      */
     public function isPreventCreate() : bool
     {
-        return $this->preventCreate;
+        return $this->isDefaultPrevented();
     }
 }

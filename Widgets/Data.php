@@ -15,7 +15,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
@@ -34,7 +34,14 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iHaveSorters;
 use exface\Core\Widgets\Parts\DataFooter;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iCanAutoloadData;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -65,7 +72,8 @@ class Data
         iHaveContextualHelp, 
         iHaveConfigurator, 
         iShowData,
-        iCanPreloadData
+        iCanPreloadData,
+        iCanAutoloadData
 {
     use iHaveColumnsAndColumnGroupsTrait;
     use iHaveButtonsAndToolbarsTrait {
@@ -79,6 +87,8 @@ class Data
     }
     use iHaveContextualHelpTrait;
     use iHaveConfiguratorTrait;
+    use iCanAutoloadDataTrait;
+    use iTrackIncomingLinksTrait;
 
     // properties
     private $paginate = true;
@@ -98,11 +108,6 @@ class Data
     /** @var UxonObject[] */
     private $sorters = array();
 
-    /** @var boolean */
-    private $is_editable = false;
-    
-    private $editable_changes_reset_on_refresh = true;
-
     /** @var WidgetLinkInterface */
     private $refresh_with_widget = null;
 
@@ -121,36 +126,53 @@ class Data
 
     private $hide_header = null;
     
-    private $hide_footer = false;
+    private $hide_footer = null;
     
     private $has_system_columns = false;
-
-    private $autoload_data = true;
-    
-    private $autoload_disabled_hint = null;
     
     private $quickSearchWidget = null;
     
     private $quickSearchEnabled = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->initColumns();
+        $this->getWorkbench()->eventManager()->addListener(OnWidgetLinkedEvent::getEventName(), [$this, 'handleWidgetLinkedEvent']);
+    }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
+        if ($this->hasButtons()) {
+            foreach ($this->getButtons() as $btn) {
+                $data_sheet = $btn->prepareDataSheetToRead($data_sheet);
+            }
+        }
+        
         // Columns & Totals
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
+                // If it's a calculated column, add the corresponding expression column
+                if ($col->isCalculated() && ! $col->getCalculationExpression()->isEmpty() && ! $col->getCalculationExpression()->isReference()) {
+                    $data_sheet->getColumns()->addFromExpression($col->getCalculationExpression(), $col->getDataColumnName());
+                }
+                
                 $cellWidget = $col->getCellWidget();
-                // Only add columns, that actually have content. The other columns exist only in the widget
-                // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
-                // but also with properties like formula, etc.
-                if (! ($cellWidget instanceof iShowSingleAttribute && $cellWidget->isBoundToAttribute())) {
+                
+                // Don't add anything to the data sheet if the widget cannot even use it
+                if (! ($cellWidget instanceof iShowDataColumn && $cellWidget->isBoundToDataColumn())) {
                     continue;
                 }
                 
@@ -165,33 +187,36 @@ class Data
                     $data_column->getTotals()->add($total);
                 }
             }
-        }
-        
-        // Aggregations
-        foreach ($this->getAggregations() as $attr) {
-            $data_sheet->getAggregations()->addFromString($attr);
+            
+            // Aggregations
+            foreach ($this->getAggregations() as $attr) {
+                $data_sheet->getAggregations()->addFromString($attr);
+            }
+            
+            // Filters only if lazy loading is disabled!
+            if (! $this->getLazyLoading()) {
+                // Add filters if they have values
+                foreach ($this->getFilters() as $filter_widget) {
+                    if ($filter_widget->getValue()) {
+                        $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
+                    }
+                }
+            }
+            
+            // Sorters defined in widget model if data sheet is not sorted or if there is no lazy loading
+            if (! $data_sheet->hasSorters() || ! $this->getLazyLoading()) {
+                foreach ($this->getSorters() as $sorterUxon) {
+                    $data_sheet->getSorters()->addFromString($sorterUxon->getProperty('attribute_alias'), $sorterUxon->getProperty('direction'));
+                }
+            }
         }
         
         // Pagination
-        if ($this->getPaginator()->getPageSize()) {
-            $data_sheet->setRowsLimit($this->getPaginator()->getPageSize());
+        if (! $data_sheet->isPaged() && $pgSize = $this->getPaginator()->getPageSize()) {
+            $data_sheet->setRowsLimit($pgSize);
         }
         if ($this->getPaginator()->getCountAllRows() === false) {
             $data_sheet->setAutoCount(false);
-        }
-        
-        // Filters and sorters only if lazy loading is disabled!
-        if (! $this->getLazyLoading()) {
-            // Add filters if they have values
-            foreach ($this->getFilters() as $filter_widget) {
-                if ($filter_widget->getValue()) {
-                    $data_sheet->getFilters()->addConditionFromString($filter_widget->getAttributeAlias(), $filter_widget->getValue(), $filter_widget->getComparator());
-                }
-            }
-            // Add sorters
-            foreach ($this->getSorters() as $sorter_obj) {
-                $data_sheet->getSorters()->addFromString($sorter_obj->getProperty('attribute_alias'), $sorter_obj->getProperty('direction'));
-            }
         }
         
         return $data_sheet;
@@ -766,6 +791,31 @@ class Data
     }
     
     /**
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    public function hasAggregationOverAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        foreach ($this->getAggregations() as $aggrAlias) {
+            if ($attribute->getAlias() === $aggrAlias) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
+    public function hasAggregationOverColumn(DataColumn $col) : bool
+    {
+        return $col->isBoundToAttribute() && $this->hasAggregationOverAttribute($col->getAttribute());
+    }
+    
+    /**
      *
      * @return bool
      */
@@ -804,19 +854,30 @@ class Data
         $this->aggregate_all = $value;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getAttributesForQuickSearch()
+     * @see \exface\Core\Interfaces\Widgets\iHaveQuickSearch::getQuickSearchConditionGroup()
      */
-    public function getAttributesForQuickSearch() : array
+    public function getQuickSearchConditionGroup($value = null) : ConditionGroupInterface
     {
-        $aliases = array();
-        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
-            $aliases[] = $fltr->getAttribute();
+        $dataObj = $this->getMetaObject();
+        $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_OR, $dataObj);
+        if ($dataObj->hasLabelAttribute()) {
+            $grp->addConditionFromAttribute($dataObj->getLabelAttribute(), $value);
         }
-        return $aliases;
+        
+        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
+            if ($fltr->hasCustomConditionGroup()) {
+                $grp->addNestedGroup($fltr->getCustomConditionGroup($value));
+            }
+            if ($fltr->isBoundToAttribute()) {
+                $grp->addConditionFromAttribute($fltr->getAttribute(), ($fltr->hasValue() ? $fltr->getValue() : $value), $fltr->getComparator() ?? ComparatorDataType::IS);
+            }
+        }
+        
+        return $grp;
     }
 
     /**
@@ -926,68 +987,6 @@ class Data
     }
 
     /**
-     * Returns TRUE, if the data widget contains at least one editable column or column group.
-     *
-     * @return boolean
-     */
-    public function isEditable() : bool
-    {
-        return $this->is_editable;
-    }
-
-    /**
-     * Set to TRUE to make the column cells editable.
-     * 
-     * This makes all columns editable, that are bound to an editable model
-     * attribute or have no model binding at all. Editable column cells will 
-     * automatically use the default editor widget from the bound model attribute 
-     * as `cell_widget`.
-     *
-     * @uxon-property editable
-     * @uxon-type boolean
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iShowData::setEditable()
-     */
-    public function setEditable($value = true) : iShowData
-    {
-        $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
-    }
-    
-    /**
-     *
-     * @return bool
-     */
-    public function getEditableChangesResetOnRefresh() : bool
-    {
-        return $this->editable_changes_reset_on_refresh;
-    }
-    
-    /**
-     * Set to FALSE to make changes in editable columns survive refreshes.
-     * 
-     * By default, any changes, that were not saved explicitly, will be lost
-     * as soon as the widget is refreshed - that is if a search is performed
-     * or the data is sorted, etc. If this `editable_changes_reset_on_refresh`
-     * is set to `false`, changes made in editable columns will "survive"
-     * refreshes. On the other hand, there will be no possibility to revert
-     * them, unless there is a dedicated reset-button (e.g. one with action
-     * `exface.Core.ResetWidget`).     * 
-     * 
-     * @uxon-property editable_changes_reset_on_refresh
-     * @uxon-type boolean
-     * @uxon-default true 
-     * 
-     * @param bool $value
-     * @return Data
-     */
-    public function setEditableChangesResetOnRefresh(bool $value) : Data
-    {
-        $this->editable_changes_reset_on_refresh = $value;
-        return $this;
-    }
-
-    /**
      *
      * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
      */
@@ -1065,24 +1064,27 @@ class Data
         $data_sheet = DataSheetFactory::createFromObject($table->getMetaObject());
         
         foreach ($this->getFilters() as $filter) {
+            $hint = $filter->getHint();
+            $title = $filter->getCaption();
             $row = array(
                 'TITLE' => $filter->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS')
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS'),
+                'DESCRIPTION' => ($title == $hint ? '' : $hint)
             );
-            if ($attr = $filter->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $filter));
-            }
             $data_sheet->addRow($row);
         }
         
         foreach ($this->getColumns() as $col) {
-            $row = array(
-                'TITLE' => $col->getCaption(),
-                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS')
-            );
-            if ($col->isBoundToAttribute() && $attr = $col->getAttribute()) {
-                $row = array_merge($row, $this->getHelpDataRowFromAttribute($attr, $col->getCellWidget()));
+            if ($col->isHidden() === true) {
+                continue;
             }
+            $title = $col->getCaption();
+            $hint = $col->getHint();
+            $row = array(
+                'TITLE' => $title,
+                'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'),
+                'DESCRIPTION' => ($title == $hint ? '' : $hint)
+            );            
             $data_sheet->addRow($row);
         }
         
@@ -1182,7 +1184,12 @@ class Data
         return $this;
     }
     
-    public function getHideFooter()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::getHideFooter()
+     */
+    public function getHideFooter() : ?bool
     {
         return $this->hide_footer;
     }
@@ -1195,63 +1202,9 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideFooter($value)
+    public function setHideFooter($value) : iHaveFooter
     {
         $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
-    }
-
-    public function getAutoloadData()
-    {
-        return $this->autoload_data;
-    }
-
-    /**
-     * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
-     * 
-     * NOTE: if autoload is disabled, the widget will show a message specified in the
-     * `autoload_disabled_hint` property.
-     * 
-     * @uxon-property autoload_data
-     * @uxon-type boolean
-     * 
-     * @param boolean $autoloadData
-     * @return Data
-     */
-    public function setAutoloadData($autoloadData)
-    {
-        $this->autoload_data = BooleanDataType::cast($autoloadData);
-        return $this;
-    }
-    
-    /**
-     * Returns a text which can be displayed if initial loading is prevented.
-     * 
-     * @return string
-     */
-    public function getAutoloadDisabledHint()
-    {
-        if ($this->autoload_disabled_hint === null) {
-            return $this->translate('WIDGET.DATA.NOT_LOADED');
-        }
-        return $this->autoload_disabled_hint;
-    }
-    
-    /**
-     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
-     * 
-     * Use `=TRANSLATE()` to make the text translatable.
-     * 
-     * @uxon-property autoload_disabled_hint
-     * @uxon-type string|metamodel:formula
-     * @uxon-translatable true
-     * 
-     * @param string $text
-     * @return Data
-     */
-    public function setAutoloadDisabledHint(string $text) : Data
-    {
-        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
         return $this;
     }
     
@@ -1383,5 +1336,30 @@ class Data
     public function getFooterWidgetPartClass() : string
     {
         return '\\' . DataFooter::class;
+    }
+    
+    /**
+     * Returns an array of data column names, that should be expected in data produced by this widget
+     *
+     * Not all columns produce action-relevant data. This method filters away read-only columns. 
+     * 
+     * System columns are included even if they are not explicitly listed as columns, because they
+     * are expected to be present in all action calls
+     * 
+     * @return string[]
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $colNames = [];
+        foreach ($this->getColumns() as $col) {
+            if ($col->isReadonly()) {
+                continue;
+            }
+            $colNames[] = $col->getDataColumnName();
+        }
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
+            $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
+        }
+        return array_unique($colNames);
     }
 }

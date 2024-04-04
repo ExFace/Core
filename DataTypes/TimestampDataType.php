@@ -8,7 +8,7 @@ class TimestampDataType extends DateDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\DateDataType::formatDateNormalized()
      */
-    public static function formatDateNormalized(\DateTime $date) : string
+    public static function formatDateNormalized(\DateTimeInterface $date) : string
     {
         return $date->format(DateTimeDataType::DATETIME_FORMAT_INTERNAL);
     }
@@ -30,7 +30,6 @@ class TimestampDataType extends DateDataType
      */
     public function getFormat() : string
     {
-        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
+        return $this->hasCustomFormat() ? parent::getFormat() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_WITH_SECONDS');
     }
 }
-?>

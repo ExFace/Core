@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 
 /**
  * A command loader for Symfony Console, that creates commands from actions implementing
@@ -103,6 +104,9 @@ class CommandLoader implements FacadeCommandLoaderInterface
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ACTION');
             $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE', 'PATHNAME_RELATIVE']);
             $ds->dataRead();
+            if ($ds->isEmpty() === true) {
+                throw new FacadeRuntimeError('This installation seems corrupt: not a single action was found! Please reinstall the workbench!');
+            }
             foreach ($ds->getRows() as $row) {
                 try {
                     $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $row['PATHNAME_RELATIVE']);

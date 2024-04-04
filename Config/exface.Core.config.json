@@ -1,41 +1,57 @@
 {
-	"AUTORUN_APPS": {},
-	
-	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
-	
+	"CONTEXTS.FILTERCONTEXT.DISCARD_AFTER_MINUTES": 1440,
 	"FACADES.DEFAULT_UI_FACADE": "exface.JEasyUIFacade.JEasyUIFacade",
     "FACADES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "FACADES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
-    "FACADE.AJAX.ACCESS_CONTROL_HEADERS" : {
-		"Access-Control-Allow-Origin": "",
-		"Access-Control-Allow-Credentials": "true",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE",
-		"Access-Control-Allow-Headers": "",
-		"Access-Control-Expose-Headers": ""
-	},
+    
+    "LIBS.MERMAID.JS": "exface/core/Facades/AbstractAjaxFacade/js/mermaid.min.js",
 	
-	"INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID": 29,
-    "INSTALLER.SERVER_INSTALLER.CLASS": "",
+	"WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED": false,
 	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
-	       {
-	           "context_scope": "User",
-	           "context_alias": "exface.Core.FavoritesContext",
-	           "visibility": "show_allways"
-	       },
-	       {
-               "context_scope": "Session",
-               "context_alias": "exface.Core.ObjectBasketContext",
-               "visibility": "show_allways"
-           },
-           {
-               "context_scope": "Window",
-               "context_alias": "exface.Core.DebugContext",
-               "visibility": "show_allways",
-               "restrict_only_admins": true
-           }           
-	   ]
+	       	{
+				"context_scope": "User",
+				"context_alias": "exface.Core.UserContext",
+				"visibility": "show_allways"
+			},
+           	{
+				"context_scope": "User",
+				"context_alias": "exface.Core.NotificationContext",
+				"visibility": "show_allways"
+			},
+          	{
+				"context_scope": "Installation",
+				"context_alias": "exface.Core.DocsContext",
+				"visibility": "show_allways",
+				"menu_items": {
+					"App docs": "api/docs/",
+					"App-desiner tutorial": "api/docs/exface/Core/Docs/Tutorials/BookClub_walkthrough/index.md",
+					"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md",
+					"Licenses": "api/docs/Licenses.md"
+				}
+           	},
+           	{
+				"context_scope": "User",
+				"context_alias": "exface.Core.FavoritesContext",
+				"visibility": "show_allways"
+	       	},
+	       	{
+				"context_scope": "Session",
+				"context_alias": "exface.Core.ObjectBasketContext",
+				"visibility": "show_allways"
+           	},
+           	{
+				"context_scope": "Window",
+				"context_alias": "exface.Core.DebugContext",
+				"visibility": "show_allways"
+           	},
+           	{
+				"context_scope": "User",
+				"context_alias": "exface.Core.PWAContext",
+				"visibility": "show_allways"
+           	}
+	   	]
 	},
 	
 	"WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [

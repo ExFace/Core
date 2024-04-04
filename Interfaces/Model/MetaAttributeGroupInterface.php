@@ -31,6 +31,8 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
     
     const READABLE = '~READABLE';
     
+    const COPYABLE = '~COPYABLE';
+    
     public function getAlias();
     
     public function setAlias($value);

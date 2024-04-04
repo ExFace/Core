@@ -3,7 +3,10 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
-use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MimeTypeDataType;
 
 /**
  * Task result containing a file.
@@ -51,6 +54,16 @@ class ResultFile extends ResultMessage implements ResultFileInterface
         $this->pathAbsolute = $filemanager::pathNormalize($path);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getFilename()
+     */
+    public function getFilename() : string
+    {
+        return FilePathDataType::findFileName($this->getPathAbsolute());
+    }
 
     /**
      * 
@@ -70,7 +83,7 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     public function getMimeType(): string
     {
         if (is_null($this->mimeType)) {
-            return GuzzleHttp\Psr7\mimetype_from_filename($this->getPathAbsolute());
+            return MimeTypeDataType::findMimeTypeOfFile($this->getPathAbsolute());
         }
         return $this->mimeType;
     }
@@ -89,12 +102,41 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getContents()
+     */
+    public function getContents() : string
+    {
+        $result = file_get_contents($this->getPathAbsolute());
+        if ($result === false) {
+            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!');
+        }
+        if ($result === false) {
+            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getResourceHandle()
+     */
+    public function getResourceHandle(string $mode = "r")
+    {
+        $handle = fopen($this->getPathAbsolute(), $mode);
+        if ($handle === false) {
+            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
+        }
+        return $handle;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
      */
     public function isEmpty() : bool
     {
         return parent::isEmpty() && ! $this->getPathAbsolute();
     }
-
-
 }

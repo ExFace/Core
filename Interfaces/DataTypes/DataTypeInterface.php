@@ -13,6 +13,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 use exface\Core\Interfaces\ValueObjectInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
 
 /**
  * 
@@ -27,7 +28,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      *
      * @return string
      */
-    public function getName();
+    public function getName() : string;
 
     /**
      * Returns TRUE if the current data type equals or is derived from the given one.
@@ -86,7 +87,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      *        
      * @throws DataTypeCastingError
      * 
-     * @return string
+     * @return mixed
      */
     public static function cast($value);
     
@@ -124,16 +125,24 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * 
      * @throws DataTypeValidationError
      * 
-     * @return string
+     * @return mixed
      */
     public function parse($value);
     
     /**
-     * Returns the unique error code (error model alias) used for parsing errors of this data type.
+     * Formats the current internal value (or the given value) to a human-readable string
      * 
+     * @param mixed $value
      * @return string
      */
-    public function getValidationErrorCode();
+    public function format($value = null) : string;
+    
+    /**
+     * Returns the unique error code (error model alias) used for parsing errors of this data type.
+     * 
+     * @return string|NULL
+     */
+    public function getValidationErrorCode() : ?string;
     
     /**
      * Sets the unique error code (error model alias) used for parsing errors of this data type.
@@ -141,14 +150,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @param string $string
      * @return DataTypeInterface
      */
-    public function setValidationErrorCode($string);
-    
-    /**
-     * Returns the text explaining validation errors (e.g. "Model entity aliases must not start with '_' or '~').
-     * 
-     * @return string
-     */
-    public function getValidationErrorText();
+    public function setValidationErrorCode(string $string) : DataTypeInterface;
     
     
     /**
@@ -157,7 +159,13 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @param string $string
      * @return DataTypeInterface
      */
-    public function setValidationErrorText($string);
+    public function setValidationErrorText(string $string) : DataTypeInterface;
+    
+    /**
+     * 
+     * @return MessageInterface|NULL
+     */
+    public function getValidationErrorMessage() : ?MessageInterface;
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
@@ -165,7 +173,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @param mixed $string            
      * @return boolean
      */
-    public function isValidValue($string);
+    public function isValidValue($value) : bool;
     
     /**
      * 
@@ -181,38 +189,31 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * 
      * @return AppInterface
      */
-    public function getApp();
+    public function getApp() : AppInterface;
     
     /**
-     * @return string
+     * @return string|NULL
      */
-    public function getShortDescription();
+    public function getShortDescription() : ?string;
     
     /**
      * 
      * @param string $text
      * @return DataTypeInterface
      */
-    public function setShortDescription($text);
+    public function setShortDescription(string $text) : DataTypeInterface;
     
     /**
      * 
      * @param UxonObject $uxon
      * @return DataTypeInterface
      */
-    public function setDefaultEditorUxon(UxonObject $uxon);
-    
-    /**
-     * 
-     * @param UxonObject $uxon
-     * @return DataTypeInterface
-     */
-    public function setDefaultEditorWidget(UxonObject $uxon);
+    public function setDefaultEditorUxon(UxonObject $uxon) : DataTypeInterface;
     
     /**
      * @return UxonObject
      */
-    public function getDefaultEditorUxon();
+    public function getDefaultEditorUxon() : UxonObject;
     
     /**
      * 
@@ -249,5 +250,16 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return DataTypeInterface
      */
     public function setSensitiveData(bool $trueOrFalse) : DataTypeInterface;
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultDisplayUxon() : UxonObject;
+    
+    /**
+     *
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    public function setDefaultDisplayUxon(UxonObject $uxon) : DataTypeInterface;
 }
-?>

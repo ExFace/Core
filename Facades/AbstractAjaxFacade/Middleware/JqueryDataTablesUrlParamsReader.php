@@ -86,6 +86,9 @@ class JqueryDataTablesUrlParamsReader implements MiddlewareInterface
         
         $dataSheet = $dataSheet ? $dataSheet : $this->getDataSheet($task, $this->getterMethodName);
         $requestCols = $params['columns'];
+        if (! empty($order)) {
+            $dataSheet->getSorters()->removeAll();
+        }
         foreach ($order as $sorter) {
             if (! is_null($sorter['column'])) { // sonst wird nicht nach der 0. Spalte sortiert (0 == false)
                 if ($sort_attr = $requestCols[$sorter['column']]['name']) {

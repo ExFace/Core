@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * Query builders build data source specific queries for the base operations
@@ -67,6 +68,53 @@ interface QueryBuilderInterface extends WorkbenchDependantInterface
      * @return DataQueryResultDataInterface
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string;
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getTimeZone() : ?string;
+    
+    /**
+     * 
+     * @param string $value
+     * @return QueryBuilderInterface
+     */
+    public function setTimeZone(string $value = null) : QueryBuilderInterface;
+    
+    /**
+     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
+     *
+     * Depending on the QueryBuilder, even related attributes can be included in a query
+     * (e.g. in SQL via JOIN or oData via $expand).
+     *
+     * This method is used by the core to determine, if a read operation on a DataSheet must
+     * be split into multiple subsheets and joind afterwards in-memory.
+     *
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool;
+    
+    /**
+     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
+     *
+     * Depending on the QueryBuilder, even related attributes can be included in a query
+     * (e.g. in SQL via JOIN or oData via $expand).
+     *
+     * This method is used by the core to determine, if a write operation on a DataSheet must
+     * be split into multiple subsheets and joind afterwards in-memory.
+     *
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    public function canWriteAttribute(MetaAttributeInterface $attribute) : bool;
     
     // TODO
 }

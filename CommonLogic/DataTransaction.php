@@ -33,7 +33,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getDataManager()
      */
-    public function getDataManager()
+    public function getDataManager() : DataManagerInterface
     {
         return $this->data_manager;
     }
@@ -44,7 +44,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::start()
      */
-    public function start()
+    public function start() : DataTransactionInterface
     {
         $this->is_started = true;
         return $this;
@@ -56,7 +56,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::commit()
      */
-    public function commit()
+    public function commit() : DataTransactionInterface
     {
         if ($this->isRolledBack()) {
             throw new DataTransactionCommitError('Cannot commit a transaction, that has already been rolled back!', '6T5VIIA');
@@ -80,7 +80,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::rollback()
      */
-    public function rollback()
+    public function rollback() : DataTransactionInterface
     {
         if ($this->isCommitted()) {
             throw new DataTransactionRollbackError('Cannot roll back a transaction, that has already been committed!', '6T5VIT8');
@@ -103,7 +103,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isStarted()
      */
-    public function isStarted()
+    public function isStarted() : bool
     {
         return $this->is_started;
     }
@@ -114,7 +114,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isRolledBack()
      */
-    public function isRolledBack()
+    public function isRolledBack() : bool
     {
         return $this->is_rolled_back;
     }
@@ -125,9 +125,19 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isCommitted()
      */
-    public function isCommitted()
+    public function isCommitted() : bool
     {
         return $this->is_committed;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::isOpen()
+     */
+    public function isOpen() : bool
+    {
+        return $this->isStarted() && ! $this->isCommitted() && ! $this->isRolledBack() && ! empty($this->getDataConnections());
     }
 
     /**
@@ -136,26 +146,30 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::addDataConnection()
      */
-    public function addDataConnection(DataConnectionInterface $connection)
+    public function addDataConnection(DataConnectionInterface $connection) : DataTransactionInterface
     {
         if (! $this->isStarted()) {
             $this->start();
         }
         
         // See if the connection is already registered in this transaction
-        foreach ($this->getDataConnections() as $existing_connection) {
-            if ($existing_connection == $connection) {} else {
-                $existing_connection = null;
-            }
+        $existing_connection = null;
+        foreach ($this->getDataConnections() as $c) {
+            if ($c === $connection) {
+                $existing_connection = $c;
+                break;
+            } 
         }
         
         // If this is a new connection, start a transaction there and add it to this DataTransaction.
         // Otherwise make sure, there is a transaction started in the existing connection.
         if (! $existing_connection) {
-            try {
-                $connection->transactionStart();
-            } catch (ErrorExceptionInterface $e) {
-                throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
+            if (! $connection->transactionIsStarted()) {
+                try {
+                    $connection->transactionStart();
+                } catch (ErrorExceptionInterface $e) {
+                    throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->getAliasWithNamespace() . '":' . $e->getMessage(), null, $e);
+                }
             }
             $this->connections[] = $connection;
         } elseif (! $existing_connection->transactionIsStarted()) {
@@ -175,7 +189,7 @@ class DataTransaction implements DataTransactionInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataTransactionInterface::getDataConnections()
      */
-    public function getDataConnections()
+    public function getDataConnections() : array
     {
         return $this->connections;
     }

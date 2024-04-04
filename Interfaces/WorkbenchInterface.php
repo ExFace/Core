@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Communication\CommunicatorInterface;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
@@ -101,7 +102,14 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return string
      */
-    public function getInstallationPath();
+    public function getInstallationPath() : string;
+    
+    /**
+     * Returns the unique name of this installation on the server.
+     * 
+     * @return string
+     */
+    public function getInstallationName() : string;
     
     /**
      *
@@ -124,32 +132,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
     public function getLogger();
     
     /**
-     * Makes the given app get automatically instantiated every time the workbench
-     * is started.
-     *
-     * The app will be added to the AUTORUN_APPS config option of the installation
-     * scope.
-     *
-     * NOTE: Autorun apps can be temporarily disabled in the config by changing
-     * their respective value to FALSE.
-     *
-     * @param AppInterface $app
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function addAutorunApp(AppInterface $app);
-    
-    /**
-     * Removes the give app from the AUTORUN_APPS config option in the installation scope.
-     *
-     * NOTE: this will completely the remove the app from the list. To disable
-     * the autorun temporarily, it's flag-value in the config can be set to FALSE.
-     *
-     * @param AppInterface $app
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function removeAutorunApp(AppInterface $app);
-    
-    /**
      * Returns the workbench cache.
      * 
      * @return WorkbenchCacheInterface
@@ -169,4 +151,10 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return string
      */
     public function getUrl() : string;
+    
+    /**
+     * 
+     * @return CommunicatorInterface
+     */
+    public function getCommunicator() : CommunicatorInterface;
 }

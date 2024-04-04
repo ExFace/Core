@@ -99,4 +99,16 @@ interface ResultInterface extends WorkbenchDependantInterface
      * @return bool
      */
     public function isEmpty() : bool;
+    
+    /**
+     * Returns a copy of the result with a different task.
+     * 
+     * This is important for actions, that inherit results from others - e.g. ActionChain or CallAction.
+     * In their cases, the result depends on another action, but the task, that other action received
+     * may be different from the task of the original acitons.
+     * 
+     * @param TaskInterface $task
+     * @return ResultInterface
+     */
+    public function withTask(TaskInterface $task) : ResultInterface;
 }

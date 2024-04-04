@@ -96,23 +96,23 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                     if ($relPathString !== '') {
                         $colCopy = $col->copy();
                         $colCopy->setName($col_name);
-                        // Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
-                        // it will also update the attribute alias, etc.
-                        // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
-                        // be in the wrong direction here
-                        $colCopy->setExpression($col->getExpressionObj()->withRelationPath($relationPath));
-                        // Update the formatter
-                        if ($col->getFormatter()) {
-                            $colCopy->setFormatter($col->getFormatter()->withRelationPath($relationPath));
+                        // Copy the columns expression with the new relation path. Keep in mind, that
+                        // if the old expression already had a relation path, we need to combine both,
+                        // so that the behavior is the same for expressions with attribute alias
+                        // `RELATION__ATTRIBUTE` and those with attribute alias `ATTRIBUTE` and an
+                        // explicit relation path `RELATION`.
+                        
+                        // IDEA perhaps it would be nicer to use the expression::rebase() here, but the 
+                        // relation path seems to be in the wrong direction here
+                        $newRelPath = $relationPath;
+                        if ($oldRelPath = $col->getExpressionObj()->getRelationPath()) {
+                            $newRelPath = $newRelPath->copy()->appendRelationsFromStringPath($oldRelPath->toString());
                         }
+                        $colCopy->setExpression($col->getExpressionObj()->withRelationPath($newRelPath));
                         // Add the column, but do not transfer values.
                         // This won't be possible anyway, as $colCopy currently still may belong to another sheet and we changed
                         // it's name, so even if the original $col had values, they won't be associated with the modified $colCopy!
                         $this->add($colCopy, $col_name, false);
-                        // Now take care of the values!
-                        /*if($col->isFresh()) {
-                            $this->getDataSheet()->setColumnValues($colCopy->getName(), $col->getValues());
-                        }*/
                     } else {
                         // If no relation path modification required, just add the column
                         $this->add($col);
@@ -153,18 +153,18 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromAttribute()
      */
-    public function addFromAttribute(MetaAttributeInterface $attribute)
+    public function addFromAttribute(MetaAttributeInterface $attribute, bool $hidden = false)
     {
         $sheetObject = $this->getDataSheet()->getMetaObject();
         // Make sure, it is clear, how the attribute is related to the sheet object. Pay attention to
         // the fact, that the attribute may have a relation path.
         if ($sheetObject->is($attribute->getRelationPath()->getStartObject())) {
             // If the relation path starts with the sheet object, just add the attribute as-is.
-            return $this->addFromExpression($attribute->getAliasWithRelationPath());
+            return $this->addFromExpression($attribute->getAliasWithRelationPath(), null, $hidden);
         } elseif ($sheetObject->is($attribute->getObject())) {
             // If the relation path starts with another object, but the attribute itself belongs 
             // to the sheet object, we can still add it by cutting off the relation path.
-            return $this->addFromExpression($attribute->getAlias());
+            return $this->addFromExpression($attribute->getAlias(), null, $hidden);
         } else {
             // If none of the above worked, it's an error!
             throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add attribute "' . $attribute->getAliasWithRelationPath() . '" to data sheet of "' . $sheetObject->getAliasWithNamespace() . '": no relation to the attribute could be found!');
@@ -194,16 +194,27 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::getByExpression()
      */
-    public function getByExpression($expression_or_string)
+    public function getByExpression($expression_or_string, bool $checkType = false)
     {
         if ($expression_or_string instanceof ExpressionInterface) {
             $exprString = $expression_or_string->toString();
         } else {
             $exprString = $expression_or_string;
         }
+        
+        // FIXME #unknown-column-types shouldn't we double-check the column-type here?
+        // Especially the second round searching below produces strange results
+        // on columns with aggregations. E.g. an attribute column `MY_ATTR:SUM`
+        // will match an unknown column `MY_ATTR_SUM`, which may or may not be
+        // a good idea depending on the use case! Since transforming data sheets
+        // to JS and back often removes the original attribute aliases, this 
+        // happens in dialog refreshes: the input of ReadPrefill contains such an
+        // aggregated column of type "unknown" (because its attribute_alias was lost
+        // in the request from the client - that column is "found" when the widget is
+        // looking for its column `MY_ATTR:SUM`, but it cannot be read when refreshing
+        // because it lost its attribute binding.
         
         // First check if there is a column with exactly the same expression
         foreach ($this->getAll() as $col) {
@@ -217,11 +228,13 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         // because sometimes the original expression is lost due to encoding
         // or decoding data leaving only the column name. If that matches,
         // however, it's enough to assume, that this column fits.
-        $colNameForExpression = DataColumn::sanitizeColumnName($exprString);
-        if ($colNameForExpression !== '') {
-            foreach ($this->getAll() as $col) {
-                if ($col->getName() === $colNameForExpression) {
-                    return $col;
+        if ($checkType === false) {
+            $colNameForExpression = DataColumn::sanitizeColumnName($exprString);
+            if ($colNameForExpression !== '') {
+                foreach ($this->getAll() as $col) {
+                    if ($col->getName() === $colNameForExpression) {
+                        return $col;
+                    }
                 }
             }
         }
@@ -238,8 +251,9 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      */
     public function getByAttribute(MetaAttributeInterface $attribute)
     {
+        $attrAlias = $attribute->getAliasWithRelationPath();
         foreach ($this->getAll() as $col) {
-            if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attribute->getAliasWithRelationPath()) {
+            if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attrAlias) {
                 return $col;
             }
         }
@@ -323,5 +337,19 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::hasSystemColumns()
+     */
+    public function hasSystemColumns() : bool
+    {
+        foreach ($this->getDataSheet()->getMetaObject()->getAttributes()->getSystem() as $attr) {
+            if (! $this->getByAttribute($attr)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
-?>

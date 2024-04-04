@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Charts;
 
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -17,10 +16,16 @@ use exface\Core\Widgets\Chart;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
- * The ChartAxis represents the X or Y axis of a chart.
+ * Explicit configuration of the X or Y axis of a chart.
  *
- * Most important properties of a ChartAxis are it's `caption`, `axis_type` (time, text, numbers, etc.), 
- * `position` (left, right, bottom, top) and `min`/`max` values. An axis can also be `hidden`.
+ * Most important properties of a `ChartAxis` are:
+ * 
+ * - `caption` - derived from the caption of the axis data column if not set explicitly
+ * - `hide_caption` - for all axis types except `time` set to `false` by default
+ * - `axis_type` (`time`, `category`, `value`, etc.) - determined automatically from the data type
+ * - `position` (left, right, bottom, top) 
+ * - `min`/`max` values - determined automatically from the data if not set explicitly
+ * - `hidden` - always `false` unless explicitly set to `true`
  *
  * @author Andrej Kabachnik
  *        
@@ -29,6 +34,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
 {
     use iHaveCaptionTrait {
         getCaption as getCaptionSetExplicitly;
+        getHideCaption as getHideCaptionSetExplicitly;
     }
 
     private $axis_type = null;
@@ -55,7 +61,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     private $gridArea = null;
     
-    private $rotate_labels = false;
+    private $rotate_labels_degrees = null;
     
     private $ticks_for_every_value = null;
 
@@ -208,7 +214,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     }
     
     /**
-     * Set this parameter if you want the axis label be rotated. Only works for x-axes.
+     * Set this parameter if you want the axis label be rotated by 45 degrees. Only works for x-axes.
      * 
      * @uxon-property rotate_labels
      * @uxon-type bool
@@ -219,8 +225,43 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
      */
     public function setRotateLabels(bool $bool) : ChartAxis
     {
-        $this->rotate_labels = $bool;
+        if ($bool === false) {
+            $this->rotate_labels_degrees = null;
+            return $this;
+        }
+        if ($this->rotate_labels_degrees === null) {
+            $this->setRotateLabelsDegrees(45);
+        }
         return $this;
+    }
+    
+    /**
+     * Set this parameter if you want the axis label be rotated by 45 degree. Only works for x-axes.
+     *
+     * @uxon-property rotate_labels_degrees
+     * @uxon-type [45,90,-45,-90]
+     *
+     *
+     * @param int
+     * @return ChartAxis
+     */
+    public function setRotateLabelsDegrees(int $degrees) : ChartAxis
+    {
+        $this->rotate_labels_degrees = $degrees;
+        return $this;
+    }
+    
+    /**
+     * Returns how many degree axis lables should get rotated.
+     * @return string
+     */
+    public function getRotateLabelsDegree() : string
+    {
+        $degrees = $this->rotate_labels_degrees;
+        if (abs($degrees) !== 45 && abs($degrees) !== 90) {
+            throw new WidgetPropertyInvalidValueError($this->getChart(), 'Invalid chart axis label rotation "' . $degrees . '". Only the values 45, 90, -45 or -90 are allowed!', '6TA2Y6A');
+        }
+        return $degrees;
     }
     
     /**
@@ -233,7 +274,7 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
         if ($this->getDimension() === Chart::AXIS_Y) {
             return false;
         }
-        return $this->rotate_labels;
+        return $this->rotate_labels_degrees !== null;
     }
 
     /**
@@ -262,7 +303,9 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function getCaption() : ?string
     {
         if ($this->getCaptionSetExplicitly() === null) {
-            $this->setCaption($this->getDataColumn()->getCaption());
+            if (($colCaption = $this->getDataColumn()->getCaption()) !== null) {
+                $this->setCaption($colCaption);
+            }
         }
         return $this->getCaptionSetExplicitly();
     }
@@ -517,6 +560,18 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     
     /**
      * 
+     * @return bool
+     */
+    public function isBoundToDataColumn() : bool
+    {
+        if ($this->data_column !== null || $this->data_column_id !== null) {
+            return $this->getDataColumn()->isBoundToDataColumn();
+        }
+        return $this->isBoundToAttribute();
+    }
+    
+    /**
+     * 
      * @return MetaAttributeInterface
      */
     public function getAttribute() : MetaAttributeInterface
@@ -568,5 +623,15 @@ class ChartAxis extends AbstractChartPart implements iHaveCaption
     public function hasTicksForEveryValue() : bool
     {
         return $this->ticks_for_every_value ?? $this->getAxisType() === self::AXIS_TYPE_CATEGORY;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see iHaveCaptionTrait::getHideCaption()
+     */
+    public function getHideCaption() : ?bool
+    {
+        return $this->getHideCaptionSetExplicitly() ?? ($this->getAxisType() === self::AXIS_TYPE_TIME ? true : false);
     }
 }

@@ -3,14 +3,18 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
- * The text widget simply shows text with an optional title (created from the caption of the widget).
+ * Displays multiline text with an optional title (created from the caption of the widget) and some simple formatting.
+ * 
+ * In contrast to the more generic `Display` widget, `Text` allows line breaks and will wrap long values. It also
+ * allows some simple formatting like `style`, `size` and `align`.
  *
  * @author Andrej Kabachnik
  *        
  */
-class Text extends Display implements iShowText
+class Text extends Display implements iShowText, iCanWrapText
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -19,6 +23,8 @@ class Text extends Display implements iShowText
     private $size = null;
 
     private $style = null;
+    
+    private $multiLine = true;
 
     public function getText()
     {
@@ -54,9 +60,9 @@ class Text extends Display implements iShowText
     }
     
     /**
-     * Sets the style of the text: normal, big, small.
+     * Sets the size of the text: normal, big, small.
      * 
-     * @uxon-property style
+     * @uxon-property size
      * @uxon-type [normal,big,small]
      * @uxon-default normal
      * 
@@ -89,7 +95,7 @@ class Text extends Display implements iShowText
      */
     public function setStyle($value)
     {
-        $this->style = $value;
+        $this->style = strtolower($value);
         return $this;
     }
 
@@ -113,5 +119,51 @@ class Text extends Display implements iShowText
         }
         return $uxon;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isMultiLine() : bool
+    {
+        return $this->multiLine;
+    }
+    
+    /**
+     * Set to FALSE to force a single-line text widget
+     * 
+     * @uxon-property multi_line
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * 
+     * @param bool $value
+     * @return Text
+     */
+    public function setMultiLine(bool $value) : Text
+    {
+        $this->multiLine = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanWrapText::getNowrap()
+     */
+    public function getNowrap(): bool
+    {
+        return ! $this->isMultiLine();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanWrapText::setNowrap()
+     */
+    public function setNowrap(bool $value): iCanWrapText
+    {
+        return $this->setMultiLine(! $value);
+    }
+
 }
-?>

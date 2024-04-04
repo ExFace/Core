@@ -12,18 +12,11 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
-
-    /**
-     *
-     * @param ExpressionInterface|string $expression            
-     * @param string $name            
-     * @param DataSheetInterface $data_sheet            
-     */
-    function __construct($expression, $name = '', DataSheetInterface $data_sheet);
-
     /**
      *
      * @return \exface\Core\Interfaces\Model\ExpressionInterface
@@ -52,6 +45,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function setDataSheet(DataSheetInterface $data_sheet);
 
     /**
+     * 
      */
     public function getName();
 
@@ -61,7 +55,23 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param boolean $keep_values            
      */
     public function setName($value, $keep_values = false);
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getTitle() : ?string;
+    
+    /**
+     * 
+     * @param string $string
+     * @return DataColumnInterface
+     */
+    public function setTitle(string $string) : DataColumnInterface;
 
+    /**
+     * 
+     */
     public function getHidden();
 
     /**
@@ -69,18 +79,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param boolean $value            
      */
     public function setHidden($value);
-
-    /**
-     *
-     * @return ExpressionInterface
-     */
-    public function getFormatter();
-
-    /**
-     *
-     * @param ExpressionInterface|string $expression            
-     */
-    public function setFormatter($expression);
 
     /**
      *
@@ -112,6 +110,15 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return array
      */
     public function getValues($include_totals = false);
+    
+    /**
+     * Returns an array of values of this column normalized according to the columns data type.
+     * 
+     * @throws DataSheetInvalidValueError
+     * 
+     * @return array
+     */
+    public function getValuesNormalized() : array;
 
     /**
      * Returns the value of the given row within this column
@@ -160,13 +167,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param boolean $value            
      */
     public function setFresh($value);
-
-    /**
-     * Clones the column and returns the new copy
-     *
-     * @return DataColumnInterface
-     */
-    public function copy();
 
     /**
      * Returns the sequential number of the first row, that contains the given value or FALSE if none of the
@@ -234,6 +234,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns an array with with all values of this column, which are not present in the same row of another one.
+     * 
      * NOTE: The keys of the returned array are the row numbers of this column
      * In contrast to diff_values(), this method compares the column per row.
      *
@@ -249,10 +250,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function getFormula();
 
     /**
-     *
-     * @param string|ExpressionInterface $expression_or_string            
+     * Make column values be calculated via formula: e.g. `=NOW()` - even if the expression of the column points to an attribute!
+     * 
+     * This will make the column a calculated column - similarly to a column with a formula in its expression.
+     * However, this separate property allows to use an attribute alias as expression and still use a formula
+     * to calculate values, so these calculated values will be saved to the attribute when the data is written
+     * to the data source. In a sence, this is an alternative to data mappers, that could map a formula-column
+     * to an attribute column.
+     * 
+     * @param string|ExpressionInterface $expression_or_string          
+     * @return DataColumn  
      */
-    public function setFormula($expression_or_string);
+    public function setFormula($expression_or_string) : DataColumn;
 
     public function getAttributeAlias();
 
@@ -380,7 +389,9 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function isFormula() : bool;
     
     /**
-     * Returns TRUE if this is a calculated column - that is, it's data does not (only) come from a data source.
+     * Returns TRUE if the values of this column are calculated instead of being loaded from a data source.
+     * 
+     * In other words, a calculated columns values are formulas or constants.
      * 
      * @return boolean
      */
@@ -392,6 +403,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return bool
      */
     public function isStatic() : bool;
+    
+    /**
+     * Returns TRUE if the column can be read from the data source (or environment in case of static values).
+     * 
+     * Returns FALSE if the column cannot be read: e.g. if
+     * - it is of unknown type or 
+     * - references a non-readable or
+     * - contains a formula, that in turn has uses one of the above
+     * 
+     * @return bool
+     */
+    public function isReadable() : bool;
     
     /**
      * Returns the aggregator defined for this column or NULL if it is not aggregated

@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\OutOfBoundsException;
+use exface\Core\Exceptions\FileNotReadableError;
 
 class Configuration implements ConfigurationInterface
 {
@@ -58,13 +59,33 @@ class Configuration implements ConfigurationInterface
      */
     public function getOption(string $key)
     {
-        $key = strtoupper($key);
+        $key = mb_strtoupper($key);
         $val = $this->getConfigUxon()->getProperty($key);
         // If the value is NULL, we need to distinguish between an intended NULL and a missing property
         if ($val === null && $this->getConfigUxon()->hasProperty($key) === false) {
            throw new ConfigOptionNotFoundError($this, 'Required configuration key "' . $key . '" not found!', '6T5DZN2');
         }
         return $val;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::getOptionGroup()
+     */
+    public function getOptionGroup(string $namespace, bool $removeNamespace = false) : array
+    {
+        $namespace = rtrim($namespace, ".") . '.';
+        $opts = $this->findOptions('/^' . preg_quote($namespace, '/') . '.*/');
+        if ($removeNamespace) {
+            $optsWithNamespace = $opts;
+            $opts = [];
+            $namespaceLength = strlen($namespace);
+            foreach ($optsWithNamespace as $opt => $val) {
+                $opts[substr($opt, $namespaceLength)] = $val;
+            }
+        }
+        return $opts;
     }
     
     /**
@@ -91,13 +112,12 @@ class Configuration implements ConfigurationInterface
      */
     public function hasOption(string $key, string $scope = null) : bool
     {
-        $config = $scope === null ? $this : $this->getScopeConfig($scope);
-        try {
-            $config->getOption($key);
-        } catch (ConfigOptionNotFoundError $e){
-            return false;
+        if ($scope !== null) {
+            return $this->getScopeConfig($scope)->hasOption($key);
         }
-        return true;
+        
+        $key = mb_strtoupper($key);
+        return array_key_exists($key, $this->getConfigUxon()->toArray());
     }
 
     protected function getConfigFilePath($scope)
@@ -118,7 +138,7 @@ class Configuration implements ConfigurationInterface
      */
     public function setOption(string $key, $value_or_object_or_string, string $configScope = null) : ConfigurationInterface
     {
-        $this->getConfigUxon()->setProperty(strtoupper($key), $value_or_object_or_string);
+        $this->getConfigUxon()->setProperty(mb_strtoupper($key), $value_or_object_or_string);
         
         if ($configScope !== null) {
             $config = $this->getScopeConfig($configScope);
@@ -164,7 +184,7 @@ class Configuration implements ConfigurationInterface
         if ($filename && file_exists($filename)) {
             $config = new self($this->getWorkbench());
             $config->loadConfigFile($filename);
-            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(strtoupper($key))->toJson(true));
+            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(mb_strtoupper($key))->toJson(true));
             $this->reloadFiles();
         }
         
@@ -207,8 +227,16 @@ class Configuration implements ConfigurationInterface
      */
     protected function readFile(string $absolute_path) : ?UxonObject
     {
-        if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path), CASE_UPPER)) {
-            $this->loadConfigUxon($uxon);
+        $uxon = null;
+        if (file_exists($absolute_path)) {
+            $json = file_get_contents($absolute_path);
+            if ($json === false) {
+                throw new FileNotReadableError('Cannot read configuration file "' . $absolute_path . "!");
+            }
+            if ($json !== null && $json !== '') {
+                $uxon = UxonObject::fromJson($json, CASE_UPPER);
+                $this->loadConfigUxon($uxon);
+            }
         }
         return $uxon;
     }

@@ -3,8 +3,9 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Basic data type for numeric values.
@@ -32,6 +33,14 @@ class NumberDataType extends AbstractDataType
     private $groupLength = 3;
     
     private $groupSeparator = null;
+    
+    private $emptyFormat = '';
+    
+    private $showPlusSign = false;
+    
+    private $prefix = null;
+    
+    private $suffix = null;
 
     /**
      *
@@ -40,40 +49,53 @@ class NumberDataType extends AbstractDataType
      */
     public static function cast($string)
     {
-        if (is_numeric($string) === true) {
+        switch (true) {
             // Decimal numbers
-            return $string;
-        } elseif (static::isValueEmpty($string) === true) {
+            case is_numeric($string) === true:
+                if (is_string($string)) {
+                    // Return the string as an int if it represents an integer value or as a float if it represents a float
+                    // That is important to assure that for exanple 1.00 and 1 is treated as the same value in comparisons
+                    $float = floatval($string);
+                    $int = intval($string);
+                    return floatval($int) === $float ? $int : $float; 
+                }
+                return $string;
             // Return NULL for casting empty values as an empty string '' actually is not a number!
-            return null;
-        } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
+            case static::isValueEmpty($string) === true:
+            // NULL constant
+            // TODO #null-or-NULL the NULL constant is not a number, but do we still need it here?
+            case static::isValueLogicalNull($string) === true:
+                return null;
             // Hexadecimal numbers in '0x....'-Notation
-            return $string;
-        } elseif (strcasecmp($string, 'true') === 0) {
-            return 1;
-        } elseif (strcasecmp($string, 'false') === 0) {
-            return 0;
-        } elseif (static::isValueLogicalNull($string) === true) {
-            return null;
-        } else {
-            $string = trim($string);
-            $matches = array();
-            preg_match_all('!^(-?\d+([,\.])?)+$!', str_replace(' ', '', $string), $matches);
-            if (empty($matches[0]) === false) {
-                $decimalSep = $matches[2][0];
-                if ($decimalSep === ',') {
-                    $number = str_replace('.', '', $string);
-                    $number = str_replace($decimalSep, '.', $number);
-                } else {
-                    $number = str_replace(',', '', $string);
-                }
-                if (is_numeric($number)) {
-                    return $number;
-                }
-            }            
-            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a number!');
-            return '';
+            case mb_strtoupper(substr($string, 0, 2)) === '0X':
+                return $string;
+            case is_bool($string):
+                return $string === true ? 1 : 0;
+            case strcasecmp($string, 'true') === 0:
+                return 1;
+            case strcasecmp($string, 'false') === 0:
+                return 0;
+            case static::isValueLogicalNull($string) === true:
+                return null;
+            default:
+                $trimmed = str_replace(' ', '', trim($string));
+                $matches = array();
+                preg_match_all('!^(-?\d+([,\.])?)+$!', $trimmed, $matches);
+                if (empty($matches[0]) === false) {
+                    $decimalSep = $matches[2][0];
+                    if ($decimalSep === ',') {
+                        $number = str_replace('.', '', $trimmed);
+                        $number = str_replace($decimalSep, '.', $number);
+                    } else {
+                        $number = str_replace(',', '', $trimmed);
+                    }
+                    if (is_numeric($number)) {
+                        return $number;
+                    }
+                }            
+                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a number!');
         }
+        return null;
     }
 
     /**
@@ -83,21 +105,63 @@ class NumberDataType extends AbstractDataType
      */
     public function parse($string)
     {
+        if (is_string($string)) {
+            if (null !== ($pfx = $this->getPrefix()) && StringDataType::startsWith($string, $pfx, false)) {
+                $string = trim(mb_substr($string, strlen($pfx)));
+            }
+            if (null !== ($sfx = $this->getSuffix()) && StringDataType::endsWith($string, $sfx, false)) {
+                $string = trim(mb_substr($string, 0, (-1) * strlen($sfx)));
+            }
+        }
+        
         try {
             $number = parent::parse($string);
         } catch (\Throwable $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
         }
         
-        if (! is_null($this->getMin()) && $number < $this->getMin()) {
-            throw $this->createValidationError($number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+        if ($string === $this->getEmptyFormat()) {
+            return null;
         }
         
-        if (! is_null($this->getMax()) && $number > $this->getMax()) {
-            throw $this->createValidationError($number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+        if (! $this->isValueEmpty($number)) {
+            if (! is_null($this->getMin()) && $number < $this->getMin()) {
+                throw $this->createValidationError($number . ' is less than the minimum of ' . $this->getMin() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+            }
+            
+            if (! is_null($this->getMax()) && $number > $this->getMax()) {
+                throw $this->createValidationError($number . ' is greater than the maximum of ' . $this->getMax() . ' allowed for data type ' . $this->getAliasWithNamespace() . '!');
+            }
         }
         
         return $number;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $and = $translator->translate('DATATYPE.VALIDATION.AND');
+        $text = '';
+        if ($this->getMin() !== null) {
+            $minMaxCond = ' ≥ ' . $this->getMin();
+        }
+        if ($this->getMax() !== null) {
+            $minMaxCond .= ($minMaxCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $this->getMax();
+        }
+        if ($minMaxCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.MINMAX_CONDITION', ['%condition%' => $minMaxCond]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
     }
     
     /**
@@ -351,5 +415,199 @@ class NumberDataType extends AbstractDataType
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.NUMBER.DECIMAL_SEPARATOR');
     }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getEmptyFormat() : string
+    {
+        return $this->emptyFormat;
+    }
+    
+    /**
+     * What to display when formatting empty values - e.g. `?` or `N/A` - empty string by default.
+     * 
+     * @uxon-property empty_format
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setEmptyFormat(string $value) : NumberDataType
+    {
+        $this->emptyFormat = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $num = $this->parse($value);
+        
+        if ($num === null || $num === '' || $num === EXF_LOGICAL_NULL) {
+            return $this->getEmptyFormat();
+        }
+        
+        $pMin = $this->getPrecisionMin();
+        $pMax = $this->getPrecisionMax();
+        
+        if ($pMax === 0 || ($pMax !== null && $pMin !== null && $pMax <= $pMin)) {
+            $decimals = $pMax;
+        } else {
+            $decPart = explode('.', strval($num))[1] ?? '';
+            $pReal = strlen(rtrim($decPart, '0'));
+            switch (true) {
+                case $pMax === null && $pMin !== null:
+                    $decimals = min([$pMin, $pReal]);
+                    break;
+                case $pMax !== null && $pMin !== null:
+                    $decimals = min([$pMin, $pMax]);
+                    break;
+                case $pMin !== null:
+                    $decimals = min([$pMax, $pReal]);
+                    break;
+                default:
+                    $decimals = $pReal;
+            }
+        }
+        
+        $float = floatval($num);
+        $sign = $this->getShowPlusSign() && $float > 0 ? '+' : '';
+        
+        $formatted = $sign . number_format($float, $decimals, $this->getDecimalSeparator(), $this->getGroupSeparator());
+        
+        if (null !== $pfx = $this->getPrefix()) {
+            $formatted = $pfx . $formatted;
+        }
+        
+        if (null !== $sfx = $this->getSuffix()) {
+            $formatted .= $sfx;
+        }
+        
+        return $formatted;
+    }
+    
+    /**
+     * 
+     * @param int|float|NULL|string $value
+     * @param WorkbenchInterface $workbench
+     * @param string $emptyFormat
+     * @param int $precisionMin
+     * @param int $precisionMax
+     * @param string $groupSeparator
+     * @param int $groupLength
+     * @param string $decimalSeparator
+     * @return string
+     */
+    public static function formatNumberLocalized($value, WorkbenchInterface $workbench, $emptyFormat = '', int $precisionMin = null, int $precisionMax = null, string $groupSeparator = null, int $groupLength = null, string $decimalSeparator = null) : string
+    {
+        if ($value === null || $value === '' || $value === EXF_LOGICAL_NULL) {
+            return $emptyFormat;
+        }
+        
+        /* @var $type \exface\Core\DataTypes\NumberDataType */
+        $type = DataTypeFactory::createFromString($workbench, NumberDataType::class);
+        
+        if ($emptyFormat !== '') {
+            $type->setEmptyFormat($emptyFormat);
+        }
+        if ($precisionMin !== null) {
+            $type->setPrecisionMin($precisionMin);
+        }
+        if ($precisionMax !== null) {
+            $type->setPrecisionMax($precisionMax);
+        }
+        /* TODO why can't we set a custom decimal separator for a numeric type???
+        if ($decimalSeparator !== null) {
+            $type->setDecimalSeparator($decimalSeparator);
+        }*/
+        if ($groupSeparator !== null) {
+            $type->setGroupSeparator($groupSeparator);
+        }
+        if ($groupLength !== null) {
+            $type->setGroupLength($groupLength);
+        }
+        
+        return $type->format($value);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowPlusSign() : bool
+    {
+        return $this->showPlusSign;
+    }
+    
+    /**
+     * Set to TRUE to show the plus-sign in front of positive numbers
+     * 
+     * @uxon-property show_plus_sign
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NumberDataType
+     */
+    public function setShowPlusSign(bool $value) : NumberDataType
+    {
+        $this->showPlusSign = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getPrefix() : ?string
+    {
+        return $this->prefix;
+    }
+    
+    /**
+     * Adds a prefix in front of the number when formatting - e.g. a symbol
+     * 
+     * @uxon-property prefix
+     * @uxon-type string
+     * @uxon-translatable true
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setPrefix(string $value) : NumberDataType
+    {
+        $this->prefix = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getSuffix() : ?string
+    {
+        return $this->suffix;
+    }
+    
+    /**
+     * Adds a suffix after the number when formatting - e.g. a measurement unit
+     * 
+     * @uxon-property suffix
+     * @uxon-type string
+     * @uxon-translatable true
+     * 
+     * @param string $value
+     * @return NumberDataType
+     */
+    public function setSuffix(string $value) : NumberDataType
+    {
+        $this->suffix = $value;
+        return $this;
+    }
 }
-?>

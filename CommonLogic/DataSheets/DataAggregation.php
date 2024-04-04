@@ -93,15 +93,31 @@ class DataAggregation implements iCanBeConvertedToUxon
     }
     
     /**
+     * Returns TRUE if the alias expression is an aggregation, else returns FALSE
+     * 
+     * @param string $attribute_alias
+     * @return bool
+     */
+    public static function hasAggregation(string $attribute_alias) : bool
+    {
+        $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
+        if ($aggregator_pos !== false){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
      * Returns the passed alias expression with the given aggregator appended to it.
      * 
      * @param string $attribute_alias
-     * @param AggregatorInterface $aggregator
+     * @param AggregatorInterface|string $aggregator
      * @return string
      */
-    public static function addAggregatorToAlias(string $attribute_alias, AggregatorInterface $aggregator) : string
+    public static function addAggregatorToAlias(string $attribute_alias, $aggregatorOrString) : string
     {
-        return $attribute_alias . self::AGGREGATION_SEPARATOR . $aggregator->__toString();
+        return $attribute_alias . self::AGGREGATION_SEPARATOR . ($aggregatorOrString instanceof AggregatorInterface ? $aggregatorOrString->__toString() : $aggregatorOrString);
     }
 
     /**
@@ -109,7 +125,7 @@ class DataAggregation implements iCanBeConvertedToUxon
      *
      * @return DataSorter
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }

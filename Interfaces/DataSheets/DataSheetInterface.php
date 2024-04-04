@@ -10,6 +10,9 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
@@ -30,7 +33,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
  * @author Andrej Kabachnik
  *
  */
-interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
+interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
 
     /**
@@ -77,35 +80,35 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface data_sheet
-     * @param string left_key_column
-     * @param string right_key_column
-     * @param string column_prefix
+     * @param DataSheetInterface $otherSheet
+     * @param string $leftKeyColName
+     * @param string $rightKeyColName
+     * @param string $relationPath
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
+    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
 
     /**
      * Imports data from matching columns of the given sheet.
      * If the given sheet has the same columns, as this one, their
-     * values will be copied to this sheet. If this sheet has columns with formulas, they will automatically get calculated
-     * for the imported rows.
+     * values will be copied to this sheet. If this sheet has columns with formulas, they will get calculated
+     * for the imported rows if `calculateFormulas` is `true`.
      *
      * @param DataSheetInterface $other_sheet            
      * @return DataSheetInterface
      */
-    public function importRows(DataSheetInterface $other_sheet);
+    public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas);
 
     /**
      * Returns the values a column of the data sheet as an array
+     * 
+     * If $include_totals is set to ture, the total rows will be appended to the data rows
      *
-     * @param
-     *            string column_name
-     * @param
-     *            boolean include_totals if set to ture, the total rows will be appended to the data rows
-     * @return boolean|array
+     * @param string $column_name
+     * @param boolean $include_totals
+     * @return array
      */
-    public function getColumnValues($column_name, $include_totals = false);
+    public function getColumnValues(string $column_name, bool $include_totals = false) : array;
 
     /**
      * Overwrites all values of a data sheet column using a given array with values per row or
@@ -119,13 +122,32 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param mixed|array totals_values
      * @return DataSheetInterface
      */
-    public function setColumnValues($column_name, $column_values, $totals_values = null);
+    public function setColumnValues(string $column_name, $column_values, $totals_values = null) : DataSheetInterface;
 
-    public function getCellValue($column_name, $row_number);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @return mixed|NULL
+     */
+    public function getCellValue(string $column_name, int $row_number);
 
-    public function setCellValue($column_name, $row_number, $value);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @param mixed $value
+     * @return DataSheetInterface
+     */
+    public function setCellValue(string $column_name, int $row_number, $value) : DataSheetInterface;
 
-    public function getTotalValue($column_name, $row_number);
+    /**
+     * 
+     * @param string $column_name
+     * @param int $row_number
+     * @return mixed|NULL
+     */
+    public function getTotalValue(string $column_name, int $row_number);
 
     /**
      * Populates the data sheet with actual data from the respecitve data sources.
@@ -309,14 +331,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
-     * @param DataTransactionInterface $transaction   
+     * @param DataTransactionInterface $transaction
+     * @param bool $cascading
      *          
      * @triggers \exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnDeleteDataEvent
      * 
      * @return int
      */
-    public function dataDelete(DataTransactionInterface $transaction = null) : int;
+    public function dataDelete(DataTransactionInterface $transaction = null, bool $cascading = true) : int;
 
     /**
      *
@@ -348,6 +371,21 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array
      */
     public function getRows($how_many = 0, $offset = 0);
+    
+    /**
+     * Returns only those rows from the current sheet, that are not present in the other sheet provided.
+     *
+     * This method is mainly usefull to compare data sheets deemed to be identical - it compares
+     * rows with the same row numbers.
+     * 
+     * Columns, attributes or expressions can be excluded from the comparison via `$exclude` argument.
+     * Differences in the corresponding columns will be ignored!
+     *
+     * @param DataSheetInterface $otherSheet
+     * @param DataColumnInterface[]|MetaAttributeInterface[]|ExpressionInterface[]|string[] $exclude
+     * @return array
+     */
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array;
 
     /**
      * Returns the specified row as an associative array (e.g.
@@ -370,12 +408,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getRowByColumnValue($column_name, $value);
 
     /**
-     * Returns the total rows as assotiative arrays.
-     * Multiple total rows can be used to display multiple totals per column.
-     *
-     * @return array [ column_id => total value ]
+     * Returns the rows containing column totals as assotiative arrays (similar to regular `getRows()`).
+     * 
+     * Each row contains only columns, that actually have totals (unless $onlyTotaledCols=false). Multiple total 
+     * rows are returned if at least one column has multiple totals.
+     * 
+     * If the data sheet has no column totals, an empty array is returned.
+     * 
+     * @param bool $onlyTotaledCols
+     * @return array [[ column_id => total value ], [ ... ], ...]
      */
-    public function getTotalsRows();
+    public function getTotalsRows(bool $onlyTotaledCols = true) : array;
+    
+    /**
+     * Returns a specific totals row by index (starting with 0).
+     * 
+     * If the index is ommitted, the first totals row (with index 0) is returned.
+     * 
+     * By default, the totals
+     * 
+     * @param int $idx
+     * @param bool $onlyTotaledCols
+     * @return array|NULL
+     */
+    public function getTotalsRow(int $idx = 0, bool $onlyTotaledCols = true) : ?array;
 
     /**
      * Returns an array of DataColumns
@@ -437,11 +493,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function setFilters(ConditionGroup $condition_group);
 
     /**
-     * Removes all rows of the data sheet without chaning anything in the column structure
+     * Removes all or specified rows of the data sheet without changing anything in the column structure
      *
+     * @param int[]|NULL $rowIndexes
      * @return DataSheetInterface
      */
-    public function removeRows();
+    public function removeRows(array $rowIndexes = null);
 
     /**
      * Removes a single row of the data sheet.
@@ -487,13 +544,24 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function removeRowsForColumn($column_name);
+    
+    /**
+     * Removes duplicate rows only leaving the first occurrence.
+     * 
+     * Returns the removed rows with their original indexes
+     * 
+     * @return array
+     */
+    public function removeRowDuplicates() : array;
 
     /**
      * Returns TRUE if the sheet currently does not have data (= no rows) and FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * @param bool $checkValues
+     * 
+     * @return bool
      */
-    public function isEmpty() : bool;
+    public function isEmpty(bool $checkValues = false) : bool;
 
     /**
      * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)
@@ -541,13 +609,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function isPaged() : bool;
 
-    public function getRowsLimit();
+    public function getRowsLimit() : ?int;
 
-    public function setRowsLimit($value);
+    public function setRowsLimit($value) : DataSheetInterface;
 
-    public function getRowsOffset();
+    public function getRowsOffset() : int;
 
-    public function setRowsOffset($value);
+    public function setRowsOffset(int $value) : DataSheetInterface;
 
     /**
      * Merges the current data sheet with another one.
@@ -566,9 +634,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * The copy will point to the same meta object, but will
      * have separate columns, filters, aggregations, etc.
      *
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy();
+    public function copy() : self;
 
     /**
      *
@@ -618,11 +687,20 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function hasColumTotals();
     
     /**
+     * Returns a new data sheet with the same columns, but only containing rows, that match the given filter
      * 
      * @param ConditionalExpressionInterface $condition
+     * @param bool $readMissingData
      * @return DataSheetInterface
      */
-    public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
+    public function extract(ConditionalExpressionInterface $filter, bool $readMissingData = false) : DataSheetInterface;
+    
+    /**
+     * Returns a copy of this data sheet, that only contains system columns
+     * 
+     * @return DataSheetInterface
+     */
+    public function extractSystemColumns() : DataSheetInterface;
     
     /**
      * Sorts the current rows using the sorters defined in the sheet or a given sorter list.
@@ -653,6 +731,26 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array
      */
     public function getRowsDecrypted($how_many = 0, $offset = 0) : array;
+    
+    /**
+     * Returns TRUE if automatic sorting according to the metamodel is to be used and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function getAutoSort() : bool;
+    
+    /**
+     * Disable/enable automatic sorting according to the metamodel
+     * 
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    public function setAutoSort(bool $value) : DataSheetInterface;
+    
+    /**
+     * Substitues values in columns with DataType marked as sensitive with 'CENSORED'
+     *
+     * @return DataSheetInterface
+     */
+    public function getCensoredDataSheet() : DataSheetInterface;
 }
-
-?>

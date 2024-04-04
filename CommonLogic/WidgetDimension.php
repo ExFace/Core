@@ -1,16 +1,24 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Interfaces\WorkbenchInterface;
+
 class WidgetDimension
 {
-
+    const MAX = 'max';
+    
+    const AUTO = 'auto';
+    
     private $exface;
 
     private $value = NULL;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(WorkbenchInterface $exface, string $value = null)
     {
         $this->exface = $exface;
+        if ($value !== null) {
+            $this->parseDimension($value);
+        }
     }
 
     /**
@@ -71,7 +79,7 @@ class WidgetDimension
      */
     public function isRelative()
     {
-        if (! $this->isUndefined() && (is_numeric($this->getValue()) || $this->getValue() == 'max'))
+        if (! $this->isUndefined() && (is_numeric($this->getValue()) || $this->isMax()))
             return true;
         else
             return false;
@@ -85,7 +93,7 @@ class WidgetDimension
      */
     public function isMax()
     {
-        if (! $this->isUndefined() && (strcasecmp($this->getValue(), 'max') == 0)) {
+        if (! $this->isUndefined() && (strcasecmp($this->getValue(), self::MAX) == 0)) {
             return true;
         } else {
             return false;
@@ -116,6 +124,15 @@ class WidgetDimension
             return true;
         else
             return false;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isAuto() : bool
+    {
+        return is_string($this->value) && strcasecmp($this->value, self::AUTO) === 0;
     }
 }
 ?>

@@ -81,16 +81,16 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-08 21:31:18",
-            "MODIFIED_ON": "2020-11-17 09:08:07",
+            "MODIFIED_ON": "2022-04-28 18:14:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4bb25832b2cfe4b318306b9a",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Page Group",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
@@ -129,9 +129,9 @@
                                                 ]
                                             },
                                             {
-                                                "caption": "Pages",
                                                 "widgets": [
                                                     {
+                                                        "caption": "Pages",
                                                         "object_alias": "exface.Core.PAGE_GROUP_PAGES",
                                                         "widget_type": "DataTree",
                                                         "tree_parent_id_attribute_alias": "PAGE__MENU_PARENT",
@@ -177,7 +177,7 @@
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "icon": "plus",
                                                                 "action": {
                                                                     "alias": "exface.Core.ShowPageAddToGroupDialog",
@@ -196,7 +196,7 @@
                                                                 }
                                                             },
                                                             {
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus",
                                                                 "action_alias": "exface.Core.DeleteObject"
                                                             }
@@ -259,14 +259,24 @@
                                                 "attribute_alias": "APP__NAME"
                                             }
                                         ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                "direction": "asc"
+                                            },
+                                            {
+                                                "attribute_alias": "NAME",
+                                                "direction": "asc"
+                                            }
+                                        ],
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')"
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')"
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {

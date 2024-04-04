@@ -2,11 +2,10 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\DataConfigurator;
 
 /**
  * 
- * @method DataConfigurator getWidget()
+ * @method \exface\Core\Widgets\DataConfigurator getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -26,7 +25,7 @@ trait JqueryDataConfiguratorTrait
      * 
      * @param AbstractJqueryElement $elementToRefresh
      */
-    public function registerFiltersWithApplyOnChange(AbstractJqueryElement $elementToRefresh = null)
+    public function registerFiltersWithApplyOnChange(AbstractJqueryElement $elementToRefresh = null, int $waitMs = 50)
     {
         $widget = $this->getWidget();
         foreach ($widget->getFilters() as $filter) {
@@ -37,7 +36,7 @@ trait JqueryDataConfiguratorTrait
                 // Wrap the refresh in setTimeout() to make sure multiple filter can get their values before
                 // one of the actually triggers the refresh. This also solved a strange bug, where the refresh
                 // did not start with the first value change, but only with the second one an onwards.
-                $filter_element->addOnChangeScript('setTimeout(function(){' . $elementToRefresh->buildJsRefresh() . '}, 50);');
+                $filter_element->addOnChangeScript("setTimeout(function(){ {$elementToRefresh->buildJsRefresh()} }, {$waitMs});");
             }
         }
         return;
@@ -92,14 +91,18 @@ trait JqueryDataConfiguratorTrait
         $filters = array_filter($filters);
         
         if (empty($filters) === false  || empty($nestedGroups) === false) {
-            $filter_group = '{operator: "AND", conditions: [' . implode(', ', $filters) . '], nested_groups: [' . implode(', ', $nestedGroups) . ']}';
+            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
             $filter_group = '';
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
     
-    public function buildJsRefreshOnEnter()
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsRefreshOnEnter()
     {
         // Use keyup() instead of keypress() because the latter did not work with jEasyUI combos.
         return <<<JS
@@ -107,12 +110,117 @@ trait JqueryDataConfiguratorTrait
             $('#{$this->getId()}').find('input').keyup(function (ev) {
                 var keycode = (ev.keyCode ? ev.keyCode : ev.which);
                 if (keycode == '13') {
-                    {$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
+                    {$this->buildJsRefreshConfiguredWidget(false)};
                 }
             })
-        }, 10)
+        }, 10);
 
 JS;
+    }
+    
+    /**
+     * Registers a jQuery custom event handler that refreshes the configured widget if effected by an action.
+     * 
+     * Returns JS code to register a listener on `document` for the custom jQuery event 
+     * `actionperformed`. The listener will see if the widget configured is affected
+     * by the event (e.g. by the action effects) and triggers a refresh on the widget.
+     * 
+     * By default the script does nothing if there is no DOM element matchnig the id of
+     * the configured element. This check can be disabled by setting $onlyIfDomExists to false.
+     * 
+     * @param string $scriptJs
+     * @param bool $onlyIfDomExists
+     * @return string
+     */
+    protected function buildJsRegisterOnActionPerformed(string $scriptJs, bool $onlyIfDomExists = true) : string
+    {
+        if ($this->getWidget()->getWidgetConfigured()->hasAutorefreshData() === false) {
+            return '';
+        }
+        $onlyIfDomExistsJs = $onlyIfDomExists ? 'true' : 'false';
+        $effectedAliases = [$this->getMetaObject()->getAliasWithNamespace()];
+        foreach ($this->getWidget()->getDataWidget()->getColumns() as $col) {
+            if (! $col->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $col->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        foreach ($this->getWidget()->getFilters() as $filter) {
+            if (! $filter->isBoundToAttribute()) {
+                continue;
+            }
+            $attr = $filter->getAttribute();
+            if ($attr->isRelation()) {
+                $effectedAliases[] = $attr->getRelation()->getRightObject()->getAliasWithNamespace();   
+            }
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $effectedAliases[] = $rel->getLeftObject()->getAliasWithNamespace();
+                $effectedAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        $effectedAliasesJs = json_encode(array_values(array_unique($effectedAliases)));
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        return <<<JS
+
+$( document ).off( "{$actionperformed}.{$this->getId()}" );
+$( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+    var oEffect = {};
+    var bOnlyIfDomExists = {$onlyIfDomExistsJs};
+    var aUsedObjectAliases = {$effectedAliasesJs};
+    var sConfiguredWidgetId = "{$this->getWidget()->getDataWidget()->getId()}";
+    var fnRefresh = function() {
+        {$scriptJs}
+    };
+
+    // Avoid errors if widget was removed already
+    if (bOnlyIfDomExists && $('#{$this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->getId()}').length === 0) {
+        return;
+    }
+
+    if (oParams.refresh_not_widgets.indexOf(sConfiguredWidgetId) !== -1) {
+        return;
+    }
+
+    if (oParams.refresh_widgets.indexOf(sConfiguredWidgetId) !== -1) {
+        fnRefresh();
+        return;
+    }
+
+    for (var i = 0; i < oParams.effects.length; i++) {
+        oEffect = oParams.effects[i];
+        if (aUsedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            // refresh immediately if directly affected or delayed if it is an indirect effect
+            if (oEffect.effected_object === '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}') {
+                fnRefresh();
+            } else {
+                setTimeout(fnRefresh, 100);
+            }
+            return;
+        }
+    }
+});
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param bool $keepPagination
+     * @return string
+     */
+    protected function buildJsRefreshConfiguredWidget(bool $keepPagination) : string
+    {
+        return $this->getFacade()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh($keepPagination);
     }
                 
     /**
@@ -132,6 +240,7 @@ JS;
      */
     public function buildJsResetter() : string
     {
-        return parent::buildJsResetter() . ';' . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
+        return parent::buildJsResetter() . ';' 
+            . $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsRefresh();
     }
 }

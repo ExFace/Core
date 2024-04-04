@@ -81,16 +81,16 @@
     "rows": [
         {
             "CREATED_ON": "2019-12-16 18:46:13",
-            "MODIFIED_ON": "2019-12-17 09:31:47",
+            "MODIFIED_ON": "2021-07-28 17:49:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea20345279b7ceaa030205857feb80",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Page Template",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
@@ -120,7 +120,7 @@
                         "widget_type": "InputUxon",
                         "hide_caption": true,
                         "width": "max",
-                        "height": 16,
+                        "height": "max",
                         "root_prototype": "=prototype_selector"
                     }
                 ]

@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Contexts\UserContext;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * The context bar shows information about the current context of the workbench.
@@ -69,9 +70,7 @@ class ContextBar extends Toolbar
      *  {
      *      "context_alias": "exface.Core.DebugContext",
      *      "context_scope": "Window",
-     *      "visibility": "show_always",
-     *      "restrict_only_admins": true,
-     *      "restrict_only_authenticated": true
+     *      "visibility": "show_always"
      *  }
      *  
      * The visibility property takes the following options, that customize the
@@ -96,21 +95,22 @@ class ContextBar extends Toolbar
         $contextManager = $this->getWorkbench()->getContext();
         foreach ($context_uxon_objects as $uxon){
             $visibility = strtolower($uxon->getProperty('visibility'));
-            if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
+            if ($visibility === ContextInterface::CONTEXT_BAR_DISABED){
                 continue;
             }
+            $uxon->unsetProperty('visibility');
             
             try {
                 $context = $contextManager->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
                 $uxon->unsetProperty('context_alias');
+                if ($visibility) {
+                    $context->setVisibility($visibility);
+                }
                 
-                // IDEA Make contexts totally configurable by importing the UXON from
-                // the config into each context. This would need the contexts to be
-                // compatible with the ImportUxonTrait though. Currently many contexts
-                // like ObjectBasketContext, ActionContext, etc. use non-standard
-                // UXON Objects.
-                // $context->importUxonObject($uxon);
+                if (! $uxon->isEmpty()) {
+                    $context->importUxonObject($uxon);
+                }
                 
                 if ($context instanceof UserContext) {
                     $userContextInitialized = true;
@@ -128,7 +128,7 @@ class ContextBar extends Toolbar
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
                         break;
                     case ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS:
-                        $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
+                        $btn->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
                         break;
                     default:
                         if (! defined('\\exface\\Core\\Interfaces\\Contexts\\ContextInterface::CONTEXT_BAR_' . mb_strtoupper($visibility))) {
@@ -160,8 +160,11 @@ class ContextBar extends Toolbar
     protected function createButtonForContext(ContextInterface $context)
     {   
         /* @var $btn \exface\Core\Widgets\Button */
-        $btn = $this->createButton()
-        ->setId($this->createButtonIdFromContext($context))
+        $btn = $this->createButton();
+        $btnId = $this->getPage()->generateWidgetId($btn, null, false) . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
+        
+        $btn
+        ->setId($btnId)
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())
         ->setIcon($context->getIcon())
@@ -173,15 +176,6 @@ class ContextBar extends Toolbar
         $this->context_widget_map[$btn->getId()] = $context;
         
         return $btn;
-    }
-    
-    /**
-     * 
-     * @param ContextInterface $context
-     * @return string
-     */
-    protected function createButtonIdFromContext(ContextInterface $context){
-        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . ucfirst($context->getAliasWithNamespace()));
     }
     
     /**
@@ -210,10 +204,8 @@ class ContextBar extends Toolbar
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Button::getInputWidget()
      */
-    public function getInputWidget()
+    public function getInputWidget() : WidgetInterface
     {
         return $this;
-    }
-    
+    }   
 }
-?>

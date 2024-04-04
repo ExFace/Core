@@ -148,11 +148,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 if (is_a(WidgetFactory::getWidgetClassFromType($wType), '\\' . Filter::class, true) === false) {
                     $mergedWidget = true;
                 }
-            }
-            // If there is an id, it is very probable, that it's a legacy filter. It is important
-            // to give that id to the input widget and not the filter as live references are
-            // typically intended to point to the input. 
-            if ($uxon_object->hasProperty('id') === true) {
+            } elseif ($uxon_object->hasProperty('id') === true) {
+                // If there is an id, it is very probable, that it's a legacy filter. It is important
+                // to give that id to the input widget and not the filter as live references are
+                // typically intended to point to the input.
                 $mergedWidget = true;
             }
             
@@ -175,11 +174,17 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                     $uxon_object->setProperty('condition_group', $inputUxon->getProperty('condition_group'));
                     $inputUxon->unsetProperty('condition_group');
                 }
-                if ($uxon_object !== null && $inputUxon->hasProperty('required')) {
-                    // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+                
+                // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+                if ($inputUxon->hasProperty('required')) {
                     $uxon_object->setProperty('required', $inputUxon->getProperty('required'));
                     $inputUxon->unsetProperty('required');
                 } 
+                // Similarly, a filter is only disabled, if a user explicitly marked it as required in the filter's UXON
+                if ($inputUxon->hasProperty('disabled')) {
+                    $uxon_object->setProperty('disabled', $inputUxon->getProperty('disabled'));
+                    $inputUxon->unsetProperty('disabled');
+                }
                 
                 $uxon_object->setProperty('input_widget', $inputUxon);
             }

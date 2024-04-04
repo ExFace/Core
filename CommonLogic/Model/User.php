@@ -8,10 +8,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Selectors\UserRoleSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserRoleSelector;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UserSelector;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * Representation of an Exface user.
@@ -47,11 +49,15 @@ class User implements UserInterface
     
     private $roleSelectors = null;
     
+    private $roleData = null;
+    
     private $disabled = false;
+    
+    private $disabledCommunication = false;
 
     /**
      * 
-     * @deprecated use UserFactory::create() instead!
+     * @deprecated use UserFactory instead!
      * @param Workbench $exface
      * @param DataSheetInterface $dataSheet
      * @param boolean $anonymous
@@ -68,7 +74,7 @@ class User implements UserInterface
     
     protected function loadData() : User
     {
-        if ($this->modelLoader !== null) {
+        if ($this->modelLoader !== null || $this->isAnonymous()) {
             $this->modelLoader->loadUserData($this);
             $this->modelLoaded = true;
         }
@@ -403,24 +409,14 @@ class User implements UserInterface
     public function hasRole(UserRoleSelectorInterface $selector): bool
     {
         foreach ($this->getRoleSelectors() as $rs) {
-            if ($rs->__toString() === $selector->__toString()) {
+            if (strcasecmp($rs->__toString(), $selector->__toString()) === 0) {
                 return true;
             }
         }
         
-        // If the selector is an alias and it's not one of the built-in aliases, look up the
-        // the UID and check that.
-        if ($selector->isAlias() && $selector->toString() !== UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS) {
-            $appAlias = $selector->getAppAlias();
-            $roleAlias = StringDataType::substringAfter($selector->toString(), $appAlias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
-            $roleSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
-            $roleSheet->getColumns()->addFromUidAttribute();
-            $roleSheet->getFilters()->addConditionFromString('ALIAS', $roleAlias);
-            $roleSheet->getFilters()->addConditionFromString('APP__ALIAS', $appAlias);
-            $roleSheet->dataRead();
-            if ($roleSheet->countRows() === 1) {
-                return $this->hasRole(new UserRoleSelector($this->getWorkbench(), $roleSheet->getUidColumn()->getCellValue(0)));
-            }
+        if ($selector->isAlias()) {
+            $aliasCol = $this->getRoleData()->getColumns()->get('ALIAS_WITH_NS');
+            return $aliasCol->findRowByValue($selector->toString()) !== false;
         }
         
         return false;
@@ -439,10 +435,10 @@ class User implements UserInterface
                 $this->roleSelectors = [];
             }
         }
-        if (empty($this->roleSelectors) && $this->isAnonymous() === false) {
+        if (empty($this->roleSelectors)) {
             $this->roleSelectors = $this->addBuiltInRoles($this->roleSelectors ?? []);
         }
-        return $this->roleSelectors;
+        return $this->roleSelectors ?? [];
     }
     
     /**
@@ -452,8 +448,13 @@ class User implements UserInterface
      */
     protected function addBuiltInRoles(array $selectorArray) : array
     {
-        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_OID);
-        $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS);
+        if ($this->isAnonymous()) {
+            $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::ANONYMOUS_USER_ROLE_UID);
+            $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::ANONYMOUS_USER_ROLE_ALIAS);
+        } else {
+            $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_UID);
+            $selectorArray[] = new UserRoleSelector($this->getWorkbench(), UserRoleSelector::AUTHENTICATED_USER_ROLE_ALIAS);
+        }
         return $selectorArray;
     }
     
@@ -502,6 +503,27 @@ class User implements UserInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isDisabledCommunication()
+     */
+    public function isDisabledCommunication() : bool
+    {
+        return $this->disabledCommunication;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::setDisabledCommunication()
+     */
+    public function setDisabledCommunication(bool $trueOrFalse) : UserInterface
+    {
+        $this->disabledCommunication = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\UserInterface::getAttribute()
      */
     public function getAttribute(string $alias)
@@ -518,9 +540,80 @@ class User implements UserInterface
         }
         $userObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
         $ds = DataSheetFactory::createFromObject($userObj);
-        $ds->getColumns()->addFromExpression($alias, $alias);
+        $col = $ds->getColumns()->addFromExpression($alias);
         $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $this->getUid(), ComparatorDataType::EQUALS);
         $ds->dataRead();
-        return $ds->getCellValue($alias, 0);
+        return $col->getValue(0);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::getStartPage()
+     */
+    public function getStartPage() : UiPageInterface
+    {
+        $selectors = $this->getRoleData()->getColumns()->getByExpression('START_PAGE')->getValues();
+        foreach ($selectors as $selector) {
+            if ($selector !== null && $selector !== '') {
+                return UiPageFactory::createFromModel($this->getWorkbench(), $selector);
+            }
+        }
+        return UiPageFactory::createIndexPage($this->getWorkbench());
+    }
+    
+    public function getRoles(string $attributeAlias = 'ALIAS_WITH_NS') : array
+    {
+        $col = $this->getRoleData()->getColumns()->getByExpression($attributeAlias);
+        if (! $col) {
+            throw new RuntimeException('Cannot get roles of user "' . $this->getUsername() . '": requested role attribute "' . $attributeAlias . '" not found!');
+        }
+        return $col->getValues();
+    }
+    
+    /**
+     * 
+     * @return DataSheetInterface
+     */
+    protected function getRoleData() : DataSheetInterface
+    {
+        if ($this->roleData === null) {
+            $roleUids = [];
+            $roleAliases = [];
+            foreach ($this->getRoleSelectors() as $sel) {
+                if ($sel->isUid()) {
+                    $roleUids[] = $sel->toString();
+                } else {
+                    $roleAliases[] = $sel->toString();
+                }
+            }
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE');
+            if (! empty($roleUids)) {
+                $ds->getFilters()->addConditionFromValueArray('UID', $roleUids);
+            } else {
+                $ds->getFilters()->addConditionFromString('USER_ROLE_USERS__USER', $this->getUid(), ComparatorDataType::EQUALS);
+            }
+            $ds->getColumns()->addFromAttributeGroup($ds->getMetaObject()->getAttributeGroup(AttributeGroup::ALL));
+            $ds->dataRead();
+            
+            // Check if there are role aliases, that were not yet loaded and add them as additional filter if so.
+            // This should happen really rarely - only if somebody added a role alias programmatically. Roles loaded
+            // from the model will always have UIDs. Filtering by UID is faster, so we only do the alias-based
+            // filtering if really neccessary.
+            if (! empty($roleAliases)) {
+                $missingAliases = array_diff($roleAliases, $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false));
+                if (! empty($missingAliases)) {
+                    $uidFilter = $ds->getFilters();
+                    $orFilter = ConditionGroupFactory::createForDataSheet($ds, EXF_LOGICAL_OR);
+                    $orFilter->addNestedGroup($uidFilter);
+                    $orFilter->addConditionFromValueArray('ALIAS_WITH_NS', $missingAliases);
+                    $ds->setFilters($orFilter);
+                    $ds->dataRead();
+                }
+            }
+            
+            $this->roleData = $ds;
+        }
+        return $this->roleData;
     }
 }

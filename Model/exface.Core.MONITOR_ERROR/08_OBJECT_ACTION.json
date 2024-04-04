@@ -1,0 +1,228 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2022-10-01 10:19:02",
+            "MODIFIED_ON": "2022-10-11 13:10:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edbc8ab536bc48bc8a025041000001",
+            "OBJECT": "0x11eb90f04b00a9be90f08c04ba002958",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowMonitorSimilarErrorsDialog",
+            "NAME": "Find similar errors",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "icon": "search",
+                "input_object_alias": "exface.Core.MONITOR_ERROR",
+                "input_mappers": [
+                    {
+                        "from_object_alias": "exface.Core.MONITOR_ERROR",
+                        "column_to_filter_mappings": [
+                            {
+                                "from": "MESSAGE",
+                                "to": "MESSAGE",
+                                "comparator": "=="
+                            },
+                            {
+                                "from": "UID",
+                                "to": "UID",
+                                "comparator": "!=="
+                            }
+                        ]
+                    }
+                ],
+                "dialog": {
+                    "widgets": [
+                        {
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.MONITOR_ERROR",
+                            "multi_select": true,
+                            "filters": [
+                                {
+                                    "attribute_alias": "STATUS",
+                                    "input_widget": {
+                                        "widget_type": "InputSelect",
+                                        "multi_select": true,
+                                        "values": [
+                                            10,
+                                            15,
+                                            20,
+                                            40
+                                        ]
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE",
+                                    "input_widget": {
+                                        "widget_type": "Input"
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "ERROR_LEVEL",
+                                    "input_widget": {
+                                        "widget_type": "InputSelect",
+                                        "multi_select": true
+                                    }
+                                },
+                                {
+                                    "attribute_alias": "USER"
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE",
+                                    "comparator": "==",
+                                    "hidden": true
+                                },
+                                {
+                                    "attribute_alias": "UID",
+                                    "comparator": "!==",
+                                    "hidden": true
+                                }
+                            ],
+                            "sorters": [
+                                {
+                                    "attribute_alias": "CREATED_ON",
+                                    "direction": "desc"
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "caption": "Occurred at",
+                                    "attribute_alias": "CREATED_ON"
+                                },
+                                {
+                                    "attribute_alias": "STATUS"
+                                },
+                                {
+                                    "calculation": "=Left(MESSAGE,100)"
+                                },
+                                {
+                                    "attribute_alias": "LOG_ID"
+                                },
+                                {
+                                    "attribute_alias": "USER__LABEL"
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "action_alias": "exface.Core.ShowObjectEditDialog",
+                                    "bind_to_double_click": true
+                                },
+                                {
+                                    "caption": "Show Error Widget",
+                                    "action": {
+                                        "alias": "exface.core.ShowDialogFromData",
+                                        "uxon_attribute": "ERROR_WIDGET"
+                                    }
+                                },
+                                {
+                                    "widget_type": "StateMenuButton"
+                                },
+                                {
+                                    "action": {
+                                        "alias": "exface.Core.ShowMassEditDialog",
+                                        "dialog": {
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "STATUS"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

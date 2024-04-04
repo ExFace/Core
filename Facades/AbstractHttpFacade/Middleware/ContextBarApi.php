@@ -25,6 +25,8 @@ class ContextBarApi implements MiddlewareInterface
     
     private $contextRoute = '';
     
+    private $responseHeaders = [];
+    
     /**
      * 
      * @param AbstractAjaxFacade $facade
@@ -32,10 +34,11 @@ class ContextBarApi implements MiddlewareInterface
      * @param string $passToMethod
      * @param string $taskAttributeName
      */
-    public function __construct(AbstractAjaxFacade $facade, string $contextRoute = '/context')
+    public function __construct(AbstractAjaxFacade $facade, array $responseHeader = [], string $contextRoute = '/context')
     {
         $this->facade = $facade;
         $this->contextRoute = $contextRoute;
+        $this->responseHeaders = $responseHeader;
     }
     
     /**
@@ -55,7 +58,9 @@ class ContextBarApi implements MiddlewareInterface
                 $page = UiPageFactory::createEmpty($this->facade->getWorkbench());
             }
             $json = $this->facade->getElement($page->getContextBar())->buildJsonContextBarUpdate();
-            return new Response(200, [], $this->facade->encodeData($json));
+            $headers = $this->responseHeaders;
+            $headers['Content-Type'] = 'application/json';
+            return new Response(200, $headers, $this->facade->encodeData($json));
         }
         
         return $handler->handle($request);

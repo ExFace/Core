@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -58,7 +66,31 @@
             "OBJECT": "0x32340000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
+        },
+        {
+            "CREATED_ON": "2021-11-04 11:15:29",
+            "MODIFIED_ON": "2021-11-04 11:17:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec952923034a2a9529025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/AliasGeneratingBehavior.php",
+            "CONFIG_UXON": {
+                "source_attribute_alias": "LABEL",
+                "target_attribute_alias": "ALIAS",
+                "case": "lower",
+                "replace_characters": {
+                    "\/[^a-zA-Z0-9_]\/": ""
+                }
+            },
+            "OBJECT": "0x32340000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generate alias from name",
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

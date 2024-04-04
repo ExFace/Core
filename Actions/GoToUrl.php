@@ -12,6 +12,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\UrlDataType;
 
 /**
  * Opens a URL optionally filling placeholders with input data.
@@ -60,11 +61,13 @@ class GoToUrl extends AbstractAction implements iShowUrl
     private $url = null;
 
     private $open_in_new_window = false;
+    
+    private $open_in_browser_widget = null;
 
     /**
      * @var boolean
      */
-    private $urlencode_placeholders = true;
+    protected  $urlencode_placeholders = null;
 
     protected function init()
     {
@@ -80,7 +83,16 @@ class GoToUrl extends AbstractAction implements iShowUrl
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowUrl::getUrl()
      */
-    public function getUrl()
+    public function getUrl() : string
+    {
+        return $this->buildUrl();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function buildUrl() : ?string
     {
         return $this->url;
     }
@@ -155,18 +167,28 @@ class GoToUrl extends AbstractAction implements iShowUrl
      */
     public function getUrlencodePlaceholders() : bool
     {
-        return $this->urlencode_placeholders;
+        if ($this->urlencode_placeholders === null) {
+            // If we have a url already, see if it consists of a single placeholder. In that case, do not
+            // urlencode it as it is the URL itself.
+            if ($this->url) {
+                if (count(StringDataType::findPlaceholders($this->url)) === 1 && trim(StringDataType::replacePlaceholders($this->url, [], false)) === '') {
+                    $this->urlencode_placeholders = false;
+                } else {
+                    $this->urlencode_placeholders = true;
+                }
+            }
+        }
+        return $this->urlencode_placeholders ?? true;
     }
 
     /**
-     * 
      * Makes all placeholders get encoded and thus URL-safe if set to TRUE (default).
      * 
-     * Use FALSE if placeholders are ment to use as-is (e.g. the URL itself is a placeholder)
+     * Use FALSE if placeholders are ment to use as-is. By default, all placeholders are encoded except for the
+     * case that the `url` consists of a single placeholder - that is, the complete URL is provided by the data.
      * 
      * @uxon-property urlencode_placeholders
      * @uxon-type boolean
-     * @uxon-default true
      * 
      * @param bool|string $value
      * @return \exface\Core\Actions\GoToUrl
@@ -196,6 +218,30 @@ class GoToUrl extends AbstractAction implements iShowUrl
             }
         }
         return $url;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getOpenInBrowserWidget() : ?string
+    {
+        return $this->open_in_browser_widget;
+    }
+    
+    /**
+     * Id of the Browser widget, that should be used to open the URL
+     * 
+     * @uxon-propert open_in_browser_widget
+     * @uxon-type uxon:$..id
+     * 
+     * @param string $value
+     * @return GoToUrl
+     */
+    public function setOpenInBrowserWidget(string $value) : GoToUrl
+    {
+        $this->open_in_browser_widget = $value;
+        return $this;
     }
 }
 ?>

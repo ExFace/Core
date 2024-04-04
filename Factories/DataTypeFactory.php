@@ -30,12 +30,12 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @param SelectorInterface $selector
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromSelector(SelectorInterface $selector)
+    public static function createFromSelector(SelectorInterface $selector, array $constructorArguments = null)
     {
         if ($selector->isUid()) {
             return $selector->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
         } else {
-            return parent::createFromSelector($selector);
+            return parent::createFromSelector($selector, $constructorArguments);
         }
     }
     
@@ -83,10 +83,22 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      * @param string $name
      * @param string $validation_error_code
      * @param UxonObject $default_editor_uxon
+     * @param UxonObject $default_dispaly_uxon
      * 
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_editor_uxon = null) : DataTypeInterface
+    public static function createFromModel(
+        $prototype_alias, 
+        $alias, 
+        AppInterface $app, 
+        UxonObject $uxon, 
+        $name = null, 
+        $short_description = null, 
+        $validation_error_code = null, 
+        $validation_error_text = null, 
+        UxonObject $default_editor_uxon = null,
+        UxonObject $default_display_uxon = null
+    ) : DataTypeInterface
     {
         $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
         $data_type->setApp($app);
@@ -105,6 +117,9 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         }
         if (! is_null($default_editor_uxon) && ! $default_editor_uxon->isEmpty()) {
             $data_type->setDefaultEditorUxon($default_editor_uxon);
+        }
+        if (! is_null($default_display_uxon) && ! $default_display_uxon->isEmpty()) {
+            $data_type->setDefaultDisplayUxon($default_display_uxon);
         }
         $data_type->importUxonObject($uxon);
         return $data_type;

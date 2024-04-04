@@ -5,6 +5,10 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Widgets\DataLookupDialog;
+use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Widgets\InputComboTable;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * Shows an advanced search dialog allowing the user to search and select data entries.
@@ -88,34 +92,131 @@ class ShowLookupDialog extends ShowDialog
     {
         $dialog = parent::enhanceDialogWidget($dialog);
         
-        if ($this->getMultiSelect() !== null) {
-            $dialog->setMultiSelect($this->getMultiSelect());
+        if ($dialog instanceof DataLookupDialog) {
+            if ($this->getMultiSelect() !== null) {
+                $dialog->setMultiSelect($this->getMultiSelect());
+            }
+            
+            /* @var $data_table \exface\Core\Widgets\DataTable */
+            $data_table = $dialog->getDataWidget();
+            if ($this->isDefinedInWidget()) {
+                $targetWidget = $this->getWidgetDefinedIn();
+                if ($targetWidget instanceof iUseInputWidget) {
+                    $inputWidget = $targetWidget->getInputWidget();
+                    $tableObj = $data_table->getMetaObject();
+                    
+                    // Inherit filters from calling widget
+                    // When inheriting filters, it is important to keept their id space. If this is not
+                    // done explicitly, the filter will have a new id space - the one of the lookup
+                    // dialog, thus any value links will stop working as they reference the id space of
+                    // the table.
+                    switch (true) {
+                        case ($inputWidget instanceof iHaveFilters && $tableObj->is($inputWidget->getMetaObject())): 
+                            foreach($inputWidget->getFilters() as $filter) {
+                                // Force the filter to keep its id space - see explanation above the switch()
+                                // TODO maybe better to copy the filters somehow?
+                                $filter->setIdSpace($filter->getIdSpace());
+                                $data_table->addFilter($filter);
+                            }
+                            break;
+                        // In case of InputComboTable, it is very important to inherit all custom
+                        // filters as the lookup table should show the same as the dropdown table
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            foreach($inputWidget->getTable()->getFilters() as $filter) {
+                                // Force the filter to keep its id space - see explanation above the switch()
+                                // TODO maybe better to copy the filters somehow?
+                                $filter->setIdSpace($filter->getIdSpace());
+                                $data_table->addFilter($filter);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                    // Inherit aggregations from calling widget
+                    $aggrAttrs = [];
+                    switch (true) {
+                        // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            $aggrAttrs = $inputWidget->getTable()->getAggregations();
+                            if (! empty($aggrAttrs)) {
+                                $data_table->setAggregateByAttributeAlias(implode(',', $aggrAttrs));
+                                // Make sure to remove all columns, that are not aggregated or
+                                // aggregated over as they will remain empty
+                                foreach ($data_table->getColumns() as $col) {
+                                    if (! $col->hasAggregator() && ! $data_table->hasAggregationOverColumn($col)) {
+                                        $data_table->setColumnsAutoAddDefaultDisplayAttributes(false);
+                                        foreach ($data_table->getFilters() as $filter) {
+                                            if ($filter->getAttribute()->isExactly($col->getAttribute())) {
+                                                $data_table->getConfiguratorWidget()->getFilterTab()->removeWidget($filter);
+                                            }
+                                        }
+                                        $data_table->removeColumn($col);
+                                    }
+                                }
+                            }
+                            break;
+                        // TODO inherit aggregations from other types of input widgets?
+                        default:
+                            break;
+                    }
+                    
+                    // Inherit columns from calling widget
+                    $cols = [];
+                    switch (true) {
+                        // If the input widget is an InputCombotTable, we MUST inherit columns of its
+                        // table because the lookup dialog should look the same as the dropdown table.
+                        // Additionally, hidden columns MUST be inherited too, because they may be
+                        // accessed by data- and value-getters and should be set in the InputComboTable
+                        // after an item was looked up.
+                        case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                            $cols = $inputWidget->getTable()->getColumns();
+                            break;
+                            // TODO inherit columns from other types of input widgets? Is it a good idea to
+                            // inherit columns from tables? Could be a lot...
+                        default:
+                            break;
+                    }
+                    foreach ($cols as $col) {
+                        if (null !== $data_table->getColumnByDataColumnName($col->getDataColumnName())) {
+                            continue;
+                        }
+                        
+                        $widgetType = $data_table->getColumnDefaultWidgetType();
+                        $colUxon = $col->exportUxonObject();
+                        $colUxon->setProperty('widget_type', $widgetType);
+                        $data_table->addColumn($data_table->createColumnFromUxon($colUxon));
+                    }
+                }
+            }
+            
+            // Add the "OK" button
+            $btnUxon = new UxonObject([
+                'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
+                'visibility' => WidgetVisibilityDataType::PROMOTED,
+                'icon' => Icons::CHECK,
+                'action' => [
+                    'alias' => 'exface.Core.SendToWidget',
+                    'target_widget_id' => $this->getTargetWidgetId()
+                ]
+            ]);
+            $btn = $dialog->createButton($btnUxon)->setInputWidget($data_table);
+            $dialog->addButton($btn);
+            
+            // Press "OK" button automatically on double-click in single-select lookups 
+            if ($data_table->getMultiSelect() === false) {
+                $singleClickBtnUxon = new UxonObject([
+                    'visibility' => WidgetVisibilityDataType::HIDDEN,
+                    'bind_to_double_click' => true,
+                    'action' => [
+                        'alias' => 'exface.Core.CallWidgetFunction',
+                        'function' => 'press',
+                        'widget_id' => $btn->getId()
+                    ]
+                ]);
+                $data_table->addButton($data_table->createButton($singleClickBtnUxon));
+            }
         }
-        
-        /* @var $data_table \exface\Core\Widgets\DataTable */
-        $data_table = $dialog->getDataWidget();
-        
-        $btnUxon = new UxonObject([
-            'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
-            'visibility' => WidgetVisibilityDataType::PROMOTED,
-            'icon' => Icons::CHECK,
-            'action' => [
-                'alias' => 'exface.Core.SendToWidget',
-                'target_widget_id' => $this->getTargetWidgetId()
-            ]
-        ]);
-        $dialog->addButton($dialog->createButton($btnUxon)->setInputWidget($data_table));
-        
-        /* TODO how to bind closing the dialog to a single click on a row for single-select lookups?
-         * A table button will not close the dialog and a dialog-button cannot be bound to clicks on
-         * a table...
-        if ($data_table->getMultiSelect() === false) {
-            $singleClickBtnUxon = $btnUxon->copy();
-            $singleClickBtnUxon
-                ->setProperty('visibility', WidgetVisibilityDataType::HIDDEN)
-                ->setProperty('bind_to_left_click', true);
-            $data_table->addButton($data_table->createButton($singleClickBtnUxon));
-        }*/
         
         return $dialog;
     }

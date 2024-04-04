@@ -50,6 +50,12 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         return $group;
     }
     
+    /**
+     * 
+     * @param MetaAttributeListInterface $attributeList
+     * @param array $spells
+     * @return MetaAttributeListInterface
+     */
     protected static function getAttributesByMagic(MetaAttributeListInterface $attributeList, array $spells) : MetaAttributeListInterface
     {
         if (empty($spells)) {
@@ -90,9 +96,7 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 if ($attributeList->isEmpty() === true && $attributeList->getMetaObject()->hasLabelAttribute() === true) {
                     $attributeList->add($attributeList->getMetaObject()->getLabelAttribute());
                 }
-                $attributeList->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) {
-                    return intval($a->getDefaultDisplayOrder()) - intval($b->getDefaultDisplayOrder());
-                });
+                $attributeList->sortByDefaultDisplayOrder();
                 break;
             case MetaAttributeGroupInterface::WRITABLE:
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
@@ -102,6 +106,11 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
             case MetaAttributeGroupInterface::READABLE:
                 $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
                     return $invert XOR $attr->isReadable();
+                });
+                break;
+            case MetaAttributeGroupInterface::COPYABLE:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr->isCopyable();
                 });
                 break;
         }

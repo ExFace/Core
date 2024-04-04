@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Shows a pagination-control (e.g. toolbar), displaying the the current position, number of pages, navigation controls, etc.
@@ -37,7 +38,7 @@ class DataPaginator extends AbstractWidget
     
     private $pageSize = null;
     
-    private $pageSizes = [];
+    private $pageSizes = null;
     
     private $useTotalCount = true;
     
@@ -72,15 +73,15 @@ class DataPaginator extends AbstractWidget
     
     /**
      *
-     * @return array
+     * @return array|NULL
      */
-    public function getPageSizes() : array
+    public function getPageSizes() : ?array
     {
         return $this->pageSizes;
     }
     
     /**
-     * Sets page sizes, the user can pick from (some facades will allow to change the page size).
+     * Available page sizes for the user to pick from (some facades will allow to select a page size in the table settings).
      * 
      * Set to an empty array to enforce the preset page size!
      * 
@@ -91,9 +92,16 @@ class DataPaginator extends AbstractWidget
      * @param int[] $value
      * @return DataPaginator
      */
-    public function setPageSizes(array $value) : DataPaginator
+    public function setPageSizes($value) : DataPaginator
     {
-        $this->pageSizes = $value;
+        if ($value instanceof UxonObject) {
+            $sizes = $value->toArray();
+        } elseif (is_array($value)) {
+            $sizes = $value;
+        } else {
+            $sizes = UxonObject::fromAnything($value)->toArray();
+        }
+        $this->pageSizes = $sizes;
         return $this;
     }
     

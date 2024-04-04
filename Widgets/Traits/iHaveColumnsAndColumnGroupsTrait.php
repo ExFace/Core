@@ -9,9 +9,13 @@ use exface\Core\Widgets\DataColumnGroup;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Trait for widgets with columns organized in groups (like DataGrid, DataTable, etc.)
+ * 
+ * Make sure to call initColumns() in the init() of the widget that uses the trait!
  * 
  * @author Andrej Kabachnik
  *
@@ -28,9 +32,8 @@ trait iHaveColumnsAndColumnGroupsTrait
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::init()
      */
-    protected function init()
+    protected function initColumns()
     {
-        parent::init();
         // Add the main column group
         if (empty($this->getColumnGroups()) === true && $this->getColumnsAutoAddDefaultDisplayAttributes() === true) {
             $this->addColumnGroup($this->getPage()->createWidget('DataColumnGroup', $this));
@@ -112,36 +115,34 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
 
     /**
-     * Returns the UID column as DataColumn
      *
-     * @return \exface\Core\Widgets\DataColumn
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getUidColumn()
      */
-    public function getUidColumn()
+    public function getUidColumn() : DataColumn
     {
         return $this->getColumnGroupMain()->getUidColumn();
     }
 
     /**
-     * Returns TRUE if this data widget has a UID column or FALSE otherwise.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasUidColumn()
      */
-    public function hasUidColumn()
+    public function hasUidColumn() : bool
     {
         return $this->getColumnGroupMain()->hasUidColumn();
     }
     
     /**
-     * Returns an array with all columns of the grid.
-     * If no columns have been added yet,
-     * default display attributes of the meta object are added as columns automatically.
-     *
-     * @return DataColumn[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumns()
      */
     public function getColumns() : array
     {
         // If no columns explicitly specified, add the default columns
-        if (count($this->getColumnGroups()) == 1 && $this->getColumnGroupMain()->isEmpty()) {
+        if ($this->getColumnsAutoAddDefaultDisplayAttributes() && ! $this->hasColumnsExplicitlyDefined()) {
             foreach ($this->createDefaultColumns() as $col) {
                 $this->addColumn($col);
             }
@@ -204,6 +205,17 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
     
     /**
+     * Returns FALSE if no columns were defined - even if hasColumns() would return TRUE because
+     * of default columns.
+     * 
+     * @return bool
+     */
+    protected function hasColumnsExplicitlyDefined() : bool
+    {
+        return ((count($this->getColumnGroups()) <= 1 && $this->getColumnGroupMain()->isEmpty()) === false) || $this->hasPropertyDefined('columns') || $this->hasPropertyDefined('column_groups');
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumn()
@@ -250,6 +262,31 @@ trait iHaveColumnsAndColumnGroupsTrait
     
     /**
      *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByExpression()
+     */
+    public function getColumnByExpression($expressionOrString) : ?DataColumn
+    {
+        switch (true) {
+            case is_string($expressionOrString):
+                $str = $expressionOrString;
+                break;
+            case $expressionOrString instanceof ExpressionInterface:
+                $str = $expressionOrString->__toString();
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot search for column widgets by "' . gettype($expressionOrString) . '": only expression strings or objects allowed!');
+        }
+        foreach ($this->getColumns() as $col) {
+            if ($col->getExpression()->__toString() === $str) {
+                return $col;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     *
      * @return DataColumnGroup
      */
     public function getColumnGroups()
@@ -278,39 +315,33 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
     
     /**
-     * Defines the columns of data: each element of the array can be a DataColumn or a DataColumnGroup widget.
+     * Defines the columns to display: each element of the array can be a `DataColumn` or a `DataColumnGroup` widget.
      *
      * To create a column showing an attribute of the Data's meta object, it is sufficient to only set
-     * the attribute_alias for each column object. Other properties like caption, align, editor, etc.
+     * the `attribute_alias` for each column object. Other properties like caption, align, editor, etc.
      * are optional. If not set, they will be determined from the properties of the attribute.
      *
-     * The widget type (DataColumn or DataColumnGroup) can be omitted: it can be determined automatically:
-     * E.g. adding {"attribute_group_alias": "~VISIBLE"} as a column is enough to generate a column group
+     * The widget type (`DataColumn` or `DataColumnGroup`) can be omitted: it can be determined automatically:
+     * E.g. adding `{"attribute_group_alias": "~VISIBLE"}` as a column is enough to generate a column group
      * with all visible attributes of the object.
      *
      * Column groups with captions will produce grouped columns with mutual headings (s. example below).
      *
      * Example:
-     * "columns": [
+     * 
+     * ```
      *  {
-     *      "attribute_alias": "PRODUCT__LABEL",
-     *      "caption": "Product"
-     *  },
-     *  {
-     *      "attribute_alias": "PRODUCT__BRAND__LABEL"
-     *  },
-     *  {
-     *      "caption": "Sales",
      *      "columns": [
-     *  {
-     *      "attribute_alias": "QUANTITY:SUM",
-     *      "caption": "Qty."
-     *  },
-     *  {
-     *      "attribute_alias": "VALUE:SUM",
-     *      "caption": "Sum"
+     *          {"attribute_alias": "PRODUCT__LABEL", "caption": "Product"}, 
+     *          {"attribute_alias": "PRODUCT__BRAND__LABEL"},
+     *          {"caption": "Sales", "columns": [
+     *              {"attribute_alias": "QUANTITY:SUM", "caption": "Qty."},
+     *              {"attribute_alias": "VALUE:SUM", "caption": "Sum"}
+     *          ]}
+     *      }
      *  }
-     * ]
+     *  
+     * ```    
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
@@ -395,13 +426,6 @@ trait iHaveColumnsAndColumnGroupsTrait
     }
     
     /**
-     * Returns TRUE if the columns should contain editors by default or FALSE for displays
-     * 
-     * @return bool
-     */
-    abstract public function isEditable() : bool;
-    
-    /**
      * 
      * @return bool
      */
@@ -413,7 +437,7 @@ trait iHaveColumnsAndColumnGroupsTrait
     /**
      * Set to FALSE to disable autogeneration of columns from default display attributes.
      * 
-     * @uxon-property columns_auto_add_from_default_display_attributes
+     * @uxon-property columns_auto_add_default_display_attributes
      * @uxon-type boolean
      * @uxon-default false
      * 

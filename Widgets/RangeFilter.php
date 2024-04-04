@@ -208,7 +208,7 @@ class RangeFilter extends Filter
      */
     public function getValueFrom() : ?string
     {
-        return $this->valueFrom !== null ? $this->valueFrom->toString() : null;
+        return $this->valueFrom !== null && ! $this->valueFrom->isReference() ? $this->valueFrom->toString() : null;
     }
     
     /**
@@ -246,7 +246,7 @@ class RangeFilter extends Filter
      */
     public function getValueTo() : ?string
     {
-        return $this->valueTo !== null ? $this->valueTo->toString() : null;
+        return $this->valueTo !== null && ! $this->valueTo->isReference() ? $this->valueTo->toString() : null;
     }
     
     /**

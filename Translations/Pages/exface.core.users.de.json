@@ -1,0 +1,6 @@
+{
+    "NAME": "Benutzer",
+    "DESCRIPTION": "Benutzer verwalten und Rollen vergeben",
+    "INTRO": null,
+    "CONTENT.CAPTION.CREDENTIALS_FOR_CONNECTION": "Zugangsdaten für Verbindung"
+}

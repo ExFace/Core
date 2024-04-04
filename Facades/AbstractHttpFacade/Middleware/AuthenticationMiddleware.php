@@ -7,34 +7,64 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Events\Security\OnBeforeAuthenticationEvent;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Interfaces\Security\PasswordAuthenticationTokenInterface;
-use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthToken;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\SecurityException;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Security\AuthenticationToken\ApiKeyAuthToken;
 
 /**
  * This PSR-15 middleware to handle authentication via workbench security.
  * 
- * This middleware will fire an `exface.Core.Security.OnBeforeAuthentication` event
- * to allow custom authenticators listening to the event to authenticate the user.
+ * This middleware simplifies authenticating a user in an HTTP facade. It also provides tools 
+ * to customize authentication: e.g. to extract token data (= credentials) from different
+ * parts of the request, etc.
  * 
- * Additionally, you can provide an array of callables to extract different types
- * of tokens from the request via the constructor argument `$tokenExtractors`.
- * Each token extractor must have the following signature:
+ * Technically, the middleware will:
+ * 
+ * 1) Check if a user is already authenticatd (e.g. via remember-me some other authenticators etc.)
+ * 2) Attemt to extract an authentciation token from the request using configurable token extractors
+ * 3) Authenticate the extracted token(s) in the workbench
+ * 4) Optionally the middleware can return a 401-response if the resulting authentication token
+ * is still anonymous, thus requiring authentication for every request.
+ * 
+ * **NOTE:** this middleware only handles authentication! It does not check, if the user
+ * is allowed to access its facade - this is the task of the facade itself or another middleware! 
+ * 
+ * ## Usage in facade configuration
  * 
  * ```
- *  function(
- *      Psr\Http\Message\ServerRequestInterface $request
- *      exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
- *  ) : ?\exface\Core\Interfaces\Security\AuthenticationTokenInterface
+ *  {
+ *    "authentication": {
+ *      "basic_auth": {
+ *        "disabled": false
+ *      },
+ *      "header_as_password": {
+ *        "username": "kmts_vht_sued",
+ *        "password_http_header": "test_pwd",
+ *        "disabled": false
+ *      },
+ *      OR
+ *      "header_as_key": {
+ *        "key_http_header": "Api-Key",
+ *        "disabled": false
+ *      }
+ *    }
+ *  }
+ *  
  * ```
+ *  
+ * ## Usage in PHP code
  * 
- * The middleware provides a built-in extractor via `extractBasicHttpAuthToken()` static method.
- * It is not being used implicitly though. To enable it, instatiate the middleware like this:
+ * This middleware can be used in the code of a facade like this:
  * 
  * ```
  *  new AuthenticationMiddleware(
@@ -43,13 +73,30 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
  *          [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
  *      ]
  *  )
+ *  
  * ```
+ * 
+ * You can provide an array of callables to extract different types of authentication tokens
+ * from the request via the constructor argument `$tokenExtractors`. Each token extractor must have 
+ * the following signature:
+ * 
+ * ```
+ *  function(
+ *      Psr\Http\Message\ServerRequestInterface $request
+ *      exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
+ *  ) : ?\exface\Core\Interfaces\Security\AuthenticationTokenInterface
+ *  
+ * ```
+ * 
+ * The middleware provides a built-in extractor via `extractBasicHttpAuthToken()` static method.
  * 
  * @author Andrej Kabachnik
  *
  */
-class AuthenticationMiddleware implements MiddlewareInterface
+class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedToUxon
 {
+    use ImportUxonObjectTrait;
+    
     private $workbench = null;
     
     private $facade = null;
@@ -87,8 +134,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
                 return $handler->handle($request);
             }
         }
-        // Fire OnBeforeAuthenticationEvent for custom authenticators listening to it
-        $this->workbench->eventManager()->dispatch(new OnBeforeAuthenticationEvent($this->facade));
+
         // If any of the custom authenticators were successfull, we would get a non-anonymous token here
         $authenticatedToken = $this->workbench->getSecurity()->getAuthenticatedToken();
         
@@ -107,14 +153,49 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
         }
         
+        $this->checkSessionCookies($request);
+        
         // If the token is still anonymous, check if that is allowed in the configuration!
-        if (true === $authenticatedToken->isAnonymous() && false === $this->isAnonymousAllowed()) {
+        if (false === $this->isAnonymousAllowed() && true === $authenticatedToken->isAnonymous()) {
             return $this->createResponseAccessDenied($request);
         }
         
         return $handler->handle($request);
     }
     
+    protected function addTokenExtractor(callable $callable) : AuthenticationMiddleware
+    {
+        $this->tokenExtractors[] = $callable;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @return void
+     */
+    protected function checkSessionCookies(ServerRequestInterface $request)
+    {
+        $sessionCookieName = session_name();
+        $sessionIds = [];
+        foreach ($request->getHeader('Cookie') as $cookie) {
+            foreach (explode(';', $cookie) as $cookieVal) {
+                if (StringDataType::startsWith(trim($cookieVal), $sessionCookieName . '=')) {
+                    $sessionIds[] = StringDataType::substringAfter($cookieVal, $sessionCookieName . '=');
+                }
+            }
+        }
+        if (count($sessionIds) > 1) {
+            $this->workbench->getLogger()->logException(new SecurityException('Security violation: multiple session ids found in the cookies! Please clear cookies for this website and refresh the page!'));
+        }
+        
+        return;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
     protected function isAnonymousAllowed() : bool
     {
         return $this->denyAnonymous !== null ? $this->denyAnonymous === false : $this->workbench->getConfig()->getOption('SECURITY.DISABLE_ANONYMOUS_ACCESS') === false;
@@ -131,7 +212,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $exception = new AuthenticationFailedError($this->workbench->getSecurity(), $content);
         
         if ($this->facade instanceof AbstractAjaxFacade) {
-            return $this->facade->createResponseFromError($request, $exception);
+            return $this->facade->createResponseFromError($exception, $request);
         } else {
             return new Response(403, [], $content);
         }
@@ -161,7 +242,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     }
     
     /**
-     * Token extractor for HTTP basic auth - produces a UsernamePasswordAuthToken.
+     * Token extractor for HTTP basic auth - produces a MetamodellUsernamePasswordAuthToken.
      * 
      * Usage:
      * 
@@ -172,27 +253,124 @@ class AuthenticationMiddleware implements MiddlewareInterface
      *          [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
      *      ]
      *  )
+     *  
      * ```
      * 
      * @param ServerRequestInterface $request
      * @return PasswordAuthenticationTokenInterface|NULL
      */
-    public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?UsernamePasswordAuthToken
+    public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?MetamodelUsernamePasswordAuthToken
     {
         $matches = [];
         if (preg_match("/Basic\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
             $explodedCredential = explode(":", base64_decode($matches[1]), 2);
             if (count($explodedCredential) == 2) {
                 list($username, $password) = $explodedCredential;
-                return new UsernamePasswordAuthToken($username, $password, $facade);
+                return new MetamodelUsernamePasswordAuthToken($username, $password, $facade);
             }
         }
         return null;
     }
     
+    public static function extractHeaderAsPasswordToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?MetamodelUsernamePasswordAuthToken
+    {
+        $matches = [];
+        if (preg_match("/Basic\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
+            $explodedCredential = explode(":", base64_decode($matches[1]), 2);
+            if (count($explodedCredential) == 2) {
+                list($username, $password) = $explodedCredential;
+                return new MetamodelUsernamePasswordAuthToken($username, $password, $facade);
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * @param string $regex
+     * @return AuthenticationMiddleware
+     */
     public function addExcludePath(string $regex) : AuthenticationMiddleware
     {
         $this->excludePaths[] = $regex;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\UxonObject
+     */
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject();
+        // TODO
+        return $uxon;
+    }
+    
+    /**
+     * Authenticate via HTTP basic authentication
+     * 
+     * @uxon-property basic_auth
+     * @uxon-type object
+     * @uxon-template {"disabled": false}
+     * 
+     * @param UxonObject $uxon
+     * @return AuthenticationMiddleware
+     */
+    protected function setBasicAuth(UxonObject $uxon) : AuthenticationMiddleware
+    {
+        if ($uxon->getProperty('disabled') !== true) {
+            $this->addTokenExtractor([$this, 'extractBasicHttpAuthToken']);
+        }
+        return $this;
+    }
+    
+    /**
+     * Authenticate using the value of an HTTP header as password for a predefined user
+     * 
+     * @uxon-property header_as_password
+     * @uxon-type object
+     * @uxon-template {"username": "", "password_http_header": "", "disabled": false}
+     * 
+     * @param UxonObject $uxon
+     * @return AuthenticationMiddleware
+     */
+    protected function setHeaderAsPassword(UxonObject $uxon) : AuthenticationMiddleware
+    {
+        if ($uxon->getProperty('disabled') !== true) {
+            $pwdHeader = $uxon->getProperty('password_http_header');
+            $usr = $uxon->getProperty('username');
+            $this->addTokenExtractor(
+                function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($usr, $pwdHeader) {
+                    $pwd = $request->getHeaderLine($pwdHeader);
+                    return new MetamodelUsernamePasswordAuthToken($usr, $pwd, $facade);
+                }
+            );
+        }
+        return $this;
+    }
+    
+    /**
+     * Authenticate using the value of an HTTP header as an API key to match agains registered API keys.
+     *
+     * @uxon-property header_as_api_key
+     * @uxon-type object
+     * @uxon-template {"key_http_header": "", "disabled": false}
+     *
+     * @param UxonObject $uxon
+     * @return AuthenticationMiddleware
+     */
+    protected function setHeaderAsApiKey(UxonObject $uxon) : AuthenticationMiddleware
+    {
+        if ($uxon->getProperty('disabled') !== true) {
+            $keyHeader = $uxon->getProperty('key_http_header');
+            $this->addTokenExtractor(
+                function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($keyHeader) {
+                    $pwd = $request->getHeaderLine($keyHeader);
+                    return new ApiKeyAuthToken($pwd, null, $facade);
+                }
+            );
+        }
         return $this;
     }
 }

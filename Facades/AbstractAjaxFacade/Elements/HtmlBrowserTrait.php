@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
-use exface\Core\Widgets\Browser;
+
 /**
  * Renders an HTML IFrame for a Browser widget
  * 
- * @method Browser getWidget()
+ * @method \exface\Core\Widgets\Browser getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -17,9 +17,15 @@ trait HtmlBrowserTrait
      */
     protected function buildHtmlIFrame() : string
     {
-        $url = $this->getWidget()->getUrlBase() . $this->getWidget()->getUrl();
+        $url = $this->getWidget()->getUrl();
+        
+        if ($base = $this->getWidget()->getBaseUrl()) {
+            $url = rtrim($base, "/") . '/' . ltrim($url, "/");
+        }
+        
         return <<<HTML
-<iframe src="{$url}" style="{$this->buildCssElementStyle()}" seamless></iframe>
+
+<iframe src="{$url}" style="{$this->buildCssElementStyle()}" id="{$this->getId()}" name="{$this->getId()}" seamless></iframe>
 HTML;
     }
         
@@ -34,35 +40,48 @@ HTML;
     }
     
     /**
-     * Wraps the given content in a sap.m.Page with back-button, that works with the iFrame.
-     *
-     * @param string $contentJs
-     * @param string $footerConstructor
-     * @param string $headerContentJs
-     *
+     * 
      * @return string
      */
-    protected function buildJsPageWrapper(string $contentJs) : string
+    protected function buildJsIFrameInit() : string
     {
-        $caption = $this->getCaption();
-        if ($caption === '' && $this->getWidget()->hasParent() === false) {
-            $caption = $this->getWidget()->getPage()->getName();
-        }
-        
+        // Show busy icon on the iframe right after it was instantiate.
+        // Hide it when the iframe was loaded and register a listener
+        // to show it again when the user is about to navigate inside
+        // the iframe.
+        // NOTE: this will probably only work with same-origin iframes!
         return <<<JS
-        
-        new sap.m.Page({
-            title: "{$caption}",
-            showNavButton: true,
-            navButtonPress: function(){window.history.go(-1);},
-            content: [
-                {$contentJs}
-            ],
-            headerContent: [
-                
-            ]
-        })
-        
+
+        $('#{$this->getId()}').ready(function () {
+            var startUrl = '{$this->getWidget()->getValueWithDefaults()}';
+            if (startUrl !== '') {
+                {$this->buildJsBusyIconShow()}
+            }
+        });
+        $('#{$this->getId()}').on('load', function () {
+            {$this->buildJsBusyIconHide()}
+            $('#{$this->getId()}')[0].contentWindow.onbeforeunload  = function(){
+                {$this->buildJsBusyIconShow()}
+            };
+        });
 JS;
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsRefresh()
+     */
+    public function buildJsRefresh()
+    {
+        return "(function(domEl){if (domEl !== undefined) domEl.contentWindow.location.reload() })(document.getElementById('{$this->getId()}'))";
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsValueSetter()
+     */
+    public function buildJsValueSetter($valueJs)
+    {
+        return "document.getElementById('{$this->getId()}').src = {$valueJs}";
     }
 }

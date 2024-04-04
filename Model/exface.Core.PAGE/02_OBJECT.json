@@ -81,16 +81,16 @@
     "rows": [
         {
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2020-07-23 10:06:42",
+            "MODIFIED_ON": "2024-02-13 13:36:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Page",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
@@ -120,16 +120,25 @@
                                         "attribute_alias": "ALIAS"
                                     },
                                     {
+                                        "widget_type": "InlineGroup",
+                                        "caption": "Icon \/ Icon set",
+                                        "separator": "\/",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "ICON"
+                                            },
+                                            {
+                                                "attribute_alias": "ICON_SET",
+                                                "width": "25%"
+                                            }
+                                        ]
+                                    },
+                                    {
                                         "attribute_alias": "PUBLISHED"
                                     },
                                     {
                                         "attribute_alias": "DESCRIPTION",
                                         "width": "max"
-                                    },
-                                    {
-                                        "attribute_alias": "INTRO",
-                                        "width": "max",
-                                        "height": 3
                                     },
                                     {
                                         "attribute_alias": "REPLACE_PAGE"
@@ -152,6 +161,9 @@
                                             },
                                             {
                                                 "attribute_alias": "MENU_POSITION"
+                                            },
+                                            {
+                                                "attribute_alias": "MENU_HOME"
                                             }
                                         ]
                                     },
@@ -172,6 +184,20 @@
                                                 "attribute_alias": "AUTO_UPDATE_WITH_APP"
                                             }
                                         ]
+                                    },
+                                    {
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Intro \/ help",
+                                        "height": "max",
+                                        "width": "max",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "INTRO",
+                                                "hide_caption": true,
+                                                "width": "max",
+                                                "height": "max"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
@@ -184,19 +210,29 @@
                                         "width": "100%",
                                         "height": "100%"
                                     }
-                                ]
+                                ],
+                                "active_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=page_uid_field",
+                                            "comparator": "!==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
                             },
                             {
-                                "caption": "=TRANSLATE('exface.Core', 'PAGE.PAGE_EDITOR.GROUPS_AND_PERMISSIONS')",
+                                "caption": "=Translate('exface.Core', 'PAGE.PAGE_EDITOR.GROUPS_AND_PERMISSIONS')",
                                 "widgets": [
                                     {
                                         "widget_type": "SplitVertical",
                                         "panels": [
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
                                                 "height": "40%",
                                                 "widgets": [
                                                     {
+                                                        "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGE_GROUPS')",
                                                         "widget_type": "DataTable",
                                                         "id": "page_group_table",
                                                         "object_alias": "exface.Core.PAGE_GROUP_PAGES",
@@ -216,9 +252,6 @@
                                                                 "attribute_alias": "PAGE_GROUP__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "PAGE_GROUP__DESCRIPTION"
-                                                            },
-                                                            {
                                                                 "attribute_alias": "PAGE_GROUP__PAGE_GROUP_PAGES__UID:COUNT",
                                                                 "caption": "Pages"
                                                             },
@@ -230,6 +263,9 @@
                                                                 "attribute_alias": "PAGE_GROUP__APP__LABEL"
                                                             },
                                                             {
+                                                                "attribute_alias": "PAGE_GROUP__DESCRIPTION"
+                                                            },
+                                                            {
                                                                 "attribute_alias": "PAGE_GROUP",
                                                                 "hidden": true
                                                             }
@@ -237,7 +273,7 @@
                                                         "buttons": [
                                                             {
                                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "disabled_if": {
                                                                     "operator": "AND",
                                                                     "conditions": [
@@ -247,18 +283,15 @@
                                                                             "value_right": ""
                                                                         }
                                                                     ]
-                                                                },
-                                                                "refresh_widget_ids": [
-                                                                    "policy_table"
-                                                                ]
+                                                                }
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
                                                             },
                                                             {
-                                                                "bind_to_double_click": "",
+                                                                "bind_to_double_click": true,
                                                                 "action": {
                                                                     "alias": "exface.Core.ShowObjectInfoDialog",
                                                                     "object_alias": "exface.Core.PAGE_GROUP",
@@ -271,26 +304,57 @@
                                                                         ]
                                                                     }
                                                                 }
+                                                            },
+                                                            {
+                                                                "caption": "Edit group",
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                                                    "object_alias": "exface.Core.PAGE_GROUP",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "PAGE_GROUP",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "caption": "Create new group",
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectCreateDialog",
+                                                                    "object_alias": "exface.Core.PAGE_GROUP"
+                                                                }
                                                             }
                                                         ]
                                                     }
                                                 ]
                                             },
                                             {
-                                                "caption": "Policies",
                                                 "widgets": [
                                                     {
+                                                        "caption": "Policies",
                                                         "object_alias": "exface.Core.PAGE_POLICY",
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
-                                                        "id": "policy_table",
                                                         "row_grouper": {
-                                                            "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                            "group_by_attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true
                                                         },
+                                                        "sorters": [
+                                                            {
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
+                                                                "direction": "asc"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__NAME",
+                                                                "direction": "asc"
+                                                            }
+                                                        ],
                                                         "filters": [
                                                             {
-                                                                "attribute_alias": "TARGET_PAGE_GROUP",
+                                                                "attribute_alias": "POLICY__TARGET_PAGE_GROUP",
                                                                 "value": "=page_group_table!PAGE_GROUP",
                                                                 "apply_on_change": true,
                                                                 "comparator": "==",
@@ -309,28 +373,43 @@
                                                         ],
                                                         "columns": [
                                                             {
-                                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL"
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "EFFECT"
+                                                                "attribute_alias": "POLICY__EFFECT"
                                                             },
                                                             {
-                                                                "attribute_alias": "NAME"
+                                                                "attribute_alias": "POLICY__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_PAGE_GROUP__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_PAGE_GROUP__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "DESCRIPTION"
+                                                                "attribute_alias": "POLICY__DESCRIPTION"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY",
+                                                                "hidden": true
                                                             }
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                                                                "bind_to_double_click": true
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectInfoDialog",
+                                                                    "object_alias": "exface.Core.AUTHORIZATION_POLICY",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "POLICY",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }

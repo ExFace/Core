@@ -10,10 +10,14 @@ use exface\Core\Factories\ContextFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Contexts\OnContextInitEvent;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
     private $active_contexts = array();
+    
+    private $active_errors = array();
 
     private $exface = NULL;
 
@@ -78,25 +82,69 @@ abstract class AbstractContextScope implements ContextScopeInterface
     public function getContext($aliasOrSelector) : ContextInterface
     {
         // If no context matching the alias exists, try to create one
-        if ($this->active_contexts[(string)$aliasOrSelector] === null) {
-            if ($aliasOrSelector instanceof ContextSelectorInterface) {
-                $selector = $aliasOrSelector;
-            } else {
-                $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $aliasOrSelector);  
+        $cache = $this->active_contexts[(string)$aliasOrSelector] ?? null;
+        
+        if ($cache === null) {
+            if (null !== $err = $this->active_errors[(string)$aliasOrSelector] ?? null) {
+                throw $err;
             }
-            $context = ContextFactory::createInScope($selector, $this);
-            // If the selector was not an alias, see if the cache already has 
-            if ($selector->isAlias() === false && $this->active_contexts[$context->getAliasWithNamespace()] !== null) {
-                $instance = $this->active_contexts[$context->getAliasWithNamespace()];
-                unset($context);
-                return $instance;
+            try {
+                if ($aliasOrSelector instanceof ContextSelectorInterface) {
+                    $selector = $aliasOrSelector;
+                } else {
+                    $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $aliasOrSelector);  
+                }
+                $context = ContextFactory::createInScope($selector, $this);
+                // If the selector was not an alias, see if the cache already has 
+                if ($selector->isAlias() === false && $this->active_contexts[$context->getAliasWithNamespace()] !== null) {
+                    $instance = $this->active_contexts[$context->getAliasWithNamespace()];
+                    unset($context);
+                    return $instance;
+                }
+                $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
+                $this->active_contexts[$context->getAliasWithNamespace()] = $context;
+                $this->active_contexts[$selector->toString()] = $context;
+                $this->loadContextData($context);
+                return $context;
+            } catch (\Throwable $e) {
+                $this->active_errors[$context->getAliasWithNamespace()] = $e;
+                $this->active_errors[(string)$aliasOrSelector] = $e;
+                throw $e;
             }
-            $this->getWorkbench()->eventManager()->dispatch(new OnContextInitEvent($context));
-            $this->active_contexts[$context->getAliasWithNamespace()] = $context;
-            $this->loadContextData($context);
-            return $context;
         }
-        return $this->active_contexts[(string)$aliasOrSelector];
+        
+        return $cache;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::hasContext()
+     */
+    public function hasContext($aliasOrSelector, bool $loadContextIfPossible = true) : bool
+    {
+        $cache = ($this->active_contexts[(string)$aliasOrSelector] ?? null);
+        if ($cache !== null) {
+            return true;
+        }
+        
+        $cache = ($this->active_errors[(string)$aliasOrSelector] ?? null);
+        if ($cache !== null) {
+            return false;
+        }
+        
+        if ($loadContextIfPossible === true) {
+            try {
+                $this->getContext($aliasOrSelector);
+                return true;
+            } catch (ContextAccessDeniedError $e) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -175,4 +223,3 @@ abstract class AbstractContextScope implements ContextScopeInterface
         return $this->name;
     }
 }
-?>

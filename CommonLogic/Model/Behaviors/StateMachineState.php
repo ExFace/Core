@@ -3,30 +3,35 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCreateData;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Behaviors\StateMachineBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * Defines a state for the StateMachineBehavior.
  *
- * @author SFL
+ * @author Andrej Kabachnik
  */
-class StateMachineState
+class StateMachineState implements iHaveIcon
 {
     use TranslatablePropertyTrait;
+    
+    use iHaveIconTrait;
+    
+    use ImportUxonObjectTrait;
 
     private $state_id = null;
 
-    private $buttons = [];
+    private $buttons = null;
 
     private $disabled_attributes_aliases = [];
     
@@ -34,6 +39,10 @@ class StateMachineState
     
     private $disable_delete = false;
 
+    /**
+     * 
+     * @var string[]|NULL
+     */
     private $transitions = null;
 
     private $name = null;
@@ -42,11 +51,29 @@ class StateMachineState
     
     private $color = null;
     
+    private $icon = null;
+    
     private $stateMachine = null;
     
-    public function __construct(StateMachineBehavior $stateMachine)
+    private $notifications = null;
+    
+    private $notifyIfDataAuthorized = null;
+    
+    private $description = null;
+    
+    private $startState = null;
+    
+    private $endState = false;
+    
+    private $showIcon = null;
+    
+    public function __construct(StateMachineBehavior $stateMachine, $stateId, UxonObject $uxon = null)
     {
         $this->stateMachine = $stateMachine;
+        $this->state_id = $stateId;
+        if ($uxon !== null) {
+            $this->importUxonObject($uxon);
+        }
     }
 
     /**
@@ -60,29 +87,65 @@ class StateMachineState
     }
 
     /**
-     * Defines the state id.
-     *
-     * @param integer|string $value            
-     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
-     */
-    public function setStateId($value)
-    {
-        $this->state_id = $value;
-        return $this;
-    }
-
-    /**
      * Returns the buttons for the state.
      *
      * @return UxonObject
      */
     public function getButtons()
     {
+        if ($this->buttons === null) {
+            $this->buttons = [];
+            foreach ($this->getTransitions() as $stateId => $actionAlias) {
+                if ($actionAlias === '' || $actionAlias === null) {
+                    $actionSelector = new ActionSelector($this->stateMachine->getWorkbench(), $actionAlias);
+                } else {
+                    $actionSelector = null;
+                }
+                if ($actionSelector !== null && $actionSelector->isAlias()) {
+                    $state = $this->getStateMachine()->getState($stateId);
+                    $btnUxon = new UxonObject([
+                        "action" => [
+                            "alias" => "exface.core.UpdateData",
+                            "input_rows_min" => 1,
+                            "input_object_alias" => $this->getStateMachine()->getObject()->getAliasWithNamespace(),
+                            "input_mappers"=> [
+                                [
+                                    "from_object_alias" => $this->getStateMachine()->getObject()->getAliasWithNamespace(),
+                                    "inherit_columns" => "own_system_attributes",
+                                    "column_to_column_mappings" => [
+                                        [
+                                            "from" => "'$stateId'",
+                                            "to" => $this->getStateMachine()->getStateAttributeAlias()
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]);
+                    $btnUxon->setProperty('caption', $state->getName());
+                    if ($state->getShowIcon() !== false) {
+                        $btnUxon->setProperty('icon', $state->getIcon() ?? 'arrow-right');
+                        if ($state->getIconSet() !== null) {
+                            $btnUxon->setProperty('icon_set', $state->getIconSet());
+                        }
+                    }
+                } else {
+                    $btnUxon = new UxonObject([
+                        "action_alias" => $actionAlias
+                    ]);
+                }
+                $this->buttons[$stateId] = $btnUxon;
+            }
+        }
         return $this->buttons;
     }
 
     /**
-     * Defines the buttons for the state.
+     * Defines the transition-buttons for the state.
+     * 
+     * If not set, but `transitions` defined, buttons for each transition state will
+     * be generated automatically using the built-in action `exface.Core.UpdateData`
+     * with an `input_mapper` for the state-attribute - see example below
      *
      * Example:
      * 
@@ -91,26 +154,23 @@ class StateMachineState
      *  "states": [
      *      "10": { 
      *          "name": "Created",
-     *          "buttons": [
-     *              {
-     *                  "caption": "20 Confirm",
+     *          "buttons": {
+     *              "20": {
+     *                  "caption": "Target state name",
      *                  "action": {
-     *                      "alias": "exface.Core.UpdateData",
-     *                      "input_data_sheet": {
-     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     *                          "columns": [
-     *                              {
-     *                                  "attribute_alias": "STATE_ID",
-     *                                  "formula": "=NumberValue('20')"
-     *                              },
-     *                              {
-     *                                  "attribute_alias": "TS_UPDATE"
-     *                              }
-     *                          ]
-     *                      }
+     *                      "alias": "exface.core.UpdateData",
+     *                      "input_rows_min": 1,
+     *                      "input_object_alias":"my.App.object_of_behavior",
+     *                      "input_mappers":[{
+     *                              "from_object_alias": "exface.Core.MONITOR_ERROR",
+     *                              "inherit_columns": "own_system_attributes",
+     *                              "column_to_column_mappings":[
+     *                                  {"from": 20,"to":"STATUS"}
+     *                               ]
+     *                      }]
      *                  }
      *              }
-     *          ]
+     *          }
      *      }
      *  }
      *  
@@ -118,12 +178,12 @@ class StateMachineState
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
-     * @uxon-template [{"action": {"alias": ""}}]
+     * @uxon-template {"10": {"caption": "", "action": {"alias": ""}}, "20": {"caption": "", "action": {"alias": ""}}}
      *
      * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setButtons($value)
+    protected function setButtons($value)
     {
         $this->buttons = $value;
         return $this;
@@ -156,7 +216,7 @@ class StateMachineState
      * @param UxonObject|string[] $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setDisabledAttributesAliases($value)
+    protected function setDisabledAttributesAliases($value)
     {
         if ($value instanceof UxonObject){
             $array = $value->toArray();
@@ -180,67 +240,137 @@ class StateMachineState
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function hasDisabledAttributes() : bool
+    {
+        return ! empty($this->disabled_attributes_aliases);
+    }
+    
+    /**
      * Returns TRUE if transitions were defined for this state and FALSE otherwise.
      * 
      * @return bool
      */
-    protected function hasTransitionRestrictions() : bool
+    public function hasTransitionRestrictions() : bool
     {
         return $this->transitions !== null;
     }
-
+    
     /**
-     * Returns the allowed transitions for the state.
-     *
-     * @return integer[]
+     * 
+     * @return string[]
      */
-    public function getTransitions()
+    public function getTransitions(bool $autoGenerate = true) : array
     {
-        return $this->transitions ?? [];
+        $array = $this->transitions;
+        if ($array === null) {
+            if ($autoGenerate === true) {
+                foreach($this->getStateMachine()->getStateIds() as $id) {
+                    $array[$id] = '';
+                }
+            } else {
+                $array = [];
+            }
+        } else {
+           // Add the current state to the transitions if the object is editable in this state
+           // Make sure to place it correctly - right before the transition to the next available
+           // state. This way, if we are at the second state, the self-transition will be placed
+           // on position two and not at the beginning or the end of the array.
+           if ($this->getDisableEditing() !== true && ! array_key_exists($this->getStateId(), $array)) {
+               $array = [];
+               $thisStateIdx = $this->getStateMachine()->getStateIndex($this);
+               foreach ($this->transitions as $targetStateId => $action) {
+                   if ($this->getStateMachine()->getStateIndex($targetStateId) > $thisStateIdx) {
+                       $array[$this->getStateId()] = '';
+                   }
+                   $array[$targetStateId] = $action;
+               }
+            }
+        }
+        
+        return $array;
     }
 
     /**
-     * Defines the allowed transitions for the state.
+     * Defines the allowed transitions for the state (if not set, transitions to all states are allowed).
+     * 
+     * If set, it will only be possible to change the state of the object to the listed states!
+     * The transition validation is done automatically with every DataSheet operation, so it is
+     * a pretty solid restriction.
+     * 
+     * Possible transition notations: 
+     * 
+     * - `50: ""` or simply `50` if `transitions` is an array - transition to state 50 is allowed
+     * - `50: "Start processing"` - transition to state 50 is allowed and has a name
+     * - `50: "my.APP.GoToState50"` - transition is a specific action - see blow.
+     * 
+     * Use an empty object to forbid any transitions from a state (including to itself!). Set to
+     * a list containing only the key of this state to forbid any transitions, but still allow
+     * changing data in this state.
+     * 
+     * Additionally an action can be specified for each transition. In contrast to the state
+     * transition itself, this is not a restriction, but rather a helpful hint for the metamodel
+     * logic and also for human model designers. If an action is defined, auto-generated state 
+     * buttons will trigger that action instead of a generic state value update. However, this
+     * does not mean, the transition to the given state can only be done via this action: it
+     * can still happen by explicit state value update or by another action and so on.
+     * 
+     * Also make sure, transition actions always have `input_invalid_if` conditions to make sure
+     * they are applied in the correct state - this validation is not done by the behavior 
+     * automatically!
      *
-     * The below example illustrates a state machine with the following rules. 
-     * From state 10 any state can be reached except 80. In state 20 too, but
-     * there is no going back to 10. From only transitions to 80 or 99 are
-     * allowed. In 80 an object can be saved, but the state cannot change,
-     * while in state 99 no writing to the instance is possible (even without
-     * changing the state!).
+     * The below example illustrates a state machine with the following rules:
+     * 
+     * - A drafted document (state 10) needs to be approved before being submitted. 
+     * - An approved document (state 50) can be submitted or modified, but cannot become a draft again
+     * - A submitted document (state 99) cannot be changed at all - even without changing the state!
+     * 
+     * ```
      *  {
-     *      10: {
-     *          transitions: [ 10, 20, 50, 99 ]
+     *      "10": {
+     *          "name": "Draft",
+     *          "transitions": {
+     *              "50": "my.App.Approve"
+     *          }
      *      },
-     *      20: {
-     *          transitions: [ 20, 50, 99 ]
+     *      "50": {
+     *          "Approved",
+     *          "transitions": {
+     *              "99": "my.App.Submit"
+     *          }
      *      },
-     *      50: {
-     *          transitions: [ 80, 99 ]
-     *      },
-     *      80: {
-     *          transitions: [ 80 ]
-     *      },
-     *      99: {
-     *          transitions: []
+     *      "99": {
+     *          "name": "Submitted",
+     *          "disable_editing": true,
+     *          "end_state": true,
+     *          "transitions": {}
      *      }
-     *  } 
+     *  }
+     *  
+     * ``` 
      *  
      * @uxon-property transitions
-     * @uxon-type array
-     * @uxon-template [""]
+     * @uxon-type metamodel:action[]
+     * @uxon-template {"100": "", "": ""}
      *
-     * @param UxonObject|integer[] $value            
+     * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
-    public function setTransitions($value)
+    protected function setTransitions(UxonObject $value)
     {
-        if ($value instanceof UxonObject){
+        $array = [];
+        
+        // Legacy syntax where transitions were merely an array with state ids
+        if ($value->isArray()) {
+            foreach ($value as $stateId) {
+                $array[$stateId] = '';
+            }
+        } 
+        // New syntax where each transition may be an action
+        else {
             $array = $value->toArray();
-        } elseif (is_array($value)){
-            $array = $value;
-        } else {
-            throw new UnexpectedValueException('Invalid format for transitions definition ins StateMachineBehavior! Array expected!');
         }
         $this->transitions = $array;
         return $this;
@@ -254,7 +384,7 @@ class StateMachineState
      *
      * @param string $name            
      */
-    public function setName($name)
+    protected function setName($name)
     {
         $this->name = $name;
     }
@@ -272,7 +402,12 @@ class StateMachineState
             try {
                 $this->name = $this->evaluatePropertyExpression($this->name);
             } catch (RuntimeException $e) {
-                throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!', $e->getAlias(), $e);
+                $behavior = $this->getStateMachine()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
+                if ($behavior) {
+                    throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!', $e->getAlias(), $e);
+                } else {
+                    throw $e;
+                }
             }
         }
         return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;
@@ -289,7 +424,7 @@ class StateMachineState
      * @param string $color_name_or_code
      * @return StateMachineState
      */
-    public function setColor($color_name_or_code)
+    protected function setColor($color_name_or_code)
     {
         $this->color = $color_name_or_code;
         return $this;
@@ -314,7 +449,7 @@ class StateMachineState
     }
 
     /**
-     * Prevents instances of the object from being edited/changed in this state if set to TRUE.
+     * Prevents instances of the object from being edited/modified in this state if set to TRUE.
      * 
      * This is a shortcut to putting all editable attributes into disabled_attribute_aliases.
      * 
@@ -322,12 +457,12 @@ class StateMachineState
      * @uxon-type bool
      * @uxon-default false
      * 
-     * @param int|string|bool $trueOrFalse
+     * @param bool $trueOrFalse
      * @return StateMachineState
      */
-    public function setDisableEditing($trueOrFalse) : StateMachineState
+    protected function setDisableEditing(bool $trueOrFalse) : StateMachineState
     {
-        $this->disable_editing = BooleanDataType::cast($trueOrFalse);
+        $this->disable_editing = $trueOrFalse;
         return $this;
     }
 
@@ -350,9 +485,9 @@ class StateMachineState
      * @param int|string|bool $trueOrFalse
      * @return StateMachineState
      */
-    public function setDisableDelete($trueOrFalse) : StateMachineState
+    protected function setDisableDelete(bool $trueOrFalse) : StateMachineState
     {
-        $this->disable_delete = BooleanDataType::cast($trueOrFalse);
+        $this->disable_delete = $trueOrFalse;
         return $this;
     }
 
@@ -364,7 +499,7 @@ class StateMachineState
      */
     public function isTransitionAllowed(StateMachineState $toState) : bool
     {
-        return $this->hasTransitionRestrictions() === false || in_array($toState->getStateId(), $this->getTransitions()) === true;
+        return $this->hasTransitionRestrictions() === false || array_key_exists($toState->getStateId(), $this->getTransitions()) === true;
     }
     
     /**
@@ -398,5 +533,191 @@ class StateMachineState
     public function getStateMachine() : StateMachineBehavior
     {
         return $this->stateMachine;
+    }
+    
+    /**
+     * Array of messages to send when this state is reached - each with their own channel, recipients, etc.
+     *
+     * You can use the following placeholders inside any message model - as recipient,
+     * message subject - anywhere:
+     *
+     * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
+     * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
+     * from the given app
+     * - `[#~data:column_name#]` - will be replaced by the value from `column_name` of the data sheet,
+     * for which the notification was triggered - only works with notification on data sheet events!
+     * - `[#=Formula()#]` - will evaluate the `Formula` (e.g. `=Now()`) in the context of the notification.
+     * This means, static formulas will always work, while data-driven formulas will only work on data sheet
+     * events!
+     *
+     * @uxon-property notifications
+     * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
+     * @uxon-template [{"channel": ""}]
+     * 
+     * @param UxonObject $uxonArray
+     * @return StateMachineState
+     */
+    protected function setNotifications(UxonObject $uxonArray) : StateMachineState
+    {
+        $this->notifications = $uxonArray;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasNotifications() : bool
+    {
+        return $this->notifications !== null;
+    }
+    
+    /**
+     * 
+     * @return UxonObject|NULL
+     */
+    public function getNotificationsUxon() : ?UxonObject
+    {
+        return $this->notifications;
+    }
+    
+    /**
+     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the corresponding data
+     *
+     * By default, the behavior will check every data row to see if the user to be notified
+     * is authorized to read it and will only send the message if so.
+     *
+     * This option only applies to notifications where the recipient is a user, a user role, 
+     * or anything else, that implies a message being sent ot a user.
+     *
+     * @uxon-property notify_if_data_authorized
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $trueOrFalse
+     * @return StateMachineState
+     */
+    protected function setNotifyIfDataAuthorized(bool $trueOrFalse) : StateMachineState
+    {
+        $this->notifyIfDataAuthorized = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    public function getNotifyOnlyForAuthorizedData() : ?bool
+    {
+        return $this->notifyIfDataAuthorized;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getDescription() : ?string
+    {
+        return $this->description;
+    }
+    
+    /**
+     * Detailed description of the state - used in generated documentation and simply helps read the state machine config
+     * 
+     * Use this property to describe who does what in each particular state and what is the expected
+     * outcome. Focus on business, not technical details.  This helps understand the configuration once 
+     * it gets complexer with lots of technical stuff like transitions, notifications, etc.
+     * 
+     * @uxon-property description
+     * @uxon-type string
+     * 
+     * @param string $text
+     * @return StateMachineBehavior
+     */
+    public function setDescription(string $text) : StateMachineState
+    {
+        $this->description = $text;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isStartState() : bool
+    {
+        return $this->startState ?? ($this->getStateMachine()->getDefaultState() === $this);
+    }
+    
+    /**
+     * Set to TRUE if this is one of the start states (in addition to the default_state of the state machine)
+     * 
+     * @uxon-property start_state
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return StateMachineState
+     */
+    public function setStartState(bool $value) : StateMachineState
+    {
+        $this->startState = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isEndState() : bool
+    {
+        return $this->endState;
+    }
+    
+    /**
+     * Set to TRUE if this is an end-state
+     * 
+     * @uxon-property end_state
+     * @uxon-type boolean 
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return StateMachineState
+     */
+    public function setEndState(bool $value) : StateMachineState
+    {
+        $this->endState = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @param bool $default
+     * @return bool|NULL
+     */
+    public function getShowIcon(bool $default = null) : ?bool
+    {
+        // If show_icon is not set explicitly, set it to true when specifying an icon.
+        // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
+        if ($this->getIcon() !== null && $this->showIcon !== false) {
+            return true;
+        }
+        return $this->showIcon ?? $default;
+    }
+    
+    /**
+     * Force the icon to show (TRUE) or hide (FALSE)
+     *
+     * The default depends on the facade used.
+     *
+     * @uxon-property show_icon
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return iHaveIcon
+     */
+    public function setShowIcon(bool $value) : iHaveIcon
+    {
+        $this->showIcon = $value;
+        return $this;
     }
 }

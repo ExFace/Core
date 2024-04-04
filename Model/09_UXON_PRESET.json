@@ -349,7 +349,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 15:43:09",
-            "MODIFIED_ON": "2020-12-04 14:49:02",
+            "MODIFIED_ON": "2021-08-02 15:18:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf2a95a0bf9aad7fe4b318306b9a",
@@ -387,9 +387,7 @@
                                                 "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT",
                                                 "comparator": "==",
                                                 "required": true,
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
+                                                "hidden": true
                                             }
                                         ],
                                         "columns": [
@@ -436,7 +434,7 @@
         },
         {
             "CREATED_ON": "2019-09-04 16:50:45",
-            "MODIFIED_ON": "2020-12-10 10:39:26",
+            "MODIFIED_ON": "2020-12-16 21:05:35",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9cf340674dde2ad7fe4b318306b9a",
@@ -468,18 +466,7 @@
                 ],
                 "buttons": [
                     {
-                        "action_alias": "exface.Core.ShowObjectCreateDialog"
-                    },
-                    {
-                        "action_alias": "exface.Core.ShowObjectEditDialog",
-                        "bind_to_double_click": true
-                    },
-                    {
-                        "action_alias": "exface.Core.ShowObjectCopyDialog"
-                    },
-                    {
-                        "action_alias": "exface.Core.DeleteObject",
-                        "visibility": "optional"
+                        "": ""
                     }
                 ]
             },
@@ -706,7 +693,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:03:13",
-            "MODIFIED_ON": "2020-12-09 19:29:24",
+            "MODIFIED_ON": "2022-01-11 16:48:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88a5a8524a2ad7fe4b318306b9a",
@@ -759,7 +746,7 @@
         },
         {
             "CREATED_ON": "2019-09-16 14:08:11",
-            "MODIFIED_ON": "2020-11-24 09:55:27",
+            "MODIFIED_ON": "2022-01-11 16:48:33",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9d88b0c200e3ead7fe4b318306b9a",
@@ -902,7 +889,7 @@
         },
         {
             "CREATED_ON": "2019-09-24 19:34:12",
-            "MODIFIED_ON": "2020-12-10 10:23:57",
+            "MODIFIED_ON": "2021-08-02 15:17:59",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9df0248f5b89898360205857feb80",
@@ -940,9 +927,7 @@
                                         "value": "=master_table",
                                         "apply_on_change": true,
                                         "required": true,
-                                        "input_widget": {
-                                            "widget_type": "InputHidden"
-                                        }
+                                        "hidden": true
                                     }
                                 ],
                                 "columns": [
@@ -961,24 +946,24 @@
         },
         {
             "CREATED_ON": "2019-09-29 21:02:28",
-            "MODIFIED_ON": "2019-09-29 21:02:28",
+            "MODIFIED_ON": "2022-01-04 09:45:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e2fc7135b291bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "MS SQL Server Connection",
-            "DESCRIPTION": "",
+            "NAME": "MS SQL Server connection",
+            "DESCRIPTION": "Most basic connection to an SQL server",
             "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
             "UXON": {
-                "serverName": "",
+                "host": "",
                 "database": "",
-                "CharacterSet": "UTF-8",
-                "UID": "",
-                "PWD": ""
+                "user": "",
+                "password": "",
+                "CharacterSet": "UTF-8"
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "connection",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2019-09-30 09:39:37",
@@ -1087,12 +1072,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:32:08",
-            "MODIFIED_ON": "2020-12-10 10:12:35",
+            "MODIFIED_ON": "2020-12-17 15:31:02",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e53cc2440bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group with caption",
+            "NAME": "Widget group with caption",
             "DESCRIPTION": "Simple widget group with a caption. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -1110,12 +1095,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:32:43",
-            "MODIFIED_ON": "2020-12-10 10:12:45",
+            "MODIFIED_ON": "2020-12-17 15:30:48",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e687ad9e1bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group without caption",
+            "NAME": "Widget group without caption",
             "DESCRIPTION": "Simple widget group without a caption\/title. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -1132,12 +1117,12 @@
         },
         {
             "CREATED_ON": "2019-10-01 09:33:31",
-            "MODIFIED_ON": "2020-12-10 10:13:00",
+            "MODIFIED_ON": "2020-12-17 15:30:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e42e856792d6bacde4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Widget Group with 2 columns",
+            "NAME": "Widget group with 2 columns",
             "DESCRIPTION": "Wide widget group with two columns. Can be used as wrapper.",
             "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
             "UXON": {
@@ -1156,7 +1141,7 @@
         },
         {
             "CREATED_ON": "2019-10-01 19:05:45",
-            "MODIFIED_ON": "2020-12-10 10:04:31",
+            "MODIFIED_ON": "2021-05-17 11:17:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e9e47e7544f531bacde4b318306b9a",
@@ -1167,6 +1152,8 @@
             "UXON": {
                 "widget_type": "ColorIndicator",
                 "attribute_alias": "",
+                "fill": true,
+                "color_only": false,
                 "color_scale": {
                     "10": "red",
                     "20": "yellow",
@@ -1311,21 +1298,21 @@
         },
         {
             "CREATED_ON": "2019-11-06 15:44:24",
-            "MODIFIED_ON": "2020-11-23 15:43:35",
+            "MODIFIED_ON": "2021-02-03 11:29:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea00ac099a5d5fb7580205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Console for a single command",
-            "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action.",
+            "DESCRIPTION": "A Console that executes a command when loaded and does not permit to enter any other commands - good to display the output of a preconfigured command or action. Replace `exface.Core:CleanUp` with the desired CLI facade command.",
             "PROTOTYPE": "exface\/Core\/Widgets\/Console.php",
             "UXON": {
                 "disabled": true,
                 "widget_type": "Console",
                 "start_commands": [
-                    ""
+                    "action exface.Core:CleanUp"
                 ],
-                "working_directory_path": ""
+                "working_directory_path": "vendor\/bin"
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
@@ -1581,13 +1568,13 @@
         },
         {
             "CREATED_ON": "2019-11-08 16:10:24",
-            "MODIFIED_ON": "2020-11-23 11:52:08",
+            "MODIFIED_ON": "2020-12-28 12:43:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea0241f45acb2cb7580205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Bar chart without axis caption",
-            "DESCRIPTION": "The Y-axis has not caption to save space. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
+            "DESCRIPTION": "The Y-axis has no caption to save space - in most cases it is pretty obvious, what the Y-axis shows because it's values are mostly descriptions or names. Make sure, y_attribute_alias of the series and attribute_alias of the axis match!",
             "PROTOTYPE": "exface\/Core\/Widgets\/Chart.php",
             "UXON": {
                 "widget_type": "Chart",
@@ -1823,7 +1810,7 @@
                         },
                         {
                             "attribute_alias": "",
-                            "formula": "=NOW()"
+                            "formula": "=Now()"
                         }
                     ]
                 }
@@ -2105,7 +2092,7 @@
         },
         {
             "CREATED_ON": "2020-01-20 09:20:12",
-            "MODIFIED_ON": "2020-12-04 14:41:27",
+            "MODIFIED_ON": "2021-07-25 19:37:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea3b65ec22ef96b32f0205857feb80",
@@ -2121,9 +2108,7 @@
                         "attribute_alias": "\/\/ REPLACE with relation to master object",
                         "comparator": "==",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        }
+                        "hidden": true
                     }
                 ],
                 "columns": [
@@ -2138,7 +2123,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 09:33:38",
-            "MODIFIED_ON": "2020-12-10 10:20:01",
+            "MODIFIED_ON": "2020-12-28 12:41:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a560b505cb9b2cfe4b318306b9a",
@@ -2149,7 +2134,7 @@
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
-                "tree_parent_id_attribute_alias": "",
+                "tree_parent_relation_alias": "",
                 "tree_folder_flag_attribute_alias": "",
                 "lazy_load_tree_levels": true,
                 "tree_root_uid": "NULL",
@@ -2176,7 +2161,7 @@
         },
         {
             "CREATED_ON": "2020-02-08 09:48:43",
-            "MODIFIED_ON": "2020-12-10 10:20:12",
+            "MODIFIED_ON": "2020-12-28 12:41:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4a5827419f81b2cfe4b318306b9a",
@@ -2187,7 +2172,7 @@
             "UXON": {
                 "widget_type": "DataTree",
                 "object_alias": "",
-                "tree_parent_id_attribute_alias": "",
+                "tree_parent_relation_alias": "",
                 "tree_folder_flag_attribute_alias": "",
                 "paginate": false,
                 "lazy_load_tree_levels": false,
@@ -2406,7 +2391,7 @@
         },
         {
             "CREATED_ON": "2020-03-19 20:23:49",
-            "MODIFIED_ON": "2020-03-20 13:07:16",
+            "MODIFIED_ON": "2022-01-11 12:51:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea6a1f8afdd918a3480205857feb80",
@@ -2425,9 +2410,8 @@
                     {
                         "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER OBJECT!",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        }
+                        "hidden": true,
+                        "comparator": "=="
                     }
                 ],
                 "columns": [
@@ -2440,11 +2424,11 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-04-21 07:13:34",
-            "MODIFIED_ON": "2020-12-04 14:49:19",
+            "MODIFIED_ON": "2021-08-02 15:18:31",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea839eaf1f208e8ee80205857feb80",
@@ -2474,9 +2458,7 @@
                                 "attribute_alias": "\/\/ REPLACE with relation to main object",
                                 "required": true,
                                 "value": "=uid_field",
-                                "input_widget": {
-                                    "widget_type": "InputHidden"
-                                }
+                                "hidden": true
                             }
                         ],
                         "columns": [
@@ -2487,7 +2469,7 @@
                         "buttons": [
                             {
                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                 "disabled_if": {
                                     "operator": "AND",
                                     "conditions": [
@@ -2501,7 +2483,7 @@
                             },
                             {
                                 "action_alias": "exface.Core.DeleteObject",
-                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')"
+                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')"
                             }
                         ]
                     }
@@ -2642,18 +2624,20 @@
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
-            "MODIFIED_ON": "2020-05-20 16:21:59",
+            "MODIFIED_ON": "2021-04-13 12:42:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9ab60540b9458abc0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Set flag on an object (e.g. disable\/enable)",
-            "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. Note: the input data MUST be based on the target meta object!",
+            "NAME": "Set a flag on an object (e.g. disable\/enable)",
+            "DESCRIPTION": "Replace the `0` in the `from` property with your desired value. Place the alias of the target attribute in the `to` property. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
             "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
             "UXON": {
+                "input_object_alias": "",
+                "icon": "toggle-off",
                 "input_rows_min": 1,
-                "icon": "",
                 "input_mapper": {
+                    "inherit_columns": "own_system_attributes",
                     "column_to_column_mappings": [
                         {
                             "from": "=0",
@@ -2664,11 +2648,11 @@
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "action",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-05-22 10:45:03",
-            "MODIFIED_ON": "2020-05-22 10:45:03",
+            "MODIFIED_ON": "2020-12-21 12:23:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9c194578004e8abc0205857feb80",
@@ -2677,11 +2661,13 @@
             "DESCRIPTION": "Will encrypt any data before sending to data source and decrypt it before showing. Just specify the the type of the raw (decrypted) data.",
             "PROTOTYPE": "exface\/Core\/DataTypes\/EncryptedDataType.php",
             "UXON": {
-                "inner_data_type": ""
+                "inner_data_type": {
+                    "alias": ""
+                }
             },
-            "WRAP_PATH": "",
+            "WRAP_PATH": "$.inner_data_type",
             "UXON_SCHEMA": "datatype",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-06-11 14:26:10",
@@ -2779,7 +2765,7 @@
                     ],
                     "buttons": [
                         {
-                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                             "icon": "plus",
                             "action_alias": "exface.Core.CreateData",
                             "visibility": "promoted",
@@ -2823,7 +2809,7 @@
                     ],
                     "buttons": [
                         {
-                            "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                            "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                             "icon": "minus",
                             "visibility": "promoted",
                             "align": "opposite",
@@ -2936,13 +2922,13 @@
         },
         {
             "CREATED_ON": "2020-10-27 07:51:05",
-            "MODIFIED_ON": "2020-12-10 10:34:28",
+            "MODIFIED_ON": "2020-12-17 15:01:49",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb0e22b0e8efab0e2025041000001",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Master-detail carousel",
-            "DESCRIPTION": "A responsive table as master widget and a form showing details for the selected row. Both can have separate buttons. Changes in the form immediately affect the table - even without being saved to the data source.",
+            "NAME": "Master-detail carousel with editable form",
+            "DESCRIPTION": "A responsive table as master widget and a form showing\/editing details for the selected row. Both can have separate buttons. Changes in the form immediately affect the table - without being saved to the data source. The user can cycle through the details of each data item and save alle changes en block.\n\nWriting back to the data source must be triggered separately - e.g. by a button inside the data table or anywhere else with the data table as input widget. \n\nSince changes are kept in the table's data, pagination should not be used as it would discard any changes when leaving a page.",
             "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
             "UXON": {
                 "widget_type": "DataCarousel",
@@ -2952,6 +2938,11 @@
                     "columns": [
                         {
                             "attribute_alias": ""
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "": ""
                         }
                     ]
                 },
@@ -3042,7 +3033,8 @@
                 "widget_type": "PDFViewer",
                 "attribute_alias": "",
                 "download_enabled": true,
-                "filename_attribute_alias": ""
+                "filename_attribute_alias": "",
+                "hide_caption": true
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
@@ -3066,7 +3058,8 @@
                     "widget_type": "PDFViewer",
                     "attribute_alias": "",
                     "download_enabled": true,
-                    "filename_attribute_alias": ""
+                    "filename_attribute_alias": "",
+                    "hide_caption": true
                 }
             },
             "WRAP_PATH": "",
@@ -3200,7 +3193,7 @@
         },
         {
             "CREATED_ON": "2020-12-04 14:44:29",
-            "MODIFIED_ON": "2020-12-04 14:44:50",
+            "MODIFIED_ON": "2021-07-25 19:36:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba490d5236b06a490847beb4a5184",
@@ -3216,9 +3209,7 @@
                         "attribute_alias": "\/\/ REPLACE with relation to master object",
                         "comparator": "==",
                         "required": true,
-                        "input_widget": {
-                            "widget_type": "InputHidden"
-                        },
+                        "hidden": true,
                         "apply_on_change": true,
                         "value": "\/\/ REPLACE with widget link to value-widget with the id of the master object - e.g. `=master_table!id`"
                     }
@@ -3245,7 +3236,8 @@
             "PROTOTYPE": "exface\/Core\/Widgets\/PDFViewer.php",
             "UXON": {
                 "widget_type": "PDFViewer",
-                "attribute_alias": ""
+                "attribute_alias": "",
+                "hide_caption": true
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
@@ -3253,7 +3245,7 @@
         },
         {
             "CREATED_ON": "2020-12-09 18:58:50",
-            "MODIFIED_ON": "2020-12-11 14:20:50",
+            "MODIFIED_ON": "2022-08-10 10:18:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ebb10231b198a6b102025041000001",
@@ -3277,7 +3269,7 @@
                     "default_duration_hours": 1
                 },
                 "resources": {
-                    "title": "shipment_category__LABEL"
+                    "title": ""
                 },
                 "buttons": [
                     {
@@ -3328,7 +3320,7 @@
         },
         {
             "CREATED_ON": "2020-12-09 19:25:25",
-            "MODIFIED_ON": "2020-12-09 19:28:09",
+            "MODIFIED_ON": "2022-01-11 16:48:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eba523e81ce3aea523025041000001",
@@ -3626,6 +3618,1715 @@
             "WRAP_PATH": "$.columns[0]",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_group.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:07:56",
+            "MODIFIED_ON": "2020-12-17 15:19:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb89e64362b87689e6025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Master-detail carousel with read-only details",
+            "DESCRIPTION": "A responsive table as master widget and a read-only form showing details for the selected row. Both can have separate buttons. \n\nThis is a good alternative for tables with lot's of columns: place most important columns in the master table and organize all the secondary fields in widget groups inside the detail-form.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataCarousel.php",
+            "UXON": {
+                "widget_type": "DataCarousel",
+                "data": {
+                    "widget_type": "DataTableResponsive",
+                    "paginate": false,
+                    "columns": [
+                        {
+                            "attribute_alias": ""
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "": ""
+                        }
+                    ]
+                },
+                "details": {
+                    "widget_type": "Form",
+                    "readonly": true,
+                    "widgets": [
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "",
+                            "widgets": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "",
+                            "widgets": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "$.data",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacarousel_readonly.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:20:52",
+            "MODIFIED_ON": "2020-12-17 15:31:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9d9c11675d5c9d9c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Inline display group (read-only)",
+            "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InlineGroup.php",
+            "UXON": {
+                "widget_type": "InlineGroup",
+                "readonly": true,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "width": "25%"
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_display.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-17 15:30:41",
+            "MODIFIED_ON": "2020-12-17 15:30:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8d7f70b028f68d7f025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Widget group read-only",
+            "DESCRIPTION": "Making the group `readonly` will automatically generate display widgets for each inner widget without an explicit widget typ. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/WidgetGroup.php",
+            "UXON": {
+                "widget_type": "WidgetGroup",
+                "caption": "",
+                "readonly": true,
+                "widgets": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/widget_group_readonly.gif"
+        },
+        {
+            "CREATED_ON": "2020-12-23 17:06:54",
+            "MODIFIED_ON": "2020-12-23 17:06:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebadeee06af086adee025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Calculated data column with formula",
+            "DESCRIPTION": "Use a formula (e.g. `=Now()`) or a widget link (e.g. `=widget_id!column` for `calculation`. \n\nYou can also an `attribute_alias` to place the calculated value in place of an attribute in the resulting data - e.g. the input data for an action. The combination of `attribute_alias` and `calculation` can be used to calculate default values in editable table.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataColumn.php",
+            "UXON": {
+                "calculation": "="
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datacolumn_calculated.gif"
+        },
+        {
+            "CREATED_ON": "2021-01-07 13:45:08",
+            "MODIFIED_ON": "2021-01-07 18:27:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9fc02cba65449fc0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Action chain",
+            "DESCRIPTION": "Perform multiple actions one-after-another. The result data of every action is passed as input to the next one.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ActionChain.php",
+            "UXON": {
+                "alias": "exface.Core.ActionChain",
+                "actions": [
+                    {
+                        "alias": ""
+                    },
+                    {
+                        "alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.actions[0]",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-01-07 13:48:32",
+            "MODIFIED_ON": "2021-01-07 18:28:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb98b6a65f1f5c98b6025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Action chain with data transformation (mappers)",
+            "DESCRIPTION": "The result data of the first action will be mapped from it's object to the object of the second action by an `input_mapper`. If both actions have the same object, the mapper can be used to change values, add columns, etc.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ActionChain.php",
+            "UXON": {
+                "alias": "exface.Core.ActionChain",
+                "actions": [
+                    {
+                        "alias": ""
+                    },
+                    {
+                        "alias": "",
+                        "input_mapper": {
+                            "column_to_column_mappings": [
+                                {
+                                    "from": "",
+                                    "to": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.actions[0]",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:41:10",
+            "MODIFIED_ON": "2021-03-19 19:03:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb88184adc17808818025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map visualizing data from a table",
+            "DESCRIPTION": "The map on the right will show a marker for each row loaded in the table. The position of the markers is determined via `latitude_attribute_alias` and `latitude_attribute_alias` that will be added to the table automatically. You can also make each marker show a (short) value (typically a number) by setting `value_attribute_alias`",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "SplitHorizontal",
+                "object_alias": "",
+                "panels": [
+                    {
+                        "width": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "id": "table_with_data",
+                                "filters": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "Map",
+                                "layers": [
+                                    {
+                                        "type": "DataMarkers",
+                                        "latitude_attribute_alias": "",
+                                        "longitude_attribute_alias": "",
+                                        "auto_zoom_to_see_all": true,
+                                        "data_widget_link": "table_with_data"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.panels[0].widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_split.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:49:12",
+            "MODIFIED_ON": "2021-03-19 19:02:23",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb91666a04a3569166025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with a aggregated data in markers ",
+            "DESCRIPTION": "Place the aggregated value (e.g. `id:COUNT`) in the `value_attribute_alias` to display it on every marker",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "longitude_attribute_alias": "",
+                        "latitude_attribute_alias": "",
+                        "value_attribute_alias": "",
+                        "data": {
+                            "filters": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ],
+                            "aggregate_by_attribute_alias": [
+                                ""
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_marker_values.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:50:44",
+            "MODIFIED_ON": "2021-03-19 19:11:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9b27a11fcaa09b27025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple map with data markers",
+            "DESCRIPTION": "A marker will be shown for every row in the data. Add more columns the display their values in popups when markers are clicked.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "longitude_attribute_alias": "",
+                        "latitude_attribute_alias": "",
+                        "data": {
+                            "filters": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ],
+                            "columns": [
+                                {
+                                    "attribute_alias": ""
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_markers.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 18:52:37",
+            "MODIFIED_ON": "2021-03-19 19:02:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8ffbe4799a6a8ffb025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with multiple base maps (ESRI, OpenStreetMap)",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "base_maps": [
+                    {
+                        "type": "EsriArcGisMap",
+                        "basemap": "Gray"
+                    },
+                    {
+                        "type": "EsriArcGisMap",
+                        "basemap": "DarkGray"
+                    },
+                    {
+                        "type": "OpenStreetMap"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_layers.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:06:08",
+            "MODIFIED_ON": "2021-03-19 19:06:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbef0c815416abef0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map with data from a widget link",
+            "DESCRIPTION": "The map will show markers for every data row from another data widget (a table, a chart, etc.) and will refresh with that widget. Data columns for `latitude_attribute_alias` and `longitude_attribute_alias` will be added to the data widget automatically.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "layers": [
+                    {
+                        "type": "DataMarkers",
+                        "latitude_attribute_alias": "",
+                        "longitude_attribute_alias": "",
+                        "auto_zoom_to_see_all": true,
+                        "data_widget_link": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_data_link.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:08:29",
+            "MODIFIED_ON": "2021-03-19 19:08:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbfdc1bacf2dcbfdc025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Map visualizing data from a table",
+            "DESCRIPTION": "The map on the right will show a marker for every SELECTED row in the table. Thus, the markers will move every time a user selects a row. The layer `DataSelectionMarker` can only be used with a `data_widget_link`!",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "SplitHorizontal",
+                "object_alias": "",
+                "panels": [
+                    {
+                        "width": "50%",
+                        "widgets": [
+                            {
+                                "widget_type": "DataTable",
+                                "id": "table_with_data",
+                                "filters": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ],
+                                "columns": [
+                                    {
+                                        "attribute_alias": ""
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "widget_type": "Map",
+                                "layers": [
+                                    {
+                                        "type": "DataSelectionMarker",
+                                        "latitude_attribute_alias": "",
+                                        "longitude_attribute_alias": "",
+                                        "data_widget_link": "table_with_data"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.panels[0].widgets[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_with_select_link.gif"
+        },
+        {
+            "CREATED_ON": "2021-03-19 19:11:09",
+            "MODIFIED_ON": "2021-03-19 19:11:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbc117b6836e6bc11025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "GeoJSON data on map",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Map.php",
+            "UXON": {
+                "widget_type": "Map",
+                "object_alias": "",
+                "layers": [
+                    {
+                        "type": "GeoJSON",
+                        "caption": "",
+                        "url": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/map\/map_geojson.gif"
+        },
+        {
+            "CREATED_ON": "2021-04-13 12:11:40",
+            "MODIFIED_ON": "2021-04-13 12:23:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbaaca3d59982baac025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Toggle a flag on an object (e.g. disable\/enable)",
+            "DESCRIPTION": "Replace the `REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS` with the alias of the attribute you want to toggle. **Note:** the input data MUST be based on the target meta object - enforce this by setting `input_object_alias`!",
+            "PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "UXON": {
+                "input_object_alias": "",
+                "input_rows_min": 1,
+                "icon": "toggle-off",
+                "input_mapper": {
+                    "inherit_columns": "own_system_attributes",
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=Not(REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS)",
+                            "to": "REPLACE_WITH_FLAG_ATTRIBUTE_ALIAS"
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-04-30 20:23:30",
+            "MODIFIED_ON": "2021-11-26 22:40:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebbb5d2ac44ab2bb5d025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as spreadsheet (child-objects inside parent-editor)",
+            "DESCRIPTION": "Use this preset to embed editable tables with simple child-objects or mappings (like categories) in an object editor. Each line will represent a child object. Lines can be added or removed even if the parent-object is not saved yet. Changes are saved together with the parent. Using a spreadsheet allows to quickly pull values along rows and columns. \n\nIf a column represents a relation, use consider using `InputCombo` widget without lazy loading to improve performance of the spreadsheet (see example in second column)",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataSpreadSheet.php",
+            "UXON": {
+                "widget_type": "DataSpreadSheet",
+                "object_alias": "\/\/ REPLACE WITH CHILD-OBJECT OR MAPPING-OBJECT ALIAS",
+                "hide_header": true,
+                "hide_footer": true,
+                "hide_caption": true,
+                "height": 12,
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO PARENT OBJECT",
+                        "required": true,
+                        "hidden": true,
+                        "value": ""
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "cell_widget": {
+                            "widget_type": "InputComboTable",
+                            "lazy_loading": false
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/spreadsheet_small.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 10:29:14",
+            "MODIFIED_ON": "2021-05-05 11:10:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb24df981f9bab24d747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Data spread sheet (like Excel)",
+            "DESCRIPTION": "A spreadsheet is an editable `DataTable` that works like Excel. By default all columns based on editable attributes are editable. Set `disabled` or `editable` to `false` to create a non-editable column. Pagination is disabled by default and also not recommended for spreadsheets as switching pages would discard changes. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataSpreadSheet.php",
+            "UXON": {
+                "widget_type": "DataSpreadSheet",
+                "object_alias": "",
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/spreadsheet.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:35:46",
+            "MODIFIED_ON": "2021-05-05 11:36:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb951a44d9f260951a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as tags (tag selector in object editor)",
+            "DESCRIPTION": "If you have a mapping between an object and predefined tags or categories (known as 3-table tagging in SQL), use this preset to create a tag-selector inside a widget based on the main object. Since the `InputTags` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the tag-object.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputTags.php",
+            "UXON": {
+                "widget_type": "InputTags",
+                "object_alias": "\/\/ REPLACE WITH ALIAS OF MAPPING-OBJECT",
+                "attribute_alias": "\/\/ REPLACE WITH RELATION FROM MAPPING TO TAG",
+                "required": false,
+                "multi_select": true,
+                "caption": "Tags"
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/tags.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:41:40",
+            "MODIFIED_ON": "2022-03-18 16:50:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8e9b1808dd368e9b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Nested data as combo (category mapping in object editor)",
+            "DESCRIPTION": "If you have a mapping between an object and predefined categories, use this preset to create a dropdown-selector inside a widget based on the main object. Since the `InputComboTabel` widget is based on the mapping-object, it will produce nested data for every mapping. The autosuggest will list all available tags as long as the `attribute_alias` is the relation from the mapping-object to the category-object.\n\nUsing an `InputComboTable` allows to display additional information about each category like a description. For simpler objects like tags also consider `InputTags`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputComboTable.php",
+            "UXON": {
+                "widget_type": "InputComboTable",
+                "object_alias": "\/\/ REPLACE WITH ALIAS OF MAPPING-OBJECT",
+                "attribute_alias": "\/\/ REPLACE WITH RELATION FROM MAPPING TO TAG",
+                "required": false,
+                "multi_select": true
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/combo_table_multi.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:52:20",
+            "MODIFIED_ON": "2021-05-05 11:52:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb907495d31e7e9074025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Multi-select filter",
+            "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "input_widget": {
+                    "widget_type": "InputSelect",
+                    "multi_select": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/select_multi.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-05 11:55:12",
+            "MODIFIED_ON": "2021-05-05 11:55:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebac37fcc9f8a0ac37025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Range filter for dates or numbers",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "RangeFilter"
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/inline_range.gif"
+        },
+        {
+            "CREATED_ON": "2021-05-07 12:37:18",
+            "MODIFIED_ON": "2021-05-07 12:39:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb68132a9e306b681025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Custom input widget with external JS lib",
+            "DESCRIPTION": "Use any JS UI library to render a custom input in almost any facade",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputCustom.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "InputCustom",
+                "hide_caption": true,
+                "width": "max",
+                "html": "",
+                "script_to_init": "",
+                "script_to_get_value": "",
+                "script_to_set_value": "",
+                "script_variables": {
+                    "": ""
+                },
+                "include_js": [
+                    ""
+                ],
+                "include_css": [
+                    ""
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-05-07 12:42:52",
+            "MODIFIED_ON": "2021-05-07 12:42:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb80e1f96b18ac80e1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "HTML WYSIWYG editor (rich text editor) via Quill.JS",
+            "DESCRIPTION": "This preset is an example for the integration of external UI libraries via `InputCustom` widgets.\n\n**NOTE:** The functionality of such custom widgets may be limited: for example, live references and conditional properties like `disable_if` may not work!",
+            "PROTOTYPE": "exface\/Core\/Widgets\/InputCustom.php",
+            "UXON": {
+                "attribute_alias": "",
+                "widget_type": "InputCustom",
+                "hide_caption": true,
+                "width": "max",
+                "height": 20,
+                "html": "<div id=\"[#~sId#]_quill\"><\/div>",
+                "script_to_init": "[#quill#] = new Quill('#[#~sId#]_quill', {\n    theme: 'snow'\n  });",
+                "script_to_get_value": "[#quill#].root.innerHTML",
+                "script_to_set_value": "[#quill#].root.innerHTML = [#~mValue#];",
+                "script_variables": {
+                    "quill": "null"
+                },
+                "include_js": [
+                    "https:\/\/cdn.quilljs.com\/1.0.0\/quill.min.js"
+                ],
+                "include_css": [
+                    "https:\/\/cdn.quilljs.com\/1.0.0\/quill.snow.css"
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-05-17 11:40:37",
+            "MODIFIED_ON": "2021-05-21 13:54:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba9f1eff78d2aa9f1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Attachments dialog with upload-enabled FileList (PDF)",
+            "DESCRIPTION": "A dialog with an editable FileList for attachments if a master object. In this example only PDF-files are allowed. The FileList has a view-button showing the PDF.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Dialog.php",
+            "UXON": {
+                "widget_type": "Dialog",
+                "object_alias": "\/\/ REPLACE WITH MASTER OBJECT",
+                "widgets": [
+                    {
+                        "attribute_alias": "id",
+                        "widget_type": "InputHidden",
+                        "id": "master_id_field"
+                    },
+                    {
+                        "widget_type": "FileList",
+                        "object_alias": "\/\/ REPLACE WITH ATTACHMENT OBJECT",
+                        "filename_attribute_alias": "",
+                        "mime_type_attribute_alias": "",
+                        "file_content_attribute_alias": "",
+                        "upload_enabled": true,
+                        "paginate": false,
+                        "hide_header": true,
+                        "upload_options": {
+                            "allowed_file_extensions": [
+                                "pdf"
+                            ]
+                        },
+                        "filters": [
+                            {
+                                "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER",
+                                "required": true,
+                                "hidden": false,
+                                "disabled": true
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "\/\/ REPLACE WITH RELATION TO MASTER",
+                                "hidden": true,
+                                "value": "=master_id_field"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "icon": "eye",
+                                "caption": "PDF",
+                                "bind_to_double_click": true,
+                                "action": {
+                                    "alias": "exface.Core.ShowDialog",
+                                    "maximize": false,
+                                    "input_rows_min": 1,
+                                    "input_rows_max": 1,
+                                    "widget": {
+                                        "widget_type": "PDFViewer",
+                                        "attribute_alias": "",
+                                        "filename_attribute_alias": "",
+                                        "hide_caption": true
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2021-07-02 10:44:53",
+            "MODIFIED_ON": "2022-08-10 10:26:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba43cc5324188a43c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery with instant upload",
+            "DESCRIPTION": "Scrollable horizontal image gallery with an uploader, that would upload each file immediately as a separate action.\n\nNOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "uploader": {
+                    "filename_attribute": "",
+                    "file_content_attribute": ""
+                },
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.DeleteObject"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 10:46:18",
+            "MODIFIED_ON": "2021-07-02 11:45:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8ca1f7be539e8ca1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery",
+            "DESCRIPTION": "Scorllable horizontal image gallery with filters and sorters",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "filters": [
+                    {
+                        "attribute_alias": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_filters.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 11:04:25",
+            "MODIFIED_ON": "2021-07-02 11:45:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9ae180ccc4ac9ae1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery without header",
+            "DESCRIPTION": "Scorllable horizontal image gallery without a header (just the gallery)",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": true
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-02 11:05:59",
+            "MODIFIED_ON": "2021-07-02 11:45:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba589b7aa4512a589025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal attachment gallery with upload",
+            "DESCRIPTION": "Attachments with a relation to an object displayed as a scrollable gallery",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "caption": "Attachments",
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "zoomable": true,
+                "hide_header": false,
+                "uploader": {
+                    "filename_attribute": "",
+                    "file_content_attribute": ""
+                },
+                "filters": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO OBJECT",
+                        "hidden": true,
+                        "required": true,
+                        "comparator": "=="
+                    }
+                ],
+                "columns": [
+                    {
+                        "attribute_alias": "\/\/ REPLACE WITH RELATION TO OBJECT",
+                        "value": "\/\/ REPLACE LINK TO RELATION VALUE (e.g. =object_uid_field)",
+                        "hidden": true
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.DeleteObject"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-13 21:30:18",
+            "MODIFIED_ON": "2021-07-14 12:07:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb9100c1ef08009100025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Simple DataMatrix",
+            "DESCRIPTION": "A table with transposed columns forming a matrix within the table. You can have one or more transposed columns. Each of them needs a `label_attribute_alias` - the \"x-axis\" of the matrix. If multiple transposed columns have the same `label_attribute_alias` their values will show up as separate rows in the matrix. If the `label_attribute_alias` is different, they will form multiple matrices. \n\nAlso keep in mind, that pagination of transposed data is very difficult, so it is safer to turn it off via `paginate:false`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataMatrix.php",
+            "UXON": {
+                "widget_type": "DataMatrix",
+                "object_alias": "",
+                "paginate": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed"
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed"
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datamatrix.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 09:19:07",
+            "MODIFIED_ON": "2021-07-14 09:25:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb45bc73d11b8b45b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "DataMatrix with totals",
+            "DESCRIPTION": "Transposed columns inside a DataMatrix may also have `footer` totals - these will be displayed in a separate column on the right of every row of transposed values. ",
+            "PROTOTYPE": "exface\/Core\/Widgets\/DataMatrix.php",
+            "UXON": {
+                "widget_type": "DataMatrix",
+                "object_alias": "",
+                "paginate": false,
+                "columns": [
+                    {
+                        "attribute_alias": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed",
+                        "footer": ""
+                    },
+                    {
+                        "attribute_alias": "",
+                        "label_attribute_alias": "",
+                        "widget_type": "DataColumnTransposed",
+                        "footer": ""
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "",
+                        "direction": "asc"
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/datamatrix_totals.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 10:13:20",
+            "MODIFIED_ON": "2021-07-14 10:20:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb853e5a26848a853e025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "External web site (iFrame)",
+            "DESCRIPTION": "Browser-in-browser (technically called iFrame) - shows the provided URL inside the widget allowing the user to navigate and interact with the target web page independently of the rest of the app. If using a static URL it does not matter, which meta object is assigned to the widget - you can use `exface.Core.DUMMY`",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Browser.php",
+            "UXON": {
+                "widget_type": "Browser",
+                "object_alias": "exface.Core.DUMMY",
+                "url": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/display\/browser.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:03:58",
+            "MODIFIED_ON": "2021-07-14 12:11:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba304ce46cfe6a304025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button disabled depending on selection in table",
+            "DESCRIPTION": "Buttons in tables or other data widgets can be dynamically enabled or disabled depending on values in the currently selected rows\/items. You don't even need to give the data widget an explicit `id` - just use the magic reference `~input` in your condition to link the table the button belongs to (= its `input_widget`). For example, `=~input!my_col` would reference the column\/attribute `my_col` of the buttons input widget.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "action_alias": "",
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=~input!REPLACE_WITH_COLUMN_NAME_OR_ATTRIBUTE_ALIAS",
+                            "comparator": "==",
+                            "value_right": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_disabled_if_table.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:11:12",
+            "MODIFIED_ON": "2022-10-07 10:55:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb495d15bde82b495025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button with a dropdown-menu (multi-action)",
+            "DESCRIPTION": "When this button is clicked, a menu will show up which also consists of button widgets - these menu items actually trigger actions. Each button inside the menu can separately be `disabled` or `disabled_if`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/MenuButton.php",
+            "UXON": {
+                "widget_type": "MenuButton",
+                "caption": "",
+                "icon": "",
+                "buttons": [
+                    {
+                        "action_alias": ""
+                    },
+                    {
+                        "action_alias": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "$.buttons[0]",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/menubutton.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:17:31",
+            "MODIFIED_ON": "2021-07-14 12:21:12",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb89abb35a91de89ab025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button with custom action",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "caption": "",
+                "hint": "",
+                "icon": "",
+                "action": {
+                    "alias": ""
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:18:22",
+            "MODIFIED_ON": "2021-07-14 12:20:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eba178d146bc9aa178025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button without icon",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "show_icon": false,
+                "action_alias": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_no_icon.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:20:20",
+            "MODIFIED_ON": "2021-07-14 12:20:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ebb61a17a1cd2eb61a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Icon-only button",
+            "DESCRIPTION": "Make sure to add a proper `hint` to give the button a helpful tooltip",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "icon": "",
+                "hint": "",
+                "action_alias": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button_icon_only.gif"
+        },
+        {
+            "CREATED_ON": "2021-07-14 12:22:00",
+            "MODIFIED_ON": "2021-07-14 12:22:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb8bca533c57648bca025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Button without action (dummy)",
+            "DESCRIPTION": "Used as mockup for quick prototyping",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Button.php",
+            "UXON": {
+                "caption": "",
+                "icon": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/button\/button.gif"
+        },
+        {
+            "CREATED_ON": "2022-01-04 09:43:45",
+            "MODIFIED_ON": "2022-01-04 09:45:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8e276d6d80288e27025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "MS SQL Server connection with SSL",
+            "DESCRIPTION": "Change `TrustServerCertificate` to `false` if no self-signed certificates are used!",
+            "PROTOTYPE": "exface\/Core\/DataConnectors\/MsSqlConnector.php",
+            "UXON": {
+                "host": "",
+                "database": "",
+                "user": "",
+                "password": "",
+                "CharacterSet": "UTF-8",
+                "connection_options": {
+                    "Encrypt": true,
+                    "TrustServerCertificate": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-16 11:48:05",
+            "MODIFIED_ON": "2022-03-16 17:08:50",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca7948fa58d52a794747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "SMTP without authentication",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/DataConnectors\/SmtpConnector.php",
+            "UXON": {
+                "host": "",
+                "port": 25,
+                "from": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-16 11:49:03",
+            "MODIFIED_ON": "2022-03-16 17:09:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca153b1cc966ea153747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "SMTP with TLS and authentication",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/DataConnectors\/SmtpConnector.php",
+            "UXON": {
+                "host": "",
+                "port": 587,
+                "tls": true,
+                "user": "",
+                "password": "",
+                "from": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "connection",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-17 12:03:04",
+            "MODIFIED_ON": "2022-03-17 12:10:35",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ecb3eed1f6b8f4b3ee747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Change status with confirmation and status log",
+            "DESCRIPTION": "This action shows a confirmation dialog for a status change on a document. The dialog has an info message explaining what will happen and an optional comment field. If the change is confirmed, an action chain is called, that will change the status of the document object and add an entry to a status log object, so that all status changes are tracked.\n\nNote, that the value of the comment field is passed through the action chain in a non-attribute column \"_Comment\", that is mapped to the actual comment-attribute only once the CreateData action for the status log is really called.",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "\/\/ REPLACE with document object alias",
+                "icon": "",
+                "dialog": {
+                    "height": "auto",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "maximized": false,
+                    "caption": "",
+                    "widgets": [
+                        {
+                            "widget_type": "Message",
+                            "type": "info",
+                            "text": "\/\/ REPLACE with description of what the status change will actually do"
+                        },
+                        {
+                            "widget_type": "WidgetGroup",
+                            "caption": "Kommentar",
+                            "widgets": [
+                                {
+                                    "data_column_name": "_Comment",
+                                    "widget_type": "InputText",
+                                    "caption": "Grund",
+                                    "hide_caption": true
+                                }
+                            ]
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "result_message_text": "",
+                                "alias": "exface.Core.ActionChain",
+                                "actions": [
+                                    {
+                                        "alias": "exface.Core.UpdateData",
+                                        "object_alias": "\/\/ REPLACE with document object alias",
+                                        "input_mapper": {
+                                            "column_to_column_mappings": [
+                                                {
+                                                    "from": "\/\/ REPLACE with new status value",
+                                                    "to": "\/\/ REPLACE with status attribute alias"
+                                                },
+                                                {
+                                                    "from": "_Comment",
+                                                    "to": "_Comment"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "alias": "exface.Core.CreateData",
+                                        "object_alias": "\/\/ REPLACE with document object alias",
+                                        "input_mapper": {
+                                            "from_object_alias": "\/\/ REPLACE with document object alias",
+                                            "to_object_alias": "\/\/ REPLACE with status log object alias",
+                                            "column_to_column_mappings": [
+                                                {
+                                                    "from": "\/\/ REPLACE with document UID attribute alias",
+                                                    "to": "\/\/ REPLACE with status log document relation alias"
+                                                },
+                                                {
+                                                    "from": "\/\/ REPLACE with status attribute alias",
+                                                    "to": "\/\/ REPLACE with status attribute alias"
+                                                },
+                                                {
+                                                    "from": "_Comment",
+                                                    "to": "\/\/ REPLACE with status log comment attribute alias"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-17 12:10:17",
+            "MODIFIED_ON": "2022-03-17 12:10:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec8c63d3b78e108c63747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Change atribute with confirmation dialog",
+            "DESCRIPTION": "This action shows a confirmation dialog before changing some attribute of its object. Such dialogs are often used for status changes, cancellation or similar. A confirmation dialog often includes some additional information about the object - like the label attribute included here.\n\nThe actual change is done via `input_mapper` in the action triggered by the primary button of the dialog. ",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
+                "dialog": {
+                    "height": "auto",
+                    "width": 1,
+                    "columns_in_grid": 1,
+                    "maximized": false,
+                    "caption": "",
+                    "widgets": [
+                        {
+                            "widget_type": "Message",
+                            "type": "info",
+                            "text": "\/\/ REPLACE with description of what the change will actually do"
+                        },
+                        {
+                            "attribute_alias": "LABEL",
+                            "display_only": true
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "alias": "exface.Core.UpdateData",
+                                "input_mapper": {
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "\/\/ REPLACE with new value",
+                                            "to": "\/\/ REPLACE with target attribute alias"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-03-18 18:02:13",
+            "MODIFIED_ON": "2022-08-10 10:31:33",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca879286681a0a879025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Show large dialog for selected data",
+            "DESCRIPTION": "Show a large dialog with details for a selected data row",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
+                "dialog": {
+                    "header": {
+                        "title_attribute_alias": "",
+                        "widgets": [
+                            {
+                                "": ""
+                            }
+                        ]
+                    },
+                    "widgets": [
+                        {
+                            "": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-05-05 08:30:54",
+            "MODIFIED_ON": "2022-05-05 08:30:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eca3d5eb50dfe2a3d5025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Error on duplicates excl. NULL-values",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "UXON": {
+                "compare_attributes": [
+                    ""
+                ],
+                "compare_with_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "\/\/ REPLACE with alias of nullable attribute",
+                            "comparator": "==",
+                            "value": "NULL"
+                        }
+                    ]
+                },
+                "duplicate_error_code": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-05-05 08:31:59",
+            "MODIFIED_ON": "2022-05-05 08:32:42",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec80471101a9888047025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "File object with mime type",
+            "DESCRIPTION": "Will allow widgets and facades to recognize instances of the object as files regardless of their data source: e.g. for files stored in DB",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/FileBehavior.php",
+            "UXON": {
+                "filename_attribute": "",
+                "contents_attribute": "",
+                "mime_type_attribute": ""
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:25:33",
+            "MODIFIED_ON": "2022-08-10 10:25:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda1a4014720f0a1a4025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Horizontal image gallery with upload",
+            "DESCRIPTION": "Horizontal image gallery with an uploader, that would add files to the form data. Thus, files will not be uploaded automatically, but only when a save-button is pressed. This type of upload is a good choice for galleries inside of larger editors. Uploads will then be saved or discarded together with all the other input in the editor.\n\nNOTE: the file-related properties of the uploader are not required for file objects with the `FileBehavior`.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/ImageGallery.php",
+            "UXON": {
+                "widget_type": "ImageGallery",
+                "object_alias": "",
+                "image_url_attribute_alias": "",
+                "image_title_attribute_alias": "",
+                "hide_header": true,
+                "mime_type_attribute_alias": "",
+                "uploader": {
+                    "filename_attribute": "",
+                    "file_content_attribute": "",
+                    "file_mime_type_attribute": "",
+                    "instant_upload": false
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/image_gallery_h_upload.gif"
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:28:57",
+            "MODIFIED_ON": "2022-08-10 10:31:20",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed88f17abbef9288f1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Show small dialog for selected data",
+            "DESCRIPTION": "Show a small dialog with details for a selected data row",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "",
+                "icon": "",
+                "dialog": {
+                    "width": 1,
+                    "height": "auto",
+                    "columns_in_grid": 1,
+                    "widgets": [
+                        {
+                            "": ""
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-10 10:40:56",
+            "MODIFIED_ON": "2022-08-10 10:44:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8170279bbbe28170025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Save a file to data",
+            "DESCRIPTION": "Allows to place the contents of a file in the input data of an action. For example, the result of a PrintTemplate or PrintPDF action can be placed in a column before some data is created.\n\nA good example would be printing an order or a similar object to save its current state in a history-table. The input data would be the order-object in this case. You would need to map it to the history-object using regular `column_to_column_mappings` and fill one of the history-columns with the result of the print action.",
+            "PROTOTYPE": "exface\/Core\/Actions\/CreateData.php",
+            "UXON": {
+                "input_mapper": {
+                    "column_to_column_mappings": [
+                        {
+                            "from": "",
+                            "to": ""
+                        }
+                    ],
+                    "action_to_column_mappings": [
+                        {
+                            "from": "~file",
+                            "to": "\/\/ REPLACE with file-contents attribute",
+                            "action": {
+                                "alias": "\/\/ REPLACE with action producing file-result (e.g. PrintTemplate)"
+                            }
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-17 17:41:02",
+            "MODIFIED_ON": "2022-08-17 17:41:02",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edad2a005f3ee4ad2a025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Send notification to a user role on status change",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
+            "UXON": {
+                "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
+                "notify_if_attributes_change": [
+                    ""
+                ],
+                "notify_if_data_matches_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "Status",
+                            "comparator": "==",
+                            "value": ""
+                        }
+                    ]
+                },
+                "notifications": [
+                    {
+                        "channel": "exface.Core.NOTIFICATIONS",
+                        "recipient_roles": [
+                            ""
+                        ],
+                        "title": "",
+                        "text": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-08-17 17:43:41",
+            "MODIFIED_ON": "2022-08-17 17:43:41",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edbb0e5f6b4b76bb0e025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Send email to users on status change",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/NotifyingBehavior.php",
+            "UXON": {
+                "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
+                "notify_if_attributes_change": [
+                    ""
+                ],
+                "notify_if_data_matches_conditions": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "expression": "\/\/ REPLACE with the alias of the status attribute",
+                            "comparator": "==",
+                            "value": "\/\/ REPLACE with the status value, that should trigger the communication"
+                        }
+                    ]
+                },
+                "notifications": [
+                    {
+                        "channel": "exface.Core.EMAIL",
+                        "recipient_roles": [
+                            ""
+                        ],
+                        "subject": "",
+                        "text": ""
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2022-10-07 10:53:27",
+            "MODIFIED_ON": "2022-10-07 10:53:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed972a829f8aba972a747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Info-button for timestamping attributes",
+            "DESCRIPTION": "Intended to be used on base objects of data sources. This behavior will add an optional button to all inheriting objects, that will show a dialog with attributes of the base object: typically the UID and various system attributes like those used by the TimestampingBehavior",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/GlobalActionsBehavior.php",
+            "UXON": {
+                "buttons": [
+                    {
+                        "icon": "info",
+                        "caption": "Object info",
+                        "action": {
+                            "alias": "exface.Core.ShowDialog",
+                            "input_rows_min": 1,
+                            "input_rows_max": 1,
+                            "dialog": {
+                                "maximized": false,
+                                "width": 1,
+                                "height": "auto",
+                                "readonly": true,
+                                "widgets": [
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    },
+                                    {
+                                        "attribute_alias": " "
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2023-03-23 20:30:27",
+            "MODIFIED_ON": "2023-03-23 20:30:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edb6602b296beeb660025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Console output dialog for CLI action",
+            "DESCRIPTION": "Opens a readonly console window and executes a CLI action",
+            "PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
+            "UXON": {
+                "icon": "fa fa-terminal",
+                "widget": {
+                    "widgets": [
+                        {
+                            "disabled": true,
+                            "widget_type": "Console",
+                            "start_commands": [
+                                "action exface.Core.ClearCache"
+                            ],
+                            "working_directory_path": "vendor\/bin"
+                        }
+                    ]
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "action",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2023-08-29 20:30:05",
+            "MODIFIED_ON": "2023-08-29 20:30:05",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eea6a014006a24a6a0025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Boolean value as icon",
+            "DESCRIPTION": "",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Icon.php",
+            "UXON": {
+                "widget_type": "icon",
+                "attribute_alias": "",
+                "icon_scale": [
+                    "toggle-off",
+                    "toggle-on"
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],

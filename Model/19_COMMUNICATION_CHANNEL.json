@@ -1,0 +1,114 @@
+{
+    "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "MUTE_FLAG_DEFAULT",
+            "attribute_alias": "MUTE_FLAG_DEFAULT"
+        },
+        {
+            "name": "MESSAGE_PROTOTYPE",
+            "attribute_alias": "MESSAGE_PROTOTYPE"
+        },
+        {
+            "name": "MESSAGE_DEFAULT_UXON",
+            "attribute_alias": "MESSAGE_DEFAULT_UXON"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "DATA_CONNECTION_DEFAULT",
+            "attribute_alias": "DATA_CONNECTION_DEFAULT"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2022-01-27 13:34:52",
+            "MODIFIED_ON": "2022-01-31 16:30:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec9de48727e8f69de4025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTE_FLAG_DEFAULT": 0,
+            "MESSAGE_PROTOTYPE": "exface\/Core\/Communication\/Messages\/NotificationMessage.php",
+            "MESSAGE_DEFAULT_UXON": null,
+            "ALIAS": "NOTIFICATIONS",
+            "DATA_CONNECTION_DEFAULT": "0x11ecae3bb921a636ae3b025041000001",
+            "DESCRIPTION": "",
+            "NAME": "In-App notifications"
+        },
+        {
+            "CREATED_ON": "2022-03-16 12:41:43",
+            "MODIFIED_ON": "2022-03-16 12:41:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ec884b0dc484e8884b747827435ce5",
+            "APP": "0x31000000000000000000000000000000",
+            "MUTE_FLAG_DEFAULT": 0,
+            "MESSAGE_PROTOTYPE": "exface\/Core\/Communication\/Messages\/EmailMessage.php",
+            "MESSAGE_DEFAULT_UXON": null,
+            "ALIAS": "EMAIL",
+            "DATA_CONNECTION_DEFAULT": "",
+            "DESCRIPTION": "",
+            "NAME": "Email notifications"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.COMMUNICATION_CHANNEL"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

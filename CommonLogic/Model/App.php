@@ -2,22 +2,19 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\CommonLogic\Translation;
+use exface\Core\CommonLogic\Translation\AppTranslation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
@@ -38,12 +35,16 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Interfaces\Selectors\WidgetSelectorInterface;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\AppInstallers\MetaModelInstaller;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -66,6 +67,8 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
 class App implements AppInterface
 {
     use AliasTrait;
+    
+    use ImportUxonObjectTrait;
     
     const CONFIG_FOLDER_IN_APP = 'Config';
     
@@ -90,6 +93,10 @@ class App implements AppInterface
     private $translator = null;
     
     private $selector_cache = [];
+    
+    private $defaultLanguageCode = null;
+    
+    private $name;
     
     /**
      *
@@ -123,6 +130,23 @@ class App implements AppInterface
         return $this->getSelector()->getAppAlias();
     }
     
+    /**
+     * 
+     * @param string $alias
+     * @return AppInterface
+     */
+    protected function setAlias(string $alias) : AppInterface
+    {
+        if (strcasecmp($alias, $this->getAliasWithNamespace()) !== 0) {
+            throw new RuntimeException('Cannot change the alias of an app at runtime! Please change it in the model before loading the app.');
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
     protected function getClassnameSuffixToStripFromAlias() : string
     {
         return 'App';
@@ -159,7 +183,6 @@ class App implements AppInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AppInterface::getDirectoryAbsolutePath()
      */
     public function getDirectoryAbsolutePath()
@@ -167,6 +190,11 @@ class App implements AppInterface
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
     public function getNamespace()
     {
         return $this->selector->getVendorAlias();
@@ -284,24 +312,29 @@ class App implements AppInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AppInterface::getUid()
      */
-    public function getUid()
+    public function getUid() : ?string
     {
-        if (is_null($this->uid)) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
-            $ds->dataRead();
-            if ($ds->countRows() == 0) {
-                throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
+        if ($this->uid === null) {
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            } catch (AppNotFoundError $e) {
+                return null;
             }
-            if ($ds->countRows() > 1) {
-                throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
-            }
-            $this->uid = $ds->getUidColumn()->getCellValue(0);
         }
         return $this->uid;
+    }
+    
+    /**
+     *
+     * @param string $value
+     * @return AppInterface
+     */
+    protected function setUid(string $value) : AppInterface
+    {
+        $this->uid = $value;
+        return $this;
     }
     
     /**
@@ -309,7 +342,7 @@ class App implements AppInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AppInterface::getSelector()
      */
-    public function getSelector()
+    public function getSelector() : AliasSelectorInterface
     {
         return $this->selector;
     }
@@ -399,11 +432,11 @@ class App implements AppInterface
         ];
         
         if ($locale !== null) {
-            return new Translation($this, $locale, $fallbackLocales);
+            return new AppTranslation($locale, $this, $fallbackLocales);
         } 
         
         if ($this->translator === null) {
-            $this->translator = new Translation($this, $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $fallbackLocales); 
+            $this->translator = new AppTranslation($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $this, $fallbackLocales); 
         }
         
         return $this->translator;
@@ -418,12 +451,17 @@ class App implements AppInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null)
     {
-        $app_installer = new AppInstallerContainer($this->getSelector());
-        // Add the injected installer
-        if ($injected_installer) {
-            $app_installer->addInstaller($injected_installer);
+        $installerContainer = new AppInstallerContainer($this->getSelector());
+        
+        // Add the model installer by default
+        $installerContainer->addInstaller(new MetaModelInstaller($this->getSelector()));
+        
+        // DEPRECATED! Add the injected installer if provided
+        if ($injected_installer !== null) {
+            $installerContainer->addInstaller($injected_installer);
         }
-        return $app_installer;
+        
+        return $installerContainer;
     }
     
     /**
@@ -433,19 +471,25 @@ class App implements AppInterface
      */
     public function getLanguageDefault() : string
     {
-        try { 
-            $language = $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
-            if ($language != null) {
-                return $language;
-            } else {
-                return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
+        if ($this->defaultLanguageCode === null) {
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            } catch (AppNotFoundError $e) {
+                $this->defaultLanguageCode = $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
             }
-        } catch (DataSheetReadError $e) {
-            // Catch read errors in case, the app does not yet exist in the model (this may happen
-            // on rare occasions, when apps are just being installed)
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this->getWorkbench()->getConfig()->getOption('SERVER.DEFAULT_LOCALE');
         }
+        return $this->defaultLanguageCode;
+    }
+    
+    /**
+     * 
+     * @param string $code
+     * @return AppInterface
+     */
+    protected function setDefaultLanguageCode(string $code) : AppInterface
+    {
+        $this->defaultLanguageCode = $code;
+        return $this;
     }
     
     /**
@@ -458,73 +502,14 @@ class App implements AppInterface
         return $this->getTranslator()->getLanguagesAvailable($forceLocale);
     }
     
-    protected function getAppModelDataSheet()
-    {
-        $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
-        $ds = DataSheetFactory::createFromObject($app_object);
-        $cols = $ds->getColumns();
-        $cols->addFromExpression('UID');
-        $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
-        $cols->addFromExpression('NAME');
-        $ds->getFilters()->addConditionFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
-        $ds->dataRead();
-        return $ds;
-    }
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
     public function handle(TaskInterface $task): ResultInterface
-    {
-        if ($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-            if (! $task->hasMetaObject()) {
-                $task->setMetaObject($widget->getMetaObject());
-            }
-            
-            // If the task tigger is a button or similar, the action might be defined in that
-            // trigger widget. However, we can only use this definition, if the task does not
-            // have an action explicitly defined or that action is exactly the same as the
-            // one of the trigger widget.
-            if ($widget instanceof iTriggerAction) {
-                if (! $task->hasAction()) {
-                    $action = $widget->getAction();
-                } elseif ($widget->hasAction()) {
-                    // At this point, we know, that both, task and widget, have actions - so we
-                    // need to compare them.
-                    if ($task->getActionSelector()->isAlias() && strcasecmp($task->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
-                        //In most cases, the task action will be defined via
-                        // alias, so we can simply compare the alias without instantiating the action.
-                        $action = $widget->getAction();
-                    } else {
-                        // Otherwise we need to instantiate it first to get the alias.
-                        $task_action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
-                        $widget_action = $widget->getAction();
-                        if ($task_action->isExactly($widget_action)) {
-                            // If the task tells us to perform the action of the widget, use the description in the
-                            // widget, because it is more detailed.
-                            $action = $widget->getAction();
-                        } else {
-                            // If the task is about another action (e.g. ReadPrefill on a button, that does ShowDialog),
-                            // Take the task action and inherit action settings related to the input data from the widget.
-                            $action = $task_action;
-                            if ($widget_action->hasInputDataPreset() === true) {
-                                $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
-                            }
-                            if ($widget_action->hasInputMappers() === true) {
-                                foreach ($widget_action->getInputMappers() as $mapper) {
-                                    $action->addInputMapper($mapper);
-                                }
-                            }
-                        }
-                    }
-                    
-                }
-            }
-        }
-        
-        if (! isset($action)) {
-            $action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
-        }
-        
-        return $action->handle($task);
+    {        
+        return $task->getAction()->handle($task);
     }
     
     /**
@@ -580,6 +565,11 @@ class App implements AppInterface
         }
     }
     
+    /**
+     * 
+     * @param PrototypeSelectorInterface $selector
+     * @return string
+     */
     protected function getPrototypeClassSuffix(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
@@ -589,6 +579,11 @@ class App implements AppInterface
         return '';
     }
     
+    /**
+     * 
+     * @param PrototypeSelectorInterface $selector
+     * @return string
+     */
     protected function getPrototypeClassSubNamespace(PrototypeSelectorInterface $selector) : string
     {
         switch (true) {
@@ -612,6 +607,8 @@ class App implements AppInterface
                 return 'QueryBuilders';
             case $selector instanceof WidgetSelectorInterface:
                 return 'Widgets';
+            case $selector instanceof CommunicationMessageSelectorInterface:
+                return 'Communication\\Messages';
         }
         return '';
     }
@@ -642,7 +639,11 @@ class App implements AppInterface
         $cache = $this->selector_cache[$selector->toString()][get_class($selector)];
         if ($cache !== null) {
             $selector = $cache['selector'];
-            $class = $cache['class'];
+            $class = $cache['class'] ?? null;
+            $instance = $cache['instance'] ?? null;
+            if ($instance !== null) {
+                return $instance;
+            }
             if ($class !== null) {
                 if ($constructorArguments === null) {
                     return new $class($selector);
@@ -651,7 +652,11 @@ class App implements AppInterface
                     return $reflector->newInstanceArgs($constructorArguments);
                 }
             } else {
-                return $this->loadFromModel($selector);
+                $instance = $this->loadFromModel($selector);
+                if ($instance === null) {
+                    throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+                }
+                return $instance;
             }
         }
         
@@ -684,11 +689,11 @@ class App implements AppInterface
                 $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'class' => $class];
                 return true;
             } else {
-                try {
-                    $this->loadFromModel($selector);
-                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector];
+                $instance = $this->loadFromModel($selector);
+                if ($instance !== null) {
+                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'instance' => $instance];
                     return true;
-                } catch (\Throwable $e) {
+                } else {
                     return false;
                 }
             }
@@ -699,12 +704,22 @@ class App implements AppInterface
         return false;
     }
     
-    protected function loadFromModel(SelectorInterface $selector) 
+    /**
+     * 
+     * @param SelectorInterface $selector
+     * @throws AppComponentNotFoundError
+     * @return object|NULL
+     */
+    protected function loadFromModel(SelectorInterface $selector) : ?object
     {
-        if ($selector instanceof DataTypeSelectorInterface) {
-            return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        switch (true) {
+            case $selector instanceof DataTypeSelectorInterface:
+                return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+            // TODO add loading other things like actions here too. Currently they are being loaded
+            // directly in their factories. It would be nicer to load them here to give app developers
+            // the freedom to use their own loading logic for certain selectors
         }
-        throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+        return null;
     }
     
     /**
@@ -734,5 +749,63 @@ class App implements AppInterface
     public function getAlias()
     {
         return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        return new UxonObject([
+            'UID' => $this->getUid(),
+            'ALIAS' => $this->getAliasWithNamespace(),
+            'NAME' => $this->getName(),
+            'DEFAULT_LANGUAGE_CODE' => $this->getLanguageDefault()
+        ]);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getName()
+     */
+    public function getName() : string
+    {
+        if ($this->name === null) {
+            try {
+                $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            } catch (AppNotFoundError $e) {
+                $this->name = '';
+            }
+        }
+        return $this->name;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return AppInterface
+     */
+    protected function setName(string $value) : AppInterface
+    {
+        $this->name = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::isInstalled()
+     */
+    public function isInstalled() : bool
+    {
+        try {
+            $this->getWorkbench()->model()->getModelLoader()->loadApp($this);
+            return true;
+        } catch (AppNotFoundError $e) {
+            return false;
+        }
     }
 }

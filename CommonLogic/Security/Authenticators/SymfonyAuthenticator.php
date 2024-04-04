@@ -18,11 +18,9 @@ use exface\Core\Interfaces\Security\PreAuthenticatedTokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Widgets\Form;
 
 class SymfonyAuthenticator extends AbstractAuthenticator
 {
@@ -50,6 +48,16 @@ class SymfonyAuthenticator extends AbstractAuthenticator
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), '7AL3J9X', $e);
         }
+        
+        /* TODO what if the username is different? Need to create a new token then, but which one?
+        if ($token->getUsername() !== $user->getUsername()) {
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword(), $token->getFacade());
+        } else {
+            $authenticatedToken = $token;
+        }*/
+        
+        $this->syncUserRoles($user, $token);
+        
         return $token;
     }
     
@@ -125,7 +133,7 @@ class SymfonyAuthenticator extends AbstractAuthenticator
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isSupported()
      */
     public function isSupported(AuthenticationTokenInterface $token) : bool {
-        return $token instanceof PasswordAuthenticationTokenInterface;
+        return ($token instanceof PasswordAuthenticationTokenInterface) && $this->isSupportedFacade($token);
     }
     
     /**
@@ -157,9 +165,9 @@ class SymfonyAuthenticator extends AbstractAuthenticator
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginForm()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    protected function createLoginForm(Form $container) : Form
     {
         $container->setWidgets(new UxonObject([
             [
@@ -171,11 +179,9 @@ class SymfonyAuthenticator extends AbstractAuthenticator
             ]
         ]));
         
-        if ($container instanceof iLayoutWidgets) {
-            $container->setColumnsInGrid(1);
-        }
+        $container->setColumnsInGrid(1);
         
-        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
+        if ($container->hasButtons() === false) {
             $container->addButton($container->createButton(new UxonObject([
                 'action_alias' => 'exface.Core.Login',
                 'align' => EXF_ALIGN_OPPOSITE,

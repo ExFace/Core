@@ -82,7 +82,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::generateAttributesForObject()
      */
-    public function generateAttributesForObject(MetaObjectInterface $meta_object) : DataSheetInterface
+    public function generateAttributesForObject(MetaObjectInterface $meta_object, string $addressPattern = '') : DataSheetInterface
     {
         $this->setModelLanguage($meta_object->getApp()->getLanguageDefault());
         
@@ -112,6 +112,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 if ($meta_object->isWritable(true) === false) {
                     $row['WRITABLEFLAG'] = false;
                     $row['EDITABLEFLAG'] = false;
+                    $row['COPYABLEFLAG'] = false;
                 }
                 $result_data_sheet->addRow($row);
             }
@@ -230,18 +231,28 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         $workbench = $object->getWorkbench();
         $sqlType = strtoupper($sql_data_type);
         switch (true) {
-            case $sqlType === 'BIGINT':
+            case $sqlType === 'BIT':
+                $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
+                break;
             case $sqlType === 'INT':
             case $sqlType === 'INTEGER':
-                if ($length == 1) {
+            case $sqlType === 'BIGINT':
+            case $sqlType === 'MEDIUMINT':
+            case $sqlType === 'SMALLINT':
+            case $sqlType === 'TINYINT':
+                if ($length === 1) {
                     $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 }
                 break;
             case $sqlType === 'NUMBER':
+            case $sqlType === 'NUMERIC':
             case $sqlType === 'DECIMAL':
+            case $sqlType === 'DEC':
             case $sqlType === 'FLOAT':
+            case $sqlType === 'REAL':
+            case $sqlType === 'DOUBLE':
                 if (is_numeric($scale) === true && $scale == 0) {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 } else {
@@ -263,14 +274,23 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case $sqlType === 'DATE':
                 $data_type = DataTypeFactory::createFromString($workbench, DateDataType::class);
                 break;
-            case strpos($sqlType, 'TEXT') !== false:
+            case stripos($sqlType, 'TEXT') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, TextDataType::class);
+                if ($length !== null && $length > 0) {
+                    $data_type->setLengthMax($length);
+                }
                 break;
-            case strpos($sqlType, 'BINARY') !== false:
+            case stripos($sqlType, 'BINARY') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, HexadecimalNumberDataType::class);
                 break;
-            case strpos($sqlType, 'BLOB') !== false:
+            case stripos($sqlType, 'BLOB') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, BinaryDataType::class);
+                break;
+            case stripos($sqlType, 'CHAR') !== false:
+                $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
+                if ($length !== null && $length > 0) {
+                    $data_type->setLengthMax($length);
+                }
                 break;
             default:
                 $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
@@ -287,7 +307,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     protected function getDataTypeConfig(DataTypeInterface $type, string $source_data_type, $length = null, $scale = null) : UxonObject
     {
-        return new UxonObject();
+        return $type->exportUxonObject();
     }
 
     /**
@@ -371,7 +391,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $ds->getColumns()->addFromUidAttribute();
                 $ds->getColumns()->addFromExpression('NAME');
                 $ds->getFilters()->addConditionFromString('DATA_ADDRESS', $relatedTable, EXF_COMPARATOR_EQUALS);
-                $ds->getFilters()->addConditionFromString('DATA_SOURCE', $object->getDataSourceId(), EXF_COMPARATOR_EQUALS);
+                $ds->getFilters()->addConditionFromString('DATA_SOURCE', $object->getDataSource()->getId(), EXF_COMPARATOR_EQUALS);
                 $ds->dataRead();
                 if ($ds->countRows() === 1) {
                     $row['RELATED_OBJ'] = $ds->getUidColumn()->getValues()[0];

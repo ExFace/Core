@@ -117,6 +117,11 @@ class FilterContext extends AbstractContext
                 }
                 foreach ($uxonConditions as $uxonCondition) {
                     try {
+                        $ts = $uxonCondition->getProperty('timestamp');
+                        $uxonCondition->unsetProperty('timestamp');
+                        if ($ts !== null && ($ts + $this->getSecondsToLive()) < time()) {
+                            continue;
+                        }
                         $conditions[$oId][] = ConditionFactory::createFromUxon($exface, $uxonCondition);
                     } catch (\Throwable $e) {
                         // ignore context that cannot be instantiated!
@@ -137,45 +142,10 @@ class FilterContext extends AbstractContext
     {
         $objectId = $condition->getExpression()->getMetaObject()->getId();
         if (($this->conditions_by_object === null || $this->conditions_by_object[$objectId] === null) && $this->isEmpty() === false) {
-            $this->conditions_by_object[$objectId] = $this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId];
+            $this->conditions_by_object[$objectId] = $this->conditionsUxon === null ? [] : ($this->getConditionsFromUxon($this->conditionsUxon, $objectId)[$objectId] ?? []);
         }
         $this->conditions_by_object[$objectId][$condition->getExpression()->toString()] = $condition;
         $this->updatedObjectIds[] = $objectId;
-        return $this;
-    }
-
-    /**
-     * Removes a given condition from the current context
-     *
-     * @param Condition $condition            
-     * @return \exface\Core\Contexts\FilterContext
-     */
-    public function removeCondition(Condition $condition)
-    {
-        $object = $condition->getExpression()->getMetaObject();
-        if (empty($this->getConditions($object)) === false) {
-            unset($this->conditions_by_object[$object->getId()][$condition->getExpression()->toString()]);
-            $this->updatedObjectIds[] = $object->getId();
-        }
-        return $this;
-    }
-
-    /**
-     * Removes all conditions based on a certain attribute
-     *
-     * @param MetaAttributeInterface $attribute            
-     * @return \exface\Core\Contexts\FilterContext
-     */
-    public function removeConditionsForAttribute(MetaAttributeInterface $attribute)
-    {
-        $objectConditions = $this->getConditions($attribute->getObject());
-        if (empty($objectConditions) === false) {
-            foreach ($objectConditions as $condition) {
-                if ($condition->getAttributeAlias() === $attribute->getAliasWithRelationPath()) {
-                    $this->removeCondition($condition);
-                }
-            }
-        }
         return $this;
     }
     
@@ -228,10 +198,14 @@ class FilterContext extends AbstractContext
         $this->getScope()->reloadContext($this);
         
         $uxon = $this->conditionsUxon ?? (new UxonObject());
+        $uxon = $this->removeExpiredFilters($uxon);
+        
         foreach ($updatedConditions as $objectId => $conditions) {
             $uxon->unsetProperty($objectId);
             foreach ($conditions as $condition) {
-                $uxon->appendToProperty($objectId, $condition->exportUxonObject());
+                $conditionUxon = $condition->exportUxonObject();
+                $conditionUxon->setProperty('timestamp', time());
+                $uxon->appendToProperty($objectId, $conditionUxon);
             }
         }
         if ($uxon->isEmpty() === false) {
@@ -265,7 +239,7 @@ class FilterContext extends AbstractContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         return 'filter';
     }
@@ -288,5 +262,30 @@ class FilterContext extends AbstractContext
     {
         return empty($this->updatedObjectIds) === false;
     }
+    
+    protected function getSecondsToLive() : int
+    {
+        return $this->getWorkbench()->getConfig()->getOption('CONTEXTS.FILTERCONTEXT.DISCARD_AFTER_MINUTES') * 60;
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @return UxonObject
+     */
+    protected function removeExpiredFilters(UxonObject $uxon) : UxonObject
+    {
+        $ttls = $this->getSecondsToLive();
+        $now = time();
+        foreach ($uxon->getPropertiesAll() as $objId => $conditions) {
+            foreach ($conditions->getPropertiesAll() as $uxonCondition) {
+                $ts = $uxonCondition->getProperty('timestamp');
+                if ($ts !== null && ($ts + $ttls) < $now) {
+                    $uxon->unsetProperty($objId);
+                    break;
+                }
+            }
+        }
+        return $uxon;
+    }
 }
-?>

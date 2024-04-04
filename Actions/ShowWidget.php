@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
@@ -19,6 +20,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Actions\Traits\iPrefillWidgetTrait;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Factories\ActionFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -106,7 +108,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
      */
     public function getWidget()
     {
-        if (is_null($this->widget)) {
+        if ($this->widget === null) {
             switch (true) {
                 case $this->getWidgetUxon():
                     $this->widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
@@ -222,7 +224,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('widget_id', $this->getWidgetId());
-        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace());
+        $pageAlias = $this->page_alias ?? ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace() : null);
+        if ($pageAlias !== null) {
+            $uxon->setProperty('page_alias', $pageAlias);
+        }
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->hasPrefillDataPreset()) {
@@ -329,5 +334,26 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
             $this->setPrefillWithPrefillData(true);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isWidgetInstantiated() : bool
+    {
+        return $this->widget !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillAction()
+     */
+    public function getPrefillAction(): ActionInterface
+    {
+        $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : $this->getWidget();
+        $action = ActionFactory::createFromString($this->getWorkbench(), ReadPrefill::class, $triggerWidget);
+        return $action;
     }
 }

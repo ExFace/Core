@@ -3,7 +3,6 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\CommonLogic\UxonObject;
@@ -76,11 +75,15 @@ class DataTree extends DataTable
 
     private $tree_folder_flag_attribute_alias = null;
     
+    private $tree_hide_empty_folders = false;
+    
     private $tree_leaf_id_concatenate = null;
     
     private $tree_leaf_id_column_id = null;
 
     private $tree_expanded = false;
+    
+    private $tree_expanded_levels = null;
 
     private $tree_root_uid = null;
     
@@ -129,7 +132,7 @@ class DataTree extends DataTable
      * If not specified, the first visible column will be used automatically.
      * 
      * @uxon-property tree_column_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * @param string $value   
      * @return DataTree         
@@ -145,17 +148,6 @@ class DataTree extends DataTable
      */
     public function getTreeFolderFlagAttributeAlias()
     {
-        if (! $this->tree_folder_flag_attribute_alias) {
-            $flags = $this->getMetaObject()->getAttributes()->filter(function(MetaAttributeInterface $attr){
-                return $attr->getDataType()->is(FlagTreeFolderDataType::getPrototypeClassName());
-            });
-            if ($flags->count() == 1) {
-                $flag = $flags->getFirst();
-                $this->setTreeFolderFlagAttributeAlias($flag->getAlias());
-            } else {
-                throw new WidgetConfigurationError($this, 'More than one tree folder flag found for the treeGrid "' . $this->getId() . '". Please specify "tree_folder_flag_attribute_alias" in the description of the widget!', '6T91BRG');
-            }
-        }
         return $this->tree_folder_flag_attribute_alias;
     }
     
@@ -177,7 +169,9 @@ class DataTree extends DataTable
      */
     public function setTreeFolderFlagAttributeAlias(string $value) : DataTree
     {
-        $this->tree_folder_flag_attribute_alias = $value;
+        if ($value !== '') {
+            $this->tree_folder_flag_attribute_alias = $value;
+        }
         return $this;
     }
 
@@ -244,9 +238,9 @@ class DataTree extends DataTable
      * 
      * @return string
      */
-    public function getTreeFolderFilterAttributeAlias() : string
+    public function getTreeFolderFilterAttributeAlias() : ?string
     {
-        if ($this->tree_folder_filter_attribute_alias === null) {
+        if ($this->tree_folder_filter_attribute_alias === null && $this->hasUidColumn()) {
             return $this->getUidColumn()->getAttributeAlias();
         }
         
@@ -288,7 +282,7 @@ class DataTree extends DataTable
      * The attribute is also automatically added as a hidden column!
      *
      * @uxon-property tree_parent_relation_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-type metamodel:relation
      *
      * @param string $value     
      * @return DataTree       
@@ -328,7 +322,35 @@ class DataTree extends DataTable
         $this->tree_expanded = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getTreeExpandedLevels() : ?int
+    {
+        return $this->tree_expanded_levels;
+    }
+    
+    /**
+     * Number of levels to expand initially if their child nodes are loaded
+     * 
+     * @uxon-property tree_expanded_levels
+     * @uxon-type integer
+     * 
+     * @param int $numberOfLevels
+     * @return DataTree
+     */
+    public function setTreeExpandedLevels(int $numberOfLevels) : DataTree
+    {
+        $this->tree_expanded_levels = $numberOfLevels;
+        return $this;
+    }
 
+    /**
+     * 
+     * @return string
+     */
     public function getTreeRootUid()
     {
         if ($this->tree_root_uid === null) {
@@ -376,15 +398,17 @@ class DataTree extends DataTable
         if ($this->hasTreeFolderFlag()) {
             $data_sheet->getColumns()->addFromExpression($this->getTreeFolderFlagAttributeAlias());
         }
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
-        $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
+        if ($this->getTreeParentRelationAlias()) {
+            $data_sheet->getColumns()->addFromExpression($this->getTreeParentRelationAlias());
+            $data_sheet->getColumns()->addFromExpression($this->getTreeParentKeyAttribute()->getAliasWithRelationPath());
+        }
         
         // Automatically add a root-filter if the root UID is known and lazy_load_tree_levels is not explicitly off
         if ($this->getTreeRootUid() !== null && $this->getLazyLoadTreeLevels() !== false && $data_sheet->getFilters()->isEmpty(true) === true && $this->getMetaObject()->is($data_sheet->getMetaObject())) {
             $data_sheet->getFilters()->addConditionFromString($this->getTreeParentRelationAlias(), $this->getTreeRootUid(), ComparatorDataType::EQUALS);
         }
-        if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null) {
-            throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` is specified!');
+        if ($this->getLazyLoadTreeLevels() === true && $this->getTreeRootUid() === null && $this->getTreeFolderFilterAttributeAlias() === null) {
+            throw new WidgetConfigurationError($this, 'Cannot use `lazy_load_tree_levels` in a ' . $this->getWidgetType() . ' if no `tree_root_uid` or `tree_folder_filter_attribute_alias` are specified!');
         }
         
         return $data_sheet;
@@ -609,6 +633,36 @@ class DataTree extends DataTable
     public function setLazyLoadTreeLevels(bool $value) : DataTree
     {
         $this->lazy_load_tree_levels = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getTreeHideEmptyFolders() : bool
+    {
+        if ($this->tree_hide_empty_folders === true && ! $this->hasTreeFolderFlag()) {
+            throw new WidgetConfigurationError($this, 'Cannot use `tree_hide_empty_folders` without `tree_folder_flag_attribute_alias` in widget ' . $this->getWidgetType() . '!');
+        }
+        return $this->tree_hide_empty_folders;
+    }
+    
+    /**
+     * Set to TRUE to hide tree nodes that are folders, but do not have any children
+     * 
+     * **NOTE:** This only works if `tree_folder_flag_attribute_alias` is set! 
+     * 
+     * @uxon-property tree_hide_empty_folders
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataTree
+     */
+    public function setTreeHideEmptyFolders(bool $value) : DataTree
+    {
+        $this->tree_hide_empty_folders = $value;
         return $this;
     }
 }

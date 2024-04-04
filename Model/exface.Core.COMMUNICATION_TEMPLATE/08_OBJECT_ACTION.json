@@ -1,0 +1,180 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2023-09-19 11:33:43",
+            "MODIFIED_ON": "2023-09-19 11:33:43",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee8b88a090d16e8b88025041000001",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "ACTION_PROTOTYPE": "exface\/core\/Actions\/ShowDialog.php",
+            "ALIAS": "ShowNotificationMassEditDialog",
+            "NAME": "Mass Edit",
+            "SHORT_DESCRIPTION": "",
+            "CONFIG_UXON": {
+                "icon": "list",
+                "prefill_with_filter_context": false,
+                "prefill_with_input_data": false,
+                "widget": {
+                    "widget_type": "Dialog",
+                    "widgets": [
+                        {
+                            "widget_type": "DataTable",
+                            "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+                            "multi_select": true,
+                            "columns": [
+                                {
+                                    "attribute_alias": "NAME"
+                                },
+                                {
+                                    "attribute_alias": "COMMUNICATION_CHANNEL__LABEL"
+                                },
+                                {
+                                    "attribute_alias": "APP__ALIAS"
+                                },
+                                {
+                                    "attribute_alias": "ALIAS"
+                                }
+                            ],
+                            "caption": "Message templates",
+                            "filters": [
+                                {
+                                    "attribute_alias": "COMMUNICATION_CHANNEL"
+                                },
+                                {
+                                    "attribute_alias": "NAME"
+                                },
+                                {
+                                    "attribute_alias": "ALIAS"
+                                },
+                                {
+                                    "attribute_alias": "APP"
+                                },
+                                {
+                                    "attribute_alias": "MESSAGE_UXON",
+                                    "input_widget": {
+                                        "widget_type": "Input",
+                                        "width": 1,
+                                        "height": 1
+                                    }
+                                }
+                            ],
+                            "sorters": [
+                                {
+                                    "attribute_alias": "NAME",
+                                    "direction": "asc"
+                                }
+                            ],
+                            "buttons": [
+                                {
+                                    "caption": "Change channel",
+                                    "icon": "pencil-square-o",
+                                    "action": {
+                                        "alias": "exface.Core.ShowMassEditDialog",
+                                        "widget": {
+                                            "widget_type": "Dialog",
+                                            "columns_in_grid": 1,
+                                            "height": "auto",
+                                            "widgets": [
+                                                {
+                                                    "attribute_alias": "COMMUNICATION_CHANNEL"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

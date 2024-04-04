@@ -6,22 +6,19 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Process\Process;
 use GuzzleHttp\Psr7\Response;
-use function GuzzleHttp\Psr7\stream_for;
+use GuzzleHttp\Psr7;
 use exface\Core\Facades\AbstractHttpFacade\IteratorStream;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use exface\Core\Factories\UiPageFactory;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Widgets\Console;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
-use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
-use exface\Core\Facades\AbstractHttpFacade\OKHandler;
+use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 
-/***
+/**
  * This is the Facade for Console Widgets
  * It streams the cmd outputs to the Console while the commands are executed
  * 
@@ -31,33 +28,17 @@ use exface\Core\Facades\AbstractHttpFacade\OKHandler;
 class WebConsoleFacade extends AbstractHttpFacade
 {
     
-    /***
+    /**
      * 
      * {@inheritDoc}
-     * @see \Psr\Http\Server\RequestHandlerInterface::handle()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponse()
      */
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
-        if ($this->getWorkbench()->isStarted() === false) {
-            $this->getWorkbench()->start();
-        }
-        
-        $handler = new HttpRequestHandler(new OKHandler());
-        $handler->add(new AuthenticationMiddleware($this));
-        $responseTpl = $handler->handle($request);
-        if ($responseTpl->getStatusCode() >= 400) {
-            return $responseTpl;
-        }
-        
         try {
             $response = $this->performCommand($request);
         } catch (\Throwable $e) {
-            if ($e instanceof ExceptionInterface) {
-                $statusCode = $e->getStatusCode();
-            } else {
-                $statusCode = 500;
-            }
-            $response = new Response($statusCode, $responseTpl->getHeaders(), $this->getWorkbench()->getDebugger()->printException($e));
+            $response = $this->createResponseFromError($e, $request);
         }  
         
         // Don't stop the workbench here!!! The response might include a generator, that
@@ -76,14 +57,21 @@ class WebConsoleFacade extends AbstractHttpFacade
      */
     protected function performCommand(RequestInterface $request) : ResponseInterface
     {
-        // tests/psr7_console/server.php?cmd=cd
-        $cmd = $request->getParsedBody()['cmd'];
+        $cmd = $request->getParsedBody()['cmd'] ?? $request->getQueryParams()['cmd'];
         $cmd = trim($cmd);
         $command = $this->getCommand($cmd);
         $widget = $this->getWidgetFromRequest($request);
         
+        // Make sure the the current user is allowed to interact with the console widget
+        // This is important to ensure AJAX requests of a console are not intercepted and 
+        // modified by other users!
+        // Note, that merely access permissions to the web console facade itself would not
+        // be enough as there could be multiple different consoles with different access
+        // rights in the menu, etc.
+        $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class)->authorizeWidget($widget);
+        
         // Current directory
-        $cwd = $request->getParsedBody()['cwd'];
+        $cwd = $request->getParsedBody()['cwd'] ?? $request->getQueryParams()['cwd'];
         if ($cwd) {
             if (Filemanager::pathIsAbsolute($cwd)) {
                 throw new RuntimeException('Absolute Path syntax not allowed!');
@@ -92,22 +80,33 @@ class WebConsoleFacade extends AbstractHttpFacade
                 throw new RuntimeException('Working Directory is not a folder!');
             }*/
         }
+        if (is_dir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd) === FALSE){
+            $headers = [
+                'X-CWD' => $cwd
+            ];
+            $body = 'Working directory is not a directory!';
+            return new Response(200, $headers, $body);
+        }
         chdir($this->getRootDirectory() . DIRECTORY_SEPARATOR . $cwd);
         
         // Check if command allowed
         $allowed = FALSE;
         foreach ($widget->getAllowedCommands() as $allowedCommand){
-            $match = preg_match($allowedCommand, '/' . $cmd . '/');
+            $match = preg_match($allowedCommand, $cmd);
             if($match !=0){
                 $allowed = TRUE;
             }
         }
         if ($allowed === FALSE){
             $headers = [
-                'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR)
+                'X-CWD' => $cwd
             ];
             $body = 'Command not allowed!';
             return new Response(200, $headers, $body);
+        }
+        $cmdNormalized = str_replace('/', DIRECTORY_SEPARATOR, $command);
+        if ($cmdNormalized !== $command) {
+            $cmd = str_replace($command, $cmdNormalized, $cmd);
         }
            
         // Process command
@@ -117,8 +116,18 @@ class WebConsoleFacade extends AbstractHttpFacade
                 if (Filemanager::pathIsAbsolute($newDir)) {
                     throw new RuntimeException('Absolute Path syntax ' . $newDir .'  not allowed! Use relative paths!');
                 }
-                chdir($newDir);
-                $stream = stream_for('');
+                //chdir($newDir);
+                $stream = Psr7\Utils::streamFor('');
+                if ($newDir) {
+                    $path = $cwd ? $cwd . DIRECTORY_SEPARATOR . $newDir : $newDir;
+                    $path = str_replace('/', DIRECTORY_SEPARATOR, $path);
+                    $path = $this->normalizePath($path);
+                    if ($path !== null) {
+                        if (is_dir($this->getRootDirectory(). DIRECTORY_SEPARATOR . $path) || $path === '') {
+                            $cwd = $path;
+                        }
+                    }
+                }
                 break;
             case $command === 'test': 
                 $generator = function ($bytes) {
@@ -144,15 +153,29 @@ class WebConsoleFacade extends AbstractHttpFacade
                     }
                 }
                 $envVars = array_merge($envVars, $widget->getEnvironmentVars());
-                $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
-                $process->start();
-                $generator = function ($process) {
-                    foreach ($process as $output) {
-                        yield $output;
-                    }
-                };
                 
-                $stream = new IteratorStream($generator($process));
+                if ($this->canUseSymfonyProcess()) {
+                    $process = Process::fromShellCommandline($cmd, null, $envVars, null, $widget->getCommandTimeout());
+                    $process->start();
+                    $generator = function ($process) {
+                        foreach ($process as $output) {
+                            yield $output;
+                        }
+                    };
+                    $stream = new IteratorStream($generator($process));
+                } else {
+                    // This workaround resulted from an issue with Microsoft IIS:
+                    // `$process->start()` seems not to produce any output.
+                    // See https://github.com/symfony/symfony/issues/24924
+                    $result = null;
+                    $code = 0;
+                    foreach ($envVars as $var => $val) {
+                        putenv($var . '=' . $val);
+                    }
+                    exec($cmd . ' 2>&1', $result, $code);
+                    $resultStr = implode("\n", $result);
+                    $stream = Psr7\Utils::streamFor($resultStr);
+                }
         }
         
         try {
@@ -162,7 +185,7 @@ class WebConsoleFacade extends AbstractHttpFacade
         }
         
         $headers = [
-            'X-CWD' => StringDataType::substringAfter(getcwd(), $this->getRootDirectory() . DIRECTORY_SEPARATOR),
+            'X-CWD' => $cwd,
             'Content-Type' => 'text/plain-stream'
         ];
         
@@ -194,18 +217,35 @@ class WebConsoleFacade extends AbstractHttpFacade
     }    
       
     /**
-     * Returns the part of $cmd preceding the first ' '
+     * Returns the part of $cmd preceding the first ' ' or the complete command if it is a complex command
      * 
      * @param string $cmd
      * @return string
      */
-    protected function getCommand(string $cmd) :string
+    protected function getCommand(string $cmd) : string
     {
+        if ($this->isComplexCommand($cmd)) {
+            return $cmd;
+        }
         if (StringDataType::substringBefore($cmd, ' ') == false){
             return $cmd;
         } else {
             return StringDataType::substringBefore($cmd, ' ');
         }
+    }
+    
+    /**
+     * Checks if a command is complex, means it includes '&&' or '|'
+     * 
+     * @param string $cmd
+     * @return bool
+     */
+    protected function isComplexCommand(string $cmd) : bool
+    {
+        if (strpos($cmd, ' && ') !== false || strpos($cmd, ' | ') !== false) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -223,11 +263,11 @@ class WebConsoleFacade extends AbstractHttpFacade
      * @param RequestInterface $request
      * @return Console
      */
-    protected function getWidgetFromRequest(RequestInterface $request) : Console
+    protected function getWidgetFromRequest(ServerRequestInterface $request) : Console
     {
-        $pageSelector = $request->getParsedBody()['page'];
+        $pageSelector = $request->getParsedBody()['page'] ?? $request->getQueryParams()['page'];
         $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
-        $widgetId = $request->getParsedBody()['widget'];
+        $widgetId = $request->getParsedBody()['widget'] ?? $request->getQueryParams()['widget'];
         return $page->getWidget($widgetId);
     }
     
@@ -242,6 +282,42 @@ class WebConsoleFacade extends AbstractHttpFacade
     
     protected function isCliAction(string $command, string $workingDir) : bool
     {
-        return strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0;
+        return (strcasecmp($command, 'action') === 0 && strcasecmp(FilePathDataType::normalize($workingDir, '/'), 'vendor/bin') === 0) 
+        || (stripos($command, 'vendor/bin/action') !== false || stripos($command, 'vendor\bin\action') !== false);
+    }
+    
+    protected function normalizePath(string $path) : ?string
+    {
+        $norml = $this->getWorkbench()->filemanager()->pathNormalize($path, DIRECTORY_SEPARATOR);
+        if (StringDataType::startsWith($norml, '..')) {
+            return null;
+        }
+        return $norml;       
+    }
+    
+    /**
+     * Returns TRUE if Symfony process should work on the current server setup
+     * 
+     * Currently known systems not compatible with Symfony process:
+     * - Some IIS versions on Windows
+     * 
+     * @return bool
+     */
+    protected function canUseSymfonyProcess() : bool
+    {
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        if ($isWindows) {
+            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
+            if ($isIIS) {
+                // Check, if symfony process will return non-empty output: 
+                // `whoami` should always return something
+                $process = new Process(['whoami']);
+                $process->run();                
+                if (! $process->isSuccessful() || $process->getOutput() === '') {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

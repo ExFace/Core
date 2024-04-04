@@ -6,10 +6,15 @@ use exface\Core\DataTypes\PolicyEffectDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Events\Facades\OnFacadeInitEvent;
+use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
+use exface\Core\Events\Facades\OnCliCommandReceivedEvent;
+use exface\Core\Interfaces\Events\FacadeEventInterface;
 
 /**
+ * Manages access to facades
  * 
+ * TODO split into two authorization points: for CLI facades and HTTP facades separately and allow to
+ * define policies for specific URLs and commands
  * 
  * @method FacadeAuthorizationPolicy[] getPolicies()
  * 
@@ -25,16 +30,17 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function register() : AuthorizationPointInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnFacadeInitEvent::getEventName(), [$this, 'authorizeEvent']);
+        $this->getWorkbench()->eventManager()->addListener(OnHttpRequestHandlingEvent::getEventName(), [$this, 'authorizeEvent']);
+        $this->getWorkbench()->eventManager()->addListener(OnCliCommandReceivedEvent::getEventName(), [$this, 'authorizeEvent']);
         return $this;
     }
         
     /**
      * Checks authorization for an exface.Core.Facades.OnFacadeInit event.
-     * @param OnFacadeInitEvent $event
+     * @param OnHttpRequestHandlingEvent $event
      * @return void
      */
-    public function authorizeEvent(OnFacadeInitEvent $event)
+    public function authorizeEvent(FacadeEventInterface $event)
     {
         $authToken = $this->getWorkbench()->getSecurity()->getAuthenticatedToken();
         $this->authorize($event->getFacade(), $authToken);
@@ -56,7 +62,7 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($facade, $userOrToken);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $facade);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $facade);
         return $facade;
     }
     
@@ -91,6 +97,6 @@ class FacadeAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return "facade '{$resource->getAliasWithNamespace()}'";
+        return "facade \"{$resource->getAliasWithNamespace()}\"";
     }
 }

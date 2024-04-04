@@ -3,6 +3,7 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Enumeration of comparators: `=`, `==`, `<`, `>`, etc.
@@ -38,6 +39,8 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @method ComparatorsDataType IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType MATCH(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType NOT_MATCH(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
@@ -62,6 +65,17 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * list within the right value.
      */
     const NOT_IN = '![';
+    
+    /**
+     * @const MATCH compares to list with each other. Becomes true when there is at least one element in both lists.
+     */
+    const MATCH = '][';
+    
+    /**
+     * @const NOT_MATCH the inverse von `][` . Becomes true when there is no element in both lists.
+     * list within the right value.
+     */
+    const NOT_MATCH = '!][';
     
     /**
      * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
@@ -135,6 +149,78 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         
         return $this->labels;
     }
-
+    
+    /**
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @return bool
+     */
+    public static function isNegative($comparatorOrString) : bool
+    {
+        $cmp = ($comparatorOrString instanceof ComparatorDataType) ? $comparatorOrString->__toString() : $comparatorOrString;
+        switch ($cmp) {
+            case self::EQUALS_NOT:
+            case self::IS_NOT:
+            case self::NOT_IN:
+            case self::NOT_MATCH:
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Returns TRUE if the given comparator can be inverted and FALSE otherwise
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @return bool
+     */
+    public static function isInvertable($comparatorOrString) : bool
+    {
+        if ($comparatorOrString instanceof ComparatorDataType) {
+            $cmp = $comparatorOrString->__toString();
+        } else {
+            $cmp = $comparatorOrString;
+        }
+        switch ($cmp) {
+            case self::BETWEEN: return false;
+        }
+        return true;
+    }
+    
+    /**
+     * 
+     * @param string|ComparatorDataType $comparatorOrString
+     * @throws RuntimeException
+     * @return string|ComparatorDataType
+     */
+    public static function invert($comparatorOrString)
+    {
+        if ($comparatorOrString instanceof ComparatorDataType) {
+            $asString = false;
+            $cmp = $comparatorOrString->__toString();
+        } else {
+            $asString = true;
+            $cmp = $comparatorOrString;
+        }
+        
+        switch ($cmp) {
+            case self::EQUALS: $inv = self::EQUALS_NOT; break;
+            case self::EQUALS_NOT: $inv = self::EQUALS; break;
+            case self::GREATER_THAN: $inv = self::LESS_THAN_OR_EQUALS; break;
+            case self::GREATER_THAN_OR_EQUALS: $inv = self::LESS_THAN; break;
+            case self::IN: $inv = self::NOT_IN; break;
+            case self::NOT_IN: $inv = self::IN; break;
+            case self::IS: $inv = self::IS_NOT; break;
+            case self::IS_NOT: $inv = self::IS; break;
+            case self::LESS_THAN: $inv = self::GREATER_THAN_OR_EQUALS; break;
+            case self::LESS_THAN_OR_EQUALS: $inv = self::GREATER_THAN; break;
+            case self::MATCH: $inv = self::NOT_MATCH; break;
+            case self::NOT_MATCH: $inv = self::MATCH; break;
+            default:
+                throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
+        }
+        
+        return $asString ? $inv : self::fromValue($comparatorOrString->getWorkbench(), $inv);
+    }
 }
 ?>

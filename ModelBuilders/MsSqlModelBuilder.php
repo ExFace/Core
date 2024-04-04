@@ -2,11 +2,13 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
-class MSSqlModelBuilder extends AbstractSqlModelBuilder
+class MsSqlModelBuilder extends AbstractSqlModelBuilder
 {
     /**
      * Replace all characters except alphanumeric signs or underscore with underscore in a given string.
@@ -55,17 +57,45 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
                 $isRequired = $col['NULLABLE'] == 0 ? 1 : 0;
                 $isEditable = 1;
             }
-            $rows[] = array(
+            
+            $dataType = $this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE']);
+            
+            $default = $col['COLUMN_DEF'];
+            switch (true) {
+                case $default === null:
+                    $default = '';
+                    break;
+                case ! ($dataType instanceof StringDataType):
+                    $default = trim($default, "()");
+                    break;
+            }
+            switch ($default) {
+                case '""': 
+                case "''":
+                case "('')":
+                case '(NULL)':
+                    $default = '';
+                    $isRequired = 0;
+            }
+            
+            $row = [
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $type, $col['PRECISION'], $col['SCALE'])),
+                'DATATYPE' => $this->getDataTypeId($dataType),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => $isRequired,
                 'EDITABLEFLAG' => $isEditable,
-                'DEFAULT_VALUE' => (! is_null($col['COLUMN_DEF']) ? $col['COLUMN_DEF'] : ''),
+                'DEFAULT_VALUE' => $default,
                 'UIDFLAG' => $isUid
-            );
+            ];
+            
+            $dataTypeProps = $this->getDataTypeConfig($dataType, $type);
+            if (! $dataTypeProps->isEmpty()) {
+                $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();
+            }
+            
+            $rows[] = $row;
         }
         return $rows;
     }
@@ -95,7 +125,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
         
         $sql = "SELECT 
                 table_name AS NAME, 
-                CONCAT(table_schema, '.', table_name) AS DATA_ADDRESS, 
+                (table_schema + '.' + table_name) AS DATA_ADDRESS, 
                 table_name AS ALIAS, 
                 (CASE table_type WHEN 'VIEW' THEN 0 ELSE 1 END) AS WRITABLE_FLAG
             FROM INFORMATION_SCHEMA.TABLES {$filter}";
@@ -125,5 +155,21 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
         
         return $result;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::guessDataType()
+     */
+    protected function guessDataType(MetaObjectInterface $object, string $sql_data_type, $length = null, $scale = null) : DataTypeInterface
+    {
+        $workbench = $object->getWorkbench();
+        $sqlType = strtoupper($sql_data_type);
+        switch (true) {
+            case $sqlType === 'DATETIME2':
+                return DataTypeFactory::createFromString($workbench, DateTimeDataType::class);
+            default:
+                return parent::guessDataType($object, $sql_data_type, $length, $scale);
+        }
+    }
 }
-?>

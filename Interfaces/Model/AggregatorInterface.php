@@ -59,4 +59,23 @@ interface AggregatorInterface extends WorkbenchDependantInterface, iCanBeConvert
      * @return DataTypeInterface
      */
     public function getResultDataType(DataTypeInterface $aggregatedType);
+    
+    /**
+     * Returns the aggregator to use on values this aggregator was already applied to.
+     * 
+     * This is important for some data sources (like SQL with subqueries) as well as 
+     * for aggregating in-memory - whenever data is aggregate iteratively in steps. 
+     * In this case, aggregators, that cannot change the data type cannot be applied 
+     * multiple itemes (because of the possible incompatible data type after the first) 
+     * application. 
+     * 
+     * For example, lets count delivered order positions on the `CUSTOMER` level. Assume
+     * the following relations: `CUSTOMER <- ORDER <- ORDER_POS`. We only need those 
+     * `ORDER_POS` with `DELIVERED_FLAG = 1`. One of the approaches (depending on the query 
+     * builder) would be counting delivered positions per `ORDER` and summing them up.
+     * That "summing up" is exactly what this method is for!
+     * 
+     * @return AggregatorInterface
+     */
+    public function getNextLevelAggregator() : AggregatorInterface;
 }

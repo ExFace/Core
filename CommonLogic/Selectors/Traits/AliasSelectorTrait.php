@@ -78,7 +78,11 @@ trait AliasSelectorTrait
     protected function split()
     {
         if ($this->splitParts === null) {
-            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->toString());
+            $string = $this->toString();
+            if (mb_substr($string, 0, 1) === '.' || mb_substr($string, -1) === '.') {
+                throw new SelectorInvalidError('"' . $string . '" is not a valid alias selector!');
+            }
+            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $string);
         }
         return $this->splitParts;
     }
@@ -93,9 +97,13 @@ trait AliasSelectorTrait
     }
     
     /**
-     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAppAlias()
+     * 
+     * NOTE: there is no corresponding getComponentAlias() method because in case of selectors,
+     * that can be paths or classes as well as aliases, such a method would only work if the value
+     * is an alias. If you know, a selector is an alias, you can get the component alias by
+     * calling stripNamespace($fullAlias).
      */
     public function getAppAlias() : string
     {
@@ -117,7 +125,7 @@ trait AliasSelectorTrait
                 $this->isAlias = false;
             }
         }
-        return $this->is;
+        return $this->isAlias;
     }
     
     /**

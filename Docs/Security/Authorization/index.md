@@ -8,11 +8,16 @@ Policies can be defined for any place in the workbench or any app running on it,
 
 ## Authorization points
 
+- [Facade authorization points](Authorization_points/Facade_AP.md) to restrict access to facades
 - [Page authorization point](Authorization_points/Page_AP.md) to control access to UI pages and navigation items
-- [Context authorization point](Authorization_points/Conext_AP.md) to control access to contexts
 - [Action authorization point](Authorization_points/Action_AP.md) to restrict access to certain actions
-- [Facade authorization point](Authorization_points/Facade_AP.md) to restrict access to certain facades
- 
+- [Data authorization point](Authorization_points/Data_AP.md) to restrict access to CRUD operations on metamodel objects
+- [Context authorization point](Authorization_points/Conext_AP.md) to control access to contexts
+
 ## Policies
+
+TODO
  
 ## Extending the authorization by adding new APs 
+
+TODO

@@ -36,7 +36,7 @@ interface iHaveColorScale
      * @param float $value
      * @return string
      */
-    public function getColor($value = null) : ?string;
+    public function getColorForValue($value = null) : ?string;
     
     public function isColorScaleRangeBased() : bool;
     

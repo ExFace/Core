@@ -3,22 +3,59 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Debugger\ExceptionRenderer;
+use Symfony\Component\ErrorHandler\ErrorHandler;
+use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\CommonLogic\Debugger\CommunicationInterceptor;
 
 class Debugger implements DebuggerInterface
 {
 
     private $prettify_errors = false;
+    
+    private $error_reporting = null;
 
     private $logger = null;
+    
+    private $tracer = null;
+    
+    private $communicationInterceptor = null;
 
-    function __construct(LoggerInterface $logger)
+    /**
+     * 
+     * @param LoggerInterface $logger
+     * @param ConfigurationInterface $config
+     * @param float $workbenchStartTime
+     * @throws RuntimeException
+     * @throws \Throwable
+     */
+    public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTime = null)
     {
         $this->logger = $logger;
+        try {
+            $opt = $config->getOption('DEBUG.PHP_ERROR_REPORTING');
+            if (preg_match('/[^a-z0-9.\s~&_^]+/i', $opt) !== 0) {
+                throw new RuntimeException('Invalid configuration option DEBUG.PHP_ERROR_REPORTING: it must be a valid PHP syntax!');
+            }
+            $errorReportingFlags = eval('return ' . $opt . ';');
+        } catch (\Throwable $e) {
+            throw $e;
+            $errorReportingFlags = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED;
+        }
+        $this->error_reporting = $errorReportingFlags;
+        error_reporting($errorReportingFlags);
+        
+        $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
+        if ($config->getOption('DEBUG.TRACE') === true) {
+            $this->tracer = new Tracer($config->getWorkbench(), $workbenchStartTime);
+        }
+        if ($config->getOption('DEBUG.INTERCEPT_COMMUNICATION') === true) {
+            $this->communicationInterceptor = new CommunicationInterceptor($config->getWorkbench());
+        }
     }
 
     /**
@@ -29,67 +66,29 @@ class Debugger implements DebuggerInterface
      */
     public function printException(\Throwable $exception, $use_html = true)
     {
-        $handler = new DebuggerExceptionHandler();    
-        if (! $exception instanceof \Exception){
-            if ($exception instanceof \Error){
-                $error = $exception;
-                $exception = new \ErrorException('Internal PHP error: see description below!', $error->getCode(), null, $error->getFile(), $error->getLine(), $error);
-            } else {
-                throw new RuntimeException('Cannot print exception of type ' . gettype($exception) . ' (' . get_class($exception) . ')!');
-            }
-        }
-        $flattened_exception = FlattenExceptionExface::create($exception);
+        $renderer = new ExceptionRenderer($exception);
         if ($use_html) {
-            $output = <<<HTML
-    <style>
-        {$handler->getStylesheet($flattened_exception)}
-        .exception .exception-summary { display: none !important }
-    </style>
-    {$handler->getContent($flattened_exception)}
-HTML;
+            $output = $renderer->renderHtml(false);
         } else {
-            $output = strip_tags($handler->getContent($flattened_exception));
+            $output = strip_tags($renderer->renderHtml());
         }
         return $output;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DebuggerInterface::getPrettifyErrors()
+     * 
+     * @param bool $value
+     * @return \exface\Core\CommonLogic\Debugger
      */
-    public function getPrettifyErrors()
+    protected function setPrettifyErrors(bool $value) : DebuggerInterface
     {
-        return $this->prettify_errors;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DebuggerInterface::setPrettifyErrors()
-     */
-    public function setPrettifyErrors($value)
-    {
-        $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        if ($this->prettify_errors) {
-            $this->registerHandler();
+        $this->prettify_errors = $value;
+        if ($value === true) {
+            $handler = new ErrorHandler(null, $this->prettify_errors);
+            $handler->setDefaultLogger($this->logger, $this->error_reporting);
+            ErrorHandler::register($handler, true);
         }
         return $this;
-    }
-
-    protected function registerHandler()
-    {
-        // Debug::enable(E_ALL & ~E_NOTICE);
-        DebuggerExceptionHandler::register();
-        ErrorHandler::register();
-        
-        // register logger
-        $handler = new \Monolog\ErrorHandler($this->logger);
-        $handler->registerErrorHandler([], false);
-        $handler->registerExceptionHandler();
-        $handler->registerFatalHandler();
     }
 
     /**

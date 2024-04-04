@@ -43,7 +43,7 @@ class RuntimeException extends \RuntimeException implements ErrorExceptionInterf
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

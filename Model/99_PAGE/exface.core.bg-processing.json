@@ -1,0 +1,410 @@
+{
+    "uid": "0x11eb998b0d92e38e998b847beb4a5184",
+    "alias_with_namespace": "exface.core.bg-processing",
+    "menu_parent_page_selector": "0xf8310d4bba2c11e7895fe4b318306b9a",
+    "menu_index": 5,
+    "menu_visible": true,
+    "name": "BG Processing",
+    "description": "View and manage background processes",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-09-30 09:19:33",
+    "modified_by_user_selector": "0x11edb424effd2980b424025041000001",
+    "modified_on": "2024-03-12 09:53:14",
+    "icon": "random",
+    "contents": {
+        "widget_type": "SplitVertical",
+        "object_alias": "exface.Core.QUEUED_TASK",
+        "panels": [
+            {
+                "height": "40%",
+                "widgets": [
+                    {
+                        "widget_type": "SplitHorizontal",
+                        "panels": [
+                            {
+                                "caption": "Errors",
+                                "width": "34%",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "nowrap": false,
+                                        "id": "errors_table",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "STATUS",
+                                                "value": "20,70",
+                                                "comparator": "[",
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "ENQUEUED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "QUEUE__LABEL"
+                                            },
+                                            {
+                                                "attribute_alias": "OWNER__LABEL"
+                                            },
+                                            {
+                                                "attribute_alias": "STATUS"
+                                            },
+                                            {
+                                                "attribute_alias": "ERROR_MESSAGE"
+                                            },
+                                            {
+                                                "attribute_alias": "TASK_ASSIGNED_ON"
+                                            },
+                                            {
+                                                "attribute_alias": "MESSAGE_ID",
+                                                "hidden": true
+                                            },
+                                            {
+                                                "attribute_alias": "PRODUCER",
+                                                "hidden": true
+                                            }
+                                        ],
+                                        "sorters": [
+                                            {
+                                                "attribute_alias": "CREATED_ON",
+                                                "direction": "desc"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Top Queues",
+                                "widgets": [
+                                    {
+                                        "widget_type": "Chart",
+                                        "id": "queues_chart",
+                                        "data": {
+                                            "aggregate_by_attribute_alias": [
+                                                "QUEUE"
+                                            ],
+                                            "paginate": false,
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "UID:COUNT",
+                                                    "direction": "desc"
+                                                }
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "bar",
+                                                "caption": "Tasks processed",
+                                                "x_attribute_alias": "UID:COUNT",
+                                                "y_attribute_alias": "QUEUE__LABEL"
+                                            }
+                                        ],
+                                        "axis_y": [
+                                            {
+                                                "attribute_alias": "QUEUE__LABEL",
+                                                "hide_caption": true
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "width": "33%",
+                                "widgets": [
+                                    {
+                                        "widget_type": "Chart",
+                                        "caption": "Top Users",
+                                        "id": "users_chart",
+                                        "data": {
+                                            "aggregate_by_attribute_alias": [
+                                                "OWNER"
+                                            ],
+                                            "paginate": false,
+                                            "sorters": [
+                                                {
+                                                    "attribute_alias": "UID:COUNT",
+                                                    "direction": "desc"
+                                                }
+                                            ]
+                                        },
+                                        "series": [
+                                            {
+                                                "type": "bar",
+                                                "caption": "Tasks owned",
+                                                "x_attribute_alias": "UID:COUNT",
+                                                "y_attribute_alias": "OWNER__LABEL"
+                                            }
+                                        ],
+                                        "axis_y": [
+                                            {
+                                                "attribute_alias": "OWNER__LABEL",
+                                                "hide_caption": true
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "caption": "Tasks",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "id": "TaskQueue_table",
+                        "multi_select": true,
+                        "nowrap": false,
+                        "filters": [
+                            {
+                                "attribute_alias": "QUEUE",
+                                "value": "=queues_chart!QUEUE",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "STATUS"
+                            },
+                            {
+                                "attribute_alias": "TASK_ASSIGNED_ON",
+                                "widget_type": "RangeFilter"
+                            },
+                            {
+                                "attribute_alias": "OWNER",
+                                "value": "=users_chart!OWNER",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "PRODUCER",
+                                "value": "=errors_table!PRODUCER",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_ID",
+                                "value": "=errors_table!MESSAGE_ID",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "ERROR_LOGID"
+                            },
+                            {
+                                "attribute_alias": "OBJECT_ALIAS"
+                            },
+                            {
+                                "attribute_alias": "ACTION_ALIAS"
+                            },
+                            {
+                                "attribute_alias": "ERROR_MESSAGE",
+                                "input_widget": {
+                                    "widget_type": "Input"
+                                }
+                            },
+                            {
+                                "attribute_alias": "RESULT",
+                                "input_widget": {
+                                    "widget_type": "Input"
+                                }
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "ENQUEUED_ON",
+                                "direction": "desc"
+                            },
+                            {
+                                "attribute_alias": "TASK_ASSIGNED_ON",
+                                "direction": "desc"
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "QUEUE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "TASK_ASSIGNED_ON"
+                            },
+                            {
+                                "attribute_alias": "ENQUEUED_ON"
+                            },
+                            {
+                                "attribute_alias": "STATUS"
+                            },
+                            {
+                                "calculation": "=Left(RESULT,60)"
+                            },
+                            {
+                                "attribute_alias": "ERROR_MESSAGE"
+                            },
+                            {
+                                "attribute_alias": "OWNER__LABEL"
+                            },
+                            {
+                                "attribute_alias": "OBJECT_ALIAS"
+                            },
+                            {
+                                "attribute_alias": "ACTION_ALIAS"
+                            },
+                            {
+                                "attribute_alias": "PRODUCER"
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_ID"
+                            },
+                            {
+                                "attribute_alias": "TOPICS"
+                            },
+                            {
+                                "attribute_alias": "CHANNEL"
+                            },
+                            {
+                                "attribute_alias": "ERROR_LOGID"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.QueueTaskInfoDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueReinsert",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueReinsertDialog",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueReroute",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.RunQueuedTasks",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "!==",
+                                            "value_right": 30
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueTaskMarkResolved",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "![",
+                                            "value_right": "20,70"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.QueueTaskCancel",
+                                "disabled_if": {
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": ">=",
+                                            "value_right": 90
+                                        },
+                                        {
+                                            "value_left": "=TaskQueue_table!STATUS",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "caption": "Error details",
+                                "icon": "bug",
+                                "disabled_if": {
+                                    "operator": "AND",
+                                    "conditions": [
+                                        {
+                                            "value_left": "=~input!ERROR_LOGID",
+                                            "comparator": "==",
+                                            "value_right": ""
+                                        }
+                                    ]
+                                },
+                                "action": {
+                                    "alias": "exface.Core.ShowObjectEditDialog",
+                                    "object_alias": "exface.Core.MONITOR_ERROR",
+                                    "input_mapper": {
+                                        "column_to_column_mappings": [
+                                            {
+                                                "from": "MONITOR_ERROR__UID",
+                                                "to": "UID"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                "visibility": "optional",
+                                "action_alias": "exface.Core.DeleteObject"
+                            },
+                            {
+                                "visibility": "optional",
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "visibility": "optional",
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

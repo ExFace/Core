@@ -33,12 +33,12 @@ class FilePathDataType extends StringDataType
      * but will tell widgets and other components to use this base automatically.
      *
      * @uxon-property base_path
-     * @uxon-type uri
+     * @uxon-type string
      *
      * @param string $value
-     * @return UrlDataType
+     * @return FilePathDataType
      */
-    public function setBasePath(string $value) : UrlDataType
+    public function setBasePath(string $value) : FilePathDataType
     {
         $this->basePath = $value;
         return $this;
@@ -121,7 +121,7 @@ class FilePathDataType extends StringDataType
      * @param string|null $path
      * @return boolean
      */
-    public function isRelative($path) : bool
+    public static function isRelative($path) : bool
     {
         return self::isAbsolute($path) === false;
     }
@@ -135,6 +135,27 @@ class FilePathDataType extends StringDataType
     public static function join(array $paths) : string
     {
         return Path::join($paths);
+    }
+    
+    /**
+     * 
+     * @param string $pathRelativeOrAbsolute
+     * @param string $basePath
+     * @param string $directorySeparator
+     * @return string
+     */
+    public static function makeAbsolute(string $pathRelativeOrAbsolute, string $basePath, string $directorySeparator = DIRECTORY_SEPARATOR) : string
+    {
+        if (! static::isAbsolute($pathRelativeOrAbsolute)) {
+            $path = static::join([
+                $basePath,
+                $pathRelativeOrAbsolute
+            ]);
+        } else {
+            $path = $pathRelativeOrAbsolute;
+        }
+        
+        return static::normalize($path, $directorySeparator);
     }
     
     /**
@@ -185,6 +206,123 @@ class FilePathDataType extends StringDataType
      */
     public static function findFolderPath(string $path) : string
     {
-       return pathinfo($path, PATHINFO_DIRNAME); 
+        return pathinfo($path, PATHINFO_DIRNAME); 
+    }
+    
+    /**
+     * Returns the folder name from the given path: e.g. my/folder/file.txt => folder
+     *
+     * @param string $path
+     * @return string
+     */
+    public static function findFolder(string $path) : string
+    {
+        return pathinfo(pathinfo($path, PATHINFO_DIRNAME), PATHINFO_FILENAME);
+    }
+    
+    /**
+     * Removes not allowed characters in a filename
+     * https://stackoverflow.com/questions/2021624/string-sanitizer-for-filename
+     * 
+     * @param string $filename
+     * @return string
+     */
+    public static function sanitizeFilename(string $filename) {
+        // sanitize filename
+        $filename = preg_replace(
+            '~
+        [<>:"/\\\|?*]|            # file system reserved https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+        [\x00-\x1F]|             # control characters http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
+        [\x7F\xA0\xAD]|          # non-printing characters DEL, NO-BREAK SPACE, SOFT HYPHEN
+        [#\[\]@!$&\'()+,;=]|     # URI reserved https://www.rfc-editor.org/rfc/rfc3986#section-2.2
+        [{}^\~`]                 # URL unsafe characters https://www.ietf.org/rfc/rfc1738.txt
+        ~x',
+            '-', $filename);
+        // avoids ".", ".." or ".hiddenFiles"
+        $filename = ltrim($filename, '.-');
+        // maximize filename length to 255 bytes http://serverfault.com/a/9548/44086
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $filename = mb_strcut(pathinfo($filename, PATHINFO_FILENAME), 0, 255 - ($ext ? strlen($ext) + 1 : 0), mb_detect_encoding($filename)) . ($ext ? '.' . $ext : '');
+        return $filename;
+    }
+    
+    /**
+     * Returns TRUE if $path matches the $pattern with wildcards
+     * 
+     * Technically this methods works the same as the built-in PHP `fnmatch()`, but
+     * it also works on non-POSIX systems, whereas `fnmatch()` does not.
+     * 
+     * Examples:
+     * 
+     * - `matchesPattern('folder/*.*', 'folder/asdf.jpg')` => true 
+     * 
+     * @param string $path
+     * @param string $pattern
+     * @param int $fnmatchFlags
+     * @return bool
+     */
+    public static function matchesPattern(string $path, string $pattern, int $fnmatchFlags = 0) : bool
+    {
+        if (! function_exists('fnmatch')) {
+            return static::fnmatchPolyfill($pattern, $path);
+        }
+        return fnmatch($pattern, $path, $fnmatchFlags);
+    }
+    
+    /**
+     * Polyfill for PHP fnmatch() in case it is not available
+     * 
+     * @link https://www.php.net/fnmatch
+     * 
+     * @param string $pattern
+     * @param string $string
+     * @param int $flags
+     * @return boolean
+     */
+    protected static function fnmatchPolyfill($pattern, $string, $flags = 0) {
+        if (!function_exists('fnmatch')) {
+            define('FNM_PATHNAME', 1);
+            define('FNM_NOESCAPE', 2);
+            define('FNM_PERIOD', 4);
+            define('FNM_CASEFOLD', 16);
+        }
+        
+        $modifiers = null;
+        $transforms = array(
+            '\*'    => '.*',
+            '\?'    => '.',
+            '\[\!'    => '[^',
+            '\['    => '[',
+            '\]'    => ']',
+            '\.'    => '\.',
+            '\\'    => '\\\\'
+        );
+        
+        // Forward slash in string must be in pattern:
+        if ($flags & FNM_PATHNAME) {
+            $transforms['\*'] = '[^/]*';
+        }
+        
+        // Back slash should not be escaped:
+        if ($flags & FNM_NOESCAPE) {
+            unset($transforms['\\']);
+        }
+        
+        // Perform case insensitive match:
+        if ($flags & FNM_CASEFOLD) {
+            $modifiers .= 'i';
+        }
+        
+        // Period at start must be the same as pattern:
+        if ($flags & FNM_PERIOD) {
+            if (strpos($string, '.') === 0 && strpos($pattern, '.') !== 0) return false;
+        }
+        
+        $pattern = '#^'
+            . strtr(preg_quote($pattern, '#'), $transforms)
+            . '$#'
+                . $modifiers;
+                
+                return (boolean)preg_match($pattern, $string);
     }
 }

@@ -13,6 +13,21 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
  */
 interface DataColumnMappingInterface extends DataMappingInterface
 {
+    
+    /**
+     *
+     * @param string $string
+     * @return DataMappingInterface
+     */
+    public function setFrom($string);
+    
+    /**
+     *
+     * @param string|UxonObject $stringOrUxonObject
+     * @return DataMappingInterface
+     */
+    public function setTo($stringOrUxonObject);
+    
     /**
      * @return ExpressionInterface
      */

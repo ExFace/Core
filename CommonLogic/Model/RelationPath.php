@@ -6,7 +6,6 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
@@ -125,6 +124,15 @@ class RelationPath implements MetaRelationPathInterface
         }
         $path = trim($path, self::RELATION_SEPARATOR);
         return $path;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return $this->toString();
     }
 
     public function getWorkbench()
@@ -310,7 +318,7 @@ class RelationPath implements MetaRelationPathInterface
         }
         
         if ($start_index < 0) {
-            $start_index = $this->countRelations() - $start_index;
+            $start_index = $this->countRelations() + $start_index;
         }
         
         if ($start_index === $this->countRelations()) {
@@ -375,9 +383,10 @@ class RelationPath implements MetaRelationPathInterface
     /**
      * Copies the relation path keeping the start object, but copying all relations
      *
-     * @return RelationPath
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = RelationPathFactory::createForObject($this->getStartObject());
         foreach ($this->getRelations() as $rel) {

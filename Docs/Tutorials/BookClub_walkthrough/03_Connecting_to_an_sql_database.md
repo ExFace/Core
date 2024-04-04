@@ -1,6 +1,6 @@
 # Setting up an SQL DB and a data source in the model
 
-#### [< Previous](02_Creating_a_new_app.md) | [BookClub tutorial](index.md) | [Next >](04_Generating_a_model_from_an_SQL_schema.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](02_Creating_a_new_app.md) [<kbd> <br>Next > <br> </kbd>](04_Generating_a_model_from_an_SQL_schema.md)
 
 Now that we have an [app](02_Creating_a_new_app.md), we need to let the workbench know, that our [newly created database](01_Preparation.md) is a data source this app can access. 
 
@@ -68,4 +68,4 @@ Note, that apart from the default connection and query builder (that we have fil
 
 Read more about data sources and connections in the [model docs](../../creating_metamodels/data_sources/index.md).
 
-### [< Previous](02_Creating_a_new_app.md) | [BookClub tutorial](index.md) | [Next >](04_Generating_a_model_from_an_SQL_schema.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](02_Creating_a_new_app.md) [<kbd> <br>Next > <br> </kbd>](04_Generating_a_model_from_an_SQL_schema.md)

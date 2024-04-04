@@ -4,6 +4,8 @@ namespace exface\Core\Formulas;
 
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\DataTypes\UrlDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Produces an URL for a given page selector
@@ -17,8 +19,16 @@ use exface\Core\Factories\SelectorFactory;
  */
 class PageURL extends \exface\Core\CommonLogic\Model\Formula
 {
-    public function run(string $pageSelectorString)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run(string $pageSelectorString = null)
     {
+        if ($pageSelectorString === null || $pageSelectorString === '') {
+            return $pageSelectorString;
+        }
         $selector = SelectorFactory::createPageSelector($this->getWorkbench(), $pageSelectorString);
         if ($selector->isAlias()) {
             $alias = $selector;
@@ -28,5 +38,14 @@ class PageURL extends \exface\Core\CommonLogic\Model\Formula
         }
         return $this->getWorkbench()->getUrl() . $alias . '.html';
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), UrlDataType::class);
+    }
 }
-?>

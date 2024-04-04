@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * This formatter generates javascript code to format and parse date/time via the library moment.js.
@@ -33,14 +34,7 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  * }
  * ```
  * 
- * If the authomatic header-include logic of the `AbstractAjaxFacade` is to be used (methods 
- * `buildHtmlBodyIncludes()` and `buildHtmlHeadIncludes()`), the following configuration options need
- * to be added to the facade:
- * 
- * ```
- *  "LIBS.MOMENT.JS": "npm-asset/moment/min/moment.min.js",
- *  "LIBS.EXFTOOLS.JS": "exface/Core/Facades/AbstractAjaxFacade/js/exfTools.js",
- * ```
+ * NOTE: This formatter requires the exfTools JS library to be available!
  *
  * @method DateDataType getDataType()
  *        
@@ -49,7 +43,20 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  */
 class JsDateFormatter extends AbstractJsDataTypeFormatter
 {
-
+    const DATE_COMPARE_YEAR = 'year';
+    
+    const DATE_COMPARE_MONTH = 'month';
+    
+    const DATE_COMPARE_DAY = 'day';
+    
+    const DATE_COMPARE_HOUR = 'hour';
+    
+    const DATE_COMPARE_MINUTE = 'minute';
+    
+    const DATE_COMPARE_SECOND = 'second';
+    
+    const DATE_COMPARE_MILLISECOND = 'millisecond';
+    
     private $format = null;
 
     /**
@@ -79,7 +86,8 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, '{$this->getFormat()}') : new Date({$jsInput}))), \"{$this->getFormat()}\")";
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        return "exfTools.date.format((! {$jsInput} ? {$jsInput} : (isNaN({$jsInput}) ? exfTools.date.parse({$jsInput}, {$formatQuoted}) : new Date({$jsInput}))), {$formatQuoted})";
     }
 
     /**
@@ -108,7 +116,14 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatDateObjectToString($jsDateObject)
     {
-        return "exfTools.date.format({$jsDateObject}, \"{$this->getFormat()}\")";
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        return "exfTools.date.format({$jsDateObject}, {$formatQuoted})";
+    }
+    
+    public function buildJsFormatDateObject(string $jsDateObject, string $ICUFormat) : string
+    {
+        $formatJs = $this->escapeFormatString($ICUFormat);
+        return "exfTools.date.format({$jsDateObject}, $formatJs)";
     }
 
     /**
@@ -121,7 +136,8 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParserToJsDate($jsString)
     {
-        return "exfTools.date.parse({$jsString}, '{$this->getFormat()}')";
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        return "exfTools.date.parse({$jsString}, {$formatQuoted})";
     }
 
     /**
@@ -131,12 +147,65 @@ class JsDateFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatParser($jsInput)
     {
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
         return <<<JS
 function() {
-                var dateObj = exfTools.date.parse({$jsInput}, '{$this->getFormat()}');
+                var dateObj = exfTools.date.parse({$jsInput}, {$formatQuoted});
                 return (dateObj ? {$this->buildJsFormatDateObjectToInternal('dateObj')} : '');
             }()
         
+JS;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        //TODO granularities als Konstanten
+        $granularity = self::DATE_COMPARE_DAY;
+        $dataType = $this->getDataType();
+        if ($dataType instanceof DateTimeDataType) {
+            if ($dataType->getShowMilliseconds()) {
+                $granularity = self::DATE_COMPARE_MILLISECOND;
+            } elseif ($dataType->getShowSeconds()) {
+                $granularity = self::DATE_COMPARE_SECOND;
+            }
+        }
+        $jsCompareMax = '';
+        $jsCompareMin = '';
+        if ($dataType->getMax() !== null) {
+            $jsCompareMax = <<<JS
+                sDateMax = '{$dataType->getMax()}';
+                valid = exfTools.date.compareDates(mVal, sDateMax, '<=', sGranularity);
+                if (valid !== true) {
+                    return false;
+                }
+JS;
+        }
+        if ($dataType->getMin() !== null) {
+            $jsCompareMin = <<<JS
+                sDateMin = '{$dataType->getMin()}';
+                valid = exfTools.date.compareDates(mVal, sDateMin, '>=', sGranularity);
+JS;
+        }
+        return <<<JS
+function() {
+                var mVal = {$jsValue};
+                var sGranularity = '{$granularity}';
+                var sDateMax, sDateMin;
+                var valid = mVal === null || mVal === '' || mVal === undefined || exfTools.date.parse(mVal, {$formatQuoted}) !== null;
+                if (valid !== true) {
+                    return false;
+                }
+                {$jsCompareMax}
+                {$jsCompareMin}
+                return valid;
+            }()
+            
 JS;
     }
 
@@ -157,38 +226,36 @@ JS;
      */
     public function buildHtmlBodyIncludes(FacadeInterface $facade) : array
     {
-        $momentLocaleJs = $this->buildJsMomentLocale($facade);
-        return [
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
-            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>',
-            $momentLocaleJs
-        ];
+        return [];
     }
     
     /**
      * Generates the moment locale include script based on the session locale
      *
-     * @return string
+     * @return string[]
      */
-    protected function buildJsMomentLocale(FacadeInterface $facade) : string
+    public static function buildHtmlHeadMomentIncludes(FacadeInterface $facade) : array
     {
-        $localesPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
-        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES');
-        $fullLocale = $this->getDataType()->getLocale();
+        $includes = [
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.MOMENT.JS') . '"></script>',
+        ];
+        $localesPath = $facade->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $facade->getConfig()->getOption('LIBS.MOMENT.LOCALES');
+        $localesUrl = $facade->buildUrlToSource('LIBS.MOMENT.LOCALES', false);
+        $fullLocale = $facade->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = str_replace("_", "-", $fullLocale);
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         $locale = substr($fullLocale, 0, strpos($fullLocale, '_'));
         $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
         if (file_exists($localesPath. DIRECTORY_SEPARATOR . $locale . '.js')) {
             $url = $localesUrl. DIRECTORY_SEPARATOR . $locale . '.js';
-            return "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
+            $includes[] = "<script type='text/javascript' src='{$url}' charset='UTF-8'></script>";
         }
         
-        return '';
+        return $includes;
     }
 
 
@@ -240,5 +307,10 @@ JS;
     {
         $this->format = $formatString;
         return $this;
+    }
+    
+    protected function escapeFormatString(string $format) : string
+    {
+        return json_encode($format, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

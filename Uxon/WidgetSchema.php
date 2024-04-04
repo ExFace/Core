@@ -7,6 +7,12 @@ use exface\Core\CommonLogic\Selectors\WidgetSelector;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
+use exface\Core\Widgets\Container;
+use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Widgets\Tab;
 
 /**
  * UXON-schema class for widgets.
@@ -19,6 +25,10 @@ use exface\Core\DataTypes\UxonSchemaNameDataType;
 class WidgetSchema extends UxonSchema
 {
     
+    /**
+     * 
+     * @return string
+     */
     public static function getSchemaName() : string
     {
         return UxonSchemaNameDataType::WIDGET;
@@ -67,8 +77,156 @@ class WidgetSchema extends UxonSchema
         return WidgetFactory::getWidgetClassFromType($widgetType);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getDefaultPrototypeClass()
+     */
     protected function getDefaultPrototypeClass() : string
     {
         return '\\' . AbstractWidget::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Uxon\UxonSchema::getPresets()
+     */
+    public function getPresets(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    {
+        $presets = parent::getPresets($uxon, $path, $rootPrototypeClass);
+        try {
+            $obj = $this->getMetaObject($uxon, $path);
+        } catch (MetaObjectNotFoundError $e) {
+            return $presets;
+        }
+        if ($obj === null) {
+            return $presets;
+        }
+        
+        $editableWigets = [];
+        $visibleWidgets = [];
+        $defaultDisplayWidgets = [];
+        $requiredWidgets = [];
+        $allWidgets = [];
+        foreach ($obj->getAttributes() as $attr) {
+            $allWidgets[] = ['attribute_alias' => $attr->getAlias()];
+            if ($attr->isEditable()) {
+                $editableWigets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+            }
+            if (! $attr->isHidden()) {
+                $visibleWidgets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+            }
+            if ($attr->getDefaultDisplayOrder() !== null) {
+                $defaultDisplayWidgets[$attr->getDefaultDisplayOrder()] = ['attribute_alias' => $attr->getAlias()];
+            }
+            if ($attr->isRequired()) {
+                $requiredWidgets[$attr->getDefaultDisplayOrder() ?? '' . $attr->getAlias()] = ['attribute_alias' => $attr->getAlias()];
+            }
+        }
+        ksort($editableWigets);
+        $editableWigets = array_values($editableWigets);
+        ksort($visibleWidgets);
+        $visibleWidgets = array_values($visibleWidgets);
+        ksort($defaultDisplayWidgets);
+        $defaultDisplayWidgets = array_values($defaultDisplayWidgets);
+        ksort($requiredWidgets);
+        $requiredWidgets = array_values($requiredWidgets);
+        ksort($allWidgets);
+        $allWidgets = array_values($allWidgets);
+        
+        if (empty($allWidgets)) {
+            return $presets;
+        }
+        
+        $containerPrototype = str_replace('\\', '/', Container::class) . '.php';
+        $tabPrototype = str_replace('\\', '/', Tab::class) . '.php';
+        
+        $presets[] = [
+            'UID' => '',
+            'NAME' => 'Form/Panel/WidgetGroup with all attributes',
+            'PROTOTYPE__LABEL' => 'Container',
+            'DESCRIPTION' => '',
+            'PROTOTYPE' => $containerPrototype,
+            'UXON' => (new UxonObject([
+                'widget_type' => '',
+                'widgets' => $allWidgets
+            ]))->toJson()
+        ];
+        
+        if (! empty($editableWigets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Form/Panel/WidgetGroup with all editable attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $containerPrototype,
+                'UXON' => (new UxonObject([
+                    'widget_type' => '',
+                    'widgets' => $editableWigets
+                ]))->toJson()
+            ];
+            
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Tab with all editable attributes',
+                'PROTOTYPE__LABEL' => 'Tab',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $tabPrototype,
+                'UXON' => (new UxonObject([
+                    'caption' => '',
+                    'widgets' => $editableWigets
+                ]))->toJson()
+            ];
+        }
+        
+        if (! empty($visibleWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Form/Panel/WidgetGroup with all visible attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $containerPrototype,
+                'UXON' => (new UxonObject([
+                    'widget_type' => '',
+                    'widgets' => $visibleWidgets
+                ]))->toJson()
+            ];
+        }
+        
+        if (! empty($defaultDisplayWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Form/Panel/WidgetGroup with default display editable attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $containerPrototype,
+                'UXON' => (new UxonObject([
+                    'widget_type' => '',
+                    'widgets' => $defaultDisplayWidgets
+                ]))->toJson()
+            ];
+        }
+        
+        if (! empty($requiredWidgets)) {
+            $presets[] = [
+                'UID' => '',
+                'NAME' => 'Form/Panel/WidgetGroup with all required attributes',
+                'PROTOTYPE__LABEL' => 'Container',
+                'DESCRIPTION' => '',
+                'PROTOTYPE' => $containerPrototype,
+                'UXON' => (new UxonObject([
+                    'widget_type' => '',
+                    'widgets' => $requiredWidgets
+                ]))->toJson()
+            ];
+        }
+        
+        $sorter = new RowDataArraySorter();
+        $sorter->addCriteria('PROTOTYPE', SORT_ASC);
+        $sorter->addCriteria('NAME', SORT_ASC);
+        $presets = $sorter->sort($presets);
+        
+        return $presets;
     }
 }

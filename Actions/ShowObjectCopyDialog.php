@@ -5,17 +5,30 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iUseData;
 
 /**
  * Renders a dialog to create a copy of the input object.
  * 
- * Dialog rendering works just like in `ShowObjectEditDialog`, but the save-button creates a copy
- * instead of modifying the selected object by calling the `CopyData` action.
+ * Dialog rendering works just like in `ShowObjectEditDialog`, but
+ * - save-button creates a copy instead of modifying the selected object by calling the `CopyData` action
+ * - all other buttons like those for editing related objects are removed similarly to 
+ * `ShowObjectInfoDialog`
+ * - any data widgets showing related objects are empty if those related objects are not to
+ * be copied
  * 
  * By default the object being shown is copied and all related objects, marked for copying in
  * the metamodel of their relation attributes. However, you can also specify the related objects
  * to be copied explicitly by adding their corresponding relations to  `copy_related_objects'.
  * In this case, the `CopyData` action will perform a deep-copy.
+ * 
+ * Also note, that by default the editors of non-copyable attributes will remain empty (since they
+ * should not be copied). However, this behavior is automatically disabled if the action has 
+ * `input_mappers`. So, if for any reason, you need a prefill for non-copyable attributes, use 
+ * input mappers to define the values explicitly.
  * 
  * @author Andrej Kabachnik
  *
@@ -34,37 +47,91 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
         parent::init();
         $this->setIcon(Icons::CLONE_);
         $this->setSaveActionAlias('exface.Core.CopyData');
+        $this->setPrefillWithFilterContext(false);
+        // Remove any buttons as they often assume, that the UID if present in the dialog
+        // is the UID of the edited object - which it is NOT in this case, but rather the
+        // UID of the object being copied, which is not to be changed.
+        $this->setDisableButtons(true);
     }
 
     /**
-     * In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
-     * duplicated object will get new ids.
-     *
+     * 
      * {@inheritdoc} 
      * @see \exface\Core\Actions\ShowWidget::prefillWidget()
      */
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
-        // If it is a deep copy, we need to make sure, widget eventually displaying related objects are 
-        // prefilled just like they are in ShowObjectEditDialog.
-        if ($this->isDeepCopy()) {
-            return parent::prefillWidget($task, $widget);
-        }
-        
-        $data_sheet = $this->getInputDataSheet($task);
-        
-        if ($data_sheet->getUidColumn()) {
-            $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
-            if (! $data_sheet->isFresh()) {
-                $data_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-                $data_sheet->dataRead();
+        // If there are no explicit input mappers and the task object is the same as the actions object,
+        // create a special input mapper to make sure the prefill data does not contain non-copyable 
+        // attributes. This mapper will explicitly empty non-copyable attributes while keeping
+        // copyable system attributes.
+        // This trick will only work if the meta object has a UID attribute and thus all required data
+        // can be loaded from the data source.
+        $obj = $this->getMetaObject();
+        if (! $this->hasInputMappers() && $obj->hasUidAttribute() && $obj->isReadable() && (! $task->hasMetaObject() || $obj->is($task->getMetaObject()))) {
+            $mappings = [];
+            foreach ($this->getMetaObject()->getAttributes() as $attr) {
+                if ($attr->isUidForObject() || ($attr->isSystem() && $attr->isCopyable())) {
+                    $mappings[] = [
+                        'from' => $attr->getAlias(),
+                        'to' => $attr->getAlias()
+                    ];
+                    continue;
+                }
+                if ($attr->isCopyable() === false) {
+                    $mappings[] = [
+                        'from' => "=''",
+                        'to' => $attr->getAlias()
+                    ];
+                    continue;
+                }
             }
-            $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());
+            $this->addInputMapper(DataSheetMapperFactory::createFromUxon(
+                $this->getWorkbench(), 
+                new UxonObject(["column_to_column_mappings" => $mappings]), 
+                $task->getMetaObject(), 
+                $this->getMetaObject()
+            ));
         }
         
-        $widget->prefill($data_sheet);
+        // Now make sure any data widgets inside the dialog, that show related objects
+        // are empty if those related objects are not to be copied. If the are to be
+        // copied, they need to be shown, but cannot be edited because all the buttons
+        // were removed in `init()`
+        if ($widget instanceof iContainOtherWidgets) {
+            $copyRelAliases = $this->getCopyRelationAliases();
+            foreach ($widget->getWidgetsRecursive() as $child) {
+                switch (true) {
+                    case $child instanceof iShowData:
+                        $dataChild = $child;
+                        break;
+                    case $child instanceof iUseData:
+                        $dataChild = $child->getData();
+                        break;
+                    default:
+                        continue 2;
+                }
+                $relFilters = $dataChild->getConfiguratorWidget()->findFiltersByObject($this->getMetaObject());
+                /* @var $relFilter \exface\Core\Widgets\Filter */
+                foreach ($relFilters as $relFilter) {
+                    if (! $relFilter->isBoundToAttribute()) {
+                        continue;
+                    }
+                    $fltrAttr = $relFilter->getAttribute();
+                    $relPath = $fltrAttr->getRelationPath()->copy();
+                    if ($fltrAttr->isRelation()) {
+                        $relPath->appendRelation($fltrAttr->getRelation());
+                        
+                    }
+                    $revRelPath = $relPath->reverse();
+                    if (! in_array($revRelPath->toString(), $copyRelAliases)) {
+                        $dataChild->setDoNotPrefill(true);
+                    }
+                }
+            }
+        }
         
-        return $widget;
+        return parent::prefillWidget($task, $widget);
     }
     
     /**

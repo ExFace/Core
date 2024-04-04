@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
-use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * A UXON editor with autosuggest, facades and validation.

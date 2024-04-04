@@ -3,6 +3,7 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * Enumeration of aggregator function like SUM, AVG, etc.
@@ -31,6 +32,10 @@ class AggregatorFunctionsDataType extends StringDataType implements EnumDataType
     const MIN = 'MIN';
     
     const MAX = 'MAX';
+    
+    const MIN_OF = 'MIN_OF';
+    
+    const MAX_OF = 'MAX_OF';
     
     const LIST_ALL = 'LIST';
     
@@ -61,6 +66,26 @@ class AggregatorFunctionsDataType extends StringDataType implements EnumDataType
         
         return $this->labels;
     }
-
+    
+    
+    public function getSymbolOfValue($value = null) : ?string
+    {
+        $value = $value ?? $this->getValue();
+        if ($value === null) {
+            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        }
+        return $this::findSymbol($value);
+    }
+    
+    public static function findSymbol($value) : ?string
+    {
+        switch (true) {
+            case $value === self::SUM: return "Σ";
+            case $value === self::AVG: return "Ø";
+            case $value === self::COUNT:
+            case $value === self::COUNT_IF:
+            case $value === self::COUNT_DISTINCT: return "#";
+        }
+        return null;
+    }
 }
-?>

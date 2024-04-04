@@ -52,7 +52,13 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
-        return "({$jsInput} == '{$this->getHtmlChecked()}' ? 1 : 0)";
+        return <<<JS
+function(mInput){
+    if (mInput === null || mInput === '' || mInput === undefined) {
+        return mInput;
+    }
+    return mInput === 1 || mInput === '1' || mInput === true || mInput === 'true' || mInput === '{$this->getHtmlChecked()}' ? 1 : 0;}({$jsInput})
+JS;
     }
 
     /**
@@ -134,6 +140,14 @@ JS;
         $this->useIcons = $true_or_false;
         return $this;
     }
-
-
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        return 'true';
+    }
 }

@@ -27,57 +27,77 @@ use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Widgets\Parts\Charts\Interfaces\XYChartSeriesInterface;
+use exface\Core\Widgets\Parts\Charts\SankeyChartSeries;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * Trait to use for implementation of charts into a facade using echarts library.
- * 
+ *
  * ## How to use
- * 
- * 1. Add the following line to the config of the facade:
- * `"LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",`
- * 2. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
+ *
+ * 1. Add the following dependencies to the composer.json of the facade:
+ *      ```
+ *		"npm-asset/tinycolor2": "^1.4.2",
+ *		"npm-asset/tinygradient": "^1.1.4"
+ *      ```
+ * 2. Add the following lines to the config of the facade:
+ *      ```
+ *      "LIBS.ECHARTS.ECHARTS_JS": "exface/Core/Facades/AbstractAjaxFacade/js/echarts/echarts.custom.min.js",
+ *      "LIBS.TINYCOLOR.JS": "npm-asset/tinycolor2/dist/tinycolor-min.js",
+ *      "LIBS.TINYGRADIENT.JS": "npm-asset/tinygradient/browser.js",
+ *      "WIDGET.CHART.COLORS": ["#c23531", "#2f4554", "#61a0a8", "#d48265", "#91c7ae", "#749f83", "#ca8622", "#bda29a", "#6e7074", "#546570", "#c4ccd3"],
+ *      ```
+ * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
- * 3. It is recommended to add eCharts as a composer dependency to make it appear in the list of
- * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of 
+ * 4. It is recommended to add eCharts as a composer dependency to make it appear in the list of
+ * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of
  * the facade's `composer.json`.
- * 
- * To use the EChartsTrait in a facade add in the function where the HTML for the site is created 
- * the following function `addChartButtons()` to add the buttons to change the chart type to your 
- * site. Also you should add a resize script which, at one point, calls the `buildJsEChartsResize()` 
- * function from the trait. Generating the javascript for the site call the following functions from 
+ *
+ * To use the EChartsTrait in a facade add in the function where the HTML for the site is created
+ * the following function `addChartButtons()` to add the buttons to change the chart type to your
+ * site. Also you should add a resize script which, at one point, calls the `buildJsEChartsResize()`
+ * function from the trait. Generating the javascript for the site call the following functions from
  * the trait:
- * 
+ *
  * - `buildJsEChartsVar()` -> generate a js variable the echarts component will be accessable on
- * - `buildJsFunctions()` -> to build and add all the javascript function needed for echarts to work 
+ * - `buildJsFunctions()` -> to build and add all the javascript function needed for echarts to work
  * correctly
- * - `buildJsEChartsInit()` -> initialize the echarts component (possible custom implementation is 
+ * - `buildJsEChartsInit()` -> initialize the echarts component (possible custom implementation is
  * needed for the facade)
  * - `buildJsRefresh()` -> add the function to refresh the chart
- * 
- * Its also necessary to implement the function buildJsDataLoadFunctionBody which should provide a 
+ *
+ * Its also necessary to implement the function buildJsDataLoadFunctionBody which should provide a
  * javascript function the provides/loads the data for the chart.
- * 
- * Its recommended to implement a function like `buildJsDataLoaderOnLoaded()` which gets called after 
- * data fetching from a server or such was succesful. This function should call the EChartsTrait function 
+ *
+ * Its recommended to implement a function like `buildJsDataLoaderOnLoaded()` which gets called after
+ * data fetching from a server or such was succesful. This function should call the EChartsTrait function
  * `buildJsRedraw()`, with the data rows als parameter, to redraw the chart with the new data.
- * 
- * The trait also provides the functions `buildJsEChartsShowLoading()` and `buildJsEChartsHideLoading()` 
+ *
+ * The trait also provides the functions `buildJsEChartsShowLoading()` and `buildJsEChartsHideLoading()`
  * which might be called when the site is busy loading data, and when its finished loading data.
- * 
- * For an example of how to use the ECahrtsTrait in a facade, see the file 
+ *
+ * For an example of how to use the ECahrtsTrait in a facade, see the file
  * `exface\JEasyUIFacade\Facades\Elements\EuiChart.php` which shows the implamantation for the JeasyUI Facade.
  * 
- * It is recommended to add
+ * ## Theming
  * 
+ * The colors of chart series alternate automatically. A list of available colors is defined in the
+ * configuration option `WIDGET.CHART.COLORS` in each facade. Additionally a `theme.js` file can
+ * be used as described in the docs of eCharts - see the UI5 implementation UI5Chart.php for an
+ * example.
+ *
  * ## Updating the custom ECharts build
- * 
- * A custom build echarts javascript file is used. The echarts website provides a 
- * tool to build a custom version of their library: https://www.echartsjs.com/en/builder.html
- * It is possible that the tool does not work correctly with the Google Chrome browser 
- * (it stops during the .js file creation), if that happens use Firefox to create the custom 
- * .js file. The current custom file includes the following chart types, coordinate systems, 
+ *
+ * A custom build echarts javascript file is used. The echarts website provides a
+ * tool to build a custom version of their library: https://echarts.apache.org/en/builder.html
+ * It is possible that the tool does not work correctly with the Google Chrome browser
+ * (it stops during the .js file creation), if that happens use Firefox to create the custom
+ * .js file. The current custom file includes the following chart types, coordinate systems,
  * components and other parts:
- * 
+ *
  * - Charts: Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge
  * - Coordinate Systems: Grid, Polar, SingleAxis
  * - Components: Title, Legend, Tooltip, MarkPoint, MarkLine, MarkArea, DataZoom, VisualMap
@@ -91,10 +111,21 @@ use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
  */
 trait EChartsTrait
 {
+    use JsValueScaleTrait;
+    
     private $chartTypeButtonGroup = null;
     
+    //this should be constants but traits do not support constants
+    private $chartTypes = [
+        "CHART_TYPE_PIE" => 'pie',        
+        "CHART_TYPE_XY" => 'xy_chart',        
+        "CHART_TYPE_GRAPH" => 'graph',        
+        "CHART_TYPE_HEATMAP" => 'heatmap',        
+        "CHART_TYPE_SANKEY" => 'sankey'
+    ];
+    
     /**
-     * 
+     *
      * @return string
      */
     protected function buildJsLiveReference() : string
@@ -108,7 +139,7 @@ trait EChartsTrait
     }
     
     /**
-     * 
+     *
      * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\EChartsTrait
      */
     protected function registerLiveReferenceAtLinkedElement()
@@ -130,7 +161,14 @@ trait EChartsTrait
      */
     protected function buildHtmlChart($style = 'height:100%; min-height: 100px; overflow: hidden;') : string
     {
-        return '<div id="' . $this->getId() . '" style="' . $style . '"></div>';
+        $hint = $this->buildHintText($this->getWidget()->getHint());
+        if ($hint) {
+            $hint = $this->escapeString($hint, true, false);
+            $hint = str_replace("\\n", "\n", $hint);
+        } else {
+            $hint = '""';
+        }
+        return '<div id="' . $this->getId() . '" class="exf-chart" style="' . $style . '" title=' . $hint . '></div>';
     }
     
     /**
@@ -142,9 +180,13 @@ trait EChartsTrait
     {
         $facade = $this->getFacade();
         $includes = [];
-        
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
-        
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_HEATMAP']) {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTSHEATMAP_JS') . '"></script>';
+        } else {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
+        }
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYCOLOR.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYGRADIENT.JS') . '"></script>';
         
         foreach ($this->getWidget()->getData()->getColumns() as $col) {
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
@@ -169,9 +211,9 @@ trait EChartsTrait
         $widget = $this->getWidget();
         $tb = $widget->getToolbarMain();
         /*$chartTypeBtnGroup = $tb->createButtonGroup();
-        $this->chartTypeButtonGroup = $chartTypeBtnGroup;
-        $tb->addButtonGroup($chartTypeBtnGroup, $tb->getButtonGroupIndex($tb->getButtonGroupForSearchActions()));
-        */
+         $this->chartTypeButtonGroup = $chartTypeBtnGroup;
+         $tb->addButtonGroup($chartTypeBtnGroup, $tb->getButtonGroupIndex($tb->getButtonGroupForSearchActions()));
+         */
         /* @var \exface\Core\Widgets\Button $menu */
         $menu = WidgetFactory::createFromUxonInParent($widget, new UxonObject([
             'widget_type' => 'MenuButton',
@@ -181,9 +223,9 @@ trait EChartsTrait
             'hint' => 'Change chart type'
         ]));
         $tb->getButtonGroupForSearchActions()->addButton($menu, 1);
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $buttonUxon = $buttonTemplate->copy();
-            $buttonUxon->setProperty('caption', 'Circle');            
+            $buttonUxon->setProperty('caption', 'Circle');
             $buttonUxon->setProperty('icon', 'circle-o');
             $button = WidgetFactory::createFromUxon($widget->getPage(), $buttonUxon, $menu);
             $button->getAction()->setScript($this->buildJsChangeToCircleGraph($button));
@@ -249,7 +291,7 @@ JS;
         $handlersJs = $this->buildJsLegendSelectHandler();
         $handlersJs .= $this->buildJsOnClickHandler();
         $handlersJs .= $this->buildJsBindToClickHandler();
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             $handlersJs .= $this->buildJsOnGraphHoverHandler();
         }
         return $handlersJs;
@@ -257,14 +299,14 @@ JS;
     
     /**
      * js script for to change grapt to a circle graph
-     * 
+     *
      * @param DataButton $button
      * @return string
      */
     protected function buildJsChangeToCircleGraph(DataButton $button) : string
     {
         return <<<JS
-
+        
             var echart = {$this->buildJsEChartsVar()};
             var options= {};
             options.series = {
@@ -275,10 +317,10 @@ JS;
             };
             echart.setOption(options);
             echart.resize();
-
+            
 JS;
     }
-            
+    
     /**
      * js script for to change grapt to a network graph
      *
@@ -288,12 +330,12 @@ JS;
     protected function buildJsChangeToNetworkGraph(DataButton $button) : string
     {
         // only works when the initial graph was a network graph
-        //TODO Chart zoom, damit nodes und edged connected (Bug, sind verschoben) 
+        //TODO Chart zoom, damit nodes und edged connected (Bug, sind verschoben)
         return <<<JS
         
             var echart = {$this->buildJsEChartsVar()};
-            var options = {};            
-            {$this->buildJsRefresh()}            
+            var options = {};
+            {$this->buildJsRefresh()}
             
 JS;
     }
@@ -324,7 +366,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsRefresh() : string
+    protected function buildJsEChartsRefresh()
     {
         return $this->buildJsDataLoadFunctionName() . '();';
     }
@@ -389,40 +431,58 @@ JS;
     protected function buildJsSelectFunctionBody(string $selection) : string
     {
         return <<<JS
-
+        
             var echart = {$this->buildJsEChartsVar()};
-            var oSelected = {$selection};
-            if (echart._oldselection === undefined) {
+            // check if _redrawSelection is not undefined, means the select is called for a redraw with a row selected before the redraw
+            if (echart._redrawSelection !== undefined) {
+                //if the selected row before the redraw is in new dataset and got selected again, dont call onChangeScripts
+                if ({$selection} !== undefined && {$this->buildJsRowCompare('echart._redrawSelection', $selection)}) {
+                    echart._oldSelection = {$selection};
+                    echart._redrawSelection = undefined;
+                    return;
+                }
+                echart._oldSelection = {$selection};
+                {$this->getOnChangeScript()}
+                echart._redrawSelection = undefined;
+                return;
+            }
+            if (echart._oldSelection === undefined && {$selection} === undefined) {
+                return;
+            }
+            if (echart._oldSelection === undefined) {
                 echart._oldSelection = {$selection};
             } else {
-                if (({$this->buildJsRowCompare('echart._oldSelection', 'oSelected')}) === false) {
+                if (({$this->buildJsRowCompare('echart._oldSelection', $selection)}) === false) {
                     echart._oldSelection = {$selection};
                 } else {
                     return;
                 }
             }
             {$this->getOnChangeScript()}
+            return;
             
 JS;
     }
-            
-            
+    
+    
     /**
-     * returns the data row from the initial dataset for a selection on a graph
-     * 
+     * returns the data row from the initial dataset for a selection on a chart
+     * TODO implementation for sankey chart is missing
+     *
      * @param string $selection
      * @return string
      */
     protected function buildJsGetSelectedRowFunction(string $selection) : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
-            
+        switch ($this->getChartType()) {
+            case $this->chartTypes['CHART_TYPE_PIE']:
+                return <<<JS
+                
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selectedRow = {$selection};
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} === selectedRow.name) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()} == selectedRow._key) {
                                 return dataset[i];
                             }
                         }
@@ -430,22 +490,21 @@ JS;
                     }()
                     
 JS;
-            
-        } else if ($this->isGraphChart() === true) {
-            return <<<JS
-            
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
+                return <<<JS
+                
                     function(){
                         var dataset = {$this->buildJsEChartsVar()}._dataset;
                         var selection = {$selection};
                         // searches first if a left object UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} === selection.id) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()} == selection.id) {
                                 return dataset[i];
                             }
                         }/*
                         // if no node matches, then searches if a relation UID matches the data.id
                         for (var i = 0; i < dataset.length; i++) {
-                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} === selection.id) {
+                            if (dataset[i].{$this->getWidget()->getSeries()[0]->getRelationDataColumn()->getDataColumnName()} == selection.id) {
                                 return dataset[i];
                             }
                         }*/
@@ -453,14 +512,18 @@ JS;
                     }()
                     
 JS;
-            
-        } else {
-            return "{$selection}";
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
+                return <<<JS
+                    ''
+
+JS;
+            default:
+                return "{$selection}";
         }
     }
     
     /**
-     * 
+     *
      * @param string $params
      * @return string
      */
@@ -471,7 +534,7 @@ JS;
     
     /**
      * Function name for javascript function that evalutes clicks on a chart
-     * 
+     *
      * @return string
      */
     protected function buildJsClicksFunctionName() : string
@@ -482,41 +545,42 @@ JS;
     /**
      * Javascript function body for function that evaluates if a click on a chart was a single click or a double click,
      * if it was a single click the single click function is called
-     * 
+     *
      * @param string $params
      * @return string
      */
     protected function buildJsClicksFunctionBody(string $params) : string
     {
         return <<<JS
-
+        
+            
             var clickCount = {$this->buildJsEChartsVar()}._clickCount;
             var params = {$params};
             var selected = {$this->buildJsGetSelectedRowFunction('params.data')};
-            
+
             clickCount++;
             {$this->buildJsEChartsVar()}._clickCount = clickCount;
+            var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
             if (clickCount === 1) {
-                if ({$this->buildJsEChartsVar()}._oldSelection === undefined || {$this->buildJsEChartsVar()}._oldSelection != selected ) {
-                    {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
-                }
-                {$this->buildJsSingleClick($params)} 
+                {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
+                {$this->buildJsSingleClick($params)}
                 setTimeout(function(){
                     clickCount = 0;
                     {$this->buildJsEChartsVar()}._clickCount = clickCount;
                     {$this->buildJsEChartsVar()}._doubleClkSelection = undefined;
                 }, 500);
             } else {
-                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined) {
+                if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined && {$this->buildJsEChartsVar()}._doubleClkSelection == selected) {
                     // do nothing
-                } else {                        
+                } else {
+                    {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
                     {$this->buildJsSingleClick($params)}
                 }
                 
             }
             
 JS;
-                        
+                    
     }
     
     /**
@@ -543,21 +607,21 @@ JS;
         {$this->buildJsEChartsVar()}.on('click', function(params){
             {$this->buildJsClicks('params')}
         });
-    
+        
 JS;
     }
-            
+    
     /**
      * javascript function to handle hover behavior for graph charts
      * when a node was selected and mouse moves over other nodes or not hovers anything,
      * the node still stays selected
-     * 
+     *
      * @return string
      */
     protected function buildJsOnGraphHoverHandler() : string
     {
         return <<<JS
-
+        
         {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
             var echart = {$this->buildJsEChartsVar()};
             if (echart._oldSelection != undefined) {
@@ -569,12 +633,12 @@ JS;
                         if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
                             return i
                         }
-                    }                    
+                    }
                 }();
                 {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', '0', 'index')}
             }
         });
-
+        
 JS;
     }
     
@@ -599,7 +663,7 @@ JS;
                     var markLineSet = false;
                     var markLineData;
                     var axisIndex;
-                    options.series.forEach((series) => {
+                    options.series.forEach(function(series){
                         //check if the series that gets hidden was showing markLine
                         //if so, save markLine.data and the axisIndex of series
                         if (params.name === series.name && series.markLine._show === true) {
@@ -611,7 +675,7 @@ JS;
                             }
                         }
                     });
-                    options.series.forEach((series) => {
+                    options.series.forEach(function(series){
                         //check if series is shown, if no markLine is set yet
                         //and if markLineData was saved, means if a markLine was show on the
                         //series that got hidden
@@ -644,7 +708,7 @@ JS;
     
     /**
      * Javascript function name for function that handles a single click on a chart
-     * 
+     *
      * @return string
      */
     protected function buildJsSingleClickFunctionName() : string
@@ -652,11 +716,11 @@ JS;
         return $this->buildJsFunctionPrefix() . 'singleClick';
     }
     
-   /**
-    * 
-    * @param string $params
-    * @return string
-    */
+    /**
+     *
+     * @param string $params
+     * @return string
+     */
     protected function buildJsSingleClick(string $params = '') : string
     {
         return $this->buildJsSingleClickFunctionName() . '(' . $params . ')';
@@ -664,7 +728,7 @@ JS;
     
     /**
      * javascript snippet to call an echarts action
-     * 
+     *
      * @param string $chart
      * @param string $type
      * @param string $seriesIndexJs
@@ -692,20 +756,20 @@ JS;
         {$dataIndex}
         {$name}
     });
-
+    
 JS;
     }
     /**
      * Javascript function body for function that handles a single click on a chart
-     * 
+     *
      * @param string $params
      * @return string
      */
     protected function buildJsSingleClickFunctionBody(string $params) : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
-            
+        switch ($this->getChartType()) {
+            case $this->chartTypes['CHART_TYPE_PIE']:
+                return <<<JS
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var echart = {$this->buildJsEChartsVar()};
@@ -714,47 +778,46 @@ JS;
             // if already slected piepart gets clicked again
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 // deselect the pie part
-                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect()}
             // if different part then already selected part gets clicked
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
-                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', null, 'name')}
+                name = {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "name")}
+                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
-                {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         // if no pie part was selected
         } else {
             // select clicked pie part
-            {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
+            {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
             {$this->buildJsSelect('dataRow')}
         }
-
-JS;
-                
-        } elseif ($this->isGraphChart() === true) {            
-            return <<<JS
-
         
+JS;
+            
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
+                return <<<JS
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
-        var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')}; 
-        if (params.dataType === "node") {          
+        var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
+        if (params.dataType === "node") {
             // if already a graph node part is selected do the following
             if (echart._oldSelection != undefined) {
                 // if already selected graph node gets clicked again
                 if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                     // deselected the node
                     {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
-                    {$this->buildJsSelect()}                        
+                    {$this->buildJsSelect()}
                 // if different node then already selected node gets clicked
                 } else {
                     // deselect old node
                     {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
-                    // select clicked node 
-                    {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}                       
+                    // select clicked node
+                    {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}
                     {$this->buildJsSelect('dataRow')}
                 }
             // if no node was selected
@@ -769,36 +832,45 @@ JS;
                 {$this->buildJsSelect()}
             }
         }
-
+        
 JS;
                 
-        } elseif ($this->isHeatmapChart()) {
-            
-            return '';
-        
-        } else {
-            return <<<JS
+            case $this->chartTypes['CHART_TYPE_HEATMAP']:
+                return '';
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
+                return '';
+            default:
+                return <<<JS
+
         var echart = {$this->buildJsEChartsVar()};
         var params = {$params};
         var dataRow = {$this->buildJsGetSelectedRowFunction('params.data')};
         var options = echart.getOption();
         var newOptions = {series: []};
-        options.series.forEach((series) => {
+        options.series.forEach(function(series){
             newOptions.series.push({markLine: {data: {}, _show: false}});
         });
         // if the chart is a barchart
         if (("_bar" in options.series[params.seriesIndex]) == true) {
+            var value = dataRow[options.series[params.seriesIndex].encode.y];
+            if (value === null) {
+                value = "null";
+            }
             newOptions.series[params.seriesIndex].markLine.data = [
                 {
-    				yAxis: dataRow[options.series[params.seriesIndex].encode.y]
+    				yAxis: value
     			}
             ];
             newOptions.series[params.seriesIndex].markLine._show = true;
         // if the chart is not a barchart
         } else {
+            var value = dataRow[options.series[params.seriesIndex].encode.x];
+            if (value === null) {
+                value = "null";
+            }
             newOptions.series[params.seriesIndex].markLine.data = [
                 {
-    				xAxis: dataRow[options.series[params.seriesIndex].encode.x]
+    				xAxis: value
     			}
             ];
             newOptions.series[params.seriesIndex].markLine._show = true;
@@ -809,7 +881,7 @@ JS;
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 {$this->buildJsSelect()}
                 newOptions = {series: []}
-                options.series.forEach((series) => {                    
+                options.series.forEach(function(series){
                     newOptions.series.push({markLine: {data: {}}, _show: false});
                 });
             } else {
@@ -820,9 +892,9 @@ JS;
             {$this->buildJsSelect('dataRow')}
         }
         echart.setOption(newOptions);
-    
-JS;
         
+JS;
+            
         }
     }
     
@@ -830,7 +902,7 @@ JS;
      * Function to handle a double click on a chart, when a button is bound to double click
      * Implementation for EasyUI Facade, other Facades probably have to overwrite this function with
      * their facade specific implementation
-     * 
+     *
      * @return string
      */
     protected function buildJsBindToClickHandler() : string
@@ -838,7 +910,7 @@ JS;
         $widget = $this->getWidget();
         $output = '';
         
-        if ($this->isGraphChart() === true) {
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_GRAPH']) {
             // click actions for graph charts
             // for now you can only call an action when clicking on a node
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
@@ -852,19 +924,19 @@ JS;
             });
             
 JS;
-                
+                    
             }
             /*if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[1]) {
-                $output .= <<<JS
-                
-            {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'edge'}, function(params){
-                {$this->buildJsEChartsVar()}._oldSelection = params.data
-                {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
-            });
-            
-JS;
-                
-            }*/
+             $output .= <<<JS
+             
+             {$this->buildJsEChartsVar()}.on('dblclick', {dataType: 'edge'}, function(params){
+             {$this->buildJsEChartsVar()}._oldSelection = params.data
+             {$this->getFacade()->getElement($dblclick_button)->buildJsClickFunction()}
+             });
+             
+             JS;
+             
+             }*/
             
             if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
                 $output .= <<<JS
@@ -876,10 +948,10 @@ JS;
                     params.event.event.preventDefault();
                 }
             });
-
+            
 JS;
             }
-
+            
             if ($leftclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_LEFT_CLICK)[0]) {
                 $output .= <<<JS
                 
@@ -889,12 +961,12 @@ JS;
                     {$this->getFacade()->getElement($leftclick_button)->buildJsClickFunction()}
                 }
             });
-
+            
 JS;
             }
             
         } else {
-        
+            
             // Double click actions for not graph charts
             // Currently only supports one double click action - the first one in the list of buttons
             if ($dblclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_DOUBLE_CLICK)[0]) {
@@ -908,7 +980,7 @@ JS;
 JS;
                     
             }
-                    
+            
             if ($leftclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_LEFT_CLICK)[0]) {
                 $output .= <<<JS
                 
@@ -920,7 +992,7 @@ JS;
 JS;
                     
             }
-                    
+            
             if ($rightclick_button = $widget->getButtonsBoundToMouseAction(EXF_MOUSE_ACTION_RIGHT_CLICK)[0]) {
                 $output .= <<<JS
                 
@@ -956,12 +1028,16 @@ JS;
             if ($s instanceof GraphChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support graph charts with multiple series!');
             }
+            if ($s instanceof SankeyChartSeries && count($series) > 1) {
+                throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support sankey charts with multiple series!');
+            }
             if ($s instanceof HeatmapChartSeries && count($series) > 1) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support heatmap charts with multiple series!');
             }
-            if (($s instanceof LineChartSeries || $s instanceof ColumnChartSeries) && count($series) > 1 && $s->isSplitByAttribute()) {
+            if ($s instanceof SplittableChartSeriesInterface && $s->isSplitByAttribute() && ! $this->canSplitSeries($s)) {
                 throw new FacadeUnsupportedWidgetPropertyWarning('The facade "' . $this->getFacade()->getAlias() . '" does not support split by attribute with multiple series!');
             }
+            
             $seriesConfig .= $this->buildJsChartSeriesConfig($s) . ',';
             if ($s instanceof iHaveVisualMapChartPart && $s->hasVisualMap() === true) {
                 $visualMapConfig .= $this->buildJsVisualMapConfig($s, $visualMapCount) . ',';
@@ -979,6 +1055,9 @@ JS;
         if ($visualMapConfig !== '') {
             $visualMapJs = "visualMap: [{$visualMapConfig}],";
         }
+        $colorScheme = $this->getWidget()->getColorScheme() ?? 'null';
+        $colors = $this->getColorSchemeColors();
+        $colorsJs = ! empty($colors) ? json_encode($colors) : 'null';
         return <<<JS
         
 {
@@ -988,7 +1067,32 @@ JS;
 	series: [{$seriesConfig}],
     {$visualMapJs}
     {$this->buildJsAxes()}
-    
+    color: function() {
+        // rotate colors for every chart widget to make them all look different
+        var iCnt = 0;
+        var oChart = {$this->buildJsEChartsVar()};
+        var oOpts = oChart.getOption() || {};
+        var aColors = ({$colorsJs} || oOpts.color) || [];
+        var jqCharts = $('.exf-chart');
+        var iColorScheme = $colorScheme;
+        
+        if (iColorScheme !== null) {
+            iCnt = iColorScheme;
+        } else {
+            for (var i = 0; i < jqCharts.length; i++) {
+                if (jqCharts[i] !== oChart.getDom()) {
+                    iCnt++;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        for (var i = 0; i < iCnt; i++) {
+            aColors.push(aColors.shift());
+        }
+        return aColors;
+    }()
 }
 
 JS;
@@ -1018,7 +1122,9 @@ JS;
             case $series instanceof GraphChartSeries:
                 return $this->buildJsGraphChart($series);
             case $series instanceof HeatmapChartSeries:
-                return $this->buildJsHeatmapChart($series); 
+                return $this->buildJsHeatmapChart($series);
+            case $series instanceof SankeyChartSeries:
+                return $this->buildJsSankeyChart($series);
         }
     }
     
@@ -1052,10 +1158,10 @@ JS;
         
         if ($series->getColor() !== null) {
             $color = <<<JS
-
+            
     lineStyle: { color: '{$series->getColor()}' },
     itemStyle: { color: '{$series->getColor()}' },
-
+    
 JS;
             
         } else {
@@ -1111,6 +1217,20 @@ JS;
         } else {
             $color = '';
         }
+        //TODO option to show label, define position of it, maybe rotation etc.
+        $label = '';
+        if ($series->getShowValues() === true) {
+            $label = <<<JS
+
+    label: {
+        show: true,
+        formatter: function(params) {
+            return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'params.value.' . $series->getValueDataColumn()->getDataColumnName())}
+        }
+    },
+         
+JS;
+        }
         
         return <<<JS
         
@@ -1124,6 +1244,7 @@ JS;
     xAxisIndex: {$series->getXAxis()->getIndex()},
     yAxisIndex: {$series->getYAxis()->getIndex()},
     {$color}
+    {$label}
     {$this->buildJsStack($series)}
     {$this->buildJsMarkLineProperties($series)}
     
@@ -1251,7 +1372,36 @@ JS;
         } elseif ($position == 'right') {
             $centerX = '30%';
         }
-        
+        $itemStyleJs = '';
+        if ($series->getTextDataColumn()->getCellWidget() instanceof iHaveColorScale) {
+            $semanticColors = $this->getFacade()->getSemanticColors();
+            $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+            $itemStyleJs = <<<JS
+
+    itemStyle: {
+        color: function(params) {
+            var oSemanticColors = $semanticColorsJs;
+            var sValue = params.data._key;
+            var sColor = {$this->buildJsScaleResolver('sValue', $series->getTextDataColumn()->getCellWidget()->getColorScale(), $series->getTextDataColumn()->getCellWidget()->isColorScaleRangeBased())};
+            if (sColor.startsWith('~')) {
+                sColor = oSemanticColors[sColor] || '';
+            } 
+            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
+                return sColor;
+            }
+            var oOptions = {$this->buildJsEChartsVar()}.getOption();
+            var aColors = oOptions.color;
+            var iColorsCount = aColors.length;
+            var iIndex = params.dataIndex;
+            while (iIndex >= iColorsCount) {
+                iIndex = iIndex - iColorsCount;
+            }
+            return aColors[iIndex];
+        }
+    },
+            
+JS;        
+        }
         $radius = $series->getInnerRadius();
         
         return <<<JS
@@ -1262,6 +1412,7 @@ JS;
     center: ['$centerX', '50%'],
     data: [],
     label: {$label},
+    {$itemStyleJs}
     //selectedMode: 'single',
     animationType: 'scale',
     animationEasing: 'backOut',
@@ -1270,7 +1421,7 @@ JS;
 
 JS;
     }
-        
+    
     /**
      * build graph series configuration
      *
@@ -1278,7 +1429,7 @@ JS;
      * @return string
      */
     protected function buildJsGraphChart(GraphChartSeries $series) : string
-    {        
+    {
         if ($series->getGraphType() === GraphChartSeries::GRAPH_TYPE_NETWORK) {
             $type = 'force';
             $curveness = '';
@@ -1295,15 +1446,16 @@ JS;
         }
         return <<<JS
         
-{    
+{
 	height: '50%',
 	name: 'Graph',
     type: 'graph',
+	hoverAnimation: true,
 	animationEasing: 'backOut',
 	layout: '{$type}',
     //autoCurveness: 20,
 	edgeSymbol: ['none', 'arrow'],
-	circular: { 
+	circular: {
 		rotateLabel: true,
 	},
 	force: {
@@ -1312,11 +1464,12 @@ JS;
 		repulsion: 500,
 		edgeLength: 120,
 		layoutAnimation: false,
-	}, 
+	},
     roam: true,
-    itemStyle: {     
+    focusNodeAdjacency: true,
+    itemStyle: {
         normal: {
-            color: '{$color}',           
+            color: '{$color}',
             borderColor: '#fff',
             borderWidth: 1,
         }
@@ -1345,31 +1498,53 @@ JS;
     
     /**
      * build heatmap series configuration
-     * 
+     *
      * @param HeatmapChartSeries $series
      * @return string
      */
     protected function buildJsHeatmapChart(HeatmapChartSeries $series) : string
     {
-        $series =  <<<JS
+        $show = "show: true,";
+        if ($series->getShowValues() === false) {
+            $show = "show: false,";
+        }
+        
+        $borders = '';
+        if ($series->getShowBorders()) {
+            $borders = <<<JS
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 1)'
+
+JS;
+        }
+        
+        return  <<<JS
         
         {
             name: '{$series->getCaption()}',
             _index: {$series->getIndex()},
             type: 'heatmap',
             label: {
-            normal: {
-                show: true,
-                formatter: (param) => {
-                    if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
-                        return 'N/A';
-                    } else {
-                        return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
-                    } 
-                   
+                normal: {
+                    {$show}
+                    formatter: function(param){
+                        if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
+                            return 'N/A';
+                        } else {
+                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}']
+                        }
+                    }
                 }
-            }
-        },
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            },
+            itemStyle: {
+                {$borders}
+            },
             coordinateSystem: 'cartesian2d',
             encode: {
                 x: '{$series->getXAxis()->getDataColumn()->getDataColumnName()}',
@@ -1378,10 +1553,35 @@ JS;
             xAxisIndex: {$series->getXAxis()->getIndex()},
             yAxisIndex: {$series->getYAxis()->getIndex()},
         }
-
+        
 JS;
-       
-        return $series;
+    }
+    
+    /**
+     *
+     * @param SankeyChartSeries $series
+     * @return string
+     */
+    protected function buildJsSankeyChart(SankeyChartSeries $series) : string
+    {
+        return <<<JS
+        
+        {
+            type: 'sankey',
+            focusNodeAdjacency: 'allEdges',
+            itemStyle: {
+                borderWidth: 1,
+                borderColor: '#aaa'
+            },
+            lineStyle: {
+                color: 'source',
+                curveness: 0.5
+            },
+            data: [],
+            links: []
+        }
+        
+JS;
     }
     
     /**
@@ -1391,7 +1591,7 @@ JS;
      */
     protected function buildJsAxes() : string
     {
-        if ($this->isPieChart() === true || $this->isGraphChart() === true) {
+        if ($this->getChartType() !== $this->chartTypes['CHART_TYPE_XY'] && $this->getChartType() !== $this->chartTypes['CHART_TYPE_HEATMAP']) {
             return '';
         }
         $countAxisRight = 0;
@@ -1403,7 +1603,7 @@ JS;
         $xZoomCount = 0;
         $yZoomCount = 0;
         foreach ($widget->getAxesX() as $axis) {
-            $xAxesJS .= $this->buildJsAxisProperties($axis);
+            $xAxesJS .= $this->buildJsAxisProperties($axis, 1);
             if ($axis->isZoomable() === true) {
                 $zoom .= $this->buildJsAxisZoom($axis, $xZoomCount);
                 $xZoomCount++;
@@ -1414,11 +1614,17 @@ JS;
                 $zoom .= $this->buildJsAxisZoom($axis, $yZoomCount);
                 $yZoomCount++;
             }
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
-                $countAxisLeft++;
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
+                if ($axis->isHidden() === false) {
+                    $countAxisLeft++;
+                }
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisLeft);
-            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
-                $countAxisRight++;
+            } elseif ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+                //only if the axis is shown the count to calculate the name gap need to be increased
+                if ($axis->isHidden() === false) {
+                    $countAxisRight++;
+                }
                 $yAxesJS .= $this->buildJsAxisProperties($axis, $countAxisRight);
             }
         }
@@ -1430,10 +1636,10 @@ dataZoom: [$zoom],
 
 JS;
     }
-        
+    
     /**
      * font family for axis labels
-     * 
+     *
      * @return string
      */
     protected function baseAxisLabelFont() : string
@@ -1443,7 +1649,7 @@ JS;
     
     /**
      * font size for axis labels
-     * 
+     *
      * @return string
      */
     protected function baseAxisLabelFontSize() : string
@@ -1460,10 +1666,28 @@ JS;
      */
     protected function buildJsAxisProperties(ChartAxis $axis, int $nameGapMulti = 1) : string
     {
+        
+        $axisType = $axis->getAxisType();
         if (! $axis->getHideCaption()) {
-            $caption = $axis->getCaption();            
+            $caption = $axis->getCaption();
         } else {
             $caption = '';
+        }
+        
+        if (! $axis->isHidden()) {
+            $axisPointer = <<<JS
+
+        axisPointer: {
+            label: {
+                formatter: function(params) {
+                    return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'params.value')}
+                },
+            },
+        },
+
+JS;
+        } else {
+            $axisPointer = '';
         }
         
         if ($axis->hasGrid() === false) {
@@ -1486,8 +1710,6 @@ JS;
         } else {
             $max = "max: '" . $axis->getMaxValue() . "',";
         }
-        $axisType = $axis->getAxisType();
-        
         if ($axis->getDimension() == Chart::AXIS_X) {
             $nameLocation = "nameLocation: 'center',";
         } else {
@@ -1495,7 +1717,8 @@ JS;
         }
         
         if ($axis->hasRotatedLabel() === true) {
-            $rotate = 'rotate: 45,';
+            $rotateValue = $axis->getRotateLabelsDegree();
+            $rotate = "rotate: {$rotateValue},";
         } else {
             $rotate = '';
         }
@@ -1507,7 +1730,7 @@ JS;
         axisTick: {
             alignWithLabel: false,
         },
-
+        
 JS;
         } else {
             $interval = '';
@@ -1515,11 +1738,11 @@ JS;
         }
         $maxInterval = '';
         /*if ($axisType === ChartAxis::AXIS_TYPE_TIME) {
-            $maxInterval = 'minInterval: 3600 * 1000 * 24*30,';
-        } else {
-            $maxInterval = '';
-        }*/
-        $axisTypeLower = mb_strtolower($axisType);        
+         $maxInterval = 'minInterval: 3600 * 1000 * 24*30,';
+         } else {
+         $maxInterval = '';
+         }*/
+        $axisTypeLower = mb_strtolower($axisType);
         $position = mb_strtolower($axis->getPosition());
         if ($axis->getDimension() == Chart::AXIS_Y) {
             $nameGap = $this->baseAxisNameGap()* $nameGapMulti;
@@ -1538,35 +1761,40 @@ JS;
             $onZero = '';
         }
         
+        $isNumericAxisJs = $axis->getDataColumn()->getDataType() instanceof NumberDataType ? 'true' : 'false';
+        
+        //initially hide all axes, so they are only shown after calculation for the gaps and everything is done
         return <<<JS
         
     {
         id: '{$axis->getIndex()}',
+        show: false,
         name: '{$caption}',
         {$nameLocation}
         {$inverse}
         type: '{$axisTypeLower}',
-        splitLine: { show: $grid },
-        splitArea: {show: $gridArea},
+        splitLine: {
+            show: $grid
+        },
+        splitArea: {
+            show: $gridArea
+        },
         position: '{$position}',
-        show: false,
         nameGap: {$nameGap},
         axisLabel: {
             fontFamily: '{$this->baseAxisLabelFont()}',
             fontSize: {$this->baseAxisLabelFontSize()},
             formatter: function(a) {
+                var bIsNumber = $isNumericAxisJs;
+                if (bIsNumber && Number.isInteger(a)){
+                    return a;
+                }
                 return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'a')}
             },
             {$rotate}
             {$interval}
         },
-        axisPointer: {
-            label: {
-                formatter: function(params) {
-                return {$this->buildJsLabelFormatter($axis->getDataColumn(), 'params.value')}
-                },
-            },
-        },
+        {$axisPointer}
         {$axisTick}
         {$onZero}
         {$min}
@@ -1603,7 +1831,7 @@ JS;
                 $offset += $this->baseZoomOffset();
             }
             $JsOffset = "bottom: {$offset},";
-        } elseif ($axis->getDimension() === Chart::AXIS_Y) {            
+        } elseif ($axis->getDimension() === Chart::AXIS_Y) {
             $offset += 25;
             $JsOffset = "right: {$offset},";
         } else {
@@ -1639,12 +1867,12 @@ JS;
     },
     
 JS;
-
+        
     }
     
     /**
      * build the configuration for the VisualMap part graph (for now only used in heatmap graphs)
-     * 
+     *
      * @param ChartSeries $series
      * @return string
      */
@@ -1653,10 +1881,10 @@ JS;
         $visualMap = $series->getVisualMap();
         if ($visualMap === null) {
             return '';
-        }        
+        }
         
         $type = '';
-        $splitNumber = '';        
+        $splitNumber = '';
         $dragable = '';
         if ($visualMap->getUseColorGroups() === null) {
             $type = VisualMapChartPart::VISUAL_MAP_TYPE_CONTINUOUS;
@@ -1669,20 +1897,20 @@ JS;
         $show = 'true';
         if ($visualMap->getShowScaleFilter() === false) {
             $show = 'false';
-        }        
+        }
         $inRange = '';
         if (count($visualMap->getColors()) > 0) {
             $colors = json_encode($visualMap->getColors());
             $inRange = "inRange: {color: {$colors}},";
-        }            
+        }
         if ($count === 0) {
             $left = "'center'";
         } else {
             $left = $this->buildJsGridMarginLeft() + $count * $this->baseVisualMapOffset();
         }
-                
+        
         return <<<JS
-
+        
         {
             type: '{$type}',
             dimension: '{$series->getValueDataColumn()->getDataColumnName()}',
@@ -1706,9 +1934,9 @@ JS;
             left: $left,
             top: 'bottom'
         }
-
-JS;
         
+JS;
+            
     }
     
     /**
@@ -1752,7 +1980,7 @@ JS;
     
     /**
      * build basic MarkArea configuration (MarkAreas are not used yet)
-     * 
+     *
      * @param ChartSeries $series
      * @return string
      */
@@ -1856,20 +2084,35 @@ JS;
         if ($this->getWidget()->getData()->hasUidColumn()) {
             $uidField =  $this->getWidget()->getData()->getUidColumn()->getDataColumnName();
         }
-        if ($this->isPieChart() === true) {
-            $js = $this->buildJsRedrawPie('newSelection');
-        } elseif ($this->isGraphChart() === true) {
-            $js = $this->buildJsRedrawGraph('newSelection');
-        } else {
-            $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
-        }       
+        switch ($this->getChartType()) {
+            case $this->chartTypes['CHART_TYPE_PIE']:
+                $js = $this->buildJsRedrawPie('newSelection', 'rowData');
+                break;
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
+                $js = $this->buildJsRedrawGraph('newSelection', 'rowData');
+                break;
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
+                $js = $this->buildJsRedrawSankey('newSelection', 'rowData');
+                break;
+            default:
+                $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex', 'rowData');
+        }
+        /*if ($this->isPieChart() === true) {
+         $js = $this->buildJsRedrawPie('newSelection');
+         } elseif ($this->isGraphChart() === true) {
+         $js = $this->buildJsRedrawGraph('newSelection');
+         } else {
+         $js = $this->buildJsRedrawXYChart('newSelection', 'seriesIndex');
+         }*/
         
         return <<<JS
         
     var rowData = $dataJs;
     var echart = {$this->buildJsEChartsVar()}
     var newSelection = undefined;
-    var uidField = '{$uidField}' || undefined ;
+    var uidField = '{$uidField}' || undefined;
+    //save the old selection to check later if after redraw it is still selected and therefor no onChangeScripts need to be called
+    echart._redrawSelection = echart._oldSelection;   
     if (echart._oldSelection != undefined) {
         if (uidField != undefined) {
             newSelection = function (){
@@ -1880,17 +2123,19 @@ JS;
                 }
                 return undefined
             }();
-        } else {
+        } else {       
             newSelection = function (){
-                for (var i = 0; i < rowData.length; i++) {
-                    if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
-                        return rowData[i];
+                    for (var i = 0; i < rowData.length; i++) {
+                        if ({$this->buildJsRowCompare('rowData[i]', 'echart._oldSelection')}) {
+                            return rowData[i];
+                        }
                     }
-                }
-                return undefined
-            }();
+                    return undefined
+                }();
         }
     }
+    // save the row that was selected before redraw, need later to check that its a redraw and selection didnt change (or changed)
+    echart._prevRedrawSelection = undefined;
     var options = echart.getOption();
     var seriesIndex = undefined
     if (options != undefined) {
@@ -1912,20 +2157,20 @@ JS;
     echart._dataset = rowData;
     //hide overlay message
     {$this->buildJsMessageOverlayHide()}
-    //build and set basic chart config and options 
+    //build and set basic chart config and options
     {$this->buildJsEChartsVar()}.setOption({$this->buildJsChartConfig()})
-    //build and set dataset,config and options depending on chart type    
+    //build and set dataset,config and options depending on chart type
     $js
-
+    
 JS;
     }
-
+    
     /**
      * javascript snippet to calculate offsets for axis and grid and draw Charts with X and Y axes
-     * 
+     *
      * @return string
      */
-    protected function buildJsRedrawXYChart(string $selection = 'undefined', string $series = 'undefined', string $dataJs = 'rowData') : string
+    protected function buildJsRedrawXYChart(string $selectionJs = 'undefined', string $seriesIndexMarkedJs = 'undefined', string $dataJs = 'rowData') : string
     {
         $axesOffsetCalc = '';
         $axesJsObjectInit = '';
@@ -1933,18 +2178,37 @@ JS;
         //for X-Axis its based on the AxisIndex, for Y-Axis it's based on the length of the longest data value
         foreach ($this->getWidget()->getAxes() as $axis) {
             if ($axis->isHidden() === true) {
+                //add an object to the axis array also for hidden axes
+                //that is necessary as hidden axes are also in the options from echart, so we need to have the same
+                //ammount of axes in the new options when redrawing and calculatign the gaps, so we merge the
+                //options of an axis with the correct axis and not a different (maybe hidden) one
+                $axesJsObjectInit .= <<<JS
+                
+    axes["{$axis->getDataColumn()->getDataColumnName()}"] = {
+        dimension: "{$axis->getDimension()}",
+        show: false
+    };
+    
+JS;
                 continue;
             }
             
             $xAxisIndex = 0;
             if ($axis->getDimension() === Chart::AXIS_X) {
                 $gap = ++$xAxisIndex . ' * 20 * 2 - 15';
-                //for axes that have rotated label gap has to be calculated differently                
+                //for axes that have rotated label gap has to be calculated differently
                 if ($axis->hasRotatedLabel() === true) {
-                    //rotation is 45 degress, therefore the gap should be the square root of
-                    //2 times the square of the text length
-                    $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';
-                }           
+                    $degree = $axis->getRotateLabelsDegree();
+                    if (abs($degree) === 45) {
+                        //rotation is 45 degress, therefore the gap should be the square root of
+                        //2 times the square of the text length
+                        $gap = 'canvasCtxt.measureText(val).width / Math.sqrt(2) + 15';                        
+                    } else {
+                        //rotation should be 90 degress,
+                        //therefore the gap should be the text length
+                        $gap = 'canvasCtxt.measureText(val).width';
+                    }
+                }
             } else {
                 //$gap = 'len * (8 - Math.floor(len / 16))';
                 $gap = 'canvasCtxt.measureText(val).width + 10';
@@ -1967,12 +2231,12 @@ JS;
             $postion = mb_strtolower($axis->getPosition());
             //if the axis has a caption the base gap is based on that length, else it's 0
             $baseGap = 0;
-            if (! $axis->getHideCaption()) {                
+            if (! $axis->getHideCaption()) {
                 if ($axis->getDimension() === Chart::AXIS_Y) {
                     $baseGap = strlen($axis->getCaption())*3.5;
-                }                
+                }
                 $caption = 'true';
-            } else {                
+            } else {
                 $caption = 'false';
             }
             if ($axis->hasRotatedLabel() === true) {
@@ -1992,7 +2256,8 @@ JS;
         position: "{$postion}",
         index: "{$axis->getIndex()}",
         name: "{$axis->getDataColumn()->getDataColumnName()}",
-        rotation : {$rotated},
+        rotation: {$rotated},
+        show: true
     };
     
 JS;
@@ -2005,21 +2270,37 @@ JS;
             }
         } else {
             if ($widget->getAxesX()[0]->isZoomable() !== null) {
-                $zoomSet = 'yes';                
+                $zoomSet = 'yes';
             }
         }
-        
-        if ($this->getWidget()->getSeries()[0] instanceof SplittableChartSeriesInterface && $this->getWidget()->getSeries()[0]->isSplitByAttribute()) {
-            $splitByDataColumnName = "'{$this->getWidget()->getSeries()[0]->getSplitByDataColumn()->getDataColumnName()}'";
-        } else {
-            $splitByDataColumnName = "undefined";
+        $firstSeries = $widget->getSeries()[0];
+        $setDatasetJs = "{$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})";
+        if ($firstSeries instanceof SplittableChartSeriesInterface && $this->canSplitSeries($firstSeries)) {
+            if ($firstSeries->isSplitByAttribute()) {
+                $splitByDataColumnName = "'{$firstSeries->getSplitByDataColumn()->getDataColumnName()}'";
+            } else {
+                $splitByDataColumnName = "undefined";
+            }
+            $setDatasetJs = <<<JS
+            
+    var split = {$splitByDataColumnName};
+    if (split === undefined) {
+        {$this->buildJsSplitCheck($firstSeries, 'split', $dataJs)}
+    }
+    if (split === undefined) {
+        {$setDatasetJs}
+    }
+    else {
+        {$this->buildJsSplitSeries($firstSeries, 'split', $dataJs)}
+    }
+    
+JS;
         }
+        
         
         
         return <<<JS
-
-    
-    
+        
     // initalize axis array
     var axes = [];
     {$axesJsObjectInit}
@@ -2029,8 +2310,8 @@ JS;
     var len = 0;
     var canvasCtxt = $('<canvas>').get(0).getContext('2d');
     canvasCtxt.font = "{$this->baseAxisLabelFontSize()}" + "px " + "{$this->baseAxisLabelFont()}";
-
-
+    
+    
     // for each data row calculate the offset for the axis bound to a data value
     {$dataJs}.forEach(function(row){
         {$axesOffsetCalc}
@@ -2048,41 +2329,44 @@ JS;
     // for every visible axis, set the correct offset and that it is visible
     for (var i in axes) {
         axis = axes[i];
-        if (axis.gap === 0 && {$dataJs}.length > 0) {   
-            {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
-        }
-        //if the caption for axis is shown the gap for x Axes needs to be
-        // set based on the axis.gap (means the space needed to show axis values)
-        if (axis.rotation === true && axis.caption === true) { 
-            var nameGap = axis.gap + {$this->baseAxisNameGap()};
+        if (axis.show === false) {
             newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],
-                nameGap: axis.gap,               
-                show: true
             });
-            offsets[axis.position] += nameGap;
         } else {
-            newOptions[axis.dimension + 'Axis'].push({
-                offset: offsets[axis.position],               
-                show: true
-            });
-            if (axis.caption === true) {
-                offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
-            } else {
-                offsets[axis.position] += axis.gap;
+            if (axis.gap === 0 && {$dataJs}.length > 0) {
+                {$this->buildJsShowMessageError("'{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.ECHARTS.AXIS_NO_DATA')} \"' + axis.name + '\"'")}
             }
+            //if the caption for axis is shown the gap for x Axes needs to be
+            // set based on the axis.gap (means the space needed to show axis values)
+            if (axis.rotation === true && axis.caption === true) {
+                var nameGap = axis.gap + {$this->baseAxisNameGap()};
+                newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
+                    offset: offsets[axis.position],
+                    nameGap: axis.gap,
+                });
+                offsets[axis.position] += nameGap;
+            } else {
+                newOptions[axis.dimension + 'Axis'].push({
+                    show: true,
+                    offset: offsets[axis.position],
+                });
+                if (axis.caption === true) {
+                    offsets[axis.position] += axis.gap + {$this->baseAxisNameGap()};
+                } else {
+                    offsets[axis.position] += axis.gap;
+                }
+            }
+            
+            // increase the offset for the next axis at the same position by the gap calculated for this axis
+            /*if (nameGap === 0) {
+                offsets[axis.position] += axis.gap;
+            } else {
+                offsets[axis.position] += nameGap;
+            }
+            
+            offsets[axis.position] += axis.gap*/
         }
-        
-        // increase the offset for the next axis at the same position by the gap calculated for this axis        
-        /*if (nameGap === 0) {
-            offsets[axis.position] += axis.gap;
-        } else {
-            offsets[axis.position] += nameGap;
-        }
-
-        offsets[axis.position] += axis.gap*/
-        
-        
     }
     
     // the grid margin at each side is the sum of each calculated axis gap for this side + the base margin
@@ -2105,55 +2389,61 @@ JS;
                 var zoom = [{$this->buildJsAxisZoom($widget->getAxesX()[0])}]
                 gridmargin['bottom'] += {$this->baseZoomOffset()}
             }
-            newOptions.dataZoom = zoom            
+            newOptions.dataZoom = zoom
         }
     }
-
-    newOptions.grid = gridmargin;    
+    
+    newOptions.grid = gridmargin;
     {$this->buildJsEChartsVar()}.setOption(newOptions);
     
-    var split = {$splitByDataColumnName};
-    if (split === undefined) {
-        {$this->buildJsSplitCheck()}
-    } 
-    if (split === undefined) {
-        {$this->buildJsEChartsVar()}.setOption({dataset: {source: {$dataJs}}})
-    }
-    else {
-        {$this->buildJsSplitSeries()}
-    }
+    {$setDatasetJs}
 
-    var selection = {$selection};
-    if (selection != undefined) {
-        if ({$series} != undefined) {
-            var params = {seriesIndex: seriesIndex};
+    if ({$selectionJs} != undefined) {
+        if ({$seriesIndexMarkedJs} != undefined) {
+            var params = {seriesIndex: {$seriesIndexMarkedJs}}
         } else {
             var params = {seriesIndex: 0};
         }
-        params.data = selection;
+        params.data = {$selectionJs};
         {$this->buildJsSingleClick('params')}
+    } else {
+        {$this->buildJsSelect()}
     }
     
     
 JS;
     }
-       
+    
+    /**
+     * Function to check if a series can be splitted or not
+     *
+     * @param ChartSeries $series
+     * @return bool
+     */
+    protected function canSplitSeries(ChartSeries $series) : bool
+    {
+        return $series instanceof SplittableChartSeriesInterface && $series->getIndex() === 0 && count($series->getChart()->getSeries()) === 1;
+    }
+    
+    
     /**
      * js snippet to check if data should be split
      * only supports single series
-     * 
+     *
      * @return string
      */
-    protected function buildJsSplitCheck(string $dataJs = 'rowData') : string
+    protected function buildJsSplitCheck(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
-        $widget = $this->getWidget();
-        if (($widget->getSeries()[0]) instanceof BarChartSeries) {
-            $axisKey = $widget->getAxesY()[0]->getDataColumn()->getDataColumnName();
+        if (! $series instanceof XYChartSeriesInterface) {
+            return '';
+        }
+        if (($series) instanceof BarChartSeries) {
+            $axisKey = $series->getYAxis()->getDataColumn()->getDataColumnName();
         } else {
-            $axisKey = $widget->getAxesX()[0]->getDataColumn()->getDataColumnName();
+            $axisKey = $series->getXAxis()->getDataColumn()->getDataColumnName();
         }
         return <<<JS
-    
+        
     var keyValues = []
     var doubleValues = []
     //compare all X-Axes Key values in each row with each other
@@ -2188,7 +2478,7 @@ JS;
     }
     var dataKeys = {$dataJs}.length === 0 ? [] : Object.keys({$dataJs}[0]);
     // for each object key in dataRow[0] check if value for that key in all objects in doubleValues array are equal
-    // if all values for that key are equal, dataset will be split at that key 
+    // if all values for that key are equal, dataset will be split at that key
     for (var j = 0; j < dataKeys.length; j++) {
         var valueMatch = false
         for (i = 1; i < doubleValues.length; i++) {
@@ -2200,27 +2490,64 @@ JS;
             }
         }
         if (valueMatch === true) {
-            split = dataKeys[j]
+            {$splitJs} = dataKeys[j]
             break
         }
     }
-
+    
 JS;
-        
+            
     }
     
     /**
-    * js snippet to split the dataset and configure series for each dataset part
-    *
-    * @return string
-    */
-    protected function buildJsSplitSeries(string $dataJs = 'rowData') : string
+     * js snippet to split the dataset and configure series for each dataset part
+     *
+     * @return string
+     */
+    protected function buildJsSplitSeries(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
+        $baseColor = 'undefined';
+        if ($series instanceof iHaveColor) {
+            if ($series->getColor()) {
+                $baseColor = $series->getColor();
+            }
+        }
+        $useGradients = 'true';
+        if ($series->getSplitWithColorGradients() === false) {
+            $useGradients = 'false';
+        }
+        
+        $nameFormatterJs = 'newNames[i];';
+        $customCol = 'false';
+        $semanticColors = $this->getFacade()->getSemanticColors();
+        $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        if ($series->isSplitByAttribute()) {
+            $col = $series->getSplitByDataColumn();
+            $nameFormatterJs = <<<JS
+
+        function(value) {
+                    return {$this->buildJsLabelFormatter($col, 'value')}
+                }(newNames[i]);
+
+JS;
+            if ($col->getCellWidget() instanceof iHaveColorScale) {
+                $customCol = 'true';
+                $colJs = <<<JS
+
+sColor = {$this->buildJsScaleResolver('value', $col->getCellWidget()->getColorScale(), $col->getCellWidget()->isColorScaleRangeBased())};
+JS;
+                
+            }
+        
+        }
         return <<<JS
-    
+        
+    var baseColor = '{$baseColor}';
     var splitDatasetObject = {};
+    var useGradients = {$useGradients};
+    var customCol = {$customCol};
     for (var i=0; i < {$dataJs}.length; i++) {
-        var p = {$dataJs}[i][split];
+        var p = {$dataJs}[i][{$splitJs}];
         if (!splitDatasetObject[p]) {
             splitDatasetObject[p] = [];
         }
@@ -2228,29 +2555,96 @@ JS;
     }
     var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i]);
     var newNames = Object.keys(splitDatasetObject);
-    var baseSeries = {$this->buildJsChartSeriesConfig($this->getWidget()->getSeries()[0])}
+    var formatNames = [];
+    for (var i = 0; i < newNames.length; i++) {
+        var formatted = {$nameFormatterJs}
+        formatNames.push(exfTools.string.htmlUnescape !== undefined ? exfTools.string.htmlUnescape(formatted) : formatted);
+    }
+    //newNames = formatNames;
+    if (baseColor == 'undefined') {
+        var options = {$this->buildJsEChartsVar()}.getOption();
+        baseColor = options['color'][{$series->getIndex()}]
+    }
+    var baseSeries = {$this->buildJsChartSeriesConfig($series)}
     var currentSeries = JSON.parse(JSON.stringify(baseSeries));
-    
-    currentSeries.name = newNames[0];
+    currentSeries.name = formatNames[0];
     currentSeries.datasetIndex = 0;
+    var gradient;
+    var colorsRgb;
+    var sColor;
+    var value;
+    if (useGradients == true) {
+        gradient = tinygradient([baseColor, 'white']);
+        colorsRgb = gradient.rgb(newNames.length+1);
+        sColor = '#' + colorsRgb[0].toHex()
+        currentSeries.itemStyle = {
+            color: sColor
+        }
+    } else if (customCol == true) {
+        var oSemanticColors = $semanticColorsJs;
+        value = newNames[0];
+        $colJs
+        if (sColor.startsWith('~')) {
+            sColor = oSemanticColors[sColor] || '';
+        }
+        if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
+            currentSeries.itemStyle = {
+                color: sColor
+            }
+        }
+    }
+    var formatter = undefined;
+    if (baseSeries.label !== undefined && baseSeries.label.formatter !== undefined) {
+        formatter = baseSeries.label.formatter
+        currentSeries.label.formatter = formatter;
+    }
+    var markLineFormatter = undefined;
+    if (baseSeries.markLine !== undefined && baseSeries.markLine.label !== undefined && baseSeries.markLine.label.formatter !== undefined) {
+        markLineFormatter = baseSeries.markLine.label.formatter
+        currentSeries.markLine.label.formatter = markLineFormatter;
+    }
     var newSeriesArray = [currentSeries];
-
-    for (var i = 1; i < newNames.length; i++) {
+    
+    for (var i = 1; i < formatNames.length; i++) {
         currentSeries = JSON.parse(JSON.stringify(baseSeries));
-        currentSeries.name = newNames[i];
+        currentSeries.name = formatNames[i];
         currentSeries.datasetIndex = i;
-        currentSeries.markLine = baseSeries.markLine;
+        if (useGradients == true) {        
+            sColor = '#' + colorsRgb[i].toHex();
+            currentSeries.itemStyle = {
+                color: sColor
+            }
+        } else if (customCol == true) {
+            var oSemanticColors = $semanticColorsJs;
+            value = newNames[i];
+            $colJs
+            if (sColor.startsWith('~')) {
+                sColor = oSemanticColors[sColor] || '';
+            }
+            if (sColor !== '' && sColor !== undefined && sColor !== 'undefined') {
+                currentSeries.itemStyle = {
+                    color: sColor
+                }
+            }
+        }
+        if (formatter !== undefined) {
+            currentSeries.label.formatter = formatter;
+        }
+        if (markLineFormatter !== undefined) {
+            currentSeries.markLine.label.formatter = markLineFormatter;
+        }
         newSeriesArray.push(currentSeries);
     }
     var dataset = [{source: splitDatasetArray[0]}]
-    for (var i = 1; i < newNames.length; i++) {
+    for (var i = 1; i < formatNames.length; i++) {
         var set = {};
         set.source = splitDatasetArray[i];
         dataset.push(set);
     }
     var newOptions = {
         dataset: dataset,
-        series: newSeriesArray }
+        series: newSeriesArray
+    }
     {$this->buildJsEChartsVar()}.setOption(newOptions)
     
 JS;
@@ -2268,9 +2662,10 @@ JS;
     var arrayLength = {$dataJs}.length;
     var chartData = [];
     for (var i = 0; i < arrayLength; i++) {
-        var item = { 
-            value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} , 
-            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} 
+        var item = {
+            value: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getValueDataColumn()->getDataColumnName()} ,
+            name: {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "{$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}")} ,
+            _key: {$dataJs}[i].{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         };
         chartData.push(item);
     }
@@ -2283,21 +2678,22 @@ JS;
             data: {$dataJs}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
         }
     })
-    var selection = {$selection};
-    if (selection != undefined) {
+    if ({$selection} != undefined) {
         var index = function(){
             for (var i = 0; i < chartData.length; i++) {
-                if (chartData[i].name === selection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
+                if (chartData[i].name === {$selection}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
                     return i
                 }
-            }                    
+            }
         }()
         var params = {seriesIndex: 0, dataIndex: index};
         params.data = {name: chartData[index].name};
         {$this->buildJsSingleClick('params')}
+    }  else {
+        {$this->buildJsSelect()}
     }
     
-
+    
 JS;
         
     }
@@ -2309,11 +2705,24 @@ JS;
      */
     protected function buildJsRedrawGraph(string $selection = 'undefined', string $dataJs = 'rowData')
     {
+        /* @var $series \exface\Core\Widgets\Parts\Charts\GraphChartSeries */
         $series = $this->getWidget()->getSeries()[0];
+        
+        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
+        // if relation direction is "regular" left object is source node, right object is target node for that relation
+        $getSourceAndTargetFromRowJs = <<<JS
+        
+    		source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
+    		target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
+    		
+JS;
+        if ($series->hasDirectionColumn()) {
+            $getSourceAndTargetFromRowJs = "if (oRow.{$series->getDirectionDataColumn()->getDataColumnName()} == 'regular') {" . $getSourceAndTargetFromRowJs . "}";
+        }
         
         if ($series->hasCategories() === true) {
             $categories = <<<JS
-
+            
         var existingCategory = false;
         var categoriesIndex = undefined;
         for (var j = 0; j<categories.length; j++) {
@@ -2329,14 +2738,14 @@ JS;
             var nodeCategory = categories.length-1;
         }
 JS;
-               
+            
         } else {
             $categories = <<<JS
         if (categories.length === 0) {
             categories.push({name: 'Nodes'});
         }
         var nodeCategory = categories.length-1;
-
+        
 JS;
         }
         return <<<JS
@@ -2346,39 +2755,42 @@ JS;
     var node = {};
     var link = {};
     var categories = [];
+    var oRow = [];
+    var source, target, existingNodeLeft, existingNodeRight, existingLink;
     
     // for each data object add a node that's not already existing to the nodes array
     // and a link that's not already existing to the links array
-    for (var i = 0; i < {$dataJs}.length; i++) {    	
-		var existingNodeLeft = false;
-        var existingNodeRight = false;
+    for (var i = 0; i < {$dataJs}.length; i++) {
+        oRow = {$dataJs}[i];
+		existingNodeLeft = false;
+        existingNodeRight = false;
         for (var j = 0; j<nodes.length; j++) {
             // if the right object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === oRow.{$series->getRightObjectDataColumn()->getDataColumnName()}) {
 				existingNodeRight = true;
                 nodes[j].symbolSize += 1;
                 nodes[j].value += 1;
 			}
             // if the left object already exists at node, increase the symbol size of that node
-			if (nodes[j].id === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+			if (nodes[j].id === oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
 				existingNodeLeft = true;
                 nodes[j].symbolSize += 1;
                 nodes[j].value += 1;
 			}
 		}
         // if the left and right object are the same and not yet existing as node, only add the left object to the nodes
-        if ({$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()} === {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
+        if (oRow.{$series->getRightObjectDataColumn()->getDataColumnName()} === oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()}) {
             existingNodeRight = true;
         }
-
+        
         //build categories array and set category for the node
-        {$categories}        
+        {$categories}
         
         // if the left object is not existing as node yet, add it
 		if (existingNodeLeft === false ) {
 			node = {
-				id: {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()},
-				name: {$dataJs}[i].{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
+				id: oRow.{$series->getLeftObjectDataColumn()->getDataColumnName()},
+				name: oRow.{$series->getLeftObjectNameDataColumn()->getDataColumnName()},
                 symbolSize: 10,
 				value: 10,
                 category: nodeCategory,
@@ -2388,32 +2800,29 @@ JS;
         // if the right object is not existing as node yet, add it
 		if (existingNodeRight === false ) {
 			node = {
-				id: {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()},
-				name: {$dataJs}[i].{$series->getRightObjectNameDataColumn()->getDataColumnName()},
+				id: oRow.{$series->getRightObjectDataColumn()->getDataColumnName()},
+				name: oRow.{$series->getRightObjectNameDataColumn()->getDataColumnName()},
 				symbolSize: 10,
 				value: 10,
                 category: nodeCategory,
 			};
-		nodes.push(node);
+	        nodes.push(node);
 		}
-        // we only check relations in regular direction	to data, so arrows are always in the right direction in the graph
-    	// if relation direction is "regular" left object is source node, right object is target node for that relation
-        if ({$dataJs}[i].{$series->getDirectionDataColumn()->getDataColumnName()} == "regular") {
-    		var source = {$dataJs}[i].{$series->getLeftObjectDataColumn()->getDataColumnName()};
-    		var target = {$dataJs}[i].{$series->getRightObjectDataColumn()->getDataColumnName()};
-        }
-        var existingLink = false;
+		
+        {$getSourceAndTargetFromRowJs}
+        
+        existingLink = false;
         // for every relation check if it's not already existing in links array
         for (var j = 0; j<links.length; j++) {
-            if (links[j].id === {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()}) {
+            if (links[j].id === oRow.{$series->getRelationDataColumn()->getDataColumnName()}) {
                 existingLink = true;
             }
         }
         // if relation is not existing yet as link, add it to links array
         if (existingLink === false) {
             link = {
-        		id: {$dataJs}[i].{$series->getRelationDataColumn()->getDataColumnName()},
-        		name: {$dataJs}[i].{$series->getRelationNameDataColumn()->getDataColumnName()},
+        		id: oRow.{$series->getRelationDataColumn()->getDataColumnName()},
+        		name: oRow.{$series->getRelationNameDataColumn()->getDataColumnName()},
         		source: source,
         		target: target,
         	};
@@ -2428,27 +2837,161 @@ JS;
             categories: categories,
     	}],
     });
-    var selection = {$selection};
-    if (selection != undefined) {
+    if ({$selection} != undefined) {
         var index = function(){
             for (var i = 0; i < nodes.length; i++) {
-                if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
+                if (nodes[i].id === {$selection}.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
                     return i
                 }
-            }                    
+            }
         }()
         var params = {seriesIndex: 0, dataIndex: index, dataType: 'node'};
-        params.data = {id: nodes[index].id}; 
+        params.data = {id: nodes[index].id};
         {$this->buildJsSingleClick('params')}
-        //echart._oldSelection = selection;
+    } else {
+        {$this->buildJsSelect()}
     }
+    
+JS;
+    }
+    
+    /**
+     * javascript snippet to transform data to match data required for sankey charts and draw sankey chart
+     * TODO implement selection keeping on redraw
+     *
+     * @return string
+     */
+    protected function buildJsRedrawSankey(string $selection = 'undefined', string $dataJs = 'rowData')
+    {
+        /* @var $series \exface\Core\Widgets\Parts\Charts\SankeyChartSeries */
+        $series = $this->getWidget()->getSeries()[0];
+        $linkCaption = 'undefined';
+        if ($series->hasLinkCaptionColumn()) {
+            $linkCaption = $series->getLinkCaptionAttributeDataColumn()->getDataColumnName();
+        }
+        return <<<JS
 
+        var targetIdColumn = '{$series->getTargetIdAttributeDataColumn()->getDataColumnName()}';
+        var targetCaption = '{$series->getTargetCaptionAttributeDataColumn()->getDataColumnName()}';
+        var targetLevel = '{$series->getTargetLevelAttributeDataColumn()->getDataColumnName()}';
+        var sourceIdColumn = '{$series->getSourceIdAttributeDataColumn()->getDataColumnName()}';
+        var sourceCaption = '{$series->getSourceCaptionAttributeDataColumn()->getDataColumnName()}';
+        var sourceLevel = '{$series->getSourceLevelAttributeDataColumn()->getDataColumnName()}';        
+        var linkCaption = '{$linkCaption}';
+        
+        var nodes = {};
+        var links = [];        
+        var echart = {$this->buildJsEChartsVar()};
+        var options = echart.getOption();
+        var colors = options['color'];
+        var minDepth;
+        {$dataJs}.forEach(function(row) {           
+            var sourceID = row[sourceIdColumn];
+            var targetID = row[targetIdColumn];
+            var depth;
+            // wrap captions after 32 characers
+            row[sourceCaption] = (row[sourceCaption] || '').replace(/(?![^\\n]{1,32}$)([^\\n]{1,32})\\s/g, '$1\\n');
+            row[targetCaption] = (row[targetCaption] || '').replace(/(?![^\\n]{1,32}$)([^\\n]{1,32})\\s/g, '$1\\n');
+            row[sourceLevel] = parseFloat(row[sourceLevel]);
+            row[targetLevel] = parseFloat(row[targetLevel]);
+            // if targetID and sourceID are set, add nodes
+            if (targetID != '' && sourceID != '') {
+                // if source doesnt exist as node yet, add it
+                if (nodes[sourceID] === undefined) {
+                    nodes[sourceID] = {
+                        "name": row[sourceCaption],
+                        "depth": row[sourceLevel],
+                        "itemStyle": {
+                            "color": colors[row[sourceLevel]]
+                        },
+                        "_caption": row[sourceCaption]
+                    };
+                    if (minDepth === undefined || row[sourceLevel] < minDepth) {
+                        minDepth = row[sourceLevel];
+                    }
+                }
+                // if target doesnt exist as node yet, add it
+                if (nodes[targetID] === undefined) {
+                    nodes[targetID] = {
+                        "name": row[targetCaption],
+                        "depth": row[targetLevel],
+                        "itemStyle": {
+                            "color": colors[row[targetLevel]]
+                        },
+                        "_caption": row[targetCaption]
+                    };
+                    if (minDepth === undefined || row[targetLevel] < minDepth) {
+                        minDepth = row[targetLevel];
+                    }
+                }                
+                
+            }
+            if (sourceID !== targetID && nodes[sourceID] && nodes[targetID]) {           
+                var depthSource = nodes[sourceID]["depth"];
+                var depthTarget = nodes[targetID]["depth"];
+                //if target nodes depth higher or equal (should not happen) to source node depth add the link
+                if (depthTarget >= depthSource) {
+                    if (depthTarget === depthSource && ! isNaN(depthTarget)) {
+                        depthTarget = depthTarget + 0.5;
+                        nodes[targetID].depth = depthTarget;
+                    }
+                    var link = {
+                        source: row[sourceCaption],
+                        target: row[targetCaption],
+                        value: 1,
+                        lineStyle: {
+                            color: colors[depthSource],
+                            opacity: 0.3
+                        }
+                    }
+                    if (linkCaption != 'undefined') {
+                        link._caption = row[linkCaption];
+                    }
+                    links.push(link);
+                }
+            
+                //if target node depth is higher than source node depth, add link but switch target and source 
+                if (depthTarget < depthSource) {
+                    var link = {
+                        source: row[targetCaption],
+                        target: row[sourceCaption],
+                        value: 1,
+                        lineStyle: {
+                            color: colors[depthSource]
+                        }
+                    }
+                    if (linkCaption != 'undefined') {
+                        link._caption = row[linkCaption];
+                    }
+                    links.push(link);
+                }
+            }
+        });
+
+        if (minDepth > 0) {
+            for (var i in nodes) {
+                nodes[i].depth = nodes[i].depth - minDepth;
+            }
+        }
+        
+        var nodesArray = [];
+        for (var prop in nodes) {
+            nodesArray.push(nodes[prop]);
+        }
+        echart.setOption({
+        	series: [{
+        		data: nodesArray,
+                links: links
+        	}],
+        });
 
 JS;
     }
     
     /**
-     * function to build overlay and show given message
+     * Returns a JS snippet (with a trailing `;`) to show an overlay with a given message
+     *
+     * The method can be overridden in facade-specific implementations.
      *
      * @param string $message
      * @return string
@@ -2456,22 +2999,22 @@ JS;
     protected function buildJsMessageOverlayShow(string $message) : string
     {
         return <<<JS
-        
-$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
+{$this->buildJsMessageOverlayHide()}      
+$({$this->buildJsEChartsVar()}.getDom()).prepend($('<div class="{$this->getId()}_exf-chart-message" style="position: absolute; padding: 10px; width: 100%; text-align: center;">{$message}</div>'));
 
 JS;
     }
     
     /**
-     * function to hide overlay message
+     * Returns a JS snippet to hide overlay message
      *
      * @return string
      */
     protected function buildJsMessageOverlayHide() : string
     {
         return <<<JS
-if ($(".exf-chart-message").length > 0) {
-    $(".exf-chart-message").remove();
+if ($(".{$this->getId()}_exf-chart-message").length > 0) {
+    $(".{$this->getId()}_exf-chart-message").remove();
 }
 
 JS;
@@ -2524,7 +3067,7 @@ JS;
             if ($axis->isZoomable() === true) {
                 $count++;
             }
-            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT) {
+            if ($axis->getPosition() === ChartAxis::POSITION_RIGHT && $axis->isHidden() === false) {
                 $rightAxis = true;
             }
         }
@@ -2578,7 +3121,7 @@ JS;
     {
         $leftAxis = false;
         foreach ($this->getWidget()->getAxesY() as $axis) {
-            if ($axis->getPosition() === ChartAxis::POSITION_LEFT) {
+            if ($axis->getPosition() === ChartAxis::POSITION_LEFT && $axis->isHidden() === false) {
                 $leftAxis = true;
             }
         }
@@ -2591,8 +3134,27 @@ JS;
         return  $margin;
     }
     
+    protected function getChartType() : string
+    {
+        $s = $this->getWidget()->getSeries()[0];
+        switch (true) {
+            case $s instanceof PieChartSeries:
+            case $s instanceof DonutChartSeries:
+            case $s instanceof RoseChartSeries:
+                return $this->chartTypes['CHART_TYPE_PIE'];
+            case $s instanceof GraphChartSeries:
+                return $this->chartTypes['CHART_TYPE_GRAPH'];;
+            case $s instanceof HeatmapChartSeries:
+                return $this->chartTypes['CHART_TYPE_HEATMAP'];
+            case $s instanceof SankeyChartSeries:
+                return $this->chartTypes['CHART_TYPE_SANKEY'];
+            default:
+                return $this->chartTypes['CHART_TYPE_XY'];
+        }
+    }
+    
     /**
-     * function to check if graph is a graph series
+     * function to check if pie is a pie series
      *
      * @return bool
      */
@@ -2631,41 +3193,96 @@ JS;
     /**
      * build basic tooltip configuration
      *
+     * Fix for tooltip position taken from here: https://github.com/apache/echarts/issues/5004
+     *
      * @return string
      */
     protected function buildJsChartPropertyTooltip() : string
     {
-        if ($this->isPieChart() === true) {
-            return <<<JS
+        // Best-fit tooltip position to avoid overflowing the chart container
+        $fnPositionJs = <<<JS
+function(canvasMousePos, params, tooltipDom, rect, sizes) {
+        var echartsDom = tooltipDom.closest('.exf-chart');
+        var margin = 2; // How far away from the mouse should the tooltip be
+        var overflowMargin = 5; // If no satisfactory position can be found, how far away from the edge of the window should the tooltip be kept
+        
+        var canvasRect = tooltipDom.parentElement.getElementsByTagName("canvas")[0].getBoundingClientRect();
+        
+        // The mouse coordinates relative to the whole window
+        // The first parameter to the position function is the mouse position relative to the canvas
+        var mouseX = canvasMousePos[0] + canvasRect.x;
+        var mouseY = canvasMousePos[1] + canvasRect.y;
+        
+        // The width and height of the tooltip dom element
+        var tooltipWidth = sizes.contentSize[0];
+        var tooltipHeight = sizes.contentSize[1];
+        
+        // Start by placing the tooltip top and right relative to the mouse position
+        var xPos = mouseX + margin;
+        var yPos = mouseY - margin - tooltipHeight;
+        
+        if (echartsDom) {
+            // The tooltip is overflowing past the right edge of the window
+            if (Math.abs(echartsDom.clientWidth - canvasMousePos[0]) < tooltipWidth) {
+                // Attempt to place the tooltip to the left of the mouse position
+                xPos = mouseX - margin - tooltipWidth;
+                
+                // The tooltip is overflowing past the left edge of the window
+                if (xPos <= 0)
+                    // Place the tooltip a fixed distance from the left edge of the window
+                    xPos = overflowMargin;
+            }
             
+            // The tooltip is overflowing past the top edge of the window
+            if (yPos <= 0) {
+                // Attempt to place the tooltip to the bottom of the mouse position
+                yPos = mouseY + margin;
+                
+                // The tooltip is overflowing past the bottom edge of the window
+                if (yPos + tooltipHeight >= echartsDom.clientHeight)
+                    // Place the tooltip a fixed distance from the top edge of the window
+                    yPos = overflowMargin;
+            }
+        }
+        
+        // Return the position (converted back to a relative position on the canvas)
+        return [xPos - canvasRect.x, yPos - canvasRect.y];
+    }
+JS;
+        switch ($this->getChartType()) {
+            case $this->chartTypes['CHART_TYPE_PIE']:
+                return <<<JS
+                
 {
 	trigger: 'item',
 	formatter: "{b} : {c} ({d}%)",
     confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } elseif ($this->isGraphChart() === true) {
-            return <<<JS
-
+            case $this->chartTypes['CHART_TYPE_GRAPH']:
+                return <<<JS
+                
 {
 	formatter: function(params) {
 		return params.data.name
 	},
     confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } elseif ($this->isHeatmapChart()) {
-            $series = $this->getWidget()->getSeries()[0];
-            $xAxisCaption = $series->getXAxis()->getCaption();
-            $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
-            $yAxisCaption = $series->getYAxis()->getCaption();
-            $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
-            $valueName = $series->getValueDataColumn()->getDataColumnName();
-            $valueCaption = $series->getValueDataColumn()->getCaption();
-            return <<<JS
-
+            case $this->chartTypes['CHART_TYPE_HEATMAP']:
+                $series = $this->getWidget()->getSeries()[0];
+                $xAxisCaption = $series->getXAxis()->getCaption();
+                $xAxisName = $series->getXAxis()->getDataColumn()->getDataColumnName();
+                $yAxisCaption = $series->getYAxis()->getCaption();
+                $yAxisName = $series->getYAxis()->getDataColumn()->getDataColumnName();
+                $valueName = $series->getValueDataColumn()->getDataColumnName();
+                $valueCaption = $series->getCaption();
+                return <<<JS
+                
 {
 	formatter: function(params) {
         var xAxisName = '{$xAxisName}';
@@ -2683,7 +3300,7 @@ JS;
         var yFormatter = function(a) {
                 return {$this->buildJsLabelFormatter($series->getYAxis()->getDataColumn(), 'a')}
             };
-        yAxisValue = yFormatter(yAxisValue);        
+        yAxisValue = yFormatter(yAxisValue);
         var value = params.data[valueName];
         var valueFormatter = function(a) {
                 return {$this->buildJsLabelFormatter($series->getValueDataColumn(), 'a')}
@@ -2697,12 +3314,28 @@ JS;
 		return tooltip;
 	},
     confine: true,
+    position: $fnPositionJs,
 },
 
 JS;
-        } else {
-            return <<<JS
-            
+            case $this->chartTypes['CHART_TYPE_SANKEY']:
+                return <<<JS
+                
+{
+	formatter: function(params) {
+        if (params.data._caption) {
+		  return params.data._caption;
+        }
+        return params.name;
+	},
+    confine: true,
+    position: $fnPositionJs,
+},
+
+JS;
+            default:
+                return <<<JS
+                
 {
 	trigger: 'axis',
     confine: true,
@@ -2711,13 +3344,10 @@ JS;
 	axisPointer: {
 		type: 'cross'
 	},
-    position: function (point) {
-      //postion directly at cursor
-      return [point[0]+5, point[1]+5];
-    },
+    position: $fnPositionJs,
     formatter: function (params) {
         // params is ordered by value Axis (x Axis normally, y Axis for bar charts)
-        var options = {$this->buildJsEChartsVar()}.getOption();                       
+        var options = {$this->buildJsEChartsVar()}.getOption();
         // build table with header based on first value axis and it's label
         var stacked = true;
         for (i = 0; i < options.series.length; i++) {
@@ -2730,38 +3360,42 @@ JS;
         var tooltipPart = '';
         var currentAxis = params[0].axisIndex;
         // for each object in params build a table row
-        params.forEach(({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}) => {
+        params.forEach(function({axisIndex, axisValueLabel, marker, value, seriesIndex, seriesName}){
+            var data, Index, formatter, value;
             // get the correct formatter and the data for this object in params array
             if (("_bar" in options.series[seriesIndex]) == true) {
-                var data = options.series[seriesIndex].encode.x;
-                var Index = options.series[seriesIndex].xAxisIndex;
-                var formatter = options.xAxis[Index].axisLabel.formatter;              
+                data = options.series[seriesIndex].encode.x;
+                Index = options.series[seriesIndex].xAxisIndex;
+                formatter = options.xAxis[Index].axisLabel.formatter;
             } else {
-                var data = options.series[seriesIndex].encode.y;
-                var Index = options.series[seriesIndex].yAxisIndex;
-                var formatter = options.yAxis[Index].axisLabel.formatter;                
+                data = options.series[seriesIndex].encode.y;
+                Index = options.series[seriesIndex].yAxisIndex;
+                formatter = options.yAxis[Index].axisLabel.formatter;
             }
-            var value = formatter(value[data]);
+            value = formatter(value[data]);
+            if (value === null || value === undefined) {
+                value = '';
+            }
             // if this params object is bound to another axis as the ones before, build a new header with new label
             if (stacked === true) {
                 if (axisIndex !== currentAxis) {
                     tooltip = tooltip + tooltipPart + '<tr><th colspan = "3">' + axisValueLabel + '</th></tr>';
                     currentAxis = axisIndex;
                 }
-                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>' + tooltipPart;
+                tooltipPart ='<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td style="text-align: right">'+ value + '</td></tr>' + tooltipPart;
             } else {
                 if (axisIndex !== currentAxis) {
                     tooltipPart += '<tr><th align = "left" colspan = "3">' + axisValueLabel + '</th></tr>';
                     currentAxis = axisIndex;
                 }
-                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td>'+ value + '</td></tr>';
-                }
+                tooltip += tooltipPart + '<tr><td>'+ marker + '</td><td>' + seriesName + '</td><td style="text-align: right">'+ value + '</td></tr>';
+            }
         });
         if (stacked === true) {
             tooltip += tooltipPart + '</tbody></table>';
         } else {
             tooltip += '</tbody></table>';
-        }        
+        }
         return tooltip;
     },
 },
@@ -2796,16 +3430,15 @@ JS;
             $padding = 'padding: [20,10,20,10],';
         }
         
-        if ($this->isLegendHidden() === true) {
+        /*if ($this->isLegendHidden() === true) {
             $show = 'show: false,';
         } else {
             $show = '';
-        }
+        }*/
         return <<<JS
         
 {
 	type: 'scroll',
-    {$show}
     {$padding}
     {$positionJs}
     
@@ -2835,7 +3468,7 @@ JS;
     }
     
     /**
-     * build echarts js function that shows loading symbol 
+     * build echarts js function that shows loading symbol
      *
      * @return string
      */
@@ -2857,8 +3490,8 @@ JS;
     /**
      * build function to get value of a selected data row
      *
-     * @param unknown $column
-     * @param unknown $row
+     * @param string $column
+     * @param int $row
      * @throws FacadeOutputError
      * @return string
      */
@@ -2882,16 +3515,26 @@ JS;
         
         return <<<JS
         
-                function(){
+                (function(){
                     var data = '';
-                    if ({$this->buildJsEChartsVar()}._oldSelection != undefined) {
-                        var selectedRow = {$this->buildJsEChartsVar()}._oldSelection;
+                    var oChart = {$this->buildJsEChartsVar()};
+                    if (oChart === undefined) {
+                        return '';
+                    }
+                    try {
+                        var oldSelection = {$this->buildJsEChartsVar()}._oldSelection;
+                    } catch (e) {
+                        console.warn('Cannot get value of chart:', e);
+                        return '';
+                    }
+                    if (oldSelection != undefined) {
+                        var selectedRow = oldSelection;
                         if (selectedRow && '{$key}' in selectedRow) {
                             data = selectedRow["{$key}"];
                         }
                     }
                 return data;
-                }()
+                })()
                 
 JS;
     }
@@ -2905,14 +3548,30 @@ JS;
     {
         $widget = $this->getWidget();
         $rows = '';
-        if (is_null($action)) {
-            $rows = "{$this->buildJsEChartsVar()}._dataset";
-        } elseif ($action instanceof iReadData) {
-            // If we are reading, than we need the special data from the configurator
-            // widget: filters, sorters, etc.
-            return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+        
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
-            $rows = "({$this->buildJsEChartsVar()}._oldSelection ? [{$this->buildJsEChartsVar()}._oldSelection] : [])";
+            $customMode = null;
+        }
+        
+        switch (true) {
+            case $customMode === DataButton::INPUT_ROWS_ALL:
+            case $action === null:
+                $rows = "{$this->buildJsEChartsVar()}._dataset";
+                break;
+                
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
+            case $action instanceof iReadData:
+                // If we are reading, than we need the special data from the configurator
+                // widget: filters, sorters, etc.
+                return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            default:
+                $rows = "({$this->buildJsEChartsVar()}._oldSelection ? [{$this->buildJsEChartsVar()}._oldSelection] : [])";
         }
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($rows ? ", rows: " . $rows : '') . "}";
     }
@@ -2945,14 +3604,15 @@ JS;
     protected function isLegendHidden() : bool
     {
         $widget = $this->getWidget();
-        if ($widget->getLegendPosition() !== null) {
-            return false;
-        }
         if ($widget->getHideLegend() === true) {
             return true;
         }
+        if ($widget->getLegendPosition() !== null) {
+            return false;
+        }
+        
         $firstSeries = $widget->getSeries()[0];
-        if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false)) {
+        if (count($widget->getSeries()) === 1 && (($firstSeries instanceof PieChartSeries) === false || $firstSeries instanceof GraphChartSeries === false || $firstSeries instanceof SankeyChartSeries === false)) {
             if ($firstSeries->getValueDataColumn() === $firstSeries->getValueAxis()->getDataColumn()){
                 if ($firstSeries instanceof SplittableChartSeriesInterface) {
                     if ($firstSeries->isSplitByAttribute()) {
@@ -2967,4 +3627,16 @@ JS;
         return false;
     }
     
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getColorSchemeColors() : array
+    {
+        $config = $this->getFacade()->getConfig();
+        if ($config->hasOption('WIDGET.CHART.COLORS')) {
+            return $config->getOption('WIDGET.CHART.COLORS')->toArray();
+        }
+        return [];
+    }
 }

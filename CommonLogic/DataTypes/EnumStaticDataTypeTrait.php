@@ -66,7 +66,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function isValidStaticValue($value)
     {
-        return in_array($value, static::getValuesStatic(), true);
+        return in_array($value, static::getValuesStatic());
     }
     
     /**
@@ -92,28 +92,43 @@ trait EnumStaticDataTypeTrait {
         throw new BadMethodCallException("No static method or enum constant '$name' in class " . get_called_class());
     }
     
-    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::cast()
+     */
     public static function cast($value)
     {
-        if (static::isValueEmpty($value) === true) {
-            // Let the parent data type (e.g. string or number) handle empty values
-            return parent::cast($value);
-        }
-        
-        if ($value === EXF_LOGICAL_NULL) {
-            return $value;
-        }
-        
+        // Cast according to the base type - e.g. number or string
         $value = parent::cast($value);
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         
-        if (! static::isValidStaticValue($value)){
+        // Check if the casted value is part of the enum
+        $valueInEnum = static::isValidStaticValue($value);
+        
+        // Convert all sorts of empty values to NULL except if they are explicitly
+        // part of the enumeration: e.g. an empty string should become null if the
+        // enumeration does not include the empty string explicitly.
+        // TODO #null-or-NULL does the NULL constant need to pass casting?
+        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $valueInEnum === false) {
+            return null;
+        }
+        
+        if ($valueInEnum === false){
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
         return $value;
     }    
     
-    public function isValidValue($value)
+    /**
+     * 
+     * @param mixed $value
+     * @return bool
+     */
+    public function isValidValue($value) : bool
     {
         return static::isValidStaticValue($value);
     }
@@ -125,7 +140,7 @@ trait EnumStaticDataTypeTrait {
      */
     public function getValues()
     {
-        return $this->getValuesStatic();
+        return $this::getValuesStatic();
     }
     
     /**
@@ -159,12 +174,37 @@ trait EnumStaticDataTypeTrait {
         return $this->getValues();
     }
     
-    public function getLabelOfValue($value = null) : string
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValues()
+     */
+    public function getLabelOfValue($value = null) : ?string
     {
         $value = $value ?? $this->getValue();
-        if ($value === null) {
-            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        $labels = $this->getLabels();
+        $label = $labels[$value] ?? null;
+        if ($label === null) {
+            foreach ($labels as $key => $label) {
+                if (strcasecmp($value, $key) === 0) {
+                    return $label;
+                }
+            }
         }
-        return $this->getLabels()[$value];
+        return $label;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $value = parent::format($value);
+        if ($value === '') {
+            return '';
+        }
+        return $this->getLabelOfValue($value) ?? $value;
     }
 }

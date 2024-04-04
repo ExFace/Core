@@ -2,6 +2,10 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\DataTypes\JsonSchemaValidationError;
+use JsonSchema\Validator;
 
 class JsonDataType extends TextDataType
 {
@@ -52,19 +56,23 @@ class JsonDataType extends TextDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\StringDataType::cast()
      */
-    public static function cast($string)
+    public static function cast($stringOrArrayOrObject)
     {
-        $string = trim($string);
+        if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
+            return $stringOrArrayOrObject;
+        }
         
-        if ($string === '') {
+        $stringOrArrayOrObject = trim($stringOrArrayOrObject);
+        
+        if ($stringOrArrayOrObject === '') {
             return '{}';
         }
         
-        if ($string === null) {
+        if ($stringOrArrayOrObject === null) {
             return null;
         }
         
-        return $string;
+        return $stringOrArrayOrObject;
     }
     
     public static function isValueEmpty($string) : bool
@@ -77,51 +85,68 @@ class JsonDataType extends TextDataType
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\StringDataType::parse()
      */
-    public function parse($string)
+    public function parse($stringOrArrayOrObject)
     {
-        if ($string === '') {
+        if ($stringOrArrayOrObject === '') {
             return '{}';
         }
         
-        if ($string === null) {
+        if ($stringOrArrayOrObject === null) {
             return null;
         }
         
         try {
-            $array = $this::decodeJson($string);
-        } catch (\Throwable $e) {
+            if (is_array($stringOrArrayOrObject) || $stringOrArrayOrObject instanceof \stdClass) {
+                $instance = $stringOrArrayOrObject;
+            } else {
+                $instance = $this::decodeJson($stringOrArrayOrObject, false);
+            }
+        } catch (DataTypeCastingError $e) {
             throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+        } catch (\Throwable $e) {
+            throw $this->createValidationError('Invalid value "' . $stringOrArrayOrObject . '" for data type ' . $this->getAliasWithNamespace() . '!', null, $e);
         }
-        return $this::encodeJson($array, $this->getPrettify());
+        return $this::encodeJson($instance, $this->getPrettify());
     }
-
+    
     /**
+     * Decodes a JSON string into a PHP array (default!) or \stdClass object.
      * 
-     * @param string $string
+     * WARNING: handling a complex JSON as an array may have side-effects:
+     * empty objects `{}` will not be different from empty arrays `[]`, thus
+     * transforming a string into an array and back may not work as expected!
+     * 
+     * @param string $anything
+     * @param bool $toArray
      * @throws DataTypeCastingError
-     * @return array
+     * @return array|\stdClass|mixed
      */
-    public static function decodeJson(string $string): array
+    public static function decodeJson(string $anything, bool $toArray = true)
     {
-        $array = json_decode($string, true);
-        if (is_array($array)) {
-            return $array;
+        $arrayOrObj = json_decode($anything, ($toArray === true ? true : null));
+        if ($arrayOrObj === null && $anything !== null) {
+            throw new DataTypeCastingError('Cannot parse string "' . substr($anything, 0, 50) . '" as JSON: ' . json_last_error_msg() . ' in JSON decoder!');
         }
-        throw new DataTypeCastingError('Cannot parse string "' . substr($string, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+        return $arrayOrObj;
     }
 
     /**
      * 
-     * @param array $json
-     * @param boolean $prettify
+     * @param mixed $json
+     * @param bool $prettify
      * @return string
      */
-    public static function encodeJson(array $json, $prettify = false): string
+    public static function encodeJson($anything, bool $prettify = false): string
     {
+        $options = null;
         if ($prettify === true) {
-            $params = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
+            $options = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
         }
-        return json_encode($json, $params);
+        $result = json_encode($anything, $options);
+        if ($result === false && $anything !== false) {
+            throw new DataTypeCastingError('Cannot encode "' . gettype($anything) . '" as JSON: ' . json_last_error_msg() . ' in JSON encoder!');
+        }
+        return $result;
     }
     
     /**
@@ -147,5 +172,87 @@ class JsonDataType extends TextDataType
         return $this;
     }
     
+    /**
+     * 
+     * @param array $json
+     * @param string $path
+     * @throws RuntimeException
+     * @return mixed
+     */
+    public static function filterXPath($json, string $path)
+    {
+        switch (true) {
+            case is_array($json):
+                $array = $json;
+                break;
+            case $json instanceof \stdClass:
+                $array = (array) $json;
+                break;
+            case $json === null:
+            case $json === '':
+                return $json;
+            case is_string($json):
+                $array = json_decode($json, true);
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot apply XPath filter to JSON: not a valid JSON!');
+        }
+        
+        return ArrayDataType::filterXPath($array, $path);
+    }
+    
+    /**
+     * Returns a pretty printed string for the given JSON, array or stdClass object.
+     * 
+     * @param string|array|object $json
+     * @return string
+     */
+    public static function prettify($json) : string
+    {
+        if (is_string($json)) {
+            $obj = json_decode($json);
+        } else {
+            $obj = $json;
+        }
+        return json_encode($obj, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * Validate json against a specified json schema. 
+     * 
+     * @param string|array|\stdClass $stringOrObjectOrArray
+     * @param string|array|\stdClass $stringOrObjectOrArray
+     * @param string $schema
+     * @throws JsonSchemaValidationError
+     * @return bool
+     */
+    public static function validateJsonSchema($json, $schemaJson) : bool
+    {
+    	$convertIntoStdClass = function ($mixedJson) {    		
+    		switch (true){
+    			case is_string($mixedJson):
+    				return json_decode($mixedJson);
+    			case is_object($mixedJson) && $mixedJson instanceof \stdClass:
+    				return $mixedJson;
+    			case is_array($mixedJson):
+    				return (object)$mixedJson;
+    		}
+    	};
+    	
+    	$validator = (new Validator());
+    	$validator->validate($convertIntoStdClass($json), $convertIntoStdClass($schemaJson));
+    	
+    	
+        if (count($validator->getErrors()) !== 0) {
+        	throw new JsonSchemaValidationError(
+        		$validator->getErrors(), 
+        		'Given json does not match given schema',
+        		null,
+        	    null,
+                'Invalid json schema',
+        	    $json);
+        }
+        
+        return $validator->isValid();
+    }
 }
-?>

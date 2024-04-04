@@ -11,9 +11,36 @@ class UxonObject implements \IteratorAggregate
 {
     private $array = [];
     
+    private $childUxons = [];
+    
     public function __construct(array $properties = [])
     {
-        $this->array = $properties;
+        $this->array = $this->stripComments($properties);
+    }
+    
+    /**
+     * 
+     * @param array $properties
+     * @return array
+     */
+    protected function stripComments(array $properties) : array
+    {
+        $skip = false;
+        foreach ($properties as $prop => $val) {
+            $prefix = mb_substr($prop, 0, 2);
+            switch ($prefix) {
+                case '//': unset($properties[$prop]); break;
+                case '/*': unset($properties[$prop]); $skip = true; break;
+                case '*/':  unset($properties[$prop]); $skip = false; break;
+            }
+            if ($skip === true) {
+                unset($properties[$prop]);
+            }
+            if (is_array($val) && array_key_first($val) === '/*' && array_key_last($val) === '*/') {
+                unset($properties[$prop]);
+            }
+        }
+        return $properties;
     }
 
     /**
@@ -39,14 +66,19 @@ class UxonObject implements \IteratorAggregate
      */
     public function toJson($prettify = false)
     {
+        // IDE Add `| JSON_UNESCAPED_UNICODE` here?
         $options = $prettify ? JSON_PRETTY_PRINT : null;
+        // Force number to be numbers and not numeric strings to make sure
+        // the JSON looks the same on different systems (e.g. Microsoft IIS would
+        // otherwise use numbers and Apache - numeric strings)
+        $options = $options | JSON_NUMERIC_CHECK;
         return json_encode($this->toArray(), $options);
     }
 
     /**
      * Creates a UXON object from a JSON string.
      * 
-     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
      * @param string $uxon      
      * @param int $normalizeKeyCase      
@@ -59,7 +91,7 @@ class UxonObject implements \IteratorAggregate
             return static::fromArray($array, $normalizeKeyCase);
         } else {
             if ($uxon !== '' && $uxon !== null) {
-                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!', null, null, $uxon);
             }
             return new self();
         }
@@ -68,10 +100,7 @@ class UxonObject implements \IteratorAggregate
     /**
      * Creates a UXON object from an array.
      * 
-     * The second argument can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
-     * 
-     * The resulting UXON will be an array itself, but alle elements will get transformed
-     * to UXON objects.
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
      * @param array $array   
      * @param int $normalizeKeyCase         
@@ -110,8 +139,15 @@ class UxonObject implements \IteratorAggregate
      */
     public function getProperty($name)
     {
-        $val = $this->array[$name];
-        return is_array($val) ? new self($val) : $val;
+        $val = $this->array[$name] ?? null;
+        if (is_array($val) === true) {
+            $child = $this->childUxons[$name] ?? null;
+            if (null === $child) {
+                $child = $this->childUxons[$name] = new self($val);
+            } 
+            return $child;
+        }
+        return $val;
     }
 
     /**
@@ -121,7 +157,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function hasProperty($name)
     {
-        return isset($this->array[$name]);
+        return array_key_exists($name, $this->array);
     }
 
     /**
@@ -154,7 +190,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function search($value)
     {
-        return array_search($value, $this->array);
+        return array_search($value, $this->array, true);
     }
 
     /**
@@ -181,11 +217,19 @@ class UxonObject implements \IteratorAggregate
      */
     public function setProperty($property_name, $scalar_or_uxon)
     {
-        $this->array[$property_name] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[$property_name] = $this->normalizeValue($scalar_or_uxon);
+        if (array_key_exists($property_name, $this->childUxons)) {
+            unset($this->childUxons[$property_name]);
+        }
         return $this;
     }
     
-    protected function sanitizePropertyValue($scalar_or_uxon)
+    /**
+     * 
+     * @param mixed $scalar_or_uxon
+     * @return string|number|bool|array
+     */
+    protected function normalizeValue($scalar_or_uxon)
     {
         return $scalar_or_uxon instanceof UxonObject ? $scalar_or_uxon->toArray() : $scalar_or_uxon;
     }
@@ -204,13 +248,18 @@ class UxonObject implements \IteratorAggregate
         } elseif (is_scalar($this->array[$property_name])){
             throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
         }
-        $this->array[$property_name][] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[$property_name][] = $this->normalizeValue($scalar_or_uxon);
+        
+        if (array_key_exists($property_name, $this->childUxons)) {
+            unset($this->childUxons[$property_name]);
+        }
+        
         return $this;
     }
     
     public function append($scalar_or_uxon)
     {
-        $this->array[] = $this->sanitizePropertyValue($scalar_or_uxon);
+        $this->array[] = $this->normalizeValue($scalar_or_uxon);
         return $this;
     }
     
@@ -226,10 +275,27 @@ class UxonObject implements \IteratorAggregate
      * @param UxonObject $extend_by_uxon            
      * @return UxonObject
      */
-    public function extend(UxonObject $extend_by_uxon)
+    public function extend(UxonObject $extend_by_uxon) : UxonObject
     {
-        // before new UxonObject: return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
         return new self(array_replace_recursive($this->array, $extend_by_uxon->toArray()));
+    }
+    
+    /**
+     * Returns a new UXON object containing only properties matching the provided array
+     * 
+     * @param string[] $properties
+     * @return UxonObject
+     */
+    public function extract(array $properties) : UxonObject
+    {
+        $old = $this->toArray();
+        $new = [];
+        foreach ($properties as $key) {
+            if (array_key_exists($key, $old)) {
+                $new[$key] = $old[$key];
+            }
+        }
+        return new self($new);
     }
 
     /**
@@ -239,7 +305,7 @@ class UxonObject implements \IteratorAggregate
      *
      * @return UxonObject
      */
-    public function copy()
+    public function copy() : self
     {
         return new self($this->array);
     }
@@ -250,7 +316,7 @@ class UxonObject implements \IteratorAggregate
      *
      * @see \IteratorAggregate::getIterator()
      */
-    public function getIterator()
+    public function getIterator() : \Traversable
     {
         return new \ArrayIterator($this->getPropertiesAll());
     }
@@ -264,11 +330,25 @@ class UxonObject implements \IteratorAggregate
     public function unsetProperty($name)
     {
         unset($this->array[$name]);
+        if (array_key_exists($name, $this->childUxons)) {
+            unset($this->childUxons[$name]);
+        }
         return $this;
     }
 
-    public function toArray()
+    /**
+     * Converts the UXON object ot an array optionally normalizing key case
+     * 
+     * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
+     * 
+     * @param int $normalizeKeyCase
+     * @return array
+     */
+    public function toArray(int $normalizeKeyCase = null)
     {
+        if ($normalizeKeyCase !== null) {
+            return array_change_key_case($this->array, $normalizeKeyCase);
+        }
         return $this->array;
     }
 
@@ -319,6 +399,15 @@ class UxonObject implements \IteratorAggregate
         }
         
         return true;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getPropertyNames() : array
+    {
+        return array_keys($this->array);
     }
     
     public function __get($name)

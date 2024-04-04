@@ -15,11 +15,12 @@ interface ModelBuilderInterface
      * read from the data source as the total row counter (that is those created and
      * those skipped as duplicates in total). 
      * 
-     * @param MetaObjectInterface $meta_object    
+     * @param MetaObjectInterface $meta_object  
+     * @param string $addressPattern  
      * @return DataSheetInterface
      *
      */
-    public function generateAttributesForObject(MetaObjectInterface $meta_object) : DataSheetInterface;
+    public function generateAttributesForObject(MetaObjectInterface $meta_object, string $addressPattern = '') : DataSheetInterface;
     
     /**
      * Generates meta objects for the specified app from all data addresses existing 

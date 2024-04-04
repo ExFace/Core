@@ -16,24 +16,6 @@ trait HtmlImageTrait
     use JqueryAlignmentTrait;
     
     /**
-     * 
-     * @see AbstractJqueryElement::buildHtml()
-     */
-    public function buildHtml()
-    {
-        return $this->buildHtmlImage($this->getWidget()->getUri());
-    }
-
-    /**
-     *
-     * @see AbstractJqueryElement::buildJs()
-     */
-    public function buildJs()
-    {
-        return '';
-    }
-    
-    /**
      * Returns the <img> HTML tag with the given source.
      * 
      * @param string $src
@@ -57,7 +39,7 @@ trait HtmlImageTrait
                 $style .= 'float: right';
         }
         
-        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" />';
+        $output = '<img src="' . $src . '" class="' . $this->buildCssElementClass() . '" style="' . $style . '" id="' . $this->getId() . '" alt="" title=' . $this->escapeString($this->getWidget()->getHint(), true, true) . '/>';
         return $output;
     }
     
@@ -68,7 +50,7 @@ trait HtmlImageTrait
     public function buildJsValueDecorator($value_js)
     {
         if ($base = $this->getWidget()->getBaseUrl()) {
-            $value_js = "'{$base}'+" . $value_js;
+            $value_js = "({$value_js} ? '{$base}' : '') + {$value_js}";
         }
         
         if ($this->getWidget()->getUseProxy()) {
@@ -86,5 +68,22 @@ JS;
 '{$this->buildHtmlImage("'+" . $value_js . "+'")}'
 JS;
     }
+    
+    /**
+     * 
+     * @param string $value_js
+     * @return string
+     */
+    protected function buildJsImgSrcSetter(string $value_js) : string
+    {
+        if ($base = $this->getWidget()->getBaseUrl()) {
+            $value_js = "({$value_js} ? '{$base}' : '') + {$value_js}";
+        }
+        return "$('#{$this->getId()}').attr('src', {$value_js})";
+    }
+    
+    protected function buildJsImgSrcGetter() : string
+    {
+        return "$('#{$this->getId()}').attr('src')";
+    }
 }
-?>

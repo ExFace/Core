@@ -24,17 +24,18 @@ use exface\Core\DataTypes\UxonDataType;
 use exface\Core\Factories\UxonSchemaFactory;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\Translation;
+use exface\Core\CommonLogic\Translation\Translation;
 use exface\Core\Events\Model\OnMetaObjectLoadedEvent;
 use exface\Core\Events\Model\OnMetaObjectActionLoadedEvent;
 use exface\Core\Events\Model\OnUiMenuItemLoadedEvent;
 use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectActionLoadedEvent;
-use exface\Core\Events\Errors\OnErrorCodeLookupEvent;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Events\Model\OnMessageLoadedEvent;
+use exface\Core\CommonLogic\Translation\UxonTranslator;
 
 /**
  * Makes the data of certain attributes of the object translatable.
@@ -148,40 +149,70 @@ class TranslatableBehavior extends AbstractBehavior
         "exface.Core.Model.OnBeforeDefaultObjectEditorInit" => [
             "\\exface\\Core\\Behaviors\\TranslatableBehavior::onObjectEditorInitTranslate"
         ],
-        "exface.Core.Errors.OnErrorCodeLookup" => [
-            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onErrorTranslateMessage"
+        "exface.Core.Errors.OnMessageLoaded" => [
+            "\\exface\\Core\\Behaviors\\TranslatableBehavior::onMessageLoadedTranslate"
         ]
     ];
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
         $obj = $this->getObject();
-        
+        $priority = $this->getPriority();
         if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
             $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), [
                 $this,
                 'onReadForKeyCreateFiles'
-            ]);
+            ], $priority);
             
             $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
                 $this,
                 'onEditDictPrefill'
-            ]);
+            ], $priority);
         }
         
         if ($this->hasTranslatableAttributes()) {
             $this->getWorkbench()->eventManager()->addListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
                 $this,
                 'onObjectEditorInitAddTranslateButton'
+            ], $priority);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $obj = $this->getObject();
+        
+        if ($obj->isExactly('exface.Core.TRANSLATIONS_FOR_DATA')) {
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeActionPerformedEvent::getEventName(), [
+                $this,
+                'onReadForKeyCreateFiles'
+            ]);
+            
+            $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [
+                $this,
+                'onEditDictPrefill'
             ]);
         }
         
-        $this->setRegistered(true);
+        if ($this->hasTranslatableAttributes()) {
+            $this->getWorkbench()->eventManager()->removeListener(OnBeforeDefaultObjectEditorInitEvent::getEventName(), [
+                $this,
+                'onObjectEditorInitAddTranslateButton'
+            ]);
+        }
+        
         return $this;
     }
     
@@ -210,13 +241,13 @@ class TranslatableBehavior extends AbstractBehavior
         
         $editorUxon = $event->getDefaultEditorUxon();
         if (strcasecmp($editorUxon->getProperty('widget_type'), 'Dialog') !== 0) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
+            throw new BehaviorRuntimeError($this, 'Cannot add translation-button to default editor dialog of object "' . $this->getObject()->getAliasWithNamespace() . '": the default editor must be of type "Dialog"!');
         }
         
         if ($this->isTranslationAppDeterminedByRelation()) {
             $appRel = $this->getRelationToTranslationApp();
             if (! ($appRel->getRightObject()->isExactly('exface.Core.APP') && $appRel->isForwardRelation())) {
-                throw new BehaviorConfigurationError($this->getObject(), 'Invalid `translation_app_determined_by_relation` specified in translatable dehavior of ' . $this->getObject()->getAliasWithNamespace() . ': the relation MUST point to the exface.Core.APP!');
+                throw new BehaviorConfigurationError($this, 'Invalid `translation_app_determined_by_relation` specified in translatable dehavior of ' . $this->getObject()->getAliasWithNamespace() . ': the relation MUST point to the exface.Core.APP!');
             }
             $appRelAlias = $appRel->getAlias();
         }
@@ -260,12 +291,18 @@ class TranslatableBehavior extends AbstractBehavior
                         [
                             "attribute_alias" => "PATHNAME_RELATIVE",
                             "caption" => "=TRANSLATE('exface.Core', 'BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE')"
+                        ],
+                        [
+                            "attribute_alias" => "APP"
                         ]
                     ],
                     "buttons" => [
                         [
                             "action_alias" => "exface.Core.ShowObjectEditDialog",
                             "bind_to_double_click" => true
+                        ],
+                        [
+                            "action_alias" => "exface.Core.TranslationAddLangDialog"
                         ]
                     ]
                 ],
@@ -442,39 +479,39 @@ class TranslatableBehavior extends AbstractBehavior
         $menuItem->setIntro($translator->translate('INTRO', null, null, $domain, $menuItem->getIntro()));
         
         if ($menuItem instanceof UiPageInterface) {
-            $menuItem->setContents($translator->translateUxonProperties(UxonObject::fromAnything($menuItem->getContents()), $domain, 'CONTENT'));
+            $uxonTranslator = new UxonTranslator($translator);
+            $uxon = UxonObject::fromAnything($menuItem->getContents());
+            $menuItem->setContents($uxonTranslator->translateUxonProperties($uxon, $domain, 'CONTENT'));
         }
 
         return;
     }
     
     /**
-     * Translates messages in errors
+     * Translates messages for errors etc.
      * 
-     * @param OnErrorCodeLookupEvent $event
+     * @param OnMessageLoadedEvent $event
      */
-    public static function onErrorTranslateMessage(OnErrorCodeLookupEvent $event)
+    public static function onMessageLoadedTranslate(OnMessageLoadedEvent $event)
     {
-        $e = $event->getException();
-        $wb = $event->getWorkbench();
+        $msg = $event->getMessage();
         
-        if (($appSel = $e->getMessageAppSelector($wb)) === null) {
+        if (($app = $msg->getApp()) === null) {
             return;
         }
         
         try {
-            $app = $wb->getApp($appSel);
             $translator = $app->getTranslator();
-            $domain = 'Messages/' . $e->getAlias();
+            $domain = 'Messages/' . $msg->getCode();
             if (! $translator->hasTranslationDomain($domain)) {
                 return;
             }
             
-            $e->setMessageTitle($translator->translate('TITLE', null, null, $domain, $e->getMessageTitle($wb)));
-            $e->setMessageHint($translator->translate('HINT', null, null, $domain, $e->getMessageHint($wb)));
-            $e->setMessageDescription($translator->translate('DESCRIPTION', null, null, $domain, $e->getMessageDescription($wb)));
-        } catch (\Throwable $e2) {
-            $wb->getLogger()->logException($e2);
+            $msg->setTitle($translator->translate('TITLE', null, null, $domain, $msg->getTitle()));
+            $msg->setHint($translator->translate('HINT', null, null, $domain, $msg->getHint()));
+            $msg->setDescription($translator->translate('DESCRIPTION', null, null, $domain, $msg->getDescription()));
+        } catch (\Throwable $e) {
+            $event->getWorkbench()->getLogger()->logException($e);
         }
     }
     
@@ -497,7 +534,8 @@ class TranslatableBehavior extends AbstractBehavior
         }
         
         $uxon = $event->getUxon();
-        $translated = $translator->translateUxonProperties($uxon, $domain, 'CONFIG_UXON');
+        $uxonTranslator = new UxonTranslator($translator);
+        $translated = $uxonTranslator->translateUxonProperties($uxon, $domain, 'CONFIG_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
@@ -552,7 +590,8 @@ class TranslatableBehavior extends AbstractBehavior
     {
         $object = $event->getObject();
         $uxon = $event->getDefaultEditorUxon();
-        $translated = $object->getApp()->getTranslator()->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
+        $uxonTranslator = new UxonTranslator($object->getApp()->getTranslator());
+        $translated = $uxonTranslator->translateUxonProperties($uxon, 'Objects/' . $object->getAliasWithNamespace(), 'DEFAULT_EDITOR_UXON');
         foreach ($translated->getPropertiesAll() as $prop => $value) {
             $uxon->setProperty($prop, $value);
         }
@@ -674,7 +713,7 @@ class TranslatableBehavior extends AbstractBehavior
         $lang = StringDataType::substringAfter($filename, '.', $filename, false, true);
         
         if (! $dataKey || ! $subfolder) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Invalid translation file name: "' . $path . '"!');
+            throw new BehaviorRuntimeError($this, 'Invalid translation file name: "' . $path . '"!');
         }
         
         $behavior = $this->findBehavior($subfolder);
@@ -683,7 +722,6 @@ class TranslatableBehavior extends AbstractBehavior
             return;
         }
         
-        $defLang = $behavior->getObject()->getApp()->getLanguageDefault();
         $coreTranslator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $keyStatus = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS');
         $keyStatusNew = $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW');
@@ -729,7 +767,7 @@ class TranslatableBehavior extends AbstractBehavior
         if ($contentWidget instanceof InputKeysValues) {
             $contentWidget->setReferenceValues([
                 $keyStatus => $statuses,
-                (LocaleDataType::getLocaleName($defLang, $coreTranslator->getLocale()) . ' - ' . $defLang) => $translatables
+                $coreTranslator->translate('BEHAVIOR.TRANSLATABLE.METAMODEL_TEXT') => $translatables
             ]);
             $contentWidget->setCaptionForKeys($coreTranslator->translate('BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY'));
             $contentWidget->setCaptionForValues(LocaleDataType::getLocaleName($lang, $coreTranslator->getLocale()) . ' - ' . $lang);
@@ -792,7 +830,7 @@ class TranslatableBehavior extends AbstractBehavior
         $dataType = $attribute->getDataType();
         
         if (! $dataType instanceof UxonDataType) {
-            throw new BehaviorRuntimeError($attribute->getObject(), 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
+            throw new BehaviorRuntimeError($this, 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
         }
         
         $schemaName = $dataType->getSchema();
@@ -845,7 +883,7 @@ class TranslatableBehavior extends AbstractBehavior
         $relPath = $transRel->getRelationPath();
         
         if (! $relPath->getRelationFirst()->isReverseRelation()) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
+            throw new BehaviorRuntimeError($this, 'Cannot get translation keys for translatable relation "' . $relPath->toString() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": only reverse relations supported!');
         }
         
         $ds = DataSheetFactory::createFromObject($transRel->getRelationPath()->getEndObject());
@@ -883,10 +921,10 @@ class TranslatableBehavior extends AbstractBehavior
         $ds->dataRead();
         
         if ($ds->countRows() === 0) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
+            throw new BehaviorRuntimeError($this, 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
         }
         if ($ds->countRows() > 1) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Multiple translatable behaviors found for subfolder "' . $subfolder . '"!');
+            throw new BehaviorRuntimeError($this, 'Multiple translatable behaviors found for subfolder "' . $subfolder . '"!');
         }
         
         $obj = $this->getWorkbench()->model()->getObjectById($ds->getCellValue('OBJECT__UID', 0));
@@ -896,7 +934,7 @@ class TranslatableBehavior extends AbstractBehavior
             }
         }
         
-        throw new BehaviorRuntimeError($this->getObject(), 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
+        throw new BehaviorRuntimeError($this, 'Cannot find translatable behavior for subfolder "' . $subfolder . '"!');
     }
     
     /**

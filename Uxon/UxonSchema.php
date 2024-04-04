@@ -17,6 +17,9 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\CommonLogic\WorkbenchCache;
+use exface\Core\DataTypes\TimeZoneDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -33,6 +36,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * - icon
  * - color
  * - uri
+ * - timezone
  * - metamodel:app
  * - metamodel:expression
  * - metamodel:object
@@ -51,6 +55,12 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
  * - metamodel:event
  * - metamodel:aggregator
  * - metamodel:context
+ * - metamodel:role
+ * - metamodel:username
+ * - metamodel:communication_channel
+ * - metamodel:widget_function (TODO)
+ * - metamodel:facade (TODO)
+ * - metamodel:<object_alias>:<attribute_alias> - values of the meta attribute
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [val1,val2] - enumeration of commma-separated values (in square brackets)
  * - {keyType => valueType} - object with typed keys and values
@@ -72,6 +82,9 @@ class UxonSchema implements UxonSchemaInterface
     const SCHEMA_BEHAVIOR = 'behavior';
     const SCHEMA_DATATYPE = 'datatype';
     const SCHEMA_CONNECTION = 'connection';
+    const SCHEMA_QUERYBUILDER = 'querybuilder';
+    const SCHEMA_QUERYBUILDER_ATTRIBUTE = 'querybuilder_attribute';
+    const SCHEMA_QUERYBUILDER_OBJECT = 'querybuilder_object';
     
     private $prototypePropCache = [];
     
@@ -100,7 +113,11 @@ class UxonSchema implements UxonSchemaInterface
     {
         $rootPrototypeClass = $rootPrototypeClass ?? $this->getDefaultPrototypeClass();
         
-        if (count($path) > 1) {
+        if ($rootPrototypeClass === '') {
+            return $rootPrototypeClass;
+        }
+        
+        if (count($path) > 0 && ($uxon->getProperty($path[0]) instanceof UxonObject)) {
             $prop = array_shift($path);
             
             if (is_numeric($prop) === false) {
@@ -147,11 +164,44 @@ class UxonSchema implements UxonSchemaInterface
             }
         }
         
-        if (count($path) > 1) {
-            return $this->getPropertyValueRecursive($uxon->getProperty($prop), $path, $propertyName, $value);
+        if (count($path) > 0) {
+            // If the current property is an array, we need to step into one of the arrays
+            // elements to get the next schema (because the array itself is still part of
+            // the parent schema)
+            if (is_numeric($path[0])) {
+                $prop2 = array_shift($path);
+                $nextStep = [$prop, $prop2];
+                $nextUxon = $uxon->getProperty($prop)->getProperty($prop2);
+                if (! ($nextUxon instanceof UxonObject)) {
+                    return $value;
+                }
+            } else {
+                $nextStep = [$prop];
+                $nextUxon = $uxon->getProperty($prop);
+            }
+            $nextSchema = $this->getSchemaForClass($this->getPrototypeClass($uxon, $nextStep));
+            return $nextSchema->getPropertyValueRecursive($nextUxon, $path, $propertyName, $value);
         }
         
         return $value;
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @return UxonObject
+     */
+    protected function getPathTargetUxon(UxonObject $uxon, array $path) : UxonObject
+    {
+        $level = $uxon;
+        foreach ($path as $step) {
+            $value = $level->getProperty($step);
+            if ($value instanceof UxonObject) {
+                $level = $value;
+            }
+        }
+        return $level;
     }
     
     /**
@@ -181,7 +231,7 @@ class UxonSchema implements UxonSchemaInterface
             $propertyCol = $ds->getColumns()->get('PROPERTY');
             foreach ($col->getValues() as $r => $tpl) {
                 if ($tpl !== null) {
-                    $tpls[$propertyCol->getCellValue($r)] = $tpl;
+                    $tpls[$propertyCol->getCellValue($r)] = str_replace('\n', "\n", $tpl);
                 }
             }
         }
@@ -230,12 +280,12 @@ class UxonSchema implements UxonSchemaInterface
     
     protected function getCache(string $prototypeClass, string $key)
     {
-        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace("\\", '.', $prototypeClass));
+        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace(WorkbenchCache::KEY_RESERVED_CHARS, '.', $prototypeClass));
     }
     
     protected function setCache(string $prototypeClass, string $key, $data) : UxonSchema
     {
-        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace("\\", '.', $prototypeClass), $data);
+        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace(WorkbenchCache::KEY_RESERVED_CHARS, '.', $prototypeClass), $data);
         return $this;
     }
 
@@ -306,6 +356,23 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
+        $firstType = $this->getUxonType($uxon, $path, $rootPrototypeClass);
+        
+        try {
+            $object = $this->getMetaObject($uxon, $path, $rootObject);
+        } catch (MetaObjectNotFoundError $e) {
+            // TODO better error handling to tell apart invalid object alias and no object alias.
+            if ($rootObject !== null) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            }
+            $object = null;
+        }
+        
+        return $this->getValidValuesForType($firstType, $search, $object);
+    }
+    
+    public function getUxonType(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : ?string
+    {
         $prop = mb_strtolower(end($path));
         if (true === is_numeric($prop)) {
             // If we are in an array, use the data from the parent property (= the array)
@@ -322,17 +389,7 @@ class UxonSchema implements UxonSchemaInterface
             $firstType = trim($propertyTypes[0]);
         }
         
-        try {
-            $object = $this->getMetaObject($uxon, $path, $rootObject);
-        } catch (MetaObjectNotFoundError $e) {
-            // TODO better error handling to tell apart invalid object alias and no object alias.
-            if ($rootObject !== null) {
-                $this->getWorkbench()->getLogger()->logException($e);
-            }
-            $object = null;
-        }
-        
-        return $this->getValidValuesForType($firstType, $search, $object);
+        return $firstType;
     }
     
     protected function getValidValuesForType(string $type, string $search = null, MetaObjectInterface $object = null) : array
@@ -345,6 +402,9 @@ class UxonSchema implements UxonSchemaInterface
                 break;
             case strcasecmp($type, 'boolean') === 0:
                 $options = ['true', 'false'];
+                break;
+            case strcasecmp($type, 'timezone') === 0:
+                $options = TimeZoneDataType::getKeysStatic();
                 break;
             case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);
@@ -370,7 +430,7 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($type, 'metamodel:comparator') === 0:
                 $options = $this->getMetamodelComparators($search);
                 break;
-            case strcasecmp($type, 'metamodel:attribute') === 0:
+            case strcasecmp($type, 'metamodel:attribute') === 0 && $object !== null:
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
                     if (strcasecmp($type, 'metamodel:attribute') === 0) {
@@ -389,7 +449,7 @@ class UxonSchema implements UxonSchemaInterface
                     if (substr($search, 0, 1) === '=') {
                         $type = 'metamodel:formula';
                         $options = $this->getMetamodelFormulaExpressions($search);
-                        brk;
+                        break;
                     }
                     
                     $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
@@ -408,15 +468,6 @@ class UxonSchema implements UxonSchemaInterface
                     $options = [];
                 }
                 break;
-            case $this->isPropertyTypeObject($type) === true:
-                list ($keyType, $valType) = explode('=>', trim($type, "{}"));
-                $keyType = trim($keyType);
-                $valType = trim($valType);
-                if (! $valType) {
-                    $valType = $keyType;
-                }
-                $options = $valType ? $this->getValidValuesForType($valType, $search, $object) : [];
-                break;
             case strcasecmp($type, 'metamodel:aggregator') === 0:
                 $options = AggregatorFunctionsDataType::getKeysStatic();
                 break;
@@ -426,13 +477,24 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($type, 'metamodel:event') === 0:
                 $options = $this->getMetamodelEventAliases();
                 break;
+            case StringDataType::startsWith($type, 'metamodel:'):
+                $options = $this->getMetamodelData($type, $search);
+                break;
+            case $this->isPropertyTypeObject($type) === true:
+                list ($keyType, $valType) = explode('=>', trim($type, "{}"));
+                $keyType = trim($keyType);
+                $valType = trim($valType);
+                if (! $valType) {
+                    $valType = $keyType;
+                }
+                $options = $valType ? $this->getValidValuesForType($valType, $search, $object) : [];
+                break;
         }
         return $options;
     }
     
     /**
-     *
-     * {@inheritdoc}
+     * 
      * @see UxonSchemaInterface::getMetaObject()
      */
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
@@ -519,7 +581,7 @@ class UxonSchema implements UxonSchemaInterface
         // Now insert forward relations _before_ the corresponding attribute: relation attributes rarely
         // get used directly, but rather as parts of a relation path.
         foreach ($value_relations as $val) {
-            $idx = array_search(rtrim($val, RelationPath::RELATION_SEPARATOR), $values);
+            $idx = array_search(rtrim($val, RelationPath::RELATION_SEPARATOR), $values, true);
             if ($idx !== false) {
                 array_splice($values, $idx, 0, [$val]);
             } else {
@@ -741,9 +803,9 @@ class UxonSchema implements UxonSchemaInterface
     protected function getMetamodelDataSourceAliases() : array
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.DATASRC');
-        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->getColumns()->addFromExpression('ALIAS_WITH_NS');
         $ds->dataRead();
-        return $ds->getColumns()->get('ALIAS')->getValues(false);
+        return $ds->getColumns()->get('ALIAS_WITH_NS')->getValues(false);
     }
     
     /**
@@ -820,7 +882,7 @@ class UxonSchema implements UxonSchemaInterface
             $class = $prototypeClass::getUxonSchemaClass();
         } 
         
-        if ($class === null || is_subclass_of($this, $class)) {
+        if ($class === null || is_a($this, $class, true)) {
             return $this;
         }
         
@@ -862,7 +924,13 @@ class UxonSchema implements UxonSchemaInterface
      */
     public static function getSchemaName() : string
     {
-        return UxonSchemaNameDataType::GENERIC;
+        $thisClass = get_called_class();
+        $genericClass = UxonSchema::class;
+        if ($thisClass === $genericClass) {
+            return UxonSchemaNameDataType::GENERIC;
+        } else {
+            return '\\' . $thisClass;
+        }
     }
     
     /**
@@ -874,15 +942,33 @@ class UxonSchema implements UxonSchemaInterface
     {
         $presets = [];
         
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.' . strtoupper($this::getSchemaName()) . '_PRESET');
+        $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass, true);
+        $schema = $this->getSchemaForClass($prototypeClass);
+        
+        if ($schema !== $this) {
+            return $schema->getPresets($uxon, $path, $rootPrototypeClass);
+        }
+        
+        $schemaNameUC = strtoupper($this::getSchemaName());
+        switch ($schemaNameUC) {
+            case 'CONNECTION':
+            case 'BEHAVIOR':
+            case 'DATATYPE':
+            case 'ACTION':
+            case 'WIDGET':
+                $objectAlias = 'exface.Core.' . $schemaNameUC . '_PRESET';
+                break;
+            default:
+                $objectAlias = 'exface.Core.UXON_PRESET';
+                
+        }
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectAlias);
         $ds->getColumns()->addMultiple(['UID','NAME', 'PROTOTYPE__LABEL', 'DESCRIPTION', 'PROTOTYPE', 'UXON' , 'WRAP_PATH', 'WRAP_FLAG', 'THUMBNAIL']);
-        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $this::getSchemaName());
+        $ds->getFilters()->addConditionFromString('UXON_SCHEMA', $schema::getSchemaName(), ComparatorDataType::EQUALS);
         $ds->getSorters()
         ->addFromString('PROTOTYPE', SortingDirectionsDataType::ASC)
         ->addFromString('NAME', SortingDirectionsDataType::ASC);
         $ds->dataRead();
-        
-        $class = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         
         foreach ($ds->getRows() as $row) {
             // TODO: Leerer Editor, oberste Knoten => class ist abstract widget => keine Filterung
@@ -891,5 +977,17 @@ class UxonSchema implements UxonSchemaInterface
         }
         
         return $presets;
+    }
+    
+    protected function getMetamodelData(string $uxonType, string $search = null) : array
+    {
+        list($prefix, $object, $attribute) = explode(':', $uxonType, 3);
+        if (mb_strtolower($prefix) !== 'metamodel' || $object === null || $attribute === null) {
+            return [];
+        }
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object);
+        $col = $ds->getColumns()->addFromExpression($attribute);
+        $ds->dataRead();
+        return $col->getValues(false);
     }
 }

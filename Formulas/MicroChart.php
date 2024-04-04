@@ -12,8 +12,17 @@ class MicroChart extends \exface\Core\CommonLogic\Model\Formula
 
     private $range_max = 0;
 
-    function run($data, $chart_type = 'line')
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run($data = null, $chart_type = 'line')
     {
+        if ($data === null || $data === '') {
+            return $data;
+        }
+        
         $id = str_replace('.', '', uniqid(null, true));
         $vals = explode(',', $data);
         foreach ($vals as $val) {

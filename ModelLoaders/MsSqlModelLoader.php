@@ -30,14 +30,23 @@ class MsSqlModelLoader extends SqlModelLoader
      * {@inheritDoc}
      * @see \exface\Core\ModelLoaders\SqlModelLoader::buildSqlGroupConcat()
      */
-    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere) : string
+    protected function buildSqlGroupConcat(string $sqlColumn, string $sqlFrom, string $sqlWhere, string $delimiter = ',') : string
     {
+        $delimLength = strlen($delimiter);
         return <<<SQL
         
-        SELECT STUFF(CAST(( SELECT [text()] = ', ' + {$sqlColumn}
-        FROM {$sqlFrom}
-        WHERE {$sqlWhere}
-        FOR XML PATH(''), TYPE) AS VARCHAR(1000)), 1, 2, '')
+        SELECT STUFF(
+            CAST(
+                (SELECT [text()] = '{$delimiter}' + {$sqlColumn}
+                    FROM {$sqlFrom}
+                    WHERE {$sqlWhere}
+                    FOR XML PATH(''), TYPE
+                ) AS VARCHAR(max)
+            ), 
+            1, 
+            {$delimLength}, 
+            ''
+        )
 SQL;
     }
     
@@ -70,9 +79,10 @@ SQL;
             $modelConnection = $this->getDataConnection();
             $dbInstaller = new MsSqlDatabaseInstaller($coreAppSelector);
             $dbInstaller
-            ->setFoldersWithMigrations(['InitDB','Migrations'])
-            ->setFoldersWithStaticSql(['Views'])
-            ->setDataConnection($modelConnection);
+                ->setFoldersWithFunctions(['Functions'])
+                ->setFoldersWithMigrations(['InitDB','Migrations'])
+                ->setFoldersWithStaticSql(['Views'])
+                ->setDataConnection($modelConnection);
             
             $installer->addInstaller($dbInstaller);
             $this->installer = $installer;

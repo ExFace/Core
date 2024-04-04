@@ -8,8 +8,6 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataTypes\UrlDataType;
 
 /**
  * Task result redirecting to a UI page or URI.

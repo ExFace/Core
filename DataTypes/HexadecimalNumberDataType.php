@@ -29,9 +29,9 @@ class HexadecimalNumberDataType extends NumberDataType
                 return null;
             // Hexadecimal numbers in '0x....'-Notation
             case stripos($string, self::HEX_PREFIX) === 0:
-                /*if (ctype_xdigit(substr($string, 2)) === false) {
+                if (ctype_xdigit(substr($string, 2)) === false) {
                     throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
-                }*/
+                }
                 return $string;
             // Logical NULL
             case static::isValueLogicalNull($string):
@@ -75,5 +75,18 @@ class HexadecimalNumberDataType extends NumberDataType
     {
         return 16;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see NumberDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $val = $value !== null ? $this->parse($value) : $this->getValue();
+        if ($val === null || $val === '' || $val === EXF_LOGICAL_NULL) {
+            return $this->getEmptyFormat();
+        }
+        return $val;
+    }
 }
-?>

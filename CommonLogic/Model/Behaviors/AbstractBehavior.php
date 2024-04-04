@@ -12,6 +12,8 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\DataTypes\PhpClassDataType;
 
 /**
  *
@@ -36,6 +38,8 @@ abstract class AbstractBehavior implements BehaviorInterface
     private $name_resolver = false;
     
     private $appSelectorOrString = null;
+    
+    private $priority = null;
 
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
@@ -114,7 +118,12 @@ abstract class AbstractBehavior implements BehaviorInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::activate()
      */
-    abstract public function register() : BehaviorInterface;
+    public function register() : BehaviorInterface
+    {
+        $this->registerEventListeners();
+        $this->setRegistered(true);
+        return $this;
+    }
     
     protected function registerEventListeners() : BehaviorInterface
     {
@@ -140,9 +149,6 @@ abstract class AbstractBehavior implements BehaviorInterface
     /**
      * Set to TRUE to disabled this behavior
      * 
-     * @uxon-property disabled
-     * @xuon-type boolean
-     * 
      * @param bool $value
      * @return BehaviorInterface
      */
@@ -164,7 +170,14 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function disable() : BehaviorInterface
     {
-        $this->unregisterEventListeners();
+        if ($this->disabled === true) {
+            return $this;
+        }
+        try {
+            $this->unregisterEventListeners();
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logException(new BehaviorRuntimeError($this, 'Cannot disable behavior: ' . $e->getMessage(), null, $e));
+        }
         $this->disabled = true;
         return $this;
     }
@@ -177,6 +190,10 @@ abstract class AbstractBehavior implements BehaviorInterface
      */
     public function enable() : BehaviorInterface
     {
+        if ($this->disabled === false) {
+            return $this;
+        }
+        
         if (! $this->isRegistered()) {
             $this->register();
         } else {
@@ -218,7 +235,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return BehaviorInterface
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }
@@ -239,5 +256,35 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function setAppSelector($selectorOrString) : BehaviorInterface
     {
         $this->appSelectorOrString = $selectorOrString;
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getPriority() : ?int
+    {
+        return $this->priority;
+    }
+    
+    /**
+     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the same event.
+     *
+     * @param int $value
+     * @return BehaviorInterface
+     */
+    public function setPriority(int $value) : BehaviorInterface
+    {
+        $this->priority = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return PhpClassDataType::findClassNameWithoutNamespace($this);
     }
 }

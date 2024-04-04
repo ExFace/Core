@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets\Parts\Charts\Traits;
 
 use exface\Core\Widgets\Parts\Charts\ChartSeries;
-use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 
 trait StackableChartSeriesTrait
 {
@@ -18,21 +17,8 @@ trait StackableChartSeriesTrait
      * 
      * @return bool
      */
-    public function isStacked() : bool
+    public function isStacked() : ?bool
     {
-        if ($this->stacked === null) {
-            $index = $this->getIndex();
-            if ($index > 0) {
-                $prevSeries = $this->getChart()->getSeries()[($index-1)];
-                if ($prevSeries instanceof StackableChartSeriesInterface && $prevSeries->isStacked() === true) {
-                    $this->stacked = true;
-                } else {
-                    $this->stacked = false;
-                }
-            } else {
-                $this->stacked = false;
-            }
-        }
         return $this->stacked;
     }
     
@@ -66,7 +52,7 @@ trait StackableChartSeriesTrait
      * @uxon-type string
      * 
      * @param string $group
-     * @return StackableChartSeriesTrait
+     * @return ChartSeries
      */
     public function setStackGroupId(string $group) : ChartSeries
     {

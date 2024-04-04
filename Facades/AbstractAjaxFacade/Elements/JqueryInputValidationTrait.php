@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Input;
@@ -32,30 +31,43 @@ trait JqueryInputValidationTrait {
     /**
      * Returns an inline JS expression, that evaluates to FALSE if validation fails and TRUE if it passes.
      * 
+     * WARNING: You cannot just use `return {$this->buildJsValidator()};` because in case of a 
+     * leading linebreak this will not work for some strange reason. Put the validator call in 
+     * parenthes instead: `return ({$this->buildJsValidator()});`
+     * 
+     * NOTE: The parameter $valJs is required for in-table inputs, where the validation must
+     * be integrated into the table code!
+     * 
      * If no validation required, override this method with `return 'true'` - see typical InputCheckBox
      * implementations.
      * 
      * {@inheritdoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValidator()
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
-        $validatorJs = $this->buildJsValidatorCheckRequired('val', 'return false;')
-        . $this->buildJsValidatorCheckDataType('val', 'return false;', $this->getWidget()->getValueDataType());
+        $constraintsJs = <<<JS
         
-        if ($validatorJs !== '') {
-            return "(function(){ 
-                        var val = {$this->buildJsValueGetter()}; 
-                        $validatorJs; 
-                        return true; 
-                    })()";
+                        {$this->buildJsValidatorCheckRequired('val', 'bConstraintsOK = false;')}
+                        {$this->buildJsValidatorConstraints('val', 'bConstraintsOK = false;', $this->getWidget()->getValueDataType())}
+JS;
+        $valJs = $valJs ?? $this->buildJsValueGetter();
+        if (trim($constraintsJs) !== '') {
+            return <<<JS
+
+                    (function(val){
+                        var bConstraintsOK = true;
+                        $constraintsJs;
+                        return bConstraintsOK;
+                    })({$valJs})
+JS;
         } else {
             return 'true';
         }
     }
     
     /**
-     * Returns a JS snippet, that performs $onFailJs if the widget is required and has not value.
+     * Returns JS code, that performs $onFailJs if the widget is required and has not value.
      * 
      * @param string $valueJs
      * @param string $onFailJs
@@ -64,41 +76,74 @@ trait JqueryInputValidationTrait {
      */
     protected function buildJsValidatorCheckRequired(string $valueJs, string $onFailJs) : string
     {
-        if ($this->getWidget()->isRequired() === true) {
-            return "if ($valueJs === '') { $onFailJs }";
+        // required_if check does not work for inTable widgets
+        if ($this->getWidget()->isInTable()) {
+            if ($this->getWidget()->isRequired() === true) {
+                return <<<JS
+
+                        if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs }
+JS;
+            }
+        }
+        if ($this->getWidget()->isRequired() === true || $this->getWidget()->getRequiredIf()) {
+            return <<<JS
+
+                        if ({$this->buildJsRequiredGetter()} == true) { if ($valueJs === undefined || $valueJs === null || $valueJs === '') { $onFailJs } }
+JS;
         }
         return '';
     }
     
     /**
-     * Returns a JS snippet, that performs $onFailJs if the current value does not match data type contraints.
+     * Returns JS code, that performs $onFailJs if the current value does not match any of the widgets contraints.
+     * 
+     * In most cases, the result will be a series of IFs, each calling $onFailJs if the constraint fails.
+     * To introduce more constraints for specific facade element implementations, just append more IFs.
+     * 
+     * By default this trait will validate the data type by letting the JS data type formatter render a
+     * validator script.
      * 
      * @param string $valueJs
      * @param string $onFailJs
      * @param DataTypeInterface $type
+     * 
      * @return string
      */
-    protected function buildJsValidatorCheckDataType(string $valueJs, string $onFailJs, DataTypeInterface $type) : string
+    protected function buildJsValidatorConstraints(string $valueJs, string $onFailJs, DataTypeInterface $type) : string
     {
+        $widget = $this->getWidget();
+        $formatter = $this->getFacade()->getDataTypeFormatter($type);
+        $typeValidationDisabled = ($widget instanceof Input) && $widget->getDisableValidation();
         $js = '';
+        
+        // If the input allows multiple values as a delimited list, apply the validation to each
+        // part of the list - in particular to check string length for each value individually
         switch (true) {
-            case $type instanceof StringDataType:
-                // Validate string min legnth
-                if ($type->getLengthMin() > 0) {
-                    $js .= "if($valueJs.toString().length < {$type->getLengthMin()}) { $onFailJs } \n";
+            case ($type instanceof StringDataType) && ($widget instanceof Input) && $widget->getMultipleValuesAllowed() === true && $typeValidationDisabled === false:
+                $partValidator = $formatter->buildJsValidator('part');
+                $js .= <<<JS
+
+                    if ($valueJs !== undefined && $valueJs !== null && Array.isArray($valueJs) === false) {
+                        $valueJs.toString().split("{$widget->getMultipleValuesDelimiter()}").forEach(function(part){
+                            if ($partValidator !== true) {
+                                {$onFailJs}
+                            }
+                        });
+                    }
+JS;
+                break;
+            default:
+                if ($typeValidationDisabled === false) {
+                    $typeValidator = $formatter->buildJsValidator($valueJs);
                 }
-                
-                // Validate string max length
-                // ... unless multi-value input is allowed!
-                if (($this->getWidget() instanceof Input) && $this->getWidget()->getMultipleValuesAllowed() === true) {
-                    break;
-                }
-                if ($type->getLengthMax() > 0) {
-                    $js .= "if($valueJs.toString().length > {$type->getLengthMax()}) { $onFailJs } \n";
-                }
-                
+                $js .= $typeValidator ? "if($typeValidator !== true) {$onFailJs};" : '';
                 break;
         }
+        
+        if (null !== $condProp = $widget->getInvalidIf()) {
+            $js .= "if ({$this->buildJsConditionalPropertyIf($condProp->getConditionGroup())} === true) {$onFailJs};";
+        }
+        
         return $js;
     }
     
@@ -111,41 +156,28 @@ trait JqueryInputValidationTrait {
      * 
      * @return string
      */
-    protected function getValidationErrorText() : string
+    public function getValidationErrorText() : string
     {
         $widget = $this->getWidget();
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $text = '';
         
-        $type = $widget->getValueDataType();
-        if ($type->getValidationErrorCode()) {
-            // TODO get message from error message model
-        }
-        if ($type->getValidationErrorText()) {
-            return $type->getValidationErrorText();
-        }
-        switch (true) {
-            case $type instanceof StringDataType:
-                $and = $translator->translate('WIDGET.INPUT.VALIDATION_AND');
-                if ($type->getLengthMin() > 0) {
-                    $lengthCond = ' ≥ ' . $type->getLengthMin();
-                }
-                if ($type->getLengthMax() > 0 && ($widget instanceof Input && $widget->getMultipleValuesAllowed() === false)) {
-                    $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $type->getLengthMax();
-                }
-                if ($lengthCond) {
-                    $text .= $translator->translate('WIDGET.INPUT.VALIDATION_LENGTH_CONDITION', ['%condition%' => $lengthCond]);
-                }
-                break;
-        }
-        
-        if ($text !== '') {
-            $text = $translator->translate('WIDGET.INPUT.VALIDATION_MUST') . ' ' . $text;
+        if ($msg = $widget->getValueDataType()->getValidationErrorMessage()) {
+            $text = $msg->getTitle();
         }
         
         if ($widget->isRequired()) {
-            $text .= ($text ? '. ' : '') . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
+            $text = ($text ? rtrim(trim($text), ".!") . '. ' : $text) . $translator->translate('WIDGET.INPUT.VALIDATION_REQUIRED');
         }
+        
+        if ((null !== $condProp = $widget->getInvalidIf()) && null !== $condReason = $condProp->getReason()) {
+            $text = $condReason . ($text ? "\n$text" : '');
+        }
+        
+        if (! $text) {
+            $translator->translate('WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR');
+        }
+        
         return $text;
     }
 }

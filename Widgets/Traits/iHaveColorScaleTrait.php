@@ -21,7 +21,7 @@ trait iHaveColorScaleTrait
      */
     public function getColorScale() : array
     {
-        return $this->colorScale ?? static::getColorScaleDefault($this->getMin(), $this->getMax());
+        return $this->colorScale ?? [];
     }
     
     /**
@@ -70,9 +70,9 @@ trait iHaveColorScaleTrait
     /**
      *
      * {@inheritdoc}
-     * @see iHaveColorScale::getColor()
+     * @see iHaveColorScale::getColorForValue()
      */
-    public function getColor($value = null) : ?string
+    public function getColorForValue($value = null) : ?string
     {
         return static::findColor($value, $this->getColorScale(), $this->isColorScaleRangeBased());
     }
@@ -97,13 +97,13 @@ trait iHaveColorScaleTrait
             }
         } else {
             foreach ($colorMap as $scaleVal => $color) {
-                if (strcasecmp($value, $scaleVal)) {
+                if (strcasecmp($value, $scaleVal) === 0) {
                     return $color;
                 }
             }
         }
         
-        return $color;
+        return $color ?? '';
     }
     
     /**

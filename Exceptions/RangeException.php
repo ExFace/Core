@@ -36,7 +36,7 @@ class RangeException extends \RangeException implements ErrorExceptionInterface,
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

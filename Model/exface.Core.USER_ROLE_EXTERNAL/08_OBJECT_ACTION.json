@@ -1,0 +1,162 @@
+{
+    "object_alias": "exface.Core.OBJECT_ACTION",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "ACTION_PROTOTYPE",
+            "attribute_alias": "ACTION_PROTOTYPE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "USE_IN_OBJECT_BASKET_FLAG",
+            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2023-08-29 20:18:43",
+            "MODIFIED_ON": "2023-10-13 09:34:52",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee84de7ddbb99684de025041000001",
+            "OBJECT": "0x11ea78ae6a2c1977ac460205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "UserRoleExternalDisable",
+            "NAME": "Disable",
+            "SHORT_DESCRIPTION": "This role will not be synced anymore. Users, that already have it, will keep it.",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.USER_ROLE_EXTERNAL",
+                "icon": "toggle-off",
+                "input_mapper": {
+                    "inherit_columns": "own_system_attributes",
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=0",
+                            "to": "ACTIVE_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2023-08-29 20:20:41",
+            "MODIFIED_ON": "2023-10-13 09:34:18",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee9815c2fe74f09815025041000001",
+            "OBJECT": "0x11ea78ae6a2c1977ac460205857feb80",
+            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/UpdateData.php",
+            "ALIAS": "UserRoleExternalEnable",
+            "NAME": "Enable",
+            "SHORT_DESCRIPTION": "Turns synchronization back on for this user role mapping. If a user has this role locally, but not remotely, it will be removed on next login.",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_object_alias": "exface.Core.USER_ROLE_EXTERNAL",
+                "icon": "toggle-on",
+                "input_mapper": {
+                    "inherit_columns": "own_system_attributes",
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=1",
+                            "to": "ACTIVE_FLAG"
+                        },
+                        {
+                            "from": "UID",
+                            "to": "UID"
+                        },
+                        {
+                            "from": "MODIFIED_ON",
+                            "to": "MODIFIED_ON"
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.OBJECT_ACTION",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.OBJECT_ACTION"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

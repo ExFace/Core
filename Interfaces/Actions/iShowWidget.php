@@ -13,7 +13,7 @@ interface iShowWidget extends iNavigate
      *
      * @throws ActionConfigurationError
      * 
-     * @return WidgetInterface
+     * @return WidgetInterface|NULL
      */
     public function getWidget();
 
@@ -36,4 +36,11 @@ interface iShowWidget extends iNavigate
      * @return string
      */
     public function getDefaultWidgetType() : ?string;
+    
+    /**
+     * Returns the action to read prefill data for the widget.
+     * 
+     * @return ActionInterface
+     */
+    public function getPrefillAction() : ActionInterface;
 }

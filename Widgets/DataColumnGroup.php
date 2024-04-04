@@ -9,9 +9,11 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 
 /**
@@ -48,7 +50,13 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             $parent = $this->getParent();
             if ($parent instanceof iShowData) {
                 $parent->setEditable(true);
-                $parent->addColumnsForSystemAttributes();
+                // Make sure the parent includes are all system columns as they will surely
+                // be needed when passing the data to the saving-action
+                // BUT: do not add system columns if we are in the process of adding one
+                // right now as this would result in an infinite loop
+                if (! ($column->isBoundToAttribute() && $column->getAttribute()->isSystem())) {
+                    $parent->addColumnsForSystemAttributes();
+                }
                 // If an attribute of a related object should be editable, we need it's system attributes as columns -
                 // that is, at least a column with the UID of the related object, but maybe also some columns needed for
                 // the behaviors of the related object
@@ -81,7 +89,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function removeColumn(DataColumn $column) : iHaveColumns
     {
-        $key = array_search($column, $this->columns);
+        $key = array_search($column, $this->columns, true);
         if ($key !== false){
             unset($this->columns[$key]);
             // Reindex the array to avoid index gaps
@@ -109,7 +117,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 // It is important to append __LABEL to the relation path (and not the actual alias of the
                 // label attribute) to make the column show the relation name as caption and not the attribute's
                 // name. This is also what a human designer would typically do.
-                $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')));
+                $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), MetaAttributeInterface::OBJECT_LABEL_ALIAS));
             }
         }
         
@@ -190,7 +198,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         return $this;
     }
 
-    public function getUidColumn()
+    public function getUidColumn() : DataColumn
     {
         if (! $this->getUidColumnId()) {
             throw new WidgetHasNoUidColumnError($this, 'No UID column found in DataColumnGroup: either set uid_column_id for the column group explicitly or give the object "' . $this->getMetaObject()->getAliasWithNamespace() . '" a UID attribute!');
@@ -206,7 +214,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @return boolean
      */
-    public function hasUidColumn()
+    public function hasUidColumn() : bool
     {
         try {
             $this->getUidColumn();
@@ -293,6 +301,31 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         }
         return null;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByExpression()
+     */
+    public function getColumnByExpression($expressionOrString) : ?DataColumn
+    {
+        switch (true) {
+            case is_string($expressionOrString):
+                $str = $expressionOrString;
+                break;
+            case $expressionOrString instanceof ExpressionInterface:
+                $str = $expressionOrString->__toString();
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot search for column widgets by "' . gettype($expressionOrString) . '": only expression strings or objects allowed!');
+        }
+        foreach ($this->getColumns() as $col) {
+            if ($col->getExpression()->__toString() === $str) {
+                return $col;
+            }
+        }
+        return null;
+    }
 
     /**
      * Defines the DataColumns within this group: an array of respecitve UXON objects.
@@ -303,15 +336,27 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(UxonObject $columns) : iHaveColumns
+    public function setColumns(UxonObject $uxonArray) : iHaveColumns
     {
-        foreach ($columns as $c) {
-            if ($c->hasProperty('attribute_group_alias')) {
-                foreach ($this->getMetaObject()->getAttributeGroup($c->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
+        // If there are columns already, we need to replace them. However, since there could be system columns
+        // (typically hidden), we want to keep those - e.g. for columns automatically added by widgets like
+        // ImageGallery or FileList.
+        if ($this->hasColumns()) {
+            foreach ($this->getColumns() as $col) {
+                if (! $col->isHidden()) {
+                    $this->removeColumn($col);
+                }
+            }
+        }
+        foreach ($uxonArray as $colUxon) {
+            if ($colUxon->hasProperty('attribute_group_alias')) {
+                $attrGrp = $this->getMetaObject()->getAttributeGroup($colUxon->getProperty('attribute_group_alias'));
+                $attrGrp->sortByDefaultDisplayOrder();
+                foreach ($attrGrp->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
             } else {
-                $this->addColumn($this->createColumnFromUxon($c));
+                $this->addColumn($this->createColumnFromUxon($colUxon));
             }
         }
         return $this;
@@ -417,7 +462,14 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function isEditable() : bool
     {
-        return $this->editable ?? $this->getDataWidget()->isEditable();
+        if ($this->editable !== null) {
+            return $this->editable;
+        }
+        $dataWidget = $this->getDataWidget();
+        if ($dataWidget instanceof iCanEditData) {
+            return $dataWidget->isEditable();
+        }
+        return false;
     }
     
     /**
@@ -431,9 +483,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * @param bool|string $trueOrFalse
      * @return DataColumn
      */
-    public function setEditable($trueOrFalse) : DataColumnGroup
+    public function setEditable(bool $trueOrFalse) : DataColumnGroup
     {
-        $this->editable = BooleanDataType::cast($trueOrFalse);
+        $this->editable = $trueOrFalse;
         if ($this->editable === true && $this->getDataWidget() instanceof iShowData) {
             $this->getDataWidget()->setEditable(true);
         }

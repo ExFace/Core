@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Selectors\PWASelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -25,10 +27,12 @@ use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
  * on the facade selection strategy of the CMS every page can be rendered as
  * a mobile or desktop application or even as a REST-API.
  * 
+ * @triggers \exface\Core\Events\Widgets\OnUiPageInitializedEvent
+ * 
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iCanBeCopied
 {
     /**
      * 
@@ -106,13 +110,21 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      *
      * @return string
      */
-    public function getWidgetIdSeparator();
-
+    public function getWidgetIdSpaceSeparator();
+    
     /**
+     * Generates an id for the given widget - optionally guaranteed to be unique on the page.
+     * 
+     * Calling this method with $makeUnique=false allows to apply custom modifications to
+     * the id - see the unique ids for contextual help buttons (iHaveContextualHelpTrait::getHelpButton())
+     * for an example.
      *
+     * @param WidgetInterface $widget     
+     * @param string $group    
+     * @param bool $makeUnique   
      * @return string
      */
-    public function getWidgetIdSpaceSeparator();
+    public function generateWidgetId(WidgetInterface $widget, string $group = null, bool $makeUnique = true) : string;
 
     /**
      * Returns TRUE if the page does not have widgets and FALSE if there is at least one widget.
@@ -135,6 +147,14 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return boolean
      */
     public function isUpdateable();
+    
+    /**
+     *  Returns TRUE if a template(facade) is explicitly set in the page configuration
+     *  and FALSE otherwise.
+     *  
+     *  @return boolean
+     */
+    public function isFacadeSet();
 
     /**
      * If FALSE is passed, the page will not be updated with its app anymore.
@@ -171,18 +191,18 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * 
      * Defaults to 0 if not set explicitly.
      *  
-     * @return integer
+     * @return int
      */
-    public function getMenuIndex();
+    public function getMenuIndex() : int;
 
     /**
      * Sets the index (position number starting with 0) of this page in the 
      * submenu of its parent.
      *
-     * @param integer $number
+     * @param int|NULL $number
      * @return UiPageInterface
      */
-    public function setMenuIndex($number);
+    public function setMenuIndex($number) : UiPageInterface;
     
     /**
      * 
@@ -297,7 +317,7 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface;
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : self;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
@@ -322,18 +342,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
     public function isExactly($pageOrSelectorOrString) : bool;
     
     /**
-     * Compares two pages by their attributes.
-     * 
-     * The attributes with names contained in the $ignore_properties array are ignored in
-     * the comparison.
-     * 
-     * @param UiPageInterface $page
-     * @param string[] $ignore_properties
-     * @return boolean
-     */
-    public function equals(UiPageInterface $page, $ignore_properties);
-    
-    /**
      * 
      * @return FacadeInterface
      */
@@ -354,4 +362,42 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon
      * @return bool
      */
     public function hasModel() : bool;
+    
+    /**
+     * Set to TRUE to make this page be exported/installed as top-level item of the main menu - regardless of its current position.
+     *
+     * This option allows developers to decouple the menu structure in their dev-environment
+     * from the menu in production: a page may put in a subfolder on dev and still land at
+     * "home"-level in production.
+     *
+     * @param bool $trueOrFalse
+     * @return UiPageInterface
+     */
+    public function setMenuHome(bool $trueOrFalse) : UiPageInterface;
+    
+    /**
+     * Retruns TRUE if this page is to be exported/installed as top-level item of the main menu and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isMenuHome() : bool;
+    
+    /**
+     * 
+     * @param string|PWASelectorInterface $selectorOrString
+     * @return UiPageInterface
+     */
+    public function setPWASelector($selectorOrString) : UiPageInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isPWA() : bool;
+    
+    /**
+     * 
+     * @return PWASelectorInterface|NULL
+     */
+    public function getPWASelector() : ?PWASelectorInterface;
 }

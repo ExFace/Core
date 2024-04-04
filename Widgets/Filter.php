@@ -25,6 +25,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\DataTypes\TextDataType;
 
 /**
  * A filter for data widgets, etc - consists of a logical comparator and an input widget.
@@ -155,7 +157,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanPreloadData
+class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
 
     private $inputWidget = null;
@@ -168,7 +170,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     
     private $apply_on_change = false;
     
-    private $customConditionGroup = null;
+    private $customConditionGroupUxon = null;
     
     private $attributeAlias = null;
     
@@ -189,6 +191,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     private $preloadConfig = null;
     
     private $preloader = null;
+    
+    private $useHiddenInput = false;
     
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -221,7 +225,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function importUxonObject(UxonObject $uxon)
     {
         if ($uxon->hasProperty('attribute_alias') === true) {
-            $this->setAttributeAlias($uxon->hasProperty('attribute_alias'));
+            $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
         } elseif (($uxon->getProperty('input_widget') instanceof UxonObject) && $uxon->getProperty('input_widget')->hasProperty('attribute_alias')) {
             $this->setAttributeAlias($uxon->getProperty('input_widget')->getProperty('attribute_alias'));
         }
@@ -280,32 +284,59 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      */
     protected function createInputWidget(UxonObject $uxon) : WidgetInterface
     {
-        if ($this->isBoundToAttribute() === true) {
-            try {
-                $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
-            } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-            }
-            
-            // Set a special caption for filters on relations, which is derived from the relation itself
-            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
-                // Get the relation from the object and not $attr->getRelation() because the latter would
-                // yield the wrong relation direction in case of reverse reltions.
-                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
-            }
-            
-            // Try to use the default editor UXON of the attribute
-            if ($attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true) {
-                $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
-                if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
-                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+        // Look for the best configuration for the input_widget
+        switch (true) {
+            // If not UXON defined by user and the filter is explicitly hidden - use a simple `InputHidden`.
+            case $this->useHiddenInput && $uxon->isEmpty() && $this->isBoundToAttribute():
+                $defaultEditorUxon = new UxonObject([
+                    'widget_type' => 'InputHidden',
+                    'attribute_alias' => $this->getAttributeAlias()
+                ]);
+                break;
+            // If the filter is bound to an attribute, use its default editor UXON
+            case $this->isBoundToAttribute() === true:
+                try {
+                    $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+                } catch (MetaAttributeNotFoundError $e) {
+                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
                 }
-            } else {
-                $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
-            }
-        } elseif ($this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
+                
+                // Set a special caption for filters on relations, which is derived from the relation itself
+                // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+                if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
+                    // Get the relation from the object and not $attr->getRelation() because the latter would
+                    // yield the wrong relation direction in case of reverse reltions.
+                    $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
+                }
+                
+                // Try to use the default editor UXON of the attribute
+                switch (true) {
+                    case $attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true:
+                        $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
+                        if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
+                            $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                        }
+                        break;
+                    // If the attribute is some large text, JSON, HTML or similar, create a simple input
+                    // as default editor - don't use custom inputs like InputJson, etc.
+                    case $attr->getDataType() instanceof TextDataType:
+                        $defaultEditorUxon = new UxonObject([
+                            'widget_type' => 'Input',
+                            'attribute_alias' => $this->getAttributeAlias(),
+                            'height' => 1
+                        ]);
+                        break;
+                    default: 
+                        $defaultEditorUxon = $attr->getDefaultEditorUxon()->extend($uxon);
+                        // Make sure to keep the attribute alias of the filter exactly as it was set.
+                        // Otherwise modifiers like an aggregator will get lost because the default
+                        // editor "thinks" it is a regular input for the attribute
+                        $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                }
+                
+                break;
+            case $this->hasCustomConditionGroup() === false && $this->hasCustomInputWidget() === false:
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
         } 
         
         if ($defaultEditorUxon && $defaultEditorUxon->isEmpty() === false) {
@@ -408,6 +439,13 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         // via the meta model defaults.
         if ($input instanceof iHaveValue) {
             $input->setIgnoreDefaultValue(true);
+        }
+        
+        // Filters do not need data type specific validation like min/max values. For example, if you have a date 
+        // attribute, that must be a future date, you will set `min:0` in the data type customization. However, 
+        // you will still need past days in filters. 
+        if ($input instanceof Input) {
+            $input->setDisableValidation(true);
         }
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
@@ -741,12 +779,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * 
      * @see \exface\Core\Widgets\Container::setDisabled()
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface
     {
         if ($this->isInputWidgetInitialized() === true) {
-            $this->getInputWidget()->setDisabled($trueOrFalseOrNull);
+            $this->getInputWidget()->setDisabled($trueOrFalseOrNull, $reason);
         }
-        return parent::setDisabled($trueOrFalseOrNull);
+        return parent::setDisabled($trueOrFalseOrNull, $reason);
     }
     
     /**
@@ -760,6 +798,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $this->getInputWidget()->setDisableCondition($value);
         }
         return parent::setDisableCondition($value);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDisabledIf()
+     */
+    public function setDisabledIf(UxonObject $value) : WidgetInterface
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setDisabledIf($value);
+        }
+        return parent::setDisabledIf($value);
     }
     
     /**
@@ -784,7 +835,7 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         if ($this->hasCustomConditionGroup() === true) {
-            $uxon->setProperty('condition_group', $this->getCustomConditionGroup()->exportUxonObject());
+            $uxon->setProperty('condition_group', $this->getCustomConditionGroupUxon());
         }
         return $uxon;
     }
@@ -840,6 +891,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             return $this->getInputWidget()->isBoundToAttribute();
         }
         return $this->attributeAlias !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::isBoundToLabelAttribute()
+     */
+    public function isBoundToLabelAttribute() : bool
+    {
+        if ($this->isInputWidgetInitialized() === true && $this->getInputWidget() instanceof iShowSingleAttribute) {
+            return $this->getInputWidget()->isBoundToLabelAttribute();
+        }
+        return false;
     }
 
     /**
@@ -1011,27 +1075,36 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
      * @return boolean
      */
     public function hasCustomConditionGroup() {
-        return $this->customConditionGroup !== null;
+        return $this->customConditionGroupUxon !== null;
     }
     
     /**
-     *
+     * Returns the custom condition group if defined (a new instance of ConditionGroup every time!).
+     * 
+     * The $value parameter allows to replace the placeholder by the given fixed value.
+     * 
+     * @param mixed $value
      * @return ConditionGroupInterface
      */
-    public function getCustomConditionGroup() : ConditionGroupInterface
+    public function getCustomConditionGroup($value = '[#value#]') : ConditionGroupInterface
     {
-        return $this->customConditionGroup;
+        $uxon = $this->getCustomConditionGroupUxon();
+        if ($uxon === null) {
+            throw new WidgetLogicError($this, 'Cannot get condition_group from ' . $this->getWidgetType() . ': it is empty!');
+        }
+        if ($value !== '[#value#]') {
+            $uxon = UxonObject::fromJson(str_replace('[#value#]', ($value ?? ''), $uxon->toJson()));
+        }
+        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject());
     }
     
     /**
      * 
-     * @param ConditionGroupInterface $group
-     * @return Filter
+     * @return UxonObject|NULL
      */
-    public function setCustomConditionGroup(ConditionGroupInterface $group) : Filter
+    protected function getCustomConditionGroupUxon() : ?UxonObject
     {
-        $this->customConditionGroup = $group;
-        return $this;
+        return $this->customConditionGroupUxon;
     }
     
     /**
@@ -1115,7 +1188,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             }
             $uxon->setProperty('conditions', new UxonObject($enrichedConditions));
         }
-        return $this->setCustomConditionGroup(ConditionGroupFactory::createFromUxon($this->getWorkbench(), $uxon));
+        $this->customConditionGroupUxon = $uxon;
+        return $this;
     }
     
     /**
@@ -1327,5 +1401,43 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             }
             return $this->preloader;
         }
+    }
+    
+    /**
+     * Set to TRUE to hide the filter and use a simple InputHidden widget by default.
+     * 
+     * If you just need a hidden filter without any special configuration, set
+     * `hidden` to `true`. This will produce a filter with a `InputHidden` for 
+     * `input_widget` which is typically a lot simpler and faster, than a fully
+     * instantiated widget being hidden via `visibility`. There will be no additional
+     * background acitivity/formatting etc. The values will be used as-is.
+     * 
+     * @uxon-property hidden
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see \exface\Core\Widgets\AbstractWidget::setHidden()
+     */
+    public function setHidden($value)
+    {
+        $this->useHiddenInput = $value;
+        return parent::setHidden($value);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::hasFunction()
+     */
+    public function hasFunction(string $functionName, bool $allowChildFunctions = true) : bool
+    {
+        $constName = 'static::FUNCTION_' . strtoupper($functionName);
+        if (defined($constName)) {
+            return true;
+        }
+        if ($allowChildFunctions) {
+            return $this->getInputWidget()->hasFunction($functionName);
+        }
+        return false;
     }
 }

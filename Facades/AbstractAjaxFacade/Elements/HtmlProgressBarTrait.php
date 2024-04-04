@@ -2,11 +2,23 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
-use exface\Core\Widgets\ProgressBar;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 
 /**
- *
- * @method ProgressBar getWidget()
+ * 
+ * ## Usage:
+ * 
+ * ### CSS
+ * 
+ * Add the following CSS to the style sheet (change slightly if required)
+ * 
+ * ```
+    .exf-progressbar {width: 100%; padding: 0 3px; border:1px solid #ccc; position:relative; overflow: hidden; white-space:nowrap; color:transparent; box-sizing: border-box;}
+    .exf-progressbar-bar {position: absolute; left:0; top:0;}
+    .exf-progressbar-text {position:absolute; left:0; top:0; z-index:100; padding:0 2px; width:100%; color:initial; overflow: hidden; text-overflow: ellipsis;}
+ * ```
+ * @method \exface\Core\Widgets\ProgressBar getWidget()
  *        
  * @author Andrej Kabachnik
  *        
@@ -32,21 +44,34 @@ trait HtmlProgressBarTrait
             $style .= 'height: ' . $this->getHeight() . '; ';
         }
         
-        if ($text === null && $value !== null) {
-            $text = $value;
+        if ($text === null) {
+            $text = $value ?? '&nbsp;';
+            $titleProp = '';
+        } else {
+            $titleProp = 'title=' . $this->escapeString($text, true, true);
         }
         $progress = $progress ?? $widget->getMin();
         $color = $color ?? 'transparent';
         
         $output = <<<HTML
 
-<div class="exf-progressbar" style="width:100%; border:1px solid #ccc; position:relative; overflow: hidden; white-space:nowrap; color:transparent; {$style}">{$text}
-    <div class="exf-progressbar-bar" style="position: absolute; left:0; top:0; width:{$progress}%; background:{$color};">&nbsp;</div>
-    <div class="exf-progressbar-text" style="position:absolute; left:0; top:0; z-index:100; padding:0 0; width:100%; color:initial; text-align: {$this->buildCssTextAlignValue($widget->getAlign())}">{$text}</div>
+<div id="{$this->getId()}" class="exf-progressbar" style="{$style}" {$titleProp}>{$text}
+    <div class="exf-progressbar-bar" style="width:{$progress}%; background:{$color};">&nbsp;</div>
+    <div class="exf-progressbar-text" style="text-align: {$this->buildCssTextAlignValue($widget->getAlign())}">{$text}</div>
 </div>
 
 HTML;
         return $output;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValueSetter()
+     */
+    public function buildJsValueSetter($value_js, $disable_formatting = false)
+    {
+        return "$('#{$this->getId()}').replaceWith($({$this->buildJsValueDecorator($value_js)}))";
     }
     
     /**
@@ -60,25 +85,28 @@ HTML;
         // The color map is presented as an array of arrays in JS because an object does not
         // retain the order of keys, which is crucial in this case.
         $colorMapJs = '';
+        $colorMapStringBased = $widget->getValueDataType() instanceof StringDataType ? true : false;
         foreach ($widget->getColorScale() as $val => $color) {
-            $colorMapJs .= '[' . $val . ',  "' . $color . '"],';
+            $colorMapJs .= '[' . ($colorMapStringBased || ! is_null($val) ? "'$val'" : $val) . ',  "' . $color . '"],';
         }
         $colorMapJs = rtrim($colorMapJs, ",");
         
         $textMapJs = json_encode($widget->getTextScale());
         $tpl = json_encode($this->buildHtmlProgressBar('exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color'));
+        $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
+        $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
+        
         return <<<JS
-function() {
-    var val = {$value_js};
-    
-    if (val === undefined || val === '') return '';
+function(val) {    
+    if (val === undefined || val === null || val === '') return '';
 
     var colorMap = [ {$colorMapJs} ];
     var textMap = {$textMapJs};
     var html = {$tpl};
     var numVal = parseFloat(val);    
-    var color = 'transparent';
-
+    var colorBase = '{$widget->getColor()}';
+    var color = colorMap.length > 0 ? colorMap[colorMap.length-1][1] : (colorBase || 'transparent');
+    var oSemanticColors = $semanticColorsJs;
     var c = [];
     for (var i in colorMap) {
         c = colorMap[i];
@@ -86,6 +114,10 @@ function() {
             color = c[1];
             break;
         }
+    }
+
+    if (oSemanticColors[color] !== undefined) {
+        color = oSemanticColors[color];
     }
     
     html = html
@@ -97,11 +129,14 @@ function() {
         html = html.replace(/exfph-text/g, textMap[val]);
     } else {
         var text = {$this->buildJsValueFormatter('val')};
+        if (text === undefined || text === null) {
+            text = '&nbsp;';
+        }
         html = html.replace(/exfph-text/g, text);
     }
     
     return html;
-}()
+}({$value_js})
 JS;
     }
 }

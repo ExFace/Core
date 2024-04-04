@@ -8,7 +8,6 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Security\Authenticators\RememberMeAuthenticator;
 use exface\Core\Interfaces\Security\AuthenticatorInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
 
@@ -33,22 +32,30 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
      */
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        foreach ($this->getSorters() as $qpart) {
+            $qpart->setApplyAfterReading(true);
+        }
+        
         $rows = [];
         foreach ($this->getAuthenticators() as $pos => $authenticator) {
             $row = [
                 'NAME' => $authenticator->getName(),
                 'CLASS' => '\\' . get_class($authenticator),
                 'ID' => $this->getAuthenticatorId($authenticator),
-                'POSITION' => $pos
+                'POSITION' => $pos,
+                'DISABLED' => $authenticator->isDisabled()
             ];
             
             $rows[] = $row;
         }
         
-        $this->applyFilters($rows);
-        $this->applySorting($rows);
+        $rows = $this->applyFilters($rows);
+        $rows = $this->applySorting($rows);
         $totalCount = count($rows);
-        $this->applyPagination($rows);
+        $rows = $this->applyPagination($rows);
         
         return new DataQueryResultData($rows, count($rows), false, $totalCount);
     }
@@ -98,8 +105,6 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
                 $this->authenticators[] = $authenticator;
                 $this->ids[] = $id;
             }
-            $this->authenticators[] = new RememberMeAuthenticator($this->getWorkbench());
-            $this->ids[] = 'DEFAULT_REMEMBER_ME_AUTH';
         }
         
         return $this->authenticators;
@@ -112,7 +117,7 @@ class WorkbenchAuthenticatorsReader extends AbstractQueryBuilder
      */
     protected function getAuthenticatorId(AuthenticatorInterface $authenticator) : ?string
     {
-        return $this->ids[array_search($authenticator, $this->getAuthenticators())];
+        return $this->ids[array_search($authenticator, $this->getAuthenticators(), true)];
     }
 }
 ?>

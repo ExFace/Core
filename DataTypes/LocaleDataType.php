@@ -34,7 +34,7 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $inLocale
      * @return string
      */
-    public static function getLocaleName(string $locale, string $inLocale) : string
+    public static function getLocaleName(string $locale, string $inLocale) : ?string
     {
         return \Locale::getDisplayName($locale, $inLocale);
     }
@@ -105,5 +105,27 @@ class LocaleDataType extends StringDataType implements EnumDataTypeInterface
     public static function getAllLocales() : array
     {
         return \ResourceBundle::getLocales('');
+    }
+    
+    /**
+     * Returns the language from the given locale - e.g. `de` from `de_DE`
+     * 
+     * @param string $locale
+     * @return string|NULL
+     */
+    public static function findLanguage(string $locale) : ?string
+    {
+        return \Locale::getPrimaryLanguage($locale);
+    }
+    
+    /**
+     * Returns the region from the given locale - e.g. `AT` from `de_AT`
+     * 
+     * @param string $locale
+     * @return string|NULL
+     */
+    public static function findRegion(string $locale) : ?string
+    {
+        return \Locale::getRegion($locale);
     }
 }

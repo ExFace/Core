@@ -13,7 +13,9 @@ class UiPageFactory extends AbstractStaticFactory
 
     /**
      * Creates a page for the passed selector automatically loading it from 
-     * the CMS if it exists there.
+     * the model if it exists there.
+     * 
+     * NOTE: if the model has no page matching the selector, a blank page will be created!
      * 
      * @param UiPageSelectorInterface $selector
      * 
@@ -101,6 +103,14 @@ class UiPageFactory extends AbstractStaticFactory
         $page->importUxonObject($uxon, $skip_property_names);
         return $page;
     }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return UiPageInterface
+     */
+    public static function createIndexPage(WorkbenchInterface $workbench) : UiPageInterface
+    {
+        return static::createFromModel($workbench, $workbench->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR'));
+    }
 }
-
-?>

@@ -56,9 +56,10 @@ trait JsonEditorTrait
 HTML;
         }
         return <<<HTML
-
+        <div id="{$this->getId()}_wrapper" style="height: 100%; width: 100%; position: relative;">
             <div id="{$this->getId()}" style="height: 100%; width: 100%;"></div>
             $uxonEditorHtml
+        </div>
 
 HTML;
     }
@@ -258,6 +259,10 @@ JS;
             $uxonEditorOptions = '';
         }
         
+        if ($widget->isMinimalistic()) {
+            $uxonEditorOptions .= 'mainMenuBar: false, navigationBar: false,';
+        }
+        
 	return <<<JS
 
     onError: {$this->buildJsOnErrorFunction()},
@@ -296,12 +301,18 @@ JS;
      * @param string $funcPrefix
      * @return string
      */
-    public static function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
+    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
     {   
         $trans = static::getTranslations($workbench);
+
+        if ($title = $this->getWidget()->getCaption()) {
+            $title = "'$title'";
+        } else {
+            $title = $uxonSchema;
+        }
         
         return <<<JS
-                    name: ({$uxonSchema} === 'generic' ? 'UXON' : {$uxonSchema}),
+                    name: $title,
                     enableTransform: false,
                     enableSort: false,
                     history: true,
@@ -337,7 +348,7 @@ JS;
                                         editor._autosuggestPending = true;
                                         var uxon = JSON.stringify(editor.get());
                                         return {$funcPrefix}_fetchAutosuggest(text, path, input, uxon)
-                                        .then(json => {                                          
+                                        .then(function(json){                                          
                                             editor._autosuggestPending = false;
                                             if (json === undefined) {
                                                 reject();
@@ -355,15 +366,15 @@ JS;
                                             // return response data for further processing
                                             return json;
                                         })
-                                       .catch((err) => { 
+                                       .catch(function(err){ 
                                             editor._autosuggestPending = false;
-                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED']}", err);
+                                            console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GENERAL']}", err);
                                        });
                     	           }
                                 })
-                                .catch((err) => {
+                                .catch(function(err){
                                     editor._autosuggestPending = false;
-                                    console.warn("{$trans['ERROR.GETTING_OPTIONS']}", err);
+                                    console.warn("{$trans['ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS']}", err);
                                     return Promise.resolve([]);
                                 });
                             }
@@ -414,7 +425,7 @@ JS;
                             
                             // Add preset button if applicable
                             // ist objekt oder wert === leer                            
-                            if(menuNodeType === "object" || menuNodeType === "root") {
+                            if(menuNodeType === "object" || menuNodeType === "root" || (menuNodeType === 'array' && Array.isArray(val) && val.length === 0)) {
                                 items.unshift(
                                 {
                                     text : "{$trans['PRESETS.TITLE']}",   // the text for the menu item
@@ -435,6 +446,18 @@ JS;
                                     className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-th-list", // the css class name(s) for the menu item
                                     click: function(){ 
                                         return {$funcPrefix}_openDetailsModal(menuNode); 
+                                    }
+                                });
+                            }
+
+                            // Add item to open model browser
+                            if (menuNode.type === 'auto' || menuNode.type === 'string') {
+                                items.push({
+                                    text: "{$trans['MODELBROWSER.TITLE']}",
+                                    title: "{$trans['MODELBROWSER.HINT']}",
+                                    className: "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-search" ,
+                                    click : function() { 
+                                        return {$funcPrefix}_openModelModal(menuNode); 
                                     }
                                 });
                             }
@@ -498,9 +521,64 @@ JS;
                                 ]
                             };
                             items.push(editMenu);
+
+                            // Add clear button if applicable
+                            if(menuNodeType === "object" || menuNodeType === "root" || menuNodeType === "array") {
+                                items.push({
+                                    text : "{$trans['CONTEXT_MENU.CLEAR.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['CONTEXT_MENU.CLEAR.HINT']}",  // the HTML title attribute
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-eraser",
+                                    click: function(){ 
+                                        switch (menuNodeType) {
+                                            case "root":
+                                                menuNode.editor.set({"":""});
+                                                break;
+                                            case "array":
+                                                menuNode.setValue([]);
+                                                break;
+                                            case "object":
+                                                menuNode.setValue({"":""});
+                                                break;
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Add comment toggle button
+                            if(menuNodeType !== "array" && menuNode.type !== 'root') {
+                                items.push({
+                                    text : "{$trans['CONTEXT_MENU.COMMENT.TITLE']}",   // the text for the menu item
+                                    title : "{$trans['CONTEXT_MENU.COMMMENT.HINT']}",  // the HTML title attribute
+                                    className : "jsoneditor-fa-menuicon jsoneditor-type-object active-button fa-quote-left",
+                                    click: function(){
+                                        var sFld;
+                                        switch (menuNodeType) {
+                                            case "object":
+                                                if (menuNode.childs[0].field === '/*' && menuNode.childs[menuNode.childs.length-1].field === '*/') {
+                                                    menuNode.removeChild(menuNode.childs[menuNode.childs.length-1]);
+                                                    menuNode.removeChild(menuNode.childs[0]);
+                                                } else {
+                                                    menuNode.childs[0]._onInsertBefore('/*', '');
+                                                    menuNode.childs[menuNode.childs.length-1]._onInsertAfter('*/', '');
+                                                }
+                                                break;
+                                            default:    
+                                                sFld = menuNode.getField();
+                                                if (sFld.substring(0, 2) === '//') {
+                                                    menuNode.setField(sFld.substring(2), menuNode.editable.field);
+                                                    menuNode.recreateDom();
+                                                } else {
+                                                    menuNode.setField('//' + sFld, menuNode.editable.field);
+                                                    menuNode.recreateDom();
+                                                }
+                                        }
+                                    }
+                                });
+                            }
                             
                             return items;
-                        } // onCreateMenu
+                        }, // onCreateMenu
+
 JS;
     }
             
@@ -521,7 +599,22 @@ JS;
      */
     public function buildJsValueSetter($value) : string
     {
-        return "(function(){var val = $value; if (val === undefined || val === null || val === '') {val = '{}'} {$this::buildJsEditorGetter($this->getId())}.setText(val); {$this::buildJsEditorGetter($this->getId())}.expandAll()})()";
+        $editorId = $this->getId();
+        $presetHintHideJs = static::buildJsPresetHintHide($editorId);
+        $presetHintShowJs = static::buildJsPresetHintHide($editorId);
+        return <<<JS
+(function(val){
+    var oEditor = {$this::buildJsEditorGetter($editorId)};
+    if (val === undefined || val === null || val === '') {
+        val = '{}';
+        $presetHintShowJs;
+    } else {
+        $presetHintHideJs;
+    }
+    oEditor.setText(val); 
+    oEditor.expandAll();
+})($value)
+JS;
     }
     
     /**
@@ -571,11 +664,38 @@ JS;
                         box-sizing: border-box;
                     }
                     .jsoneditor-modal .uxoneditor-input,
+                    .jsoneditor-modal .uxoneditor-btn,
                     .jsoneditor-modal .spinner-wrapper {
                         height: 35px;
                         margin-bottom: 4px;
                     }
-                    .jsoneditor-modal input.uxoneditor-input:not([type]),
+                    .jsoneditor-modal button {
+                        width: initial;
+                        background: #f5f5f5;
+                        cursor: pointer;
+                        font-size: 10pt;
+                        box-sizing: border-box;
+                        box-shadow: none;
+                        border: 1px solid #d3d3d3;
+                        color: #4d4d4d;
+                        border-radius: 3px;
+                        vertical-align: top;
+                    }
+                    .jsoneditor-modal div.uxoneditor-input {
+                        width: initial;
+                        font-size: 10pt;
+                        box-sizing: border-box;
+                        box-shadow: none;
+                        border: 1px solid #d3d3d3;
+                        color: #4d4d4d;
+                        border-radius: 3px;
+                        vertical-align: top;
+                        line-height: 27px;
+                        font-family: inherit;
+                        background-color: #f5f5f5;
+                        display: inline-block;
+                    }
+                    .jsoneditor-modal .uxoneditor-input:not([type]),
                     .jsoneditor-modal input.uxoneditor-input[type=text] {
                         height: 35px !important;
                         border: 1px solid #d3d3d3;
@@ -596,12 +716,33 @@ JS;
                         background-color:  #f5f5f5;
                     }
                     .jsoneditor-modal input[type="submit"],
-                    .jsoneditor-modal input[type="button"] {
+                    .jsoneditor-modal input[type="button"] 
+                    .jsoneditor-model button {
                         width: auto;
                         font-family: inherit;
                     }
                     .jsoneditor-modal .action-buttons {
                         float: right;
+                    }
+
+                    .uxoneditor-btn-group {display: inline-block; vertical-align: top}
+                    .uxoneditor-btn-group > input,
+                    .uxoneditor-btn-group > button,
+                    .uxoneditor-btn-group > div.uxoneditor-input {
+                        border-radius: 0 !important;
+                        margin-left: 0;
+                        margin-right: 0;
+                        width: initial;
+                        border-right-width: 0;
+                    }
+                    .uxoneditor-btn-group > *:last-child {
+                        border-top-right-radius: 3px !important;
+                        border-bottom-right-radius: 3px !important;
+                        border-right-width: 1px;
+                    }
+                    .uxoneditor-btn-group > *:first-child {
+                        border-top-left-radius: 3px !important;
+                        border-bottom-left-radius: 3px !important;
                     }
 
                     .jsoneditor-modal table.jsoneditor-values {width: initial;}
@@ -652,26 +793,30 @@ JS;
                     .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
                     .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
                     .uxoneditor-preset-cards {width: 100%; height: calc(100% - 28px); overflow-y: auto;}
-                    .uxoneditor-preset-card {width: 213px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; float: left; overflow: hidden; cursor: pointer;}
-                    .uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa;}
+                    .uxoneditor-preset-card {width: 221px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; padding: 3px; float: left; overflow: hidden; cursor: pointer;}
+                    .uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa; border-width: 4px; padding: 0;}
                     .uxoneditor-preset-name {text-align: center; padding: 0 10px 7px 10px; height: 2.3rem}
                     .uxoneditor-preset-card.text-only {position: relative;}
                     .uxoneditor-preset-card.text-only .uxoneditor-preset-name {padding: 0 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 20px);}
                    
 
                     .uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
-                    .uxoneditor-details-table {margin-bottom: 20px}
-                    .uxoneditor-details-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
-                    .uxoneditor-details-table td {padding: 3px !important;}
-                    .uxoneditor-details-table p {margin: 0.3em 0 0.7em 0;}
-                    .uxoneditor-details-table code {
+                    .uxoneditor-table {margin-bottom: 20px}
+                    .uxoneditor-table-selectable tr:hover {background-color: #3883fa;}
+                    .uxoneditor-table-selectable tr {cursor: pointer;}
+                    .uxoneditor-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
+                    .uxoneditor-table td {padding: 3px !important;}
+                    .uxoneditor-table tr.selected {background-color: #3883fa;}
+                    .uxoneditor-table tr.selected > td {color: white;}
+                    .uxoneditor-table p {margin: 0.3em 0 0.7em 0;}
+                    .uxoneditor-table code {
                         padding: 0.2em 0.4em;
                         margin: 0;
                         font-size: 85%;
                         background-color: rgba(27,31,35,0.05);
                         border-radius: 3px;
                     }
-                    .uxoneditor-details-table pre {
+                    .uxoneditor-table pre {
                         padding: 16px;
                         overflow: auto;
                         font-size: 85%;
@@ -679,7 +824,7 @@ JS;
                         background-color: #f6f8fa;
                         border-radius: 3px;
                     }
-                    .uxoneditor-details-table pre code {
+                    .uxoneditor-table pre code {
                         display: inline;
                         max-width: auto;
                         padding: 0;
@@ -765,6 +910,7 @@ CSS;
         {
             $addHelpButtonFunction = static::buildJsFunctionNameAddHelpButton($funcPrefix);
             $onBlurFunctionName = static::buildJsFunctionNameOnBlur($funcPrefix);
+            $onClickValueFunctionName = $funcPrefix . '_onClickValue';
             $presetHintHide = static::buildJsPresetHintHide($uxonEditorId);
             $trans = static::getTranslations($workbench);
             
@@ -792,7 +938,7 @@ CSS;
         	      body: formData, // body data type must match "Content-Type" header
         	   }
             )
-          	.then(response => {
+          	.then(function(response){
                 if (
                     response
                     && response.ok
@@ -879,19 +1025,42 @@ CSS;
         	}
         	var path = node.getPath();
         	var prop = path[path.length-1];
+            var val;
+            var tpl;
+            var type = 'auto';
         	if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
-        		var tpl = editor._autosuggestLastResult.templates[prop];
+        		tpl = editor._autosuggestLastResult.templates[prop];
         		if (tpl) {
-        			var val = JSON.parse(tpl);
-        			node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
+        			try {
+                        val = JSON.parse(tpl);
+                        type = (Array.isArray(val) ? 'array' : 'object');
+                    } catch (e) {
+                        val = tpl;
+                        if (tpl.includes("\\n")) {
+        			        node.setValue(val, type);
+                            {$funcPrefix}_openAceModal(node);
+                            return;
+                        }
+                    }
+        			node.setValue(val, type);
         			node.expand(true);
         			{$funcPrefix}_focusFirstChildValue(node);
         		}
         	}
         }
+
+        function {$onClickValueFunctionName}(event){
+            var editor = event.data.jsonEditor;
+        	var oNode = {$funcPrefix}_getNodeFromTarget(this);
+            var sVal = oNode.getValue();
+            if (sVal && sVal.includes("\\n")) {
+                {$funcPrefix}_openAceModal(oNode);
+            }
+        }
+
           function {$addHelpButtonFunction}($, editorId, url, title) {
             var helpBtn = $(
-                '<button type="button" title="{$trans['HELP']}" style="background: transparent;"><i ' +
+                '<button title="{$trans['HELP']}" style="background: transparent;"><i ' +
                 'class="fa fa-question-circle-o" style="font-size: 22px"></i></button>'
             );
            
@@ -927,8 +1096,8 @@ CSS;
             var aFiltered = [ [],[],[] ];
             var aResult = [];
             var iLen = aSuggestions.length;
-            aSuggestions.forEach(sVal => {
-                sValLower = sVal.toLowerCase();
+            aSuggestions.forEach(function(sVal){
+                sValLower = (sVal || '').toLowerCase();
                 switch (true) {
                     case sValLower.startsWith(sSearch):
                         aFiltered[0].push(sVal);
@@ -941,7 +1110,7 @@ CSS;
                 }
             });
             
-            aFiltered.forEach(aPart => {
+            aFiltered.forEach(function(aPart){
                 aResult = aResult.concat(aPart);
             });
             
@@ -1022,7 +1191,7 @@ CSS;
         function {$funcPrefix}_openAceModal(node) {
             return {$funcPrefix}_openModal(
                 "{$trans['CONTEXT_MENU.EDITOR.WINDOW']}",
-                '   <div id="{$funcPrefix}_value_editor" style="height: calc(100% - 40px)">' + node.getValue() + '</div>' +
+                '   <div id="{$funcPrefix}_value_editor" style="height: calc(100% - 40px)">' + node.getValue().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") + '</div>' +
                 '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
                 '      <div class="action-buttons">' +
                 '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
@@ -1032,7 +1201,10 @@ CSS;
                 false,
                 "jsoneditor-modal jsoneditor-modal-maximized",
                 function(modal) {
-                    var editor = ace.edit('{$funcPrefix}_value_editor');
+                    var editor = ace.edit('{$funcPrefix}_value_editor', {
+                        wrap: true
+                    });
+                    editor.focus();
 
                     modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
                         node.setValue(editor.getValue());
@@ -1126,7 +1298,7 @@ CSS;
                     '       <div style="width: 30%; height: 100%; display: inline-block">' +
                     '          <div class="jsoneditor-jmespath-label">{$trans['PRESETS.PREVIEW']} </div>' +
                     '          <div class="jsoneditor-jmespath-block">' +
-                    '              <textarea id="uxonPresetDescription" class="uxoneditor-input" style="height: 180px;" readonly></textarea>' +
+                    '              <div id="uxonPresetDescription" style="height: 180px;"></div>' +
                     '          </div>' +
                     '          <div class="jsoneditor-jmespath-block" style="height: calc(100% - 10px - 188px - 25px - 10px)">' +
                     '              <div class="uxoneditor-preset-preview" style="height: 100%"> </div>' +
@@ -1175,12 +1347,12 @@ CSS;
                 nodeIsWrappingTarget = false;
             }
             
-            var hasArrayContext = (node.parent !== null && node.parent.childs)? true : false;
+            var hasArrayContext = (node.parent !== null && node.parent.type === 'array') ? true : false;
            
-            var oPresetPathElem = document.getElementById('uxonPresetPath');
-            {$funcPrefix}_autoWidth(oPresetPathElem);
-            oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
-            oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oNodePathElem);
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
             $.ajax( {
                 type: 'POST',
@@ -1192,6 +1364,7 @@ CSS;
                     input: 'preset',
                     schema: {$uxonSchema},
                     prototype: {$rootPrototype},
+                    object: {$rootObject},
                     uxon: node.editor.getText()
                 }, // data
                 
@@ -1253,7 +1426,7 @@ CSS;
 
                     oPreviewEditor.setText(oPresetData['UXON']);
                     
-                    document.getElementById('uxonPresetDescription').value = oPresetData['DESCRIPTION'];
+                    document.getElementById('uxonPresetDescription').innerHTML = oPresetData['DESCRIPTION'];
                     oPreviewEditor.expandAll(true);
                     modal.modalElem().querySelector(".uxoneditor-preset-replace").disabled = false;
                     
@@ -1288,8 +1461,11 @@ CSS;
                 return [];
             } ); // fail
             
-            var {$funcPrefix}_replaceNodeValue = function(oNode, sJson, oModal){  
-               oNode.update(sJson);
+            var {$funcPrefix}_replaceNodeValue = function(oNode, mJson, oModal){  
+               if (oNode.type === 'array' && oNode.childs.length === 0) {
+                    mJson = (typeof mJson === 'string' || mJson instanceof String) ? '[' + mJson + ']' : [mJson];
+               }
+               oNode.update(mJson);
                oNode.expand(true);
                {$funcPrefix}_focusFirstChildValue(oNode, true);
                {$presetHintHide}
@@ -1343,7 +1519,7 @@ CSS;
 
             return  '   <p class="uxoneditor-object-details-title" style="display:none"></p>' + 
                     '   <div class="uxoneditor-object-details-description" style="display:none"></div>' +
-                    '   <table class="uxoneditor-details-table">' +
+                    '   <table class="uxoneditor-table">' +
                     '       <thead>' +
                     '           <tr>' +
                     '               <th style="text-align: center"><i class="fa fa-eye"></i></th>' +
@@ -1374,12 +1550,12 @@ CSS;
             
             var path = node.getPath();
             
-            var oPresetPathElem = document.getElementById('uxonPresetPath');
-            {$funcPrefix}_autoWidth(oPresetPathElem);
-            oPresetPathElem.value = {$funcPrefix}_convertToJsonPath(path);
-            oPresetPathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            {$funcPrefix}_autoWidth(oNodePathElem);
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
             
-            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-details-table > tbody'));
+            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-table > tbody'));
             $.ajax( {
                 type: 'POST',
                 url: '{$ajaxUrl}',
@@ -1453,7 +1629,7 @@ CSS;
                     if(oRow['DESCRIPTION'] == ""){
                         sBtnRowDetails = '   <td></td>';
                     } else {
-                        sBtnRowDetails =        '   <td><a href="javascript:;" class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></a></td>';
+                        sBtnRowDetails =        '   <td><button class="btn-row-description"><i class="fa fa-info-circle" aria-hidden="true"></i></button></td>';
                     }             
 
 
@@ -1508,44 +1684,234 @@ CSS;
 
         }
 
+        function {$funcPrefix}_openModelModal(node){
+            return {$funcPrefix}_openModal(
+                "{$trans['MODERBROWSER']}",
+                '   <div class="uxoneditor-btn-group">' +
+                        '<div class="uxoneditor-input" id="uxonModelBrowserBase" style="border-right: none;"></div>' + 
+                        '<div class="uxoneditor-input" id="uxonModelBrowserPath" style="border-left: none;"></div>' + 
+                        '<button class="uxoneditor-btn" id="uxonModelBrowserBack" title="{$trans['MODELBROWSER.RELATION_BACK']}" /><i class="fa fa-step-backward" aria-hidden="true"></i></button>' +
+                    '</div>' +
+                '   <input class="uxoneditor-input" id="uxonModelBrowserSearch" style="width: initial;"></input>' + 
+                '   <table class="uxoneditor-table uxoneditor-table-selectable">' +
+                '       <thead>' +
+                '           <tr>' +
+                '               <th>{$trans['MODELBROWSER.NAME']}</th>' +
+                '               <th>{$trans['MODELBROWSER.DESCRIPTION']}</th>' +
+                '               <th>{$trans['MODELBROWSER.SUGGESTION']}</th>' +
+                '           </tr>' +
+                '       </thead>' +
+                '       <tbody>' +
+                '       </tbody>' +
+                '   </table>' +
+                '   <div style="width: calc(100% - 20px); padding: 0 0 20px 0; text-align: center;">' +
+                '       <div class="spinner" style="width: 32px; height: 32px"></div>' +
+                '   </div>' +
+                '   <div class="jsoneditor-jmespath-block jsoneditor-modal-actions">' +
+                '      <input class="uxoneditor-input" id="uxonPresetPath" style="margin-right: 4px;" readonly></input>' +
+                '      <div class="action-buttons">' +
+                '          <input class="uxoneditor-input uxoneditor-btn-ok" autofocus type="submit" value="{$trans['BUTTON_OK']}"/>' +
+                '          <input class="uxoneditor-input uxoneditor-btn-cancel" type="submit" value="{$trans['BUTTON_CANCEL']}" />' +
+                '      </div>' +
+                '   </div>',
+                false,
+                'jsoneditor-modal jsoneditor-modal-maximized',
+                function(modal) {
+                    return {$funcPrefix}_loadModelBrowser(modal, node);
+                }
+            );
+        }
 
+        function {$funcPrefix}_loadModelBrowser(modal, node) {
+            var path = node.getPath();
+            var sPath = node.getValue();
+            var sSearch = '';
+            var sDelim = '__';
+            var iSplitPos = -1;
+            var oNodePathElem = document.getElementById('uxonPresetPath');
+            var jqTableBody = $(modal.modalElem().querySelector('.uxoneditor-table > tbody'));
+            var oCache = {};
+
+            iSplitPos = sPath.lastIndexOf(sDelim);
+            if (iSplitPos > -1) {
+                sPath = sPath.substring(0, iSplitPos + sDelim.length);
+            } else {
+                sPath = '';
+            }
+
+            iSplitPos = sSearch.lastIndexOf(':');
+            if (iSplitPos > -1) {
+                sSearch = sSearch.substring(0, iSplitPos);
+            }
+            
+            {$funcPrefix}_autoWidth(oNodePathElem);
+
+            oNodePathElem.value = {$funcPrefix}_convertToJsonPath(path);
+            oNodePathElem.title = node.editor.options.name + (path.length > 0 ? ' > ' : '') + path.join(' > ');
+            
+            $('#uxonModelBrowserBack').click(function(){
+                var sPath = $('#uxonModelBrowserPath').text();
+                var aPath = sPath.split(sDelim);
+                if (aPath.length > 0) {
+                    sPath = aPath.slice(0, -2).join(sDelim);
+                    if (sPath !== '') {
+                        sPath += sDelim;
+                    }
+                    fnSearch(jqTableBody, '',  sPath);
+                }
+            });
+
+            var fnLoad = function(sPath) {
+                return $.ajax( {
+                    type: 'POST',
+                    url: '{$ajaxUrl}',
+                    dataType: 'json',
+                    data: {
+                        action: 'exface.Core.UxonAutosuggest',
+                        path: JSON.stringify(path),
+                        input: 'modelbrowser',
+                        text: sPath,
+                        schema: {$uxonSchema},
+                        prototype: {$rootPrototype},
+                        uxon: node.editor.getText()
+                    }, // data
+                    
+                }) // ajax POST request
+                .done(function(oResponse, sTextStatus, jqXHR) {
+                    var oData = oResponse || {};
+                    var aRows = [];
+                    var sTitle = '';
+                    var sDescription = '';
+
+                    switch (oData['_TYPE']) {
+                        case 'object': 
+                            sTitle = oData._BASE_OBJECT_NAME + ' (' + oData._BASE_OBJECT_ALIAS_NS + ')';
+                            sDescription = oResponse.DESCRIPTION;
+                            aRows = (oData.ATTRIBUTES || []);
+                            oCache[sPath] = aRows;
+                    }
+
+                    modal.modalElem().querySelector('.pico-modal-header').innerHTML = sTitle;
+                    $('#uxonModelBrowserBase').html(oData._BASE_OBJECT_ALIAS + ':');
+
+                    return aRows;
+                }) // done
+                .fail( function (jqXHR, textStatus, errorThrown) {
+                    console.warn("{$trans['ERROR.SERVER_ERROR']}", jqXHR);
+                    modal.modalElem().querySelector('.spinner').parentNode.style.display = 'none';
+                    return [];
+                } ); // fail
+            };
+
+            var fnSearch = function(jqTableBody, sSearch, sPath) {
+                var aData = oCache[sPath];
+                jqTableBody.empty();
+                $('#uxonModelBrowserSearch').val(sSearch);
+                $('#uxonModelBrowserPath').text(sPath);
+                if (aData === undefined) {
+                    modal.modalElem().querySelector('.spinner').parentNode.style.display = 'block';
+                    fnLoad(sPath).then(function() {
+                        modal.modalElem().querySelector('.spinner').parentNode.style.display = 'none';
+                        fnSearch(jqTableBody, sSearch, sPath);
+                    });
+                } else {
+                    aData.forEach(function(oRow) {
+                        if (sSearch !== '') {
+                            sSearch = sSearch.toLowerCase();
+                            if (! oRow['NAME'].toLowerCase().includes(sSearch) && ! oRow['ALIAS'].toLowerCase().includes(sSearch)) {
+                                return;
+                            }
+                        }
+    
+                        jqTableBody.append($(
+                            '<tr data-suggest="' + oRow['_SUGGEST'] + '">' + 
+                            '   <td>' + oRow['NAME'] + (oRow['_RELATION'] ? ' <button class="uxoneditor-follow-relation" title="{$trans['MODELBROWSER.RELATION_FOLLOW']}" data-relation="' + oRow['_SUGGEST'] + '"/><i class="fa fa-step-forward" aria-hidden="true"></i></button>' : '') + '</td>' + 
+                            '   <td>' + (oRow['DESCRIPTION'] || '') + '</td>' + 
+                            '   <td>' + oRow['_SUGGEST'] + '</td>' + 
+                            '</tr>'
+                        ));
+                    });
+
+                    jqTableBody.find('button.uxoneditor-follow-relation').click(function() {
+                        var sPath = $(this).data('relation');
+                        fnSearch(jqTableBody, '', sPath);
+                    });
+
+                    jqTableBody.find('tr').click(function() {
+                        jqTableBody.find('tr').removeClass('selected');
+                        $(this).addClass('selected');
+                    });
+                }
+            }
+
+            fnSearch(jqTableBody, sSearch, sPath);
+
+            $('#uxonModelBrowserSearch').focus().on('input', function(){
+                fnSearch(jqTableBody, $(this).val(), $('#uxonModelBrowserPath').text());
+            });
+            
+            modal.modalElem().querySelector(".uxoneditor-btn-ok").onclick = function() {
+                var sSelected = jqTableBody.find('tr.selected').data('suggest');
+                if (sSelected) {
+                    node.setValue(sSelected);
+                }
+                modal.close();
+            };
+
+            modal.modalElem().querySelector(".uxoneditor-btn-cancel").onclick = function() {
+                modal.close();
+            };
+
+        }
 	
     
 JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsRootPrototypeGetter() : string
     {
         $widget = $this->getWidget();
         if ($widget instanceof InputUxon) {
             $expr = $widget->getRootPrototype();
             if ($expr !== null) {
-                if ($expr->isString() === true) {
-                    return '"' . $expr->toString() . '"';
-                } elseif ($expr->isReference() === true) {
+                if ($expr->isReference() === true) {
                     $link = $expr->getWidgetLink($widget);
                     return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                } else {
+                    return json_encode(trim($expr->toString(), "'\""));
                 }
             }
         }
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsSchemaGetter() : string
     {
         $widget = $this->getWidget();
         if ($widget instanceof InputUxon) {
             $expr = $widget->getSchemaExpression();
-            if ($expr->isString() === true) {
-                return '"' . trim($expr->toString(), "'\"") . '"';
-            } elseif ($expr->isReference() === true) {
+            if ($expr->isReference() === true) {
                 $link = $expr->getWidgetLink($widget);
                 return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+            } else {
+                return json_encode(trim($expr->toString(), "'\""));
             }
         }
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsRootObjectGetter() : string
     {
         $widget = $this->getWidget();
@@ -1563,6 +1929,10 @@ JS;
         return '""';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsAutosuggestFunction() : string
     {
         $widget = $this->getWidget();
@@ -1585,7 +1955,25 @@ JS;
             <<<JS
                 
                 $(function() {
-            		$(document).on('blur', '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]', {jsonEditor: {$this::buildJsEditorGetter($uxonEditorId)} }, {$funcPrefix}_onBlur);
+                    var sEditableFieldsSelector = '#{$uxonEditorId} div.jsoneditor-field[contenteditable="true"]';
+                    var sEditableValuesSelector = '#{$uxonEditorId} div.jsoneditor-value[contenteditable="true"].jsoneditor-string';
+                    var oEventData = {
+                        jsonEditor: {$this::buildJsEditorGetter($uxonEditorId)} 
+                    };
+
+                    if (! ($._data(document, 'events').click || []).find(function(oListener){
+                            return oListener.selector === sEditableValuesSelector;
+                        })
+                    ){
+                        $(document).on('click', sEditableValuesSelector, oEventData, {$funcPrefix}_onClickValue);
+                    }
+
+                    if (! ($._data(document, 'events').blur || []).find(function(oListener){
+                            return oListener.selector === sEditableFieldsSelector;
+                        })
+                    ){
+                        $(document).on('blur', sEditableFieldsSelector, oEventData, {$funcPrefix}_onBlur);
+                    }
             	});
 JS;
     }
@@ -1632,5 +2020,15 @@ JS;
     public static function buildJsFunctionNameOnBlur(string $funcPrefix) : string
     {
         return $funcPrefix . '_onBlur';
+    }
+    
+    protected function buildJsSetRequired(bool $required) : string
+    {
+        return "";
+    }
+    
+    protected function buildJsRequiredGetter() : string
+    {
+        return $this->getWidget()->isRequired() ? "true" : "false";   
     }
 }

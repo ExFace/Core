@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 interface iHaveColumns extends WidgetInterface
 {
@@ -60,6 +61,13 @@ interface iHaveColumns extends WidgetInterface
     
     /**
      * 
+     * @param ExpressionInterface|string $expressionOrString
+     * @return DataColumn|NULL
+     */
+    public function getColumnByExpression($expressionOrString) : ?DataColumn;
+    
+    /**
+     * 
      * @param DataColumn $column
      * @return iHaveColumns
      */
@@ -88,4 +96,18 @@ interface iHaveColumns extends WidgetInterface
      * @return \exface\Core\Widgets\DataColumn
      */
     public function createColumnFromUxon(UxonObject $uxon) : DataColumn;
+    
+    /**
+     * Returns the UID column as DataColumn
+     *
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function getUidColumn() : DataColumn;
+    
+    /**
+     * Returns TRUE if this data widget has a UID column or FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasUidColumn() : bool;
 }

@@ -2,6 +2,8 @@
 namespace exface\Core\Formulas;
 
 
+use exface\Core\DataTypes\UUIDDataType;
+
 /**
  * Creates a 7 characters long id depending on the time and based on 36 characters system.
  * 
@@ -12,10 +14,13 @@ namespace exface\Core\Formulas;
  */
 class ShortId extends \exface\Core\CommonLogic\Model\Formula
 {
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
     function run()
     {
-        return strtoupper(base_convert(round(microtime(true)*10),10,36));
+        return UUIDDataType::generateShortIdFromTime(1);
     }
 }
-?>

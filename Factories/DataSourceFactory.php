@@ -18,10 +18,6 @@ use exface\Core\Interfaces\Model\ModelInterface;
  */
 abstract class DataSourceFactory extends AbstractStaticFactory
 {
-    const METAMODEL_SOURCE_ALIAS = 'METAMODEL_SOURCE';
-    
-    const METAMODEL_SOURCE_UID = '0x32000000000000000000000000000000';
-    
     /**
      * 
      * @param DataSourceSelectorInterface $selector
@@ -30,7 +26,7 @@ abstract class DataSourceFactory extends AbstractStaticFactory
     public static function createEmpty(DataSourceSelectorInterface $selector) : DataSourceInterface
     {
         $sourceSelectorString = $selector->toString();
-        if (strcasecmp($sourceSelectorString, self::METAMODEL_SOURCE_UID) === 0 || strcasecmp($sourceSelectorString, self::METAMODEL_SOURCE_ALIAS) === 0) {
+        if (strcasecmp($sourceSelectorString, DataSourceSelector::METAMODEL_SOURCE_UID) === 0 || strcasecmp($sourceSelectorString, DataSourceSelector::METAMODEL_SOURCE_ALIAS) === 0) {
             return self::createMetamodelDataSource($selector->getWorkbench()->model());
         }
         
@@ -52,7 +48,7 @@ abstract class DataSourceFactory extends AbstractStaticFactory
      */
     public static function createFromModel(WorkbenchInterface $workbench, string $sourceSelectorString, string $connectionSelectorString = null)
     {
-        if (strcasecmp($sourceSelectorString, self::METAMODEL_SOURCE_UID) === 0 || strcasecmp($sourceSelectorString, self::METAMODEL_SOURCE_ALIAS) === 0) {
+        if (strcasecmp($sourceSelectorString, DataSourceSelector::METAMODEL_SOURCE_UID) === 0 || strcasecmp($sourceSelectorString, DataSourceSelector::METAMODEL_SOURCE_ALIAS) === 0) {
             return self::createMetamodelDataSource($workbench->model());
         }
         
@@ -76,7 +72,7 @@ abstract class DataSourceFactory extends AbstractStaticFactory
     public static function createMetamodelDataSource(ModelInterface $model) : DataSourceInterface
     {
         $source = new DataSource($model);
-        $source->setId(self::METAMODEL_SOURCE_UID);
+        $source->setId(DataSourceSelector::METAMODEL_SOURCE_UID);
         $source->setQueryBuilderAlias($model->getWorkbench()->getConfig()->getOption('METAMODEL.QUERY_BUILDER'));
         $source->setConnection($model->getModelLoader()->getDataConnection());
         $source->setName('Metamodel Data Source');

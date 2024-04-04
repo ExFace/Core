@@ -4,15 +4,20 @@
     global.exfTools = factory(global.moment)
 }(this, (function (moment) { 'use strict';
 	//ICU format to moment format
-	(function(m){
-		m.fn.formatICU = function(format){
-			var that = this;
-
-			return this.format(_ICUFormatToMoment (format));
-		};
-	}(moment));
+	if (moment !== undefined) {
+		(function(m){
+			m.fn.formatICU = function(format){
+				return this.format(_ICUFormatToMoment (format));
+			};
+		}(moment));
+	}
 	
-	function _ICUFormatToMoment (format) {
+	/**
+	 * Translates the ICU format syntax into moment.js syntax
+	 * @param {string} [sFormatICU]
+     * @return {string}
+	 */
+	function _ICUFormatToMoment (sFormatICU) {
 		var formatMap = {
 			'yyyy': 'YYYY',
 			'yy': 'YY',
@@ -55,21 +60,39 @@
 			'xxx': 'Z',	
 			'xx': 'ZZ'	
 		};
-			
-		var RegExpString = '';
+		var sRegExp = '';
+		var oRegExp = '';
+		var sFormatMoment = '';
+		// Find escaped sequences in the ICU format and replace them by a neutral `%%`.
+		var aEscaped = sFormatICU.match(/\'[^\']*\'/g) || [];
+		sFormatICU = sFormatICU.replace(/\'[^\']*\'/g, '%%');
+		
+		// Replace symbols using a regular expression generated from the symbol map
 		for (var key in formatMap) {
 			if (!formatMap.hasOwnProperty(key)) continue;
-			RegExpString += key + "|";
+			sRegExp += key + "|";
 		}
-	
-		var formatEx = new RegExp("(" + RegExpString + ")", "g");
-		
-		return format.replace(formatEx, function(ICUStr){
+		oRegExp = new RegExp("(" + sRegExp + ")", "g");
+		sFormatMoment = sFormatICU.replace(oRegExp, function(ICUStr){
 			if (formatMap[ICUStr] !== undefined) {
 				return formatMap[ICUStr];
 			}
 			return '';
 		});
+		
+		// Replace each of the escape-placeholders with its original value
+		// Translate the ICU escape syntax (single quotes) into moment escape (square braces)
+		aEscaped.forEach(function(sEscapedICU){
+			var sEscapedMoment = '';
+			if (sEscapedICU === "''") {
+				sEscapedMoment = "'";
+			} else {
+				sEscapedMoment = sEscapedICU.replace(/\'/, '[').replace(/\'/, ']');
+			}
+			sFormatMoment = sFormatMoment.replace(/%%/, sEscapedMoment);
+		});
+		
+		return sFormatMoment;
 	};
 	
 	var _mDateParseDefaultParams = {
@@ -125,7 +148,7 @@
 		return _string;
 	};
 	
-	function _findKey (_exp, ParseParams) {
+	function _normalizeDateInterval (sInterval, ParseParams) {
 		var langObject = _mDateParseDefaultParams.lang;
 		if (ParseParams !== undefined) {
 			if (ParseParams.lang) {
@@ -134,12 +157,33 @@
 		}
 		for (var key in langObject) {
 			if (!langObject.hasOwnProperty(key)) continue;
-			var _result = langObject[key].findIndex(item => _exp.toLowerCase() === item.toLowerCase());
+			var _result = langObject[key].findIndex(item => sInterval.toLowerCase() === item.toLowerCase());
 			if (_result !== -1) {
 				return key;
 			}
 		}
 		return null;
+	};
+	
+	/**
+	 * Returns an array like ['-1d', '-1', 'd'] for the expresison '-1d'
+	 * 
+	 * @param {string} sExpr
+	 * @param {object} [oParserParams]
+	 * @returns {array}
+	 */
+	function _matchDateRelative (sExpr, oParserParams) {
+		return (new RegExp("^([+\-]?\\d{0,3})(" + _buildRegexString(oParserParams) + ")$", "i")).exec(sExpr);
+	};
+	
+	/**
+	 * Returns an array like ['-1h', '-1', 'h'] for the expresison '-1h'
+	 *
+	 * @param {string} sExpr
+	 * @returns {array}
+	 */
+	function _matchTimeRelative (sExpr) {
+		return /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sExpr);
 	};
 	
 	function _dataRowsCompare(row1, row2) {
@@ -156,7 +200,7 @@
 		return true;
 	}
 	
-	return {		
+	var exfTools = {		
 		/**
 		 * Working with date strings and objects
 		 * 
@@ -172,190 +216,208 @@
 		     * - numbers (seconds)
 		     * - parsable string dates (ISO string, human-readable string)
 		     * - relative dates (+/-1d, etc.)
+		     * 
+		     * Returns NULL for invalid date values
 		     *
 		     * Examples:
 		     * - "31.12.2019" -> 2019-12-31
 		     * - "31.12" -> 2019-12-31
 		     * - "now" -> 2019-12-31
 		     * - "-2w" -> 2019-12-17
+		     * - "asdf" -> null
 		     * 
 			 * @param {string|NULL} [sDate]
-			 * @param {string} [dateFormat]
-			 * @param {Object} [ParseParams]
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
 			 * 
-			 * @returns {Date}
+			 * @returns {Date|NULL}
 			 */
-			parse: function(sDate, dateFormat, ParseParams) {
+			parse: function(sDate, sDateFormat, oParserParams) {
 				// date ist ein String und wird zu einem date-Objekt geparst
 				
 				// Variablen initialisieren
-				var match = null;
-				var dateParsed = false;
-				var dateValid = false;
-				var time = undefined;
-				var output = null;
+				var aMatches = null;
+				var bParsed = false;
+				var bValid = false;
+				var sTime = undefined;
+				var oMoment = null;
+				var iYYYY, iMM, iDD;
+				var sHH, sMM, sSS;
+				var aTime;
+				var sIntervalType, iIntervals;
 				
 				if (sDate === '' || sDate === null) {
-					return output;
+					return null;
 				}
 				
-				if (dateFormat !== undefined) {
-					output = moment(sDate, _ICUFormatToMoment(dateFormat), true);
-					if (output.isValid()) {
-						return output.toDate();
+				if (sDateFormat !== undefined) {
+					oMoment = moment(sDate, _ICUFormatToMoment(sDateFormat), true);
+					if (oMoment.isValid()) {
+						return oMoment.toDate();
 					}
 				}
 
 				// hh:mm:ss , Thh:mm:ss
-				if (!dateParsed && (match = /[T ](\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
-					time = match[1];
-				} else if (!dateParsed && (match = / (\d{2}:\d{2})/.exec(sDate)) != null) {
+				if (!bParsed && (aMatches = /(\d{2}:\d{2}:\d{2})/.exec(sDate)) != null) {
+					sTime = aMatches[1];
+				} else if (!bParsed && (aMatches = / (\d{2}:\d{2})/.exec(sDate)) != null) {
 				// hh:mm
-					time = match[1];
+					sTime = aMatches[1];
+				}
+				if (sTime != undefined) {					
+					aTime = sTime.split(':');
+					sHH = aTime[0];
+					sMM = aTime[1];
+					sSS = aTime[2] !== undefined ? aTime[2] : '00';
+					sTime = 'T' + sHH + ':' + sMM + ':' + sSS;
+				} else {
+					sTime = 'T12:00:00';
 				}
 				
 				// dd.MM.yyyy, dd-MM-yyyy, dd/MM/yyyy, d.M.yyyy, d-M-yyyy, d/M/yyyy
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
-					var yyyy = Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yyyy.MM.dd, yyyy-MM-dd, yyyy/MM/dd, yyyy.M.d, yyyy-M-d, yyyy/M/d
-				if (!dateParsed && (match = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = Number(match[1]);
-					var MM = Number(match[2]);
-					var dd = Number(match[3]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[1]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[3]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM.yy, dd-MM-yy, dd/MM/yy, d.M.yy, d-M-yy, d/M/yy
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// yy.MM.dd, yy-MM-dd, yy/MM/dd, yy.M.d, yy-M-d, yy/M/d
-				if (!dateParsed && (match = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[1]);
-					var MM = Number(match[2]);
-					var dd = Number(match[3]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[1]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[3]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// dd.MM, dd-MM, dd/MM, d.M, d-M, d/M
-				if (!dateParsed && (match = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
-					var yyyy = moment().year;
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /(\d{1,2})[.\-/](\d{1,2})/.exec(sDate)) != null) {
+					iYYYY = moment().year();
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyyyy
-				if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
-					var yyyy = Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})(\d{4})$/.exec(sDate)) != null) {
+					iYYYY = Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMMyy
-				if (!dateParsed && (match = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					var yyyy = 2000 + Number(match[3]);
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = 2000 + Number(aMatches[3]);
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				// ddMM
-				if (!dateParsed && (match = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
-					var yyyy = moment().year;
-					var MM = Number(match[2]);
-					var dd = Number(match[1]);
-					dateParsed = true;
-					dateValid = _validateDate(yyyy, MM, dd);
+				if (!bParsed && (aMatches = /^(\d{2})(\d{2})$/.exec(sDate)) != null) {
+					iYYYY = moment().year();
+					iMM = Number(aMatches[2]);
+					iDD = Number(aMatches[1]);
+					bParsed = true;
+					bValid = _validateDate(iYYYY, iMM, iDD);
 				}
 				
 				// Ausgabe des geparsten Wertes
-				if (dateParsed && dateValid) {
-					
-					output = new Date(yyyy + '-' + MM + '-' + dd + (time !== undefined ? ' ' + time : ''));
-					return output;
+				if (bParsed && bValid) {
+					var sMM = iMM.toString();
+					var sDD = iDD.toString();
+					var sYYYY = iYYYY.toString();
+					sMM = sMM.padStart(2, '0');
+					sDD = sDD.padStart(2, '0');
+					sYYYY = sYYYY.padStart(4, '0');
+					return new Date(sYYYY + '-' + sMM + '-' + sDD + sTime);
 				}
+				
 				// check for +/-?, digit?, expession in _mDateParseDefaultParams.lang?
-				var regexString = _buildRegexString(ParseParams);
-				var regExp = new RegExp("^([+\-]?\\d{0,3})(" + regexString + ")$", "i");
-				match = regExp.exec(sDate);
-				output = null;
-				if (!dateParsed && (match !== null)) {
-					output = moment();
-					var key = null;
-					var exp = match[2];
-					var number = Number(match[1]);
-					if (number !== 0 && exp === '') {
-						key ="day";
+				aMatches = _matchDateRelative(sDate, oParserParams);
+				oMoment = null;
+				if (! bParsed && (aMatches !== null)) {
+					oMoment = moment();
+					sIntervalType = aMatches[2];
+					iIntervals = Number(aMatches[1]);
+					if (iIntervals !== 0 && sIntervalType === '') {
+						sIntervalType ="day";
 					}
-					if (number === 0 && exp === '') {
-						key = "now";
+					if (iIntervals === 0 && sIntervalType === '') {
+						sIntervalType = "now";
 					}
-					if (number === 0 && exp !== '') {
-						number = 1;
+					if (iIntervals === 0 && sIntervalType !== '') {
+						iIntervals = 1;
 					}
-					if (key === null) {
-						key = _findKey(exp, ParseParams);
-					}
-					switch (key) {
+					
+					sIntervalType = _normalizeDateInterval(sIntervalType, oParserParams);
+						
+					switch (sIntervalType) {
 						case "now": break;
 						case "yesterday":
-							output.subtract(1, 'days');
+							oMoment.subtract(1, 'days');
 							break;
 						case "tomorrow":
-							output.add(1, 'days');
+							oMoment.add(1, 'days');
 							break;
 						case "day":							
-							output.add(number, 'days');							
+							oMoment.add(iIntervals, 'days');							
 							break;
 						case "week":
-							output.add(number, 'weeks');
+							oMoment.add(iIntervals, 'weeks');
 							break;
 						case "month":
-							output.add(number, 'months');							
+							oMoment.add(iIntervals, 'months');							
 							break;
 						case "year":
-							output.add(number, 'years');
+							oMoment.add(iIntervals, 'years');
 							break;
-						default: output = null;
+						default: oMoment = null;
 					}
-					dateParsed = true;
+					bParsed = true;
 				}
 				
 				// (+/-)? ... (H/h/M/m/S/s)?
-		        if (!dateParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sDate)) != null) {
-		            output = moment();
-		            switch (match[2].toUpperCase()) {
+		        if (! bParsed && (aMatches = _matchTimeRelative(sDate)) != null) {
+		            oMoment = moment();
+		            switch (aMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	output.add(Number(match[1]), 'hours');
+		                	oMoment.add(Number(aMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	output.add(Number(match[1]), 'minutes');
+		                	oMoment.add(Number(aMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	output.add(Number(match[1]), 'seconds');
+		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
-		            dateParsed = true;
+		            bParsed = true;
 		        }
 				
 				// Ausgabe des geparsten Wertes
-				if (dateParsed && output !== null && output.isValid()) {
-					return output.toDate();
+				if (bParsed && oMoment !== null && oMoment.isValid()) {
+					return oMoment.toDate();
 				}
 			
-			return output;
+			return null;
 			},
 			
 			/**
@@ -378,7 +440,78 @@
 			},
 			
 			validate: function (sDate) {				
-				return true;						
+				return sDate === null || sDate === '' || sDate === undefined || this.parse(sDate) !== null;						
+			},
+			
+			/**
+			 * Compares two given date strings with the given comparator and granularity.
+			 * Supported comparators are '==', '<=', '<', '>=', '>'.
+			 * Supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'.
+			 *
+			 * @param {string} sDate1
+			 * @param {string} sDate2
+			 * @param {string} sComparator
+			 * @param {string} sGranularity
+			 * 
+			 * @return {bool}			 *
+			 */
+			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
+				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
+				var supportedComparators = ['==', '<=', '<', '>=', '>'];
+				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
+				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
+				if (supportedComparators.includes(sComparator) !== true) {
+					console.error("Comparator '" + sComparator + "' is not supported in date compare, supported comparators are '==', '<=', '<', '>=', '>' !")
+					return false;
+				}
+				if (supportedGranularity.includes(sGranularity) !== true) {
+					console.error("Granularity '" + sGranularity + "' is not supported in date compare, supported granularities are 'year', 'month', 'day', 'hour', 'minute', 'seconds', 'millisecond' !")
+					return false;
+				}
+				oParsedDate1 = this.parse(sDate1);
+				if (oParsedDate1 === null) {
+					console.error("Date '" + sDate1 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oParsedDate2 = this.parse(sDate2);
+				if (oParsedDate2 === null) {
+					console.error("Date '" + sDate2 + "' is not a valid date, comparison not possible!");
+					return false;
+				}
+				oMomentDate1 = moment(oParsedDate1);
+				oMomentDate2 = moment(oParsedDate2);
+				switch (sComparator) {
+					case '==': return oMomentDate1.isSame(oMomentDate2, sGranularity);
+					case '<': return oMomentDate1.isBefore(oMomentDate2, sGranularity);
+					case '<=': return oMomentDate1.isSameOrBefore(oMomentDate2, sGranularity);
+					case '>': return oMomentDate1.isAfter(oMomentDate2, sGranularity);
+					case '>=': return oMomentDate1.isSameOrAfter(oMomentDate2, sGranularity);
+					default: return false;
+				}
+			},
+			
+			/**
+			 * Adds an interval to a JS date object: e.g. +1d, -1w.
+			 * 
+			 * Intervals follow the syntax of relative dates.
+			 * 
+			 * @param {Date} oDate
+			 * @param {string} sInterval
+			 * @returns {Date}
+			 */
+			add(oDate, sInterval) {
+				var aMatches = _matchDateRelative(sInterval || '1day');
+				var iNumber = Number(aMatches[1]);
+				var sIntervalType = aMatches[2];
+				var sIntervalKey;
+				switch (sIntervalType) {
+					case "week": sIntervalKey = 'weeks'; break;
+					case "month": sIntervalKey = 'months'; break;
+					case "year": sIntervalKey = 'years'; break;
+					case "day":		
+					default: sIntervalKey = 'days'; break;
+				}
+				return moment(oDate).add(iNumber, sIntervalKey).toDate();
 			}
 		},
 		
@@ -389,110 +522,141 @@
 		 * 
 		 */
 		time: {
+			
 			/**
+			 * Parses a string date into a JS Date object.
+			 * 
+			 * Accepts as input:
+		     * - empty values,
+		     * - parsable string tmes
+		     * - relative times (+/-1h, etc.)
+		     * 
+		     * Returns NULL for invalid time values
+		     *
+		     * Examples:
+		     * - "11:00" -> 11:00:00
+		     * - "1100" -> 11:00:00
+			 * - "11" -> 11:00:00
+			 * - "1" -> 01:00:00
+		     * - "+1" -> current time + 1 hour
+		     * - "asdf" -> null
+		     * 
+		     * @param {string|NULL} [sTime]
+			 * @param {string} [sTimeFormat]
 			 * 
 			 * @returns {string}
 			 */
-			parse: function(sTime, timeFormat) {
+			parse: function(sTime, sTimeFormat) {
 				// sTime ist ein String und wird zu einem date-Objekt geparst
 		        
 		        // Variablen initialisieren
-		        var match = null;
-		        var timeParsed = false;
-		        var timeValid = false;
-		        var output = null;
-		        
-		        if (sTime === '' || sTime === null) {
-					return output;
+		        var aMatches = null;
+		        var bTimeParsed = false;
+		        var bTimeValid = false;
+		        var oMoment = null;
+		        var iMsPos, iMs;
+		        var iHH, iMM, iSS, sAmPm;
+
+		        if (sTime === '' || sTime === null || sTime == undefined) {
+					return null;
 				}
 		        
-		        if (timeFormat !== undefined) {
-					output = moment(sTime, _ICUFormatToMoment(timeFormat), true);
-					if (output.isValid()) {
-						if (timeFormat.indexOf('a') !== '-1') {
-							return output.format('hh:mm:ss a');
+		        if (sTimeFormat !== undefined) {
+					oMoment = moment(sTime, _ICUFormatToMoment(sTimeFormat), true);
+					if (oMoment.isValid()) {
+						if (sTimeFormat.indexOf('a') !== -1) {
+							return oMoment.format('hh:mm:ss a');
 						} else {
-							return output.format('HH:mm:ss');
+							return oMoment.format('HH:mm:ss');
 						}
 					}
 				}
+				
+				iMsPos = sTime.lastIndexOf('.');
+				if (iMsPos !== -1) {
+					iMs = parseInt(sTime.substring(iMsPos + 1));
+					if (! isNaN(iMs)) {
+						sTime = sTime.substring(0, iMsPos);
+					}
+				}
 		        
-		     // HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm
-		        if (!timeParsed && (match = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
-		        	var hh, mm, ss, am_pm;
-		            hh = Number(match[1]);
-		            mm = Number(match[2]);
-		            ss = Number(match[3]);
-		            if (match[4]) {
-		            	am_pm = match[4].toUpperCase();
+				// HH, h
+				if (sTime.length <= 2 && sTime.match(/^\d+$/gm) && parseInt(sTime) < 24) {
+					return sTime.padStart(2, '0') + ':00:00';
+				}
+		     	// HH:mm , HH:mm:ss, HH:mm am/pm, HH:mm:ss am/pm, HHmmss, HHmm
+		        if (!bTimeParsed && (aMatches = /(\d{1,2}):?(\d{1,2}):?(\d{1,2})?\040?(pm|am)?$/i.exec(sTime)) != null) {
+		        	iHH = Number(aMatches[1]);
+		            iMM = Number(aMatches[2]);
+		            iSS = Number(aMatches[3]);
+		            if (aMatches[4]) {
+		            	sAmPm = aMatches[4].toUpperCase();
 		            }
-		            if (isNaN(ss)) {
-		            	ss = 0;
+		            if (isNaN(iSS)) {
+		            	iSS = 0;
 		            }
-		            timeParsed = true;
-		            timeValid = _validateTime (hh, mm, ss) ;
+		            bTimeParsed = true;
+		            bTimeValid = _validateTime(iHH, iMM, iSS) ;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	return hh + ':' + mm + ':' + ss + (am_pm !== undefined ? ' ' + am_pm : '');
+		        if (bTimeParsed && bTimeValid) {
+					// ().slice() padds the number with leading zeros
+		        	return ('00' + iHH).slice(-2) + ':' + ('00' + iMM).slice(-2) + ':' + ('00' + iSS).slice(-2) + (sAmPm !== undefined ? ' ' + sAmPm : '');
 		        }
 		        
 		        // (+/-)? ... (H/h/M/m/S/s)?
-		        if (!timeParsed && (match = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
-		            output = moment();
-		            switch (match[2].toUpperCase()) {
+		        if (!bTimeParsed && (aMatches = /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sTime)) != null) {
+		            oMoment = moment();
+		            switch (aMatches[2].toUpperCase()) {
 		                case "H":
 		                case "":
-		                	output.add(Number(match[1]), 'hours');
+		                	oMoment.add(Number(aMatches[1]), 'hours');
 		                    break;
 		                case "M":
-		                	output.add(Number(match[1]), 'minutes');
+		                	oMoment.add(Number(aMatches[1]), 'minutes');
 		                    break;
 		                case "S":
-		                	output.add(Number(match[1]), 'seconds');
+		                	oMoment.add(Number(aMatches[1]), 'seconds');
 		                    break;
 		            }
-		            timeParsed = true;
-		            timeValid = true;
+					
+		            bTimeParsed = true;
+		            bTimeValid = true;
 		        }
 		        
 		        // Ausgabe des geparsten Wertes
-		        if (timeParsed && timeValid) {
-		        	var hh = output.hour();
-		        	var mm = output.minute();
-		        	var ss = output.second();
-		        	return output.format('HH:mm:ss');
-		        	//return  hh + ':' + mm + ':' + ss
+		        if (bTimeParsed && bTimeValid) {
+		        	return oMoment.format('HH:mm:ss');
 		        }
 		        
-		        return output;
+		        return null;
 			},
 			
 			format: function(sTime, sICUFormat) {
-				if (sTime !== null && sTime !== undefined && sTime !== '') {
-					if (sICUFormat === undefined) {
-						return moment('1970-01-01 ' + sTime).format('LTS');
-					} else {
-						return moment('1970-01-01 ' + sTime).formatICU(sICUFormat);
-					}
+				if (sTime === null || sTime === undefined || sTime === '') {
+					return sTime;	
 				}
-				return sTime;
+				if (sICUFormat === undefined) {
+					return moment(new Date('1970-01-01 ' + sTime)).format('LTS');
+				} else {
+					return moment(new Date('1970-01-01 ' + sTime)).formatICU(sICUFormat);
+				}
 			},
 			
-			formatObject: function(dateTime, sICUFormat) {
-				if (dateTime !== null && dateTime !== undefined && dateTime !== '') {
-					if (sICUFormat === undefined) {
-						return moment(dateTime).format('LTS');
-					} else {
-						return moment(dateTime).formatICU(sICUFormat);
-					}
+			formatObject: function(oDateTime, sICUFormat) {
+				if (oDateTime === null || oDateTime === undefined || oDateTime === '') {
+					return oDateTime;	
 				}
-				return '';
+				if (sICUFormat === undefined) {
+					return moment(oDateTime).format('LTS');
+				} else {
+					return moment(oDateTime).formatICU(sICUFormat);
+				}
 			},
 			
 			validate: function (sTime) {
-				return true;
+				return sTime === null || sTime === '' || sTime === undefined || this.parse(sTime) !== null;
 			}
 		},
 		
@@ -501,11 +665,253 @@
 		 * 
 		 * 
 		 * 
-		 * 
 		 */
 		data: {
 			compareRows: function(row1, row2) {
 				return _dataRowsCompare(row1, row2);
+			},
+			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
+				var bResult;
+				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
+				mLeft = exfTools.data.comparableValue(mLeft);
+				mRight = exfTools.data.comparableValue(mRight);
+				
+				if (sComparator === '<' || sComparator === '<=' || sComparator === '>' || sComparator === '>=') {
+					if (isNaN(mLeft) === false) {
+						mLeft = parseFloat(mLeft);
+					}
+					if (isNaN(mRight) === false) {
+						mRight = parseFloat(mRight);
+					}
+				}
+				switch (sComparator) {
+	                case '==':
+	                case '!==':
+	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
+	                    if (sComparator === '!==') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                case '<':
+	                	bResult = mLeft < mRight;
+	                	break;
+	                case '<=':
+	                	bResult = mLeft <= mRight;
+	                	break;
+	                case '>':
+	                	bResult = mLeft > mRight;
+	                	break;
+	                case '>=':
+	                	bResult = mLeft >= mRight;
+	                	break;
+	                case '[':
+	                case '![':
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+			                var sLeftVal = (mLeft || '').toString().toLowerCase();
+			                for (var i = 0; i < rightValues.length; i++) {
+			                    if (sLeftVal === rightValues[i].trim().toLowerCase()) {
+			                        return true;
+			                    }
+			                }
+			                return false;
+			            }();
+						if (sComparator === '![') {
+							bResult = ! bResult;
+						}
+	                    break;
+					case '][':
+	                case '!][':
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+								for (var j = 0; j < leftValues.length; j++) {
+				                    if (rightValues[i].trim().toLowerCase() === leftValues[j].trim().toLowerCase()) {
+				                        return true;
+				                    }
+								}
+			                }
+			                return false;
+			            }();
+						if (sComparator === '!][') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                case '=':
+	                case '!=':
+	                    bResult = function(){
+							var sR = (mRight || '').toString(); 
+							var sL = (mLeft || '').toString(); 
+							if (sR === '' && sL !== '') {
+								return false;
+							}
+							if (sR !== '' && sL === '') {
+								return false;
+							}
+							return (new RegExp(sR, 'i')).test(sL); 
+						}();
+						if (sComparator === '!=') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                default:
+	                  	throw 'Unknown comparator "' + sComparator + '"!';
+	            }
+	            return bResult;
+			},
+			
+			/**
+			 * Prepares the given value for comparision via compareValues
+			 *
+			 * @param {mixed} [mVal]
+			 * @return {String|number|NULL}
+			 */
+			comparableValue: function(mVal) {
+				var bValIsString = exfTools.string.isString(mVal);
+				
+				// Convert undefined to null to reduce all sorts of checks
+				if (mVal === undefined) return null;
+				
+				// Make sure, numeric 0 is transformed to string as otherwise the possible || operators
+				// will transform it to an empty string because 0 is a falsly value.
+				if (mVal === 0) return '0';
+				
+				// Make sure boolean values and strings representing booleans are converted to the strings 
+				// '0' and '1' so that comparing values 0 and false and 1 and true return true and not false.
+				// If not explicitly normalized (false).toString() will yield '' and not '0'.
+				if (mVal === true || (bValIsString && mVal.toLowerCase() === 'true')) return '1';
+				if (mVal === false || (bValIsString && mVal.toLowerCase() === 'false')) return '0';
+				
+				// Handle `NULL` strings used in metamodel
+				if (bValIsString && mVal.toUpperCase() === 'NULL') return null;
+				
+				return mVal;
+			},
+			
+			/**
+			 * Filter data rows using a condition group
+			 * 
+			 * @param {Array.<Object>} [aRows] - e.g. [{UID: 22, NAME: "Something"}, {UID: 23, NAME: "Another"}]
+			 * @param {{
+				operator: string, 
+				ignore_empty_values: boolean,
+				conditions: Array.<{columnName: string, value: any, comparator: string}>
+				nested_groups: Array
+				}} [oConditionGroup] - e.g. {columnName: "UID", value: 22, comparator: "=="}
+			 * 
+			 * @returns {Array.<Object>}
+			 * 
+			 */
+			filterRows: function(aRows, oConditionGroup) {
+				var aConditions = oConditionGroup.conditions || [];
+				var aNestedGroups = oConditionGroup.nested_groups || [];
+				var sOperator = oConditionGroup.operator || 'AND';
+				var aRowsFiltered = [];
+				var oSelf = this;
+				var bIgnoreEmptyRightVals = oConditionGroup.ignore_empty_values;
+				if (bIgnoreEmptyRightVals === undefined) {
+					bIgnoreEmptyRightVals = false;
+				}
+				aRows.forEach(function(oRow){
+					var oCondition;
+					var sColName;
+					var bRowResult = null;
+					var bConditionResult = null;
+					
+					for (var iC = 0; iC < aConditions.length; iC++) {
+						oCondition = aConditions[iC];
+						if (bIgnoreEmptyRightVals === true && (oCondition.value === '' || oCondition.value === null || oCondition.value === undefined)) {
+							continue;
+						}
+						sColName = oCondition.columnName || oCondition.expression;
+				        bConditionResult = oSelf.compareValues(
+							oRow[sColName] === undefined ? null : oRow[sColName], 
+							oCondition.value,
+							(oCondition.comparator || '=')
+						);
+				        if (sOperator === 'AND') {
+							if (bConditionResult === false) {
+								bRowResult = false;
+								break;
+							} else {
+								bRowResult = true;
+							}
+						} else if (sOperator === 'OR') {
+							if (bConditionResult === true) {
+								bRowResult = true;
+								break;
+							} else {
+								bRowResult = false;
+							}
+						} else {
+							throw 'Unknown logical operator ' + sOperator + ' used!';
+						}
+					}
+					
+					if (bRowResult === false && sOperator === 'AND') {
+						return;
+					}
+					if (bRowResult === true && sOperator === 'OR') {
+						aRowsFiltered.push(oRow);
+						return;
+					}
+					
+					for (var iCG = 0; iCG < aNestedGroups.length; iCG++) {
+				        bConditionResult = oSelf.filterRows([oRow], aNestedGroups[iCG]).length === 1;
+				        if (sOperator === 'AND') {
+							if (bConditionResult === false) {
+								bRowResult = false;
+								break;
+							} else {
+								bRowResult = true;
+							}
+						} else if (sOperator === 'OR') {
+							if (bConditionResult === true) {
+								bRowResult = true;
+								break;
+							} else {
+								bRowResult = false;
+							}
+						} else {
+							throw 'Unknown logical operator ' + sOperator + ' used!';
+						}
+					}
+					
+					if (bRowResult === true || bRowResult === null) {
+						aRowsFiltered.push(oRow);
+					}
+					
+			    });
+			    
+			    return aRowsFiltered;
+			},
+			
+			/**
+			 * Sorts rows using an array of sorter objects
+			 * 
+			 * @param {Array.<Object>} aRows
+			 * @param {Array.<{columnName: string, direction: string}>} aSorters
+			 */
+			sortRows: function(aRows, aSorters) {
+				if (! aSorters || aSorters === []) {
+					return aRows;
+				}
+				aRows.sort(function(a, b) {
+					for (let i = 0; i < aSorters.length; i++) {
+					    const oSorter = aSorters[i];
+					    const sCol = oSorter.columnName;
+					    const sDir = oSorter.direction.toLowerCase() === 'asc' ? 1 : -1;
+					
+					    if (a[sCol] < b[sCol]) {
+				      		return -1 * sDir;
+					    } else if (a[sCol] > b[sCol]) {
+			      			return 1 * sDir;
+					    }
+				  	}
+				 	return 0;
+				});
+				return aRows;
 			}
 		},
 		
@@ -583,6 +989,74 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
+		},
+		
+		/**
+		 * String tools
+		 * 
+		 * 
+		 * 
+		 */
+		string: {
+			
+			/**
+			 * Replaces line breaks with the given HTML tag - like PHP nl2br()
+			 *
+			 * @param {string} [str]
+			 * @param {string} [breakTag] - default: '<br>'
+			 * 
+			 * @returns {string}
+			 */
+			nl2br: function(str, breakTag) {
+				breakTag = breakTag || '<br>';
+	  			return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+			},
+			
+			/**
+			 * Checks if the given value is a string
+			 * @param {mixed} [val]
+			 * 
+			 * @returns {bool}
+			 */
+			isString: function(val) {
+				return (typeof val === 'string' || val instanceof String);
+			},
+			
+			/**
+			 * Replaces most dangerous characters with HTML entities:  `&` => `&amp;`, `<` => `&lt;`, etc.
+			 */
+			htmlEscape: function(text, bEscapeQuotes) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+  				var oRegEx = bEscapeQuotes ? /[&<>"']/g : /[&<>]/g;
+				bEscapeQuotes !== undefined ? bEscapeQuotes : true;
+				if (exfTools.string.isString(text)) {
+					return text.replace(oRegEx, function(m) { return map[m]; });
+				}
+				return text;
+			},
+			
+			htmlUnescape: function(text) {
+				var map = {
+					'&amp;': '&',
+					'&lt;': '<',
+					'&gt;': '>',
+					'&quot;': '"',
+					'&#039;': "'"
+				};
+  
+				if (exfTools.string.isString(text)) {
+					return text.replace(/(&amp;|&lt;|&gt;|&quot;|&#039;)/g, function(m) { return map[m]; });
+				}
+				return text;
+			}
 		}
 	}
+	
+	return exfTools;
 })));

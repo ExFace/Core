@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\DataTypes\UxonSchemaNameDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * UXON-schema class for data types.
@@ -63,7 +64,7 @@ class DatatypeSchema extends UxonSchema
             $instance = DataTypeFactory::create($selector);
         } catch (\Throwable $e) {
             $ex = new RuntimeException('Error loading data type autosuggest - falling back to "AbstractDataType"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex);
+            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
             return $this->getDefaultPrototypeClass();
         }
         return get_class($instance);

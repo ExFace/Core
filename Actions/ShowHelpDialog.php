@@ -84,9 +84,7 @@ class ShowHelpDialog extends ShowDialog
     {
         parent::init();
         $this->setIcon(Icons::QUESTION_CIRCLE_O);
-        $this->setPrefillWithFilterContext(false);
-        $this->setPrefillWithInputData(false);
-        $this->setPrefillWithPrefillData(false);
+        $this->setPrefillDisabled(true);
     }
 
     /**

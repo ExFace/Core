@@ -7,7 +7,6 @@ use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -15,32 +14,42 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
-use exface\Core\Exceptions\LogicException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * A condition is a simple conditional predicate consisting of a (left) expression,
- * a comparator (e.g. =, <, etc.) and a (right) value expression: e.g. "expr = a" or 
- * "date > 01.01.1970", etc.
+ * A condition is a simple conditional predicate to compare two expressions.
  * 
- * Conditions can be combined to condition groups (see CondtionGroupInterface) using 
- * logical operators like AND, OR, etc.
+ * Each condition (e.g. `expression = value` or `date > 01.01.1970`) consists of 
+ * - a (left) expression,
+ * - a comparator (e.g. =, <, etc.) and 
+ * - a (right) value expression
  * 
  * A condition can be expressed in UXON:
  * 
- * {
- *  "object_alias": "my.App.myObject",
- *  "expression": "myAttribute",
- *  "comparator": "=",
- *  "value" = "myValue"
- * }
+ * ```
+ *  {
+ *      "object_alias": "my.App.myObject",
+ *      "expression": "myAttribute",
+ *      "comparator": "=",
+ *      "value" = "myValue"
+ *  }
+ * 
+ * ```
  * 
  * Depending on the comparator, the value may be a scalar or an array (for IN-comparators).
+ * 
+ * ## Handling empty values
+ * 
+ * Note, that it might by tricky to distinguish between checking if something is empty (i.e. `!== null`) or 
+ * an empty condition, that is missing a value on of its sides and should not be evaluated. Normally, setting
+ * `"value":""` in UXON will result in an empty check, but you can also explicitly set `ignore_empty_values:true`
+ * to treat such conditions as empty and thus ommitted.
  * 
  * @see ConditionInterface
  *
@@ -61,6 +70,8 @@ class Condition implements ConditionInterface
     private $comparator = null;
 
     private $data_type = null;
+    
+    private $ignoreEmptyValues = null;
 
     /**
      * @deprecated use ConditionFactory instead!
@@ -71,11 +82,17 @@ class Condition implements ConditionInterface
      * @param \exface\Core\CommonLogic\Workbench $exface   
      * @param ExpressionInterface $leftExpression
      * @param string $comparator
-     * @param string $rightExpression         
+     * @param string $rightExpression      
+     * @param bool $ignoreEmptyValues   
      */
-    public function __construct(\exface\Core\CommonLogic\Workbench $exface, ExpressionInterface $leftExpression = null, string $comparator = null, string $rightExpression = null)
+    public function __construct(\exface\Core\CommonLogic\Workbench $exface, ExpressionInterface $leftExpression = null, string $comparator = null, string $rightExpression = null, bool $ignoreEmptyValues = false)
     {
         $this->exface = $exface;
+        $this->ignoreEmptyValues = $ignoreEmptyValues;
+        
+        if ($comparator !== null) {
+            $this->setComparator($comparator);
+        }
         if ($leftExpression !== null) {
             $this->setExpression($leftExpression);
         }
@@ -96,12 +113,22 @@ class Condition implements ConditionInterface
     {
         return $this->expression;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getLeftExpression()
+     */
+    public function getLeftExpression() : ExpressionInterface
+    {
+        return $this->getExpression();
+    }
 
     /**
      * The left side of the condition.
      * 
-     * @uxon-property attribute_alias
-     * @uxon-type metamodel:attribute
+     * @uxon-property expression
+     * @uxon-type metamodel:expression
      * 
      * @param ExpressionInterface $expression
      * @return ConditionInterface
@@ -121,6 +148,16 @@ class Condition implements ConditionInterface
     {
         return $this->value;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getRightExpression()
+     */
+    public function getRightExpression() : ExpressionInterface
+    {
+        return ExpressionFactory::createFromString($this->getWorkbench(), $this->value, $this->getLeftExpression()->getMetaObject());
+    }
 
     /**
      * Changes right side of the condition.
@@ -130,15 +167,32 @@ class Condition implements ConditionInterface
      * 
      * @see ConditionInterface::setValue()
      */
-    public function setValue(string $value) : ConditionInterface
+    public function setValue(?string $value) : ConditionInterface
     {
+        $this->unsetValue();
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value, $this->getLeftExpression()->getMetaObject());
+            if ($expr->isStatic()) {
+                $value = $expr->evaluate();
+            } else {
+                throw new InvalidArgumentException('Illegal filter value "' . $value . '": only scalar values or static formulas allowed!');
+            }
+        }
+        $cmp = $this->comparator;
+        // If the value empty according to its data type, concider this condition not empty
+        // only if it should explicitly support empty values AND never for IN comparators
+        // (not sure, what exactly IN(nothing) or NOT_IN(nothing) are supposed to mean)
+        // only use an explicitly set comparater here and not let the comparater be guessed, as that could guess a wrong comparator
+        // when the value is not set yet. For example that happens in a autosuggest action request with an filter parameter containing an IN filter
+        // like in a Prefill of an InputComboTable with multi-select
+        if ($this->getDataType()->isValueEmpty($value) && ($this->ignoreEmptyValues === true || $cmp === ComparatorDataType::IN || $cmp === ComparatorDataType::NOT_IN)) {
+            return $this;
+        }
         $this->value_set = true;
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
             throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
-            $value = null;
-            $this->unset();
         }
         $this->value = $value;
         return $this;
@@ -236,8 +290,7 @@ class Condition implements ConditionInterface
         } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
             && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
-                || $base_object->getAttribute($expression_string)->getDataType() instanceof RelationDataType
-                )
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = EXF_COMPARATOR_IN;
@@ -332,7 +385,7 @@ class Condition implements ConditionInterface
      * 
      * @return string
      */
-    public function __toString()
+    public function __toString() : string
     {
         return $this->toString();
     }
@@ -347,8 +400,13 @@ class Condition implements ConditionInterface
         $uxon = new UxonObject();
         $uxon->setProperty('expression', $this->getExpression()->toString());
         $uxon->setProperty('comparator', $this->getComparator());
-        $uxon->setProperty('value', $this->getValue());
+        if ($this->isEmpty() === false) {
+            $uxon->setProperty('value', $this->getValue());
+        }
         $uxon->setProperty('object_alias', $this->getExpression()->getMetaObject()->getAliasWithNamespace());
+        if ($this->ignoreEmptyValues === true) {
+            $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
+        }
         return $uxon;
     }
 
@@ -357,47 +415,55 @@ class Condition implements ConditionInterface
      *
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()            
      */
-    public function importUxonObject(UxonObject $uxon_object)
+    public function importUxonObject(UxonObject $uxon)
     {
         if (! $this->isEmpty()) {
-            throw new LogicException('Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
+            throw new UxonParserError($uxon, 'Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
         }
-        if ($uxon_object->hasProperty('expression')) {
-            $expression = $uxon_object->getProperty('expression');
-        } elseif ($uxon_object->hasProperty('attribute_alias')) {
-            $expression = $uxon_object->getProperty('attribute_alias');
+        if ($uxon->hasProperty('expression')) {
+            $expression = $uxon->getProperty('expression');
+        } elseif ($uxon->hasProperty('attribute_alias')) {
+            $expression = $uxon->getProperty('attribute_alias');
         }
-        if (! $objAlias = $uxon_object->getProperty('object_alias')) {
-            throw new UxonParserError($uxon_object, 'Invalid UXON condition syntax: Missing object alias!');
+        if (! $objAlias = $uxon->getProperty('object_alias')) {
+            throw new UxonParserError($uxon, 'Invalid UXON condition syntax: Missing object alias!');
         }
-        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
-        if ($uxon_object->hasProperty('comparator') && $comp = $uxon_object->getProperty('comparator')) {
-            $this->setComparator($comp);
-        }
-        if ($uxon_object->hasProperty('value')){
-            $value = $uxon_object->getProperty('value');
-            if (! is_null($value) && $value !== ''){
-                if ($value instanceof UxonObject) {
-                    if (! $comp || $comp === EXF_COMPARATOR_IS) {
-                        $comp = EXF_COMPARATOR_IN;
-                    }
-                    
-                    if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
-                        $comp = EXF_COMPARATOR_NOT_IN;
-                    }
-                    if ($this->getExpression()->isMetaAttribute()) {
-                        $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
-                    } else {
-                        $glue = EXF_LIST_SEPARATOR;
-                    }
-                    $value = implode($glue, $value->toArray());
-                    
-                    if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
-                        throw new UxonParserError($uxon_object, 'Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
-                    }
-                }
-                $this->setValue($value);
+        try {
+            $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
+            if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
+                $this->setComparator($comp);
             }
+            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+                $this->setIgnoreEmptyValues($ignoreEmpty);
+            }
+            if ($uxon->hasProperty('value')){
+                $value = $uxon->getProperty('value');
+                // Apply th evalue only if it is not empty or ignore_empty_values is off
+                if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
+                    if ($value instanceof UxonObject) {
+                        if (! $comp || $comp === EXF_COMPARATOR_IS) {
+                            $comp = EXF_COMPARATOR_IN;
+                        }
+                        
+                        if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
+                            $comp = EXF_COMPARATOR_NOT_IN;
+                        }
+                        if ($this->getExpression()->isMetaAttribute()) {
+                            $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
+                        } else {
+                            $glue = EXF_LIST_SEPARATOR;
+                        }
+                        $value = implode($glue, $value->toArray());
+                        
+                        if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
+                            throw new UnexpectedValueException('Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
+                        }
+                    }
+                    $this->setValue($value);
+                }
+            }
+        } catch (\Throwable $e) {
+            throw new UxonParserError($uxon, 'Cannot create condition from UXON: ' . $e->getMessage(), null, $e);
         }
     }
     
@@ -445,7 +511,7 @@ class Condition implements ConditionInterface
      * 
      * @return \exface\Core\Interfaces\iCanBeConvertedToUxon|\exface\Core\CommonLogic\Model\Condition
      */
-    public function copy()
+    public function copy() : self
     {
         return ConditionFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
     }
@@ -469,6 +535,16 @@ class Condition implements ConditionInterface
         $rightVal = $this->getValue(); // Value is already parsed via datatype in setValue()
 
         $listDelimiter = $this->getExpression()->isMetaAttribute() ? $this->getExpression()->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        
+        // Normalize empty values according to the data type of the expression
+        $dataType = $this->getExpression()->getDataType();
+        if ($dataType->isValueEmpty($leftVal)) {
+            $leftVal = null;
+        }
+        if ($dataType->isValueEmpty($rightVal)) {
+            $rightVal = null;
+        }
+        
         return $this->compare($leftVal, $this->getComparator(), $rightVal, $listDelimiter);
     }
     
@@ -493,13 +569,13 @@ class Condition implements ConditionInterface
         }
         switch ($comparator) {
             case ComparatorDataType::IS:
-                return $rightVal === null || mb_stripos($leftVal, $rightVal) !== false;
+                return $rightVal === null || mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) !== false;
             case ComparatorDataType::IS_NOT:
-                return mb_stripos($leftVal, $rightVal ?? '') === false;
+                return mb_stripos(($leftVal ?? ''), ($rightVal ?? '')) === false;
             case ComparatorDataType::EQUALS:
-                return $leftVal === $rightVal;
+                return $leftVal == $rightVal;
             case ComparatorDataType::EQUALS_NOT:
-                return $leftVal !== $rightVal;
+                return $leftVal != $rightVal;
             case ComparatorDataType::GREATER_THAN:
                 return $leftVal > $rightVal;
             case ComparatorDataType::LESS_THAN:
@@ -516,13 +592,60 @@ class Condition implements ConditionInterface
                 }
                 $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
                 foreach ($rightParts as $part) {
-                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, $part)) {
+                    // trim the $part value as list read from data source might be
+                    // seperated by list delimiter and whitespace
+                    if ($this->compare($leftVal, ComparatorDataType::EQUALS, trim($part))) {
                         return $resposeOnFound;
                     }
                 }
                 return ! $resposeOnFound;
+            case ComparatorDataType::MATCH:
+            case ComparatorDataType::NOT_MATCH:
+                $resposeOnFound = $comparator === ComparatorDataType::MATCH ? true : false;
+                if ($rightVal === null && $leftVal === null) {
+                    return $resposeOnFound;
+                }
+                if ($rightVal === null || $leftVal === null) {
+                    return ! $resposeOnFound;
+                }
+                $rightParts = is_array($rightVal) ? $rightVal : explode($listDelimiter, $rightVal);
+                $leftParts = is_array($leftVal) ? $leftVal : explode($listDelimiter, $leftVal);
+                $rightPartsTrimmed = array_map('trim', $rightParts);
+                $leftPartsTrimmed = array_map('trim', $leftParts);
+                $intersectArray = array_intersect($rightPartsTrimmed, $leftPartsTrimmed);
+                if (! empty($intersectArray)) {
+                    return $resposeOnFound;
+                } else {
+                    return ! $resposeOnFound;
+                }
             default:
                 throw new RuntimeException('Invalid comparator "' . $comparator . '" used in condition "' . $this->toString() . '"!');
         }
+    }
+    
+    /**
+     * Set to TRUE to treat the condition as empty (having no value) if an empty value is set.
+     * 
+     * @uxon-property ignore_empty_values
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return ConditionInterface
+     */
+    protected function setIgnoreEmptyValues(bool $trueOrFalse) : ConditionInterface
+    {
+        $this->ignoreEmptyValues = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::willIgnoreEmptyValues()
+     */
+    public function willIgnoreEmptyValues() : bool
+    {
+        return $this->ignoreEmptyValues;
     }
 }

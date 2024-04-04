@@ -81,16 +81,16 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2020-06-11 14:20:50",
+            "MODIFIED_ON": "2024-02-05 16:02:53",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "User",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
@@ -104,11 +104,11 @@
                         "widget_type": "Tabs",
                         "tabs": [
                             {
-                                "caption": "General",
+                                "caption": "User",
                                 "widgets": [
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.USER_DATA')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.USER_DATA')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "UID",
@@ -127,27 +127,49 @@
                                                 "attribute_alias": "LOCALE"
                                             },
                                             {
-                                                "attribute_alias": "DISABLED_FLAG"
+                                                "attribute_alias": "DISABLED_FLAG",
+                                                "caption": "Disable login"
+                                            },
+                                            {
+                                                "attribute_alias": "DISABLED_COMMUNICATION_FLAG"
                                             }
                                         ]
                                     },
                                     {
                                         "widget_type": "WidgetGroup",
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.PERSONAL_DATA')",
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.PERSONAL_DATA')",
                                         "widgets": [
                                             {
                                                 "attribute_alias": "FIRST_NAME"
                                             },
                                             {
                                                 "attribute_alias": "LAST_NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "COMPANY"
+                                            },
+                                            {
+                                                "attribute_alias": "POSITION"
                                             }
                                         ]
                                     },
                                     {
-                                        "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')",
+                                        "widget_type": "WidgetGroup",
+                                        "caption": "Comments (only visible to user admins)",
+                                        "widgets": [
+                                            {
+                                                "attribute_alias": "COMMENTS",
+                                                "height": 3,
+                                                "hide_caption": true
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS')",
                                         "widget_type": "DataTableResponsive",
                                         "object_alias": "exface.Core.DATA_CONNECTION_CREDENTIALS",
                                         "id": "credentials_table",
+                                        "height": "max",
                                         "filters": [
                                             {
                                                 "attribute_alias": "USER_CREDENTIALS__USER",
@@ -169,7 +191,7 @@
                                         ],
                                         "buttons": [
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS_ADD_CONNECTION')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS_ADD_CONNECTION')",
                                                 "action": {
                                                     "alias": "exface.Core.CreateCredentialsDialog",
                                                     "prefill_with_data_from_widget_link": "user_uid_field",
@@ -187,7 +209,7 @@
                                                 }
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS_UPDATE')",
+                                                "caption": "=Translate('exface.Core', 'PAGE.USERS.CREDENTIALS_UPDATE')",
                                                 "icon": "refresh",
                                                 "action": {
                                                     "alias": "exface.Core.CreateCredentialsDialog",
@@ -264,6 +286,9 @@
                                                                 "attribute_alias": "USER_ROLE__DESCRIPTION"
                                                             },
                                                             {
+                                                                "attribute_alias": "USER_ROLE__START_PAGE__LABEL"
+                                                            },
+                                                            {
                                                                 "attribute_alias": "USER_ROLE__APP__ALIAS"
                                                             },
                                                             {
@@ -277,7 +302,7 @@
                                                         "buttons": [
                                                             {
                                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                                 "disabled_if": {
                                                                     "operator": "AND",
                                                                     "conditions": [
@@ -287,14 +312,11 @@
                                                                             "value_right": ""
                                                                         }
                                                                     ]
-                                                                },
-                                                                "refresh_widget_ids": [
-                                                                    "policy_table"
-                                                                ]
+                                                                }
                                                             },
                                                             {
                                                                 "action_alias": "exface.Core.DeleteObject",
-                                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                                 "icon": "minus"
                                                             },
                                                             {
@@ -323,14 +345,13 @@
                                                         "object_alias": "exface.Core.USER_POLICY",
                                                         "widget_type": "DataTable",
                                                         "hide_header": true,
-                                                        "id": "policy_table",
                                                         "row_grouper": {
-                                                            "group_by_attribute_alias": "AUTHORIZATION_POINT__LABEL",
+                                                            "group_by_attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
                                                             "hide_caption": true
                                                         },
                                                         "filters": [
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE",
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE",
                                                                 "value": "=role_table!USER_ROLE",
                                                                 "apply_on_change": true,
                                                                 "comparator": "==",
@@ -349,25 +370,53 @@
                                                         ],
                                                         "columns": [
                                                             {
-                                                                "attribute_alias": "AUTHORIZATION_POINT__LABEL"
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "EFFECT"
+                                                                "attribute_alias": "POLICY__EFFECT"
                                                             },
                                                             {
-                                                                "attribute_alias": "NAME"
+                                                                "attribute_alias": "POLICY__NAME"
                                                             },
                                                             {
-                                                                "attribute_alias": "TARGET_USER_ROLE__LABEL"
+                                                                "attribute_alias": "POLICY__TARGET_USER_ROLE__LABEL"
                                                             },
                                                             {
-                                                                "attribute_alias": "DESCRIPTION"
+                                                                "attribute_alias": "POLICY__APP__ALIAS"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__DESCRIPTION"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY",
+                                                                "hidden": true
+                                                            }
+                                                        ],
+                                                        "sorters": [
+                                                            {
+                                                                "attribute_alias": "POLICY__AUTHORIZATION_POINT__LABEL",
+                                                                "direction": "asc"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "POLICY__NAME",
+                                                                "direction": "asc"
                                                             }
                                                         ],
                                                         "buttons": [
                                                             {
-                                                                "action_alias": "exface.Core.ShowObjectInfoDialog",
-                                                                "bind_to_double_click": true
+                                                                "bind_to_double_click": true,
+                                                                "action": {
+                                                                    "alias": "exface.Core.ShowObjectInfoDialog",
+                                                                    "object_alias": "exface.Core.AUTHORIZATION_POLICY",
+                                                                    "input_mapper": {
+                                                                        "column_to_column_mappings": [
+                                                                            {
+                                                                                "from": "POLICY",
+                                                                                "to": "UID"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
                                                             }
                                                         ]
                                                     }
@@ -410,7 +459,7 @@
                                         "buttons": [
                                             {
                                                 "action_alias": "exface.Core.ShowObjectCreateDialog",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
                                                 "disabled_if": {
                                                     "operator": "AND",
                                                     "conditions": [
@@ -424,16 +473,66 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.DeleteObject",
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
                                                 "icon": "minus"
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.DISABLE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.DISABLE')",
                                                 "action_alias": "exface.Core.DisableUserAuthenticator"
                                             },
                                             {
-                                                "caption": "=TRANSLATE('exface.Core', 'ACTION.GENERIC.ENABLE')",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ENABLE')",
                                                 "action_alias": "exface.Core.EnableUserAuthenticator"
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.ResetUserAuthenticator"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "API Keys",
+                                "widgets": [
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.USER_API_KEY",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "USER",
+                                                "required": true,
+                                                "input_widget": {
+                                                    "widget_type": "InputHidden"
+                                                }
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "EXPIRES"
+                                            }
+                                        ],
+                                        "buttons": [
+                                            {
+                                                "action_alias": "exface.Core.ShowObjectCreateDialog",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ADD')",
+                                                "disabled_if": {
+                                                    "operator": "AND",
+                                                    "conditions": [
+                                                        {
+                                                            "value_left": "=user_uid_field",
+                                                            "comparator": "==",
+                                                            "value_right": ""
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "action_alias": "exface.Core.DeleteObject",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "icon": "minus"
                                             }
                                         ]
                                     }

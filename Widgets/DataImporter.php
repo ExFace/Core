@@ -22,6 +22,10 @@ use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iCanBeEditable;
+use exface\Core\Widgets\Traits\iCanBeEditableTrait;
 
 /**
  * The DataImporter allows users to quickly create data by copy-pasting tabels from Excel-compatible editors.
@@ -111,7 +115,16 @@ use exface\Core\Exceptions\NotImplementedError;
  * @author Andrej Kabachnik
  *        
  */
-class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iFillEntireContainer, iTakeInput, iHaveToolbars, iHaveButtons
+class DataImporter extends AbstractWidget implements 
+    iHaveColumns, 
+    iHaveColumnGroups, 
+    iFillEntireContainer, 
+    iTakeInput, 
+    iHaveToolbars, 
+    iHaveButtons, 
+    iCanWrapText, 
+    iCanBeRequired,
+    iCanBeEditable
 {
     use iHaveColumnsAndColumnGroupsTrait;
     
@@ -121,9 +134,35 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     
     use DataTableTrait;
     
+    use iCanBeEditableTrait;
+    
+    /**
+     * Empty the table
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
+    
     private $empty_text = null;
     
     private $previewButton = null;
+    
+    private $displayOnly = false;
+    
+    private $required = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->initColumns();
+    }
     
     /**
      * Set to TRUE to force the user to fill all required fields of at least one row.
@@ -449,5 +488,52 @@ class DataImporter extends AbstractWidget implements iHaveColumns, iHaveColumnGr
     public function setValue($expressionOrString, bool $parseStringAsExpression = true)
     {
         throw new NotImplementedError('Cannot set values for ' . $this->getWidgetType() . ': not implemented!');
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'DataButton';
+    }
+    
+    /**
+     * Returns an array of data column names, that should be expected in data produced by this widget
+     *
+     * Not all columns produce action-relevant data. This method filters away read-only columns.
+     *
+     * System columns are included even if they are not explicitly listed as columns, because they
+     * are expected to be present in all action calls
+     *
+     * @return string[]
+     */
+    public function getActionDataColumnNames() : array
+    {
+        $colNames = [];
+        foreach ($this->getColumns() as $col) {
+            if ($col->isReadonly()) {
+                continue;
+            }
+            $colNames[] = $col->getDataColumnName();
+        }
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
+            $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
+        }
+        return array_unique($colNames);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
+        return $uxon;
     }
 }

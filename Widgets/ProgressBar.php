@@ -10,13 +10,51 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Displays the widgets value as a progress bar with a floating label text.
+ * Displays the widgets value as a progress bar with a floating text label.
  * 
  * The progress bar can be configured by setting `min`/`max` values, a `color_scale`
- * and a `text_map` to add a text to the value. By default, a percentual scale
- * (from 0 to 100) will be assumed.
+ * and a `text_map` to add a text to the value. 
+ * 
+ * By default, a percentual scale (from 0 to 100) with a yellow-green color gradient will be used.
+ * 
+ * ## Examples
+ * 
+ * Progress bar with a single color:
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "color": "lightgray"
+ *  }
+ * 
+ * ```
+ * 
+ * Custom colors for certain values:
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "color_scale": {
+ *          "50": "~ERROR",
+ *          "100": "lightgray"
+ *      }
+ *  }
+ * 
+ * ```
+ * 
+ * Value of another attribute as text (instead of the percent value):
+ * 
+ * ```
+ *  {
+ *      "widget_type": "ProgressBar",
+ *      "attribute_alias": "PROGRESS",
+ *      "text_attribute_alias": "STATUS__NAME"
+ *  }
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -160,6 +198,17 @@ class ProgressBar extends Display implements iCanBeAligned
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::getColorScale()
+     */
+    public function getColorScale() : array
+    {
+        $scale = parent::getColorScale();
+        return empty($scale) && $this->getColor() === null ? static::getColorScaleDefault($this->getMin(), $this->getMax()) : $scale;
+    }
+    
+    /**
      * Returns the default color map
      * 
      * @param float $min
@@ -181,7 +230,8 @@ class ProgressBar extends Display implements iCanBeAligned
             $m*70 => "#97CF86",
             $m*80 => "#86C983",
             $m*90 => "#75C47F",
-            $m*100 => "#63BE7B"
+            $m*100 => "#63BE7B",
+            $m*110 => "orange"
         ];
         
         return $invert === false ? $map : array_reverse($map);
@@ -200,7 +250,7 @@ class ProgressBar extends Display implements iCanBeAligned
             return $this->getAlignViaTrait();
         }
         
-        if ($this->hasTextScale() === false && ($this->getValueDataType() instanceof NumberDataType)) {
+        if ($this->hasTextScale() === false && ($this->getValueDataType() instanceof NumberDataType) && ! ($this->getValueDataType() instanceof EnumDataTypeInterface)) {
             return EXF_ALIGN_OPPOSITE;
         }
         
@@ -256,7 +306,7 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
-            $textPrefillExpr = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            $textPrefillExpr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias());
             if ($textPrefillExpr !== null) {
                 $data_sheet->getColumns()->addFromExpression($textPrefillExpr);
             }
@@ -273,7 +323,7 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         parent::doPrefill($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
-            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getTextAttributeAlias());
+            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias());
             if ($textPrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($textPrefillExpression)) {
                 if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                     // TODO #OnPrefillChangeProperty

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\TimeZoneDataType;
 
 /**
  * This is the base class for data queries.
@@ -16,6 +17,8 @@ use exface\Core\CommonLogic\UxonObject;
 abstract class AbstractDataQuery implements DataQueryInterface
 {
     use ImportUxonObjectTrait;
+    
+    private $timeZone = null;
 
     /**
      *
@@ -83,5 +86,26 @@ abstract class AbstractDataQuery implements DataQueryInterface
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         return $debug_widget;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataQueryInterface::getTimeZone()
+     */
+    public function getTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataQueryInterface::setTimeZone()
+     */
+    public function setTimeZone(string $value = null) : DataQueryInterface
+    {
+        $this->timeZone = TimeZoneDataType::cast($value);
+        return $this;
     }
 }

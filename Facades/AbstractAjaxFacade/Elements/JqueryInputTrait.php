@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Widgets\Input;
+
 trait JqueryInputTrait
 {
     /**
@@ -19,7 +21,7 @@ trait JqueryInputTrait
     {
         $defaults = [
             'name' => $this->getWidget()->getAttributeAlias(),
-            'value' => $this->getValueWithDefaults(),
+            'value' => $this->escapeString($this->getWidget()->getValueWithDefaults(), false, true),
             'id' => $this->getId()
         ];
         
@@ -30,5 +32,65 @@ trait JqueryInputTrait
         }
         
         return '<input type="' . $type . '" ' . $props . ' />';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === Input::FUNCTION_FOCUS:
+                return "setTimeout(function(){ $('#{$this->getId()}').focus(); }, 0);";
+            case $functionName === Input::FUNCTION_EMPTY:
+                return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
+            case $functionName === Input::FUNCTION_REQUIRE:
+                return "setTimeout(function(){ {$this->buildJsSetRequired(true)} }, 0);";
+            case $functionName === Input::FUNCTION_UNREQUIRE:
+                return "setTimeout(function(){ {$this->buildJsSetRequired(false)} }, 0);";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
+    }
+    
+    /**
+     * javascript to get if an input is required or not, must not end with a semicolon!
+     *
+     * @return string
+     */
+    protected function buildJsRequiredGetter() : string
+    {
+        return "($('#{$this->getId()}').prop('required') != undefined)";
+    }
+    
+    /**
+     * 
+     * @param bool $required
+     * @return string
+     */
+    protected function buildJsSetRequired(bool $required) : string
+    {
+        if ($required === true) {
+            return "$('#{$this->getId()}').prop('required', 'required');";
+        } else {
+            return "$('#{$this->getId()}').removeProp('required');";
+        }
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsEmpty() : string
+    {
+        return <<<JS
+        (function(){
+			var val = {$this->buildJsValueGetter()};
+            if (val !== undefined && val !== '' && val !== null) {
+                {$this->buildJsValueSetter("''")}
+            }
+        })()
+JS;
     }
 }

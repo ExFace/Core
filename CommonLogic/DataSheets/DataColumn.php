@@ -13,13 +13,16 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\DataSheets\DataSheetInvalidValueError;
 
 class DataColumn implements DataColumnInterface
 {
@@ -30,6 +33,8 @@ class DataColumn implements DataColumnInterface
 
     // Properties, to be dublicated on copy()
     private $name = null;
+    
+    private $title = null;
 
     private $attribute_alias = null;
 
@@ -49,10 +54,7 @@ class DataColumn implements DataColumnInterface
     /** @var Formula */
     private $formula = null;
 
-    /** @var ExpressionInterface */
-    private $formatter = null;
-
-    function __construct($expression, $name = '', DataSheetInterface $data_sheet)
+    function __construct($expression, DataSheetInterface $data_sheet, $name = '')
     {
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
@@ -201,31 +203,6 @@ class DataColumn implements DataColumnInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getFormatter()
-     */
-    public function getFormatter()
-    {
-        return $this->formatter;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormatter()
-     */
-    public function setFormatter($expression)
-    {
-        if (! ($expression instanceof ExpressionInterface)) {
-            $expression = $this->getWorkbench()->model()->parseExpression($expression);
-        }
-        $this->formatter = $expression;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getDataType()
      */
     public function getDataType()
@@ -296,6 +273,25 @@ class DataColumn implements DataColumnInterface
     {
         return $this->getDataSheet()->getColumnValues($this->getName(), $include_totals);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getValuesNormalized()
+     */
+    public function getValuesNormalized() : array
+    {
+        $type = $this->getDataType();
+        $vals = [];
+        foreach ($this->getValues(false) as $rowIdx => $val) {
+            try {
+                $vals[$rowIdx] = $type->parse($val);
+            } catch (DataTypeValidationError $e) {
+                throw new DataSheetInvalidValueError($this->getDataSheet(), null, null, $e, $this, [$rowIdx]);
+            }
+        }
+        return $vals;
+    }
 
     /**
      *
@@ -346,6 +342,11 @@ class DataColumn implements DataColumnInterface
      */
     public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
+        // Don't do anything, if there are no rows - nothing to calculate!
+        if ($this->getDataSheet()->isEmpty()) {
+            return $this;
+        }
+        // If there are rows, but this column is empty, or we will be overwriting - calculate
         if ($overwrite || $this->isEmpty()) {
             $this->setValues($expression->evaluate($this->getDataSheet()));
         } else {
@@ -387,14 +388,14 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
-        if ($this->getExpressionObj()) {
-            $copy->setExpression($this->getExpressionObj()->copy());
+        if ($expr = $this->getExpressionObj()) {
+            $copy->setExpression($expr->copy());
         }
-        if ($this->getFormula()) {
-            $copy->setFormula($this->getFormula()->copy());
+        if ($this->formula !== null) {
+            $copy->setFormula($this->formula->copy());
         }
         return $copy;
     }
@@ -429,16 +430,16 @@ class DataColumn implements DataColumnInterface
                 $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
             }
             
-            if ($this->getAttribute()->getFormula() !== $this->getFormula()) {
-                $arr['formula'] = $this->getFormula()->toString();
+            if ($this->formula !== null && $this->getAttribute()->getFormula() !== $this->formula) {
+                $arr['formula'] = $this->formula->toString();
             }
         } else {
             // If it's not an attribute, export everything
             $arr['expression'] = $this->getExpressionObj()->toString();
             $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
         
-            if ($this->formula) {
-                $arr['formula'] = $this->getFormula()->toString();
+            if ($this->formula !== null) {
+                $arr['formula'] = $this->formula->toString();
             }
         }
         
@@ -462,7 +463,7 @@ class DataColumn implements DataColumnInterface
      */
     public function isFormula() : bool
     {
-        return is_null($this->formula) || $this->formula === '' ? false : true; 
+        return $this->formula !== null || $this->getExpressionObj()->isFormula(); 
     }
     
     /**
@@ -566,7 +567,8 @@ class DataColumn implements DataColumnInterface
     {
         $result = array();
         foreach ($this->getValues(false) as $row_nr => $val) {
-            if ($another_column->getCellValue($row_nr) !== $val) {
+            // Compare with `!=` to ignore the differences between `1` and `"1"` and similar.
+            if ($another_column->getCellValue($row_nr) != $val) {
                 $result[$row_nr] = $val;
             }
         }
@@ -592,7 +594,15 @@ class DataColumn implements DataColumnInterface
         }
         foreach ($this->getValues(false) as $row_nr => $val) {
             $uid = $this_uid_column->getCellValue($row_nr);
-            if ($another_column->getCellValue($other_uid_column->findRowByValue($uid)) !== $val) {
+            $otherVal = $another_column->getCellValue($other_uid_column->findRowByValue($uid));
+            if ($another_column->getDataType()) {
+                $otherVal = $another_column->getDataType()::cast($otherVal);
+            }
+            $thisVal = $val;
+            if ($this->getDataType()) {
+                $thisVal = $this->getDataType()::cast($val);
+            }
+            if (mb_strtolower($otherVal) !== mb_strtolower($thisVal)) {
                 $result[$uid] = $val;
             }
         }
@@ -607,11 +617,17 @@ class DataColumn implements DataColumnInterface
      */
     public function getFormula()
     {
-        return $this->formula;
+        return $this->formula ?? ($this->getExpressionObj()->isFormula() ? $this->getExpressionObj() : null);
     }
 
     /**
-     * Make column values be calculated via formula: e.g. `=NOW()`
+     * Make column values be calculated via formula: e.g. `=NOW()` - even if the expression of the column points to an attribute!
+     * 
+     * This will make the column a calculated column - similarly to a column with a formula in its expression.
+     * However, this separate property allows to use an attribute alias as expression and still use a formula
+     * to calculate values, so these calculated values will be saved to the attribute when the data is written
+     * to the data source. In a sence, this is an alternative to data mappers, that could map a formula-column
+     * to an attribute column.
      * 
      * @uxon-property formula
      * @uxon-type metamodel:formula
@@ -619,7 +635,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormula()
      */
-    public function setFormula($expression_or_string)
+    public function setFormula($expression_or_string) : DataColumn
     {
         if ($expression_or_string) {
             if ($expression_or_string instanceof ExpressionInterface) {
@@ -737,22 +753,26 @@ class DataColumn implements DataColumnInterface
         
         if ($fixedEx && $this->getIgnoreFixedValues() === false) {
             // Fixed values MUST be calculated unless this feature is explicitly disabled for the column
-            foreach ($this->getValues(false) as $row_id => $val) {
-                $this->setValue($row_id, $fixedEx->evaluate($sheet, $row_id));
+            foreach ($this->getValues(false) as $rowIdx => $val) {
+                $this->setValue($rowIdx, $fixedEx->evaluate($sheet, $rowIdx));
             }
         }
         
         // After fixed values were calculated (which theoretically could also lead to empty values!), we
         // will proceed with calculating default values for empty cells
-        foreach ($this->getValues(false) as $row_id => $val) {
+        $missingInRowIdxs = [];
+        foreach ($this->getValues(false) as $rowIdx => $val) {
             if ($val === null || $val === '') {
                 if ($attr->getDefaultValue()) {
-                    $this->setValue($row_id, $defaultEx->evaluate($sheet, $row_id));
+                    $this->setValue($rowIdx, $defaultEx->evaluate($sheet, $rowIdx));
                 } elseif ($leaveNoEmptyValues === true) {
                     // If a value is still empty and we do not want it to be so - throw an error!
-                    throw new DataSheetRuntimeError($sheet, 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
+                    $missingInRowIdxs[] = $rowIdx;
                 }
             }
+        }
+        if (! empty($missingInRowIdxs)) {
+            throw new DataSheetMissingRequiredValueError($sheet, null, null, null, $this, $missingInRowIdxs);
         }
         
         return $this;
@@ -854,60 +874,10 @@ class DataColumn implements DataColumnInterface
         }
         
         try {
-            return static::aggregateValues($this->getValues(false), $aggregator);
+            return ArrayDataType::aggregateValues($this->getValues(false), $aggregator);
         } catch (\Throwable $e) {
             throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate values of column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
         }
-    }
-
-    /**
-     * Reduces the given array of values to a single value by applying the given aggregator.
-     * If no aggregator is specified, returns the first value.
-     *
-     * @param array $row_array  
-     * @param AggregatorInterface $aggregator          
-     * @return array
-     */
-    public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
-    {
-        if ($aggregator === null) {
-            $func = AggregatorFunctionsDataType::LIST_DISTINCT;
-            $args = [];
-        } else {
-            $func = $aggregator->getFunction()->getValue();
-            $args = $aggregator->getArguments();
-        }
-        
-        $output = '';
-        switch ($func) {
-            case AggregatorFunctionsDataType::LIST_ALL:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), $row_array);
-                break;
-            case AggregatorFunctionsDataType::LIST_DISTINCT:
-                $output = implode(($args[0] ? $args[0] : EXF_LIST_SEPARATOR), array_unique($row_array));
-                break;
-            case AggregatorFunctionsDataType::MIN:
-                $output = count($row_array) > 0 ? min($row_array) : 0;
-                break;
-            case AggregatorFunctionsDataType::MAX:
-                $output = count($row_array) > 0 ? max($row_array) : 0;
-                break;
-            case AggregatorFunctionsDataType::COUNT:
-                $output = count($row_array);
-                break;
-            case AggregatorFunctionsDataType::COUNT_DISTINCT:
-                $output = count(array_unique($row_array));
-                break;
-            case AggregatorFunctionsDataType::SUM:
-                $output = array_sum($row_array);
-                break;
-            case AggregatorFunctionsDataType::AVG:
-                $output = count($row_array) > 0 ? array_sum($row_array) / count($row_array) : 0;
-                break;
-            default:
-                throw new UnexpectedValueException('Unsupported aggregator function "' . $func . '"!');
-        }
-        return $output;
     }
 
     /**
@@ -998,5 +968,60 @@ class DataColumn implements DataColumnInterface
             }
         }
         return $rowNos;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getTitle()
+     */
+    public function getTitle(): ?string
+    {
+        if ($this->title === null) {
+            switch (true) {
+                case $this->isAttribute():
+                    return $this->getAttribute()->getName();
+                case $this->isCalculated():
+                    return $this->getExpressionObj()->__toString();
+            }
+        }
+        return $this->title;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setTitle()
+     */
+    public function setTitle(string $string): DataColumnInterface
+    {
+        $this->title = $string;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isReadable()
+     */
+    public function isReadable() : bool
+    {
+        switch (true) {
+            case $this->isAttribute():
+                return $this->getAttribute()->isReadable();
+            case $this->isFormula():
+                $formula = $this->getExpressionObj();
+                foreach ($formula->getRequiredAttributes() as $attrAlias) {
+                    if (! $this->getMetaObject()->hasAttribute($attrAlias) || $this->getMetaObject()->getAttribute($attrAlias)->isReadable()) {
+                        return false;
+                    }
+                }
+                return true;
+            case $this->isStatic():
+            case $this->isEmpty():
+                return true;
+        }
+        
+        return false;
     }
 }

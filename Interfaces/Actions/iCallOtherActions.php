@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\ActionListInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Interface for actions, that call other actions (e.g. chaines, workflows, etc.)
@@ -14,23 +14,16 @@ interface iCallOtherActions extends ActionInterface
 {
     /**
      *
-     * @return ActionListInterface|ActionInterface[]
+     * @return ActionInterface[]
      */
-    public function getActions() : ActionListInterface;
+    public function getActions() : array;
     
     /**
      * 
-     * @param UxonObject|ActionInterface[] $uxon_array_or_action_list
-     * @return iCallOtherActions
+     * @param callable $filter
+     * @return ActionInterface[]
      */
-    public function setActions($uxon_array_or_action_list) : iCallOtherActions;
-    
-    /**
-     * 
-     * @param ActionInterface $action
-     * @return iCallOtherActions
-     */
-    public function addAction(ActionInterface $action) : iCallOtherActions;
+    public function getActionsRecursive(callable $filter = null) : array;
     
     /**
      * 
@@ -40,8 +33,37 @@ interface iCallOtherActions extends ActionInterface
     
     /**
      * 
-     * @param bool $value
-     * @return iCallOtherActions
+     * @param string $classOrInterface
+     * @param bool $onlyThisClass
+     * @return bool
      */
-    public function setUseSingleTransaction(bool $value) : iCallOtherActions;
+    public function containsActionClass(string $classOrInterface, bool $recursive = true, bool $onlyThisClass = false) : bool;
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param bool $recursive
+     * @return bool
+     */
+    public function containsAction(ActionInterface $action, bool $recursive = true): bool;
+    
+    /**
+     * 
+     * @param ActionSelectorInterface|string $actionOrSelectorOrString
+     * @param bool $recursive
+     * @return bool
+     */
+    public function containsActionSelector($actionOrSelectorOrString, bool $recursive = true): bool;
+    
+    /**
+     * Returns the first action, that needs to be run for the given task.
+     * 
+     * Complex workflows or action chains may start differently depending on the task information (e.g.
+     * base object of the task, or input data). This method returns the first action to be performed
+     * which is important for facades, that need to the resulting action type.
+     * 
+     * @param TaskInterface $task
+     * @return ActionInterface|NULL
+     */
+    public function getActionToStart(TaskInterface $task) : ?ActionInterface;
 }

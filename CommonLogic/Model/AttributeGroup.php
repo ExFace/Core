@@ -64,7 +64,7 @@ class AttributeGroup extends AttributeList implements MetaAttributeGroupInterfac
         $object = $this->getMetaObject();
         $group = AttributeGroupFactory::createForObject($object);
         foreach ($this->getMetaObject()->getAttributes() as $attr) {
-            if (! in_array($attr, $this->getAttributes())) {
+            if (! in_array($attr, $this->getAttributes(), true)) {
                 $group->addAttribute($attr);
             }
         }

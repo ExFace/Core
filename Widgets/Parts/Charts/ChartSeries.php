@@ -75,6 +75,15 @@ abstract class ChartSeries extends AbstractChartPart implements iHaveCaption
         return $this->getCaptionSetExplicitly();
     }
     
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasCaption() : bool
+    {
+        return $this->getCaptionSetExplicitly() !== null;
+    }
+    
     public function getIndex() : int
     {
         return $this->getChart()->getSeriesIndex($this);

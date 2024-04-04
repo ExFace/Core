@@ -14,6 +14,8 @@ class Tiles extends WidgetGrid
 {    
     private $centerContent = null;
     
+    private $hiddenIfEmpty = false;
+    
     /**
      *
      * @return bool
@@ -85,5 +87,30 @@ class Tiles extends WidgetGrid
         }
         
         return parent::setWidgets($widgets);
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isHiddenIfEmpty() : bool
+    {
+        return $this->hiddenIfEmpty;
+    }
+    
+    /**
+     * Set to TRUE to hide the widget completely from users that won't see any tiles.
+     *
+     * @uxon-property hidden_if_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setHiddenIfEmpty(bool $value) : Tiles
+    {
+        $this->hiddenIfEmpty = $value;
+        return $this;
     }
 }

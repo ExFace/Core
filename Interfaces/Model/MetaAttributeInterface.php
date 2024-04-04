@@ -10,6 +10,8 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
+    const OBJECT_LABEL_ALIAS = 'LABEL';
+    
     public function __construct(MetaObjectInterface $object);
     
     /**
@@ -111,7 +113,20 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setEditable($value);
     
     /**
-     * Returns the formatter expression as a string
+     * 
+     * @return bool
+     */
+    public function isCopyable() : bool;
+    
+    /**
+     * 
+     * @param bool $value
+     * @return MetaAttributeInterface
+     */
+    public function setCopyable(bool $value) : MetaAttributeInterface;
+    
+    /**
+     * Returns the expression for a calculated attribute or NULL for other attribute types
      * 
      * @return ExpressionInterface|NULL
      */
@@ -303,7 +318,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      *
      * @return \exface\Core\CommonLogic\UxonObject
      */
-    public function getDataAddressProperties();
+    public function getDataAddressProperties() : UxonObject;
     
     /**
      *
@@ -384,7 +399,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      *
      * @return boolean
      */
-    public function isSystem();
+    public function isSystem() : bool;
     
     /**
      * Marks the attribute as system (TRUE) or non-system (FALSE).
@@ -394,7 +409,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @param boolean $value
      * @return MetaAttributeInterface
      */
-    public function setSystem($value);
+    public function setSystem(bool $value) : MetaAttributeInterface;
     
     /**
      *
@@ -478,7 +493,19 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      */
     public function setValueListDelimiter($string);
     
+    /**
+     * 
+     * @param string $delimitedString
+     * @return string[]
+     */
+    public function explodeValueList(string $delimitedString) : array;
     
+    /**
+     * 
+     * @param array $values
+     * @return string
+     */
+    public function implodeValueList(array $values) : string;
     
     /**
      * Returns a copy of the UXON object for the default editor widget for this attribute.
@@ -526,4 +553,10 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @return bool
      */
     public function isRelated() : bool;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string;
 }
