@@ -14,4 +14,3 @@ class NumberEnumDataType extends NumberDataType implements EnumDataTypeInterface
 {
     use EnumDynamicDataTypeTrait;
 }
-?>

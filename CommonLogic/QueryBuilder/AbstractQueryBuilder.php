@@ -15,6 +15,9 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\ArrayDataType;
+use exface\Core\Uxon\QueryBuilderSchema;
+use exface\Core\Factories\ExpressionFactory;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -40,6 +43,8 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     private $selector = null;
     
     private $workbench = null;
+    
+    private $timeZone = null;
     
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
@@ -166,6 +171,24 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     protected function getAttribute($alias)
     {
         return $this->attributes[$alias];
+    }
+    
+    /**
+     * Returns the query part for the UID attribute of the main object if present in the query and NULL otherwies.
+     * 
+     * @return QueryPartAttribute|NULL
+     */
+    protected function getUidAttribute() : ?QueryPartAttribute
+    {
+        if ($this->getMainObject()->hasUidAttribute()) {
+            $uidAttr = $this->getMainObject()->getUidAttribute();
+            foreach ($this->getAttributes() as $qpart) {
+                if ($qpart->getAttribute()->isExactly($uidAttr)) {
+                    return $qpart;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -325,14 +348,16 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      * 
      * @return QueryPartSorter
      */
-    public function addSorter($sort_by, $order = 'ASC')
+    public function addSorter($sort_by, $order = 'ASC', bool $addToAttributes = true)
     {
         $qpart = new QueryPartSorter($sort_by, $this);
         $qpart->setOrder($order);
         $this->sorters[$sort_by . $order] = $qpart;
         // IDEA move this to the read method of the concrete builder, since it might not be neccessary for
         // all data sources.
-        $this->addAttribute($sort_by);
+        if ($addToAttributes === true) {
+            $this->addAttribute($sort_by);
+        }
         return $qpart;
     }
 
@@ -429,19 +454,31 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
 
     /**
      * Adds a value column with multiple rows (in other words multiple values for a single database column).
-     * The values
-     * are passed as an array with row ids as keys. What column is meant by "row id" can optionally be specified via the
-     * $row_id_attribute_alias parameter. If not set, the UID column of the main object of the query will be used.
+     * 
+     * The values are passed as an array with row indexes as keys. This means, every attribute
+     * in a query may have values on different rows. This is important as an update may contain
+     * rows, that simply don't have a value for a certain data column, which does not mean, 
+     * it should be emptied in the data source!
+     * 
+     * The third argument is an optional array containing UIDs for rows to be updated.
+     * Only knowing the UIDs allows us to be sure to update the right item in the data source!
+     * If no UIDs are provided, the query builder will attempt to do an update by filters.
+     * Note: The number of items in the values and uids array MUST be equal!  
      *
      * @param string $attribute_alias            
-     * @param array $values
-     *            [ row_id_attribute_alias_value => value_to_be_saved ]
-     * @param array $uids_for_values            
+     * @param array $values [ row_index => value_to_be_saved ]
+     * @param array $uids_for_values  [ row_index => row_uid ]  
      * @return QueryPartValue
      */
-    public function addValues($attribute_alias, array $values, array $uids_for_values = array())
+    public function addValues($attribute_alias, array $values, array $uids_for_values = [])
     {
         $qpart = new QueryPartValue($attribute_alias, $this);
+        if (empty ($values)) {
+            throw new QueryBuilderException("Empty set of values passed for attribute \"{$attribute_alias}\" for an update operation");
+        }
+        if (! empty($uids_for_values) && count($values) !== count($uids_for_values)) {
+            throw new QueryBuilderException("Invalid values passed for attribute \"{$attribute_alias}\" for an update operation");
+        }
         $qpart->setValues($values);
         $qpart->setUids($uids_for_values);
         $this->values[$attribute_alias] = $qpart;
@@ -522,6 +559,29 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         } 
         return $this;
     }
+    
+    /**
+     * 
+     * @param QueryPart $qpart
+     * @throws NotImplementedError
+     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     */
+    protected function removeQueryPart(QueryPart $qpart) 
+    {
+        switch (true) {
+            case $qpart instanceof QueryPartValue:
+                unset($this->values[$qpart->getAlias()]);
+                break;
+            case $qpart instanceof QueryPartAttribute:
+                $columnKey = $qpart instanceof QueryPartSelect ? $qpart->getColumnKey() : $qpart->getAlias();
+                unset($this->attributes[$columnKey]);
+                break;
+            default:
+                // FIXME add all other query parts. Perhaps use this metho even in the regular add...() methods to centralize the population of the private arrays.
+                throw new NotImplementedError('Removing ready-made query parts to existing queries not supported for ' . get_class($qpart));
+        }
+        return $this;
+    }
 
     /**
      * Sorts the given array of data rows by applying the sorters defined for this query.
@@ -582,18 +642,65 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         return array_slice($row_array, $this->getOffset(), $this->getLimit());
     }
     
+    /**
+     *
+     * @param mixed[][] $rows
+     * @param QueryPartAttribute[] $byAttributeQueryParts
+     * @return mixed[][]
+     */
+    protected function applyAggregations(array $rows, array $byAttributeQueryParts) : array
+    {
+        if (empty($byAttributeQueryParts)) {
+            return $rows;
+        }
+        $resultRows = [];
+        $rowsPerKey = [];
+        foreach ($rows as $row) {
+            $key = '';
+            foreach ($byAttributeQueryParts as $qpart) {
+                $key .= $row[$qpart->getColumnKey()];
+            }
+            $rowsPerKey[$key][] = $row;
+        }
+        foreach ($rowsPerKey as $rowsWithKey) {
+            $resultRow = [];
+            foreach ($this->getAttributes() as $qpart) {
+                $key = $qpart->getColumnKey();
+                switch (true) {
+                    case $this->isAggregatedBy($qpart):
+                        $resultRow[$key] = $rowsWithKey[0][$key];
+                        break;
+                    case $qpart->hasAggregator():
+                        $vals = [];
+                        foreach ($rowsWithKey as $r) {
+                            $vals[] = $r[$key];
+                        }
+                        $resultRow[$key] = ArrayDataType::aggregateValues($vals, $qpart->getAggregator());
+                }
+            }
+            $resultRows[] = $resultRow;
+        }
+        return $resultRows;
+    }
+    
     protected function replacePlaceholdersByFilterValues($string)
     {
         foreach (StringDataType::findPlaceholders($string) as $ph) {
-            if ($ph_filter = $this->getFilter($ph)) {
+            if (StringDataType::startsWith($ph, '=')) {
+                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $ph);
+                if (! $expr->isFormula() && ! $expr->isStatic()) {
+                    throw new QueryBuilderException('Only static formulas can be used as placeholder in "' . $string . '"! Placeholder "' . $ph . '" is not a static formula!');
+                }
+                $string = str_replace('[#' . $ph . '#]', $expr->evaluate(), $string);
+            } elseif ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
-                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
+                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getDataType()->parse($ph_filter->getCompareValue()), $string);
                 } else {
                     // If at least one filter does not have a value, return false
-                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in data address "' . $string . '"!');
                 }
             } else {
-                // If at least one placeholder does not have a corresponding filter, return false
+                // If at least one placeholder does not have a corresponding filter or is a static formula, return false
                 throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
             }
         }
@@ -601,16 +708,9 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
     
     /**
-     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
      * 
-     * Depending on the QueryBuilder, even related attributes can be included in a query 
-     * (e.g. in SQL via JOIN or oData via $expand).
-     * 
-     * This method is used by the core to determine, if a read operation on a DataSheet must 
-     * be split into multiple subsheets and joind afterwards in-memory.
-     * 
-     * @param MetaAttributeInterface $attribute
-     * @return bool
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::canReadAttribute()
      */
     abstract public function canReadAttribute(MetaAttributeInterface $attribute) : bool;
     
@@ -622,6 +722,16 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     public function canRead(string $modelAliasExpression) : bool
     {
         return $this->canReadAttribute($this->getMainObject()->getAttribute($modelAliasExpression));
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::canWriteAttribute()
+     */
+    public function canWriteAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $this->canReadAttribute($attribute);
     }
     
     /**
@@ -641,5 +751,35 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
             }
         }
         return false;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass() : ?string
+    {
+        return QueryBuilderSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::getTimeZone()
+     */
+    public function getTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::setTimeZone()
+     */
+    public function setTimeZone(string $value = null) : QueryBuilderInterface
+    {
+        $this->timeZone = $value;
+        return $this;
     }
 }

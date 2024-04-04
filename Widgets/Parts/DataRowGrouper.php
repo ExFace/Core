@@ -12,6 +12,7 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * This widget part is used to group rows in a data table.
@@ -27,7 +28,7 @@ use exface\Core\Widgets\Traits\iHaveCaptionTrait;
  *  "widget_type": "DataTable",
  *  "row_grouper": {
  *      "group_by_attribute_alias": "MY_ATTRIBUTE",
- *      "expand_all_groups": true,
+ *      "expand_groups": "all",
  *      "show_counter": true
  *  }
  * }
@@ -46,9 +47,9 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
         getCaption as getCaptionViaTrait;
     }
     
-    const EXPAND_ALL_GROUPS = 'ALL';
-    const EXPAND_FIRST_GROUP = 'FIRST';
-    const EXPAND_NO_GROUPS = 'NONE';
+    const EXPAND_ALL_GROUPS = 'all';
+    const EXPAND_FIRST_GROUP = 'first';
+    const EXPAND_NO_GROUPS = 'none';
     
     /**
      * @var string|null
@@ -68,7 +69,7 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     private $group_by_column = null;
     
     /**
-     * @var boolean
+     * @var string
      */
     private $expand_groups = self::EXPAND_ALL_GROUPS;
     
@@ -77,6 +78,8 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
      * @var boolean
      */
     private $show_counter = false;
+    
+    private $empty_text = null;
     
     /**
      * 
@@ -161,50 +164,54 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
     }
     
     /**
-     * 
-     * @return boolean
+     *
+     * @return string
      */
-    public function getExpandAllGroups()
+    public function getExpandGroups() : string
     {
-        return $this->expand_groups === self::EXPAND_ALL_GROUPS;
+        return $this->expand_groups;
     }
     
     /**
      * Set to FALSE to collapse all groups when loading data - TRUE by default.
-     * 
-     * @uxon-property expand_all_groups
-     * @uxon-type boolean
-     * @uxon-default true
+     *
+     * @uxon-property expand_groups
+     * @uxon-type [all,first,none]
+     * @uxon-default all
+     *
+     * @param string $value
+     * @return DataRowGrouper
+     */
+    public function setExpandGroups(string $value) : DataRowGrouper
+    {
+        $value = mb_strtolower($value);
+        $refl = new \ReflectionClass($this);
+        if (! in_array($value, $refl->getConstants())) {
+            throw new WidgetPropertyInvalidValueError($this->getWidget(), 'Invalid value "' . $value . '" for property `expand_groups` of `row_grouper`: expecting `all`, `first` or `none`!');
+        }
+        $this->expand_groups = $value;
+        return $this;
+    }
+    
+    /**
+     * @deprecated use setExpandGroups() instead
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
-    public function setExpandAllGroups($true_or_false)
+    protected function setExpandAllGroups($true_or_false)
     {
         $this->expand_groups = BooleanDataType::cast($true_or_false) ? self::EXPAND_ALL_GROUPS : self::EXPAND_NO_GROUPS;
         return $this;
     }
     
     /**
-     *
-     * @return boolean
-     */
-    public function getExpandFirstGroupOnly()
-    {
-        return $this->expand_groups === self::EXPAND_FIRST_GROUP;
-    }
-    
-    /**
-     * Set to FALSE to collapse all groups when loading data - TRUE by default.
-     *
-     * @uxon-property expand_all_groups
-     * @uxon-type boolean
-     * @uxon-default false
-     *
+     * @deprecated use setExpandGroups() instead
+     * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\Parts\DataRowGrouper
      */
-    public function setExpandFirstGroupOnly($true_or_false)
+    protected function setExpandFirstGroupOnly($true_or_false)
     {
         $this->expand_groups = BooleanDataType::cast($true_or_false) ? self::EXPAND_FIRST_GROUP : self::EXPAND_ALL_GROUPS;
         return $this;
@@ -291,5 +298,29 @@ class DataRowGrouper implements WidgetPartInterface, iHaveCaption
             $this->setCaption($cap);
         }
         return $cap;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getEmptyText() : string
+    {
+        return $this->empty_text ?? $this->getWidget()->translate('WIDGET.DATA.GROUP_EMPTY');
+    }
+    
+    /**
+     * Caption of the group of rows without values in the `group_by_attribute_alias`.
+     * 
+     * @uxon-property empty_text
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return DataRowGrouper
+     */
+    public function setEmptyText(string $value) : DataRowGrouper
+    {
+        $this->empty_text = $value;
+        return $this;
     }
 }

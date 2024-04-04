@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\CompoundAttributeInterface;
@@ -69,6 +68,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setCompareValue($value)
     {
         $this->compare_value = trim($value);
+        $this->compoundFilterGroup = null;
         return $this;
     }
 
@@ -93,6 +93,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setComparator($value)
     {
         $this->comparator = $value;
+        $this->compoundFilterGroup = null;
         return $this;
     }
 
@@ -103,16 +104,6 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function getCondition()
     {
         return $this->condition;
-    }
-    
-    /**
-     * Returns the delimiter to be used for concatennated value strings 
-     * (comma by default)
-     * 
-     * @return string
-     */
-    public function getValueListDelimiter(){
-        return $this->getAttribute()->getValueListDelimiter();
     }
 
     /**
@@ -151,6 +142,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     public function setValueIsDataAddress($true_or_false) 
     {
         $this->value_is_data_address = $true_or_false;
+        $this->compoundFilterGroup = null;
         return $this;
     }
     
@@ -168,7 +160,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
      * 
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         $copy->condition = $this->getCondition()->copy();
@@ -179,7 +171,7 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
     {
         if ($this->compoundFilterGroup === null) {
             if (($this->getAttribute() instanceof CompoundAttributeInterface) === false) {
-                throw new RuntimeException('TODO');
+                throw new RuntimeException('Cannot generate compound filters for attribute ' . $this->getAttribute()->__toString() . ': unsupported attribute type "' . get_class($this->getAttribute()) . '"');
             }
             
             $compoundFilterGroup = $this->getAttribute()->splitCondition($this->getCondition());
@@ -188,4 +180,3 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
         return $this->compoundFilterGroup;
     }
 }
-?>

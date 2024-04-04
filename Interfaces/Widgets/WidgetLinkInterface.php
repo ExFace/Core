@@ -18,7 +18,12 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
  */
 interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
-
+    const REF_SELF = '~self';
+    
+    const REF_PARENT = '~parent';
+    
+    const REF_INPUT = '~input';
+    
     /**
      * Returns the page alias of the target page of the link.
      * 
@@ -61,15 +66,15 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
 
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getTargetColumnId();
+    public function getTargetColumnId() : ?string;
 
     /**
      * 
-     * @return integer
+     * @return int|NULL
      */
-    public function getTargetRowNumber();
+    public function getTargetRowNumber() : ?int;
     
     /**
      * 
@@ -88,5 +93,11 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
      * @return bool
      */
     public function hasSourceWidget() : bool;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isOnlyIfNotEmpty() : bool;
 }
 ?>

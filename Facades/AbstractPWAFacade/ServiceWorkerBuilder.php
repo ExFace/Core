@@ -21,6 +21,8 @@ class ServiceWorkerBuilder
     
     private $basePath = '';
     
+    private $urlCacheHash = null;
+    
     /**
      * Creates a service worker builder for a specific base path (relative URL path from the
      * service worker location to the includes location).
@@ -49,14 +51,19 @@ JS;
     {
         $imports = array_unique($this->imports);
         foreach ($imports as $import) {
-            $importScript .= PHP_EOL . "importScripts('{$this->basePath}{$import}');";
+            $importScript .= PHP_EOL . "importScripts('{$this->buildUrlToImport($import)}');";
         }
         
         return <<<JS
-importScripts('{$this->basePath}{$this->workboxImportPath}');
+importScripts('{$this->buildUrlToImport($this->workboxImportPath)}');
 {$importScript}
 
 JS;
+    }
+    
+    protected function buildUrlToImport(string $pathRelativeToBase) : string
+    {
+        return $this->basePath . $pathRelativeToBase . ($this->getUrlCacheHash() !== null ? '?' . $this->getUrlCacheHash() : '');
     }
 
     public function buildJsLogic() : string
@@ -201,5 +208,26 @@ JS;
     public function getImports() : array
     {
         return $this->imports;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getUrlCacheHash() : ?string
+    {
+        return $this->urlCacheHash;
+    }
+    
+    /**
+     * Will be appended to import() URLs to control browser caching - a new hash will force cache invalidation
+     * 
+     * @param string $value
+     * @return ServiceWorkerBuilder
+     */
+    public function setUrlCacheHash(string $value) : ServiceWorkerBuilder
+    {
+        $this->urlCacheHash = $value;
+        return $this;
     }
 }

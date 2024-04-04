@@ -33,7 +33,6 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\PrefixedFilterUrlParamsReader;
-use exface\Core\Factories\ResultFactory;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
@@ -46,7 +45,6 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade;
 use Psr\Http\Message\RequestInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Templates\FacadePageTemplateRenderer;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
-use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
@@ -58,8 +56,17 @@ use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Contexts\DebugContext;
-use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\DataTypes\UrlDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsStringFormatter;
+use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
+use exface\Core\Exceptions\Facades\FacadeLogicError;
+use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
+use exface\Core\DataTypes\MessageTypeDataType;
+use function GuzzleHttp\Psr7\stream_for;
 
 /**
  * 
@@ -69,8 +76,6 @@ use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements HtmlPageFacadeInterface
 {
     private $elements = [];
-    
-    private $requestIdCache = [];
     
     /**
      * [ widget_type => qualified class name]
@@ -85,39 +90,17 @@ abstract class AbstractAjaxFacade extends AbstractHttpTaskFacade implements Html
     private $data_type_formatters = [];
     
     private $pageTemplateFilePath = null;
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Facades\AbstractFacade\AbstractFacade::init()
-     */
-    protected function init()
+    
+    private $sematic_colors = [];
+    
+    private $fileVersionHash = null;
+    
+    public function __construct(FacadeSelectorInterface $selector)
     {
-        parent::init();
+        parent::__construct($selector);
         $this->getWorkbench()->eventManager()->addListener(OnRemoveEvent::getEventName(), function (OnRemoveEvent $event) {
             $this->removeElement($event->getWidget());
         });
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::handle()
-     */
-    public function handle(ServerRequestInterface $request, $useCacheKey = null) : ResponseInterface
-    {
-        if (! is_null($useCacheKey)) {
-            $request = $request->withAttribute('result_cache_key', $useCacheKey);
-        }
-        
-        if ($cache = $this->requestIdCache[$request->getAttribute('result_cache_key')]) {
-            if ($cache instanceof ResultInterface) {
-                return $this->createResponseFromTaskResult($request, $cache);
-            }
-        }
-        
-        return parent::handle($request);
     }
 
     /**
@@ -406,6 +389,7 @@ HTML;
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
             case $dataType instanceof TimeDataType: return new JsTimeFormatter($dataType);
             case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
+            case $dataType instanceof StringDataType: return new JsStringFormatter($dataType);
         }
         return new JsTransparentFormatter($dataType);
     }
@@ -419,7 +403,7 @@ HTML;
     {
         $middleware = parent::getMiddleware();
         
-        $middleware[] = new ContextBarApi($this);
+        $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
@@ -438,16 +422,18 @@ HTML;
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponseFromTaskResult()
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromTaskResult()
      */
     protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
-        if ($cacheKey = $request->getAttribute('result_cache_key')) {
-            $this->requestIdCache[$cacheKey] = $result;
+        /* @var $headers array [header_name => array_of_values] */
+        $headers = $this->buildHeadersCommon();
+        if ($this->isRequestAjax($request)) {
+            $headers = array_merge($headers, $this->buildHeadersForAjax());
+        } else {
+            $headers = array_merge($headers, $this->buildHeadersForHtml());
         }
         
-        /* @var $headers array [header_name => array_of_values] */
-        $headers = $this->buildHeadersAccessControl();
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
@@ -473,16 +459,27 @@ HTML;
                 }
                 break;
                 
-            case $result instanceof ResultFileInterface:
-                $url = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
-                $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '" download>here</a>.';
+            case $result instanceof ResultFileInterface && $result->isDownloadable():
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
                 $json = [
                     "success" => $message,
                     "download" => $url
                 ];
-                break;   
+                break;
+                
+            case $result instanceof ResultFileInterface && ! $result->isDownloadable():
+                $headers = array_merge($headers, [
+                    'Expires' => 0,
+                    'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+                    'Pragma' => 'public'
+                ]);
+                $headers['Content-Transfer-Encoding'] = 'binary';
+                $headers['Content-Disposition'] = 'inline; filename=' . $result->getFilename();
+                $headers['Content-Type'] = $result->getMimeType();
+                return new Response(200, $headers, stream_for($result->getResourceHandle())); 
                 
             case $result instanceof ResultUriInterface:
                 if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
@@ -491,14 +488,21 @@ HTML;
                     $uri = $result->getUri();
                 }
                 
-                if ($result->getOpenInNewWindow()) {
-                    $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+                if ($result->isDownload()) {
+                    $json = [
+                        "success" => $result->getMessage() ? $result->getMessage() : $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]),
+                        "download" => $uri->__toString()
+                    ];
+                } else {
+                    if ($result->isOpenInNewWindow()) {
+                        $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+                    }
+                    
+                    $json = [
+                        "success" => $result->getMessage(),
+                        "redirect" => $uri->__toString()
+                    ];
                 }
-                
-                $json = [
-                    "success" => $result->getMessage(),
-                    "redirect" => $uri->__toString()
-                ];
                 break;  
             case $result instanceof ResultTextContentInterface:
                 $headers['Content-type'] = $result->getMimeType();
@@ -518,8 +522,6 @@ HTML;
                 }
         }
         
-        // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
-        // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         if (! empty($json)) {
             if ($result->isContextModified() && $result->getTask()->isTriggeredOnPage()) {
                 $context_bar = $result->getTask()->getPageTriggeredOn()->getContextBar();
@@ -541,15 +543,63 @@ HTML;
     abstract public function buildResponseData(DataSheetInterface $data_sheet, WidgetInterface $widget = null);
     
     /**
+     * Returns an array of data rows with sanitized values, that are safe to put publish as HTML
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @param bool $decrypt
+     * @param bool $forceHtmlEntities
+     * @param bool $stripHtmlTags
+     * @return array
+     */
+    protected function buildResponseDataRowsSanitized(DataSheetInterface $data_sheet, bool $decrypt = true, bool $forceHtmlEntities = true, bool $stripHtmlTags = false) : array
+    {
+        $rows = $decrypt ? $data_sheet->getRowsDecrypted() : $data_sheet->getRows();
+        if (empty($rows)) {
+            return $rows;
+        }
+        
+        foreach ($data_sheet->getColumns() as $col) {
+            $colName = $col->getName();
+            $colType = $col->getDataType();
+            switch (true) {
+                case $colType instanceof HtmlDataType:
+                    // FIXME #xss-protection sanitize HTML here!
+                    break;
+                case $colType instanceof JsonDataType:
+                    // FIXME #xss-protection sanitize JSON here!
+                    break;
+                case $colType instanceof StringDataType:
+                    if ($forceHtmlEntities === true || $stripHtmlTags === true) {
+                        foreach ($rows as $i => $row) {
+                            $val = $row[$colName];
+                            if ($val !== null && $val !== '') {
+                                if ($stripHtmlTags === true) {
+                                    $rows[$i][$colName] = strip_tags($val);
+                                }
+                                if ($forceHtmlEntities === true) {
+                                    $rows[$i][$colName] = htmlspecialchars($val, ENT_NOQUOTES);
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        return $rows;
+    }
+    
+    /**
      *
      * @param array|\stdClass $serializable_data
-     * @param string $add_extras
      * @throws FacadeOutputError
      * @return string
      */
     public function encodeData($serializable_data)
     {        
-        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
+        // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
+        // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
+        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
         if (! $result) {
             throw new FacadeOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
         }
@@ -561,7 +611,7 @@ HTML;
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpTaskFacade::createResponseFromError()
      */
-    public function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface 
+    public function createResponseFromError(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : ResponseInterface 
     {
         if ($exception instanceof ExceptionInterface) {
             $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
@@ -569,51 +619,50 @@ HTML;
             $status_code = 500;
         }
         
-        // If the user is not logged on an the permission is denied, wrap the error in an
-        // AuthenticationFailedError to tell the facade to handle it as an unauthorized-error
-        if ($exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous()) {
-            $exception = new AuthenticationFailedError($this->getWorkbench()->getSecurity(), $exception->getMessage(), null, $exception);
-        }
-        
         // If the error goes back to failed authorization (HTTP status 401), see if a login-prompt should be shown.
-        if ($exception instanceof ExceptionInterface && $exception->getStatusCode() == 401) {
+        if ($exception instanceof ExceptionInterface && $status_code == 401) { 
             // Don't show the login-prompt if the request is a login-action itself. In this case,
             // it originates from a login form, so we don't need another one.
             /* @var $task \exface\Core\CommonLogic\Tasks\HttpTask */
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
-            if (! $task || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))) {
+            $task = $request !== null ? $request->getAttribute($this->getRequestAttributeForTask()) : null;
+            if (! $task 
+            || ($task->getActionSelector() && ! (ActionFactory::create($task->getActionSelector()) instanceof Login))
+            || $exception instanceof AuthenticationIncompleteError) {
                 // See if the method createResponseUnauthorized() can handle this exception.
                 // If not, continue with the regular error handling.
-                $response = $this->createResponseUnauthorized($request, $exception, $page);
+                $response = $this->createResponseUnauthorized($exception, $request, $page);
                 if ($response !== null) {
                     return $response;
                 }
             }
         }
         
-        $headers = $this->buildHeadersAccessControl();
+        $headers = $this->buildHeadersCommon();
         $body = '';
         
         switch (true) {
             case $this->isShowingErrorDetails() === true:
             case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
                 // If details needed, render a widget
-                $body = $this->buildHtmlFromError($request, $exception, $page);
+                $body = $this->buildHtmlFromError($exception, $request, $page);
+                $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
             default:
-                if ($this->isRequestAjax($request)) {
+                if ($request !== null && $this->isRequestAjax($request)) {
                     // Render error data for AJAX requests, so the JS can interpret it.
                     $body = $this->encodeData($this->buildResponseDataError($exception));
+                    $headers = array_merge($headers, $this->buildHeadersForAjax());
                     $headers['Content-Type'] = ['application/json;charset=utf-8'];
                 } else {
                     // If we were rendering a widget, return HTML even for non-detail cases
-                    $body = $this->buildHtmlFromError($request, $exception, $page);
+                    $body = $this->buildHtmlFromError($exception, $request, $page);
+                    $headers = array_merge($headers, $this->buildHeadersForHtml());
                     $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 }
-        }     
+        }
         
-        $this->getWorkbench()->getLogger()->logException($exception);
+        $headers = array_merge($headers, $this->buildHeadersForErrors());
         
         return new Response($status_code, $headers, $body);
     }
@@ -628,26 +677,34 @@ HTML;
      * Override this method, if a specific facade needs special treatment for unauthorized-exceptions.
      * 
      * @param \Throwable $exception
-     * @param UiPageInterface $page
-     * @return ResponseInterface
+     * @param ServerRequestInterface|NULL $request
+     * @param UiPageInterface $page|NULL
+     * @return ResponseInterface|NULL
      */
-    protected function createResponseUnauthorized(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ?ResponseInterface
+    protected function createResponseUnauthorized(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : ?ResponseInterface
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
         try {
             $loginPrompt = LoginPrompt::createFromException($page, $exception);
         } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
             return null;
         }
         
-        if ($this->isRequestAjax($request)) {
+        if ($request !== null && $this->isRequestAjax($request)) {
             $responseBody = $this->buildHtmlHead($loginPrompt) . "\n" . $this->buildHtmlBody($loginPrompt);
         } else {
             $responseBody = $this->buildHtmlPage($loginPrompt, $this->getPageTemplateFilePathForUnauthorized());
         }
-        return new Response(401, $this->buildHeadersAccessControl(), $responseBody);
+        
+        $headers = array_merge(
+            $this->buildHeadersCommon(), 
+            $this->buildHeadersForHtml(),
+            $this->buildHeadersForErrors()
+        );
+        
+        return new Response($exception instanceof AuthorizationExceptionInterface ? $exception->getStatusCode() : 401, $headers, $responseBody);
     }
     
     /**
@@ -657,15 +714,7 @@ HTML;
      */
     protected function isShowingErrorDetails() : bool
     {
-        try {
-            $this->getWorkbench()->getContext()->getScopeWindow()->getContext(DebugContext::class);
-            return true;
-        } catch (ContextAccessDeniedError $e) {
-            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
-        return false;
+        return $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
     }
     
     /**
@@ -677,7 +726,7 @@ HTML;
      * @throws RuntimeException
      * @return string
      */
-    protected function buildHtmlFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : string 
+    protected function buildHtmlFromError(\Throwable $exception, ServerRequestInterface $request = null, UiPageInterface $page = null) : string 
     {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         $body = '';
@@ -685,6 +734,7 @@ HTML;
         try {
             $debug_widget = $exception->createWidget($page);
             switch (true) {
+                case $request === null:
                 case $this->isRequestFrontend($request) === true:
                     $body = $this->buildHtmlPage($debug_widget);
                     break;
@@ -700,12 +750,6 @@ HTML;
             throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
-        // If using the cache, we can store the error widget in that cache to make sure it is shown.
-        // Otherwise if the error only occurs in certain modes, it might never get really shown!
-        if ($cacheKey = $request->getAttribute('result_cache_key')) {
-            $task = $request->getAttribute($this->getRequestAttributeForTask());
-            $this->requestIdCache[$cacheKey] = ResultFactory::createWidgetResult($task, $debug_widget);
-        }
         return $body;
     }
     
@@ -715,21 +759,23 @@ HTML;
      * @param \Throwable $exception
      * @return mixed
      */
-    public function buildResponseDataError(\Throwable $exception)
+    public function buildResponseDataError(\Throwable $exception, bool $forceHtmlEntities = true)
     {
         $error = [
             'code' => $exception->getCode(),
-            'message' => $exception->getMessage(),
+            'message' => $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage(),
         ];
         
         if ($exception instanceof ExceptionInterface) {
-            $wb = $this->getWorkbench();
             $error['code'] = $exception->getAlias();
             $error['logid'] = $exception->getId();
-            $error['title'] = $exception->getMessageTitle($wb);
-            $error['hint'] = $exception->getMessageHint($wb);
-            $error['description'] = $exception->getMessageDescription($wb);
-            $error['type'] = $exception->getMessageType($wb);
+            
+            $wb = $this->getWorkbench();
+            $msg = $exception->getMessageModel($wb);
+            $error['title'] = $forceHtmlEntities ? htmlspecialchars($msg->getTitle()) : $msg->getTitle();
+            $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
+            $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
+            $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
         }
         
         return [
@@ -749,59 +795,156 @@ HTML;
         return 'filter_';
     }
     
-    public function buildUrlToVendorFile(string $pathInVendorFolder) : string
+    /**
+     * 
+     * @param string $pathInVendorFolder
+     * @param bool $addVersionHash
+     * @return string
+     */
+    public function buildUrlToVendorFile(string $pathInVendorFolder, bool $addVersionHash = true) : string
     {
-        return 'vendor/' . $pathInVendorFolder;
+        return 'vendor/' . $pathInVendorFolder . ($addVersionHash ? '?' . $this->getFileVersionHash() : '');
     }
     
     /**
      * 
      * @param string $configOption
+     * @param bool $addVersionHash
      * @return string
      */
-    public function buildUrlToSource(string $configOption) : string
+    public function buildUrlToSource(string $configOption, bool $addVersionHash = true) : string
     {
         $path = $this->getConfig()->getOption($configOption);
         if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
             return $path;
         } else {
-            return $this->buildUrlToVendorFile($path);
+            return $this->buildUrlToVendorFile($path, $addVersionHash);
         }
     }
     
-    protected function buildHtmlHeadCommonIncludes() : array
+    /**
+     * 
+     * @param string $filename
+     * @return string
+     */
+    public function getFileVersionHash(string $filename = null) : string
     {
-        return [];
+        return $this->fileVersionHash ?? 'v' . str_replace(['-', ' ', ':'], '', $this->getWorkbench()->getContext()->getScopeInstallation()->getVariable('last_metamodel_install'));
     }
     
     /**
-     * Returns an array of allowed origins for AJAX requests to the facade.
+     * Returns the common script/css tags to include in the <head> of the HTML page.
      * 
-     * The core config key FACADES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
-     * for all AJAX facades. Facades are free to use their own configuration though - please
-     * refer to the documentation of the facade used.
+     * By default, the built-in JS-library exfTools is always included
      * 
      * @return string[]
      */
-    protected function buildHeadersAccessControl() : array
+    protected function buildHtmlHeadCommonIncludes() : array
     {
-        $headers = $this->getConfig()->getOption('FACADE.AJAX.ACCESS_CONTROL_HEADERS')->toArray();
+        $includes = JsDateFormatter::buildHtmlHeadMomentIncludes($this);
+        $includes[] = '<script type="text/javascript" src="' . $this->buildUrlToSource('LIBS.EXFTOOLS.JS') . '"></script>';
+        return $includes;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
+     */
+    protected function buildHeadersCommon() : array
+    {
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        return array_merge($commonHeaders, $facadeHeaders);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function buildHeadersForHtml() : array
+    {
+        $headers = array_filter($this->getConfig()->getOption('FACADE.HEADERS.HTML')->toArray());
+                
+        $workbenchHosts = [];
+        foreach ($this->getWorkbench()->getConfig()->getOption('SERVER.BASE_URLS') as $url) {
+            $host = UrlDataType::findHost($url);
+            if ($host) {
+                $workbenchHosts[] = $host;
+            }
+        }
+        
+        $cspString = '';
+        foreach ($this->getConfig()->getOptionGroup('FACADE.HEADERS.CONTENT_SECURITY_POLICY', true) as $directive => $values) {
+            // Skip the directive if the config option has no value (thus removing the directive)
+            if (empty($values)) {
+                continue;
+            }
+            // Otherwise add this directive to the policy
+            $directive = str_replace('_', '-', mb_strtolower($directive));
+            if ($directive === 'flags') {
+                $cspString .= $values . ' ; ';
+            } else {
+                // Add the hosts of the workbench base URLs to every directive to aviod issues
+                // with workbenches behind reverse proxies, where the same workbench can be
+                // reached through different URLs.
+                $cspString .= $directive . ' ' . implode(' ', $workbenchHosts) . ' ' . $values . ' ; ';
+            }
+        }
+        
+        return array_merge(['Content-Security-Policy' => $cspString], $headers);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function buildHeadersForAjax() : array
+    {
+        $headers = $this->getConfig()->getOption('FACADE.HEADERS.AJAX')->toArray();
         return array_filter($headers);
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    protected function buildHeadersForErrors() : array
+    {
+        return [
+            'Cache-Control' => ['no-cache', 'no-store', 'must-revalidate'],
+            'Pragma' => ['no-cache'],
+            'Expires' => [0]
+        ];
     }
     
     protected function buildHtmlHeadIcons() : array
     {
         $tags = [];
-        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS')->toArray();
-        $favicon = $icons[0];
-        if (is_array($favicon)) {
-            $tags[] = '<link rel="shortcut icon" href="' . $favicon['src'] . '">';
+        $icons = $this->getWorkbench()->getConfig()->getOption('SERVER.ICONS');
+        if (! $icons) {
+            return $tags;
         }
-        foreach ($icons as $icon) {
-            if ($icon['sizes'] == '192x192') {
-                $tags[] = '<link rel="icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
-                $tags[] = '<link rel="apple-touch-icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
-            }  
+        if (! ($icons instanceof UxonObject)) {
+            $icons = new UxonObject([$icons]);
+        }
+        foreach ($icons->getPropertiesAll() as $icon) {
+            if (($icon instanceof UxonObject) && $src = $icon->getProperty('src')) {
+                $props = '';
+                
+                $rel = $icon->getProperty('rel');
+                $props .= ' rel="' . ($rel ? $rel : 'icon') . '"';
+                
+                $type = $icon->getProperty('type');
+                $props .= $type ? ' type="' . $type . '"' : '';
+                
+                $sizes = $icon->getProperty('sizes');
+                $props .= $sizes ? ' sizes="' . $sizes . '"' : '';
+                
+                $tags[] = '<link ' . $props . ' href="' . $src . '">';
+            } elseif (is_string($icon) && $icon !== '') {
+                $tags[] = '<link rel="shortcut icon" href="' . $icon . '">';
+            }
         }
         return $tags;
     }
@@ -872,11 +1015,30 @@ HTML;
         return $this;
     }
     
-    protected function buildHtmlPage(WidgetInterface $widget, string $pagetTemplateFilePath = null) : string
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @param string $pageTemplateFilePath
+     * @return string
+     */
+    protected function buildHtmlPage(WidgetInterface $widget, string $pageTemplateFilePath = null) : string
     {
-        $pagetTemplateFilePath = $pagetTemplateFilePath ?? $this->getPageTemplateFilePath();
-        $renderer = new FacadePageTemplateRenderer($this, $pagetTemplateFilePath, $widget);
-        return $renderer->render();
+        $renderer = $this->getTemplateRenderer($widget);
+        return $renderer->render($pageTemplateFilePath ?? $this->getPageTemplateFilePath());
+    }
+    
+    /**
+     * Instantiates a template renderer for the given widget - override this method to customize the renderer
+     * 
+     * To add additional placeholders, override this method and call 
+     * `$renderer->addPlaceholderResolver()`.
+     * 
+     * @param WidgetInterface $widget
+     * @return FacadePageTemplateRenderer
+     */
+    protected function getTemplateRenderer(WidgetInterface $widget) : FacadePageTemplateRenderer
+    {
+        return new FacadePageTemplateRenderer($this, $widget);
     }
     
     /**
@@ -914,5 +1076,53 @@ HTML;
         } catch (ConfigOptionNotFoundError $e) {
             return ['fa' => 'Font Awesome'];
         }
+    }
+    
+    public function getSemanticColors() : array
+    {
+        return $this->sematic_colors;
+    }
+    
+    /**
+     * CSS color values for each semantic color
+     * 
+     * @uxon-property semantic_colors
+     * @uxon-type object
+     * @uxon-template {"~OK": "", "~WARNING": "", "~ERROR"}
+     * 
+     * @param UxonObject|array $keyToHtmlColorArray
+     * @throws FacadeLogicError
+     * @return AbstractAjaxFacade
+     */
+    protected function setSemanticColors($keyToHtmlColorArray) : AbstractAjaxFacade
+    {
+        switch (true) {
+            case $keyToHtmlColorArray instanceof UxonObject:
+                $array = $keyToHtmlColorArray->toArray();
+                break;
+            case is_array($keyToHtmlColorArray):
+                $array = $keyToHtmlColorArray;
+                break;
+            default:
+                throw new FacadeLogicError('Invalid value for `semantic_colors` in configuration of facade "' . $this->getAliasWithNamespace() . '": expecting an array!');
+        }
+        $this->sematic_colors = $array;
+        return $this;
+    }
+    
+    public function getExternalScripts () : string
+    {
+        if ($this->getConfig()->hasOption('FACADE.EXTERNAL.SCRIPTS') === false) {
+            return '';
+        }
+        $scripts = $this->getConfig()->getOption('FACADE.EXTERNAL.SCRIPTS') ?? [];
+        if (empty($scripts)) {
+            return '';
+        }
+        $html = '';
+        foreach ($scripts as $script) {
+            $html .= "<script src=$script></script>\n";
+        }
+        return $html;
     }
 }

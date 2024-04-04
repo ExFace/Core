@@ -1,0 +1,168 @@
+{
+    "uid": "0xa7760458949e11e7a353028037ec0200",
+    "alias_with_namespace": "exface.core.apps",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 0,
+    "menu_visible": true,
+    "name": "Apps",
+    "description": "Create, install, repair and backup apps",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2020-03-12 14:04:30",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2023-12-21 09:02:54",
+    "contents": {
+        "object_alias": "exface.Core.APP",
+        "widget_type": "DataTable",
+        "multi_select": true,
+        "filters": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON",
+                "widget_type": "RangeFilter"
+            },
+            {
+                "attribute_alias": "UID"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "ALIAS",
+                "direction": "ASC"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "PACKAGE"
+            },
+            {
+                "attribute_alias": "PACKAGE__version"
+            },
+            {
+                "attribute_alias": "PAGE__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.PAGES')"
+            },
+            {
+                "attribute_alias": "OBJECT__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+            },
+            {
+                "attribute_alias": "DATASRC__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.DATA_SOURCES')"
+            },
+            {
+                "attribute_alias": "CONNECTION__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.CONNECTIONS')"
+            },
+            {
+                "attribute_alias": "USER_ROLE__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ROLES')"
+            },
+            {
+                "attribute_alias": "AUTHORIZATION_POLICY[APP]__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.POLICIES')"
+            },
+            {
+                "attribute_alias": "PUPLISHED",
+                "caption": "Puplished"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.AppInspectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject",
+                "visibility": "optional"
+            },
+            {
+                "action_alias": "exface.Core.ShowAppRelationGraph"
+            },
+            {
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.objects",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                }
+            },
+            {
+                "action_alias": "axenox.PackageManager.ExportAppModel"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.DownloadZippedFolder",
+                    "folder_path_attribute_alias": "PACKAGE",
+                    "folder_path_subfolder": "vendor",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                }
+            },
+            {
+                "widget_type": "MenuButton",
+                "caption": "Puplish",
+                "icon": "share-square-o",
+                "buttons": [
+                    {
+                        "action_alias": "axenox.PackageManager.PublishApp"
+                    },
+                    {
+                        "action_alias": "axenox.PackageManager.UnpublishApp"
+                    },
+                    {
+                        "action_alias": "axenox.PackageManager.ShowPackageUrl"
+                    }
+                ]
+            },
+            {
+                "widget_type": "MenuButton",
+                "caption": "=Translate('exface.Core', 'PAGE.APPS.REPAIR')",
+                "icon": "wrench",
+                "buttons": [
+                    {
+                        "action_alias": "axenox.PackageManager.ShowAppRepairConsole",
+                        "caption": "=Translate('exface.Core', 'PAGE.APPS.REPAIR')"
+                    },
+                    {
+                        "action_alias": "axenox.PackageManager.ImportAppModel"
+                    },
+                    {
+                        "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions"
+                    }
+                ]
+            },
+            {
+                "action_alias": "axenox.PackageManager.BackupApp"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ShowAppUninstallConsole"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ShowAppGitConsoleDialog"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ShowPackageManagerConsole"
+            },
+            {
+                "action_alias": "exface.Core.ShowAppFilesDialog"
+            }
+        ]
+    }
+}

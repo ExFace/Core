@@ -104,6 +104,15 @@ class QueryPartAttribute extends QueryPart
         }
         return $this->getAttribute()->getDataAddressProperty($property_key);
     }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getDataAddressProperties() : array
+    {
+        return $this->getAttribute()->getDataAddressProperties()->toArray();
+    }
 
     /**
      * Overrides a data address property for this query part (not affecting the underlying attribute).
@@ -181,5 +190,14 @@ class QueryPartAttribute extends QueryPart
     {
         return DataColumn::sanitizeColumnName($this->getAlias());
     }
+    
+    /**
+     * Returns the delimiter to be used for concatennated value strings
+     * (comma by default)
+     *
+     * @return string
+     */
+    public function getValueListDelimiter(){
+        return $this->getAttribute()->getValueListDelimiter();
+    }
 }
-?>

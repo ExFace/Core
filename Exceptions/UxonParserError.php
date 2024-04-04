@@ -17,7 +17,6 @@ use exface\Core\Factories\WidgetFactory;
  */
 class UxonParserError extends RuntimeException implements UxonExceptionInterface
 {
-    
     use ExceptionTrait {
 		createDebugWidget as parentCreateDebugWidget;
 	}
@@ -35,32 +34,38 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
-        $this->setUxon($uxon);
+        $this->uxon = $uxon;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\UxonExceptionInterface::getUxon()
+     */
     public function getUxon()
     {
         return $this->uxon;
     }
 
-    public function setUxon(UxonObject $uxon)
-    {
-        $this->uxon = $uxon;
-        return $this;
-    }
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
         if ($debug_widget->findChildById('uxon_tab') === false) {
-            $page = $debug_widget->getPage();
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('UXON');
             $uxon_tab->setCaption('UXON');
-            $uxon_tab->setNumberOfColumns(1);
-            $request_widget = WidgetFactory::create($page, 'Html');
-            $uxon_tab->addWidget($request_widget);
-            $request_widget->setHtml('<pre>' . $this->getUxon()->toJson(true) . '</pre>');
+            $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
+                'widget_type' => 'InputUxon',
+                'disabled' => true,
+                'width' => '100%',
+                'height' => '100%',
+                'value' => $this->getUxon()->toJson()
+            ])));
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;

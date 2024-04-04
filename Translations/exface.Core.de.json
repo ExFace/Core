@@ -4,14 +4,14 @@
 	"ACTION.CHANGEMYPASSWORD.NAME": "Passwort ändern",
 	"ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD": "Passwort konnte nicht aktualisiert, altes Passwort ist inkorrekt.",
 
+	"ACTION.CLEANUP.NAME": "Veraltete Daten löschen",
+
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.COPYDATA.NAME": "Daten duplizieren",
 	"ACTION.COPYDATA.RESULT": "%number% Objekt kopiert|%number% Objekte kopiert",
 	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " inkl. %number% abhängiges Objekt| inkl. %number% Abhängigkeiten",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Neu",
-    
-    "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% Zeile gespeichert.|%number% Zeilen gespeichert.",
 
@@ -28,9 +28,11 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Kein Schreibzugriff auf Datenquelle erlaubt!",
 
 	"ACTION.CLEARCACHE.NAME": "Cache leeren",
-	"ACTION.CLEARCACHE.RESULT": "Cache geleert!",
+	"ACTION.CLEARCACHE.RESULT": "Cache geleert.",
+	"ACTION.CLEARCACHE.RESULT_OPCACHE": "OPcache zurückgesetzt.",
 	
 	"ACTION.DOWNLOADFILE.NAME": "Download File",
+	"ACTION.DOWNLOADFILE.RESULT_WITH_LINK": "Download bereit. Wenn es nicht automatisch startet, bitte <a href=\"%url%\" download>hier</a> klicken.",
 	"ACTION.DOWNLOADZIPPEDFOLDER.NAME": "Download ZIP",
 	
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
@@ -56,7 +58,9 @@
     "ACTION.LOGOUT.RESULT": "Abmeldung erfolgreich!",
     
     "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
-	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
+	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Duplikate ignoriert!",
+	
+	"ACTION.GENERATEPWA.NAME": "PWA-Modell generieren",
 	
 	"ACTION.GENERIC.ADD": "Hinzufügen",
 	"ACTION.GENERIC.REMOVE": "Entfernen",
@@ -69,7 +73,11 @@
 	
     "ACTION.GOBACK.NAME": "Zurück",
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
-	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
+	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",	
+	"ACTION.GOTOEMAIL.NAME": "E-Mail senden",
+	"ACTION.GOTOEMAIL.SUCCESS": "Öffne Email-App...",
+	"ACTION.GOTOMAPS.NAME": "Karte",
+	"ACTION.GOTOMAPS.SUCCESS": "Öffne Karten-App...",
 	"ACTION.GOTOPAGE.NAME": "Anzeigen",
 	"ACTION.NAVIGATE.OPENING_NEW_WINDOW": "Ein neues Fenster/Tab wird geöffnet!",
 
@@ -77,19 +85,6 @@
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
 	"ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
-	
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT": "Commit & Push",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_COMMIT_HINT": "Alle lokalen Änderungen einchecken und hochladen",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH": "Branches",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_LIST_BRANCH_HINT": "Verfügbare Branches listen",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL": "Pull",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PULL_HINT": "Aktuellen Stand vom Repo laden",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH": "Push",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_PUSH_HINT": "Push aller lokalen Commits",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH": "Branch wechseln",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_GIT_SWITCH_BRANCH_HINT": "Zu einem anderen Branch wechseln",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES": "Status",
-	"ACTION.SHOWAPPGITCONSOLEDIALOG.BTN_SHOW_CHANGES_HINT": "Änderungen gegenüber Git-Repo anzeigen",
 
 	"ACTION.SHOWWIDGET.NAME": "Anzeigen",
 	
@@ -100,11 +95,15 @@
     "ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
+	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Nicht verfügbar, wenn keine einzelnen Objekte selektiert werden können",
 
     "ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
+    "ACTION.READDATA.RESULT": "%number% Einträge gelesen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
 	"ACTION.RESETWIDGET.NAME": "Zurücksetzen",
+	
+	"ACTION.RUNSCHEDULER.NAME": "Scheduler jetzt ausführen",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",
@@ -112,7 +111,6 @@
 	"ACTION.SETCONTEXT.NAME": "Set context",
 
 	"ACTION.SHOWDIALOG.NAME": "Open dialog",
-	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Abbrechen",
 	
 	"ACTION.SHOWDIALOGFROMFILE.NAME": "Widget aus Datei anzeigen",
 
@@ -134,32 +132,51 @@
 		
 	"BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY": "Automatisch generiert durch %behavior%!",
 	
+	"BEHAVIOR.STATEMACHINEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "%object% in Status \"%state%\" darf nicht gelöscht werden!",
+	
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR": "%object% %row% darf nicht gelöscht werden!",
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "%object% auf Zeile %row% darf nicht gelöscht werden!",
 	
-	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile %row% von Objekt %object% sind Dublikate!",
+	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile(n) %row% von Objekt %object% sind Duplikate!",
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Datei mit Übersetzungen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_KEY": "Übersetzungs-Schlüssel",
+	"BEHAVIOR.TRANSLATABLE.METAMODEL_TEXT": "Text im Metamodell",
 	"BEHAVIOR.TRANSLATABLE.NO_TRANSLATIONS_FOUND": "App hat nur eine sprache. Bitte fügen Sie mind. eine Übersetzungsdatei zu der App des objektes hinzu!",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "Neu!",
-	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",
-	
-	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
-	
-    "CONTEXT.DATA.NAME": "Daten",
+	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",	
     
-    "CONTEXT.DEBUG.NAME": "Debugger",
-    "CONTEXT.DEBUG.START": "Trace starten",
-    "CONTEXT.DEBUG.STOP": "Trace beenden",
+    "CONTEXT.ACTIONTEST.NAME": "ActionTest",
+	
+    "CONTEXT.API.RESULT": "'%operation_name%' erfolgreich!",
+	
+	"CONTEXT.DATA.NAME": "Daten",
+    
+    "CONTEXT.DEBUG.NAME": "Developer tools",
+    "CONTEXT.DEBUG.TRACE_STARTED": "Tracer AN: Alle Server-Requests werden jetzt detailliert gelogt.",
+    "CONTEXT.DEBUG.TRACE_STOPPED": "Tracer AUS: Server-Requests werden nicht mehr gelogt.",
+    "CONTEXT.DEBUG.TRACE_SERVER_REQUESTS": "Trace server requests",
+    "CONTEXT.DEBUG.TRACES_LIST_CAPTION": "Trace logs",
+    "CONTEXT.DEBUG.TRACES_LIST_BUTTON": "Traces anzeigen",
+    "CONTEXT.DEBUG.TRACE_NAME": "Trace",
+    "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION": "Intercept user communication",
+    "CONTEXT.DEBUG.INTERCEPT_COMMUNICATION_HINT": "Temporary re-route all messages to certain users or roles while interception is active. Multiple values can be separated by comma.",
+    "CONTEXT.DEBUG.INTERCEPT_STARTED": "Interceptor AN: alle Nachrichten werden zu %recipients% umgeleitet",
+    "CONTEXT.DEBUG.INTERCEPT_STOPPED": "Interceptor AUS: alle Nachrichten werden normal zugestellt",
     
     "CONTEXT.FAVORITES.NAME": "Favoriten",
     
     "CONTEXT.FILTER.NAME": "Filter",
     
-    "CONTEXT.OBJECTBASKET.NAME": "Objektkorb",
+    "CONTEXT.NOTIFICATION.NAME": "Benachrichtigungen",
+    "CONTEXT.NOTIFICATION.DELETE_ALL": "Alle löschen",
+	"CONTEXT.NOTIFICATION.MARK_ALL_READ": "Alle als gelesen markieren",
+    "CONTEXT.NOTIFICATION.MESSAGE_FROM": "Von",
+    "CONTEXT.NOTIFICATION.MESSAGE_SENT_AT": "Gesendet am",
+    
+	"CONTEXT.OBJECTBASKET.NAME": "Objektkorb",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
@@ -168,6 +185,18 @@
     "CONTEXT.USER.NOT_LOGGED_IN_HINT": "Sie sind nicht angemeldet.",
     "CONTEXT.USER.LOGGED_IN_HINT": "Sie sind angemeldet.",
     "CONTEXT.USER.MY_ACCOUNT": "Meine Daten",
+	
+	"DATASHEET.ERROR.INVALID_VALUES": "Ungültige Werte für \"%column%\" von \"%object%\"!",
+	"DATASHEET.ERROR.INVALID_VALUES_ON_ROWS": "Ungültiger Wert für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
+	"DATASHEET.ERROR.MISSING_VALUES": "Werte fehlen für \"%column%\" von \"%object%\"!",
+	"DATASHEET.ERROR.MISSING_VALUES_ON_ROWS": "Werte fehlen für \"%column%\" von \"%object%\" auf Zeile(n) %rows%!",
+	
+	"DATATYPE.VALIDATION.MUST": "Muss",
+	"DATATYPE.VALIDATION.LENGTH_CONDITION": "%condition% Zeichen lang sein",
+	"DATATYPE.VALIDATION.REGEX_CONDITION": "der Maske %regex% entsprechen",
+	"DATATYPE.VALIDATION.AND": "und",
+	"DATATYPE.VALIDATION.MINMAX_CONDITION": "%condition% sein",
+	"DATATYPE.VALIDATION.CRON": "ein valider CRON-Ausdruck sein (z.B. \"0 0 * ? * * *\")",
 	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
@@ -216,7 +245,11 @@
     "LOCALIZATION.DATE.DATE_FORMAT": "dd.MM.yyyy",
     "LOCALIZATION.DATE.DATE_FORMAT_HINT": "übliche Datumsformate (z.B. 31.12.2019), Kurznotation (z.B. 31122019), Kurznotation für aktuelles Jahr (z.B. 3112), relative Angaben (z.B. 0 für heute, +1 für morgen, +1w, +1m, -1d, -1y  etc.)",
     "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
-	"LOCALIZATION.DATE.DATETIME_FORMAT": "dd.MM.yyyy HH:mm:ss",
+	"LOCALIZATION.DATE.TODAY": "Heute",
+    "LOCALIZATION.DATE.YESTERDAY": "Gestern",
+    "LOCALIZATION.DATE.TOMORROW": "Morgen",
+    "LOCALIZATION.DATE.DATETIME_FORMAT": "dd.MM.yyyy HH:mm",
+	"LOCALIZATION.DATE.DATETIME_FORMAT_WITH_SECONDS": "dd.MM.yyyy HH:mm:ss",
 	"LOCALIZATION.DATE.DATETIME_FORMAT_HINT": "übliche Formate (z.B. 31.12.2019 12:00), Kurznotation (z.B. 31122019), Kurznotation für aktuelles Jahr (z.B. 3112), relative Angaben (z.B. 0 für aktuelles Datum und Zeit, +1 für morgen, +1h für heute in einer Stunde, +1w, -1d, -1y, -1s  etc.)",
     "LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL": "DD.MM.YYYY HH:MM:SS",
 	"LOCALIZATION.DATE.TIME_FORMAT": "HH:mm:ss",
@@ -234,11 +267,23 @@
     "MESSAGE.TYPES.INFO": "Info",
     "MESSAGE.TYPES.SUCCESS": "Erfolg",
     "MESSAGE.TYPES.HINT": "Tip",
+    "MESSAGE.TYPES.QUESTION": "Frage",
     
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Bitte genau %number% Datensatz auswählen!|Bitte genau %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_AT_MOST_X_ROWS": "Bitte maximal %number% Datensatz auswählen!|Bitte maximal %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_AT_LEAST_X_ROWS": "Bitte mindestens %number% Datensatz auswählen!|Bitte mindestens %number% Datensätze auswählen!",
 	"MESSAGE.SELECT_X_TO_Y_ROWS": "Bitte %min% bis %max% Datensätze auswählen!",
+	
+    "OFFLINE.ACTIONS.ACTION_QUEUED": "Aktion in Offline-Puffer gespeichert. Sie wird ausgeführt, sobald Sie wieder online sind!",
+	"OFFLINE.ACTIONS.NETWORK.ACTION_QUEUE_FAILED": "Aktion kann nicht offline ausgeführt werden!",
+	"OFFLINE.ACTIONS.NETWORK.SYNC_COMPLETE": "Offline-Aktionen synchronisiert",
+	"OFFLINE.ACTIONS.NETWORK.SYNC_FAILED": "Synchronisation von Offline-Aktionen fehlgeschlagen!",
+	"OFFLINE.STRATEGY.ENQUEUE": "Offline-Queue verwenden",
+    "OFFLINE.STRATEGY.PRESYNC": "Vorher synchronisieren",
+    "OFFLINE.STRATEGY.USE_CACHE": "Cache verwenden",
+    "OFFLINE.STRATEGY.SKIP": "Überspringen",
+    "OFFLINE.STRATEGY.ONLINE_ONLY": "Nur online verfügbar",
+    "OFFLINE.STRATEGY.CLIENT_SIDE": "Im Client",
 	
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
@@ -254,9 +299,6 @@
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND": "Zusammengesetztes Attribut",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND_DELIMITER": "Trenner",
     "PAGE.ATTRIBUTE_EDITOR.COMPOUND_COMPONENT_HINT": "Damit Werte des zusammengesetzen Attributs korrekt verwendet werden können (insb. als Filter oder bei Schreib-Operationen), müssen Präfixe und Suffixe der Teil-Attribute so gesetzt werden, dass sie als eindeutige Trenner funktioniern - also innerhalb des Wertes eines Teil-Attributs nie vorkommen.\n\nZ.B.: wenn die Id einer Auftragsposition aus Auftragsnummer und Positionsnummer besteht, würde der Präfix \"--\" an der Pos.Nr. solche Ids produzieren: 123--1, 123--2, etc. Diese können problemlos wieder in Einzelteile zerlegt werden, da ein doppeltes Minus weder in der Auftragsnummer noch in der Positionsnummer vorkommen kann.",
-    "PAGE.OBJECTS.APP_ALIAS": "App Alias",
-    "PAGE.OBJECTS.COPY_OBJECT": "Objekt kopieren",
-    "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Objekt mit Attributen kopieren",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
@@ -310,10 +352,15 @@
     "SECURITY.POLICIES.TARGET.META_OBJECT": "Objekt",
     "SECURITY.POLICIES.TARGET.FACADE": "Fassade",
     
+    "TASK.QUEUE.STATUS_RECEIVED": "Empfangen",
+    "TASK.QUEUE.STATUS_ORPHANED": "Nicht zuordenbar",
+    "TASK.QUEUE.STATUS_DUPLICATE": "Duplikat",
     "TASK.QUEUE.STATUS_QUEUED": "Wartend",
-    "TASK.QUEUE.STATUS_INPROGRESS": "Verarbeitend",
-    "TASK.QUEUE.STATUS_ERROR": "Fehlerhaft",
-    "TASK.QUEUE.STATUS_RESOLVED": "Behoben",
+    "TASK.QUEUE.STATUS_INPROGRESS": "In Bearbeitung",
+    "TASK.QUEUE.STATUS_ERROR": "Fehler",
+    "TASK.QUEUE.STATUS_CANCELED": "Storniert",
+    "TASK.QUEUE.STATUS_REPLACED": "Ersetzt",
+    "TASK.QUEUE.STATUS_DONE_MANUALLY": "Erledigt manuell",
     "TASK.QUEUE.STATUS_DONE": "Erledigt",
     "TASK.QUEUE.TYPE_SYNC": "Synchron",
     "TASK.QUEUE.TYPE_ASYNC": "Asynchron",    
@@ -333,6 +380,9 @@
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
 	"WIDGET.DATA.NOT_LOADED": "Bitte zuerst Filter setzen und dann die Suche ausführen!",
+	"WIDGET.DATA.GROUP_EMPTY": "leer",
+	"WIDGET.DATA.DISCARD_INPUT": "Eingaben verwerfen",
+	"WIDGET.DATA.DISCARD_INPUT.TEXT": "Achtung: durch Nachladen der Daten gehen alle ungespeicherten Änderungen in der Tabelle verloren!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
@@ -357,13 +407,18 @@
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.EDITOR.TITLE": "Im Editor öffnen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.EDITOR.HINT": "Öffnet den Wert des Feldes in einem größeren Text-Editor",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.EDITOR.WINDOW": "Wert bearbeiten",
-	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.TITLE": "Zwichenablage",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.TITLE": "Zw.-ablage",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.HINT": "Kopieren, Einfügen, etc.",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY": "Kopieren",
-	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "Kopieren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_VALUE": "Wert kopieren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.COPY_HINT": "In Zwischenablage kopieren",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE": "Einfügen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_HINT": "Einfügen",
 	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLIPBOARD.PASTE_DIALOG_TITLE": "Hier einfügen - z.B. Strg+V drücken!",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLEAR.TITLE": "Leeren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.CLEAR.HINT": "Diesen Knoten komplett leeren",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.COMMENT.TITLE": "Kommentar",
+	"WIDGET.UXONEDITOR.CONTEXT_MENU.COMMENT.HINT": "Diesen Knoten aus- oder einkommentieren (deaktivieren).",
 	"WIDGET.UXONEDITOR.PRESETS.HINT": "Preset verwenden",
 	"WIDGET.UXONEDITOR.PRESETS.PRESET_GROUP_GENERAL": "Allgemein",
 	"WIDGET.UXONEDITOR.PRESETS.TITLE": "Presets",
@@ -384,6 +439,13 @@
 	"WIDGET.UXONEDITOR.DETAILS.DESCRIPTION": "Beschreibung",
 	"WIDGET.UXONEDITOR.DETAILS.REQUIRED": "Pflicht",
 	"WIDGET.UXONEDITOR.DETAILS.SHOW_MORE": "Mehr...",
+	"WIDGET.UXONEDITOR.MODELBROWSER.TITLE": "Metamodell",
+	"WIDGET.UXONEDITOR.MODELBROWSER.HINT": "Objekte und Attribute im Metamodell suchen",
+	"WIDGET.UXONEDITOR.MODELBROWSER.NAME": "Name",
+	"WIDGET.UXONEDITOR.MODELBROWSER.DESCRIPTION": "Beschreibung",
+	"WIDGET.UXONEDITOR.MODELBROWSER.SUGGESTION": "UXON-Pfad",
+	"WIDGET.UXONEDITOR.MODELBROWSER.RELATION_FOLLOW": "Relation folgen",
+	"WIDGET.UXONEDITOR.MODELBROWSER.RELATION_BACK": "1 Relation zurück",
 	"WIDGET.UXONEDITOR.ERROR.AUTOSUGGEST_FAILED.GENERAL": "Autosuggest fehlgeschlagen. ",
 	"WIDGET.UXONEDITOR.ERROR.AUTOSUGGEST_FAILED.GETTING_OPTIONS": "Autosuggest beim Laden der Optionen abgebrochen - ignorieren.",
 	"WIDGET.UXONEDITOR.ERROR.MALFORMED_RESPONSE": "Lesen des JSON bei Fetch fehlgeschlagen! ",
@@ -393,11 +455,18 @@
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	"WIDGET.INPUT.REQUIRED_HINT": "Diese Eingabe ist Pflicht!",
-	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein!",
-	"WIDGET.INPUT.VALIDATION_MUST": "Muss",
-	"WIDGET.INPUT.VALIDATION_LENGTH_CONDITION": "%condition% Zeichen lang sein",
-	"WIDGET.INPUT.VALIDATION_AND": "und",
+	"WIDGET.INPUT.VALIDATION_REQUIRED": "Darf nicht leer sein.",
+	"WIDGET.INPUT.VALIDATION_UNKNOWN_ERROR": "Muss ein gültiger Wert sein.",
 	"WIDGET.INPUTCOMBOTABLE.COLUMN_NAME_USES": "Verwendungen",
+	
+	"WIDGET.IMAGEGALLERY.BUTTON_ZOOM": "Zoom",
+	"WIDGET.IMAGEGALLERY.BUTTON_REMOVE": "Entfernen",
+	"WIDGET.IMAGEGALLERY.BUTTON_BROWSE": "Durchsuchen",
+	"WIDGET.IMAGEGALLERY.BUTTON_DOWNLOAD": "Herunterladen",
+	"WIDGET.IMAGEGALLERY.HINT_UPLOAD": "Dateien für Upload hierher ziehen oder Button \"Durchsuchen\" verwenden.",
+	"WIDGET.IMAGEGALLERY.HINT_EMPTY": "Keine Dateien vorhanden",
+	
+	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Weiter", 
 	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Zurück", 

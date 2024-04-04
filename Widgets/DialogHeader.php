@@ -20,8 +20,6 @@ class DialogHeader extends Form
     
     private $title_attribute_alias = null;
     
-    private $title_widget = null;
-    
     /**
      * @return boolean
      */
@@ -129,11 +127,11 @@ class DialogHeader extends Form
      */
     public function prepareDataSheetToRead(DataSheetInterface $dataSheet = null) : DataSheetInterface
     {
-        $sheet = parent::prepareDataSheetToRead($dataSheet);
+        $dataSheet = parent::prepareDataSheetToRead($dataSheet);
         if ($dataSheet->getMetaObject()->is($this->getMetaObject()) && $this->isTitleBoundToAttribute()) {
-            $sheet->getColumns()->addFromAttribute($this->getTitleAttribute());
+            $dataSheet->getColumns()->addFromAttribute($this->getTitleAttribute());
         }
-        return $sheet;
+        return $dataSheet;
     }
     
     protected function doPrefill(DataSheetInterface $dataSheet)
@@ -142,10 +140,14 @@ class DialogHeader extends Form
             if ($col = $dataSheet->getColumns()->getByAttribute($this->getTitleAttribute())) {
                 $cnt = count(array_unique($col->getValues()));
                 if ($cnt > 1) {
-                    $this->setCaption($cnt . 'x ' . $this->getMetaObject()->getName());
+                    if ($this->getCaption() === null) {
+                        $this->setCaption($cnt . 'x ' . $this->getMetaObject()->getName());
+                    }
                     $pointer = DataPointerFactory::createFromColumn($col);
                 } else {
-                    $this->setCaption($this->getMetaObject()->getName() . ' ' . $col->getCellValue(0));
+                    if ($this->getCaption() === null) {
+                        $this->setCaption($this->getMetaObject()->getName() . ' ' . $col->getCellValue(0));
+                    }
                     $pointer = DataPointerFactory::createFromColumn($col, 0);
                 }
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'caption', $pointer));

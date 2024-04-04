@@ -14,7 +14,24 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 /**
  * Shows a command line terminal.
  * 
- * Example:
+ * ## Examples
+ * 
+ * ### Console to run a single CLI action with an input-placeholder
+ * 
+ * ```
+ *  {
+ *      "widget_type": "Console",
+ *      "disabled": true,
+ *      "command_placeholder_value_list_delimiter": ",",
+ *      "start_commands": [
+ *          "action axenox.PackageManager:InstallApp [#ALIAS#]"
+ *      ],
+ *      "working_directory_path": "vendor/bin"
+ *  }
+ * 
+ * ```
+ * 
+ * ### Interactive Git console with command presets
  * 
  * ```
  * {
@@ -27,16 +44,14 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  *      "git status"
  *  ],
  *  "environment_vars": {
- *    "GIT_SSL_NO_VERIFY": true,
- *    "GIT_COMMITTER_NAME": "=User('full_name')",
- *    "GIT_COMMITTER_EMAIL": "=User('email')"
+ *    "GIT_SSL_NO_VERIFY": true
  *  },
  * 	"command_prsets": [
  * 		{
  * 			"caption": "Commit/Push all",
  * 			"hint": "Commits all local changes and pushes them to the current remote",
  * 			"commands": [
- * 				"git commit -a -m <message>",
+ * 				"git commit -a -m \"<Commit-Message>\" --author \"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\"",
  * 				"git push"
  * 			]
  * 		},
@@ -86,6 +101,8 @@ class Console extends AbstractWidget
     
     private $commandPlaceholderValueListDelimiter = EXF_LIST_SEPARATOR;
     
+    private $workingDirectoryCreate = null;
+    
     /**
      * Returns Array of regular expressions with allowed commands
      * 
@@ -127,8 +144,13 @@ class Console extends AbstractWidget
     {
         $baseFolder = $this->getWorkbench()->filemanager()->getPathToBaseFolder();
         $workingFolder = Filemanager::pathJoin([$this->getWorkingDirectorySubfolder() ?? '', $pathRelativeToSubfolder]);
-        if (is_dir(Filemanager::pathJoin([$baseFolder, $workingFolder])) === false) {
-            throw new RuntimeException('Working Directory is not a folder!');
+        if (is_dir($workingPath = Filemanager::pathJoin([$baseFolder, $workingFolder])) === false) {
+            if (! $this->getWorkingDirectoryCreate()) {
+                throw new RuntimeException('Working Directory is not a folder!');
+            }
+            if (mkdir($workingPath) === false) {
+                throw new RuntimeException('Working Directory is not a folder!');
+            }            
         }
         return $workingFolder;
     }
@@ -258,7 +280,7 @@ class Console extends AbstractWidget
      *      "visibility": "promoted",
      *      "commands": [
      *          "git add --all",
-     *          "git commit -m <message>"
+     *          "git commit -a -m \"<Commit-Message>\" --author \"[#=Concatenate(User('LAST_NAME'), ' ', User('FIRST_NAME'), '<', User('EMAIL'), '>')#]\""
      *      ]
      *  },
      *  {
@@ -479,9 +501,9 @@ class Console extends AbstractWidget
     {
         switch (true) {
             case $type instanceof StringDataType:
-                $string = trim(json_encode($value), "\"");
+                $value = trim(json_encode($value), "\"");
         }   
-        return $string;
+        return $value;
     }
     
     /**
@@ -498,6 +520,27 @@ class Console extends AbstractWidget
     {
         $this->commandPlaceholderValueListDelimiter = $string;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to produce an error if the `working_directory_path` does not exist.
+     * 
+     * @uxon-property working_directory_create
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param string $trueOrFalse
+     * @return Console
+     */
+    public function setWorkingDirectoryCreate (string $trueOrFalse) : Console
+    {
+        $this->workingDirectoryCreate = $trueOrFalse;
+        return $this;
+    }
+    
+    protected function getWorkingDirectoryCreate() : bool
+    {
+        return $this->workingDirectoryCreate ?: false;
     }
 
     /**

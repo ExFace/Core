@@ -14,7 +14,7 @@ class RoseChartSeries extends PieChartSeries
      * @uxon-type string [ radius, angle ]
      *
      * @param string $roseType
-     * @return PieChartSeries
+     * @return RoseChartSeries
      */
     public function setValueMode(string $roseType) : RoseChartSeries
     {

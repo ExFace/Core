@@ -12,9 +12,7 @@ use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\UserInterface;
-use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 
 /**
  * Base class for core authorization points.
@@ -267,7 +265,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * 
      * @param PermissionInterface[] $permissions
      * @param UserImpersonationInterface $userOrToken
-     * @param mixed $resource
+     * @param object|NULL $resource
      * 
      * @triggers \exface\Core\Events\Security\OnAuthorizedEvent
      * 
@@ -275,7 +273,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      * 
      * @return CombinedPermission
      */
-    protected function combinePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
+    protected function evaluatePermissions(iterable $permissions, UserImpersonationInterface $userOrToken, $resource = null) : CombinedPermission
     {
         $permission = new CombinedPermission($this->getPolicyCombiningAlgorithm(), $permissions);
         
@@ -283,10 +281,13 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
             $this->getWorkbench()->getLogger()->logException($e);
         }
         
+        $permission = $this->evaluateObligations($permission, $userOrToken, $resource);
+        
         switch (true) {
             case $permission->isPermitted():
             case ($permission->isIndeterminate() || $permission->isNotApplicable()) && $this->getDefaultPolicyEffect() == PolicyEffectDataType::PERMIT:
-                $event = new OnAuthorizedEvent($this, $userOrToken, $resource);
+                $event = new OnAuthorizedEvent($this, $permission, $userOrToken, $resource);
+                $this->workbench->getLogger()->debug('Authorized ' . $this->getResourceName($resource), [], $event);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 break;
             case $permission->isDenied():
@@ -298,7 +299,31 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
                     throw $this->createAccessDeniedException('Unknown error while validating page access permissions!', $permission, $userOrToken, $resource);
                 }
             default:
-                throw new RuntimeException('Error evaluating permissions: invalid result!');
+                throw new AuthorizationRuntimeError('Error evaluating permissions: invalid result!');
+        }
+        return $permission;
+    }
+    
+    /**
+     * Applies obligations from the provided permission.
+     * 
+     * Override this method to add custom obligation types for your authorization point. Don't forget to mark obligations
+     * as fulfilled once applied!
+     * 
+     * @param PermissionInterface $permission
+     * @param object|NULL $resource
+     * @return PermissionInterface
+     */
+    protected function evaluateObligations(PermissionInterface $permission, UserImpersonationInterface $userOrToken, $resource = null) : PermissionInterface
+    {
+        foreach ($permission->getObligations() as $obligation) {
+            switch (true) {
+                case $obligation->isFulfilled():
+                    break;
+                // IDEA add generic obligations here
+                default:
+                    throw new AuthorizationRuntimeError('Obligation "' . get_class($obligation) . '" could not be fulfilled in authorization point "' . $this->getName() . '"');
+            }
         }
         return $permission;
     }

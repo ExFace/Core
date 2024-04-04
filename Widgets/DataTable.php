@@ -9,11 +9,13 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iTakeInput;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Parts\DataRowGrouper;
 use exface\Core\Widgets\Traits\EditableTableTrait;
 use exface\Core\Widgets\Traits\DataTableTrait;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iCanWrapText;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -94,10 +96,26 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu, iTakeInput
+class DataTable extends Data implements 
+    iCanEditData, 
+    iFillEntireContainer, 
+    iSupportMultiSelect, 
+    iHaveContextMenu, 
+    iTakeInput, 
+    iCanWrapText,
+    iCanBeDragAndDropSource
 {
     use DataTableTrait;
     use EditableTableTrait;
+    
+    /**
+     * Empty the table
+     *
+     * @uxon-property empty
+     *
+     * @var string
+     */
+    const FUNCTION_EMPTY = 'empty';
 
     private $show_filter_row = null;
 
@@ -122,6 +140,14 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $context_menu = null;
     
     private $multi_select_sync_attribute = null;
+    
+    private $freeze_columns = 0;
+    
+    private $select_single_result = false;
+    
+    private $height_in_rows = null;
+    
+    private $drag_to_other_widgets = false;
 
     function hasRowDetails()
     {
@@ -433,6 +459,29 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     {
         $this->multi_select = $value;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getSelectSingleResult() : bool
+    {
+        return $this->select_single_result;
+    }
+    
+    /**
+     * Set to TRUE to automatically select a row if it is the only row in the table.
+     *
+     * @uxon-property select_single_result
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
+     */
+    public function setSelectSingleResult(bool $value)
+    {
+        $this->select_single_result = $value;
+    }
 
     /**
      *
@@ -503,20 +552,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         $this->context_menu = $menu;
         return $this;
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Data::getToolbars()
-     */
-    public function getToolbars()
-    {
-        $toolbars = parent::getToolbars();
-        if ($this->hasAggregations()) {
-            $toolbars[0]->setIncludeGlobalActions(false)->setIncludeObjectBasketActions(false);
-        }
-        return $toolbars;
-    }
     
     /**
      * 
@@ -556,6 +591,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
             $uxon->setProperty('row_details', $this->getRowDetailsContainer()->exportUxonObject());
         }
         
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
+        
         return $uxon;
     }
     
@@ -583,5 +620,134 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function getMultiSelectSyncAttributeAlias()
     {
         return $this->multi_select_sync_attribute;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function getFreezeColumns() : int
+    {
+        return $this->freeze_columns;
+    }
+    
+    /**
+     * Freeze the first X columns from the left (X is the value of this property)
+     * 
+     * @uxon-property freeze_columns
+     * @uxon-type integer
+     * @uxon-default 0 
+     * 
+     * @param int $value
+     * @return DataTable
+     */
+    public function setFreezeColumns(int $value) : DataTable
+    {
+        $this->freeze_columns = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
+    public function isFrozen(DataColumn $col) : bool
+    {
+        $frozen = $this->getFreezeColumns();
+        if ($frozen === 0) {
+            return false;
+        }
+        $visibleCnt = 0;
+        foreach ($this->getColumns() as $col) {
+            if ($col->isHidden()) {
+               continue; 
+            }
+            $visibleCnt++;
+            return $visibleCnt <= $frozen ? true : false;
+        }
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getHeightInRows() : ?int
+    {
+        return $this->height_in_rows;
+    }
+    
+    /**
+     * Abjust the height of the widget to always show this number of rows
+     * 
+     * @uxon-property height_in_rows
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return DataTable
+     */
+    public function setHeightInRows(int $value) : DataTable
+    {
+        $this->setHeight(null);
+        $this->height_in_rows = $value;
+        return $this;
+    }
+    
+    /**
+     * Sets the height of the widget.
+     * Set to `1` for default widget height in a facade or `max` for maximum height possible.
+     *
+     * The height can be specified either in
+     * - facade-specific relative units (e.g. `height: 2` makes the widget twice as high
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `height: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `height: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property height
+     * @uxon-type string
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\WidgetInterface::setHeight()
+     */
+    public function setHeight($value)
+    {
+        $this->height_in_rows = null;
+        return parent::setHeight($value);
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see iCanBeDragAndDropSource
+     */
+    public function isDragSource() : bool
+    {
+        return $this->getDragToOtherWidgets() === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getDragToOtherWidgets() : bool
+    {
+        return $this->drag_to_other_widgets;
+    }
+    
+    /**
+     * Set to TRUE to enable users to drag rows to widgets, that accept drop actions
+     * 
+     * @uxon-property drag_to_other_widgets
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return DataTable
+     */
+    public function setDragToOtherWidgets(bool $value) : DataTable
+    {
+        $this->drag_to_other_widgets = $value;
+        return $this;
     }
 }

@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Exceptions\FormulaError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
@@ -23,6 +22,8 @@ use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -39,8 +40,6 @@ class Expression implements ExpressionInterface
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
     const TYPE_UNKNOWN = 'unknown';
-    
-    private $attributes = null;
 
     private $formula = null;
 
@@ -54,8 +53,10 @@ class Expression implements ExpressionInterface
 
     private $type = null;
 
-    private $relation_path = '';
-
+    private $relation_path = null;
+    
+    private $relation_path_string = null;
+    
     private $originalString = '';
 
     private $data_type = null;
@@ -146,7 +147,7 @@ class Expression implements ExpressionInterface
         } else {
             // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             try {
-                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
+                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $expression) : $expression))) {
                     $isAttributeAlias = true;
                 } else {
                     $isAttributeAlias = false;
@@ -237,7 +238,7 @@ class Expression implements ExpressionInterface
      */
     public function isEmpty() : bool
     {
-        return $this->toString() === null;
+        return $this->__toString() === null;
     }
     
     /**
@@ -247,7 +248,7 @@ class Expression implements ExpressionInterface
      */
     public function isLogicalNull() : bool
     {
-        return $this->toString() === EXF_LOGICAL_NULL;
+        return $this->__toString() === EXF_LOGICAL_NULL;
     }
 
     /**
@@ -274,76 +275,20 @@ class Expression implements ExpressionInterface
     }
 
     /**
-     * Checks, if the given expression is a data function and returns the function object if so, false otherwise.
-     * It is a good idea to create the function here already, because we need to know it's required attributes.
+     * Parses the given $expression into a formula instance
      *
-     * @param string $expression            
-     * @return boolean|FormulaInterface function object or false
+     * @param string $expression     
+     * @param string $relationPath  
+     *      
+     * @return FormulaInterface
      */
-    protected function parseFormula($expression)
+    protected function parseFormula(string $expression, string $relationPath = null) : FormulaInterface
     {
-        if (substr($expression, 0, 1) !== '=')
-            return false;
-        $expression = substr($expression, 1);
-        $parenthesis_1 = strpos($expression, '(');
-        $parenthesis_2 = strrpos($expression, ')');
-        
-        if ($parenthesis_1 === false || $parenthesis_2 === false) {
-            throw new FormulaError('Syntax error in the data function: "' . $expression . '"');
+        $formula = FormulaFactory::createFromString($this->exface, $expression);
+        if ($relationPath !== null && $relationPath !== '') {
+            $formula = $formula->withRelationPath($relationPath);
         }
-        
-        $func_name = substr($expression, 0, $parenthesis_1);
-        $params = substr($expression, $parenthesis_1 + 1, $parenthesis_2 - $parenthesis_1 - 1);
-        
-        return FormulaFactory::createFromString($this->exface, $func_name, $this->parseParams($params));
-    }
-
-    
-    protected function parseParams($str)
-    {
-        $buffer = '';
-        $stack = array();
-        $depth = 0;
-        $len = strlen($str);
-        for ($i = 0; $i < $len; $i ++) {
-            $char = $str[$i];
-            switch ($char) {
-                case '(':
-                    $depth ++;
-                    break;
-                case ',':
-                    if (! $depth) {
-                        if ($buffer !== '') {
-                            $stack[] = $buffer;
-                            $buffer = '';
-                        }
-                        continue 2;
-                    }
-                    break;
-                case ' ':
-                    if (! $depth) {
-                        // Not sure, what the purpose of this continue is, but it removes whitespaces from formual arguments in the first level
-                        // causing many problems. Commented it out for now to see if that helps.
-                        // continue 2;
-                    }
-                    break;
-                case ')':
-                    if ($depth) {
-                        $depth --;
-                    } else {
-                        $stack[] = $buffer . $char;
-                        $buffer = '';
-                        continue 2;
-                    }
-                    break;
-            }
-            $buffer .= $char;
-        }
-        if ($buffer !== '') {
-            $stack[] = $buffer;
-        }
-        
-        return $stack;
+        return $formula;
     }
 
     /**
@@ -352,6 +297,7 @@ class Expression implements ExpressionInterface
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null)
     {
+        // Static valuse (no depending on data)
         if ($this->isStatic() === true) {
             if ($this->isFormula() === true) {
                 return $this->getFormula()->evaluate();
@@ -359,11 +305,14 @@ class Expression implements ExpressionInterface
                 return $this->value;
             }
             
-        } else {
+        } 
+        // Data-driven values
+        else {
             if ($data_sheet === null) {
                 throw new InvalidArgumentException('In a non-static expression $data_sheet and $column_name are mandatory arguments.');
             }
             
+            // If not evaluated for a single row, evaluate() recursively for each row
             if ($row_number === null) {
                 $result = array();
                 $rows_and_totals_count = $data_sheet->countRows() + count($data_sheet->getTotalsRows());
@@ -372,9 +321,19 @@ class Expression implements ExpressionInterface
                 }
                 return $result;
             }
+            // If in single row context, do the actual evaluation
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
-                    return $data_sheet->getColumns()->getByExpression($this->attribute_alias)->getCellValue($row_number);
+                    if ($this->relation_path_string !== null) {
+                        $attrAlias = RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias);
+                    } else {
+                        $attrAlias = $this->attribute_alias;
+                    }
+                    $col = $data_sheet->getColumns()->getByExpression($attrAlias);
+                    if (! $col) {
+                        throw new DataSheetColumnNotFoundError($data_sheet, 'Expression "' . $this->toString() . '" does not match any column in provided data sheet!');
+                    }
+                    return $col->getCellValue($row_number);
                 case self::TYPE_FORMULA:
                     return $this->getFormula()->evaluate($data_sheet, $row_number);
                 default:
@@ -387,20 +346,15 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRequiredAttributes()
      */
-    public function getRequiredAttributes()
+    public function getRequiredAttributes() : array
     {
-        if (is_null($this->attributes)) {
-            $this->attributes = [];
-            switch ($this->getType()) {
-                case self::TYPE_ATTRIBUTE:
-                    $this->attributes[] = $this->attribute_alias;
-                    break;
-                case self::TYPE_FORMULA:
-                    $this->attributes = $this->getFormula()->getRequiredAttributes();
-                    break;
-            }            
+        switch ($this->getType()) {
+        	case self::TYPE_ATTRIBUTE:
+        		return [($this->relation_path ? RelationPath::relationPathAdd($this->relation_path, $this->attribute_alias) : $this->attribute_alias)];
+        	case self::TYPE_FORMULA:
+        		return $this->getFormula()->getRequiredAttributes();           
         }
-        return $this->attributes;
+        return [];
     }
 
     /**
@@ -416,82 +370,65 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRelationPath()
      */
-    public function getRelationPath()
+    public function getRelationPath() : ?MetaRelationPathInterface
     {
-        return $this->relation_path;
+        return $this->relation_path === null ? null : $this->relation_path;
     }
-
+    
     /**
-     * @deprecated use rebase()
-     * FIXME get rid of setRelationPath in favor of rebase() or so.
      * 
-     * @param string $relation_path
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @param string $pathString
+     * @return ExpressionInterface
      */
-    public function setRelationPath($relation_path)
+    private function setRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
-        // remove old relation path
-        if ($this->relation_path !== '') {
-            $path_length = strlen($this->relation_path . RelationPath::RELATION_SEPARATOR);
-            foreach ($this->getRequiredAttributes() as $key => $a) {
-                $this->attributes[$key] = substr($a, $path_length);
-            }
-        }
-        
-        // set new relation path
-        $this->relation_path = $relation_path;
-        if ($relation_path !== '' && $relation_path !== null) {
-            foreach ($this->getRequiredAttributes() as $key => $a) {
-                $this->attributes[$key] = RelationPath::relationPathAdd($relation_path, $a);
-            }
-        }
-        
-        if ($this->isFormula() === true) {
-            $this->getFormula()->setRelationPath($relation_path);
-        }
-        if ($this->attribute_alias) {
-            $this->attribute_alias = RelationPath::relationPathAdd($relation_path, $this->attribute_alias);
-            $this->originalString = RelationPath::relationPathAdd($relation_path, $this->originalString);
-        }
-        
+        $this->relation_path_string = $path->toString();
+        $this->relation_path = $path;
+        // Unset cached formula to force its reinitialization when getFormula() is called.
+        $this->formula = null;
         return $this;
     }
     
     /**
      * 
-     * @param string $relation_path
-     * @return ExpressionInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::withRelationPath()
      */
     public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
     {
-        return $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path->toString());
+        $copy = $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path);
+        if ($copy->isConstant() === false) {
+            $copy->parse($copy->originalString);
+        }
+        return $copy;
     }
 
     /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::toString()
+     * @deprecated use __toString() instead!
      */
     public function toString()
     {
-        return $this->originalString;
+        return $this->__toString();
     }
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::__toString()
      */
-    public function __toString()
+    public function __toString() : string
     {
-        return $this->toString();
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRawValue()
-     */
-    public function getRawValue()
-    {
-        return $this->value;
+        switch ($this->getType()) {
+            case self::TYPE_ATTRIBUTE:
+                // IDEA perhaps it would be better not to prepend the relation path here as it originates
+                // from withRelationPath() which should not modify the expression. On the other hand, the
+                // premise that chaining withRelationPath() will replace the previous path is fulfilled here.
+                // There are also many places in the code, that assume that toString() of an attribute
+                // expression will yield the alias including the relation path...
+                return ($this->relation_path_string ? RelationPath::relationPathAdd($this->relation_path_string, $this->attribute_alias) : $this->attribute_alias);
+            default:
+                return $this->originalString ?? '';
+        }
     }
 
     /**
@@ -549,21 +486,6 @@ class Expression implements ExpressionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::mapAttribute()
-     */
-    public function mapAttribute($map_from, $map_to)
-    {
-        foreach ($this->getRequiredAttributes() as $id => $attr) {
-            if ($attr == $map_from) {
-                $this->attributes[$id] = $map_to;
-            }
-        }
-        if ($this->isFormula())
-            $this->getFormula()->mapAttribute($map_from, $map_to);
-    }
-
-    /**
-     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getMetaObject()
      */
     public function getMetaObject()
@@ -589,6 +511,7 @@ class Expression implements ExpressionInterface
     {
         if ($this->isFormula()) {
             // TODO Implement rebasing formulas. It should be possible via recursion.
+            $this->getWorkbench()->getLogger()->error('Cannot rebase formula "' . $this->toString() . '" - leaving the formula as-is (see Expression::rebase())');
             return $this->copy();
         } elseif ($this->isMetaAttribute()) {
             try {
@@ -647,8 +570,7 @@ class Expression implements ExpressionInterface
             if ($new_expression_string == '') {
                 $new_expression_string .= $rel->getRightKeyAttribute()->getAlias();
             }
-            
-            return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRightObject());
+            return ExpressionFactory::createFromString($this->getWorkbench(), $new_expression_string, $rel->getRightObject());
         } else {
             // In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
             return $this->copy();
@@ -674,7 +596,7 @@ class Expression implements ExpressionInterface
      */
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface
     {
-        if (($link = $this->widgetLinks[$sourceWidget->getId()]) !== null) {
+        if (null !== $link = ($this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()] ?? [])[$sourceWidget->getId()] ?? null) {
             return $link;
         }
         
@@ -683,7 +605,7 @@ class Expression implements ExpressionInterface
         }
         
         $link = WidgetLinkFactory::createFromWidget($sourceWidget, $this->widgetLinkString);
-        $this->widgetLinks[$sourceWidget->getId()] = $link;
+        $this->widgetLinks[$sourceWidget->getPage()->getAliasWithNamespace()][$sourceWidget->getId()] = $link;
         return $link;
     }
 
@@ -693,11 +615,11 @@ class Expression implements ExpressionInterface
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return ExpressionInterface
      */
-    public function copy()
+    public function copy() : self
     {
         $copy = clone $this;
         if ($this->isConstant() === false) {
-            $copy->parse($this->toString());
+            $copy->parse($this->originalString);
         }
         return $copy;
     }
@@ -726,11 +648,21 @@ class Expression implements ExpressionInterface
      */
     public static function detectFormula($value) : bool
     {
-        $value = trim($value);
-        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && substr($value, 1, 2) !== '=' && strpos($value, '(') > 0) {
-            return true;
+        return self::detectCalculation($value) && strpos($value, '(') > 0;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectCalculation()
+     */
+    public static function detectCalculation($value) : bool
+    {
+        if (! is_string($value)) {
+            return false;
         }
-        return false;
+        $value = trim($value);
+        return $value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=';
     }
     
     /**
@@ -740,11 +672,7 @@ class Expression implements ExpressionInterface
      */
     public static function detectReference($value) : bool
     {
-        $value = trim($value);
-        if ($value && substr($value, 0, 1) === '=' && substr($value, 1, 1) !== '=' && ! self::detectFormula($value)) {
-            return true;
-        }
-        return false;
+        return self::detectCalculation($value) && ! self::detectFormula($value);
     }
     
     /**
@@ -793,29 +721,10 @@ class Expression implements ExpressionInterface
         }
         
         if ($this->formula === null) {
-            $this->formula = $this->parseFormula($this->toString());
+            $this->formula = $this->parseFormula($this->originalString, $this->relation_path_string);
         }
         
         return $this->formula;
-    }
-    
-    /**
-     * 
-     * @param string $string
-     * @param string $quote
-     * @throws UnexpectedValueException
-     * @return string
-     */
-    public static function enquote(string $string, string $quote = '"') : string
-    {
-        switch ($quote) {
-            case '"':
-                return json_encode($string);
-            case "'": 
-                return "'" . str_replace("'", "\\'", $string);
-            default:
-                throw new UnexpectedValueException('Invalid quote character "' . $quote . '" used to enquote expression!');
-        }
     }
     
     /**
@@ -825,7 +734,7 @@ class Expression implements ExpressionInterface
      * @throws UnexpectedValueException
      * @return string
      */
-    public static function unquote(string $quotedString, string $quote = null) : string
+    protected static function unquote(string $quotedString, string $quote = null) : string
     {
         $quotedString = trim($quotedString);
         
@@ -839,7 +748,14 @@ class Expression implements ExpressionInterface
         
         switch ($quote) {
             case '"':
-                return json_decode($quotedString);
+                // Try unqote via json_decode
+                $unquoted = json_decode($quotedString);
+                if ($unquoted !== null) {
+                    return $unquoted;
+                }
+                // If it does not work (= $quotedString is not a valid JSON string), leav it as-is
+                // For example, this might be due to the string being multiple quoted strings: `"..." "..."`
+                break;
             case "'":
                 return trim(str_replace("\\'", "'", $quotedString), "'");
         }

@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Replaces the default delete-operation by setting a "deleted"-attribute to a special value.
@@ -38,22 +41,33 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * @author Andrej Kabachnik
  *
  */
-class SoftDeleteBehavior extends AbstractBehavior
+class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
     private $soft_delete_attribute_alias = null;
     
     private $soft_delete_value = null;
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete'], $this->getPriority());
 
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'setFlagOnDelete']);
+
         return $this;
     }
     
@@ -89,6 +103,8 @@ class SoftDeleteBehavior extends AbstractBehavior
         if (! $eventData->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
         // prevent deletion of the main object, but dont prevent the cascading deletion
         $event->preventDelete(false);
@@ -131,7 +147,8 @@ class SoftDeleteBehavior extends AbstractBehavior
         if ($eventData->isEmpty() === false && $deletedColInEventData = $eventData->getColumns()->getByAttribute($this->getSoftDeleteAttribute())){
             $deletedColInEventData->setValueOnAllRows($this->getSoftDeleteValue());
         }
-
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
         return;
     }
     
@@ -159,7 +176,7 @@ class SoftDeleteBehavior extends AbstractBehavior
         if ($this->getObject()->hasAttribute($value) === true){
             $this->soft_delete_attribute_alias = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
+            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute ' . $value . 'found in object ' . $this->getObject()->getAlias() . '.');
         }
         return $this;
     }
@@ -173,7 +190,7 @@ class SoftDeleteBehavior extends AbstractBehavior
         try {
             return $this->getObject()->getAttribute($this->getSoftDeleteAttributeAlias()); 
         } catch (MetaAttributeNotFoundError $e) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
+            throw new BehaviorConfigurationError($this, 'Configuration error: no attribute "' . $this->getSoftDeleteAttributeAlias() . '" found in object "' . $this->getObject()->getAlias() . '".');
         }
     }
     
@@ -214,5 +231,27 @@ class SoftDeleteBehavior extends AbstractBehavior
         $uxon->setProperty('soft_delete_attribute_alias', $this->getSoftDeleteAttributeAlias());
         $uxon->setProperty('soft_delete_value', $this->getSoftDeleteValue());
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        return [
+            $this->getSoftDeleteAttribute()
+        ];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumnsToData()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return true;   
     }
 }

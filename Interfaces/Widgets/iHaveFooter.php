@@ -8,12 +8,12 @@ interface iHaveFooter extends WidgetInterface
     /**
      * @return boolean
      */
-    function getHideFooter();
+    public function getHideFooter() : ?bool;
     
     /**
      * 
      * @param boolean $boolean
      * @return iHaveFooter
      */
-    function setHideFooter($boolean);
+    public function setHideFooter($boolean) : iHaveFooter;
 }

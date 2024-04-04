@@ -2,12 +2,13 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Widgets\Container;
 
 /**
  *
- * @method Container getWidget()
+ * @method \exface\Core\Widgets\Container getWidget()
  *        
  * @author Andrej Kabachnik
  *        
@@ -85,7 +86,7 @@ trait JqueryContainerTrait {
      *
      * @return string
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         $widget = $this->getWidget();
         
@@ -101,6 +102,23 @@ trait JqueryContainerTrait {
 				})()';
         
         return $output;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter($dataColumnName = null)
+    {
+        if ($dataColumnName === null) {
+            if ($this->getMetaObject()->hasUidAttribute()) {
+                $dataColumnName = DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());
+            } else {
+                return parent::buildJsValueGetter($dataColumnName);
+            }
+        }
+        return "({$this->buildJsDataGetter()}.rows[0] || {})['{$dataColumnName}']";
     }
     
     /**
@@ -125,7 +143,7 @@ trait JqueryContainerTrait {
 				if(!' . $validator . ') { invalidElements.push("' . $alias . '"); }';
         }
         $output .= '
-				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . '" + invalidElements.join(", ")');
+				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . ' " + invalidElements.join(", ")');
         
         return $output;
     }
@@ -206,5 +224,125 @@ JS;
             $output .= $this->getFacade()->getElement($subw)->buildJsResetter() . ";\n";
         }
         return $output;
+    }
+    
+    /**
+     * Registers a jQuery custom event handler that refreshes the container contents if effected by an action.
+     *
+     * Returns JS code to register a listener on `document` for the custom jQuery event
+     * `actionperformed`. The listener will see if the widget configured is affected
+     * by the event (e.g. by the action effects) and triggers a refresh on the widget.
+     * 
+     * By default, a container is refreshed if
+     * - it is to be refreshed explicitly (e.g. the button has a `refresh_widget_ids`
+     * or `refresh_input` explicitly set to `true`)
+     * - its main object is effected by an action directly
+     * - one of the related objects used within the container is effected directly
+     * or indirectly
+     * 
+     * The container is not refreshed if it is explicitly excluded via `refresh_input`
+     * being set to `false` on the button.
+     * 
+     * Thus, the behavior is slightly different than that of data widgets. Refreshing
+     * the entire container (e.g. Dialog) blocks user interaction, so we try to do it
+     * only when really neccessary. In Dialog particularly, any action performed inside
+     * a nested dialog is concidered to have an indirect effect on the object of the
+     * outer dialog. These effects do not lead to a refresh. Instead, the Dialog will
+     * only be refreshed if the action effects its object explicitly.
+     *
+     * @param string $scriptJs
+     * @return string
+     */
+    protected function buildJsRegisterOnActionPerformed(string $scriptJs) : string
+    {
+        $relatedObjAliases = [];
+        foreach ($this->getWidget()->getWidgetsRecursive() as $child) {
+            if (! (($child instanceof iShowSingleAttribute) && $child->isBoundToAttribute())) {
+                continue;
+            }
+            $attr = $child->getAttribute();
+            if ($attr->getRelationPath()->isEmpty()) {
+                continue;
+            }
+            foreach ($attr->getRelationPath()->getRelations() as $rel) {
+                $relatedObjAliases[] = $rel->getRightObject()->getAliasWithNamespace();
+            }
+        }
+        $relatedObjAliasesJs = json_encode(array_values(array_unique($relatedObjAliases)));
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        return <<<JS
+        
+$( document ).off( "{$actionperformed}.{$this->getId()}" );
+$( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+    var oEffect = {};
+    var aRelatedObjectAliases = {$relatedObjAliasesJs};
+    var sMainObjectAlias = '{$this->getMetaObject()->getAliasWithNamespace()}';
+    var sWidgetId = "{$this->getId()}";
+    var fnRefresh = function() {
+        {$scriptJs}
+    };
+    
+    if (oParams.refresh_not_widgets.indexOf(sWidgetId) !== -1) {
+        return;
+    }
+    
+    if (oParams.refresh_widgets.indexOf(sWidgetId) !== -1) {
+        fnRefresh();
+        return;
+    }
+  
+    for (var i = 0; i < oParams.effects.length; i++) {
+        oEffect = oParams.effects[i];
+        // Refresh if the main object of the container is effected directly
+        if (oEffect.effected_object === sMainObjectAlias && ! oEffect.relation_path_to_effected_object) {
+            fnRefresh();
+            return;
+        }
+        // Refresh if one of the objects required for inner widgets is effected directly or indirectly
+        if (aRelatedObjectAliases.indexOf(oEffect.effected_object) !== -1) {
+            fnRefresh();
+            return;
+        }
+    }
+});
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param string $functionName
+     * @param array $parameters
+     * @return string
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof Container && $widget->hasFunction($functionName, false)) {
+            return parent::buildJsCallFunction($functionName, $parameters);
+        }
+        
+        $js = '';
+        foreach ($this->getWidget()->getWidgets() as $child) {
+            if ($child->hasFunction($functionName)) {
+                $js .= $this->getFacade()->getElement($child)->buildJsCallFunction($functionName, $parameters);
+            }
+        }
+        
+        return $js;
+    }
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsSetDisabled()
+     */
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $js = '';
+        foreach ($this->getWidget()->getWidgets() as $w) {
+            $el = $this->getFacade()->getElement($w);
+            $js .= "\n" . $el->buildJsSetDisabled($trueOrFalse) . ';';
+        }
+        return $js;
     }
 }

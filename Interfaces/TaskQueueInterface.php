@@ -18,11 +18,13 @@ interface TaskQueueInterface extends TaskHandlerInterface, AliasInterface, iCanB
      * @param string[] $topics
      * @param string $producer
      * @param string $messageId
+     * @param string $channel
+     * 
      * @return ResultInterface
      * 
      * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
      */
-    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $userAgent = null) : ResultInterface;
+    public function handle(TaskInterface $task, array $topics = [], string $producer = null, string $messageId = null, string $channel = null) : ResultInterface;
     
     /**
      * 
@@ -56,4 +58,13 @@ interface TaskQueueInterface extends TaskHandlerInterface, AliasInterface, iCanB
      * @return bool
      */
     public function getAllowOtherQueuesToHandleSameTasks() : bool;
+    
+    /**
+     * Housekeeping for the queue: remove older messages, logs, etc. - depending on the queue implementation.
+     * 
+     * Returns a message describing what has been done.
+     * 
+     * @return string
+     */
+    public function cleanUp() : string;
 }

@@ -4,8 +4,8 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
-use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -17,17 +17,19 @@ use exface\Core\CommonLogic\UxonObject;
  */
 interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
-
     /**
      * 
      * @param DataSheetInterface $fromSheet
+     * @param bool $readMissingColumns
+     * @param LogBookInterface $logbook
+     * 
      * @return DataSheetInterface
      */
-    public function map(DataSheetInterface $fromSheet) : DataSheetInterface;
+    public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface;
     
     /**
      *
-     * @throws DataSheetMapperError if no from-object set
+     * @throws DataMapperConfigurationError if no from-object set
      * 
      * @return MetaObjectInterface
      */
@@ -69,54 +71,48 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
     public function getMappings() : array;
     
     /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setColumnToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addColumnToColumnMapping(DataColumnMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setColumnToFilterMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
-    public function setFilterToColumnMappings(UxonObject $uxon) : DataSheetMapperInterface;
-    
-    /**
-     *
-     * @param DataColumnMappingInterface $map
-     * @return DataSheetMapperInterface
-     */
-    public function addFilterToColumnMapping(DataFilterToColumnMappingInterface $map) : DataSheetMapperInterface;
-    
-    /**
-     * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
      * 
-     * @param UxonObject
+     * @param DataMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings(UxonObject $uxon) : DataSheetMapperInterface;
+    public function addMapping(DataMappingInterface $map) : DataSheetMapperInterface;  
+    
+    /**
+     * 
+     * @param string|bool $value
+     * @throws DataMapperConfigurationError
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritColumns($value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param string|bool $value
+     * @throws DataMapperConfigurationError
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritFilters($value) : DataSheetMapperInterface;
+    
+    /**
+     * 
+     * @param string|bool $value
+     * @throws DataMapperConfigurationError
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritSorters($value) : DataSheetMapperInterface;
+    
+    /**
+     * Set to TRUE to force the to-sheet to be empty if the from-sheet is empty
+     * 
+     * By default the to-sheet might still get new rows: e.g. if there are column-to-column mappings with
+     * formulas. Setting `inherit_empty_data` to `true` will make sure, no new rows are created if the
+     * from-sheet is empty. In this case, all changes to the data sheet structure (added columns, filters, etc.)
+     * will still be applied - there will only be no rows if the from-sheet had none.
+     * 
+     * @param bool $value
+     * @return DataSheetMapperInterface
+     */
+    public function setInheritEmptyData(bool $value) : DataSheetMapperInterface;
     
     /**
      * 
@@ -124,26 +120,4 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @return DataSheetMapperInterface
      */
     public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
-    
-    /**
-     * 
-     * @param bool $value
-     * @return DataSheetMapperInterface
-     */
-    public function setInheritColumns(bool $value) : DataSheetMapperInterface;
-
-    /**
-     * 
-     * @param bool $value
-     * @return DataSheetMapperInterface
-     */
-    public function setInheritFilters(bool $value) : DataSheetMapperInterface;
-    
-    /**
-     * 
-     * @param bool $value
-     * @return DataSheetMapperInterface
-     */
-    public function setInheritSorters(bool $value) : DataSheetMapperInterface;
-   
 }

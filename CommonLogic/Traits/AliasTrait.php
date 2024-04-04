@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Traits;
 
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorWithOptionalNamespaceInterface;
 
 trait AliasTrait {
     
@@ -32,6 +33,9 @@ trait AliasTrait {
      */
     public function getAliasWithNamespace()
     {
+        if ($this->getSelector() instanceof AliasSelectorWithOptionalNamespaceInterface && !$this->getSelector()->hasNamespace()) {
+            return $this->getSelector()->toString();
+        }
         return $this->getSelector()->getAppAlias() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
     }
     

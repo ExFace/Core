@@ -1,0 +1,60 @@
+{
+    "uid": "0x11ec8816dd0289568816025041000001",
+    "alias_with_namespace": "exface.core.notifications",
+    "menu_parent_page_selector": "0x11ea5edc2f798596b9920205857feb80",
+    "menu_index": 3,
+    "menu_visible": true,
+    "name": "Notifications",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2022-05-02 11:04:24",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-09-08 12:38:01",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.NOTIFICATION",
+        "multi_select": true,
+        "filters": [
+            {
+                "attribute_alias": "USER__USER_ROLE_USERS__USER_ROLE"
+            },
+            {
+                "attribute_alias": "USER"
+            },
+            {
+                "attribute_alias": "TITLE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "USER__LABEL"
+            },
+            {
+                "attribute_alias": "TITLE"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

@@ -17,6 +17,9 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
      */
     public static function createFromWidget(WidgetInterface $sourceWidget, $stringOrUxon) : WidgetLinkInterface
     {
+        if (is_string($stringOrUxon)) {
+            $stringOrUxon = ltrim($stringOrUxon, "=");
+        }
         return new WidgetLink($sourceWidget->getPage(), $sourceWidget, $stringOrUxon);
     }
     
@@ -30,18 +33,4 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
     {
         return new WidgetLink($sourcePage, null, $stringOrUxon);
     }
-    
-    /**
-     * 
-     * @param WidgetInterface $widget
-     * @return WidgetLinkInterface
-     */
-    public static function createForWidget(WidgetInterface $widget) : WidgetLinkInterface
-    {
-        $link = new WidgetLink($widget->getWorkbench());
-        $link->setWidgetId($widget->getId());
-        $link->setPageAlias($widget->getPage()->getAliasWithNamespace());
-        return $link;
-    }
 }
-?>

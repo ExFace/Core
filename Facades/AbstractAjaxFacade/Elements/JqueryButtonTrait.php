@@ -12,120 +12,102 @@ use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Actions\SendToWidget;
 use exface\Core\Actions\ResetWidget;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Widgets\DialogButton;
-use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Actions\iCallWidgetFunction;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
+use exface\Core\Interfaces\Actions\iShowUrl;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Actions\CallAction;
+use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Actions\ActionChain;
 
 /**
  * 
  * @method Button getWidget()
  * @method AbstractAjaxFacade getFacade()
  * 
- * @author tmc
+ * @author Andrej Kabachnik
  *
  */
 trait JqueryButtonTrait {
     
-    use JqueryDisableConditionTrait;
+    use JsConditionalPropertyTrait;
     
     private $onSuccessJs = [];
-
-    /**
-     * Returns the JS code to run when refreshing/resetting widgets after the action.
-     * 
-     * @param Button $widget
-     * @return string
-     */
-    protected function buildJsInputRefresh(Button $widget)
-    {
-        $js = '';
-        
-        // Reset the input if needed (before refreshing!!!)
-        $js .= $this->buildJsResetWidgets($widget);
-        
-        // Refresh the linked widget if needed
-        $js .= $this->buildJsRefreshWidgets($widget);
-        
-        return $js;
-    }
     
-    /**
-     * Returns the JS to refresh input widgets for all ancestor buttons.
-     * 
-     * This is usefull if you have multiple nested dialogs and need to refresh the inputs
-     * of every button that was pressed to open each of the dialogs.
-     * 
-     * For example: when adding a credential set from the user-editor, first a dialog
-     * pops up to select the data connections, etc. This dialog will refresh it's input
-     * (= credentials table) when it closes. Pressing "login" on that dialog closes it
-     * and opens another one. At this point the credentials table is refreshed, by there
-     * still is no new credential set. Only when the second dialog closes the data had
-     * changed. The cascade allows to still refresh to credentials table in this case.
-     * 
-     * @param iUseInputWidget $button
-     * @param int $depth
-     * @return string
-     */
-    protected function buildJsRefreshCascade(iUseInputWidget $button, int $depth = null) : string
-    {
-        if ($button instanceof DialogButton && $button->getCloseDialogAfterActionSucceeds()){
-            
-            $dialogWidget = $button->getInputWidget();
-            if (! $dialogWidget instanceof Dialog){
-                return '';
-            }
-            if (! $dialogWidget->hasParent()) {
-                return '';
-            }
-            
-            $dialogTrigger = $dialogWidget->getParent();
-            if ($dialogTrigger instanceof Button) {
-                $js = $this->buildJsRefreshWidgets($dialogTrigger);
-                if ($depth > 1 || $depth === null) {
-                    $js .= $this->buildJsRefreshCascade($dialogTrigger, ($depth !== null ? $depth-1 : null));
-                }
-                return $js;
-            }
-        }
-        return '';
-    }
+    private $onErrorJs = [];
     
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
      * 
-     * @param Button $widget
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsRefreshWidgets(Button $widget) : string
+    protected function buildJsRefreshWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
-        foreach ($widget->getRefreshWidgetIds() as $widgetId) {
-            $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $widget->getPage());
-            $js .=  $refreshEl->buildJsRefresh(true) . "\n";
+        $widget = $this->getWidget();
+        $page = $widget->getPage();
+        $idSpace = $widget->getIdSpace();
+        foreach ($widget->getRefreshWidgetIds($includeInputWidget) as $widgetId) {
+            $idSpaceProvided = StringDataType::substringBefore($widgetId, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+            if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
+                $widgetId = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $widgetId;
+            }
+            
+            $refreshEl = $this->getFacade()->getElementByWidgetId($widgetId, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($refreshEl) === false) {
+                    continue;
+                }
+            }
+            
+            $js .=  $refreshEl->buildJsRefresh(true) . ";\n";
         }
         return $js;
     }
     
     /**
      * Returns the JS code to reset all neccessary widgets after the button's action succeeds.
-     *
-     * @param Button $widget
-     * @param AbstractJqueryElement $input_element
+     * 
+     * @param bool $includeInputWidget
      * @return string
      */
-    protected function buildJsResetWidgets(Button $widget) : string
+    protected function buildJsResetWidgets(bool $includeInputWidget = true, callable $elementFilter = null) : string
     {
         $js = '';
-        foreach ($widget->getResetWidgetIds() as $id) {
-            $resetElem = $this->getFacade()->getElementByWidgetId($id, $widget->getPage());
-            $js .= $resetElem->buildJsResetter() . "\n";
+        $btn = $this->getWidget();
+        $page = $btn->getPage();
+        $idSpace = $btn->getIdSpace();
+        foreach ($btn->getResetWidgetIds($includeInputWidget) as $id) {
+            $idSpaceProvided = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, '', false, true);
+            if ($idSpaceProvided === '' && $idSpace !== null && $idSpace !== '') {
+                $id = $idSpace . UiPage::WIDGET_ID_SPACE_SEPARATOR . $id;
+            }
+            
+            $resetElem = $this->getFacade()->getElementByWidgetId($id, $page);
+            if ($elementFilter !== null) {
+                if ($elementFilter($resetElem) === false) {
+                    continue;
+                }
+            }
+            
+            $js .= $resetElem->buildJsResetter() . ";\n";
         }
         return $js;
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function buildJsClickFunctionName()
     {
         return $this->buildJsFunctionPrefix() . 'click';
@@ -136,60 +118,108 @@ trait JqueryButtonTrait {
      * Placeholders must be in the general ExFace syntax [#placholder#], while the value object must have a property for every
      * placeholder with the same name (without "[#" and "#]"!).
      *
-     * @param string $js_var
-     *            - e.g. result (the variable must be already instantiated!)
-     * @param string $js_values_array
-     *            - e.g. values = {placeholder = "someId"}
-     * @param string $string_with_placeholders
-     *            - e.g. http://localhost/pages/[#placeholder#]
-     * @param string $js_sanitizer_function
-     *            - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without parentheses!!!
+     * @param string $sValJs - e.g. result (the variable must be already instantiated!)
+     * @param string $oRowJs - e.g. values = {placeholder = "someId"}
+     * @param string $originalStringWithPlaceholders - e.g. http://localhost/pages/[#placeholder#]
+     * @param string $fnSanitizrJs - a Javascript function to be applied to each value (e.g. encodeURIComponent) - without parentheses!!!
      * @return string - e.g. result = result.replace('[#placeholder#]', values['placeholder']);
      */
-    protected function buildJsPlaceholderReplacer($js_var, $js_values_object, $string_with_placeholders, $js_sanitizer_function = null)
+    protected function buildJsPlaceholderReplacer(string $sValJs, string $oRowJs, string $originalStringWithPlaceholders, string $fnSanitizrJs = null)
     {
         $output = '';
-        $placeholders = StringDataType::findPlaceholders($string_with_placeholders);
+        $placeholders = StringDataType::findPlaceholders($originalStringWithPlaceholders);
+        $commonPhVals = $this->getCommonPlaceholderValues($placeholders);
         foreach ($placeholders as $ph) {
-            $value = $js_values_object . "['" . $ph . "']";
-            if ($js_sanitizer_function) {
-                $value = $js_sanitizer_function . '(' . $value . ')';
+            switch (true) {
+                case array_key_exists($ph, $commonPhVals):
+                    $value = "'{$commonPhVals[$ph]}'";
+                    break;
+                default: 
+                    $value = $oRowJs . "['" . $ph . "']";
             }
-            $output .= $js_var . " = " . $js_var . ".replace('[#" . $ph . "#]', " . $value . ");";
+            if ($fnSanitizrJs !== null && ! array_key_exists($ph, $commonPhVals)) {
+                $value = $fnSanitizrJs . '(' . $value . ')';
+            }
+            $output .= "\n{$sValJs} = {$sValJs}.replace('[#{$ph}#]', {$value});";
         }
         return $output;
     }
+    
+    /**
+     * 
+     * @param string[] $phs
+     * @return string[]
+     */
+    protected function getCommonPlaceholderValues(array $phs) : array
+    {
+        $phVals = [];
+        foreach ($phs as $ph) {
+            switch (true) {
+                case $ph === 'api':
+                    $phVals[$ph] = $this->getWorkbench()->getUrl() . 'api';
+                    break;
+                case $ph === 'facade':
+                    $phVals[$ph] = $this->getFacade()->buildUrlToFacade(true);
+                    break;
+                case StringDataType::startsWith($ph, 'element_id:', false):
+                    $widgetId = StringDataType::substringAfter($ph, 'element_id:', $ph);
+                    switch ($widgetId) {
+                        case '~input':
+                            $phVals[$ph] = $this->getInputElement()->getId();
+                            break;
+                        case '~self':
+                            $phVals[$ph] = $this->getId();
+                            break;
+                        case '~parent':
+                            $phVals[$ph] = $this->getFacade()->getElement($this->getWidget()->getParent())->getId();
+                            break;
+                        default:
+                            $phVals[$ph] = $this->getFacade()->getElement($this->getWidget()->getPage()->getWidget($widgetId))->getId();
+                    }
+            }
+        }
+        return $phVals;
+    }
 
     /**
-     * Produces the JS variable `requestData` containing the input data for the action
+     * Produces the JS variable named by $jsVariable parameter containing the input data for the action
      * 
      * @param ActionInterface $action
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsRequestDataCollector(ActionInterface $action, AbstractJqueryElement $input_element, string $jsVariable = 'requestData') : string
     {
-        if (! is_null($action->getInputRowsMin()) || ! is_null($action->getInputRowsMax())) {
+        $min = $action->getInputRowsMin();
+        $max = $action->getInputRowsMax();
+        
+        // If the action has built-in input data, let the server handle the checks.
+        if ($action->hasInputDataPreset() && ! $action->getInputDataPreset()->isEmpty()) {
+            $min = null;
+            $max = null;
+        }
+        
+        if ($min !== null || $max !== null) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            if ($action->getInputRowsMin() === $action->getInputRowsMax()) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
-                    '%number%' => $action->getInputRowsMax()
-                ), $action->getInputRowsMax()) . '"') . " return false;}";
-            } elseif (is_null($action->getInputRowsMax())) {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
-                    '%number%' => $action->getInputRowsMin()
-                ), $action->getInputRowsMin()) . '"') . " return false;}";
-            } elseif (is_null($action->getInputRowsMin())) {
-                $js_check_input_rows = "if (requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
-                    '%number%' => $action->getInputRowsMax()
-                ), $action->getInputRowsMax()) . '"') . " return false;}";
+            if ($min === $max) {
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_EXACTLY_X_ROWS", array(
+                    '%number%' => $max
+                ), $max) . '"') . " return false;}";
+            } elseif (is_null($max)) {
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_LEAST_X_ROWS", array(
+                    '%number%' => $min
+                ), $min) . '"') . " return false;}";
+            } elseif (is_null($min)) {
+                $js_check_input_rows = "if ({$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_AT_MOST_X_ROWS", array(
+                    '%number%' => $max
+                ), $max) . '"') . " return false;}";
             } else {
-                $js_check_input_rows = "if (requestData.rows.length < " . $action->getInputRowsMin() . " || requestData.rows.length > " . $action->getInputRowsMax() . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
-                    '%min%' => $action->getInputRowsMin(),
-                    '%max%' => $action->getInputRowsMax()
+                $js_check_input_rows = "if ({$jsVariable}.rows.length < " . $min . " || {$jsVariable}.rows.length > " . $max . ") {" . $this->buildJsShowMessageError('"' . $translator->translate("MESSAGE.SELECT_X_TO_Y_ROWS", array(
+                    '%min%' => $min,
+                    '%max%' => $max
                 )) . '"') . " return false;}";
             }
-            $js_check_input_rows = 'if (requestData.rows){' . $js_check_input_rows . '}';
+            $js_check_input_rows = "if ({$jsVariable}.rows){ {$js_check_input_rows} }";
         } else {
             $js_check_input_rows = '';
         }
@@ -197,7 +227,7 @@ trait JqueryButtonTrait {
         if (($conditionalProperty = $this->getWidget()->getDisabledIf()) !== null) {
             $js_check_button_state = <<<JS
             
-                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty)}) {
+                    if ({$this->buildJsConditionalPropertyIf($conditionalProperty->getConditionGroup())}) {
                         return false;
                     }
 
@@ -206,10 +236,50 @@ JS;
             $js_check_button_state = $this->getWidget()->isDisabled() === true ? 'return false;' : '';
         }
         
+        if ($customData = $this->getWidget()->getInputData()) {
+            $customDataRows = '';
+            foreach ($customData->getRows() as $row) {
+                $jsRow = '';
+                foreach ($row as $colName => $val) {
+                    $val = trim($val);
+                    if (substr($val, 0, 1) === '=') {
+                        $expr = ExpressionFactory::createForObject($customData->getMetaObject(), $val);
+                        switch (true) {
+                            case $expr->isReference():
+                                $jsRow .= $colName . ': ' . $this->getFacade()->getElement($expr->getWidgetLink($this->getWidget())->getTargetWidget())->buildJsValueGetter() . ',';
+                                break;
+                            case $expr->isConstant():
+                                $jsRow .= $colName . ': ' . $expr->__toString() . ',';
+                                break;
+                            case $expr->isStatic():
+                                $jsRow .= $colName . ': "' . $expr->evaluate() . '",';
+                                break;
+                            default:
+                                throw new WidgetConfigurationError($this, 'Invalid row value "' . $val . '" in input_data of ' . $this->getWidget()->getWidgetType());
+                        }
+                    } else {
+                        
+                    }
+                }
+                $customDataRows .= '{' . $jsRow . '},';
+            }
+            $js_get_data = <<<JS
+{
+    "oId": "{$customData->getMetaObject()->getId()}",
+    "rows": [
+        {$customDataRows}
+    ]
+}
+
+JS;
+        } else {
+            $js_get_data = $input_element->buildJsDataGetter($action);
+        }
+        
         return <<<JS
 
                     $js_check_button_state
-					var requestData = {$input_element->buildJsDataGetter($action)};
+					{$jsVariable} = {$js_get_data};
 					$js_check_input_rows
 
 JS;
@@ -236,44 +306,317 @@ JS;
         return parent::getWidget();
     }
 
-    public function buildJsClickFunction()
+    /**
+     * Returns the body of the on-click function for the button.
+     * 
+     * @return string
+     */
+    public function buildJsClickFunction(ActionInterface $action = null, string $jsRequestData = null)
     {
-        $output = '';
-        $widget = $this->getWidget();
-        $input_element = $this->getInputElement();
+        $action = $action ?? $this->getWidget()->getAction();
         
-        $action = $widget->getAction();
-        
-        // if the button does not have a action attached, just see if the attributes of the button
-        // will cause some click-behaviour and return the JS for that
-        if (! $action) {
-            $output .= $this->buildJsCloseDialog($widget, $input_element) . $this->buildJsInputRefresh($widget);
-            return $output;
+        if ($jsRequestData === null && $action !== null) {
+            $jsRequestData = 'requestData';
+            $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), $jsRequestData);
         }
         
-        if ($action instanceof RefreshWidget) {
-            $output = $this->buildJsClickRefreshWidget($action, $input_element);
-        } elseif ($action->implementsInterface('iRunFacadeScript')) {
-            $output = $this->buildJsClickRunFacadeScript($action, $input_element);
-        } elseif ($action->implementsInterface('iShowDialog')) {
-            $output = $this->buildJsClickShowDialog($action, $input_element);
-        } elseif ($action->implementsInterface('iShowUrl')) {
-            $output = $this->buildJsClickShowUrl($action, $input_element);
-        } elseif ($action->implementsInterface('iShowWidget')) {
-            $output = $this->buildJsClickShowWidget($action, $input_element);
-        } elseif ($action instanceof GoBack) {
-            $output = $this->buildJsClickGoBack($action, $input_element);
-        } elseif ($action instanceof SendToWidget) {
-            $output = $this->buildJsClickSendToWidget($action, $input_element);
-        } elseif ($action instanceof ResetWidget) {
-            $output = $this->buildJsResetWidgets($widget);
-        } else {
-            $output = $this->buildJsClickCallServerAction($action, $input_element);
+        switch (true) {
+            // Buttons without an action don't do anything
+            case ! $action:
+                $js = $this->buildJsClickNoAction(); break;
+            // CallAction needs som extra logic because its action is different depending on the input data
+            case $action instanceof CallAction:
+                $js = $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData); break;
+            // Action chains and other action proxies
+            case $action instanceof iCallOtherActions:
+                $js = $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData); break;
+            // Refresh input or other widget - don't need input data here
+            case $action instanceof RefreshWidget:
+                $js = $this->buildJsClickRefreshWidget($action); break;
+            // Run custom JS - don't need input data here
+            case $action instanceof iRunFacadeScript:
+                $js = $this->buildJsClickRunFacadeScript($action); break;
+            // Show Dialog
+            case $action instanceof iShowDialog:
+                $js = $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData); break;
+            // Navigate to URL
+            case $action instanceof iShowUrl:
+                $js = $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData); break;
+            // Other show-widget actions (not simple navigating)
+            case $action instanceof iShowWidget:
+                $js = $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData); break;
+            // Back-button - don't need input data here
+            case $action instanceof GoBack:
+                $js = $this->buildJsClickGoBack($action); break;
+            // Send data to widget
+            case $action instanceof SendToWidget:
+                $js = $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData); break;
+            // Reset input or other widget - don't need input data here
+            case $action instanceof ResetWidget:
+                $js = $this->buildJsResetWidgets(); break;
+            // Call a widget function - e.g. click another button
+            case $action instanceof iCallWidgetFunction:
+                $js = $this->buildJsClickCallWidgetFunction($action); break;
+            // Send all other acitons to the server
+            default: 
+                $js = $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData); break;
         }
         
-        return $output;
+        // In any case, wrap some offline-logic around the action
+        if ($action !== null) {
+            $js = $this->buildJsClickOfflineWrapper($action, $js);
+        }
+        
+        return $js;
     }
     
+    /**
+     * Executes the provided $regularJs snippet depending of the offline strategy of the $action. 
+     * 
+     * If the action is configured to be skipped offline, $ifNotExcecutedJs will be run instead.
+     * 
+     * @param ActionInterface $action
+     * @param string $regularJs
+     * @param string $ifNotExecutedJs
+     * @return string
+     */
+    protected function buildJsClickOfflineWrapper(ActionInterface $action, string $regularJs, string $ifNotExecutedJs = '') : string
+    {
+        if ($action->getOfflineStrategy() === OfflineStrategyDataType::SKIP) {
+            $regularJs = <<<JS
+            
+            if(navigator.onLine !== false) {
+                $regularJs
+            } else {
+                $ifNotExecutedJs
+            }
+JS;
+        }
+        return $regularJs;
+    }
+    
+    /**
+     * 
+     * @param CallAction $action
+     * @param string $jsRequestData
+     * @return string
+     */
+    protected function buildJsClickDynamicAction(CallAction $action, string $jsRequestData) : string
+    {
+        $js = '';
+        if ($action->hasActionsConditions()) {
+            foreach ($action->getActions() as $i => $potentialAction) {
+                $conditionalProp = $action->getActionsConditions()[$i];
+                $js .= $this->buildJsConditionalProperty($conditionalProp, $this->buildJsClickFunction($potentialAction, $jsRequestData), '');
+            }
+        } else {
+            $js = $this->buildJsClickCallServerAction($action, $jsRequestData);
+        }
+        return $js;
+    }
+    
+    /**
+     *
+     * @param ActionInterface $action
+     * @return bool
+     */
+    protected function isActionFrontendOnly(ActionInterface $action) : bool
+    {
+        switch (true) {
+            case $action instanceof RefreshWidget:
+            case $action instanceof iRunFacadeScript:
+            case $action instanceof iShowUrl:
+            case $action instanceof GoBack:
+            case $action instanceof SendToWidget:
+            case $action instanceof ResetWidget:
+            case $action instanceof iCallWidgetFunction:
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @param iCallOtherActions $action
+     * @param AjaxFacadeElementInterface $input_element
+     * @throws FacadeRuntimeError
+     * @return string
+     */
+    protected function buildJsClickActionChain(iCallOtherActions $action, string $jsRequestData) : string
+    {
+        $firstServerActionIdx = null;
+        $lastServerActionIdx = null;
+        $firstDialogActionIdx = null;
+        $steps = $action->getActions();
+        $lastActionIdx = count($steps) - 1;
+        foreach ($steps as $i => $step) {
+            // For front-end action their JS code will be called directly
+            if ($this->isActionFrontendOnly($step)) {
+                continue;
+            }
+            // For actions showing dialogs, this can be done too, but only if they use the input data
+            // of the chain and not that of some step in the middle
+            if ($step instanceof iShowDialog) {
+                if ($firstDialogActionIdx !== null) {
+                    throw new FacadeRuntimeError('Cannot render action chain with multiple actions showing dialogs!');
+                }
+                if ($i > 0 && ($action instanceof ActionChain) && $action->getUseInputDataOfAction() !== 0) {
+                    throw new FacadeRuntimeError('Cannot render action chain with multiple actions showing dialogs!');
+                }
+                $firstDialogActionIdx = $i;
+                continue;
+            } 
+            // ShowWidget actions other than ShowDialog cannot be used in chains - its not clear, what
+            // they would do.
+            if ($step instanceof iShowWidget) {
+                throw new FacadeRuntimeError('Cannot render action chain with ShowWidget actions!');
+            }
+            // Make sure there are no client-side action between two server actions
+            if ($firstServerActionIdx !== null && $lastServerActionIdx !== $i-1) {
+                throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): cannot mix front- and back-end actions!');
+            }
+            // Since we know, this is a server action it must be the first one if we did not see
+            // any other so far.
+            if ($firstServerActionIdx === null) {
+                $firstServerActionIdx = $i;
+            }
+            $lastServerActionIdx = $i;
+        }
+        
+        // If the chain consists of server actions only - just pass it to the server
+        if ($firstServerActionIdx === 0 && $lastServerActionIdx === $lastActionIdx) {
+            return $this->buildJsClickCallServerAction($action, $jsRequestData);
+        }
+        
+        // Render JS for the chain
+        // Starting with the front-end-actions BEFORE the first server-action
+        $js = 'var oChainThis = this; ';
+        for ($i = 0; $i < $firstServerActionIdx; $i++) {
+            $js .= $this->buildJsClickFunction($steps[$i], $jsRequestData) . "\n\n";
+        }
+        // Now prepare the front-end-actions AFTER the last server-action and save their
+        // code into $onSuccess in order to perform it after the server request
+        $onSuccess = '';
+        for ($i = ($lastServerActionIdx + 1); $i <= $lastActionIdx; $i++) {
+            // Make sure the on-success code has the same `this` in the JS as the code
+            // executed immediately. After all, the action handlers cannot know, that
+            // they are called within a chain.
+            $onSuccess .= "(function() { {$this->buildJsClickFunction($steps[$i], $jsRequestData)} }).call(oChainThis); \n\n";
+        }
+        
+        // TODO Multiple server actions in the middle are not supported yet
+        if ($firstServerActionIdx !== $lastServerActionIdx) {
+            throw new FacadeRuntimeError('Cannot render action "' . $action->getName() . '" (' . $action->getAliasWithNamespace() . '): action chains with mixed front- and back-end actions can only contain a single back-end action!');
+        }
+        
+        // Now send the server-action stuff to the server and do the remaining JS-part of the chain
+        // after a successful response was received.
+        $serverAction = $steps[$firstServerActionIdx];
+        $js .= $this->buildJsClickOfflineWrapper($serverAction, $this->buildJsClickCallServerAction($action, $jsRequestData, $onSuccess), $onSuccess);
+        
+        return $js;
+    }
+    
+    /**
+     * Returns the JS code triggered by a button without an action.
+     * 
+     * @return string
+     */
+    protected function buildJsClickNoAction() : string
+    {
+        // Can't use buildJsActionEffects() here sind we don't have an action, so we need to call
+        // all required code generator manually.
+        return $this->buildJsCloseDialog()
+        . $this->buildJsRefreshWidgets()
+        . $this->buildJsResetWidgets();
+    }
+    
+    /**
+     * Returns the JS code to trigger things to run on action success
+     * 
+     * 1. Reset the input if needed (before refreshing!!!)
+     * 2. Fire the JS even `actionperformed`
+     * 3. Run custom on-success scripts added in PHP via `addOnSuccessScript()`
+     * 
+     * The event `actionperformed` has an additional parameter with the following structure:
+     * 
+     * ```
+     * {
+     *  trigger_widget_id: "DataTable_DataToolbar_ButtonGroup_DataButton", // Id of the widget (e.g. button) that triggered the action
+     *  action_alias: "exface.Core.SaveData", // Namespaced alias of the action performed
+     *  effects: [
+     *      {
+     *          "name": "Save",
+     *          "effected_object": "exface.Core.ATTRIBUTE",
+     *      }   
+     *  ], 
+     *  refresh_widgets: [],
+     *  refresh_not_widgets: [],
+     * }
+     * 
+     * ```
+     * 
+     * @param ActionInterface $action
+     * @param bool $returnEventParamsOnly
+     * @return string
+     */
+    public function buildJsTriggerActionEffects(ActionInterface $action, bool $returnEventParamsOnly = false) : string
+    {
+        $effects = $action->getEffects();
+        $widget = $this->getWidget();
+        
+        $effectsJs = '';
+        foreach ($effects as $effect) {
+            $effectUxon = $effect->exportUxonObject();
+            // Make sure the `effected_object` property is set in all cases - even if it was not
+            // set in the original UXON or not required by it (e.g. implied by relation path, etc.)
+            $effectUxon->setProperty('effected_object', $effect->getEffectedObject()->getAliasWithNamespace());
+            $effectsJs .= $effectUxon->toJson() . ',';
+        }
+        
+        $refreshIds = '';
+        $refreshNotIds = $widget->getRefreshInput() === false ? '"' . $widget->getId() . '"' : '';
+        foreach ($widget->getRefreshWidgetIds($widget->getRefreshInput() ?? false) as $refreshId) {
+            $refreshIds .= '"' . $refreshId . '", ';
+        }
+        
+        $resetIds = '';
+        foreach ($widget->getResetWidgetIds(false) as $resetId) {
+            $resetIds .= '"' . $resetId . '", ';
+        }
+        
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+        $eventParamsJs = <<<JS
+
+                    [{
+                        trigger_widget_id: "{$widget->getId()}",
+                        action_alias: "{$action->getAliasWithNamespace()}",
+                        effects: [ $effectsJs ],
+                        refresh_widgets: [ $refreshIds ],
+                        refresh_not_widgets: [ $refreshNotIds ],
+                        reset_widgets: [ $resetIds ],
+                    }]
+JS;
+        if ($returnEventParamsOnly === true) {
+            return $eventParamsJs;
+        }
+        
+        return <<<JS
+
+                {$this->buildJsResetWidgets()}
+                
+                $(document).trigger("$actionperformed", $eventParamsJs);
+                
+                {$this->buildJsOnSuccessScript()}
+JS;
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $trigger
+     * @param ActionInterface $action
+     * @return string
+     */
     protected function buildJsRequestCommonParams(WidgetInterface $trigger, ActionInterface $action) : string
     {
         if ($trigger->getPage()->hasModel()) {
@@ -293,15 +636,20 @@ JS;
 JS;
     }
 
-    protected function buildJsClickCallServerAction(ActionInterface $action, AbstractJqueryElement $input_element)
+    /**
+     * 
+     * @param ActionInterface $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsClickCallServerAction(ActionInterface $action, string $jsRequestData, string $jsOnSuccess = '') : string
     {
         $widget = $this->getWidget();
         
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
-        $output = $this->buildJsRequestDataCollector($action, $input_element);
         $output .= "
-						if (" . $input_element->buildJsValidator() . ") {
+						if (" . $this->getInputElement()->buildJsValidator() . ") {
 							" . $this->buildJsBusyIconShow() . "
 							$.ajax({
 								type: 'POST',
@@ -309,7 +657,7 @@ JS;
                                 {$headers} 
 								data: {	
 									{$this->buildJsRequestCommonParams($widget, $action)}
-									data: requestData
+									data: {$jsRequestData}
 								},
 								success: function(data, textStatus, jqXHR) {
                                     if (typeof data === 'object') {
@@ -323,12 +671,11 @@ JS;
     									}
                                     }
 				                   	if (response.success !== undefined){
-										" . $this->buildJsCloseDialog($widget, $input_element) . "
-										" . $this->buildJsInputRefresh($widget) . "
-				                       	" . $this->buildJsBusyIconHide() . "
-				                       	$('#" . $this->getId() . "').trigger('" . $action->getAliasWithNamespace() . ".action.performed', [requestData, '" . $input_element->getId() . "']);
+										{$this->buildJsCloseDialog()}
+				                       	{$this->buildJsBusyIconHide()}
+				                       	{$this->buildJsTriggerActionEffects($action)}
 										if (response.success !== undefined || response.undoURL){
-				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
+				                       		{$this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')")}
 											if(response.redirect !== undefined){
                                                 switch (true) {
 												    case response.redirect.indexOf('target=_blank') !== -1:
@@ -352,27 +699,29 @@ JS;
                                                 a.click();
                                                 document.body.removeChild(a);
 	                       					}
+                                            {$jsOnSuccess}
 										}
-                                        {$this->buildJsOnSuccessScript()}
 				                    } else {
-										" . $this->buildJsBusyIconHide() . "
-										" . $this->buildJsShowMessageError('response.error', '"Server error"') . "
+										{$this->buildJsBusyIconHide()}
+                                        {$this->buildJsOnErrorScript()}
+										{$this->buildJsShowMessageError('response.error', '"Server error"')}
 				                    }
 								},
 								error: function(jqXHR, textStatus, errorThrown){ 
-									" . $this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText') . " 
-									" . $this->buildJsBusyIconHide() . "
+									{$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')} 
+									{$this->buildJsBusyIconHide()}
+                                    {$this->buildJsOnErrorScript()}
 								}
 							});
 						} else {
-							" . $input_element->buildJsValidationError() . "
+							" . $this->getInputElement()->buildJsValidationError() . "
 						}
 					";
         
         return $output;
     }
 
-    protected function buildJsClickShowWidget(iShowWidget $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickShowWidget(iShowWidget $action, string $jsRequestData) : string
     {
         $widget = $this->getWidget();
         $output = '';
@@ -387,20 +736,15 @@ JS;
                 throw new ActionConfigurationError($action, 'Input mappers not supported in navigating actions as "' . $action->getAliasWithNamespace() . '"!');
             }
             
-            $output = <<<JS
-
-            {$this->buildJsRequestDataCollector($action, $input_element)}	
-
-JS;
             if ($action->getPrefillWithPrefillData()) {
                 if ($prefillPreset = $action->getPrefillDataPreset()) {
                     $prefill_param = '&prefill=\' + JSON.stringify(' . $this->buildJsPrefillDataFromPreset($prefillPreset) . ') + \'';
-                } else {
+                } elseif ($widget->getMetaObject()->hasUidAttribute()) {
                     $output .= <<<JS
 
 			var prefillRows = [];
-			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
-				prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
+			if ($jsRequestData.rows && $jsRequestData.rows.length > 0 && $jsRequestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+				prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: $jsRequestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
 			}
 
 JS;
@@ -421,8 +765,8 @@ JS;
             
             $output .= <<<JS
 
-            {$input_element->buildJsBusyIconShow()}
-			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element, $newWindow)}
+            {$this->getInputElement()->buildJsBusyIconShow()}
+			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $this->getInputElement(), $newWindow)}
 
 JS;
         }
@@ -460,7 +804,7 @@ JS;
     }
     
     /**
-     * Generates the JS code to navigate to another UI page.
+     * Generates the JS code to navigate to another UI page - eventually opening a new browser tab
      * 
      * @param string $pageSelector
      * @param string $urlParams
@@ -478,48 +822,98 @@ JS;
         return $this->buildJsBusyIconHide() . ';' . $js;
     }
 
-    protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)
+    /**
+     * Returns the JS code to call the browsers back-navigation.
+     * 
+     * @param ActionInterface $action
+     * @param AbstractJqueryElement $input_element
+     * @return string
+     */
+    protected function buildJsClickGoBack(ActionInterface $action) : string
     {
-        return $input_element->buildJsBusyIconShow() . 'parent.history.back(); return false;';
+        return $this->getInputElement()->buildJsBusyIconShow() . 'parent.history.back(); return false;';
     }
 
-    protected function buildJsClickShowUrl(ActionInterface $action, AbstractJqueryElement $input_element)
+    /**
+     * Returns the JS code to navigate to the actions URL - eventually opening a new browser tab.
+     * 
+     * @param ActionInterface $action
+     * @param string $jsRequestData
+     * @return string
+     */
+    protected function buildJsClickShowUrl(ActionInterface $action, string $jsRequestData) : string
     {
+        $input_element = $this->getInputElement();
         /* @var $action \exface\Core\Interfaces\Actions\iShowUrl */
         $output = $this->buildJsRequestDataCollector($action, $input_element) . "
 					var " . $action->getAlias() . "Url='" . $action->getUrl() . "';
-					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "requestData.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
-        if ($action->getOpenInNewWindow()) {
-            $output .= $input_element->buildJsBusyIconShow() . "window.open(" . $action->getAlias() . "Url);" . $input_element->buildJsBusyIconHide();
-        } else {
-            $output .= $input_element->buildJsBusyIconShow() . "window.location.href = " . $action->getAlias() . "Url;";
+					" . $this->buildJsPlaceholderReplacer($action->getAlias() . "Url", "{$jsRequestData}.rows[0]", $action->getUrl(), ($action->getUrlencodePlaceholders() ? 'encodeURIComponent' : null));
+        
+        switch (true) {
+            case $action->getOpenInNewWindow() === true:
+                $output .= $input_element->buildJsBusyIconShow() . "window.open(" . $action->getAlias() . "Url);" . $input_element->buildJsBusyIconHide();
+                break;
+            case null !== $browserId = $action->getOpenInBrowserWidget():
+                $output .= $this->getFacade()->getElementByWidgetId($browserId, $this->getWidget()->getPage())->buildJsValueSetter("{$action->getAlias()}Url");
+                break;
+            default:
+                $output .= $input_element->buildJsBusyIconShow() . "window.location.href = " . $action->getAlias() . "Url;";
         }
         return $output;
     }
 
-    protected function buildJsClickRunFacadeScript(ActionInterface $action, AbstractJqueryElement $input_element)
+    /**
+     * Returns the JS code to run the javascript stored inside the action
+     * 
+     * @param ActionInterface $action
+     * @return string
+     */
+    protected function buildJsClickRunFacadeScript(ActionInterface $action) : string
     {
-        $widget = $this->getWidget();
+        $inputEl = $this->getInputElement();
+        $facade = $this->getFacade();
+        $script = $action->buildScript($facade, $inputEl->getWidget());
+        $phs = StringDataType::findPlaceholders($script);
+        $phVals = $this->getCommonPlaceholderValues($phs);
+        // Backwards compatibility with older scripts
+        if (in_array('widget_id', $phs) === true) {
+            $phVals['widget_id'] = $this->getInputElement()->getId();
+        }
+        if (! empty($phVals)) {
+            $script = StringDataType::replacePlaceholders($script, $phVals);
+        }
         
-        $output = $action->buildScript($input_element->getId());
-        $output .= '
-				' . $this->buildJsCloseDialog($widget, $input_element);
+        return <<<JS
         
-        return $output;
+                {$script};
+                {$this->buildJsTriggerActionEffects($action)};
+                {$this->buildJsCloseDialog()};
+
+JS;
+
     }
     
-    protected function buildJsClickRefreshWidget(ActionInterface $action, AbstractJqueryElement $input_element)
+    /**
+     * Returns the JS code to refresh the input widget of the action
+     * 
+     * @param ActionInterface $action
+     * @return string
+     */
+    protected function buildJsClickRefreshWidget(ActionInterface $action) : string
     {
-        $output = $input_element->buildJsRefresh();
-        $output .= '
-				' . $this->buildJsCloseDialog($this->getWidget(), $input_element);
+        return <<<JS
+
+                {$this->getInputElement()->buildJsRefresh()};
+                {$this->buildJsTriggerActionEffects($action)};
+                {$this->buildJsCloseDialog()};
         
-        return $output;
+JS;
     }
 
-    protected function buildJsUndoUrl(ActionInterface $action, AbstractJqueryElement $input_element)
+    protected function buildJsUndoUrl(ActionInterface $action) : string
     {
         $widget = $this->getWidget();
+        $undo_url = '';
         if ($action->isUndoable()) {
             $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . $widget->getId();
         }
@@ -549,9 +943,29 @@ JS;
      * 
      * @return string
      */
-    public function buildJsOnSuccessScript() : string
+    protected function buildJsOnSuccessScript() : string
     {
         return implode("\n\n", array_unique($this->onSuccessJs));
+    }
+    
+    /**
+     *
+     * @param string $js
+     * @return AbstractJqueryElement
+     */
+    public function addOnErrorScript(string $js) : AbstractJqueryElement
+    {
+        $this->onErrorJs[] = $js;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function buildJsOnErrorScript() : string
+    {
+        return implode("\n\n", array_unique($this->onErrorJs));
     }
     
     /**
@@ -584,33 +998,106 @@ JS;
      * Passes the result of the data-getter of the input widget to the data-setter of the target widget
      * 
      * @param SendToWidget $action
-     * @param AbstractJqueryElement $input_element
+     * @param string $jsRequestData
+     * 
      * @return string
      */
-    protected function buildJsClickSendToWidget(SendToWidget $action, AbstractJqueryElement $input_element)
+    protected function buildJsClickSendToWidget(SendToWidget $action, string $jsRequestData) : string
     {
-        $widget = $this->getWidget();
         $targetElement = $this->getFacade()->getElementByWidgetId($action->getTargetWidgetId(), $this->getWidget()->getPage());
         
         return <<<JS
 
-                        {$this->buildJsRequestDataCollector($action, $input_element)}
-						if ({$input_element->buildJsValidator()}) {
-                            {$targetElement->buildJsDataSetter('requestData')}
-                            {$this->buildJsCloseDialog($widget, $input_element)}
-                            {$this->buildJsInputRefresh($widget)}
+                        if ({$this->getInputElement()->buildJsValidator()}) {
+                            {$targetElement->buildJsDataSetter($jsRequestData)}
+                            {$this->buildJsTriggerActionEffects($action)}
+                            {$this->buildJsCloseDialog()}
                         }
 
 JS;
     }
     
     /**
-     * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
      * 
-     * @param WidgetInterface $widget
+     * @param iCallWidgetFunction $action
      * @param AbstractJqueryElement $input_element
      * @return string
      */
-    abstract protected function buildJsCloseDialog($widget, $input_element);
+    protected function buildJsClickCallWidgetFunction(iCallWidgetFunction $action) : string
+    {
+        $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
+        $beforeJs = '';
+        $afterJs = '';
+        $thisButtonScriptJs = <<<JS
+
+                {$this->buildJsTriggerActionEffects($action)}
+                {$this->buildJsCloseDialog()}
+JS;
+        
+        // If the widget function is pressing another button, make sure the success/error 
+        // scripts of this button run AFTER the action of that other button succeeds/fails. 
+        // This is particularly important for dialog buttons, that press other types of
+        // buttons (e.g. data buttons). The dialog button should only close its dialog
+        // AFTER the other button succeeded. It should not close the dialog if the
+        // other button failed!
+        if ($action->getFunctionName() === Button::FUNCTION_PRESS && ($targetEl->getWidget() instanceof iTriggerAction)) {
+            // add the onErrorScripts of the calling Button to the error scripts of the Button to be pressed
+            // FIXME this does not work if the other button is already rendered...
+            if (method_exists($targetEl, 'addOnErrorScript')) {
+                $targetEl->addOnErrorScript($this->buildJsOnErrorScript());
+            }
+            // Add an event listener to on-action-performed to trigger postprocessing for 
+            // this button.
+            $afterJs = '';
+            $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+            $beforeJs = <<<JS
+
+            $( document ).off( "{$actionperformed}.{$this->getId()}" );
+            $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oParams ) {
+                var sTriggerWidgetId = "{$targetEl->getWidget()->getId()}";
+                if (oParams.trigger_widget_id !== sTriggerWidgetId) {
+                    return;
+                }
+                // Avoid errors if widget was removed already
+                if ({$this->buildJsCheckInitialized()} === false || {$targetEl->buildJsCheckInitialized()} === false) {
+                    return;
+                }
+                {$thisButtonScriptJs}
+            });
+JS;
+        } else {
+            $afterJs = $thisButtonScriptJs;
+        }
+        
+        // Make sure to trigger the widget function only once the 
+        return <<<JS
+
+            {$beforeJs}
+            {$targetEl->buildJsCallFunction($action->getFunctionName(), $action->getFunctionArguments())}
+            {$afterJs}
+JS;
+    }
+    
+    /**
+     * If it's a `DialogButton` returns the JS code to close the dialog after the action succeeds.
+     * 
+     * @return string
+     */
+    abstract protected function buildJsCloseDialog() : string;
+    
+    /**
+     * 
+     * @see AbstractJqueryElement::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === null:
+            case $functionName === Button::FUNCTION_PRESS:
+                return $this->buildJsClickFunctionName() . '()';
+            case $functionName === Button::FUNCTION_FOCUS:
+                return "$('#{$this->getId()}').focus()";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
+    }
 }
-?>

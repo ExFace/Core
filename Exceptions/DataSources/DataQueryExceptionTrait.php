@@ -55,10 +55,6 @@ trait DataQueryExceptionTrait {
      * the data query.
      *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::createDebugWidget()
-     *
-     * @param
-     *            ErrorMessage
-     * @return ErrorMessage
      */
     public function createDebugWidget(DebugMessage $error_message)
     {
@@ -66,4 +62,3 @@ trait DataQueryExceptionTrait {
         return $this->getQuery()->createDebugWidget($error_message);
     }
 }
-?>

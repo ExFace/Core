@@ -36,6 +36,7 @@ class Model implements ModelInterface
     }
 
     /**
+     * @deprecated use MetaObjectFactory::createFromUid()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObjectById()
@@ -54,22 +55,20 @@ class Model implements ModelInterface
     /**
      * Returns a copy of the given object freshly read from the meta model.
      * 
-     * NOTE: since this method creates a new instance of the object, all behaviors are instatiated as well,
-     * eventually registering their events a second time. This may lead to unexpected behavior: e.g. if
-     * you disabled/changed a behavior for an object, but this object is being refreshed, it will register 
-     * a new behavior, which will not be affected by the changes on the old one.
-     * 
      * @param MetaObjectInterface $object
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function reloadObject(MetaObjectInterface $object)
     {
-        $obj = $this->getModelLoader()->loadObjectById($this, $object->getId());
-        $this->cacheObject($obj);
-        return $obj;
+        $oId = $object->getId();
+        $this->destroyObject($object);
+        $object = $this->getModelLoader()->loadObjectById($this, $oId);
+        $this->cacheObject($object);
+        return $object;
     }
-    
+    	
     /**
+     * @deprecated use MetaObjectFactory::createFromAliasAndNamespace()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObjectByAlias()
@@ -98,6 +97,7 @@ class Model implements ModelInterface
     }
 
     /**
+     * @deprecated use MetaObjectFactory::createFromString()
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObject()
@@ -110,18 +110,21 @@ class Model implements ModelInterface
             $selector = new MetaObjectSelector($this->getWorkbench(), $selectorOrString);
         }
         
-        // If the given identifier looks like a UUID, try using it as object id. If this fails, try using it as alias anyway.
         $object = null;
         if ($selector->isUid()) {
-            try {
-                $object = $this->getObjectById($selector->toString());
-            } catch (MetaObjectNotFoundError $e) {
-                $object = null;
+            $object = $this->getObjectById($selector->toString());
+        } else {
+            $fullAlias = trim($selector->toString());
+            if ($fullAlias === '') {
+                throw new MetaObjectNotFoundError('Meta object with alias "' . $fullAlias . '" not found!');
             }
-        }
-        
-        if (! $object) {
-            $alias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
+            $appAlias = $selector->getAppAlias();
+            if ($appAlias === $fullAlias) {
+                $alias = $appAlias;
+                $appAlias = '';
+            } else {
+                $alias = substr($fullAlias, (strlen($appAlias)+1));
+            }
             $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
         }
         
@@ -136,7 +139,9 @@ class Model implements ModelInterface
      */
     private function getObjectIdFromAlias($object_alias, $namespace)
     {
-        if ($id = $this->object_library[$namespace][$object_alias]) {
+    	$object_alias = mb_strtolower($object_alias);
+    	$namespace = mb_strtolower($namespace);
+        if ($id = ($this->object_library[$namespace][$object_alias] ?? null)) {
             return $id;
         } else {
             return false;
@@ -147,12 +152,13 @@ class Model implements ModelInterface
      * Checks if the object is loaded already and returns the cached version.
      * Returns false if the object is not in the cache.
      *
-     * @param int $object_id            
+     * @param int $object_id
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     private function getObjectFromCache($object_id)
     {
-        if ($obj = $this->loaded_objects[$object_id]) {
+    	$object_id = mb_strtolower($object_id);
+        if ($obj = ($this->loaded_objects[$object_id] ?? null)) {
             return $obj;
         } else {
             return false;
@@ -163,13 +169,13 @@ class Model implements ModelInterface
      * Adds the object to the model cache.
      * Also sets the default namespace, if it is the first object loaded.
      *
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
      * @return boolean
      */
     private function cacheObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
     {
-        $this->loaded_objects[$obj->getId()] = $obj;
-        $this->object_library[$obj->getNamespace()][$obj->getAlias()] = $obj->getId();
+        $this->loaded_objects[mb_strtolower($obj->getId())] = $obj;
+        $this->object_library[mb_strtolower($obj->getNamespace())][mb_strtolower($obj->getAlias())] = $obj->getId();
         if (! $this->getDefaultNamespace()) {
             $this->setDefaultNamespace($obj->getNamespace());
         }
@@ -189,7 +195,7 @@ class Model implements ModelInterface
     /**
      * Returns the object part of a full alias ("CUSTOMER" from "CRM.CUSTOMER")
      *
-     * @param string $qualified_alias_with_app            
+     * @param string $qualified_alias_with_app
      * @return string
      */
     public function getObjectAliasFromQualifiedAlias($qualified_alias_with_app)
@@ -204,7 +210,7 @@ class Model implements ModelInterface
     /**
      * Returns the app part of a full alias ("CRM" from "CRM.CUSTOMER")
      *
-     * @param string $qualified_alias_with_app            
+     * @param string $qualified_alias_with_app
      * @return string
      */
     public function getNamespaceFromQualifiedAlias($qualified_alias_with_app)
@@ -261,5 +267,37 @@ class Model implements ModelInterface
         $this->model_loader = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $obj
+     */
+    private function destroyObject(MetaObjectInterface $obj)
+    {
+        foreach ($obj->getBehaviors()->getAll() as $beh) {
+            $beh->disable();
+        }
+        unset ($obj);
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ModelInterface::clearCache()
+     */
+    public function clearCache() : ModelInterface
+    {
+        // Make sure to unregister any behaviors because the object instances are not destroyed right away
+        // but rather handled by the garbage collector at some later time. Thus, the behaviors remain active
+        // and will respond to events even after their objects are not used anymore. This caused errors in
+        // installers.
+        foreach ($this->loaded_objects as $obj) {
+            $this->destroyObject($obj);
+        }
+        $this->object_library = [];
+        $this->loaded_objects = [];
+        $this->getModelLoader()->clearCache();
+        return $this;
+    }
 }
-?>

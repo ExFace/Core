@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
 use exface\Core\Widgets\Parts\DataSchedulerResource;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Widgets\Traits\iCanEditDataTrait;
 
 /**
  * Shows a timeline with events per resource (lane) - like Outlook scheduling assistant.
@@ -12,13 +16,17 @@ use exface\Core\Widgets\Parts\DataSchedulerResource;
  * @author Andrej Kabachnik
  *
  */
-class Scheduler extends Data
+class Scheduler extends Data implements iFillEntireContainer, iCanEditData
 {
+    use iCanEditDataTrait;
+    
     private $timelinePart = null;
     
     private $calendarItemPart = null;
     
     private $schedulerResourcePart = null;
+    
+    private $startDate = null;
     
     /**
      *
@@ -58,6 +66,7 @@ class Scheduler extends Data
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('timeline', $this->getTimelineConfig()->exportUxonObject());
         $uxon->setProperty('items', $this->getItemConfig()->exportUxonObject());
+        $uxon = $uxon->extend($this->exportUxonForEditableProperties());
         return $uxon;
     }
     
@@ -121,5 +130,37 @@ class Scheduler extends Data
     public function hasResources() : bool
     {
         return $this->schedulerResourcePart !== null;
+    }
+    
+    public function getStartDate() : ?string
+    {
+        return $this->startDate;
+    }
+    
+    /**
+     * The left-most date in the scheduler: can be a real date or a relative date - e.g. `-2w`.
+     * 
+     * If not set, the date of the first item will be used.
+     * 
+     * @uxon-property start_date
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return Scheduler
+     */
+    public function setStartDate(string $value) : Scheduler
+    {
+        $this->startDate = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings() : ?iContainOtherWidgets
+    {
+        return null;
     }
 }

@@ -36,11 +36,13 @@ use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Exceptions\EncryptionError;
 use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
     use ImportUxonObjectTrait {
-		importUxonObject as importUxonObjectDefault;
+		importUxonObject as importUxonViaTrait;
 	}
 	use MetaModelPrototypeTrait;
 
@@ -61,6 +63,12 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     private $connected = false;
     
     private $readonly = false;
+    
+    private $timeZone = null;
+    
+    private $filterContextUxon = null;
+    
+    private $uxon = null;
     
     /**
      *
@@ -104,7 +112,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
+        return ($this->getNamespace() ? $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER : '') . $this->getAlias();
     }
     
     /**
@@ -165,22 +173,29 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     }
     
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getSelector()
      */
-    protected function getClassnameSuffixToStripFromAlias() : string
-    {
-        return '';
-    }
-    
     public function getSelector() : ?DataConnectionSelectorInterface
     {
-        return $this->selector;
+        if ($this->id !== null) {
+            return new DataConnectionSelector($this->getWorkbench(), $this->id);
+        }
+        if ($this->alias !== null) {
+            return new DataConnectionSelector($this->getWorkbench(), $this->getAliasWithNamespace());
+        }
+        return null;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getPrototypeSelector()
+     */
     public function getPrototypeSelector() : DataConnectorSelectorInterface
     {
-        return $this->getPrototypeSelector();
+        return $this->prototypeSelector;
     }
 
     /**
@@ -191,7 +206,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public function exportUxonObject()
     {
-        return new UxonObject();
+        return $this->uxon ?? new UxonObject();
     }
 
     /**
@@ -203,7 +218,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
     public function importUxonObject(UxonObject $uxon)
     {
         try {
-            return $this->importUxonObjectDefault($uxon);
+            $this->uxon = $uxon;
+            return $this->importUxonViaTrait($uxon);
         } catch (UxonMapError $e) {
             throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: ' . $e->getMessage(), '6T4F41P', $e);
         }
@@ -264,8 +280,14 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         if ($this->isConnected() === false) {
             $this->connect();
         }
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeQueryEvent($this, $query));        
+        
+        if ((null !== $tz = $this->getTimeZone()) && $query->getTimeZone() === null) {
+            $query->setTimeZone($tz);
+        }
         $result = $this->performQuery($query);
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnQueryEvent($this, $query));
         return $result;
     }
@@ -525,8 +547,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface
                         $this->getWorkbench()->getLogger()->logException($e);
                         $oldUxon = new UxonObject();
                     }
-                    $newUxon = $oldUxon->extend($uxon);
-                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $newUxon->toJson());
+                    $uxon = $oldUxon->extend($uxon);
+                    $credData->setCellValue('DATA_CONNECTOR_CONFIG', 0, $uxon->toJson());
                     $credData->dataUpdate(false, $transaction);
                     break;
                 } else {
@@ -574,6 +596,113 @@ abstract class AbstractDataConnector implements DataConnectionInterface
         
         $transaction->commit();
         
+        // Apply the configuratio to this instance too!
+        // First extract the credentials properties from the current UXON model of the connection,
+        // then merge them with the just saved credentials values and import that merged UXON
+        $currentUxon = $this->exportUxonObject()->extract(array_keys($uxon->toArray()));
+        $mergedUxon = $currentUxon->extend($uxon);
+        $this->importUxonObject($mergedUxon);
+        
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getTimeZone()
+     */
+    public function getTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * The time zone expected for all values inside this data source, that do not have an explicit time zone defined
+     * 
+     * @uxon-property time_zone
+     * @uxon-type string 
+     * 
+     * @param string $value
+     * @return AbstractDataConnector
+     */
+    public function setTimeZone(string $value) : AbstractDataConnector
+    {
+        $this->timeZone = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return UxonObject|NULL
+     */
+    protected function getFilterContext() : ?UxonObject
+    {
+        return $this->filterContextUxon;
+    }
+    
+    /**
+     * Adds conditions to the filter context (in the application context scope)
+     * 
+     * This feature allows to add global filters to all queries over certain object. This may be
+     * usefull, if a connection should only make parts of the data visible. 
+     * 
+     * **NOTE:** in general, it is better to use the data authorization point to hide data on certain
+     * occasions. Concider data authorization first, before using hard-coded filter context
+     * conditions here!
+     * 
+     * @uxon-property filter_context
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * 
+     * @param UxonObject $uxonObjectOrArray
+     * @return AbstractDataConnector
+     */
+    protected function setFilterContext(UxonObject $uxonObjectOrArray) : AbstractDataConnector
+    {
+        if ($uxonObjectOrArray->isEmpty()) {
+            return $this;
+        }
+        
+        $this->filterContextUxon = $uxonObjectOrArray;
+        
+        // If there is only one filter, make an array out of it (needed for backwards compatibility)
+        if (! $uxonObjectOrArray->isArray()){
+            $uxonObjectOrArray = new UxonObject([$uxonObjectOrArray->toArray()]);
+        }
+        
+        // Register the filters in the application context scope
+        foreach ($uxonObjectOrArray as $filter) {
+            $condition = ConditionFactory::createFromUxon($this->getWorkbench(), $filter);
+            $this->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::isExactly()
+     */
+    public function isExactly($selectorOrString) : bool
+    {
+        switch (true) {
+            case is_string($selectorOrString):
+                $selector = new DataConnectionSelector($this->getWorkbench(), $selectorOrString);
+                break;
+            case $selectorOrString instanceof DataConnectionSelectorInterface:
+                $selector = $selectorOrString;
+                break;
+            default:
+                return false;
+        }
+        
+        switch (true) {
+            case $selector->isUid() && $this->id !== null:
+                return strcasecmp($this->id, $selector->toString()) === 0;
+            case $selector->isAlias() && $this->alias !== null:
+                return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
+        }
+        
+        return false;
     }
 }

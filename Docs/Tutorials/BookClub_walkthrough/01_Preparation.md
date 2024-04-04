@@ -1,6 +1,6 @@
 # Things to do before the BookClub tutorial
 
-#### < Previous | [BookClub tutorial](index.md) | [Next >](02_Creating_a_new_app.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) <kbd> <br>< Previous <br> </kbd> [<kbd> <br>Next > <br> </kbd>](02_Creating_a_new_app.md)
 
 ## 1. Check the requirements
 
@@ -123,4 +123,4 @@ COMMIT;
 
 Start a new metamodel by [creating an app](02_Creating_a_new_app.md).
 
-### < Previous | [BookClub tutorial](index.md) | [Next >](02_Creating_a_new_app.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) <kbd> <br>< Previous <br> </kbd> [<kbd> <br>Next > <br> </kbd>](02_Creating_a_new_app.md)

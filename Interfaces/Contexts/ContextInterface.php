@@ -7,6 +7,10 @@ use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\Interfaces\TaskHandlerInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * A context is a container for stateful data, that needs to live longer, than
@@ -33,7 +37,12 @@ use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, WorkbenchDependantInterface
+interface ContextInterface extends 
+    AliasInterface, 
+    iCanBeConvertedToUxon, 
+    WorkbenchDependantInterface, 
+    TaskHandlerInterface,
+    iHaveIcon
 {
     
     const CONTEXT_BAR_SHOW_ALLWAYS = 'show_allways';
@@ -155,21 +164,6 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Workbe
     public function getContextBarPopup(Container $container);
     
     /**
-     * Returns the name of the icon for this context.
-     * 
-     * @return string
-     */
-    public function getIcon();
-    
-    /**
-     * Sets the name of the icon to be used for this context. 
-     * 
-     * @param string $icon
-     * @return ContextInterface
-     */
-    public function setIcon($icon);
-    
-    /**
      * Returns a human readable (translated!) name of the context
      * 
      * @return string
@@ -196,5 +190,11 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Workbe
      * @return ContextSelectorInterface
      */
     public function getSelector() : ContextSelectorInterface;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
+    public function handle(TaskInterface $task, string $operation = null) : ResultInterface;
 }
-?>

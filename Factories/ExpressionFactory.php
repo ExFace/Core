@@ -18,21 +18,35 @@ abstract class ExpressionFactory
      * TODO Make the object a mandatory parameter. This requires a lot of changes to formulas, however. Probably will do that when rewriting the formula parser.
      *
      * @param WorkbenchInterface $exface            
-     * @param string $expression            
+     * @param string|mixed|NULL $expression            
      * @param MetaObjectInterface $object            
      * @return ExpressionInterface
      */
-    public static function createFromString(WorkbenchInterface $exface, $string, MetaObjectInterface $object = null, bool $treatUnknownAsString = false) : ExpressionInterface
+    public static function createFromString(WorkbenchInterface $exface, $scalar, MetaObjectInterface $object = null, bool $treatUnknownAsString = false) : ExpressionInterface
     {
         // IDEA cache expressions within the workbench instead of a static cache?
         
-        $objId = $object === null ? 'null' : $object->getId()  . '-' . $treatUnknownAsString;
-        
-        if (! isset(self::$cache[$string]) || ! isset(self::$cache[$string][$objId])) {
-            $expr = new Expression($exface, $string, $object, true, $treatUnknownAsString);
-            self::$cache[$string][$objId] = $expr;
+        // Be carefull when caching as the Expression parser might see a difference in
+        // similar values of different types: e.g. `0`, `false` and `'0'` will yield
+        // the same cache key, but are different expressions! This is why the cache
+        // key gets the type as prefix.
+        $objKey = $object === null ? 'null' : $object->getId()  . '-' . $treatUnknownAsString;
+        $type = gettype($scalar);
+        if ($type === 'boolean') {
+            // Convert the boolean value `true` to `1` and the
+            // boolean value `false` to '0' because else PHP automatically
+            // converts `true` to `1` when it is treated as a string but
+            // converts `false` to `` instead of `0`
+            $string = $scalar ? '1' : '0';
         } else {
-            $expr = self::$cache[$string][$objId];
+            $string = $scalar;
+        }
+        $exprKey = $type . ':' . $string;
+        if (! isset(self::$cache[$exprKey]) || ! isset(self::$cache[$exprKey][$objKey])) {
+            $expr = new Expression($exface, $scalar, $object, true, $treatUnknownAsString);
+            self::$cache[$exprKey][$objKey] = $expr;
+        } else {
+            $expr = self::$cache[$exprKey][$objKey];
         }
         
         return $expr;

@@ -44,28 +44,38 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
         {
-            "CREATED_ON": "2020-04-28 13:14:36",
-            "MODIFIED_ON": "2020-05-11 12:13:35",
-            "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
+            "CREATED_ON": "2021-10-04 08:10:34",
+            "MODIFIED_ON": "2021-10-04 08:10:34",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11ea894171ce99a9aa6e025041000001",
+            "UID": "0x11ec972ec9a59654972e025041000001",
             "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
             "CONFIG_UXON": {
                 "on_duplicate_multi_row": "update",
                 "on_duplicate_single_row": "update",
                 "compare_attributes": [
-                    "USER",
+                    "AUTHENTICATOR_USERNAME",
                     "AUTHENTICATOR"
                 ]
             },
             "OBJECT": "0x11ea8619c8d1453697940205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "PreventDuplicates",
-            "DESCRIPTION": ""
+            "NAME": "Username unique per authenticator",
+            "DESCRIPTION": "Should the same authenticator-username be assigned to a new user for some reason, this behavior will \"move\" it to the new user instead of creating a duplicate",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

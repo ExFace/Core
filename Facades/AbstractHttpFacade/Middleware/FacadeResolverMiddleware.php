@@ -17,6 +17,8 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 
 /**
  * This PSR-15 middleware will look for a facade responsible for the given request
@@ -56,10 +58,18 @@ class FacadeResolverMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        try {
-            $facade = $this->getFacadeFromUri($request->getUri());
-        } catch (FacadeRoutingError $eRouter) {
-            $this->workbench->start();
+        $facade = $this->getFacadeFromUriRoutes($request->getUri());
+        if ($facade === null) {
+            // TODO add more specific response for additional exception types          
+            try {
+                $this->workbench->start();
+            } catch (\Exception $e) {
+                $this->workbench->getLogger()->logException($e);
+                if ($e instanceof DataConnectionFailedError) {                    
+                    return new Response(500, [], "Workbench couldn't start. Could not connect to metamodel database!");
+                }
+                return new Response(500, [], "Workbench couldn't start. Undefined error when starting workbench!");                
+            }
             try {
                 $page = $this->getPageFromUri($request->getUri());
                 $facade = $page->getFacade();
@@ -71,8 +81,18 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                     $request = $request->withAttribute($facade->getRequestAttributeForWidget(), $page->getWidgetRoot()->getId());
                 }
             } catch (FacadeRoutingError $ePage) {
-                $this->workbench->getLogger()->logException($eRouter)->logException($ePage);
-                return new Response(404, [], $eRouter->getMessage());
+                $logLevel = null;
+                $uri = $request->getUri()->__toString();
+                switch (true) {
+                    // Lower log level for JS-map URLs often happening in browser developer console.
+                    case StringDataType::endsWith($uri, '.js.map', false): 
+                    case StringDataType::endsWith($uri, 'map.js', false):
+                        $logLevel = LoggerInterface::NOTICE;
+                        break;
+                }
+                $this->workbench->getLogger()
+                    ->logException($ePage, $logLevel);
+                return new Response(404, [], $ePage->getMessage());
             }
         }
         
@@ -85,6 +105,13 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         return $facade->handle($request);
     }
     
+    /**
+     * Searches for UI pages with aliases matching the URI
+     * 
+     * @param UriInterface $uri
+     * @throws FacadeRoutingError
+     * @return UiPageInterface
+     */
     protected function getPageFromUri(UriInterface $uri) : UiPageInterface
     {
         // If not, see if the URL matches a page alias
@@ -95,21 +122,22 @@ class FacadeResolverMiddleware implements MiddlewareInterface
         
         try {
             if ($aliasFromUrl === '') {
-                $aliasFromUrl = $this->workbench->getConfig()->getOption('SERVER.INDEX_PAGE_SELECTOR');
+                return $this->workbench->getSecurity()->getAuthenticatedUser()->getStartPage();
+            } else {
+                return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
             }
-            return UiPageFactory::createFromModel($this->workbench, $aliasFromUrl);
         } catch (UiPageNotFoundError $e) {            
             throw new FacadeRoutingError('No route can be found for URL "' . $uri->getPath() . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!', null, $e);
         }
     }
     
     /**
-     * 
+     * Matches the URI against FACADES.ROUTES config and returns the matching facade or NULL if no match.
+     *  
      * @param UriInterface $uri
-     * @throws FacadeRoutingError
-     * @return HttpFacadeInterface
+     * @return HttpFacadeInterface|NULL
      */
-    protected function getFacadeFromUri(UriInterface $uri) : HttpFacadeInterface
+    protected function getFacadeFromUriRoutes(UriInterface $uri) : ?HttpFacadeInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();
         $routes = $this->workbench->getConfig()->getOption('FACADES.ROUTES');
@@ -121,7 +149,7 @@ class FacadeResolverMiddleware implements MiddlewareInterface
                 return FacadeFactory::createFromString($facadeAlias, $this->workbench);
             }
         }
-        throw new FacadeRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option FACADES.ROUTES or reinstall your facade!');
+        return null;
     }
     
     /**

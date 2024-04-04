@@ -93,7 +93,7 @@ class MessageList extends Container
      * @param Message $widget
      * @return MessageList
      */
-    public function addMesage(Message $widget) : MessageList
+    public function addMessage(Message $widget) : MessageList
     {
         $this->addWidget($widget);
         return $this;
@@ -167,23 +167,23 @@ class MessageList extends Container
     /**
      * Creates a message of the given type and appends it to the list.
      * 
-     * @param string $type
+     * @param string|MessageTypeDataType $type
      * @param string $text
      * @param string $title
      * 
      * @return MessageList
      */
-    protected function addMessageFromString(MessageTypeDataType $type, string $text, string $title = null, string $subtitle = null) : MessageList
+    public function addMessageFromString($type, string $text, string $title = null, string $subtitle = null) : MessageList
     {
         $message = WidgetFactory::createFromUxon($this->getPage(), new UxonObject([
             'widget_type' => 'Message',
-            'type' => $type->__toString(),
+            'type' => ($type instanceof MessageTypeDataType) ? $type->__toString() : MessageTypeDataType::cast($type),
             'text' => ($subtitle ?? $text)
         ]), $this);
         if ($title !== null) {
             $message->setCaption($title);
         }
-        $this->addMesage($message);
+        $this->addMessage($message);
         return $this;
     }
     
@@ -197,6 +197,16 @@ class MessageList extends Container
     {
         $this->messageCodesToLoad[$messageCode] = $fallbackMessage;
         return $this;
+    }
+    
+    /**
+     * 
+     * @param Message $messageModel
+     * @return \exface\Core\CommonLogic\Model\Message
+     */
+    public function addMessageFromModel(\exface\Core\CommonLogic\Model\Message $messageModel) : MessageList
+    {
+        return $this->addMessageFromString($messageModel->getType(), $messageModel->getDescription() ?? '', $messageModel->getTitle() . ' (' . $messageModel->getCode() . ')', $messageModel->getHint());
     }
     
     /**

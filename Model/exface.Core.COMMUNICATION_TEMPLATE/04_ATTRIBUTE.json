@@ -1,0 +1,652 @@
+{
+    "object_alias": "exface.Core.ATTRIBUTE",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "SORTABLEFLAG",
+            "attribute_alias": "SORTABLEFLAG"
+        },
+        {
+            "name": "FILTERABLEFLAG",
+            "attribute_alias": "FILTERABLEFLAG"
+        },
+        {
+            "name": "AGGREGATABLEFLAG",
+            "attribute_alias": "AGGREGATABLEFLAG"
+        },
+        {
+            "name": "DEFAULT_AGGREGATE_FUNCTION",
+            "attribute_alias": "DEFAULT_AGGREGATE_FUNCTION"
+        },
+        {
+            "name": "VALUE_LIST_DELIMITER",
+            "attribute_alias": "VALUE_LIST_DELIMITER"
+        },
+        {
+            "name": "READABLEFLAG",
+            "attribute_alias": "READABLEFLAG"
+        },
+        {
+            "name": "WRITABLEFLAG",
+            "attribute_alias": "WRITABLEFLAG"
+        },
+        {
+            "name": "SYSTEMFLAG",
+            "attribute_alias": "SYSTEMFLAG"
+        },
+        {
+            "name": "DEFAULT_EDITOR_UXON",
+            "attribute_alias": "DEFAULT_EDITOR_UXON"
+        },
+        {
+            "name": "COPY_WITH_RELATED_OBJECT",
+            "attribute_alias": "COPY_WITH_RELATED_OBJECT"
+        },
+        {
+            "name": "DELETE_WITH_RELATED_OBJECT",
+            "attribute_alias": "DELETE_WITH_RELATED_OBJECT"
+        },
+        {
+            "name": "DEFAULT_DISPLAY_UXON",
+            "attribute_alias": "DEFAULT_DISPLAY_UXON"
+        },
+        {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
+            "name": "COPYABLEFLAG",
+            "attribute_alias": "COPYABLEFLAG"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "DATATYPE",
+            "attribute_alias": "DATATYPE"
+        },
+        {
+            "name": "DATA_ADDRESS",
+            "attribute_alias": "DATA_ADDRESS"
+        },
+        {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
+            "name": "FORMATTER",
+            "attribute_alias": "FORMATTER"
+        },
+        {
+            "name": "DISPLAYORDER",
+            "attribute_alias": "DISPLAYORDER"
+        },
+        {
+            "name": "LABELFLAG",
+            "attribute_alias": "LABELFLAG"
+        },
+        {
+            "name": "UIDFLAG",
+            "attribute_alias": "UIDFLAG"
+        },
+        {
+            "name": "HIDDENFLAG",
+            "attribute_alias": "HIDDENFLAG"
+        },
+        {
+            "name": "EDITABLEFLAG",
+            "attribute_alias": "EDITABLEFLAG"
+        },
+        {
+            "name": "REQUIREDFLAG",
+            "attribute_alias": "REQUIREDFLAG"
+        },
+        {
+            "name": "RELATED_OBJ",
+            "attribute_alias": "RELATED_OBJ"
+        },
+        {
+            "name": "SORTERPOS",
+            "attribute_alias": "SORTERPOS"
+        },
+        {
+            "name": "SORTERDIR",
+            "attribute_alias": "SORTERDIR"
+        },
+        {
+            "name": "RELATED_OBJ_ATTR",
+            "attribute_alias": "RELATED_OBJ_ATTR"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "name": "DATA_ADDRESS_PROPS",
+            "attribute_alias": "DATA_ADDRESS_PROPS"
+        },
+        {
+            "name": "DEFAULT_VALUE",
+            "attribute_alias": "DEFAULT_VALUE"
+        },
+        {
+            "name": "FIXED_VALUE",
+            "attribute_alias": "FIXED_VALUE"
+        },
+        {
+            "name": "CUSTOM_DATA_TYPE",
+            "attribute_alias": "CUSTOM_DATA_TYPE"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2022-09-19 13:19:22",
+            "MODIFIED_ON": "2022-09-19 13:54:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8231e9b2882a8231025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 1,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Is part of app",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "APP",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
+            "DATA_ADDRESS": "app_oid",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "0x35370000000000000000000000000000",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2022-09-19 13:19:22",
+            "MODIFIED_ON": "2022-09-20 15:39:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed917be9b26ac0917b025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Template alias",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 0,
+            "ALIAS": "ALIAS",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "alias",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 1,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": 100
+            }
+        },
+        {
+            "CREATED_ON": "2022-09-19 13:19:22",
+            "MODIFIED_ON": "2022-09-19 13:34:17",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed9abee9b2dd209abe025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Message template",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "MESSAGE_UXON",
+            "DATATYPE": "0x31330000000000000000000000000000",
+            "DATA_ADDRESS": "message_uxon",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 1,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": 65535
+            }
+        },
+        {
+            "CREATED_ON": "2022-09-19 13:19:22",
+            "MODIFIED_ON": "2022-09-28 13:29:55",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eda65ce9b2fa9ea65c025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 1,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Base object",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "OBJECT",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
+            "DATA_ADDRESS": "object_oid",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "0x31350000000000000000000000000000",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2022-09-19 13:19:22",
+            "MODIFIED_ON": "2022-09-19 14:04:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edae24e9b23af0ae24025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Template name",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "NAME",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "name",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 1,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 1,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": {
+                "length_max": 100
+            }
+        },
+        {
+            "CREATED_ON": "2022-09-19 13:35:42",
+            "MODIFIED_ON": "2022-09-19 18:03:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ed8d3f32a5e1428d3f025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 1,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 1,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Channel",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "COMMUNICATION_CHANNEL",
+            "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
+            "DATA_ADDRESS": "communication_channel_oid",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 1,
+            "REQUIREDFLAG": 1,
+            "RELATED_OBJ": "0x11ec9b5e07d27cb89b5e025041000001",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": {
+                "SQL_DATA_TYPE": "binary"
+            },
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2022-09-19 16:29:28",
+            "MODIFIED_ON": "2022-09-19 16:29:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edaed778ef2632aed7025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Alias with namespace",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 0,
+            "ALIAS": "ALIAS_WITH_NS",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "(CASE\n  WHEN [#APP#] IS NOT NULL \n  THEN CONCAT(\n    (SELECT \n      (CASE \n        WHEN [#~alias#]_nsa.app_alias IS NOT NULL \nTHEN CONCAT([#~alias#]_nsa.app_alias, '.') \n        ELSE '' \n      END) \n      FROM exf_app [#~alias#]_nsa \n      WHERE [#~alias#]_nsa.oid = [#~alias#].app_oid), \n    [#ALIAS#])\n  ELSE\n    [#ALIAS#]\nEND)\n",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "Full alias of the template including the app alias as namespace. This is what is used in UXON to identify the message template.",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2023-03-16 18:50:48",
+            "MODIFIED_ON": "2023-03-16 19:36:41",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11edb84615f0cc4cb846025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Recipients",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "RECIPIENTS",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipients'))\n\n@MySQL: (SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipients')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2023-03-16 19:05:49",
+            "MODIFIED_ON": "2023-03-16 19:32:04",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ed97782f016c769778025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Recipient Roles",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "RECIPIENT_ROLES",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_roles'))\n\n@MySQL:\n(SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_roles')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        },
+        {
+            "CREATED_ON": "2023-03-16 19:06:29",
+            "MODIFIED_ON": "2023-03-16 19:36:34",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11edb5524694f772b552025041000001",
+            "SORTABLEFLAG": 1,
+            "FILTERABLEFLAG": 1,
+            "AGGREGATABLEFLAG": 1,
+            "DEFAULT_AGGREGATE_FUNCTION": "",
+            "VALUE_LIST_DELIMITER": ",",
+            "READABLEFLAG": 1,
+            "WRITABLEFLAG": 0,
+            "SYSTEMFLAG": 0,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": 0,
+            "DELETE_WITH_RELATED_OBJECT": 0,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
+            "NAME": "Recipient Users",
+            "RELATION_CARDINALITY": "",
+            "TYPE": "D",
+            "COPYABLEFLAG": 1,
+            "ALIAS": "RECIPIENT_USERS",
+            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATA_ADDRESS": "@T-SQL:(select STRING_AGG(convert(nvarchar(255), isnull([value], '')), ', ') from openjson([#MESSAGE_UXON#], '$.recipient_users'))\n\n@MySQL: (SELECT \n REPLACE(\n   REPLACE(\n      REPLACE(\n       JSON_EXTRACT([#MESSAGE_UXON#], '$.recipient_users')\n       , '['\n       , ''\n     )\n     , ']'\n     , ''\n   )\n   , '\"'\n   , ''\n ))",
+            "OBJECT": "0x11ed830be97308e4830b025041000001",
+            "FORMATTER": "",
+            "DISPLAYORDER": null,
+            "LABELFLAG": 0,
+            "UIDFLAG": 0,
+            "HIDDENFLAG": 0,
+            "EDITABLEFLAG": 0,
+            "REQUIREDFLAG": 0,
+            "RELATED_OBJ": "",
+            "SORTERPOS": null,
+            "SORTERDIR": "",
+            "RELATED_OBJ_ATTR": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_VALUE": "",
+            "FIXED_VALUE": "",
+            "CUSTOM_DATA_TYPE": null
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "base_object_alias": "exface.Core.ATTRIBUTE",
+        "conditions": [
+            {
+                "expression": "OBJECT__APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.ATTRIBUTE"
+            }
+        ]
+    },
+    "rows_limit": null,
+    "rows_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

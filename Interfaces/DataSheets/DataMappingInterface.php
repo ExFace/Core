@@ -3,7 +3,8 @@ namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Base interface for DataColumnMappers, DataSorterMappers, etc. to ensure they all work alike.
@@ -24,22 +25,15 @@ interface DataMappingInterface extends iCanBeConvertedToUxon, WorkbenchDependant
      * 
      * @param DataSheetInterface $fromSheet
      * @param DataSheetInterface $toSheet
-     * @return DataMappingInterface
+     * @param LogBookInterface $logbook
      */
-    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet);
+    public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet, LogBookInterface $logbook = null);
     
     /**
+     * Returns an array of expression instances required in the from-sheet in order for the mapper to work.
      * 
-     * @param string $string
-     * @return DataMappingInterface
+     * @param DataSheetInterface $dataSheet
+     * @return ExpressionInterface[]
      */
-    public function setFrom($string);
-    
-    /**
-     *
-     * @param string|UxonObject $stringOrUxonObject
-     * @return DataMappingInterface
-     */
-    public function setTo($stringOrUxonObject);
-   
+    public function getRequiredExpressions(DataSheetInterface $fromSheet) : array;
 }

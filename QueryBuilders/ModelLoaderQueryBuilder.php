@@ -17,8 +17,8 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Uxon\QueryBuilderSchema;
 
 /**
  * This query builder represents whatever query builder is configured for the model data source.
@@ -40,6 +40,8 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
     private $selector = null;
     
     private $workbench = null;
+    
+    private $timezone = null;
     
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
@@ -261,9 +263,9 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
      *
      * @return QueryPartSorter
      */
-    public function addSorter($sort_by, $order = 'ASC')
+    public function addSorter($sort_by, $order = 'ASC', bool $addToAttributes = true)
     {
-        return $this->qb->addSorter($sort_by, $order);
+        return $this->qb->addSorter($sort_by, $order, $addToAttributes);
     }
     
     /**
@@ -352,6 +354,36 @@ class ModelLoaderQueryBuilder implements QueryBuilderInterface
     public function addQueryPart(QueryPart $qpart)
     {
         $this->qb->addQueryPart($qpart);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public static function getUxonSchemaClass(): ?string
+    {
+        return QueryBuilderSchema::class;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::getTimeZone()
+     */
+    public function getTimeZone(): ?string
+    {
+        return $this->qb->getTimeZone();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::setTimeZone()
+     */
+    public function setTimeZone(string $value = null): QueryBuilderInterface
+    {
+        $this->qb->setTimeZone($value);
         return $this;
     }
 }

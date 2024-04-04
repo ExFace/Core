@@ -15,7 +15,7 @@ abstract class DataSheetMapperFactory extends AbstractUxonFactory
      * @param Workbench $exface            
      * @return DataSheetMapperInterface
      */
-    public static function createEmpty(Workbench $workbench)
+    public static function createEmpty(Workbench $workbench) : DataSheetMapperInterface
     {
         return new DataSheetMapper($workbench);
     }
@@ -26,9 +26,9 @@ abstract class DataSheetMapperFactory extends AbstractUxonFactory
      * @param UxonObject $uxon
      * @param MetaObjectInterface $from_object
      * @param MetaObjectInterface $to_object
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface
+     * @return DataSheetMapperInterface
      */
-    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, MetaObjectInterface $from_object = null, MetaObjectInterface $to_object = null)
+    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, MetaObjectInterface $from_object = null, MetaObjectInterface $to_object = null) : DataSheetMapperInterface
     {
         $mapper = static::createEmpty($workbench);
         
@@ -45,4 +45,3 @@ abstract class DataSheetMapperFactory extends AbstractUxonFactory
         return $mapper;
     }
 }
-?>

@@ -22,6 +22,8 @@ class ShowMassEditDialog extends ShowDialog
 {
 
     private $affected_counter_widget = NULL;
+    
+    private $show_affected_counter_message = true;
 
     /**
      * 
@@ -61,10 +63,17 @@ class ShowMassEditDialog extends ShowDialog
      */
     protected function enhanceDialogWidget(Dialog $dialog)
     {
+        if ($dialog->countWidgetsVisible() === 1) {
+            $dialog->setHeight('auto');
+            $dialog->setWidth(1);
+        }
+        
         // Add a message widget that displays what exactly we are editing here
-        $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
-        $this->setAffectedCounterWidget($counter_widget);
-        $dialog->addWidget($counter_widget, 0);
+        if ($this->getShowAffectedCounterMessage() === TRUE) {
+            $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
+            $this->setAffectedCounterWidget($counter_widget);
+            $dialog->addWidget($counter_widget, 0);
+        }
         
         // Add a default save button that uses filter contexts
         // TODO make this button configurable via UXON
@@ -94,9 +103,10 @@ class ShowMassEditDialog extends ShowDialog
     protected function getAffectedCounterText(DataSheetInterface $input_data)
     {
         if ($input_data) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             if ($input_data->countRows()) {
                 $counter = $input_data ? $input_data->countRows() : 0;
-                return $this->translate('EDITING_SELECTED', array(
+                return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED', array(
                     "%number%" => $counter
                 ), $counter);
             } else {
@@ -104,13 +114,13 @@ class ShowMassEditDialog extends ShowDialog
                 $filter_conditions = array_merge($input_data->getFilters()->getConditions(), $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($input_data->getMetaObject()));
                 if (is_array($filter_conditions) && count($filter_conditions) > 0) {
                     foreach ($filter_conditions as $cond) {
-                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' (' . $cond->getExpression()->getAttribute()->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();
+                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' ' . $cond->getComparator() . ' ' . $cond->getValue();
                     }
-                    return $this->translate('EDITING_BY_FILTER', array(
-                        '%filters%' => implode($filters, ' AND ')
-                    ));
+                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER', [
+                        '%filters%' => implode(' AND ', $filters)
+                    ]);
                 } else {
-                    return $this->translate('EDITING_ALL');
+                    return $translator->translate('ACTION.SHOWMASSEDITDIALOG.EDITING_ALL');
                 }
             }
         }
@@ -134,6 +144,28 @@ class ShowMassEditDialog extends ShowDialog
     {
         $this->affected_counter_widget = $widget;
         return $this;
+    }
+    
+    /**
+     * Set to FALSE to hide the hint showing how many entries are affected by the mass edit.
+     * Default is TRUE.
+     *
+     * @uxon-property show_affected_counter_message
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return \exface\Core\Actions\UpdateData
+     */
+    public function setShowAffectedCounterMessage(bool $value) : ShowMassEditDialog
+    {
+        $this->show_affected_counter_message = $value;
+        return $this;
+    }
+    
+    protected function getShowAffectedCounterMessage() : bool
+    {
+        return $this->show_affected_counter_message;
     }
 }
 ?>

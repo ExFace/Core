@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\DataTypes\PercentDataType;
 
 /**
  * 
@@ -14,23 +14,15 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
  */
 class JsNumberFormatter extends AbstractJsDataTypeFormatter
 {
-    private $decimalSeparator = '.';
-    private $thousandsSeparator = '';
-    
-    protected function setDataType(DataTypeInterface $dataType)
-    {
-        if (! $dataType instanceof NumberDataType) {
-            // TODO
-        }
-        return parent::setDataType($dataType);
-    }
+    private $decimalSeparator = null;
+    private $thousandsSeparator = null;
     
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
-    public function buildJsFormatter($jsInput)
+    public function buildJsFormatter($jsInput, string $decimalSeparator = null, string $thousandSeparator = null)
     {
         $dataType = $this->getDataType();
         
@@ -40,28 +32,62 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         
         $precision_max = $dataType->getPrecisionMax() === null ? 'undefined' : $dataType->getPrecisionMax();
         $precision_min = $dataType->getPrecisionMin() === null ? 'undefined' : $dataType->getPrecisionMin();
+        $showPlusJs = $dataType->getShowPlusSign() ? 'true' : 'false';
         $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
-        $use_grouping = $dataType->getGroupDigits() && $this->getThousandsSeparator() ? 'true' : 'false';
+        if ($dataType->getGroupDigits() && $this->getThousandsSeparator()) {
+            $use_grouping =  'true';
+            $setGroupSeparatorJs = <<<JS
+
+            sTsdSep = (1000).toLocaleString({$locale}, {useGrouping: true}).charAt(1);
+            sNum = sNum.replace(sTsdSep, '{$this->getThousandsSeparator()}');
+JS;
+        } else {
+            $use_grouping =  'false';
+            $setGroupSeparatorJs = '';
+        }
+        
+        $prefix = $dataType->getPrefix();
+        $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
+        $suffix = $dataType->getSuffix();
+        $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
         
         return <<<JS
-        function() {
-            var input = {$jsInput};
-            if (input !== null && input !== undefined && input !== ''){
-    			var number = parseFloat({$this->buildJsFormatParser('input')});
-                if (! isNaN(number)) {
-                    return number.toLocaleString(
-                        {$locale}, // use a string like 'en-US' to override browser locale
-                        {
-                            minimumFractionDigits: {$precision_min},
-                            maximumFractionDigits: {$precision_max},
-                            useGrouping: {$use_grouping}
-                        }
-                    );
-                }
+        function(mNumber) {
+            var fNum, sNum, sTsdSep;
+            var bShowPlus = $showPlusJs;
+            var sPrefix = $prefixJs;
+            var sSuffix = $suffixJs;
+            var sEmpty = $emptyFormatJs;
+                    
+            if ((mNumber === null || mNumber === undefined || mNumber === '') && sEmpty !== '') {
+                return sEmpty;
             }
-            return input;
-        }()
+			fNum = parseFloat({$this->buildJsFormatParser('mNumber')});
+            if (isNaN(fNum)) {
+                return mNumber;
+            }
+            sNum = fNum.toLocaleString(
+                {$locale}, // use a string like 'en-US' to override browser locale
+                {
+                    minimumFractionDigits: {$precision_min},
+                    maximumFractionDigits: {$precision_max},
+                    useGrouping: {$use_grouping}
+                }
+            );
+            {$setGroupSeparatorJs}
+
+            sNum = (bShowPlus === true && fNum > 0 ? '+' : '') + sNum;
+            if (sPrefix !== '') {
+                sNum = sPrefix + sNum;
+            }
+            if (sSuffix !== '') {
+                sNum = sNum + sSuffix;
+            }
+
+            return sNum;
+        }({$jsInput})
 JS;
     }
     
@@ -72,8 +98,37 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
-        $separator_regex = preg_quote($this->getDecimalSeparator());
-        return "{$jsInput}.toString().replace(/{$separator_regex}/g, '.').replace(/ /g, '')";
+        $decimalRegex = preg_quote($this->getDecimalSeparator());
+        $thousandsRegex = preg_quote($this->getThousandsSeparator());
+        
+        $prefix = $this->getDataType()->getPrefix();
+        $prefixJs = $prefix === '' || $prefix === null ? '""' : json_encode($prefix . ' ');
+        $suffix = $this->getDataType()->getSuffix();
+        $suffixJs = $suffix === '' || $suffix === null ? '""' : json_encode(' ' . $suffix);
+        $emptyFormatJs = json_encode($this->getDataType()->getEmptyFormat() ?? '');
+        
+        return <<<JS
+        function(mNumber) {
+            var sPrefix = $prefixJs;
+            var sSuffix = $suffixJs;
+            if (mNumber === undefined || mNumber === null) return mNumber;
+            if (typeof mNumber === 'number' && isFinite(mNumber)) {
+                return mNumber;
+            }
+            if ((sPrefix !== '' || sSuffix !== '') && (typeof mNumber === 'string' || mNumber instanceof String)) {
+                mNumber = mNumber.trim();
+                if (sPrefix !== '' && mNumber.startsWith(sPrefix)) {
+                    mNumber = mNumber.substring(sPrefix.length).trim();
+                }
+                if (sSuffix !== '' && mNumber.endsWith(sSuffix)) {
+                    mNumber = mNumber.substring(sSuffix.length).trim();
+                }
+            }
+            if (mNumber === '' || mNumber === $emptyFormatJs) return null;
+            mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+            return mNumber;
+        }({$jsInput})
+JS;
     }
 
     /**
@@ -102,6 +157,12 @@ JS;
      */
     public function getDecimalSeparator()
     {
+        if ($this->decimalSeparator === null) {
+            $this->decimalSeparator = $this->getDataType()->getDecimalSeparator();
+        }
+        if ($this->decimalSeparator === $this->thousandsSeparator) {
+            throw new DataTypeConfigurationError($this->getDataType(), 'Cannot use the same separator "' . $this->decimalSeparator . '" for decimals an thousands in a number data type!');
+        }
         return $this->decimalSeparator;
     }
 
@@ -120,6 +181,12 @@ JS;
      */
     public function getThousandsSeparator()
     {
+        if ($this->thousandsSeparator === null) {
+            $this->thousandsSeparator = $this->getDataType()->getGroupSeparator();
+        }
+        if ($this->decimalSeparator === $this->thousandsSeparator) {
+            throw new DataTypeConfigurationError($this->getDataType(), 'Cannot use the same separator "' . $this->decimalSeparator . '" for decimals an thousands in a number data type!');
+        }
         return $this->thousandsSeparator;
     }
 
@@ -132,8 +199,34 @@ JS;
         $this->thousandsSeparator = $thousandsSeparator;
         return $this;
     }
-
-
-
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsValidator()
+     */
+    public function buildJsValidator(string $jsValue) : string
+    {
+        $type = $this->getDataType();
+        if ($type->getBase() !== 10) {
+            return 'true';
+        }
+        
+        $checksOk = [];
+        if ($type->getMin() !== null) {
+            $checksOk[] = "parseFloat(mVal) >= {$type->getMin()}";
+        }
+        if ($type->getMax() !== null) {
+            $checksOk[] = "parseFloat(mVal) <= {$type->getMax()}";
+        }
+        $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
+        
+        $nullStr = '" . EXF_LOGICAL_NULL . "';
+        return <<<JS
+function(mVal) {
+                var bEmpty = (mVal === null || mVal === undefined || mVal.toString() === '' || mVal.toString() === $nullStr);
+                return (bEmpty || ($checksOkJs));
+            }($jsValue)
+JS;
+    }
 }

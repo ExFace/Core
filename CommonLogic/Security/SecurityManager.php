@@ -24,10 +24,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
-use exface\Core\Factories\ConfigurationFactory;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\CoreApp;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 
 /**
@@ -56,9 +52,8 @@ class SecurityManager implements SecurityManagerInterface
     {
         $this->workbench = $workbench;
         
-        // Initialize all authenticators to give them the option to register
-        // event listeners (e.g. for the exface.Core.Security.OnBeforeAuthentication 
-        // event).
+        // Initialize all authenticators to give them the option to register listeners 
+        // (e.g. for the exface.Core.Security.OnAuthenticated event).
         $this->authenticators = self::loadAuthenticatorsFromConfig($this->getWorkbench());
         
         // Initialize authorization points if the workbench is already installed.
@@ -79,13 +74,19 @@ class SecurityManager implements SecurityManagerInterface
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
         $errors = [];
+        
+        // Try all authenticators. If any of the work, stop and return the authenticated token
         foreach ($this->getAuthenticators() as $authenticator) {
+            if ($authenticator->isDisabled()) {
+                continue;
+            }
             if ($authenticator->isSupported($token) === false) {
                 continue;
             }
             try {
                 $authenticated = $authenticator->authenticate($token);
                 $this->storeAuthenticatedToken($authenticated);
+                $this->getWorkbench()->getLogger()->debug('Authenticated user "' . $authenticated->getUsername() . '" via "' . $authenticator->getName() . '"');
                 $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
                 $this->getWorkbench()->eventManager()->dispatch($event);
                 return $authenticated;
@@ -94,7 +95,9 @@ class SecurityManager implements SecurityManagerInterface
             }
         }
         
+        // If no authenticators worked, the user is a guest
         if ($token->isAnonymous() === true) {
+            $this->getWorkbench()->getLogger()->debug('Authenticated anonymous user');
             $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
             $this->getWorkbench()->eventManager()->dispatch($event);
             $this->storeAuthenticatedToken($token);
@@ -165,7 +168,7 @@ class SecurityManager implements SecurityManagerInterface
      */
     public function getUser(AuthenticationTokenInterface $token) : UserInterface
     {
-        if (($user = $this->userCache[$token->getUsername()]) !== null) {
+        if (($user = ($this->userCache[$token->getUsername()] ?? null)) !== null) {
             return $user;    
         }
         
@@ -220,6 +223,16 @@ class SecurityManager implements SecurityManagerInterface
         $authenticators = [];
         $systemConfig = $workbench->getConfig();
         $authenticatorsUxon = $systemConfig->getOption('SECURITY.AUTHENTICATORS');
+        /*
+        if ($authenticatorsUxon->isArray()) {
+            $authUxonNormalized = new UxonObject();
+            foreach ($authenticatorsUxon as $pos => $authConfig) {
+                
+            }
+        } else {
+            $authUxonNormalized = $authenticatorsUxon;
+        }*/
+            
         $authenticatorsUxonChanged = false;
         foreach ($authenticatorsUxon as $pos => $authConfig) {
             switch (true) {
@@ -298,13 +311,10 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         foreach ($this->getAuthenticators() as $authenticator) {
-            $loginForm = WidgetFactory::create($loginPrompt->getPage(), 'Form', $loginPrompt);
-            $loginForm->setObjectAlias('exface.Core.LOGIN_DATA');
-            $authenticator->createLoginWidget($loginForm);
-            if ($loginForm->isEmpty() === false) {
-                $loginForm->setCaption($authenticator->getName());
-                $loginPrompt->addForm($loginForm);
+            if ($authenticator->isDisabled()) {
+                continue;
             }
+            $loginPrompt = $authenticator->createLoginWidget($loginPrompt);
         }
         
         return $container;
@@ -360,8 +370,28 @@ class SecurityManager implements SecurityManagerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenLifetime()
      */
-    public function getTokenLifetime(): ?int
+    public function getTokenLifetime(AuthenticationTokenInterface $token): ?int
     {
         return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getTokenRefreshInterval()
+     */
+    public function getTokenRefreshInterval(): ?int
+    {
+        return null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isDisabled()
+     */
+    public function isDisabled(): bool
+    {
+        return false;
     }
 }

@@ -26,6 +26,19 @@ interface ContextScopeInterface extends WorkbenchDependantInterface
     public function getContext($aliasOrSelector) : ContextInterface;
     
     /**
+     * Checks if a context exists in the scope.
+     * 
+     * The optional argument $loadContextIfPossible allows to distinguish between
+     * checking if a context was already loaded (`false`) or if it is allowed to
+     * exist in this scope at all (`true`, default)
+     * 
+     * @param string|ContextSelectorInterface $aliasOrSelector
+     * @param bool $loadContextIfPossible
+     * @return bool
+     */
+    public function hasContext($aliasOrSelector, bool $loadContextIfPossible = true) : bool;
+    
+    /**
      * Refreshes the data within the context with the latest information from the scope storage.
      * 
      * NOTE: This will overwrite any changes not saved via saveContexts()!
@@ -73,5 +86,33 @@ interface ContextScopeInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function getName();
+    
+    /**
+     * Stores an arbitrary name-value pair in the context.
+     * 
+     * @param string $name
+     * @param mixed $value
+     * @param string $namespace
+     * @return ContextScopeInterface
+     */
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface;
+    
+    /**
+     * Removes a previously stored name-value pair from the context.
+     * 
+     * @param string $name
+     * @param string $namespace
+     * @return ContextScopeInterface
+     */
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface;
+    
+    /**
+     * Retrieves the value of a previously stored name-value pair from the context.
+     * 
+     * @param string $name
+     * @param string $namespace
+     * @return mixed
+     */
+    public function getVariable(string $name, string $namespace = null);
 }
 ?>

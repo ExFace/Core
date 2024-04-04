@@ -31,14 +31,8 @@ class ObjectBasketShowDialog extends ShowDialog
     protected function init()
     {
         parent::init();
-        $this->setInputRowsMax(1);
-        $this->setInputRowsMin(1);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
-        // Never use the context for prefill because the ObjectBasket can be called on any page,
-        // so the context does not really have anything to do with the ObjectBasket
-        $this->setPrefillWithFilterContext(false);
-        $this->setPrefillWithInputData(false);
-        $this->setPrefillWithPrefillData(false);
+        $this->setPrefillDisabled(true);
     }
     
     /**
@@ -48,8 +42,8 @@ class ObjectBasketShowDialog extends ShowDialog
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if ($task->hasParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE)) {
-            $this->setContextScope($task->getParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE));
+        if ($task->hasParameter(CallContext::TASK_PARAMETER_CONTEXT_SCOPE)) {
+            $this->setContextScope($task->getParameter(CallContext::TASK_PARAMETER_CONTEXT_SCOPE));
         }
         return parent::perform($task, $transaction);
     }
@@ -67,6 +61,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getWidgetDefinedIn());
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
+        $dialog->setCacheable(false);
         
         /* @var $table \exface\Core\Widgets\DataTable */
         $table = WidgetFactory::create($dialog->getPage(), 'DataTable', $dialog);
@@ -78,6 +73,25 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->getConfiguratorWidget()->addFilter(
             $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAttributeAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
         );
+        
+        // If the table has no columns, try to generate some: either use the UID column
+        // if there is a UID attribute and that is visible or just take the first 10
+        // visible attributes.
+        if (empty($table->getColumns())) {
+            if ($table->getMetaObject()->hasUidAttribute() && ! $table->getMetaObject()->getUidAttribute()->isHidden()) {
+                $table->addColumn($table->createColumnFromAttribute($table->getMetaObject()->getUidAttribute()));
+            } else {
+                $cnt = 1;
+                foreach ($table->getMetaObject()->getAttributeGroup('~VISIBLE') as $attr) {
+                    $table->addColumn($table->createColumnFromAttribute($attr));
+                    if ($cnt >= 10) {
+                        break;
+                    } else {
+                        $cnt++;
+                    }
+                }
+            }
+        }
         $dialog->addWidget($table);
         
         // Prefill table
@@ -116,8 +130,6 @@ class ObjectBasketShowDialog extends ShowDialog
         $dialog->addButton($menu);
         
         // Add actions menu to info dialog too
-        // FIXME change to $info_button->getAction()->getDialogWidget()->getToolbarMain()->setIncludeObjectBasketActions(true);
-        // because the input widget for the menu still is the table (see above)
         $info_button->getAction()->getWidget()->addButton($menu);
         
         return $dialog;

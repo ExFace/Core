@@ -83,19 +83,54 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      */
     public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $row_number = null);
     
-    public function getRequiredAttributes();
+    /**
+     * Returns an array with aliases of all attributes required for this expression relative to its meta object.
+     * 
+     * @return string[]
+     */
+    public function getRequiredAttributes() : array;
     
     /**
      * @return string
      */
     public function getType();
     
-    public function getRelationPath();
+    /**
+     * 
+     * @return MetaRelationPathInterface|NULL
+     */
+    public function getRelationPath() : ?MetaRelationPathInterface;
     
     /**
-     * Returns a copy of the expression with the relation path replaced by the given one.
+     * Returns a copy of this expression with the relation path replaced by the given one.
      * 
-     * @param MetaRelationPathInterface $path
+     * NOTE: In contrast to `rebase()` this method will not change the expression itself - it
+     * will only change it's meta object and make it resolve using a relation path from that
+     * new object. Calling `withRelationPath()` again will replace the previous relation path
+     * and object and make **the same** expression resolve relatively to that new paths starting
+     * object. Thus, calling `withRelationPath()` multiple times produces the same result regardless
+     * of the sequence, whereas calling `rebase()` multiple will apply changes to the expression
+     * in a chained manner.
+     * 
+     * Examples: 
+     * 
+     * 1. Assume a simple attribute expression `lat` of some `location` object with attributes for
+     * latitude and longitude. To be able to resolve the expression against factory data we could
+     * call `withRelationPath('location')`, which would not change the expression itself, but only
+     * its meta object. When being `evalute()`ed against factory data the expression would map to
+     * `location__lat`. However, we could also use `rebase('factory')` to swith to the factory object,
+     * which would actually change the expression to `location__lat`. This method is much more complex
+     * and may produce unexpected results, but it can also handle more complex situations! 
+     * 2. Assume, the expression `=Concatenate(lat, ',', lng)` is a formula based on our location-object 
+     * having latitude and longitude attributes. We can now change the object to `factory` by calling 
+     * `withRelationPath('location')` if the factory has a relation called `location`. This will not 
+     * change our expression itself, but when being evaluated against factory data it will use 
+     * `location__lat` and `location__lng` for arguments. If we need to evaluate the formula against
+     * the data of a production order, we might call `withRelationPath('factory__location')` to
+     * change the object again and the `lat` argument would be mapped to `factory__location__lat` in
+     * our data.
+     * 
+     * @param MetaRelationPathInterface $relation_path
      * @return ExpressionInterface
      */
     public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface;
@@ -115,9 +150,7 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      *
      * @return string
      */
-    public function toString();
-    
-    public function getRawValue();
+    public function __toString() : string;
     
     /**
      * Returns the data type, that the calculation result of this expression will have.
@@ -128,15 +161,21 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     
     public function setDataType($value);
     
-    public function mapAttribute($map_from, $map_to);
-    
     public function getMetaObject();
     
     public function setMetaObject(MetaObjectInterface $object) : ExpressionInterface;
     
     /**
      * Returns a copy of the expression relative to another base object.
-     * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
+     * 
+     * The required argument is the relation from the current base object to the new one. 
+     * E.g. `ORDER__POSITION__PRODUCT__ID` will become `PRODUCT__ID` after calling `rebase('ORDER__POSITION')`
+     * on it.
+     * 
+     * NOTE: in contranst to `withRelationPath()` this method will modify the epxression itself instead
+     * of merely changing the base object and remembering the relation path from it. Also not the syntax
+     * difference: `rebase()` takes the relation path **to** the new object while `withRelationPath()`
+     * uses the path **from** the new object. See description of `withRelationPath()` for more details!
      *
      * @param string $relation_path_to_new_base_object
      * @return ExpressionInterface
@@ -154,6 +193,14 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return WidgetLinkInterface
      */
     public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface;
+    
+    /**
+     * Returns true if a string seems to contain a calculated value (formula or reference) and false otherwise.
+     * 
+     * @param mixed $value
+     * @return bool
+     */
+    public static function detectCalculation($value) : bool;
     
     /**
      * Returns true if a string seems to contain a formula and false otherwise.

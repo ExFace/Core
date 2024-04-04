@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
@@ -17,14 +16,32 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\RegularExpressionDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Generates a the value for an alias-type attribute from another attribute (typically a name).
  * 
- * Affects update/create operations on data having the target (alias) column. This means, if
- * alias is emptied intentionally, it will be regenerated. This also means, that the behavior
+ * Affects update/create operations on data having the target (alias) column. A new values will
+ * be generated for every cell in the column, that has no value yet. This means, the behavior
  * will not have effect on operations, that do not inlcude the target column: e.g. partial
  * updates.
+ * 
+ * In the simplest scenario, the value for the `target_attribute_alias` will be generated 
+ * from the `source_attribute_alias` by applying transformation rules defined in
+ * `replace_characters` and `case` - every time the `target_attribute_alias` is empty.
+ * In particular, if the alias is emptied intentionally, it will be regenerated. For example,
+ * this scenario is used in the meta object `exface.Core.CONNECTION`.
+ * 
+ * There is also an option to generate namespaced aliases using `namespace_attribute_alias`
+ * and `namespace_separator`. The namespace is added if there is no alias yet or the
+ * existing alias does not have any namespace yet. This approach is used in the meta object 
+ * `exface.Core.PAGE`.
  * 
  * Generation is done as follows:
  * 
@@ -34,8 +51,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * 3. Replace characters accoring to `replace_characters` configuration
  * 4. Transliterate the result using PHP's `transliterator_transliterate()`
  * 5. Transform the result's case if required by the `case` property
- * 
- * **NOTE**: Generation is only done if the target cell in the data sheet is empty!
  * 
  * If you need to customize the transliteration, use `replace_characters` to define custom
  * rules. 
@@ -54,8 +69,10 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * ```
  * 
  * Here is how alias generation works for the object `exface.Core.PAGES`. In addition
- * to the simples case, a namespace will be appended, the result will be lowercased
- * and whitespaces will be replaced by `-` instead of the default `_`.
+ * to the simplest case, a namespace will be appended, the result will be lowercased
+ * and whitespaces will be replaced by `-` instead of the default `_`. Any characters
+ * accept for lating letters, `_` and `-` will be removed by the last entry in
+ * `replace_characters`.
  * 
  * ```
  * {
@@ -64,22 +81,21 @@ use exface\Core\CommonLogic\Model\RelationPath;
  *  "source_attribute_alias": "NAME",
  *  "case": "lower",
  *  "replace_characters": {
- *      " ": "-"
+ *      " ": "-",
+ *      "/[^a-zA-Z0-9_\.-]/": ""
  *  }
  * }
  * 
  * ```
  * 
  */
-class AliasGeneratingBehavior extends AbstractBehavior
+class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingBehaviorInterface
 {
     const CASE_UPPER = 'UPPER';
     
     const CASE_LOWER = 'LOWER';
     
     const TRANSLITERATION_CONFIG = 'Any-Latin; Latin-ASCII; [\u0080-\u7fff] remove;';
-    
-    const REGEX_DELIMITERS = ['/', '~', '@', ';', '%', '`'];
     
     private $namespaceAttributeAlias = null;
     
@@ -100,7 +116,14 @@ class AliasGeneratingBehavior extends AbstractBehavior
         "ü"=>"ue", 
         "ß"=>"ss", 
         " "=>"_",
-        "&" => "and"
+        "&" => "_and_",
+        "(" => "",
+        ")" => "",
+        "[" => "",
+        "]" => "",
+        "{" => "",
+        "}" => "",
+        "~" => ""
     ];
     
     private $namespaceCache = [];
@@ -108,15 +131,26 @@ class AliasGeneratingBehavior extends AbstractBehavior
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate'], $this->getPriority());
         
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate']);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), [$this, 'handleOnBeforeCreate']);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'handleOnBeforeUpdate']);
         
-        $this->setRegistered(true);
         return $this;
     }
     
@@ -164,14 +198,9 @@ class AliasGeneratingBehavior extends AbstractBehavior
         
         // If the target column exists and already has all values, don't do anything!
         if ($targetCol = $eventSheet->getColumns()->getByAttribute($this->getTargetAttribute())) {
-            if ($targetCol->hasEmptyValues() === false) {
-                return;
-            }
-        } else {
-            return;
+            $this->generateTransliteratedAliases($eventSheet, $targetCol, $event);
         }
         
-        $this->generateTransliteratedAliases($eventSheet, $targetCol);
         return;
     }
     
@@ -184,56 +213,110 @@ class AliasGeneratingBehavior extends AbstractBehavior
      * 
      * @return DataSheetInterface
      */
-    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol) : DataSheetInterface
+    protected function generateTransliteratedAliases(DataSheetInterface $dataSheet, DataColumnInterface $targetCol, DataSheetEventInterface $event) : DataSheetInterface
     {
+        $logbook = new BehaviorLogBook($this->getAlias(), $this);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, null, $logbook));
+        if (! $this->hasNamespace() && ! $targetCol->hasEmptyValues()) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, null, $logbook));
+            return $dataSheet;
+        }
+        
+        $logbook->addDataSheet('Data', $dataSheet);
         if ($srcCol = $dataSheet->getColumns()->getByAttribute($this->getSourceAttribute())) {
             $srcValues = $srcCol->getValues();
         } else {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+            throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute ' . $this->getSourceAttribute()->__toString() . ': no input data found for source attribute found!', null, null, $logbook);
         }
         
+        // If namepacing is no, see where the namespaces had changed
+        $nsChangedRowNos = [];
         if ($this->hasNamespace()) {
             $nsAttr = $this->getNamespaceAttribute();
-            if ($nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr)) {
-                if ($nsCol->hasEmptyValues()) {
-                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
+            if (! $nsAttr->isRelated()) {
+                // If the namespace is taken from a direct attribute, check if that attribute changed
+                $nsCol = $dataSheet->getColumns()->getByAttribute($nsAttr);
+                if (! $nsCol || $nsCol->hasEmptyValues()) {
+                    throw new BehaviorRuntimeError($this, $this->getErrorText() . ': missing values in input data for namespace column ' . $this->getNamespaceAttribute()->__toString() . '!', null, null, $logbook);
                 }
                 $nsValues = $nsCol->getValues(false);
-            } else {
-                if ($nsAttr->isRelated() === false) {
-                    throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace column "' . $this->getNamespaceAttribute()->getAliasWithRelationPath() . '"!');
+                if ($event instanceof OnBeforeUpdateDataEvent) {
+                    // If updating, ask the event, what changed
+                    $nsChangedRowNos = array_keys($event->getChanges($nsCol) ?? []);
+                } else {
+                    // If creating, treat all rows as changes
+                    $nsChangedRowNos = array_keys($nsValues);
                 }
+            } else {
+                // If the namespace is taken from a related object, watch for changes on the foreign key
                 $nsValues = null;
+                if ($event instanceof OnBeforeUpdateDataEvent) {
+                    // If updating, ask the event for changes on the foreign key column
+                    $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsAttr->getRelationPath()->getRelationFirst()->getLeftKeyAttribute());
+                    $nsChangedRowNos = array_keys($event->getChanges($nsRelLeftCol) ?? []);
+                } else {
+                    // If creating, treat all rows as changed
+                    $nsChangedRowNos = array_keys($dataSheet->getRows());
+                }
             }
         }
         
         $namespace = null;
+        $sep = $this->getNamespaceSeparator();
         foreach ($srcValues as $rowNo => $srcVal) {
             $targetVal = $targetCol->getCellValue($rowNo);
-            if ($targetVal !== null && $targetVal !== '') {
+            $nsChanged = in_array($rowNo, $nsChangedRowNos);
+            $doGenerate = true;
+            $hasAlias = $targetVal !== null && $targetVal !== '';
+            $hasAliasWithNamespace = $hasAlias && stripos($targetVal, $sep) !== false;
+            
+            // Don't bother if there is an alias already unless namespacing is on and the namespace has changed
+            if ($hasAlias && ! ($this->hasNamespace() && $nsChanged)) {
                 continue;
             }
             
+            // Now as we know, we will probably need to generating, double check if there is a source
+            // value to generate from
             if ($srcVal === null || $srcVal === '') {    
-                throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->getAliasWithRelationPath() . '": no input data found for source attribute found!');
+                throw new BehaviorRuntimeError($this, $this->getErrorText() . ' from source attribute "' . $this->getSourceAttribute()->__toString() . '": no input data found for source attribute found!', null, null, $logbook);
             }
             
+            // If namespacing is on, get the current namespace and check if it has changed
             if ($this->hasNamespace()) {
                 if ($nsValues !== null) {
                     $namespace = $nsValues[$rowNo];
                 } else {
-                    $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
+                    try {
+                        $namespace = $this->getNamespaceFromRelation($dataSheet, $rowNo);
+                    } catch (\Throwable $e) {
+                        throw new BehaviorRuntimeError($this, $this->getErrorText() . ': ' . $e->getMessage(), null, $e, $logbook);
+                    }
                 }
                 
-                if ($namespace !== null && $namespace !== '') {
-                    $srcVal = $namespace . $this->getNamespaceSeparator() . trim($srcVal);
+                //if ($namespace === null || $namespace === '' || $hasAliasWithNamespace)
+                
+                // Generate a new alias if 
+                // - a namespace could be determined
+                // - AND there either is no alias yet or the existing alias has no namespace or that namespace changed
+                if ($namespace !== null && $namespace !== '' && (! $hasAlias || ($nsChanged && ! $hasAliasWithNamespace))) {
+                    if ($hasAlias) {
+                        $srcVal = StringDataType::substringAfter($targetVal, $sep, $targetVal, false, true);
+                    } else {
+                        $srcVal = str_replace($sep, '', $srcVal);
+                    }
+                    $srcVal = $namespace . $sep . $srcVal;
+                } elseif ($hasAlias) {
+                    $doGenerate = false;
                 }
             }
             
-            $transliterated = $this->transliterate($srcVal);
-            $targetCol->setValue($rowNo, $transliterated);
+            if ($doGenerate) {
+                $transliterated = $this->transliterate($srcVal);
+                $targetCol->setValue($rowNo, $transliterated);
+            }
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, null, $logbook));
         return $dataSheet;
     }
     
@@ -253,7 +336,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
         $nsRelLeftKeyAttr = $nsRelPath->getRelationFirst()->getLeftKeyAttribute();
         $nsRelLeftCol = $dataSheet->getColumns()->getByAttribute($nsRelLeftKeyAttr);
         if (! $nsRelLeftCol) {
-            throw new BehaviorRuntimeError($this->getObject(), $this->getErrorText() . ': missing values in input data for namespace key column "' . $nsRelLeftKeyAttr->getAliasWithRelationPath() . '"!');
+            throw new DataSheetColumnNotFoundError($dataSheet, 'Missing values for namespace key column ' . $nsRelLeftKeyAttr->__toString() . '!');
         }
         
         $nsRelLeftKeyVal = $nsRelLeftCol->getCellValue($rowNo);
@@ -264,8 +347,11 @@ class AliasGeneratingBehavior extends AbstractBehavior
             return $ns;
         }
         
+        $revRelPath = $nsRelPath->reverse()->getSubpath(0, -1);
+        $revRelAlias = RelationPath::relationPathAdd($revRelPath->toString(), $nsRelPath->getRelationFirst()->getRightKeyAttribute()->getAlias());
+        
         $nsSheet = DataSheetFactory::createFromObject($nsRelPath->getEndObject());
-        $nsSheet->getFilters()->addConditionFromString(RelationPath::relationPathAdd($nsRelPath->reverse()->toString(), $nsRelLeftKeyAttr->getAlias()), $nsRelLeftKeyVal, ComparatorDataType::EQUALS);
+        $nsSheet->getFilters()->addConditionFromString($revRelAlias, $nsRelLeftKeyVal, ComparatorDataType::EQUALS);
         $nsCol = $nsSheet->getColumns()->addFromExpression($nsAttr->getAlias());
         $nsSheet->dataRead();
         $ns = $nsCol->getCellValue(0) ?? '';
@@ -309,14 +395,7 @@ class AliasGeneratingBehavior extends AbstractBehavior
     protected function replaceSpecialCharacters(string $string) : string
     {
         foreach ($this->getReplaceCharacters() as $exp => $repl) {
-            $isRegex = false;
-            foreach (self::REGEX_DELIMITERS as $delim) {
-                if (StringDataType::startsWith($exp, $delim) === true && StringDataType::endsWith($exp, $delim) === true) {
-                    $isRegex = true;
-                    break;
-                }
-            }
-            if ($isRegex === true) {
+            if (RegularExpressionDataType::isRegex($exp)) {
                 $string = preg_replace($exp, $repl, $string);
             } else {
                 $string = str_replace($exp, $repl, $string);
@@ -527,6 +606,18 @@ class AliasGeneratingBehavior extends AbstractBehavior
      * 
      * ```
      * 
+     * Another example: remove all characters except for latin letters and underscores via
+     * regular expression:
+     * 
+     * ```
+     * {
+     *  "replace_characters": {
+     *      "/[^a-zA-Z0-9_]/": ""
+     *  }
+     * }
+     * 
+     * ```
+     * 
      * @uxon-property replace_characters
      * @uxon-type UxonObject 
      * @uxon-template {"":""} 
@@ -547,5 +638,27 @@ class AliasGeneratingBehavior extends AbstractBehavior
     protected function getReplaceCharacters() : array
     {
         return $this->replaceCharacters;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::getAttributesModified()
+     */
+    public function getAttributesModified(): array
+    {
+        return [
+            $this->getTargetAttribute()
+        ];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface::canAddColumns()
+     */
+    public function canAddColumnsToData(): bool
+    {
+        return false;
     }
 }

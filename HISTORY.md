@@ -1,23 +1,199 @@
 # Release history
 
-## 1.2 (in development)
+## 1.15 - in development
 
-- NEW Task queues to process tasks in the background
-- NEW Task scheduler
+## 1.14 - 12.01.2023
+
+- TODO
+
+## 1.13 - 18.12.2023
+
+New features:
+
+- Copy to clipboard from right-click menu in most UI templates
+- Quick filters in right-click menu in SAP UI5/Fiori templates
+- Indicators with additional colors (e.g. to visualize status) for events in Scheduler widgets
+- WYSIWYG and preview modes in InputMarkdown widgets
+
+Improvements:
+
+- InputCombo can now be forced to actively search for a single possible value via `autosearch_single_suggestion`
+- Improved Browser cache buster in jEasyUI Facade
+- Improvements in the query builders of the UrlDataConnector
+
+## 1.12 - 20.11.2023
+
+New features: 
+
+- New Comparator `][` and `!][` to check for intersections in two value lists
+- Added administration dialog to search the entire model
+- New option for HTTP facades to include external scripts (e.g. counters) in all templates
+- Selected objects from an app (e.g. master data) can now be included in its model via `MetamodelAdditionInstaller`
+- New data timeline granularity `all` to show all item in a single view
+
+Improvements: 
+
+- Improved `Scheduler` widget in UI5 facade
+- Improved model editors for objects and data types, added more buttons to open relations, etc.
+- `TreeTable` and Gantt widgets now allow hiding empty folders
+- Added option to commit transactions before the action in `CallActionBehavior`
+- Better support for complex inline widgets in UI5 dialog headers: e.g. `ColorIndicator`, `ProgressBar`
+
+## 1.11 - 26.10.2023
+
+New features:
+
+- Entirely new file system model with a universal `FileBuilder` and the possibility to access remote or virtual file systems by using compatible connectors. Added optional app [FlysystemConnector](https://github.com/axenox/FlysystemConnector) with a generic Connector to use with the popular PHP library Flysystem.
+- Added aggregators `:MIN_OF()` and `:MAX_OF()` to quickly get the text of the newest comment and similar data
+- New `JournalingBehavior` to save entries in a history-table every time certain things happen to an object
+- New features for data flows in [axenox.ETL](https://github.com/axenox/ETL/):
+	- Added `DataFlowFacade` to build web services for data flows.
+	- New flow step `DataSheetToSQL` to import large data sets with better performance
+
+Improvements:
+
+- `DataSpreadSheet` widgets now support copy/paste dropdown values to and from excel using visible names and not techical ids.
+- Various improvements in [axenox.ETL](https://github.com/axenox/ETL/)
+- Improved performance of the `ExcelBuilder`
+- Widget `ImageGallery` does not required file-related configuration anymore for objects with `FileBehavior`
+- Fixed prefill issues with multi-select `InputComboTable`
+
+## 1.10 - 07.08.2023
+
+## 1.9 - 27.06.2023
+
+## 1.8 - 27.04.2023
+
+New features:
+
+- NEW Configurable offline apps (PWA) with greatly improved offline data storage. Entire pages can be made offline capable fully automatically with all neccessary data being determined in advance and visualized in `Administration > Pages > Offline apps`.
+- NEW Second factor authentication can now be added to any authenticator
+- NEW Support for different time zones in data sources
+- NEW Data mapper types `row_filter` and `subsheet_mappers`
+- NEW Advanced debug output for behaviors + behaviors now visible in the performance chart
+- NEW Built-in JavaScript inspector and console, that can be used even without browser support (e.g. on mobile browsers)
+
+Improvements:
+
+- IMPROVED MS SQL queries by allowing to add `WITH NOLOCK` to certain meta objects
+- IMPROVED behavior models: order of execution (priority) now configurable
+
+- FIX data authorization point now correctly handles multiple roles assigned to a user
+
+## 1.7 - February 2023
+
+New features:
+
+- NEW app [axenox.IDE](https://github.com/axenox/ide) providing an integrated development environment for files and SQL schemas
+- NEW Widget for Gantt charts (experimental)
+- NEW `WidgetModifyingBehavior` to modify widget in selected pages
+- NEW Pivot-sheets to transpose data sheets in-memory
+
+Improvements:
+
+- IMPROVED `NotifyingBehavior` can now send notifications after all transactions committed
+- IMPROVED Action `CallAction`
+
+## 1.6 - December 2022
+
+New features:
+
+- NEW Auto-refresh for dashboards
+- NEW Data mapper type `unpivot mapper`
+- NEW Action `CallAction` to select the right action depending on the input
+
+Improvements:
+
+- Improved `FileBehavior` to save files in any data source transparently
+- Improved security
+- Improved action debugger
+
+## 1.5 - October 2022
+
+New features:
+
+- NEW Communication framework to send emails, Teams messages, etc.
+- NEW Full JSON support in HTTP task facade
+- NEW Data authorization point
+- NEW configurable action input validation via `input_invalid_if`
+
+Improvements:
+
+- Improved debugger menu
+- Improved `ActionChain` configuration
+- Improved Git console in `Administration > Metamodel > Apps`
+
+## 1.4 - March 2022
+
+New features:
+
+- NEW GUI to install payload packages on a workbench(`Administration > Package manager`)
+- NEW Single-sign-on via SQL query to validate passwords against hashes stored in a database by other applications
+- NEW PDF layout printer
+- NEW Widget function framework + action `CallWidgetFunction`
+- NEW Map widget layers `DataLines` and `DataPoints`
+- NEW Widget `InputSelectButtons`
+
+Improvements:
+
+- Improved `disabled_if` and `hidden_if` configuration of widgets
+- Improved `StateMachineBehavior`, added automatically generated flow diagrams
+- Improved widget `DataSpreadsheet`
+- Improved data mappers now allowing explicit ordering and adding using custom classes
+- Much improved form layouts in the UI5 facade
+
+## 1.3 - may 2021
+
+New features:
+
+- NEW action scheuler: `Administration > BG Processing > Scheduler`
+- NEW infrastructure app [axenox.ETL](https://github.com/axenox/ETL) to build and run ETL processes
+- NEW Single-Sign-On via OAuth 2.0: e.g. with [Microsoft 365 / Azure](https://github.com/axenox/Microsoft365Connector), [Google](https://github.com/axenox/GoogleConnector), etc.
+- NEW OAuth2 authentication for HTTP data connections
+- NEW data connector apps for [Google APIs](https://github.com/axenox/GoogleConnector) and [Microsoft Graph](https://github.com/axenox/Microsoft365Connector) 
+- NEW Error monitor to keep track of recent errors incl. dashboard for support user group
+- NEW configurable home-pages for user groups
+- NEW widgets 
+	- `Map` for interactive maps with various layers
+	- `InputCustom` to hook-in arbitrary JS libraries easily (WYSIWYG editors, etc.)
+	- `InputTags` to quickly select tags, categories, etc.
+	- `InputMarkdown` - WYSIWYG MarkDown editor
+- NEW query builder to read Excel files (*.xlsx)
+
+Improvements:
+
+- Improved prefill debugger
+- Much improved auto-detection of objects and widgets affected by an action + custom `effects` in action models
+
+## 1.2
+
+New features:
+
+- NEW Task queues to process tasks in the background: `Administration > BG Processing`
 - NEW generic offline queue for server actions available for PWA facades - see `exface.UI5Facade` for an example.
+- NEW Built-in usage monitor: `Administration > Monitor`.
+- NEW wireframe-previews in widget presets.
+- NEW improved UXON editor incl. code-editor, copy/paste support and more.
+
+Improvements:
+
+- FIX improved exception handling in command line actions
 
 ## 1.1
 
+New features:
+
 - NEW Translation module. 
-	- Now most components of the meta model are now translatable: meta objects, attributes, action models, pages and messages.
+	- Now most components of the meta model are now translatable right inside their model editors: meta objects, attributes, action models, pages and messages.
 	- Comfortale translation UI with complete key listing, a second reference language, etc.
 - NEW support for running the workbench on Microsoft IIS and SQL Server
 - NEW static event listeners now configurable in the `System.config.json` allowing handlers to react to events without being previously registered from PHP code.
-- FIX lot's of smaller issues
 
 ## 1.0
 
 First stand-alone release without the dependency on an external CMS-system.
+
+New features:
 
 - NEW page editor.
 - NEW Security system based on authorization points and flexible policies.

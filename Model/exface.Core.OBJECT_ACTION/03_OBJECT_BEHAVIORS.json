@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -70,7 +78,9 @@
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
-            "DESCRIPTION": "Makes names and descriptions translatable"
+            "DESCRIPTION": "Makes names and descriptions translatable",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-11-20 21:06:34",
@@ -83,7 +93,9 @@
             "OBJECT": "0x11e6e217f7f91457a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

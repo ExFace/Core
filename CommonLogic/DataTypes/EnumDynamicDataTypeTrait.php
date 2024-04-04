@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\DataTypes;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
-use exface\Core\Exceptions\LogicException;
 
 trait EnumDynamicDataTypeTrait {
     
@@ -52,17 +51,22 @@ trait EnumDynamicDataTypeTrait {
         return $text;
     }
     
-    public function getLabelOfValue($value = null) : string
+    public function getLabelOfValue($value = null) : ?string
     {
         $value = $value ?? $this->getValue();
-        if ($value === null) {
-            throw new LogicException('Cannot get text label for an enumeration value: neither an internal value exists, nor is one passed as parameter');
+        $labels = $this->getLabels();
+        $label = $labels[$value] ?? null;
+        if ($label === null) {
+            foreach ($labels as $key => $label) {
+                if (strcasecmp($value, $key) === 0) {
+                    return $label;
+                }
+            }
         }
-        $text = $this->values[$value];
-        if ($text === null) {
-            throw $this->createValidationError('Value "' . $value . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
+        if ($label === null) {
+            return null;
         }
-        return $this->buildLabel($value, $text);
+        return $this->buildLabel($value, $label);
     }
     
     /**
@@ -94,19 +98,37 @@ trait EnumDynamicDataTypeTrait {
         }
     }
     
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::parse()
+     */
     public function parse($string)
     {
-        if ($string === null || $string === '') {
-            return $string;
+        // Do not cast the value to aviod type mismatches with array keys (e.g. do not normalize numbers!)
+        $value = trim($string);
+        
+        $valueInArray = array_key_exists($value, $this->values);
+        
+        // Convert all sorts of empty values to NULL except if they are explicitly
+        // part of the enumeration: e.g. an empty string should become null if the
+        // enumeration does not include the empty string explicitly.
+        // TODO #null-or-NULL does the NULL constant need to pass parsing?
+        if (($this->isValueEmpty($value) || static::isValueLogicalNull($value)) && $valueInArray === false) {
+            return null;
         }
         
-        if (false === array_key_exists($string, $this->values)) {
+        if (false === $valueInArray) {
             throw $this->createValidationError('Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
         }
         
-        return $string;
+        return $value;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getShowValues() : bool
     {
         return $this->showValues;
@@ -165,5 +187,19 @@ trait EnumDynamicDataTypeTrait {
     public function toArray() : array
     {
         return $this->values;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::format()
+     */
+    public function format($value = null) : string
+    {
+        $value = parent::format($value);
+        if ($value === '') {
+            return '';
+        }
+        return $this->getLabelOfValue($value) ?? $value;
     }
 }

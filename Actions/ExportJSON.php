@@ -5,14 +5,26 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iShowData;
-use exface\Core\Exceptions\Actions\ActionLogicError;
+use exface\Core\Interfaces\Widgets\iUseData;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Container;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
+use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -46,6 +58,8 @@ class ExportJSON extends ReadData implements iExportData
     
     private $firstRowWritten = false;
     
+    private $lazyExport = null;
+    
     /**
      * 
      * {@inheritDoc}
@@ -71,7 +85,7 @@ class ExportJSON extends ReadData implements iExportData
         // which columns to export.
         $widget = $this->getWidgetToReadFor($task);
         if ($widget){
-            $widget->prepareDataSheetToRead($dataSheet);
+            $dataSheet = $widget->prepareDataSheetToRead($dataSheet);
         }
         
         $dataSheet->removeRows();
@@ -189,39 +203,29 @@ class ExportJSON extends ReadData implements iExportData
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
          
+        $lazyExport = $this->isLazyExport($dataSheetMaster);
+        $rowsOnPage = $this->getLimitRowsPerRequest();
+        
         // If there we expect to do split requests, we MUST sort over a unique attribute!
         // Otherwise, the results of subsequent requests may contain data in different order
         // resulting in dublicate or missing rows from the point of view of the entire
         // (combined) export.
-        if ($this->getLimitRowsPerRequest() > 0) {
+        if ($rowsOnPage > 0) {
             if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
                 $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
             } else {
-                throw new ActionLogicError($this, 'Cannot export data for meta object ' . $dataSheetMaster->getMetaObject()->getAliasWithNamespace() . ': corrupted data expected due to lack of a UID attribute!');
+                $rowsOnPage = null;
             }
         }
         
-        $widget = $this->getWidgetToReadFor($task);
-        /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */
-        if (! ($widget instanceof iShowData)) {
-            $page = $task->getPageTriggeredOn();
-            $widget = WidgetFactory::create($page, 'Data');
-            foreach ($dataSheetMaster->getColumns() as $col) {
-                if ($col->getHidden()) {
-                    continue;
-                }
-                $colWidget = WidgetFactory::create($page, 'DataColumn', $widget);
-                $colWidget->setAttributeAlias($col->getAttributeAlias());
-                $widget->addColumn($colWidget);
-            }
+        $exportedWidget = $this->getWidgetToReadFor($task);
+        
+        if ($lazyExport) {
+            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
         
-        // Datei erzeugen und schreiben
-        $columnNames = $this->writeHeader($widget);
-        $rowsOnPage = $this->getLimitRowsPerRequest();
         $rowOffset = 0;
         $errorMessage = null;
-        
         set_time_limit($this->getLimitTimePerRequest());
         do {
             $dataSheet = $dataSheetMaster->copy();
@@ -229,7 +233,24 @@ class ExportJSON extends ReadData implements iExportData
             $dataSheet->setRowsOffset($rowOffset);
             $dataSheet->dataRead();
             
-            $this->writeRows($dataSheet, $columnNames);
+            foreach ($dataSheet->getColumns() as $col) {
+                $type = $col->getDataType();
+                if ($type instanceof NumberEnumDataType) {
+                    $values = $col->getValues();
+                    $newValues = [];
+                    foreach ($values as $val) {
+                        $newValues[] = $type->getLabelOfValue($val);
+                    }
+                    $col->setValues($newValues);
+                }
+            }
+            
+            if ($lazyExport) {
+                $this->writeRows($dataSheet, $columnNames);
+            } else {
+                // Don't add any columns to the master sheet if reading produced hidden/system columns
+                $dataSheetMaster->addRows($dataSheet->getRows(), false, false);
+            }
             
             $rowOffset += $rowsOnPage;
             // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
@@ -241,9 +262,14 @@ class ExportJSON extends ReadData implements iExportData
         // Speicher frei machen
         $dataSheet = null;
         
+        if (! $lazyExport) {
+            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
+            $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
+        }
+        
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute());
+        $result = ResultFactory::createFileResult($task, $this->getFilePathAbsolute(), $this->isDownloadable());
         
         if ($errorMessage !== null) {
             $result->setMessage($errorMessage);
@@ -253,23 +279,93 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Generates an array of column names from the passed DataSheet and writes it as headers
-     * to the file.
+     * Generates an array of column names from the passed array of widgets.
      *
      * The column name array is returned.
      *
-     * @param iShowData $dataWidget
+     * @param iShowDataColumn[] $widget
      * @return string[]
      */
-    protected function writeHeader(iShowData $dataWidget) : array
+    protected function writeHeader(array $exportedColumns) : array
     {
         $header = [];
-        foreach ($dataWidget->getColumns() as $col) {
-            if (! $col->getHidden()) {
-                $header[$col->getDataColumnName()] = $this->getUseAttributeAliasAsHeader() === true ? $col->getAttributeAlias() : $col->getCaption();
+        foreach ($exportedColumns as $widget) {
+            if ($widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
+                if ($widget instanceof DataColumn && $widget->isExportable(! $widget->isHidden())=== false) {
+                    continue;
+                }
+                if ($this->getUseAttributeAliasAsHeader() && ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute()) {
+                    $headerName = $widget->getAttributeAlias();
+                } else {
+                    $headerName = $widget->getCaption();
+                }
+                $header[$widget->getDataColumnName()] = $headerName;
             }
         }
         return $header;
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $exportedWidget
+     * @return array
+     */
+    protected function getExportColumnWidgets(WidgetInterface $exportedWidget, DataSheetInterface $exportedSheet) : array
+    {
+        switch (true) {
+            case $exportedWidget instanceof iUseData:
+                $widgets = $exportedWidget->getData()->getColumns();
+                break;
+            case $exportedWidget instanceof iShowData:
+                $widgets = $exportedWidget->getColumns();
+                break;
+            case $exportedWidget instanceof Container:
+                $widgets = $exportedWidget->getWidgets();
+                break;
+            default:
+                $widgets = [];
+        }
+        
+        // If the exported data is a pivot-sheet, the columns we get from the widget will not be enough.
+        // We need to remove the columns being pivoted and add those, that result from transposing
+        // value columns.
+        if ($exportedSheet instanceof PivotSheetInterface) {
+            $widgetsBeforePivot = $widgets;
+            $widgets = [];
+            $pivotedSheet = $exportedSheet->getPivotResultDataSheet();
+            foreach ($widgetsBeforePivot as $widgetCol) {
+                $sheetCol = $exportedSheet->getColumns()->get($widgetCol->getDataColumnName());
+                switch (true) {
+                    // Don't bother about strange cases, where the sheet does not have a matching column
+                    case $sheetCol === null:
+                        $widgets[] = $widgetCol;
+                        break;
+                    // Replace the column with pivot headers with as many columns as headers expected
+                    case $exportedSheet->isColumnWithPivotHeaders($sheetCol):
+                        foreach ($pivotedSheet->getColumns() as $pivotedCol) {
+                            if ($pivotedCol instanceof PivotColumnInterface) {
+                                if ($pivotedCol->getPivotColumnGroup()->getColumnWithHeaders() === $sheetCol) {
+                                    $widgets[] = WidgetFactory::createFromUxonInParent($exportedWidget, new UxonObject([
+                                        'widget_type' => 'DataColumn',
+                                        'caption' => $pivotedCol->getTitle(),
+                                        'data_column_name' => $pivotedCol->getName()
+                                    ]));
+                                }
+                            }
+                        }
+                        break;
+                    // Skip pivot values columns - the values will be placed in the headers column above
+                    case $exportedSheet->isColumnWithPivotValues($sheetCol):
+                        break;
+                    // Keep regular columns
+                    default:
+                        $widgets[] = $widgetCol;
+                        break;
+                }
+            }
+        }
+        
+        return $widgets;
     }
     
     /**
@@ -286,7 +382,7 @@ class ExportJSON extends ReadData implements iExportData
     {
         foreach ($dataSheet->getRows() as $row) {
             $outRow = [];
-            foreach ($columnNames as $key) {
+            foreach ($columnNames as $key => $value) {
                 $outRow[$key] = $row[$key];
             }
             if ($this->firstRowWritten) {
@@ -310,6 +406,82 @@ class ExportJSON extends ReadData implements iExportData
         fclose($this->getWriter());
     }
     
+    /**
+     * Returns an array with the set filters with the captions as array key and comporator and filter value as array value in the format
+     * `{comporator} {filter value}`.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return array
+     */
+    protected function getFilterData(DataSheetInterface $dataSheet) : array
+    {
+        $filters = [];
+        $dataTableFilters = [];
+        $exportedWidget = $this->getWidgetDefinedIn()->getInputWidget();
+        switch (true) {
+            case $exportedWidget instanceof iShowData:
+                $dataWidget = $exportedWidget;
+                break;
+            case $exportedWidget instanceof iUseData:
+                $dataWidget = $exportedWidget->getData();
+                break;
+            default:
+                $dataWidget = null;
+        }
+        if ($dataWidget) {
+            foreach ($dataWidget->getFilters() as $filter) {
+                $dataTableFilters[$filter->getInputWidget()->getAttributeAlias()] = $filter->getInputWidget()->getCaption();
+            }
+        }
+        // Gesetzte Filter am DataSheet durchsuchen
+        foreach ($dataSheet->getFilters()->getConditions() as $condition) {
+            if (! is_null($filterValue = $condition->getValue()) && $filterValue !== '') {
+                // Name
+                if (array_key_exists(($filterExpression = $condition->getExpression())->toString(), $dataTableFilters)) {
+                    $filterName = $dataTableFilters[$filterExpression->toString()];
+                } else if ($filterExpression->isMetaAttribute()) {
+                    $filterName = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())->getName();
+                } else {
+                    $filterName = '';
+                }
+                
+                // Comparator
+                $filterComparator = $condition->getComparator();
+                if (substr($filterComparator, 0, 1) == '=') {
+                    // Wird sonst vom XLSX-Writer in eine Formel umgewandelt.
+                    $filterComparator = ' ' . $filterComparator;
+                }
+                
+                // Wert, gehoert der Filter zu einer Relation soll das Label und nicht
+                // die UID geschrieben werden
+                if ($filterExpression->isMetaAttribute()) {
+                    if ($dataSheet->getMetaObject()->hasAttribute($filterExpression->toString()) && ($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
+                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
+                        if ($relatedObject->isReadable() && empty($relatedObject->getDataAddressRequiredPlaceholders(false, true))) {
+                            $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
+                            $uidColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute())->getName();
+                            if ($relatedObject->hasLabelAttribute()) {
+                                $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
+                            } else {
+                                $labelColName = $uidColName;
+                            }
+                            $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($relatedObject->getUidAttribute()), $filterValue, $condition->getComparator()));
+                            $filterValueRequestSheet->dataRead();
+                            
+                            if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($labelColName))) {
+                                $filterValue = $requestValue;
+                            }
+                        }
+                    }
+                }
+                
+                // Zeile schreiben
+                $filters[$filterName] = $filterComparator . ' ' . $filterValue;
+            }
+        }
+        return $filters;
+    }
+    
     
     
     /**
@@ -318,7 +490,7 @@ class ExportJSON extends ReadData implements iExportData
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = fopen($this->getPathname(), 'x+');
+            $this->writer = fopen($this->getFilePathAbsolute(), 'x+');
             fwrite($this->writer, '[');
         }
         return $this->writer;
@@ -423,6 +595,29 @@ class ExportJSON extends ReadData implements iExportData
     public function setUseAttributeAliasAsHeader(bool $value) : ExportJSON
     {
         $this->useAttributeAliasAsHeader = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isLazyExport(DataSheetInterface $exporetedData) : bool
+    {
+        if ($this->lazyExport === null && $exporetedData instanceof PivotSheetInterface) {
+            return false;
+        }
+        return $this->lazyExport ?? true;
+    }
+    
+    /**
+     * 
+     * @param bool $value
+     * @return ExportJSON
+     */
+    public function setLazyExport(bool $value) : ExportJSON
+    {
+        $this->lazyExport = $value;
         return $this;
     }
 }

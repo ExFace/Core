@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * An advanced search dialog allowing the user to search and select data entries.
@@ -118,7 +119,9 @@ class DataLookupDialog extends Dialog
             
             if ($data_table->getMetaObject()->hasLabelAttribute() === true) {
                 $labelAlias = $data_table->getMetaObject()->getLabelAttributeAlias();
-                if (! $data_table->getColumnByAttributeAlias($labelAlias) && ! $data_table->getColumnByDataColumnName($this->getWorkbench()->getConfig()->getOption("METAMODEL.OBJECT_LABEL_ALIAS"))) {
+                if (! $data_table->getColumnByAttributeAlias($labelAlias) 
+                    && ! $data_table->getColumnByDataColumnName(MetaAttributeInterface::OBJECT_LABEL_ALIAS)
+                ) {
                     $data_table->addColumn($data_table->createColumnFromAttribute($data_table->getMetaObject()->getLabelAttribute()));
                 }
             }

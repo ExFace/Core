@@ -68,16 +68,20 @@
         {
             "name": "TARGET_FACADE",
             "attribute_alias": "TARGET_FACADE"
+        },
+        {
+            "name": "TARGET_APP",
+            "attribute_alias": "TARGET_APP"
         }
     ],
     "rows": [
         {
             "CREATED_ON": "2020-03-22 13:40:27",
-            "MODIFIED_ON": "2020-07-06 07:26:15",
+            "MODIFIED_ON": "2024-02-29 16:51:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea6c42b1bda91ea3480205857feb80",
-            "NAME": "Access all pages for superusers",
+            "NAME": "All pages for superusers",
             "DESCRIPTION": "",
             "EFFECT": "P",
             "APP": "0x31000000000000000000000000000000",
@@ -90,15 +94,16 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-22 13:42:27",
-            "MODIFIED_ON": "2020-03-22 13:42:27",
+            "MODIFIED_ON": "2024-02-29 16:51:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea6c42f91d2d39a3480205857feb80",
-            "NAME": "Access to all contexts for superusers",
+            "NAME": "All contexts for superusers",
             "DESCRIPTION": "",
             "EFFECT": "P",
             "APP": "0x31000000000000000000000000000000",
@@ -109,7 +114,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:29:13",
@@ -130,7 +136,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:29:31",
@@ -151,7 +158,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-26 13:30:06",
@@ -172,7 +180,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-26 17:03:55",
@@ -193,7 +202,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-26 21:12:23",
@@ -214,7 +224,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-03-27 14:46:37",
@@ -235,7 +246,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-04-16 06:50:27",
@@ -256,7 +268,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-06 17:01:17",
@@ -275,7 +288,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:22:43",
@@ -294,7 +308,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:26:22",
@@ -313,7 +328,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:28:17",
@@ -332,7 +348,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:28:47",
@@ -351,7 +368,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:32:59",
@@ -370,7 +388,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:35:20",
@@ -391,7 +410,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:40:53",
@@ -412,15 +432,16 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:43:11",
-            "MODIFIED_ON": "2020-05-11 09:43:11",
+            "MODIFIED_ON": "2024-02-29 16:51:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea936bd3c66cfaa9d10205857feb80",
-            "NAME": "Access all actions for superusers",
+            "NAME": "All actions for superusers",
             "DESCRIPTION": "",
             "EFFECT": "P",
             "APP": "0x31000000000000000000000000000000",
@@ -431,15 +452,16 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 09:43:39",
-            "MODIFIED_ON": "2020-05-11 09:43:39",
+            "MODIFIED_ON": "2022-12-02 09:35:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea936be4203981a9d10205857feb80",
-            "NAME": "Access all facades for superusers",
+            "NAME": "All facades for superusers",
             "DESCRIPTION": "",
             "EFFECT": "P",
             "APP": "0x31000000000000000000000000000000",
@@ -450,7 +472,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 13:01:40",
@@ -469,7 +492,8 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-11 13:02:29",
@@ -490,16 +514,17 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-05-28 15:42:11",
-            "MODIFIED_ON": "2020-07-20 12:58:17",
+            "MODIFIED_ON": "2021-04-22 12:26:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eaa0f9b9fd9c67bba0e4b318306b9a",
             "NAME": "Deny any web-actions without a trigger widget",
-            "DESCRIPTION": "Only applied to non-CLI tasks without a trigger widget. Login\/Logout are excluded as they are always allowed.",
+            "DESCRIPTION": "Only applied to HTTP tasks without a trigger widget. Login\/Logout are excluded as they are always allowed.",
             "EFFECT": "D",
             "APP": "0x31000000000000000000000000000000",
             "AUTHORIZATION_POINT": "0x11ea8eddc766689f8ba98c04ba002958",
@@ -508,7 +533,7 @@
             "TARGET_OBJECT": "",
             "CONDITION_UXON": {
                 "action_trigger_widget_match": false,
-                "command_line_task": false,
+                "http_task": true,
                 "exclude_actions": [
                     "exface.Core.Login",
                     "exface.Core.Logout"
@@ -516,7 +541,8 @@
             },
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         },
         {
             "CREATED_ON": "2020-11-17 09:09:19",
@@ -535,7 +561,241 @@
             "CONDITION_UXON": null,
             "TARGET_ACTION_MODEL": "",
             "TARGET_ACTION_PROTOTYPE": "",
-            "TARGET_FACADE": ""
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2021-04-21 14:51:38",
+            "MODIFIED_ON": "2021-04-21 14:51:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb96e9502a964696e9025041000001",
+            "NAME": "Access to any CLI command for CLI users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8eddc766689f8ba98c04ba002958",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11eba8ea3b31c0c2a8ea025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "command_line_task": true
+            },
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2021-04-21 14:52:23",
+            "MODIFIED_ON": "2023-01-30 10:57:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11eb82676b1a93d48267025041000001",
+            "NAME": "ConsoleFacade for CLI users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ed92150ec75cde9215025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11eba8ea3b31c0c2a8ea025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/core\/Facades\/ConsoleFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2021-04-22 11:07:01",
+            "MODIFIED_ON": "2021-04-22 11:07:01",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb878c19786380878c025041000001",
+            "NAME": "Access to Monitor for Support",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea5ede96e738f6b9920205857feb80",
+            "TARGET_PAGE_GROUP": "0x11ebb081f5b857c0b081025041000001",
+            "TARGET_USER_ROLE": "0x11ebadc4702cd376adc4025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2021-04-22 12:27:06",
+            "MODIFIED_ON": "2021-04-22 12:27:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11eb98d649cd239498d6025041000001",
+            "NAME": "Running the scheduler for CLI users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8eddc766689f8ba98c04ba002958",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11eba8ea3b31c0c2a8ea025041000001",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "scheduler_task": true
+            },
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2022-02-24 09:12:21",
+            "MODIFIED_ON": "2022-02-24 11:43:57",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ec8540dfa3190c8540025041000001",
+            "NAME": "NotificationContext for Authenticated Users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea6c42dfac007ba3480205857feb80",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "context": "exface.Core.NotificationContext"
+            },
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2022-06-10 18:20:23",
+            "MODIFIED_ON": "2022-06-10 18:20:23",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ecbc913b316dd4bc91025041000001",
+            "NAME": "HttpFileServerFacade for authenticated users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/Core\/Facades\/HttpFileServerFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2022-12-01 21:40:01",
+            "MODIFIED_ON": "2023-01-30 10:55:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ed9fd25427322a9fd2025041000001",
+            "NAME": "Docs for authenticated users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/core\/Facades\/DocsFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2022-12-01 21:59:59",
+            "MODIFIED_ON": "2023-01-30 10:55:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11edb2e71df168a8b2e7025041000001",
+            "NAME": "WebConsole for authenticated",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/core\/Facades\/WebConsoleFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2022-12-02 08:34:26",
+            "MODIFIED_ON": "2023-04-06 14:24:31",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edbb42c0a22a6cbb42025041000001",
+            "NAME": "Offline queue for authenticated users",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11ea6fa3cab9a380a3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "url_path_pattern": "@\/offline\/.*@i"
+            },
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/Core\/Facades\/HttpTaskFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2023-03-21 10:21:48",
+            "MODIFIED_ON": "2023-03-21 10:21:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11edb49dce5e4c9cb49d025041000001",
+            "NAME": "PWA API for everyone",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface\/Core\/Facades\/PWAapiFacade.php",
+            "TARGET_APP": ""
+        },
+        {
+            "CREATED_ON": "2024-02-29 16:51:02",
+            "MODIFIED_ON": "2024-02-29 17:14:47",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ee89db57a2705e89db025041000001",
+            "NAME": "All data for superusers",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ec8990fa549caa8990025041000001",
+            "TARGET_PAGE_GROUP": "",
+            "TARGET_USER_ROLE": "0x11ea6c428d7e7e9fa3480205857feb80",
+            "TARGET_OBJECT": "",
+            "CONDITION_UXON": {
+                "add_filters": {
+                    "operator": "AND",
+                    "conditions": []
+                }
+            },
+            "TARGET_ACTION_MODEL": "",
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "",
+            "TARGET_APP": ""
         }
     ],
     "totals_rows": [],

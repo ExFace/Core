@@ -5,10 +5,8 @@ use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
@@ -16,6 +14,9 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\Widgets\AbstractWidget;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -25,7 +26,8 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  */
 abstract class AbstractJqueryElement implements WorkbenchDependantInterface, AjaxFacadeElementInterface
 {
-
+    const EVENT_NAME_ACTIONPERFORMED = 'actionperformed';
+    
     private $exf_widget = null;
 
     private $facade = null;
@@ -42,19 +44,19 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
 
     private $hint_max_chars_in_line = null;
 
-    private $on_change_script = '';
+    private $on_change_scripts = [];
 
-    private $on_resize_script = '';
+    private $on_resize_scripts = [];
+    
+    private $on_refresh_scripts = [];
 
     private $ajax_url = null;
 
     private $function_prefix = null;
 
     private $id = null;
-
-    private $element_type = null;
     
-    private $element_class = '';
+    private $element_class = 'exf-element';
     
     private $element_style = '';
 
@@ -175,18 +177,19 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      * Returns a ready-to-use hint text, that will generally be included in float-overs for facade elements
      *
      * @param string $hint_text            
-     * @param string $remove_linebreaks            
+     * @param bool $remove_linebreaks  
+     * @param string $forceQuotesAs          
      * @return string
      */
-    public function buildHintText($hint_text = NULL, $remove_linebreaks = false)
+    public function buildHintText(string $hint_text = null, bool $remove_linebreaks = false)
     {
         $max_hint_len = $this->getHintMaxCharsInLine();
         $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
-        $hint = str_replace('"', '\"', $hint);
+        $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
-            $hint = trim(preg_replace('/\r|\n/', ' ', $hint));
+            $hint = trim(StringDataType::stripLineBreaks($hint));
         } else {
-            $parts = explode("\n", $hint);
+            $parts = StringDataType::splitLines($hint);
             $hint = '';
             foreach ($parts as $part) {
                 if (strlen($part) > $max_hint_len) {
@@ -246,19 +249,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         }
         return $this->function_prefix;
     }
-
-    /**
-     * Returns the type attribute of the resulting HTML-element.
-     * In pure HTML this is only usefull for elements like
-     * input fields (the type would be "text", "hidden", etc.), but many UI-frameworks use this kind of attribute
-     * to identify types of widgets. Returns NULL by default.
-     *
-     * @return string
-     */
-    public function getElementType()
-    {
-        return $this->element_type;
-    }
     
     /**
      * Returns the CSS classes for this element (i.e. the contents of the HTML attribute class="...")
@@ -312,20 +302,6 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         return $this;
     }
     
-    
-
-    /**
-     * Sets the element type
-     *
-     * @param string $value            
-     * @return AbstractJqueryElement
-     */
-    public function setElementType($value)
-    {
-        $this->element_type = $value;
-        return $this;
-    }
-
     /**
      * Returns the id of the HTML-element representing the widget.
      * Passing a widget id makes the method return the id of the element
@@ -440,6 +416,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         if ($dimension->isRelative()) {
             if (! $dimension->isMax()) {
                 $width = ($this->getWidthRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $width = '100%';
             }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $width = $dimension->getValue();
@@ -478,7 +456,11 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     {
         $dimension = $this->getWidget()->getHeight();
         if ($dimension->isRelative()) {
-            $height = $this->getHeightRelativeUnit() * $dimension->getValue() . 'px';
+            if (! $dimension->isMax()) {
+                $height = ($this->getHeightRelativeUnit() * $dimension->getValue()) . 'px';
+            } else {
+                $height = '100%';
+            }
         } elseif ($dimension->isFacadeSpecific() || $dimension->isPercentual()) {
             $height = $dimension->getValue();
         } else {
@@ -555,7 +537,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             $this->width_minimum = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.WIDTH_MINIMUM');
             $width = $this->getWidget()->getWidth();
             if ($width->isRelative() === true && $width->isMax() === false) {
-                $this->width_minimum = round($this->width_minimum * $this->getWidget()->getWidth()->getValue(), 0);
+                $this->width_minimum = round($this->width_minimum * ($width->getValue() < 1 ? $width->getValue() : 1), 0);
             }
         }
         return $this->width_minimum;
@@ -595,10 +577,36 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             if (! $alias && $widget instanceof iShowDataColumn) {
                 $alias = $widget->getDataColumnName();
             }
-        } else {
-            $alias = $widget->getMetaObject()->getAliasWithNamespace();
+            if ($alias) {
+                $rowsJs = "{'$alias': {$this->buildJsValueGetter()} }";
+            }
         }
-        return "{oId: '" . $widget->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '{$widget->getMetaObject()->getId()}', rows: [{$rowsJs}]}";
+    }
+    
+    /**
+     * Returns the meta object of the data this widget is expected to provide for a certain aciton.
+     * 
+     * This method helps to determine, if the input data for the given action will be based on
+     * the widgets object or another one:
+     * 
+     * - If the input widget of the action is known, the input data will be based on the object of that widget
+     * - Otherwise (in particular, if no action is provided), the input data will be based on this
+     * widgets own object.
+     * 
+     * @param ActionInterface $action
+     * @return MetaObjectInterface
+     */
+    protected function getMetaObjectForDataGetter(ActionInterface $action = null) : MetaObjectInterface
+    {
+        switch (true) {
+            case $action !== null && ($action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iUseInputWidget):
+                return $action->getWidgetDefinedIn()->getInputWidget()->getMetaObject();
+            /*case $action !== null && $widget->hasParent():
+                return $this->getWidget()->getParent()->getMetaObject();*/
+            default:
+                return $this->getMetaObject();
+        }
     }
     
     /**
@@ -645,17 +653,14 @@ JS;
     }
 
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes.
      * 
-     * NOTE: the event object is available via the javascript variable "event".
-     *
-     * @param string $string            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnChangeScript()
      */
     public function addOnChangeScript($string)
     {
         // Add a semicolon in case the $string does not end with one.
-        $this->on_change_script .= trim($string) . ';';
+        $this->on_change_scripts[] = trim($string);
         return $this;
     }
 
@@ -666,17 +671,17 @@ JS;
      */
     public function getOnChangeScript()
     {
-        return $this->on_change_script;
+        return implode(";\n", array_unique($this->on_change_scripts));
     }
 
     /**
-     * Overwrites the JavaScript snippet, that will get executed every time the value of this element changes
-     *
-     * @param string $string            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnResizeScript()
      */
-    public function setOnChangeScript($string)
+    public function addOnResizeScript($js)
     {
-        $this->on_change_script = $string;
+        $this->on_resize_scripts[] = trim($js);
         return $this;
     }
 
@@ -687,31 +692,28 @@ JS;
      */
     public function getOnResizeScript()
     {
-        return $this->on_resize_script;
+        return implode(";\n", array_unique($this->on_resize_scripts));
     }
-
+    
     /**
-     * Overwrites the JavaScript snippet, that will get executed every time the size of this element changes
-     *
-     * @param string $value            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::addOnRefreshScript()
      */
-    public function setOnResizeScript($value)
+    public function addOnRefreshScript(string $js) : AjaxFacadeElementInterface
     {
-        $this->on_resize_script = $value;
+        $this->on_refresh_scripts[] = trim($js);
         return $this;
     }
-
+    
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the size of this element changes
+     * Returns the JavaScript snippet, that should get executed every time the size of this element changes
      *
-     * @param string $js            
-     * @return \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement
+     * @return string
      */
-    public function addOnResizeScript($js)
+    public function getOnRefreshScript() : string
     {
-        $this->on_resize_script .= $js;
-        return $this;
+        return implode(";\n", array_unique($this->on_refresh_scripts));
     }
 
     /**
@@ -774,23 +776,23 @@ JS;
      * Returns a facade specific CSS class for a given icon.
      * In most facades this string will be used as a class for an <a> or <i> element.
      *
-     * @param string $icon            
+     * @param NULL|string $icon            
      * @return string
      */
-    public function buildCssIconClass($icon)
+    public function buildCssIconClass(?string $icon) : string
     {
-        try {
-            $class = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
-            return $class;
-        } catch (ConfigOptionNotFoundError $e) {
+        $opt = 'ICON_CLASSES.' . strtoupper($icon ?? '');
+        $config = $this->getFacade()->getConfig();
+        if ($config->hasOption($opt)) {
+            return $config->getOption($opt);
+        } else {
             $widget = $this->getWidget();
             if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
                 $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';
-            }
-            if (! $prefix) {
+            } else {
                 $prefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
             }
-            return ($prefix !== '' && StringDataType::startsWith($icon, $prefix, false) === false ? $prefix : '') . $icon;
+            return ($prefix !== '' && StringDataType::startsWith($icon ?? '', $prefix, false) === false ? $prefix : '') . ($icon ?? '');
         }
     }
     
@@ -806,9 +808,10 @@ JS;
     /**
      * Returns the translation string for the given message id.
      *
-     * This is a shortcut for calling $this->getFacade()->getApp()->getTranslator()->translate().
+     * Checks, if the widget has a custom translation for the key in `translations`, and calls 
+     * `$this->getFacade()->getApp()->getTranslator()->translate()` otherwise.
      *
-     * @see Translation::translate()
+     * @see \exface\Core\CommonLogic\Translation\Translation::translate()
      *
      * @param string $message_id            
      * @param array $placeholders            
@@ -818,7 +821,9 @@ JS;
     public function translate($message_id, array $placeholders = array(), $number_for_plurification = null)
     {
         $message_id = trim($message_id);
-        return $this->getFacade()->getApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
+        $translator = $this->getFacade()->getApp()->getTranslator();
+        $customText = $this->getWidget()->getTranslationCustomization($translator->getLanguage(), $message_id, $placeholders, $number_for_plurification);
+        return $customText ?? $translator->translate($message_id, $placeholders, $number_for_plurification);
     }
 
     /**
@@ -828,7 +833,7 @@ JS;
      *
      * @return string
      */
-    public function buildJsValidator()
+    public function buildJsValidator(?string $valJs = null) : string
     {
         return 'true';
     }
@@ -844,25 +849,30 @@ JS;
     {
         return '';
     }
-
+    
     /**
-     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
-     *
-     * @return string
+     * Returns an inline JS snippet which disabled/enables the widget (no tailing semicolon!).
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsSetDisabled()
      */
-    public function buildJsEnabler()
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
     {
-        return '$("#' . $this->getId() . '").removeProp("disabled")';
+        if ($trueOrFalse === true) {
+            return '$("#' . $this->getId() . '").prop("disabled", "disabled");';
+        } else {
+            return '$("#' . $this->getId() . '").removeProp("disabled");';
+        }
     }
-
+    
     /**
-     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
      *
+     * @param bool $hidden
      * @return string
      */
-    public function buildJsDisabler()
+    protected function buildJsSetHidden(bool $hidden) : string
     {
-        return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
+        return "$('#{$this->getId()}')" . ($hidden ? ".addClass('exf-hidden')" : ".removeClass('exf-hidden')");
     }
     
     /**
@@ -898,7 +908,7 @@ JS;
     {
         $widget = $this->getWidget();
         $caption = $widget->getCaption();
-        return ($caption ? $caption . ': ' : '') . $widget->getHint();
+        return $this->buildHintText(($caption ? $caption . ': ' : '') . $widget->getHint());
     }
     
     /**
@@ -960,5 +970,79 @@ JS;
         
         return $this->buildJsValueSetter($initialValueJs);
     }
+    
+    /**
+     * Escapes special characters in the given string value, so it can be used in JavaScript or HTML (if `$forUseInHtml` is set to TRUE).
+     * 
+     * Common use cases:
+     * - inside HTML - e.g. `<div>mystring</div>` - with `$forUseInHtml=true`
+     * - in HTML attribute - e.g. `<input value="mystring">` - with `$forUseInHtml=true`
+     * - in JS config object - with `$forUseInHtml=false`
+     * - in JS config logic like value getters/setters - with `$forUseInHtml=false`
+     * 
+     * By default the escaped string is automatically enclosed in double quotes. To avoid this, set 
+     * `$encloseInQuotes` to `false`. It is recommended to place the result in double quotes in
+     * this case: e.g. `"escaped_string"`.
+     * 
+     * @param mixed $string
+     * @param bool $forUseInHtml
+     * @return string|NULL
+     */
+    public function escapeString($string, bool $encloseInQuotes = true, bool $forUseInHtml = false) : ?string
+    {
+        if ($string === null) {
+            return $encloseInQuotes ? '""' : '';
+        }
+        
+        if ($string === '') {
+            return $encloseInQuotes ? '""' : $string;
+        }
+        
+        if ($forUseInHtml === true) {
+            $escaped = htmlspecialchars($string, ENT_QUOTES);
+            return $encloseInQuotes ? '"' . $escaped . '"' : $escaped;
+        }
+        
+        $escaped = json_encode($string, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encloseInQuotes === false && substr($escaped, 0, 1) === '"' && substr($escaped, -1) === '"') {
+            $escaped = substr($escaped, 1, -1);
+        }
+        return $escaped;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === AbstractWidget::FUNCTION_REFRESH:
+                return $this->buildJsRefresh();
+            case $functionName === AbstractWidget::FUNCTION_RESET:
+                return $this->buildJsResetter();
+            case $functionName === AbstractWidget::FUNCTION_ENABLE:
+                return $this->buildJsSetDisabled(false);
+            case $functionName === AbstractWidget::FUNCTION_DISABLE:
+                return $this->buildJsSetDisabled(true);
+            case $functionName === AbstractWidget::FUNCTION_HIDE:
+                return $this->buildJsSetHidden(true);
+            case $functionName === AbstractWidget::FUNCTION_SHOW:
+                return $this->buildJsSetHidden(false);
+            case $functionName === AbstractWidget::FUNCTION_NONE:
+                return '';
+        }
+        throw new WidgetPropertyUnknownError($this->getWidget(), 'Unsupported widget function "' . $functionName . '" for widget "' . $this->getWidget()->getWidgetType() . '"!');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface::buildJsCheckInitialized()
+     */
+    public function buildJsCheckInitialized() : string
+    {
+        return "($('#{$this->getId()}').length !== 0)";
+    }
 }
-?>

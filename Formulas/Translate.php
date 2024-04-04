@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Formulas;
 
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
+
 /**
  * This formula can be used to translate certain widget-attributes, e.g. caption.
  * 
@@ -23,19 +25,20 @@ class Translate extends \exface\Core\CommonLogic\Model\Formula
      * @param string $pluralNumber
      * @return string
      */
-    public function run(string $appAlias, string $messageId, string $placeholderValues = null, string $pluralNumber = null)
+    public function run(string $appAlias = null, string $messageId = null, string $placeholderValues = null, string $pluralNumber = null)
     {
-        try {
-            if ($placeholderValues) {
-                $placeholder = $this->parsePlaceholderValues($placeholderValues);
-            }
-            if ($pluralNumber) {
-                $plural = $this->parsePluralNumber($pluralNumber);
-            }
-            return $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate($messageId, $placeholder, $plural);
-        } catch (\Exception $e) {
-            return $messageId;
+        if (! $appAlias || ! $messageId) {
+            return '';
         }
+        
+        if ($placeholderValues) {
+            $placeholder = $this->parsePlaceholderValues($placeholderValues);
+        }
+        if ($pluralNumber) {
+            $plural = $this->parsePluralNumber($pluralNumber);
+        }
+        
+        return $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate($messageId, $placeholder, $plural);
     }
 
     /**

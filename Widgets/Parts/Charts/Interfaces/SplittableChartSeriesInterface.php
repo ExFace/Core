@@ -6,9 +6,7 @@ use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 interface SplittableChartSeriesInterface
-{    
-    
-    
+{
     /**
      * 
      * @param string $value
@@ -39,4 +37,17 @@ interface SplittableChartSeriesInterface
      * @return DataColumn
      */
     public function getSplitByDataColumn() : DataColumn;
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return ChartSeries
+     */
+    public function setSplitWithColorGradients(bool $trueOrFalse) : ChartSeries;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getSplitWithColorGradients() : bool;
 }

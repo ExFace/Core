@@ -13,6 +13,8 @@ class QueryPartSelect extends QueryPartAttribute
 
     private $column_key = null;
     
+    private $excludeFromResult = false;
+    
     public function __construct($alias, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null, string $column_name = null) {
         parent::__construct($alias, $query, $parentQueryPart);
         $this->column_key = $column_name ?? DataColumn::sanitizeColumnName($alias);
@@ -58,5 +60,24 @@ class QueryPartSelect extends QueryPartAttribute
     {
         return $this->column_key;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isExcludedFromResult() : bool
+    {
+        return $this->excludeFromResult;
+    }
+    
+    /**
+     * 
+     * @param bool $value
+     * @return QueryPartSelect
+     */
+    public function excludeFromResult(bool $value) : QueryPartSelect
+    {
+        $this->excludeFromResult = $value;
+        return $this;
+    }
 }
-?>

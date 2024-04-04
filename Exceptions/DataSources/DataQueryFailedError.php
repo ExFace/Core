@@ -19,7 +19,6 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  */
 class DataQueryFailedError extends RuntimeException implements DataQueryExceptionInterface
 {
-    
     use DataQueryExceptionTrait;
 
     public function __construct(DataQueryInterface $query, $message, $alias = null, $previous = null)
@@ -33,4 +32,3 @@ class DataQueryFailedError extends RuntimeException implements DataQueryExceptio
         return LoggerInterface::CRITICAL;
     }
 }
-?>

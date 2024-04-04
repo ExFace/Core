@@ -58,7 +58,7 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
         }
         
         $permissionsGenerator = $this->evaluatePolicies($action, $userOrToken, $task);
-        $this->combinePermissions($permissionsGenerator, $userOrToken, $action);
+        $this->evaluatePermissions($permissionsGenerator, $userOrToken, $action);
         return $task;
     }
     
@@ -93,6 +93,6 @@ class ActionAuthorizationPoint extends AbstractAuthorizationPoint
      */
     protected function getResourceName($resource) : string
     {
-        return "action '{$resource->getAliasWithNamespace()}'";
+        return "action \"{$resource->getAliasWithNamespace()}\"";
     }
 }

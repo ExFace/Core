@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -58,11 +66,13 @@
             "OBJECT": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2018-11-11 20:51:01",
-            "MODIFIED_ON": "2018-11-11 20:54:09",
+            "MODIFIED_ON": "2022-04-25 16:58:15",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8e5f37769e67cbed30205857feb80",
@@ -71,7 +81,9 @@
             "OBJECT": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Model validation",
-            "DESCRIPTION": "This behavior makes sure, every meta object is instantiated and validated every time any editor for it's model is opened. This behavior also fires the onModelValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors."
+            "DESCRIPTION": "This behavior makes sure, every meta object is instantiated and validated every time any editor for it's model is opened. This behavior also fires the OnMetaObjectModelValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors.",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-08-26 08:15:53",
@@ -104,7 +116,9 @@
             "OBJECT": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Translations",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

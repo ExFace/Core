@@ -9,6 +9,8 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
@@ -105,15 +107,26 @@ class UndeletableBehavior extends AbstractBehavior
     private $conditionGroup = null;
     
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'handleOnBeforeDelete']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'handleOnBeforeDelete'], $this->getPriority());
         
-        $this->setRegistered(true);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'handleOnBeforeDelete']);
+        
         return $this;
     }
     
@@ -137,6 +150,8 @@ class UndeletableBehavior extends AbstractBehavior
         if (! $eventDataSheet->getMetaObject()->isExactly($this->getObject())) {
             return;
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
         $dataSheet = $eventDataSheet->copy();
         
@@ -254,8 +269,11 @@ class UndeletableBehavior extends AbstractBehavior
                 ]);
             }
             
-            throw new DataSheetDeleteForbiddenError($dataSheet, $message);    
+            throw (new DataSheetDeleteForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true);    
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**

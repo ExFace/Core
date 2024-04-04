@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 /**
  * The window scope exists in every browser window separately (in contrast to the session scope, which is bound to a single "user login").
@@ -79,6 +80,11 @@ class WindowContextScope extends AbstractContextScope
         }
         return $context;
     }
+    
+    public function hasContext($aliasOrSelector, bool $loadContextIfPossible = true) : bool
+    {
+        return $this->getContextManager()->getScopeSession()->hasContext($aliasOrSelector, $loadContextIfPossible);
+    }
 
     /**
      * Delegate everything to the session scope until there is a proper implementation for the window scope
@@ -96,5 +102,40 @@ class WindowContextScope extends AbstractContextScope
         }
         return $contexts;
     }
+    
+    /**
+     *
+     * @param string $name
+     * @param mixed $value
+     * @param string $namespace
+     * @return ContextScopeInterface
+     */
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
+    {
+        $this->getContextManager()->getScopeSession()->setVariable($name, $value, $namespace);
+        return $this;
+    }
+    
+    /**
+     *
+     * @param string $name
+     * @param string $namespace
+     * @return ContextScopeInterface
+     */
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
+    {
+        $this->getContextManager()->getScopeSession()->unsetVariable($name, $namespace);
+        return $this;
+    }
+    
+    /**
+     *
+     * @param string $name
+     * @param string $namespace
+     * @return mixed
+     */
+    public function getVariable(string $name, string $namespace = null)
+    {
+        return $this->getContextManager()->getScopeSession()->getVariable($name, $namespace);
+    }
 }
-?>

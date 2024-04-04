@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -50,6 +49,8 @@ class Attribute implements MetaAttributeInterface
     private $hidden = false;
 
     private $editable = false;
+    
+    private $copyable = true;
 
     private $system = false;
 
@@ -273,7 +274,7 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormatter()
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCalculation()
      */
     public function setCalculation(string $expressionString) : MetaAttributeInterface
     {
@@ -673,8 +674,11 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataAddressProperties()
      */
-    public function getDataAddressProperties()
+    public function getDataAddressProperties() : UxonObject
     {
+        if (null === $this->data_address_properties) {
+            $this->data_address_properties = new UxonObject();
+        }
         return $this->data_address_properties;
     }
 
@@ -769,7 +773,7 @@ class Attribute implements MetaAttributeInterface
      * 
      * @return MetaAttributeInterface
      */
-    public function copy(bool $ignoreRelationPath = false)
+    public function copy(bool $ignoreRelationPath = false) : self
     {
         $copy = clone $this;
         
@@ -813,7 +817,7 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isSystem()
      */
-    public function isSystem()
+    public function isSystem() : bool
     {
         return $this->system;
     }
@@ -823,9 +827,9 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSystem()
      */
-    public function setSystem($value)
+    public function setSystem(bool $value) : MetaAttributeInterface
     {
-        $this->system = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->system = $value;
         return $this;
     }
 
@@ -856,6 +860,9 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultAggregateFunction($value)
     {
+        if ($value === '') {
+            $value = null;
+        }
         $this->default_aggregate_function = $value;
         return $this;
     }
@@ -949,13 +956,35 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::explodeValueList()
+     */
+    public function explodeValueList(string $delimitedString) : array
+    {
+        $array = explode($this->getValueListDelimiter(), $delimitedString);
+        array_walk($array, 'trim');
+        return $array;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::implodeValueList()
+     */
+    public function implodeValueList(array $values) : string
+    {
+        return implode($this->getValueListDelimiter(), $values);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCustomDataTypeUxon()
      */
     public function getCustomDataTypeUxon()
     {
         if ($this->custom_data_type_uxon === null){
-            if ($this->custom_data_type_uxon_string !== null) {
-                $this->custom_data_type_uxon = UxonObject::fromJson($this->custom_data_type_uxon_string);
+            if ($this->custom_data_type_string !== null) {
+                $this->custom_data_type_uxon = UxonObject::fromJson($this->custom_data_type_string);
             } else {
                 return new UxonObject();
             }
@@ -972,9 +1001,9 @@ class Attribute implements MetaAttributeInterface
     {
         if ($uxonOrString instanceof UxonObject) {
             $this->custom_data_type_uxon = $uxonOrString;
-            $this->custom_data_type_uxon_string = null;
+            $this->custom_data_type_string = null;
         } elseif (is_string($uxonOrString)) {
-            $this->custom_data_type_uxon_string = $uxonOrString;
+            $this->custom_data_type_string = $uxonOrString;
             $this->custom_data_type_uxon = null;
         } else {
             throw new InvalidArgumentException('Invalid custom data type UXON for attribute ' . $this->getAlias() . ' of object ' . $this->getObject()->getAliasWithNamespace() . ': expecting string or UXON object!');
@@ -1067,7 +1096,11 @@ class Attribute implements MetaAttributeInterface
             if ($this->default_display_uxon_string !== null) {
                 $this->default_display_uxon = UxonObject::fromJson($this->default_display_uxon_string);
             } else {
-                $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+                $tpl = $this->getDataType()->getDefaultDisplayUxon()->copy();
+                if ($tpl->isEmpty()) {
+                    $tpl->setProperty('widget_type', 'Display');
+                }
+                $this->default_display_uxon = $tpl;
             }
         }
         
@@ -1112,5 +1145,35 @@ class Attribute implements MetaAttributeInterface
     {
         return $this->getRelationPath()->isEmpty() === false;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isCopyable()
+     */
+    public function isCopyable(): bool
+    {
+        return $this->copyable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCopyable()
+     */
+    public function setCopyable(bool $value): MetaAttributeInterface
+    {
+        $this->copyable = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::__toString()
+     */
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '" (alias "' . $this->getAliasWithRelationPath() . '")';
+    }
 }
-?>

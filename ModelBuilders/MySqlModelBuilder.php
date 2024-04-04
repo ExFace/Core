@@ -49,8 +49,13 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                     $row['REQUIREDFLAG'] = 0;
                 }
                 
-                if ($def !== '') {
-                    $row['DEFAULT_VALUE'] = is_numeric($def) ? $def : "'$def'";
+                switch (true) {
+                    case $def === 'CURRENT_TIMESTAMP':
+                        $row['DEFAULT_VALUE'] = '=Now()';
+                        break;
+                    case $def !== '':
+                        $row['DEFAULT_VALUE'] = is_numeric($def) ? $def : "'$def'";
+                        break;
                 }
             }
             
@@ -86,15 +91,11 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $type = trim(StringDataType::substringBefore($data_type, '(', $data_type));
         if ($type !== $data_type) {
             $details = explode(',', substr($data_type, (strlen($type)+1), -1));
+            $length = $length ?? trim($details[0]);
+            $number_scale = $number_scale ?? trim($details[1]);
         }
         
-        switch (mb_strtoupper($type)) {
-            case 'TINYINT':
-                $type = 'INT';
-                break;
-        }
-        
-        return parent::guessDataType($object, $type, trim($details[0]), trim($details[1]));
+        return parent::guessDataType($object, $type, $length, $number_scale);
     }
     
     /**
@@ -111,8 +112,18 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $sql = "SELECT table_name as ALIAS, table_name as NAME, table_name as DATA_ADDRESS, table_comment as SHORT_DESCRIPTION FROM information_schema.tables where table_schema='{$this->getDataConnection()->getDbase()}' {$filter}";
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         foreach ($rows as $nr => $row) {
+            // MySQL views have the table_comment "VIEW" by default - ignore it
+            if ($row['SHORT_DESCRIPTION'] === 'VIEW') {
+                $row['SHORT_DESCRIPTION'] = '';
+            }
+            
+            if (substr($row['ALIAS'], 0, 1) === '_') {
+                $rows[$nr]['ALIAS'] = ltrim($row['ALIAS'], '_');
+            }
+            
             $rows[$nr]['NAME'] = $this->generateLabel($row['NAME'], $row['SHORT_DESCRIPTION']);
         }
+        
         return $rows;
     }
     
@@ -126,21 +137,8 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $uxon = parent::getDataTypeConfig($type, $source_data_type, $length, $scale);
         
         $source_data_type = strtoupper($source_data_type);
-        $srcTypeParts = explode('(', $source_data_type);
-        if (count($srcTypeParts) > 1) {
-            $source_data_type = $srcTypeParts[0];
-            $srcTypeOptions = rtrim($srcTypeParts[1], ")");
-        }
-        
         $source_data_type = mb_strtoupper($source_data_type);
         switch (true) {
-            /* TODO how to give a MAX to a hex number?
-            case StringDataType::endsWith($source_data_type, 'BINARY') && $srcTypeOptions:
-                $uxon->setProperty('size_max', $srcTypeOptions);
-                break;*/
-            case StringDataType::endsWith($source_data_type, 'CHAR') && $srcTypeOptions:
-                $uxon->setProperty('length_max', $srcTypeOptions);
-                break;
             case $source_data_type === 'TINYBLOB':
             case $source_data_type === 'TINYTEXT':
                 $uxon->setProperty('length_max', 255);

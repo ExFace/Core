@@ -26,6 +26,7 @@ use exface\Core\CommonLogic\Tasks\ResultRedirect;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Tasks\ResultError;
+use exface\Core\CommonLogic\Tasks\ResultHTML;
 
 /**
  * Creates all kinds of task results. 
@@ -120,12 +121,30 @@ class ResultFactory extends AbstractStaticFactory
     /**
      * 
      * @param TaskInterface $task
+     * @param string $html
+     * @return ResultHTML
+     */
+    public static function createHTMLResult(TaskInterface $task, string $html) : ResultHTML
+    {
+        $result = new ResultHTML($task);
+        $result->setContent($html);        
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
      * @param string $path
+     * @param bool $downloadable
      * @return ResultFileInterface
      */
-    public static function createFileResult(TaskInterface $task, string $path) : ResultFileInterface
+    public static function createFileResult(TaskInterface $task, string $path, bool $downloadable = null) : ResultFileInterface
     {
-        return (new ResultFile($task))->setPath($path);
+        $result = (new ResultFile($task))->setPath($path);
+        if ($downloadable === true) {
+            $result->setDownloadable(true);
+        }
+        return $result;
     }
     
     /**
@@ -134,9 +153,20 @@ class ResultFactory extends AbstractStaticFactory
      * @param string $path
      * @return ResultFileInterface
      */
-    public static function createDownloadResult(TaskInterface $task, string $path) : ResultFileInterface
+    public static function createDownloadResultFromFile(TaskInterface $task, string $path) : ResultFileInterface
     {
         return (static::createFileResult($task, $path))->setDownloadable(true);
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param string $url
+     * @return ResultFileInterface
+     */
+    public static function createDownloadResultFromUrl(TaskInterface $task, string $url) : ResultUriInterface
+    {
+        return (static::createUriResult($task, $url))->setDownload(true);
     }
     
     /**

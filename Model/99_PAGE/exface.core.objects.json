@@ -1,0 +1,162 @@
+{
+    "uid": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "alias_with_namespace": "exface.core.objects",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 3,
+    "menu_visible": true,
+    "name": "Objects",
+    "description": "Manage meta objects, attributes, relations, etc.",
+    "intro": "Create and edit meta objects here. Use the model builder to quickly import basic structure from a data source (e.g. SQL tables or web service descriptors) and fine-tune it manually here.",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2013-06-20 19:21:06",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2024-02-07 12:11:29",
+    "contents": {
+        "object_alias": "exface.Core.OBJECT",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS",
+                "widget_type": "Input"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DATA_SOURCE"
+            },
+            {
+                "attribute_alias": "UID",
+                "widget_type": "input"
+            },
+            {
+                "attribute_alias": "PARENT_OBJECT"
+            },
+            {
+                "attribute_alias": "DEFAULT_EDITOR_UXON",
+                "widget_type": "Input",
+                "width": 1,
+                "height": 1
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DATA_SOURCE__LABEL"
+            },
+            {
+                "calculation": "=Left(DATA_ADDRESS,100)"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
+            },
+            {
+                "attribute_alias": "OBJECT_ACTION__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
+            },
+            {
+                "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
+            },
+            {
+                "attribute_alias": "HAS_DEFAULT_EDITOR"
+            },
+            {
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "widget_type": "MenuButton",
+                "caption": "=Translate('exface.Core', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
+                "icon": "clone",
+                "buttons": [
+                    {
+                        "caption": "Copy object",
+                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                    },
+                    {
+                        "caption": "Copy object incl. attributes",
+                        "action": {
+                            "alias": "exface.Core.ShowObjectCopyDialog",
+                            "copy_related_objects": [
+                                "ATTRIBUTE"
+                            ]
+                        }
+                    },
+                    {
+                        "caption": "Copy object incl. attributes, behaviors and actions",
+                        "action": {
+                            "alias": "exface.Core.ShowObjectCopyDialog",
+                            "copy_related_objects": [
+                                "ATTRIBUTE",
+                                "OBJECT_BEHAVIORS",
+                                "OBJECT_ACTION"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action_alias": "exface.Core.ShowModelBuilderDialog",
+                "caption": "=Translate('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.attributes",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                },
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.relations",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                },
+                "caption": "=Translate('exface.Core', 'GLOBAL.MODEL.RELATIONS')"
+            }
+        ]
+    }
+}

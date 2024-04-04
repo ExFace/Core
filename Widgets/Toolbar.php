@@ -40,6 +40,10 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
     
     private $position = null;
     
+    private $buttonsDisabledIfInputInvalid = null;
+    
+    private $buttonsHiddenIfInputDisabled = null;
+    
     use iUseInputWidgetTrait;
     
     /**
@@ -221,20 +225,39 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      */
     public function setButtons($buttons)
     {
-        $btn_grps = [];
+        $align_grps = [];
+        $explicit_groups = [];
         foreach ($buttons as $btn){
-            if ($btn instanceof UxonObject){
-                $btn_grps[$btn->hasProperty('align') ? $btn->getProperty('align') : EXF_ALIGN_DEFAULT][] = $btn;
-            } elseif ($btn instanceof Button){
-                $btn_grps[$btn->getAlign()][] = $btn;
-            } else {
-                $btn_grps[EXF_ALIGN_DEFAULT] = $btn;
+            switch (true) {
+                case $btn instanceof UxonObject:
+                    if ($btn->hasProperty('widget_type') && $btn->getProperty('widget_type') === 'ButtonGroup') {
+                        $explicit_groups[] = $btn;
+                    } else {
+                        $align_grps[$btn->hasProperty('align') ? $btn->getProperty('align') : EXF_ALIGN_DEFAULT][] = $btn;
+                    }
+                    break;
+                case $btn instanceof Button:
+                    $align_grps[$btn->getAlign()][] = $btn;
+                    break;
+                default:
+                    $align_grps[EXF_ALIGN_DEFAULT] = $btn;
+            }
+            if (null !== $val = $this->isButtonsDisabledIfInputInvalid()) {
+                $btn->setDisabledIfInputInvalid($val);
+            }
+            if (null !== $val = $this->isButtonsHiddenIfInputInvalid()) {
+                $btn->setHiddenIfInputInvalid($val);
             }
         }
         
-        foreach ($btn_grps as $align => $btns){
+        foreach ($align_grps as $align => $btns){
             $this->getButtonGroupFirst($align)->setButtons($btns);
         }
+        
+        foreach ($explicit_groups as $uxon) {
+            $this->addButtonGroup($this->createButtonGroup($uxon));
+        }
+        
         return $this;
     }
     
@@ -336,7 +359,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      */
     public function getButtonIndex(Button $widget)
     {
-        return array_search($widget, $this->getButtons());
+        return array_search($widget, $this->getButtons(), true);
     }
     
     /**
@@ -359,5 +382,65 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
         return $widgets[$index];
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasUidData()
+     */
+    public function hasUidData() : bool
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof iHaveButtons) {
+            return $input->hasUidData();
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    public function isButtonsDisabledIfInputInvalid() : ?bool
+    {
+        return $this->buttonsDisabledIfInputInvalid;
+    }
+    
+    /**
+     * Set to TRUE to disable buttons if their input does not match the actions `input_invalid_if`
+     *
+     * @uxon-property buttons_disabled_if_input_invalid
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return Button
+     */
+    public function setButtonsDisabledIfInputInvalid(bool $value) : Toolbar
+    {
+        $this->buttonsDisabledIfInputInvalid = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool|NULL
+     */
+    public function isButtonsHiddenIfInputInvalid() : ?bool
+    {
+        return $this->buttonsHiddenIfInputDisabled;
+    }
+    
+    /**
+     * Set to TRUE to hide buttons if their input does not match the actions `input_invalid_if`
+     *
+     * @uxon-property buttons_hidden_if_input_invalid
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return Button
+     */
+    public function setButtonsHiddenIfInputInvalid(bool $value) : Toolbar
+    {
+        $this->buttonsHiddenIfInputDisabled = $value;
+        return $this;
+    }
 }
-?>

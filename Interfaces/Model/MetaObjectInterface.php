@@ -14,6 +14,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
@@ -266,24 +267,22 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      */
     public function hasLabelAttribute();
     
-    public function getDataSourceId();
-    
     /**
      * Returns TRUE if the object has a data source and FALSE otherwise.
      * 
      * @return boolean
      */
-    public function hasDataSource();
+    public function hasDataSource() : bool;
     
-    public function setDataSourceId($value);
+    public function setDataSourceId($value) : MetaObjectInterface;
     
     /**
      * Returns the data source for this object.
      * The data source is fully initialized and the connection is already established.
      *
-     * @return \exface\Core\CommonLogic\DataSource
+     * @return DataSourceInterface
      */
-    public function getDataSource();
+    public function getDataSource() : DataSourceInterface;
     
     /**
      * Returns the data connection for this object.
@@ -294,18 +293,14 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     public function getDataConnection();
     
     /**
-     * Sets a custom data connection to be used for this object.
-     * This way, the default connection for the data source can be overridden!
+     * Sets a custom data connection to be used for this object (or NULL to use the default connection).
+     * 
+     * This way, the default connection for the data source can be temporarily overridden!
      *
-     * @param string $alias
+     * @param string|NULL $alias
      * @return MetaObjectInterface
      */
-    public function setDataConnectionAlias($alias);
-    
-    /**
-     * @return AbstractQueryBuilder
-     */
-    public function getQueryBuilder();
+    public function setDataConnectionAlias($alias) : MetaObjectInterface;
     
     public function getId();
     
@@ -326,7 +321,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      *
      * @return UxonObject
      */
-    public function getDataAddressProperties();
+    public function getDataAddressProperties() : UxonObject;
     
     /**
      * Returns the value of a data source specific object property specified by it's id
@@ -557,4 +552,10 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return MetaObjectInterface
      */
     public function setReadable($true_or_false);
+    
+    /**
+     * 
+     * @return string
+     */
+    public function __toString() : string;
 }

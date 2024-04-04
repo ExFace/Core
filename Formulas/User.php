@@ -27,12 +27,16 @@ use exface\Core\Exceptions\FormulaError;
  */
 class User extends \exface\Core\CommonLogic\Model\Formula
 {
-
-    function run($property = null)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Formula::run()
+     */
+    public function run($property = null)
     {
         // If looking for the username, get it from the authenticated token without
         // loading user data, etc.
-        if ($property === null || strcasecmp($property, 'username') === 0) {
+        if ($property === null || $property === '' || strcasecmp($property, 'username') === 0) {
             return $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->getUsername();
         }
         

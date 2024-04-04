@@ -5,6 +5,14 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
+/**
+ * Interface for actions that fetch prefill data for widgets.
+ * 
+ * @triggers \exface\Core\Events\Widget\OnPrefillDataLoadedEvent
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 interface iPrefillWidget extends ActionInterface
 {
     const REFRESH_AUTO = 'auto';
@@ -111,4 +119,21 @@ interface iPrefillWidget extends ActionInterface
      * @return string
      */
     public function getPrefillDataRefresh() : string;
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getPrefillWithDefaults() : ?bool;
+    
+    /**
+     * Set to TRUE to include default values of widgets in prefill data
+     *
+     * If not set explicitly, this option will be up to the facade: some will set defaults via
+     * prefill, others - when generating the widget.
+     *
+     * @param bool $value
+     * @return iPrefillWidget
+     */
+    public function setPrefillWithDefaults(bool $value) : iPrefillWidget;
 }

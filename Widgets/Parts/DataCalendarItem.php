@@ -5,6 +5,11 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
+use exface\Core\Interfaces\Widgets\iHaveColor;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * Configuration for items in calendar-related data widgets.
@@ -12,15 +17,20 @@ use exface\Core\Widgets\Traits\DataWidgetPartTrait;
  * @author Andrej Kabachnik
  *
  */
-class DataCalendarItem implements WidgetPartInterface
+class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorScale
 {
     use DataWidgetPartTrait;
     
-    private $startTimeString = null;
+    use iHaveColorScaleTrait {
+        getColorScale as getColorScaleViaTrait;
+        hasColorScale as hasColorScaleViaTrait;
+    }
+    
+    private $startTimeExprString = null;
     
     private $startTimeColumn = null;
     
-    private $endTimeString = null;
+    private $endTimeExprString = null;
     
     private $endTimeColumn = null;
     
@@ -33,6 +43,12 @@ class DataCalendarItem implements WidgetPartInterface
     private $subtitleString = null;
     
     private $subtitleColumn = null;
+    
+    private $colorExpr = null;
+    
+    private $colorColumn = null;
+    
+    private $indicator = null;
     
     /**
      * 
@@ -58,6 +74,10 @@ class DataCalendarItem implements WidgetPartInterface
             $uxon->setProperty('default_duration_hours', $this->defaultDurationHours);
         }
         
+        if ($this->indicator !== null) {
+            $uxon->setProperty('indicator', $this->indicator->exportUxonObject());
+        }
+        
         return $uxon;
     }
     
@@ -67,7 +87,7 @@ class DataCalendarItem implements WidgetPartInterface
      */
     protected function getStartTime() : string
     {
-        return $this->startTimeString;
+        return $this->startTimeExprString;
     }
     
     /**
@@ -75,19 +95,28 @@ class DataCalendarItem implements WidgetPartInterface
      * 
      * @uxon-property start_time
      * @uxon-type metamodel:attribute|metamodel:formula
+     * @uxon-required true
      * 
      * @param string $value
      * @return DataCalendarItem
      */
     public function setStartTime(string $value) : DataCalendarItem
     {
-        $this->startTimeString = $value;
-        $this->startTimeColumn = $this->addDataColumn($value);
+        $this->startTimeExprString = $value;
+        $this->startTimeColumn = null;
+        $this->addDataColumn($value);
         return $this;
     }
     
+    /**
+     * 
+     * @return DataColumn
+     */
     public function getStartTimeColumn() : DataColumn
     {
+        if ($this->startTimeColumn === null) {
+            $this->startTimeColumn = $this->getDataWidget()->getColumnByExpression($this->startTimeExprString);
+        }
         return $this->startTimeColumn;
     }
     
@@ -97,7 +126,7 @@ class DataCalendarItem implements WidgetPartInterface
      */
     protected function getEndTime() : ?string
     {
-        return $this->endTimeString;
+        return $this->endTimeExprString;
     }
     
     /**
@@ -111,19 +140,31 @@ class DataCalendarItem implements WidgetPartInterface
      */
     public function setEndTime(string $value) : DataCalendarItem
     {
-        $this->endTimeString = $value;
-        $this->endTimeColumn = $this->addDataColumn($value);
+        $this->endTimeExprString = $value;
+        $this->endTimeColumn = null;
+        $this->addDataColumn($value);
         return $this;
     }
     
-    public function getEndTimeColumn() : DataColumn
+    /**
+     * 
+     * @return DataColumn|NULL
+     */
+    public function getEndTimeColumn() : ?DataColumn
     {
+        if ($this->endTimeColumn === null && $this->endTimeExprString !== null) {
+            $this->endTimeColumn = $this->getDataWidget()->getColumnByExpression($this->endTimeExprString);
+        }
         return $this->endTimeColumn;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasEndTime() : bool
     {
-        return $this->endTimeString !== null;
+        return $this->endTimeExprString !== null;
     }
     
     /**
@@ -176,7 +217,8 @@ class DataCalendarItem implements WidgetPartInterface
     public function setTitle(string $expression) : DataCalendarItem
     {
         $this->titleString = $expression;
-        $this->titleColumn = $this->addDataColumn($expression);
+        $this->titleColumn = null;
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -187,7 +229,9 @@ class DataCalendarItem implements WidgetPartInterface
     public function getTitleColumn() : DataColumn
     {
         if ($this->titleColumn === null) {
-            if ($this->getMetaObject()->hasLabelAttribute()) {
+            if ($this->titleString !== null) {
+                $this->titleColumn = $this->getDataWidget()->getColumnByExpression($this->titleString);
+            } elseif ($this->getMetaObject()->hasLabelAttribute()) {
                 $this->titleColumn = $this->addDataColumn($this->getMetaObject()->getLabelAttribute()->getAlias());
             } else {
                 foreach ($this->getDataWidget()->getColumns() as $col) {
@@ -227,7 +271,8 @@ class DataCalendarItem implements WidgetPartInterface
     public function setSubtitle(string $expression) : DataCalendarItem
     {
         $this->subtitleString = $expression;
-        $this->subtitleColumn = $this->addDataColumn($expression);
+        $this->subtitleColumn = null;
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -237,6 +282,9 @@ class DataCalendarItem implements WidgetPartInterface
      */
     public function getSubtitleColumn() : ?DataColumn
     {
+        if ($this->subtitleColumn === null) {
+            $this->subtitleColumn = $this->getDataWidget()->getColumnByExpression($this->subtitleString);
+        }
         return $this->subtitleColumn;
     }
     
@@ -247,5 +295,136 @@ class DataCalendarItem implements WidgetPartInterface
     public function hasSubtitle() : bool
     {
         return $this->subtitleString !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColor::getColor()
+     */
+    public function getColor(): ?string
+    {
+        if ($this->colorExpr === null || ! $this->colorExpr->isStatic()) {
+            return null;
+        }
+        return $this->colorExpr->evaluate();
+    }
+
+    /**
+     * The color of each appointment can be set to an attribute alias, a `=Formula()` or a CSS color value.
+     * 
+     * @uxon-property color
+     * @uxon-type metamodel:expression|color 
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
+     */
+    public function setColor($color)
+    {
+        $this->colorColumn = null;
+        $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
+        if ($this->hasColorColumn()) {
+            $this->addDataColumn($color);
+        }
+        
+        return $this;
+    }
+    
+    public function hasColorColumn() : bool
+    {
+        return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
+    }
+    
+    /**
+     * 
+     * @return DataColumn|NULL
+     */
+    public function getColorColumn() : ?DataColumn
+    {
+        if ($this->colorColumn === null && $this->hasColorColumn()) {
+            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+        }
+        return $this->colorColumn;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isColorScaleRangeBased(): bool
+    {
+        return $this->colorExpr->getDataType() instanceof NumberDataType;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::getColorScale()
+     */
+    public function getColorScale() : array
+    {
+        $scale = $this->getColorScaleViaTrait();
+        if (empty($scale) && null !== $colorCol = $this->getColorColumn()) {
+            $colWidget = $colorCol->getCellWidget();
+            if ($colWidget instanceof iHaveColorScale) {
+                return $colWidget->getColorScale();
+            }
+        }
+        return $scale;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see iHaveColorScale::hasColorScale()
+     */
+    public function hasColorScale() : bool
+    {
+        $value = $this->hasColorScaleViaTrait();
+        if ($value === false && null !== $colorCol = $this->getColorColumn()){
+            $colWidget = $colorCol->getCellWidget();
+            if ($colWidget instanceof iHaveColorScale) {
+                return $colWidget->hasColorScale();
+            }
+        }
+        return $value;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasIndicator() : bool
+    {
+        return $this->indicator !== null;
+    }
+    
+    /**
+     * 
+     * @return DataItemIndicator|NULL
+     */
+    public function getIndicatorConfig() : ?DataItemIndicator
+    {
+        return $this->indicator;
+    }
+    
+    /**
+     * Each calendar item can have an indicator with a different color - e.g. representing a status or similar.
+     * 
+     * The indicator is independant of the main color of the event. Depending on the facade
+     * used, it may be rendered as a stripe on the side of the event bar or an icon inside
+     * of it.
+     *
+     * @uxon-property indicator
+     * @uxon-type \exface\Core\Widgets\Parts\DataItemIndicator
+     * @uxon-template {"color": ""}
+     *
+     * @param DataCalendarItem $uxon
+     * @return DataCalendarItem
+     */
+    public function setIndicator(UxonObject $uxon) : DataCalendarItem
+    {
+        $this->indicator = new DataItemIndicator($this->getDataWidget(), $uxon);
+        return $this;
     }
 }

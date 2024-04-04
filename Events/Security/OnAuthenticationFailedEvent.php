@@ -5,6 +5,7 @@ use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 
 /**
  * Event fired after an authentication attempt failed in an authenticator.
@@ -56,5 +57,14 @@ class OnAuthenticationFailedEvent extends AbstractEvent
     public function getException() : AuthenticationExceptionInterface
     {
         return $this->exception;
+    }
+    
+    /**
+     * 
+     * @return AuthenticationTokenInterface|NULL
+     */
+    public function getAuthenticationToken() : ?AuthenticationTokenInterface
+    {
+        return $this->exception->getAuthenticationToken();
     }
 }

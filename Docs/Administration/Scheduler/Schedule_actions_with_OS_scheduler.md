@@ -10,9 +10,10 @@ Actions, that can be called from the command line, can be scheduled by means of 
 2. Click `Create Task...` on the actions-panel (right side of the screen)
 3. Follow the wizard until being asked about the action to perform
 4. Pick `Start a program` as action type and fill out the other fields as follows:
+
     - Program/script: `cmd`
-    - Add arguments(optional): `/c vendor\bin\action.bat exface.Core:ClearCache >> scheduler.log 2>&1`
-    - Start in (optional): `C:\wamp\www\exface`
+    - Add arguments: `/c vendor\bin\action.bat exface.Core:ClearCache >> scheduler.log 2>&1`
+    - Start in: `C:\wamp\www\exface`
     
 Replace the action `exface.Core:ClearCache` and the path according to your needs.
 

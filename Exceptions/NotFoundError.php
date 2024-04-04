@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Interfaces\Log\LoggerInterface;
+
 /**
  * Base class for all kinds of not-found-errors:
  *
@@ -12,5 +14,13 @@ namespace exface\Core\Exceptions;
  */
 abstract class NotFoundError extends OutOfBoundsException
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\OutOfBoundsException::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
+    }
 }
-?>

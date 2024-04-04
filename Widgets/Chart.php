@@ -27,6 +27,8 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
+use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -39,6 +41,7 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  */
 class Chart extends AbstractWidget implements 
     iUseData, 
+    iCanAutoloadData,
     iHaveToolbars, 
     iHaveButtons, 
     iHaveHeader, 
@@ -52,6 +55,7 @@ class Chart extends AbstractWidget implements
     use iHaveConfiguratorTrait {
         setConfiguratorWidget as setConfiguratorWidgetViaTrait;
     }
+    use iCanAutoloadDataTrait;
 
     const AXIS_X = 'x';
 
@@ -103,7 +107,9 @@ class Chart extends AbstractWidget implements
      *
      * @var bool
      */
-    private $hide_footer = false;
+    private $hide_footer = null;
+    
+    private $hide_axes = null;
     
     /**
      * @var bool
@@ -111,6 +117,8 @@ class Chart extends AbstractWidget implements
     private $dataPrepared = false;
     
     private $empty_text = null;
+    
+    private $colorScheme = null;
 
     /**
      * 
@@ -253,6 +261,10 @@ class Chart extends AbstractWidget implements
     {
         $var = 'axes_' . $x_or_y;
         array_push($this->$var, $axis);
+        /*
+        if ($this->hide_axes !== null) {
+            $axis->setHidden($this->hide_axes);
+        }*/
         return $this;
     }
     
@@ -314,7 +326,7 @@ class Chart extends AbstractWidget implements
                     throw new WidgetConfigurationError($this, 'Error instantiating chart widget data. ' . $e->getMessage(), null, $e);
                 }
             } else {
-                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false]), 'Data');
+                $this->data = WidgetFactory::createFromUxonInParent($this, new UxonObject(['columns_auto_add_default_display_attributes' => false, 'paginate' => false]), 'Data');
             }
             
             if ($this->dataPrepared === false) {
@@ -334,6 +346,8 @@ class Chart extends AbstractWidget implements
      */
     protected function prepareDataWidget(iShowData $dataWidget) : Chart
     {
+        $dataWidget->setAutoloadData($this->hasAutoloadData());
+        $dataWidget->setAutorefreshData($this->hasAutorefreshData());
         foreach ($this->getSeries() as $series) {
             $series->prepareDataWidget($dataWidget);
         }
@@ -341,7 +355,8 @@ class Chart extends AbstractWidget implements
         foreach ($this->getAxes() as $axis) {
             $axis->prepareDataWidget($dataWidget);
         }
-        
+        if ($dat)
+        $dataWidget->setPaginate(false);
         return $this;
     }
 
@@ -401,6 +416,7 @@ class Chart extends AbstractWidget implements
         $data = WidgetFactory::create($this->getPage(), 'Data', $this);
         $data->setColumnsAutoAddDefaultDisplayAttributes(false);
         $data->setMetaObject($this->getMetaObject());
+        $data->setPaginate(false);
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
         // not be shown anyway. The Chart has it's own toolbars.
@@ -567,7 +583,7 @@ class Chart extends AbstractWidget implements
      * and other setting of the target data widget.
      *
      * @uxon-property data_widget_link
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      *
      * {@inheritdoc}
      *
@@ -591,6 +607,7 @@ class Chart extends AbstractWidget implements
      */
     public function setHideAxes(bool $trueOrFalse) : Chart
     {
+        $this->hide_axes = $trueOrFalse;
         if ($trueOrFalse === true) {
             foreach ($this->getAxes() as $axis) {
                 $axis->setHidden(true);
@@ -627,7 +644,12 @@ class Chart extends AbstractWidget implements
         return $this;
     }
 
-    public function getHideFooter()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::getHideFooter()
+     */
+    public function getHideFooter() : ?bool
     {
         return $this->hide_footer;
     }
@@ -641,7 +663,7 @@ class Chart extends AbstractWidget implements
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveFooter::setHideFooter()
      */
-    public function setHideFooter($value)
+    public function setHideFooter($value) : iHaveFooter
     {
         $this->hide_footer = $value;
         return $this;
@@ -953,33 +975,33 @@ class Chart extends AbstractWidget implements
     }
     
     /**
-     * Returns a text which can be displayed if initial loading is prevented.
-     *
-     * @return string
+     * 
+     * @return int|NULL
      */
-    public function getAutoloadDisabledHint()
+    public function getColorScheme() : ?int
     {
-        if ($this->autoload_disabled_hint === null) {
-            return $this->translate('WIDGET.DATA.NOT_LOADED');
-        }
-        return $this->autoload_disabled_hint;
+        return $this->colorScheme;
     }
     
     /**
-     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
-     *
-     * Use `=TRANSLATE()` to make the text translatable.
-     *
-     * @uxon-property autoload_disabled_hint
-     * @uxon-type string|metamodel:formula
-     * @uxon-translatable true
-     *
-     * @param string $text
-     * @return Data
+     * Give two charts the same scheme number to make them use the same colors.
+     * 
+     * Facades will automatically assign colors to chart series according to their
+     * design rules. Most facades will alter colors automatically, so that two
+     * different charts do not look the same. Setting the `color_scheme` to the
+     * same value for two charts will force them to use the same color logic
+     * making the look related. What exactly the `color_scheme` number stand for
+     * is up to the facade.
+     * 
+     * @uxon-property color_scheme
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return Chart
      */
-    public function setAutoloadDisabledHint(string $text) : Chart
+    public function setColorScheme(int $value) : Chart
     {
-        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
+        $this->colorScheme = $value;
         return $this;
     }
 }

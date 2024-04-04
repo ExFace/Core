@@ -22,7 +22,7 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValue()
      */
-    public function getLabelOfValue($value = null): string
+    public function getLabelOfValue($value = null): ?string
     {
         return $value;
     }
@@ -169,5 +169,73 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
             '3g2' => 'video/3gpp2', // 3GPP2 audio/video container
             '7z' => 'application/x-7z-compressed' // 7-zip archive
         ];
+    }
+    
+    /**
+     * Returns TRUE if the mime type is a JSON format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectJson(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'json') !== false;
+    }
+    
+    /**
+     * Returns TRUE if the mime type is an XML format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectXml(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'xml') !== false && ! static::detectHtml($mimeType);
+    }
+    
+    /**
+     * Returns TRUE if the mime type is an HTML format and FALSE otherwise
+     * @param string $mimeType
+     * @return bool
+     */
+    public static function detectHtml(string $mimeType) : bool
+    {
+        return stripos($mimeType, 'html') !== false;
+    }
+    
+    /**
+     * 
+     * @param string $absolutePath
+     * @return string|NULL
+     */
+    public static function findMimeTypeOfFile(string $absolutePath) : ?string
+    {
+        switch (true) {
+            case function_exists("finfo_file"):
+                $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
+                $mime = finfo_file($finfo, $absolutePath);
+                finfo_close($finfo);
+                return $mime;
+            case function_exists("mime_content_type"):
+                return mime_content_type($absolutePath);
+            case ! stristr(ini_get("disable_functions"), "shell_exec"):
+                // http://stackoverflow.com/a/134930/1593459
+                $absolutePath = escapeshellarg($absolutePath);
+                $mime = shell_exec("file -bi " . $absolutePath);
+                return $mime;                
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Returns TRUE if the provided string is a valid mime type and FALSE otherwise
+     * 
+     * @link https://stackoverflow.com/a/48046041
+     * 
+     * @param string $str
+     * @return bool
+     */
+    public static function isValidMimeType(string $str) : bool
+    {
+        return preg_match("@(application|audio|font|example|image|message|model|multipart|text|video|x-(?:[0-9A-Za-z!#$%&'*+.^_`|~-]+))/([0-9A-Za-z!#$%&'*+.^_`|~-]+)@", $str) === 1 ? true : false;
     }
 }

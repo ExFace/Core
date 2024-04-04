@@ -4,15 +4,14 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DataConnectionUsernamePasswordAuthToken;
 use exface\Core\Factories\DataConnectionFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
+use exface\Core\Exceptions\Security\AuthenticatorConfigError;
+use exface\Core\Widgets\Form;
 
 /**
  * Performs authentication via selected data connections.
@@ -30,19 +29,22 @@ use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTr
  * 
  * ```
  * {
- * 		"class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
- * 		"connection_aliases": [
- * 			"exface.Core.METAMODEL_CONNECTION"
- * 		],
- * 		"create_new_users": true,
- * 		"create_new_users_with_roles": [
- * 			"exface.Core.SUPERUSER"
- * 		]
- * }
+ *      "class": "\\exface\\Core\\CommonLogic\\Security\\Authenticators\\DataConnectionAuthenticator",
+ *      "connection_aliases": [
+ *          "exface.Core.METAMODEL_CONNECTION"
+ *      ],
+ *      "create_new_users": true,
+ *      "create_new_users_with_roles": [
+ *          "exface.Core.SUPERUSER"
+ *      ]
+ *  }
  * 
  * ```
  * 
  * If you specify multiple connections, the user will be able to choose one berfor logging in.
+ * For a single connection you can also hide the connection selector completely by setting
+ * `hide_connection_selector` to `true`. This way the user will not even see, which data source
+ * he or she is going to authenticate agains.
  * 
  * If `create_new_users` is `true`, a new workbench user will be created automatically once
  * a new username is authenticated successfully. These new users can be assigned some roles
@@ -62,6 +64,8 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     
     private $connectionAliases = null;
     
+    private $hideConnectionSelector = false;
+    
     /**
      *
      * {@inheritDoc}
@@ -74,28 +78,50 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         }
         $this->checkAuthenticatorDisabledForUsername($token->getUsername());
         
+        $user = $this->userExists($token) ? $this->getUserFromToken($token) : null;
+        
         try {
             $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
-            $connector->authenticate($token, false);
+            if ($user === null) {
+                $authenticatedToken = $connector->authenticate($token, false);
+            } else {
+                $authenticatedToken = $connector->authenticate($token, true, $user, true);
+            }
         } catch (AuthenticationException $e) {
             throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
         }
-        $user = null;
-        if ($this->userExists($token) === true) {
-            $user = $this->getUserFromToken($token);
-        } elseif ($this->getCreateNewUsers() === true) {
-            $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
-            //second authentification to save credentials
-            $connector->authenticate($token, true, $user, true);
-        } else {            
-            throw new AuthenticationFailedError($this, "Authentication failed, no PowerUI user with that username '{$token->getUsername()}' exists and none was created!", '7AL3J9X');
+        
+        if ($user === null) {
+            if ($this->getCreateNewUsers() === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);            
+                // second authentification to save credentials
+                $connector->authenticate($token, true, $user, true);
+            } else {            
+                throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+            }
         }
+        
         $this->logSuccessfulAuthentication($user, $token->getUsername());
         if ($token->getUsername() !== $user->getUsername()) {
-            return new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
+            $authenticatedToken = new DataConnectionUsernamePasswordAuthToken($token->getDataConnectionAlias(), $user->getUsername(), $token->getPassword());
         }
+        
+        $this->saveAuthenticatedToken($authenticatedToken);
+        
+        $this->syncUserRoles($user, $authenticatedToken);
+        
+        return $authenticatedToken;
+    }
+    
+    /**
+     * 
+     * @param AuthenticationTokenInterface $token
+     * @return DataConnectionAuthenticator
+     */
+    protected function saveAuthenticatedToken(AuthenticationTokenInterface $token) : DataConnectionAuthenticator
+    {
         $this->authenticatedToken = $token;
-        return $token;
+        return $this;
     }
     
     /**
@@ -119,7 +145,11 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             return false;
         }
         
-        if (! in_array($token->getDataConnectionAlias(), $this->getConnectionAliases())) {
+        if (! in_array($token->getDataConnectionAlias(), ($this->getConnectionAliases() ?? []))) {
+            return false;
+        }
+        
+        if (! $this->isSupportedFacade($token)) {
             return false;
         }
         
@@ -166,11 +196,11 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\AbstractAuthenticator::createLoginForm()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    protected function createLoginForm(Form $emptyForm) : Form
     {   
         $conAliases = $this->getConnectionAliases();
         $conNames = [];
@@ -181,14 +211,20 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             }
         }        
         
-        $container->setWidgets(new UxonObject([
+        $hideSelector = $this->getHideConnectionSelector();
+        if ($hideSelector && count($conAliases) > 1) {
+            throw new AuthenticatorConfigError($this, 'Cannot hide data connection selector in authenticator "' . $this->getName() . '": multiple connections specified!');
+        }
+        
+        $emptyForm->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DATACONNECTIONALIAS',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.CONNECTION'),
                 'selectable_options' => array_combine($conAliases, $conNames) ?? [],
                 'required' => true,
-                'value' => count($conAliases) === 1 ? $conAliases[0] : null
+                'value' => count($conAliases) === 1 ? $conAliases[0] : null,
+                'hidden' => $this->getHideConnectionSelector()
             ],[
                 'attribute_alias' => 'USERNAME',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.DATACONNECTION.USERNAME'),
@@ -202,18 +238,41 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
             ]
         ]));
         
-        if ($container instanceof iLayoutWidgets) {
-            $container->setColumnsInGrid(1);
-        }
+        $emptyForm->setColumnsInGrid(1);
         
-        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
-            $container->addButton($container->createButton(new UxonObject([
+        if ($emptyForm->hasButtons() === false) {
+            $emptyForm->addButton($emptyForm->createButton(new UxonObject([
                 'action_alias' => 'exface.Core.Login',
                 'align' => EXF_ALIGN_OPPOSITE,
                 'visibility' => WidgetVisibilityDataType::PROMOTED
             ])));
         }
         
-        return $container;
+        return $emptyForm;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getHideConnectionSelector() : bool
+    {
+        return $this->hideConnectionSelector;
+    }
+    
+    /**
+     * Set to TRUE to hide the widget that allows the user to select a connection on the login promt.
+     * 
+     * @uxon-property hide_connection_selector
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataConnectionAuthenticator
+     */
+    protected function setHideConnectionSelector(bool $value) : DataConnectionAuthenticator
+    {
+        $this->hideConnectionSelector = $value;
+        return $this;
     }
 }

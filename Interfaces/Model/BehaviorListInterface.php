@@ -2,9 +2,17 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\EntityListInterface;
 
-interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
+interface BehaviorListInterface extends EntityListInterface, iCanBeConvertedToUxon, \IteratorAggregate
 {
+    /**
+     * 
+     * @param BehaviorInterface $behavior
+     * @param mixed $key
+     * @return BehaviorListInterface
+     */
+    public function add($behavior, $key = null);
 
     /**
      *
@@ -37,6 +45,13 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
     
     /**
      * 
+     * @param string $uid
+     * @return BehaviorInterface|NULL
+     */
+    public function getByUid(string $uid) : ?BehaviorInterface;
+    
+    /**
+     * 
      * @param string $className
      * @return BehaviorListInterface
      */
@@ -66,4 +81,3 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
      */
     public function isEmpty();
 }
-?>

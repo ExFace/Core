@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\Widgets\iHaveColorScale;
+use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 
 /**
  * Configuration for resources (people, rooms, etc.) in calendar-related data widgets.
@@ -20,6 +24,10 @@ class DataSchedulerResource implements WidgetPartInterface
 {
     use DataWidgetPartTrait;
     
+    use iHaveColorScaleTrait {
+        getColorScale as getColorScaleViaTrait;
+    }
+    
     private $uidString = null;
     
     private $uidColumn = null;
@@ -31,6 +39,10 @@ class DataSchedulerResource implements WidgetPartInterface
     private $subtitleString = null;
     
     private $subtitleColumn = null;
+    
+    private $colorExpr = null;
+    
+    private $colorColumn = null;
     
     /**
      * 
@@ -73,8 +85,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function setTitle(string $expression) : DataSchedulerResource
     {
+        $this->titleColumn = null;
         $this->titleString = $expression;
-        $this->titleColumn = $this->addDataColumn($expression);
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -85,7 +98,9 @@ class DataSchedulerResource implements WidgetPartInterface
     public function getTitleColumn() : DataColumn
     {
         if ($this->titleColumn === null) {
-            if ($this->getMetaObject()->hasLabelAttribute()) {
+            if ($this->titleString !== null) {
+                $this->titleColumn = $this->getDataWidget()->getColumnByExpression($this->titleString);
+            } elseif ($this->getMetaObject()->hasLabelAttribute()) {
                 $this->titleColumn = $this->addDataColumn($this->getMetaObject()->getLabelAttribute()->getAlias());
             } else {
                 foreach ($this->getDataWidget()->getColumns() as $col) {
@@ -124,8 +139,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function setSubtitle(string $expression) : DataSchedulerResource
     {
+        $this->subtitleColumn = null;
         $this->subtitleString = $expression;
-        $this->subtitleColumn = $this->addDataColumn($expression);
+        $this->addDataColumn($expression);
         return $this;
     }
     
@@ -135,6 +151,9 @@ class DataSchedulerResource implements WidgetPartInterface
      */
     public function getSubtitleColumn() : ?DataColumn
     {
+        if ($this->subtitleColumn === null && $this->subtitleString !== null) {
+            $this->subtitleColumn = $this->getDataWidget()->getColumnByExpression($this->subtitleString);
+        }
         return $this->subtitleColumn;
     }
     
@@ -145,5 +164,85 @@ class DataSchedulerResource implements WidgetPartInterface
     public function hasSubtitle() : bool
     {
         return $this->subtitleString !== null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColor::getColor()
+     */
+    public function getColor(): ?string
+    {
+        if ($this->colorExpr === null || ! $this->colorExpr->isStatic()) {
+            return null;
+        }
+        return $this->colorExpr->evaluate();
+    }
+    
+    /**
+     * The color of each resource can be set to an attribute alias, a `=Formula()` or a CSS color value.
+     *
+     * @uxon-property color
+     * @uxon-type metamodel:expression|color 
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
+     */
+    public function setColor($color)
+    {
+        $this->colorColumn = null;
+        $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
+        if ($this->hasColorColumn()) {
+            $this->colorColumn = $this->addDataColumn($color);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasColorColumn() : bool
+    {
+        return $this->colorExpr !== null && ! $this->colorExpr->isStatic();
+    }
+    
+    /**
+     *
+     * @return DataColumn|NULL
+     */
+    public function getColorColumn() : ?DataColumn
+    {
+        if ($this->colorColumn === null && $this->hasColorColumn()) {
+            $this->colorColumn = $this->getDataWidget()->getColumnByExpression($this->colorExpr);
+        }
+        return $this->colorColumn;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
+     */
+    public function isColorScaleRangeBased(): bool
+    {
+        return $this->colorExpr->getDataType() instanceof NumberDataType;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::getColorScale()
+     */
+    public function getColorScale() : array
+    {
+        $scale = $this->getColorScaleViaTrait();
+        if (empty($scale) && null !== $colorCol = $this->getColorColumn()) {
+            $colWidget = $colorCol->getCellWidget();
+            if ($colWidget instanceof iHaveColorScale) {
+                return $colWidget->getColorScale();
+            }
+        }
+        return $scale;
     }
 }

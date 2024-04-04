@@ -43,6 +43,10 @@ class WizardButton extends Button
             // Current step
             return $this->getWizardStep()->getStepNumber() - 1;
         } elseif ($this->goToStep === null) {
+            // if it is the last step stay there
+            if ($this->getWizardStep()->isLast()) {
+                return $this->getWizardStep()->getStepNumber() - 1;
+            }
             // Next step
             return $this->getWizardStep()->getStepNumber();
         }
@@ -78,8 +82,9 @@ class WizardButton extends Button
             $value = null;
         } elseif (is_int($value) === false) {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property go_to_step of widget "' . $this->getWidgetType() . '": only step numbers or keyword "none" allowed!');
+        } elseif ($value < 0 || $value >= $this->getWizard()->countSteps()) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property go_to_step of widget "' . $this->getWidgetType() . '": No step with that index found!');
         }
-        
         $this->goToStep = $value;
         return $this;
     }

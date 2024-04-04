@@ -1,9 +1,12 @@
 <?php
-
-
 namespace exface\Core\CommonLogic\Log\Processors;
 
-
+/**
+ * Base class for column enrichers.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 abstract class AbstractColumnPositionProcessor
 {
     private $workbench;

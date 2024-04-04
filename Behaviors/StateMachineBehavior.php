@@ -4,26 +4,34 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
-use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
+use exface\Core\Exceptions\Behaviors\StateMachineTransitionError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
-use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
-use exface\Core\Actions\SaveData;
-use exface\Core\Actions\DeleteObject;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\StringEnumDataType;
-use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ProgressBar;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
+use exface\Core\Events\Model\OnBehaviorModelValidatedEvent;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\BehaviorFactory;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
+use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -61,6 +69,8 @@ class StateMachineBehavior extends AbstractBehavior
 
     private $states = null;
     
+    private $stateIndex = [];
+    
     private $overrideAttributeEditorWidget = true;
     
     private $overrideAttributeDisplayWidget = true;
@@ -73,16 +83,21 @@ class StateMachineBehavior extends AbstractBehavior
     
     private $hasNumericIds = true;
     
+    private $behaviors = null;
+    
+    private $displayWidgetWidth = null;
+    
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
-    public function register() : BehaviorInterface
+    protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
+        $prio = $this->getPriority();
+        $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates'], $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate'], $prio);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete'], $prio);
         
         if ($this->getOverrideAttributeDataType() === true) {
             $this->overrideAttributeDataType();
@@ -96,7 +111,30 @@ class StateMachineBehavior extends AbstractBehavior
             $this->overrideAttributeDisplayWidget();
         }
         
-        $this->setRegistered(true);
+        $this->registerNotifications();
+        foreach ($this->behaviors as $behavior) {
+            if ($behavior->is)
+                $behavior->enable();
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
+        $this->getWorkbench()->eventManager()->removeListener(OnBeforeDeleteDataEvent::getEventName(), [$this, 'checkForConflictsOnDelete']);
+        
+        foreach ($this->behaviors as $behavior) {
+            $behavior->disable();
+        }
+        
         return $this;
     }
     
@@ -114,6 +152,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         $attr->setCustomDataTypeUxon($configUxon);
         
+        $enumType = null;
         if (! ($type instanceof EnumDataTypeInterface)) {
             if ($type instanceof NumberDataType) {
                 $enumType = '0x11e7c39621725c1e8001e4b318306b9a';
@@ -230,6 +269,9 @@ class StateMachineBehavior extends AbstractBehavior
                 'text_scale' => new UxonObject($texts),
                 'color_scale' => new UxonObject($colorMap)
             ]);
+            if ($this->getDisplayWidgetWidth()) {
+                $uxon->setProperty('width', $this->getDisplayWidgetWidth()->getValue());
+            }
             $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         }
         
@@ -245,7 +287,7 @@ class StateMachineBehavior extends AbstractBehavior
     public function getStateAttributeAlias()
     {
         if (is_null($this->state_attribute_alias)) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Cannot initialize StateMachineBehavior for "' . $this->getObject()->getAliasWithNamespace() . '": state_attribute_alias not set in behavior configuration!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Cannot initialize StateMachineBehavior for "' . $this->getObject()->getAliasWithNamespace() . '": state_attribute_alias not set in behavior configuration!', '6TG2ZFI');
         }
         return $this->state_attribute_alias;
     }
@@ -310,7 +352,7 @@ class StateMachineBehavior extends AbstractBehavior
         } elseif (is_int($value) || is_string($value)) {
             $this->default_state = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setDefaultState() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setDefaultState() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
         }
         
         return $this;
@@ -328,7 +370,7 @@ class StateMachineBehavior extends AbstractBehavior
             if (count($states = $this->getStates()) > 0) {
                 $this->default_state = reset($states)->getStateId();
             } else {
-                throw new BehaviorConfigurationError($this->getObject(), 'The default state cannot be determined for "' . $this->getObject()->getAliasWithNamespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
+                throw new BehaviorConfigurationError($this, 'The default state cannot be determined for "' . $this->getObject()->getAliasWithNamespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
             }
         }
         return $this->default_state;
@@ -343,6 +385,16 @@ class StateMachineBehavior extends AbstractBehavior
     {
         return $this->states;
     }
+    
+    /**
+     * Returns an array with the ids of all states
+     * 
+     * @return string[]
+     */
+    public function getStateIds() : array
+    {
+        return array_keys($this->getStates());
+    }
 
     /**
      * Defines the states of the state machine.
@@ -350,45 +402,22 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
+     * 
      * ```
      *  "states": {
      *      "10": {
-     *          "buttons": {
-     *              "10": {
-     *                  "caption": "20 Annahme bestätigen",
-     *                  "action": {
-     *                      "alias": "exface.Core.UpdateData",
-     *                      "input_data_sheet": {
-     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     *                          "columns": [
-     *                              {
-     *                                  "attribute_alias": "STATE_ID",
-     *                                  "formula": "=NumberValue('20')"
-     *                              },
-     *                              {
-     *                                  "attribute_alias": "TS_UPDATE"
-     *                              }
-     *                          ]
-     *                      }
-     *                  }
-     *              }
-     *          },
+     *          "name": "Received",
+     *          "transitions": [
+     *              10: "",
+     *              20: "my.App.ComplaintApprove",
+     *              90: "my.App.ComplaintCancel"
+     *          ],
      *          "disabled_attributes_aliases": [
      *              "COMPLAINT_NO"
-     *          ],
-     *          "transitions": [
-     *              10,
-     *              20,
-     *              30,
-     *              50,
-     *              60,
-     *              70,
-     *              90,
-     *              99
      *          ]
      *      },
      *      "20": {
-     *          "buttons": ...,
+     *          "name": "Approved",
      *          "transitions": ...,
      *          ...
      *      }
@@ -413,22 +442,17 @@ class StateMachineBehavior extends AbstractBehavior
                 if (is_numeric($state) === false) {
                     $this->hasNumericIds = false;
                 }
-                $smstate = new StateMachineState($this);
-                $smstate->setStateId($state);
-                if ($uxon_smstate) {
-                    try {
-                        $uxon_smstate->mapToClassSetters($smstate);
-                    } catch (UxonMapError $e) {
-                        throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
-                    }
-                }
-                $this->addState($smstate);
+                $this->addState(new StateMachineState($this, $state, $uxon_smstate));
             }
         } elseif (is_array($value)) {
             $this->states = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this, 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
+        
+        $this->stateIndex = array_keys($this->states);
+        
+        $this->getWorkbench()->eventManager()->addListener(OnBehaviorModelValidatedEvent::getEventName(), [$this, 'onModelValidatedAddDiagram']);
         
         return $this;
     }
@@ -449,9 +473,34 @@ class StateMachineBehavior extends AbstractBehavior
      * @param integer|string $state_id            
      * @return StateMachineState
      */
-    public function getState($state_id)
+    public function getState($state_id) : StateMachineState
     {
-        return $this->states[$state_id];
+        $state = $this->states[$state_id];
+        if ($state === null) {
+            throw new BehaviorRuntimeError($this, 'Unknown state machine state "' . $state_id . '" for object ' . $this->getObject()->__toString() . '!');
+        }
+        return $state;
+    }
+    
+    /**
+     * 
+     * @param mixed $state_id
+     * @return bool
+     */
+    public function hasState($state_id) : bool
+    {
+        return $this->states[$state_id] !== null;
+    }
+    
+    /**
+     * 
+     * @param StateMachineState|string $state
+     * @return int
+     */
+    public function getStateIndex($state) : int
+    {
+        $stateId = $state instanceof StateMachineState ? $state->getStateId() : $state;
+        return array_search($stateId, $this->stateIndex);
     }
 
     /**
@@ -527,20 +576,23 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         
         $widget = $event->getWidget();
+        $thisObj = $this->getObject();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $widget->getMetaObject()->is($this->getObject())) {
+        if (! $widget->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
-        if (! ($prefill_data = $widget->getPrefillData()) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
+        if (! ($prefill_data = $widget->getPrefillData()) || ! $prefill_data->getMetaObject()->isExactly($thisObj) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
             $current_state = $this->getDefaultStateId();
         }
         
         // Throw an error if the current state is not in the state machine definition!
         if ($current_state && ! $this->getState($current_state)) {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
+            throw new BehaviorRuntimeError($this, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
         }
         
         $state = $this->getState($current_state);
@@ -552,7 +604,7 @@ class StateMachineBehavior extends AbstractBehavior
                 // Widgets nicht gespeichert. Behebt einen Fehler, der dadurch ausgeloest
                 // wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
                 // und sich der Wert dadurch vom Wert in der DB unterschied ->
-                // StateMachineUpdateException
+                // StateMachineTransitionError
                 if ($widget instanceof iTakeInput) {
                     $widget->setReadonly(true);
                 } else {
@@ -564,17 +616,72 @@ class StateMachineBehavior extends AbstractBehavior
         // Disable buttons saving or deleting data if the respecitve operations are disabled in the current state.
         if ($widget instanceof iHaveButtons) {
             foreach ($widget->getButtons() as $btn) {
-                if (! $btn->getMetaObject()->is($this->getObject())) {
+                if (! $btn->getMetaObject()->isExactly($thisObj)) {
                     continue;
                 }
                 
-                if ($btn->hasAction() && $btn->getAction()->getMetaObject()->is($this->getObject())) {
+                if ($btn->hasAction() && $btn->getAction()->getMetaObject()->isExactly($thisObj)) {
                     if ($state->isActionDisabled($btn->getAction()) === true) {
                         $btn->setDisabled(true);
                     }
                 }
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
+    }
+    
+    /**
+     * 
+     * @param OnBeforeDeleteDataEvent $event
+     * @throws BehaviorRuntimeError
+     * @throws DataSheetDeleteForbiddenError
+     * @return void
+     */
+    public function checkForConflictsOnDelete(OnBeforeDeleteDataEvent $event)
+    {
+        if ($this->isDisabled()) {
+            return;
+        }
+        
+        if (! $this->getStateAttributeAlias() || empty($this->getStates())) {
+            return;
+        }
+        
+        $data_sheet = $event->getDataSheet();
+        $thisObj = $this->getObject();
+        
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
+        if (! $data_sheet->getMetaObject()->isExactly($thisObj)) {
+            return;
+        }
+        
+        $states = $this->getStatesWithDisabledDelete();
+        if (empty($states)) {
+            return;
+        }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
+        $stateCol = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute());
+        if (! $stateCol) {
+            throw new BehaviorRuntimeError($this, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
+        }
+        
+        foreach ($states as $state) {
+            $stateId = $state->getStateId();
+            foreach ($stateCol->getValues(false) as $stateVal) {
+                if ($stateVal == $stateId) {
+                    $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+                    throw (new DataSheetDeleteForbiddenError($data_sheet, $translator->translate('BEHAVIOR.STATEMACHINEBEHAVIOR.DELETE_FORBIDDEN_ERROR', ['%object%' => $thisObj->getName(), '%state%' => $state->getName()])))->setUseExceptionMessageAsTitle(true);
+                }
+            }
+        }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
 
     /**
@@ -584,92 +691,121 @@ class StateMachineBehavior extends AbstractBehavior
      * state are changed. If a disallowed behavior is detected an error is thrown.
      *
      * @param OnBeforeUpdateDataEvent $event            
-     * @throws StateMachineUpdateException
+     * @throws StateMachineTransitionError
      */
     public function checkForConflictsOnUpdate(OnBeforeUpdateDataEvent $event)
     {
-        if ($this->isDisabled())
-            return;
-        if (! $this->getStateAttributeAlias() || ! $this->getStates())
-            return;
-        
-        $data_sheet = $event->getDataSheet();
-        
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if ($this->isDisabled()) {
             return;
         }
+        
+        if (! $this->getStateAttributeAlias() || empty($this->getStates())) {
+            return;
+        }
+        
+        $data_sheet = $event->getDataSheet();
+        $thisObj = $this->getObject();
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject()))
+        if (! $data_sheet->getMetaObject()->isExactly($thisObj)) {
             return;
-        
-        // Read the unchanged object from the database
-        $check_sheet = DataSheetFactory::createFromObject($this->getObject());
-        foreach ($this->getObject()->getAttributes() as $attr) {
-            $check_sheet->getColumns()->addFromAttribute($attr);
         }
-        $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
-        $check_sheet->dataRead();
-        $check_column = $check_sheet->getColumns()->getByAttribute($this->getStateAttribute());
-        $check_cnt = count($check_column->getValues());
         
-        // Check if the state column is present in the sheet, if so get the old value and check
-        // if the transition is allowed, throw an error if not
-        if ($updated_column = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute())) {
-            $update_cnt = count($updated_column->getValues());
-            $error = false;
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
+        if ($this->hasTransitionRestrictions()) {
             
-            if ($check_cnt == $update_cnt) {
-                // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
-                // ueber Knopf $check_nr == 1, $update_nr == 1
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
-                foreach ($updated_column->getValues() as $row_nr => $updated_val) {
-                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
-                    $from_state = $this->getState($check_val);
+            // Read the unchanged object from the database
+            $check_sheet = DataSheetFactory::createFromObject($thisObj);
+            $check_column = $check_sheet->getColumns()->addFromAttribute($this->getStateAttribute());
+            if ($this->getObject()->hasUidAttribute()) {
+                $check_sheet->getColumns()->addFromUidAttribute();
+            }
+            if ($data_sheet->hasUidColumn(true)) {
+                $check_sheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
+            } else {
+                $check_sheet->setFilters($data_sheet->getFilters()->copy());
+            }
+            
+            $check_sheet->dataRead();
+            $check_cnt = count($check_column->getValues());
+            
+            // Check if the state column is present in the sheet, if so get the old value and check
+            // if the transition is allowed, throw an error if not
+            if ($updated_column = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute())) {
+                $update_cnt = count($updated_column->getValues());
+                $error = null;
+                
+                if ($check_cnt == $update_cnt) {
+                    // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
+                    // ueber Knopf $check_nr == 1, $update_nr == 1
+                    // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
+                    foreach ($updated_column->getValues() as $row_nr => $updated_val) {
+                        $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
+                        $from_state = $this->getState($check_val);
+                        $to_state = $this->getState($updated_val);
+                        if ($from_state->isTransitionAllowed($to_state) === false) {
+                            $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';
+                            break;
+                        }
+                        foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
+                            if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
+                                $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
+                                break 2;
+                            }
+                        }
+                    }
+                } else if ($check_cnt > 1 && $update_cnt == 1) {
+                    // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
+                    // $check_nr > 1, $update_nr == 1
+                    $updated_val = $updated_column->getValues()[0];
                     $to_state = $this->getState($updated_val);
-                    if ($from_state->isTransitionAllowed($to_state) === false) {
-                        $error = true;
-                        break;
+                    foreach ($check_column->getValues() as $row_nr => $check_val) {
+                        $from_state = $this->getState($check_val);
+                        if ($from_state->isTransitionAllowed($to_state) === false) {
+                            $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';    
+                            break;
+                        }
+                    }
+                    foreach ($from_state->getDisabledAttributesAliases() as $disabledAttrAlias) {
+                        if ($event->willChangeAttribute($thisObj->getAttribute($disabledAttrAlias))) {
+                            $error = 'no changes to attribute "' . $thisObj->getAttribute($disabledAttrAlias)->getName() . '" allowed in state ' . $from_state->getName() . ' (' . $check_val . ')';
+                            break;
+                        }
                     }
                 }
-            } else if ($check_cnt > 1 && $update_cnt == 1) {
-                // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
-                // $check_nr > 1, $update_nr == 1
-                $updated_val = $updated_column->getValues()[0];
-                $from_state = $this->getState($check_val);
-                $to_state =$this->getState($updated_val);
-                foreach ($check_column->getValues() as $row_nr => $check_val) {
-                    if ($from_state->isTransitionAllowed($to_state) === false) {
-                        $error = true;    
-                        break;
-                    }
+                
+                if ($error !== null) {
+                    $data_sheet->dataMarkInvalid();
+                    throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $error . '!', '6VC040N');
                 }
             }
             
-            if ($error === true) {
-                $data_sheet->dataMarkInvalid();
-                throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed!', '6VC040N');
-            }
         }
         
         // Check all the updated attributes for disabled attributes, if a disabled attribute
         // is changed throw an error
-        foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
-            $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
-            $check_state_val = $check_column->getCellValue($check_row_nr);
-            $state = $this->getState($check_state_val);            
-            foreach ($updated_row as $colum_name => $updated_val) {
-                $col = $data_sheet->getColumns()->get($colum_name);
-                if ($col->isAttribute() === true && $state->isAttributeDisabled($col->getAttribute()) === true) {
-                    $check_val = $col->getCellValue($check_row_nr);
-                    if ($updated_val != $check_val) {
-                        $data_sheet->dataMarkInvalid();
-                        throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $attr->getName() . ' (' . $attr->getAliasWithNamespace() . ') is disabled in the current state "' . $state->getName() . '"!', '6VC07QH');
+        if ($this->hasDisabledAttributes()) {
+            foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
+                $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
+                $check_state_val = $check_column->getCellValue($check_row_nr);
+                $state = $this->getState($check_state_val);            
+                foreach ($updated_row as $colum_name => $updated_val) {
+                    $col = $data_sheet->getColumns()->get($colum_name);
+                    if ($col->isAttribute() === true && $state->isAttributeDisabled($col->getAttribute()) === true) {
+                        $check_val = $col->getCellValue($check_row_nr);
+                        if ($updated_val != $check_val) {
+                            $data_sheet->dataMarkInvalid();
+                            throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $col->getAttribute()->__toString() . ' is disabled in the current state "' . $state->getName() . '"!', '6VC07QH');
+                        }
                     }
                 }
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+        return;
     }
     
     /**
@@ -695,6 +831,35 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $this->overrideAttributeDisplayWidget = BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * Sets the width of the widget.
+     * Set to `1` for default widget width in a facade or `max` for maximum width possible.
+     *
+     * The width can be specified either in
+     * - facade-specific relative units (e.g. `width: 2` makes the widget twice as wide
+     * as the default width of a widget in the current facade)
+     * - percent (e.g. `width: 50%` will make the widget take up half the available space)
+     * - any other facade-compatible units (e.g. `width: 200px` will work in CSS-based facades)
+     *
+     * @uxon-property display_widget_width
+     * @uxon-type string
+     **/ 
+    public function setDisplayWidgetWidth($value)
+    {
+        $exface = $this->getWorkbench();
+        $this->displayWidgetWidth = WidgetDimensionFactory::createFromAnything($exface, $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return WidgetDimension|NULL
+     */
+    protected function getDisplayWidgetWidth() : ?WidgetDimension
+    {
+        return $this->displayWidgetWidth;
     }
     
     /**
@@ -822,5 +987,224 @@ class StateMachineBehavior extends AbstractBehavior
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
+    }
+    
+    /**
+     * 
+     * @return StateMachineState[]
+     */
+    protected function getStatesWithDisabledDelete() : array
+    {
+        $arr = [];
+        foreach ($this->getStates() as $state) {
+            if ($state->getDisableDelete()) {
+                $arr[] = $state;
+            }
+        }
+        return $arr;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasTransitionRestrictions() : bool
+    {
+        foreach ($this->getStates() as $state) {
+            if ($state->hasTransitionRestrictions()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasDisabledAttributes() : bool
+    {
+        foreach ($this->getStates() as $state) {
+            if ($state->hasDisabledAttributes()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 
+     * @return StateMachineBehavior
+     */
+    protected function registerNotifications() : StateMachineBehavior
+    {
+        // Only register behaviors once!
+        if ($this->behaviors !== null) {
+            return $this;
+        } else {
+            $this->behaviors = [];
+        }
+        
+        foreach ($this->getStates() as $state) {
+            if (null !== $notifications = $state->getNotificationsUxon()) {
+                // Create a behavior configuration notify on updates changing the state attribute
+                $uxon = new UxonObject([
+                    "notify_on_event" => OnUpdateDataEvent::getEventName(),
+                    "notify_if_attributes_change" => [$this->getStateAttributeAlias()],
+                    "notify_if_data_matches_conditions" => [
+                        "operator" => EXF_LOGICAL_AND,
+                        "conditions" => [
+                            [
+                                "expression" => $this->getStateAttributeAlias(),
+                                "comparator" => ComparatorDataType::EQUALS,
+                                "value" => $state->getStateId()
+                            ]
+                        ]
+                    ],
+                    'notifications' => $notifications
+                ]);
+                if ($state->getNotifyOnlyForAuthorizedData() !== null) {
+                    $uxon->setProperty('notify_if_data_authorized', $state->getNotifyOnlyForAuthorizedData());
+                }
+                // Add the on-update behavior
+                $behaviorOnUpdate = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                $this->getObject()->getBehaviors()->add($behaviorOnUpdate);
+                $this->behaviors[] = $behaviorOnUpdate;
+                
+                // For start-states also add an on-create behavior with the same configuration
+                if ($state->isStartState()) {
+                    $uxonCreate = $uxon->copy();
+                    $uxonCreate->setProperty('notify_on_event', OnCreateDataEvent::getEventName());
+                    $behaviorOnCreate = BehaviorFactory::createFromUxon($this->getObject(), NotifyingBehavior::class, $uxon, $this->getApp()->getSelector());
+                    $this->getObject()->getBehaviors()->add($behaviorOnCreate);
+                    $this->behaviors[] = $behaviorOnCreate;
+                }
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @param OnBehaviorModelValidatedEvent $event
+     * @return void
+     */
+    public function onModelValidatedAddDiagram(OnBehaviorModelValidatedEvent $event)
+    {
+        if ($event->getBehavior() !== $this) {
+            return;
+        }
+        
+        $widget = $event->getMessageList()->getParent();
+        $widget->addButton($widget->createButton(new UxonObject([
+            'caption' => 'Diagram',
+            'close_dialog' => false,
+            'action' => [
+                'alias' => 'exface.Core.ShowDialog',
+                'dialog' => [
+                    'lazy_loading' => false,
+                    'maximized' => true,
+                    'widgets' => [
+                        [
+                            'widget_type' => 'Markdown',
+                            'width' => '100%',
+                            'height' => '100%',
+                            'value' => $this->buildMermaidDiagram(),
+                            'renderMermaidDiagrams' => true
+                        ]
+                    ]
+                ]
+            ]
+        ])));
+        return;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildMermaidDiagram() : string
+    {
+        $mm = '';
+        foreach ($this->getStates() as $state) {
+            $stateFlags = '';
+            if ($state->getDisableDelete() || $state->getDisableEditing()) {
+                $stateFlags .= ' #128274;';
+            }
+            $stateProps = [
+                'State ID - ' . $state->getStateId(),
+                'State color - ' . $state->getColor(),
+                'State icon - ' . $state->getIcon(),
+                ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable delete',
+                ($state->getDisableDelete() ? '#9745;' : '#9744;') . ' disable edit'
+            ];
+            
+            $stateProps = implode('#013;', $stateProps);
+            $stateProps = str_replace(':', '#58;', $stateProps);
+            
+            $stateDetails = '';
+            if ($state->getDescription() !== null) {
+                $stateDetails .= '<i>' . str_replace(';', '#59;', wordwrap($state->getDescription(), 50, '<br>')) . '</i><br>';
+            }
+            if (null !== $notificationsUxon = $state->getNotificationsUxon()) {
+                foreach ($notificationsUxon->getPropertiesAll() as $notificationUxon) {
+                    $stateDetails .= "<br><b>#9993;</b> " . $notificationUxon->getProperty('template') ?? $notificationUxon->getProperty('channel');
+                    foreach (($notificationUxon->getProperty('recipient_roles')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
+                    }
+                    foreach (($notificationUxon->getProperty('recipient_users')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
+                    }
+                    foreach (($notificationUxon->getProperty('recipients')) ?? [] as $recipient) {
+                        $stateDetails .= "<br>- " . str_replace(';', '#59;', $recipient);
+                    }
+                }
+            }
+            $stateDetails = $stateDetails !== '' ? '<br>' . $stateDetails : '';
+            $stateDetails = str_replace(':', '#58;', $stateDetails);
+            
+            $mm .= <<<MERMAID
+
+    {$state->getStateId()} : <span title="$stateProps">{$state->getName()} <small>{$stateFlags}</small><small>{$stateDetails}</small></span>
+MERMAID;
+            if ($state->isStartState()) {
+                $mm .= <<<MERMAID
+                
+    [*] --> {$state->getStateId()}
+MERMAID;
+            }
+            if ($state->isEndState()) {
+                $mm .= <<<MERMAID
+                
+    {$state->getStateId()} --> [*]
+MERMAID;
+            }
+            foreach ($state->getTransitions(false) as $targetStateId => $actionAlias) {
+                if ($targetStateId === $state->getStateId() && ! $actionAlias) {
+                    continue;
+                }
+                $actionSelector = new ActionSelector($this->getWorkbench(), $actionAlias);
+                if ($actionSelector->isAlias()) {
+                    $transitionText = StringDataType::substringAfter($actionAlias, '.', $actionAlias, false, true);
+                } else {
+                    $transitionText = $actionAlias;
+                }
+                $actionAlias = '<span title="' . $actionAlias . '">' . $transitionText . '</span>';
+                $mm .= <<<MERMAID
+               
+    {$state->getStateId()} --> {$targetStateId} : {$actionAlias}
+MERMAID;
+            }
+        }
+        $mm = trim($mm);
+        
+        return <<<MD
+## State diagram
+```mermaid
+stateDiagram-v2
+    $mm
+```
+
+MD;
     }
 }

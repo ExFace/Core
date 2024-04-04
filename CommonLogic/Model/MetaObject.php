@@ -33,6 +33,7 @@ use exface\Core\Events\Model\OnBeforeDefaultObjectEditorInitEvent;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -308,6 +309,7 @@ class MetaObject implements MetaObjectInterface
                     $rel_attr = $this->getRelatedObject($rel_parts[0])->getAttribute($rel_parts[1]);
                     $attr = $rel_attr->copy();
                     $rel = $this->getRelation($rel_parts[0]);
+                    // TODO replace with #Attribute::withRelationPath()
                     $attr->getRelationPath()->prependRelation($rel);
                     $this->setAttributeCache($alias, $attr);
                     return $attr;
@@ -334,6 +336,7 @@ class MetaObject implements MetaObjectInterface
                     try {
                         $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
                         $attr = $rel_attr->copy();
+                        // TODO replace with #Attribute::withRelationPath()
                         $attr->getRelationPath()->prependRelation($rev_rel);
                         $this->setAttributeCache($alias, $attr);
                         return $attr;
@@ -451,7 +454,12 @@ class MetaObject implements MetaObjectInterface
             return;
         }
         
-        // Save UIDs of all objects this on extends from or it's parents extend from.
+        // Prevent extending multiple times becaus that would double behavior triggers!
+        if (in_array($parent, $this->parent_objects, true)) {
+            return;
+        }
+        
+        // Save all objects this one extends from.
         $this->parent_objects[] = $parent; 
         
         // Inherit data address
@@ -507,13 +515,50 @@ class MetaObject implements MetaObjectInterface
         }
         
         // Inherit Relations
-        foreach ($parent->getRelations() as $rel) {
-            $rel_clone = clone $rel;
-            // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-            if (is_null($rel->getInheritedFromObjectId())) {
-                $rel_clone->setInheritedFromObjectId($parent->getId());
+        // If we can access the relations array directly, iterate over it instead of
+        // calling getRelations() as the latter might trigger loading right objects
+        // when calculation the alias with modifier. Skipping this saves us a couple
+        // of object loading operations when objects with reverse relations are inherited
+        if ($parent instanceof self) {
+            foreach ($parent->relations as $relSet) {
+                foreach ($relSet as $rel) {
+                    // Copy the relation unless it is a self-relation. Self-relations (pointing from the parent to the parent)
+                    // need to be recreated, so that they point from the extending object to the extending object.
+                    // For example, if we are extending the FILE object, the relation to the folder should not point
+                    // to the original file object, but rather to the extending object, which may have a custom base
+                    // address, etc.
+                    if ($rel->getRightObjectId() === $parent->getId()) {
+                        $rel_clone = new Relation(
+                            $this->getWorkbench(),
+                            $rel->getCardinality(),
+                            $rel->getId(),
+                            $rel->getAlias(), // IDEA should not the new relation have the alias of the new object?
+                            $rel->getAliasModifier(),
+                            $this,
+                            $this->getAttribute($rel->getLeftKeyAttribute()->getAlias()),
+                            $this->getId(),
+                            $rel->getRightKeyIsUnspecified() === true ?  null : $this->getAttribute($rel->getRightKeyAttribute()->getAlias())->getId()
+                        );
+                    } else {
+                        $rel_clone = clone $rel;
+                    }
+                    // $rel_clone = $rel->copy();
+                    // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
+                    if (null === $rel->getInheritedFromObjectId()) {
+                        $rel_clone->setInheritedFromObjectId($parent->getId());
+                    }
+                    $this->addRelation($rel_clone);
+                }
             }
-            $this->addRelation($rel_clone);
+        } else {
+            foreach ($parent->getRelations() as $rel) {
+                $rel_clone = clone $rel;
+                // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
+                if (null === $rel->getInheritedFromObjectId()) {
+                    $rel_clone->setInheritedFromObjectId($parent->getId());
+                }
+                $this->addRelation($rel_clone);
+            }
         }
         
         // Inherit behaviors
@@ -727,28 +772,20 @@ class MetaObject implements MetaObjectInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSourceId()
-     */
-    public function getDataSourceId()
-    {
-        return $this->data_source_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataSourceId()
      */
-    public function setDataSourceId($value)
+    public function setDataSourceId($value) : MetaObjectInterface
     {
         $this->data_source_id = $value;
+        return $this;
     }
     
     /**
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::hasDataSource()
      */
-    public function hasDataSource()
+    public function hasDataSource() : bool
     {
         return is_null($this->data_source_id) ? false : true;
     }
@@ -758,9 +795,12 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSource()
      */
-    public function getDataSource()
+    public function getDataSource() : DataSourceInterface
     {
-        return $this->getModel()->getWorkbench()->data()->getDataSource($this->getDataSourceId(), $this->data_connection_alias);
+        if (! $this->hasDataSource()) {
+            throw new MetaObjectHasNoDataSourceError($this, 'No data source is specified for object "' . $this->__toString() . '!');
+        }
+        return $this->getWorkbench()->data()->getDataSource($this->data_source_id, $this->data_connection_alias);
     }
 
     /**
@@ -777,29 +817,14 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Sets a custom data connection to be used for this object.
-     * This way, the default connection for the data source can be overridden!
-     *
-     * @param string $alias            
-     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataConnectionAlias()
      */
-    function setDataConnectionAlias($alias)
+    public function setDataConnectionAlias($alias) : MetaObjectInterface
     {
         $this->data_connection_alias = $alias;
         return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getQueryBuilder()
-     */
-    public function getQueryBuilder()
-    {
-        if (! $this->hasDataSource()) {
-            throw new MetaObjectHasNoDataSourceError($this, 'Cannot create a query builder for "' . $this->getName() . '" (' . $this->getAliasWithNamespace() . '): the object does not have a data source!');
-        }
-        return $this->getModel()->getWorkbench()->data()->getQueryBuilder($this->data_source_id);
     }
 
     public function getId()
@@ -847,9 +872,9 @@ class MetaObject implements MetaObjectInterface
      *
      * @return UxonObject
      */
-    public function getDataAddressProperties()
+    public function getDataAddressProperties() : UxonObject
     {
-        if (is_null($this->data_address_properties)) {
+        if (null === $this->data_address_properties) {
             $this->data_address_properties = new UxonObject();
         }
         return $this->data_address_properties;
@@ -924,7 +949,7 @@ class MetaObject implements MetaObjectInterface
             foreach ($obj->getParentObjects(($depth === null ? null : $depth-1)) as $objParent) {
                 // Can't just use array_unique here because it requires all elements
                 // to be convertable to strings!
-                if (! in_array($objParent, $objects)) {
+                if (! in_array($objParent, $objects, true)) {
                     $objects[] = $objParent;
                 }
             }
@@ -1235,7 +1260,10 @@ class MetaObject implements MetaObjectInterface
         $this->writable = BooleanDataType::cast($true_or_false);
         return $this;
     }
-
-
+    
+    public function __toString() : string
+    {
+        return '"' . $this->getName() . '" [' . $this->getAliasWithNamespace() . ']';
+    }
 }
 ?>

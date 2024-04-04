@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\DataPointerFactory;
@@ -31,6 +30,8 @@ class Html extends Display
     private $headTags = null;
     
     private $margins = false;
+    
+    private $inline = false;
     
     private $baseUrl = '';
     
@@ -66,7 +67,7 @@ class Html extends Display
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::setValue()
+     * @see \exface\Core\Widgets\Value::setValue()
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
@@ -156,10 +157,11 @@ class Html extends Display
      * @uxon-default
      * 
      * @param boolean $margins
+     * @return Html
      */
-    public function setMargins($true_or_false)
+    public function setMargins(bool $true_or_false)
     {
-        $this->margins = BooleanDataType::cast($true_or_false);
+        $this->margins = $true_or_false;
         return $this;
     }
     
@@ -280,7 +282,7 @@ class Html extends Display
         if ($base = $this->getBaseUrl()) {
             $fm = $this->getWorkbench()->filemanager();
             if ($fm::pathGetCommonBase([$base, $fm->getPathToBaseFolder()])) {
-                $base = HttpFileServerFacade::buildUrlForDownload($this->getWorkbench(), $base);
+                $base = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $base);
             }
             $base = rtrim($base, "/\\") . '/';
             $html = preg_replace('#(href|src)="([^:"]*)("|(?:(?:%20|\s|\+)[^"]*"))#','$1="' . $base . '$2$3', $html);
@@ -348,5 +350,25 @@ class Html extends Display
         }
         return parent::getValue();
     }
+    
+    public function getInline() : bool
+    {
+        return $this->inline;
+    }
+    
+    /**
+     * Set to TRUE to make the widget appear in-line with its caption.
+     * 
+     * @uxon-property inline
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return Html
+     */
+    public function setInline(bool $value) : Html
+    {
+        $this->inline = $value;
+        return $this;
+    }
 }
-?>

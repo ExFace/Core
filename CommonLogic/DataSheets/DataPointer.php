@@ -15,10 +15,22 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  */
 class DataPointer implements DataPointerInterface
 {
+    /**
+     * 
+     * @var DataSheetInterface|NULL
+     */
     private $dataSheet = null;
     
+    /**
+     * 
+     * @var DataColumnInterface|NULL
+     */
     private $dataColumn = null;
     
+    /**
+     * 
+     * @var int|NULL
+     */
     private $rowNumber = null;
     
     /**
@@ -42,7 +54,7 @@ class DataPointer implements DataPointerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataPointerInterface::getRowNumber()
      */
-    public function getRowNumber(): int
+    public function getRowNumber(): ?int
     {
         return $this->rowNumber;
     }
@@ -52,21 +64,38 @@ class DataPointer implements DataPointerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataPointerInterface::getValue()
      */
-    public function getValue()
+    public function getValue(bool $splitLists = false, string $splitDelimiter = null, bool $onlyUnique = false)
     {
-        if ($this->isCell()) {
-            return $this->getColumn()->getCellValue($this->getRowNumber());
-        }
+        $val = null;
         
-        if ($this->isRow()) {
-            return $this->getDataSheet()->getRow($this->getRowNumber());
+        if ($this->isCell()) {
+            $val = $this->getColumn()->getCellValue($this->getRowNumber());
         }
         
         if ($this->isColumn()) {
-            return $this->getColumn()->getValues(false);
+            $val = $this->getColumn()->getValues(false);
         }
         
-        return null;
+        
+        if ($splitLists === true && is_string($val) && ($splitDelimiter !== null || $this->dataColumn !== null && $this->dataColumn->isAttribute())) {
+            $splitDelimiter = $splitDelimiter ?? $this->dataColumn->getAttribute()->getValueListDelimiter();
+            if (stripos($val, $splitDelimiter) !== false) {
+                $val = explode($splitDelimiter, $val);
+            }
+        }
+        
+        if ($onlyUnique === true && is_array($val)) {
+            $val = array_unique($val);
+            if (count($val) === 1) {
+                $val = reset($val);
+            }
+        }
+        
+        if ($this->isRow()) {
+            $val = $this->getDataSheet()->getRow($this->getRowNumber());
+        }
+        
+        return $val;
     }
 
     /**
@@ -94,7 +123,7 @@ class DataPointer implements DataPointerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataPointerInterface::getColumn()
      */
-    public function getColumn(): DataColumnInterface
+    public function getColumn(): ?DataColumnInterface
     {
         return $this->dataColumn;
     }
@@ -137,5 +166,42 @@ class DataPointer implements DataPointerInterface
     public function isRow(): bool
     {
         return $this->dataColumn === null && $this->rowNumber !== null;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataPointerInterface::hasValue()
+     */
+    public function hasValue() : bool
+    {
+        if ($this->isEmpty() === true) {
+            return false;
+        }
+        $val = $this->getValue();
+        return $val !== null && $val !== ''; 
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataPointerInterface::hasMultipleValues()
+     */
+    public function hasMultipleValues() : bool
+    {
+        if ($this->isEmpty() === true) {
+            return false;
+        }
+        $val = $this->getValue();
+        if (is_array($val)) {
+            return true;
+        }
+        if ($this->dataColumn !== null && $this->dataColumn->isAttribute()) {
+            $delim = $this->dataColumn->getAttribute()->getValueListDelimiter();
+            if (stripos($val, $delim) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 }

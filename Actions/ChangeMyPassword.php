@@ -10,7 +10,9 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\UsernamePasswordAuthTok
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Security\PasswordMismatchError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
-use exface\Core\DataTypes\PasswordHashDataType;
+use exface\Core\DataTypes\PasswordDataType;
+use exface\Core\CommonLogic\Security\AuthenticationToken\MetamodelUsernamePasswordAuthToken;
+use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 
 /**
  * Action to change password of a user. Only for internal purpose, dont use otherwise as it needs very specific input data configuration.
@@ -44,15 +46,19 @@ class ChangeMyPassword extends UpdateData
         if (! $dataSheet->getColumns()->getByExpression('USERNAME') || ! $dataSheet->getColumns()->getByExpression('PASSWORD') || ! $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')) {
             throw new ActionInputMissingError($this, "Can not update password, make sure the input data contains the Columns 'USER', 'PASSWORD' and 'OLD_PASSWORD'!");
         }
-        $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')->setDataType(PasswordHashDataType::class);
-        $user = $dataSheet->getRow(0)['USERNAME'];
-        if ($user !== $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername()) {
+        $dataSheet->getColumns()->getByExpression('OLD_PASSWORD')->setDataType(PasswordDataType::class);
+        $userName = $dataSheet->getRow(0)['USERNAME'];
+        if ($userName !== $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getUsername()) {
             throw new ActionRuntimeError($this, "Password could not be updated, it is not possible to change the password of another user.");
         }
         $oldPassword = $dataSheet->getRow(0)['OLD_PASSWORD'];
         //$newPassword = $dataSheet->getRow(0)['PASSWORD'];
         try {
-            $this->getWorkbench()->getSecurity()->authenticate(new UsernamePasswordAuthToken($user, $oldPassword));
+            $this->getWorkbench()->getSecurity()->authenticate(
+                new MetamodelUsernamePasswordAuthToken($userName, $oldPassword, $task->getFacade())
+            );
+        } catch (AuthenticationIncompleteError $e) {
+            // Ignore second factor here - its OK if the passwords match, complete login is not required.
         } catch (\Exception $e) {
             $this->getWorkbench()->getLogger()->logException($e);
             throw new PasswordMismatchError($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CHANGEMYPASSWORD.WRONG_PASSWORD'));
@@ -66,7 +72,7 @@ class ChangeMyPassword extends UpdateData
         $result->setUndoable($undoable);
         if ($affectedRows > 0) {
             $result->setDataModified(true);
-        }        
+        }
         return $result;
     }    
 }

@@ -38,7 +38,7 @@ class LogicException extends \LogicException implements ErrorExceptionInterface,
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

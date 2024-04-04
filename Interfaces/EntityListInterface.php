@@ -51,6 +51,13 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * @param mixed $key            
      */
     public function removeByKey($key);
+    
+    /**
+     * Removes all entities from the list, thus emptying the list.
+     *
+     * @return EntityListInterface
+     */
+    public function removeAll() : EntityListInterface;
 
     /**
      * Returns the entity, that was stored under the given key.

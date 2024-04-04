@@ -9,10 +9,50 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Exceptions\UxonParserError;
+use exface\Core\DataTypes\StringDataType;
 
+/**
+ * A reference to another widget or its data.
+ * 
+ * Widget links are similar to Excel references. Think of a UI page as an Excel workbook, a widget as
+ * a worksheet and the widgets data as that worksheets contents.
+ * 
+ * You can address
+ * 
+ * - UI pages using their namespaced alias in square braces
+ * - Widgets using their ids. **NOTE:** This means, to explicitly linke a widget, you MUST give it an `id`.
+ * - Data columns using their `data_column_name` following the widgets id separated by an `!` 
+ * 
+ * There are also a couple of "shortcut" references available instead of explicit page/widget ids:
+ * 
+ * - `~self` - references the widget the link is defined in
+ * - `~parent` - references the immediate parent of `~self`
+ * - `~input` - references the `input_widget` of a `Button` or anything else that supports input widgets. 
+ * 
+ * You can make a widget link "optional" by adding a trailing `?`. This will make sure, the linked value
+ * us only used if it is not empty. Thus, the widget, that contains the link will not be emptied if the
+ * linked widget has no value.
+ * 
+ * A few examples:
+ * 
+ * - `some_widget` - references the entire widget with id `some_widget`
+ * - `some_widget!mycol` - references the column `mycol` in the data of the widget with id `some_widget`
+ * - `some_widget!mycol?` - references the column `mycol` only if it has a non-empty value. Otherwise the reference is not applied!
+ * - `[my.App.page1]` - references the root widget of the page with alias `my.App.page1`
+ * - `[my.App.page1]some_widget` - references the widget with id `some_widget` on page `my.App.page1`
+ * - `~self!mycol` - references the column `mycol` in the data of the current widget
+ * - `~parent!mycol` - references the column `mycol` of the current widgets parent
+ * - `~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 class WidgetLink implements WidgetLinkInterface
 {
-
+    
     private $sourcePage = null;
     
     private $sourceWidget = null;
@@ -25,9 +65,11 @@ class WidgetLink implements WidgetLinkInterface
 
     private $widget_id_space = null;
 
-    private $targetColumnId;
+    private $targetColumnId = null;
 
-    private $targetRowNumber;
+    private $targetRowNumber = null;
+    
+    private $ifNotEmpty = false;
 
     /**
      * 
@@ -70,6 +112,14 @@ class WidgetLink implements WidgetLinkInterface
     protected function parseLinkString(string $string) : WidgetLinkInterface
     {
         $string = trim($string);
+        
+        if (StringDataType::endsWith($string, '?')) {
+            $this->setOnlyIfNotEmpty(true);
+            $string = substr($string, 0, -1);
+        } else {
+            $this->setOnlyIfNotEmpty(false);
+        }
+        
         // Check for reference to specific page_alias
         if (strpos($string, '[') === 0) {
             $page_alias = substr($string, 1, strpos($string, ']') - 1);
@@ -103,6 +153,7 @@ class WidgetLink implements WidgetLinkInterface
             // Otherwise, everything that is left, is the widget id
             $widget_id = $string;
         }
+        
         $this->setWidgetId($widget_id);
         
         return $this;
@@ -117,6 +168,9 @@ class WidgetLink implements WidgetLinkInterface
     {
         $this->setPageAlias($object->getProperty('page_alias'));
         $this->setWidgetId($object->getProperty('widget_id'));
+        if ($object->hasProperty('only_if_not_empty')) {
+            $this->setOnlyIfNotEmpty($object->getProperty('only_if_not_empty'));
+        }
         return $this;
     }
 
@@ -150,7 +204,33 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setWidgetId($value)
     {
+        // Handle magir refs
+        switch ($value) {
+            case WidgetLinkInterface::REF_SELF:
+                if ($this->hasSourceWidget()) {
+                    $value = $this->getSourceWidget()->getId();
+                    break;
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_SELF . '" only available if the links source widget is known!');
+            case WidgetLinkInterface::REF_PARENT:
+                if ($this->hasSourceWidget() && $this->getSourceWidget()->hasParent()) {
+                    $value = $this->getSourceWidget()->getParent()->getId();
+                    break;
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is known and it has a parent!');
+            case WidgetLinkInterface::REF_INPUT:
+                if ($this->hasSourceWidget()) {
+                    $src = $this->getSourceWidget();
+                    if ($src instanceof iUseInputWidget && $input = $src->getInputWidget()) {
+                        $value = $input->getId();
+                        break;
+                    }
+                }
+                throw new RuntimeException('Cannot parse widget link: reference "' . WidgetLinkInterface::REF_INPUT . '" only available if the links source widget is a button (or any other widget with an input widget) and the input widget is known!');
+        }
+        
         $this->targetWidgetId = $value;
+        return $this;
     }
 
     /**
@@ -265,8 +345,12 @@ class WidgetLink implements WidgetLinkInterface
         $uxon->setProperty('widget_id', $this->targetWidgetId);
         $uxon->setProperty('page_alias', $this->getTargetPage()->getAliasWithNamespace());
         $uxon->setProperty('widget_id_space', $this->widget_id_space);
+        if ($this->targetColumnId !== null) {
         $uxon->setProperty('column_id', $this->targetColumnId);
-        $uxon->setProperty('row_number', $this->targetRowNumber);
+        }
+        if ($this->targetRowNumber !== null) {
+            $uxon->setProperty('row_number', $this->targetRowNumber);
+        }
         return $uxon;
     }
     
@@ -285,7 +369,7 @@ class WidgetLink implements WidgetLinkInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetColumnId()
      */
-    public function getTargetColumnId()
+    public function getTargetColumnId() : ?string
     {
         return $this->targetColumnId;
     }
@@ -306,8 +390,11 @@ class WidgetLink implements WidgetLinkInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetRowNumber()
      */
-    public function getTargetRowNumber()
+    public function getTargetRowNumber() : ?int
     {
+        if ($this->targetRowNumber !== null && $this->targetColumnId === null) {
+            throw new UxonParserError($this->exportUxonObject(), 'Cannot user row numbers in widget links without a column reference!');
+        }
         return $this->targetRowNumber;
     }
 
@@ -371,6 +458,30 @@ class WidgetLink implements WidgetLinkInterface
     {
         return $this->sourceWidget !== null;
     }
-
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isOnlyIfNotEmpty() : bool
+    {
+        return $this->ifNotEmpty;
+    }
+    
+    /**
+     * Set to TRUE to ignore the link completely if the linked value is empty
+     * 
+     * @uxon-property only_if_not_empty
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return WidgetLink
+     */
+    public function setOnlyIfNotEmpty(bool $value) : WidgetLink
+    {
+        $this->ifNotEmpty = $value;
+        return $this;
+    }
 }
 ?>

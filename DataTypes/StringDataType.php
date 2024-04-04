@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
-use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Exceptions\RangeException;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
@@ -28,7 +25,7 @@ class StringDataType extends AbstractDataType
     /**
      * @return string|null
      */
-    public function getValidatorRegex()
+    public function getValidatorRegex() : ?string
     {
         return $this->regexValidator;
     }
@@ -50,6 +47,36 @@ class StringDataType extends AbstractDataType
     {
         $this->regexValidator = $regularExpression;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $and = $translator->translate('DATATYPE.VALIDATION.AND');
+        $text = '';
+        if ($this->getLengthMin() > 0) {
+            $lengthCond = ' ≥ ' . $this->getLengthMin();
+        }
+        if ($this->getLengthMax() > 0) {
+            $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $this->getLengthMax();
+        }
+        if ($lengthCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
+        }
+        if ($this->getValidatorRegex()) {
+            $text = ($text ? $text . ' ' . $and . ' ' : '') . $translator->translate('DATATYPE.VALIDATION.REGEX_CONDITION', ['%regex%' => $this->getValidatorRegex()]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
     }
 
     /**
@@ -105,7 +132,7 @@ class StringDataType extends AbstractDataType
      */
     public static function startsWith($haystack, $needle, $case_sensitive = true)
     {
-        $substr = substr($haystack, 0, strlen($needle));
+        $substr = mb_substr($haystack, 0, strlen($needle));
         if ($case_sensitive) {
             return $substr === $needle;
         } else {
@@ -123,9 +150,9 @@ class StringDataType extends AbstractDataType
     public static function endsWith($haystack, $needle, $case_sensitive = true)
     {
         if ($case_sensitive) {
-            return substr($haystack, (-1)*strlen($needle)) === $needle;
+            return mb_substr($haystack, (-1)*strlen($needle)) === $needle;
         } else {
-            return substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+            return mb_substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
         }
     }
     
@@ -152,15 +179,27 @@ class StringDataType extends AbstractDataType
      */
     public function parse($string)
     {
+        if ($this::isValueLogicalNull($string)) {
+            return $string;
+        }
+            
         $value = parent::parse($string);
+        
+        if ($this->isValueEmpty($value)) {
+            return $value;
+        }
         
         // validate length
         $length = mb_strlen($value);
         if ($this->getLengthMin() > 0 && $length < $this->getLengthMin()){
-            throw $this->createValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+            $excValue = '';
+            if (! $this->isSensitiveData()) {
+                $excValue = '"' . $value . '" (' . $length . ')';
+            }
+            throw $this->createValidationError('The lenght of the string ' . $excValue . ' is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
-            $value = substr($value, 0, $this->getLengthMax());
+            $value = mb_substr($value, 0, $this->getLengthMax());
         }
         
         // validate against regex
@@ -172,7 +211,11 @@ class StringDataType extends AbstractDataType
             }
             
             if (! $match){
-                throw $this->createValidationError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+                $excValue = '';
+                if (! $this->isSensitiveData()) {
+                    $excValue = '"' . $value . '"';
+                }
+                throw $this->createValidationError('Value ' . $excValue . ' does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
             }
         }
         
@@ -189,7 +232,7 @@ class StringDataType extends AbstractDataType
         return SortingDirectionsDataType::ASC($this->getWorkbench());
     }
     /**
-     * @return integer
+     * @return int|float
      */
     public function getLengthMin()
     {
@@ -202,17 +245,17 @@ class StringDataType extends AbstractDataType
      * @uxon-property length_min
      * @uxon-type integer
      * 
-     * @param integer $number
+     * @param int $number
      * @return StringDataType
      */
-    public function setLengthMin($number)
+    public function setLengthMin($number) : StringDataType
     {
         $this->lengthMin = $number;
         return $this;
     }
 
     /**
-     * @return integer
+     * @return int|float|NULL
      */
     public function getLengthMax()
     {
@@ -225,13 +268,35 @@ class StringDataType extends AbstractDataType
      * @uxon-property length_max
      * @uxon-type integer
      * 
-     * @param integer $number
+     * @param int|NULL $number
      * @return StringDataType
      */
-    public function setLengthMax($number)
+    public function setLengthMax($number) : StringDataType
     {
         $this->lengthMax = $number;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if (null !== $val = $this->getLengthMin()) {
+            if ($val > 0) {
+                $uxon->setProperty('length_min', $val);
+            }
+        }
+        if (null !== $val = $this->getLengthMax()) {
+            $uxon->setProperty('length_max', $val);
+        }
+        if (null !== $val = $this->regexValidator) {
+            $uxon->setProperty('validation_regex', $this->regexValidator);
+        }
+        return $uxon;
     }
     
     /**
@@ -257,27 +322,43 @@ class StringDataType extends AbstractDataType
      * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD']) -> exception
      * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD'], false) -> "Hello WORLD"
      * 
+     * If `$recursive` is set to `true`, placeholders eventually contained in the replacement values
+     * will be replaced true, allowing nested placeholders.
+     * 
      * @param string $string
      * @param string[] $placeholders
      * @param bool $strict
+     * @param bool $recursive
      * 
      * @throws RangeException if no value is found for a placeholder
      * 
      * @return string
      */
-    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true) : string
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false) : string
     {
         $phs = static::findPlaceholders($string);
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
-            if ($strict === true && isset($placeholders[$ph]) === false) {
-                throw new RangeException('Missing value for "' . $ph . '"!');
+            if ($strict === true && array_key_exists($ph, $placeholders) === false) {
+                throw new RangeException('Missing value for placeholder "[#' . $ph . '#]"!');
             }
-            $search[] = '[#' . $ph . '#]';
+            $search[] = '[#' . ($ph ?? '') . '#]';
             $replace[] = $placeholders[$ph] ?? '';
         }
-        return str_replace($search, $replace, $string);
+        
+        $replaced = str_replace($search, $replace, $string);
+        
+        while ($recursive === true) {
+            $replacedAgain = static::replacePlaceholders($replaced, $placeholders, $strict, false);
+            if ($replacedAgain === $replaced) {
+                $recursive = false;
+            } else {
+                $replaced = $replacedAgain;
+            }
+        }
+        
+        return $replaced;
     }
     
     /**
@@ -290,7 +371,7 @@ class StringDataType extends AbstractDataType
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
     {
         if (! is_scalar($value)) {
-            throw new RuntimeException('Cannot replace placeholder "' . $placeholder . '" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
+            throw new RuntimeException('Cannot replace placeholder "[#' . $placeholder . '#]" in string "' . $string . '": replacement value must be scalar, ' . gettype($value) . ' received!');
         }
         $search = '[#' . $placeholder . '#]';
         return str_replace($search, $value, $string);
@@ -326,7 +407,7 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, 0, $pos);
+                    $substr = mb_substr($haystack, 0, $pos);
                 }
             } else {
                 $substr = strstr($haystack, $needle, true);
@@ -340,7 +421,7 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, 0, $pos);
+                    $substr = mb_substr($haystack, 0, $pos);
                 }
             } else {
                 $substr = stristr($haystack, $needle, true);
@@ -374,14 +455,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+strlen($needle)));
+                    $substr = mb_substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = strstr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, strlen($needle));
+                    $substr = mb_substr($substr, strlen($needle));
                 }
             }
         } else {
@@ -390,14 +471,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+strlen($needle)));
+                    $substr = mb_substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = stristr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, strlen($needle));
+                    $substr = mb_substr($substr, strlen($needle));
                 }
             }
         }
@@ -418,23 +499,128 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Shortens the given $string to a maximum of $length characters
      * 
      * @param string $string
      * @param int $length
-     * @param bool $stickToWords
+     * @param bool $stickToWords prevents words getting cut in the middle
+     * @param bool $ellipsis adds `...` at the end if the string is really shortened
+     * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull for debug output)
      * @return string
      */
-    public static function truncate(string $string, int $length, bool $stickToWords) : string
+    public static function truncate(string $string, int $length, bool $stickToWords = false, bool $removeLineBreaks = false, bool $ellipsis = false, bool $endHint = false) : string
     {
-        if ($stickToWords === false) {
-            return mb_substr($string, 0, $length);
-        } else {
-            if (strlen($string) > $length) {
+        $stringLength = mb_strlen($string);
+        
+        if ($stringLength > $length) {
+            if ($ellipsis) {
+                $length = max($length - 3, 3);
+            }
+            if ($stickToWords === false) {
+                $string = mb_substr($string, 0, $length);
+            } else {
                 $string = wordwrap($string, $length);
                 $string = mb_substr($string, 0, mb_strpos($string, "\n"));
             }
-            return $string;
+            if ($ellipsis) {
+                $string .= '...';
+            }
+            if ($endHint) {
+                $string .= ' [truncated ' . number_format($stringLength) . ' characters]';
+            }
         }
+        
+        if ($removeLineBreaks === true) {
+            $string = static::stripLineBreaks($string);
+        }
+        
+        return $string;
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param int $limit
+     * @return string[]
+     */
+    public static function splitLines(string $string, int $limit = null) : array
+    {
+        return preg_split("/\R/u", $string, ($limit > 0 ? $limit : -1));
+    }
+    
+    /**
+     * Removes line breaks for the given string keeping words intact.
+     * 
+     * A simple replacement of linebreaks with empty strings or space is not enough
+     * because lines may contain spaces, tabs or other inivisble charaters at
+     * their ends. Need to replace them properly keeping words intact.
+     * 
+     * IDEA probably need to hanle hypenation here somehow...
+     * 
+     * @param string $string
+     * @return string
+     */
+    public static function stripLineBreaks(string $string) : string
+    {
+        $lines = static::splitLines($string);
+        $result = '';
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $result .= ($result !== '' ? ' ' : '') . $line;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Replaces all line breaks in a string by the given value - e.g. for normalization
+     * 
+     * By default replaces everything with `PHP_EOL`. Use `"\r\n"` for `$replace` alternatively.
+     * 
+     * If you don't want to replace all Unicode newlines but only CRLF style ones, set 
+     * `$includeUnicodeLineBreaks` to `false`;
+     * 
+     * @param string $string
+     * @param string $replace
+     * @return string
+     */
+    public static function replaceLineBreaks(string $string, string $replace = PHP_EOL, bool $includeUnicodeLineBreaks = true) : string
+    {
+        $regex = $includeUnicodeLineBreaks ? '/\R/u' : '/(*BSR_ANYCRLF)\R/';
+        return preg_replace($regex, $replace, $string);
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @param string $indent
+     * @return string
+     */
+    public static function indent(string $string, $indent = '  ') : string
+    {
+        return $indent .= preg_replace('/(\\R)(.*)/', '\\1' . preg_quote($indent, '/') . '\\2', $string);
+    }
+    
+    /**
+     * 
+     * @param string $text
+     * @param string $puct
+     * @return string
+     */
+    public static function endSentence(string $text, string $puct = '.') : string
+    {
+        $text = trim($text);
+        $end = mb_substr($text, -1);
+        switch ($end) {
+            case '.':
+            case '?':
+            case '!':
+                return $text;
+        }
+        
+        return $text . $puct;
     }
 }
-?>

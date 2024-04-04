@@ -28,7 +28,7 @@ class UrlDataType extends StringDataType
      */
     public static function isAbsolute(string $url) : bool
     {
-        return StringDataType::startsWith('http', $url, false);
+        return preg_match('@^[a-z1-2\+\-\._]+://@i', $url) === 1;
     }
     
     /**
@@ -73,5 +73,37 @@ class UrlDataType extends StringDataType
             $uri = new Uri($stringOrUri);
         }
         return $uri->getPath() ?? '';
+    }
+    
+    /**
+     * Returns the host of the given URI - e.g. `domain.com` from `https://domain.com/path`.
+     * 
+     * @param UriInterface|string $stringOrUri
+     * @return string
+     */
+    public static function findHost($stringOrUri) : string
+    {
+        if ($stringOrUri instanceof UriInterface) {
+            $uri = $stringOrUri;
+        } else {
+            $uri = new Uri($stringOrUri);
+        }
+        return $uri->getHost() ?? '';
+    }
+    
+    /**
+     * Removes all query parameters including the `?` from the given URI.
+     * 
+     * For example: http://domain.com/path?param1=1&param2=2 -> http://domain.com/path.
+     * 
+     * @param UriInterface|string $stringOrUri
+     * @return string
+     */
+    public static function stripQuery($stringOrUri) : string
+    {
+        if ($stringOrUri instanceof UriInterface) {
+            return $stringOrUri->withQuery('')->__toString();
+        }
+        return self::substringBefore($stringOrUri, '?', $stringOrUri);
     }
 }

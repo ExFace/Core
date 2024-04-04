@@ -21,32 +21,6 @@ class ResultEmpty extends ResultMessage
     {
         return true;
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::setContextModified()
-     */
-    public function setContextModified(bool $value) : ResultInterface
-    {
-        if ($value === true) {
-            throw new LogicException('Illegal attempt to set positive context modification flag on empty task result! An empty result cannot have modified anything!');
-        }
-        return parent::setContextModified($value);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::setDataModified()
-     */
-    public function setDataModified(bool $value) : ResultInterface
-    {
-        if ($value === true) {
-            throw new LogicException('Illegal attempt to set positive data modification flag on empty task result! An empty result cannot have modified anything!');
-        }
-        return parent::setContextModified($value);
-    }
     
     /**
      * 

@@ -1,6 +1,6 @@
 # Organizing pages and navigation
 
-#### [< Previous](05_Creating_the_apps_first_pages.md) | [BookClub tutorial](index.md) | [Next >](07_CRUD_UIs_for_complex_objects.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](05_Creating_the_apps_first_pages.md) [<kbd> <br>Next > <br> </kbd>](07_CRUD_UIs_for_complex_objects.md)
 
 Each UI page has it's unique place in the navigation menu - the tree structure you see in `Administration > Pages`. One specific menu node (the one aliased `index` by default) is concidered to be the root of the main menu, which most templates will display on the left side. Other root nodes of the nav-menu can be created to add totally different custom menus.
 
@@ -69,4 +69,4 @@ If you open the root page of our app now, it should look like this:
 
 ![Root page of the Book Club](Images/menu_tiles.png)
 
-### [< Previous](05_Creating_the_apps_first_pages.md) | [BookClub tutorial](index.md) | [Next >](07_CRUD_UIs_for_complex_objects.md)
+[<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](05_Creating_the_apps_first_pages.md) [<kbd> <br>Next > <br> </kbd>](07_CRUD_UIs_for_complex_objects.md)

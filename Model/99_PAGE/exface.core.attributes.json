@@ -1,0 +1,196 @@
+{
+    "uid": "0xfcda43fa949e11e789c6028037ec0200",
+    "alias_with_namespace": "exface.core.attributes",
+    "menu_parent_page_selector": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "menu_index": 1,
+    "menu_visible": true,
+    "name": "Attributes",
+    "description": "Search for attributes across all objects",
+    "intro": "Hier k\u00f6nnen Meta-Attribute gepflegt werden.",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "created_on": "2013-06-24 13:08:07",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2021-11-23 13:03:42",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.ATTRIBUTE",
+        "multi_select": true,
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "OBJECT__APP"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "TYPE"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS",
+                "widget_type": "Input",
+                "height": 1
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
+                "widget_type": "input",
+                "height": 1
+            },
+            {
+                "attribute_alias": "SHORT_DESCRIPTION",
+                "widget_type": "input",
+                "height": 1,
+                "width": 1
+            },
+            {
+                "attribute_alias": "OBJECT"
+            },
+            {
+                "attribute_alias": "OBJECT__DATA_SOURCE"
+            },
+            {
+                "attribute_alias": "DATATYPE"
+            },
+            {
+                "attribute_alias": "CUSTOM_DATA_TYPE",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
+            },
+            {
+                "attribute_alias": "FORMATTER",
+                "widget_type": "Input"
+            },
+            {
+                "attribute_alias": "DEFAULT_EDITOR_UXON",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
+            },
+            {
+                "attribute_alias": "DEFAULT_DISPLAY_UXON",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
+            },
+            {
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "EDITABLEFLAG"
+            },
+            {
+                "attribute_alias": "HIDDENFLAG"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "OBJECT__APP__LABEL"
+            },
+            {
+                "attribute_alias": "OBJECT__NAME"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "OBJECT__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS",
+                "width_max": "300px"
+            },
+            {
+                "attribute_alias": "DATATYPE__LABEL",
+                "width_max": "100px"
+            },
+            {
+                "attribute_alias": "LABELFLAG"
+            },
+            {
+                "attribute_alias": "REQUIREDFLAG"
+            },
+            {
+                "attribute_alias": "EDITABLEFLAG"
+            },
+            {
+                "attribute_alias": "HIDDENFLAG"
+            },
+            {
+                "attribute_alias": "RELATED_OBJ__LABEL",
+                "caption": "=Translate('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+            },
+            {
+                "attribute_alias": "DISPLAYORDER",
+                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
+                "width_max": "200px"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "caption": "=Translate('exface.Core', 'PAGE.ATTRIBUTES.OPEN_OBJECT')",
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.QuickEditAttributes",
+                    "input_mapper": {
+                        "inherit_columns": false,
+                        "column_to_filter_mappings": [
+                            {
+                                "from": "UID",
+                                "to": "UID",
+                                "comparator": "["
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

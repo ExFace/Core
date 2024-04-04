@@ -21,6 +21,17 @@ use exface\Core\Widgets\Parts\DataSpreadSheetFooter;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Widgets\InputComboTable;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Widgets\Input;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsNumberFormatter;
+use exface\Core\Widgets\InputText;
+use exface\Core\Widgets\Text;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\DataTable;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -30,7 +41,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * ```
  * {
  *  "require": {
- *      "npm-asset/jexcel" : "^4.4.1"
+ *      "npm-asset/jspreadsheet-ce" : "^4.10",
+		"npm-asset/jspreadsheet--autowidth" : "^2"
  *  }
  * }
  * 
@@ -38,15 +50,19 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
  * to the facade config file. Make sure, each config option points to an existing
- * inlcude file!
+ * include file!
  * 
  * ```
- *  "LIBS.JEXCEL.JS": "npm-asset/jexcel/dist/jexcel.js",
+ *  "LIBS.JEXCEL.JS": "npm-asset/jspreadsheet-ce/dist/index.js",
  *  "LIBS.JEXCEL.JS_JSUITES": "npm-asset/jsuites/dist/jsuites.js",
- *  "LIBS.JEXCEL.CSS": "npm-asset/jexcel/dist/jexcel.css",
- *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css",
- *	
+ *  "LIBS.JEXCEL.CSS": "npm-asset/jspreadsheet-ce/dist/jspreadsheet.css",
+ *	"LIBS.JEXCEL.CSS_JSUITES": "npm-asset/jsuites/dist/jsuites.css"
+ *  "LIBS.JEXCEL.PLUGINS": {
+ *		"jss_autoWidth": "npm-asset/jspreadsheet--autowidth/plugins/dist/autoWidth.min.js"
+ *	},
  * ```
+ * 
+ * NOTE: This trait requires the exfTools JS library to be available!
  * 
  * @method Data getWidget()
  * 
@@ -55,6 +71,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 trait JExcelTrait 
 {
+    use JsConditionalPropertyTrait;
+    
+    /**
+     * @return void
+     */
     protected function registerReferencesAtLinkedElements()
     {
         $widget = $this->getWidget();
@@ -64,6 +85,11 @@ trait JExcelTrait
         }
     }
     
+    /**
+     * 
+     * @param DataSpreadSheet $widget
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     */
     protected function registerReferencesAtLinkedElementsForSpreadSheet(DataSpreadSheet $widget)
     {
         // Add live refs links for default_row
@@ -79,7 +105,7 @@ trait JExcelTrait
                         
     !function(){
         var jqExcel = {$this->buildJsJqueryElement()};
-        var aData = jqExcel.jexcel('getData');
+        var aData = jqExcel.jspreadsheet('getData');
         if (aData.length > {$this->getMinSpareRows()}) {
             return;
         }
@@ -146,13 +172,18 @@ JS;
     protected function buildHtmlHeadTagsForJExcel() : array
     {
         $facade = $this->getFacade();
-        return [
+        $includes = [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
-        
+        if ($facade->getConfig()->hasOption('LIBS.JEXCEL.PLUGINS')) {
+            foreach ($facade->getConfig()->getOption('LIBS.JEXCEL.PLUGINS') as $path) {
+                $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile($path) . '"></script>';
+            }
+        }
+        return $includes;
     }
     
     /**
@@ -164,6 +195,10 @@ JS;
         return "$('#{$this->getId()}')";
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildHtmlJExcel() : string
     {
         return <<<JS
@@ -182,52 +217,625 @@ JS;
         $widget = $this->getWidget();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
+        $allowDragRow = $this->getAllowToDragRows() ? 'true' : 'false';
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
+        $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
+        $disabledJs = $widget->isDisabled() ? 'true' : 'false';
+        
+        /* @var $col \exface\Core\Widgets\DataColumn */
+        foreach ($widget->getColumns() as $colIdx => $col) {
+            // If the values were formatted according to their data types in buildJsConvertDataToArray()
+            // parse them back here
+            if ($this->needsDataFormatting($col)) {
+                $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
+                $cellWidget = $col->getCellWidget();
+                if (($cellWidget instanceof InputNumber) && ($formatter instanceof JsNumberFormatter)) {
+                    $formatter->setDecimalSeparator($cellWidget->getDecimalSeparator());
+                    $formatter->setThousandsSeparator($cellWidget->getThousandsSeparator());
+                }
+                $parserJs = 'function(value){ return ' . $formatter->buildJsFormatParser('value') . '}';
+                // For those cells, that do not have a specific editor, use the data type formatter
+                // to format the values before showing them and parse them back in buildJsConvertArrayToData()
+                $formatterJs = 'function(value){ return ' . $formatter->buildJsFormatter('value') . '}';
+            } else {
+                $parserJs = 'function(value){ return value; }';
+                $formatterJs = 'function(value){ return value; }';
+            }
+            
+            $validatorJs = '';
+            if (! $col->isHidden() && $col->isEditable()) {
+                $cellEl = $this->getFacade()->getElement($col->getCellWidget());
+                if ($cellEl->getWidget() instanceof Input) {
+                    $validatorJs = 'function(value){ return (' . $cellEl->buildJsValidator('value') . ') ? true : ' . $this->escapeString($cellEl->getValidationErrorText(), true, false) . ' }';
+                }
+            }
+            if (! $validatorJs) {
+                $validatorJs = 'function(value){return true}';
+            }
+            
+            $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
+            $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
+            
+            $conditionsJs = '';
+            if ($condProp = $col->getDisabledIf()) {
+                $conditionsJs .= $this->buildJsConditionalProperty(
+                    $condProp, 
+                    "aCells.forEach(function(domCell, iRowIdx){
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    });", 
+                    "aCells.forEach(function(domCell){domCell.classList.remove('readonly')});"
+                );
+            }
+            if ($conditionsJs) {
+                $conditionsJs = <<<JS
+
+                        var iColIdx = {$colIdx};
+                        var oJExcel = oWidget.getJExcel();
+                        var aCells = [];
+                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
+                        });
+                        $conditionsJs
+JS;
+            }
+            
+            $columnsJson .= <<<JS
+                "{$col->getDataColumnName()}": {
+                    dataColumnName: "{$col->getDataColumnName()}",
+                    caption: {$this->escapeString($col->getCaption(), true, false)},
+                    tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
+                    parser: {$parserJs},
+                    formatter: {$formatterJs},
+                    validator: {$validatorJs},
+                    hidden: {$hiddenFlagJs},
+                    system: {$systemFlagJs},
+                    conditionize: function(oWidget){
+                        $conditionsJs
+                    }
+                }, 
+
+JS;           
+        }
+        $columnsJson = '{' . $columnsJson . '}';
+        
+        $rowNumberColName = ($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute() ? "'{$widget->getRowNumberColumn()->getDataColumnName()}'" : 'null'; 
         
         return <<<JS
 
     {$this->buildJsJqueryElement()}
-    .data('_exfColumnNames', {$colNamesJson})
-    .jexcel({
+    {$this->buildJsResetSelection('')}
+    .jspreadsheet({
         data: [ [] ],
+        columnSorting:false,
         allowRenameColumn: false,
         allowInsertColumn: false,
         allowDeleteColumn: false,
         allowInsertRow: $allowInsertRow,
+        rowDrag: $allowDragRow,
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
+            var oWidget = jqSelf[0].exfWidget;
             {$this->buildJsFixedFootersOnLoad('jqSelf')}
+            
+            try {
+                if (instance.exfWidget !== undefined) {
+                    jqSelf.find('thead > tr > td').each(function(iIdx, oTD) {
+                        var iX = $(oTD).data('x');
+                        if (iX !== undefined) {
+                            oTD.title = instance.exfWidget.getColumnModel(iX).tooltip;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Cannot set tooltips for columns:', e);
+            }
+
+            if (oWidget !== undefined && oWidget.isDisabled() === true) {
+                {$this->buildJsSetDisabled(true)}
+            }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
-        onchange: function(instance, cell, col, row, value) {
+        onbeforechange: function(instance, cell, x, y, value) {
+            var fnParser = instance.exfWidget.getColumnModel(x).parser;
+            var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
+            var mValueParsed, mValidated;
+
+            if (value === undefined) {
+                return;
+            }
+
+            mValueParsed = fnParser ? fnParser(value) : value;
+            if ((mValueParsed === '' || mValueParsed === null) && mValueParsed !== value) {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, value);
+            } else {
+                mValidated = instance.exfWidget.validateCell(cell, x, y, mValueParsed);
+            }
+            
+            if (mValueParsed === mValidated && fnFormatter) {
+                mValidated = fnFormatter(mValueParsed);
+            }
+
+            return mValidated;
+        },
+        onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the spread logic runs
+            {$this->buildJsOnUpdateApplyValuesFromWidgetLinks('instance', 'col', 'row')};
             setTimeout(function(){
                 {$this->buildJsFixedFootersSpread()}
             }, 0);
         },
-        ondeleterow: function(instance) {
+        oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
+            
+        },
+        ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
+        },
+        onselection: function(el, x1, y1, x2, y2, origin) {
+            $(el).data('_exfSelection', {
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2
+            });
+        },
+        onblur: function(el) {
+            var oSel = $(el).data('_exfSelection');
+            if (oSel.x1 !== null) {
+                $(el).jspreadsheet('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
+            }
+        },
+        onundo: function(el, historyRecord) {
+            el.exfWidget.validateAll();
+        },
+        onredo: function(el, historyRecord) {
+            el.exfWidget.validateAll();
+        },
+        onevent: function(event) {
+            ({$this->buildJsJqueryElement()}[0].jssPlugins || []).forEach(function(oPlugin) {
+                oPlugin.onevent(event);
+            });
+        },
+
+        /**
+        * Before the paste action is performed. Can return parsed or filtered data, can cancel the action when return false.
+        *
+        * @param el: Object
+        * @param data: Array
+        * @param x: Number
+        * @param y: Number
+        * @param style: Array
+        * @param processedData: String
+        */
+        onbeforepaste: function(el, data, x, y, style, processedData) {
+            var oDropdownVals = {};
+            var oDropdownFiters = {};
+            var aPastedData = [];
+            var aProcessedData = [];
+            var iXStart = parseInt(x);
+            var iXEnd = iXStart;
+            var oColOpts = {};
+
+            el.jspreadsheet.parseCSV(data).forEach(function(aRow){
+                aPastedData.push(aRow[0].split("\\t"));
+            });
+            iXEnd = iXStart + aPastedData[0].length;
+
+            for (var i = iXStart; i <= iXEnd; i++) {
+                oColOpts = el.jspreadsheet.options.columns[i];
+                if (oColOpts !== undefined && oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    if (typeof(oColOpts.filter) == 'function') {
+                        oDropdownVals[i - iXStart] = oColOpts.filter(el, null, (i - iXStart), null, oColOpts.source);
+                    } else {
+                        oDropdownVals[i - iXStart] = oColOpts.source;
+                    }
+                }
+            };
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            aPastedData.forEach(function(aRow) {  
+                var aValRows, mVal, oValRow, bKeyFound;
+                for (var iCol in oDropdownVals) {
+                    bKeyFound = false;
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.name == mVal) {
+                            aRow[iCol] = oValRow.id;
+                            bKeyFound = true;
+                            break;
+                        }
+                    }
+                    if (bKeyFound === false) {
+                        aRow[iCol] = '';
+                    }
+                }
+                aProcessedData.push(aRow.join("\t"));
+            });
+
+            // If a single value is pasted and it does not represent a valid dropdown value
+            // we have to return false, else the original value will still be pasted into the cell
+            // even when we did overwrite it with an empty string.
+            // Seems like an unfortunate implemantation in the jspreadsheet library.
+            if (aProcessedData.length === 1 && aProcessedData[0] === '') {
+                return false;
+            }
+            return aProcessedData.join("\\r\\n");
+        },
+
+        /**
+        * When a copy is performed in the spreadsheet. 
+        * Any string returned will overwrite the user data or return null to progress with the default behavior.
+        * NOTE: returning a string does not work though!
+        * @param el: Object
+        * @param selectedCells: Array
+        * @param data: String
+        */
+        oncopy: function(el, selectedCells, data) {
+            var oDropdownVals = {};
+            var aSelectedData = [];
+
+            el.jspreadsheet.getSelectedColumns().forEach(function(iX, iCol){
+                var oColOpts = el.jspreadsheet.getColumnOptions(iX);
+                if (oColOpts.type === 'autocomplete' && Array.isArray(oColOpts.source) && oColOpts.source.length > 0) {
+                    oDropdownVals[iCol] = oColOpts.source;
+                }
+            });
+
+            if (oDropdownVals === {}) {
+                return selectedCells;
+            }
+
+            selectedCells.forEach(function(sRow, iX) {
+                var aRow = sRow.split("\t");
+                var aValRows, mVal, oValRow;
+                for (var iCol in oDropdownVals) {
+                    aValRows = oDropdownVals[iCol];
+                    mVal = aRow[iCol];
+                    for (var i = 0; i < aValRows.length; i++) {
+                        oValRow = aValRows[i];
+                        if (oValRow.id == mVal) {
+                            aRow[iCol] = oValRow.name;
+                            break;
+                        }
+                    }
+                }
+                aSelectedData.push(aRow.join("\t"));
+            });
+
+            this.data = aSelectedData.join("\\r\\n");
+
+            // Create a hidden textarea to copy the values
+            this.textarea.value = this.data;
+            this.textarea.select();
+            document.execCommand("copy");
+
+            return this.data;
         }
     });
+
+    {$this->buildJsJqueryElement()}[0].exfWidget = {
+        _dom: {$this->buildJsJqueryElement()}[0],
+        _colNames: {$colNamesJson},
+        _cols: {$columnsJson},
+        _rowNumberColName: $rowNumberColName,
+        _initData: [],
+        _disabled: $disabledJs,
+        getJExcel: function(){
+            return this._dom.jspreadsheet;
+        },
+        getDom: function(){
+            return this._dom;
+        },
+        getDataLastLoaded: function(){
+            return this._initData;
+        },
+        getColumnName: function(iColIdx) {
+            return this._colNames[this.getJExcel().getHeader(iColIdx)];
+        },
+        getColumnModel: function(iColIdx) {
+            return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
+        getInitValue: function(iCol, iRow) {
+            return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
+        },
+        restoreInitValue: function(iCol, iRow) {
+            var mInitVal = this.getInitValue(iCol, iRow);
+            if (mInitVal === undefined) {
+                mInitVal = '';
+            }
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal);            
+        },
+        hasChanged: function(iCol, iRow, mValue){
+            var mInitVal = this.getInitValue(iCol, iRow);
+            var oCol = this.getColumnModel(iCol);
+            
+            mValue = mValue === undefined ? this.getJExcel().getValueFromCoords(iCol, iRow) : mValue;
+            mValue = oCol.parser ? oCol.parser(mValue) : mValue;
+            if (mValue === undefined || mValue === null) {
+                mValue = '';
+            }
+            if (mInitVal === undefined || mInitVal === null) {
+                mInitVal = '';
+            } else {
+                //mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
+            }
+
+            // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
+            if ((this.getJExcel().getConfig().columns[iCol] || {}).type === 'checkbox') {
+                if (mValue === false && (mInitVal === null || mInitVal === '' || mInitVal === undefined) && mInitVal !== true && mInitVal !== 1) {
+                    return false;
+                }
+            }
+
+            return mInitVal.toString() != mValue.toString();
+        },
+        hasChanges: function() {
+            var aData = this.getJExcel().getData() || [];
+            var bChanged = false;
+            var oWidget = this;
+            var oRow;
+            for (var iRowIdx = 0; iRowIdx < aData.length - {$this->getMinSpareRows()}; iRowIdx++) {
+                oRow = aData[iRowIdx];
+                for (var iColIdx = 0; iColIdx < oRow.length; iColIdx++) {
+                    bChanged = oWidget.hasChanged(iColIdx, iRowIdx, oRow[iColIdx]);
+                    if (bChanged) {
+                        break;
+                    }
+                }
+                if (bChanged) {
+                    break;
+                }
+            }
+            return bChanged;
+        },
+        validateValue: function(iCol, iRow, mValue) {
+            var fnValidator = this.getColumnModel(iCol).validator;
+            if (fnValidator === null || fnValidator === undefined) {
+                return true;
+            }            
+            return fnValidator(mValue);
+        },
+        validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
+            var mValidationResult;
+            var oCol;
+            if (mValue === '\u0000') {
+                mValue = '';
+            }
+            bParseValue = bParseValue === undefined ? false : true;
+            if (bParseValue === true) {
+                oCol = this.getColumnModel(iCol);
+                mValue = oCol.parser ? oCol.parser(mValue) : mValue;
+            }
+            mValidationResult = this.validateValue(iCol, iRow, mValue);
+
+            if (this.hasChanged(iCol, iRow, mValue)) {
+                $(cell).addClass('exf-spreadsheet-change');
+            } else {
+                $(cell).removeClass('exf-spreadsheet-change');
+                mValue = this.getInitValue(iCol, iRow);
+            }
+
+            if (mValidationResult === true) {
+                $(cell).removeClass('exf-spreadsheet-invalid');
+                cell.title = '';
+            } else {
+                $(cell).addClass('exf-spreadsheet-invalid');
+                cell.title = (mValidationResult || '');
+            }
+
+            return mValue;
+        },
+        validateAll: function() {
+            var aData = this.getJExcel().getData() || [];
+            var iDataCnt = aData.length;
+            var iSpareRows = {$this->getMinSpareRows()};
+            var oWidget = this;
+            
+            aData.forEach(function(aRow, iRowIdx) {
+                var bRowEmpty = true;
+                var aCells = [];
+                // Spare rows cannot be invalid
+                if (iRowIdx >= iDataCnt - iSpareRows) {
+                    return;
+                }
+                
+                aRow.forEach(function(mValue, iColIdx) {
+                    var mValidated;                    
+                    var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
+                    aCells.push(oCell);
+                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
+                    if (mValidated !== '' && mValidated !== null && mValidated !== undefined) {
+                        bRowEmpty = false;
+                    }                   
+                });
+                if (bRowEmpty === true) {
+                    aCells.forEach(function(oCell) {
+                        $(oCell).removeClass('exf-spreadsheet-invalid');
+                    });
+                }
+            });
+        },
+        refreshConditionalProperties: function() {
+            for (i in this._cols) {
+                this._cols[i].conditionize(this);
+            }
+        },
+        convertArrayToData: function(aDataArray) {
+            var aData = [];
+            var iDataCnt = aDataArray.length;
+            var jExcel = $(this._dom);
+            var oColNames = this._colNames;
+            var oWidget = this;
+            var bAllowEmptyRows = {$allowEmptyRows};
+            aDataArray.forEach(function(aRow, i){
+                var oRow = {};
+                var bEmptyRow = true;
+
+                if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+
+                aRow.forEach(function(val, iColIdx){
+                    var oCol = oWidget.getColumnModel(iColIdx);
+                    var sColName = oWidget.getColumnName(iColIdx);
+                    if (sColName) {
+                        val = oCol.parser ? oCol.parser(val) : val;
+                        if (val !== undefined && val !== '' && val !== null && oCol.hidden === false) {
+                            bEmptyRow = false;
+                        }
+                        oRow[sColName] = val;
+                    }
+                });
+
+                if (bEmptyRow === false || bAllowEmptyRows === true) {
+                    if (oWidget._rowNumberColName !== null) {
+                        oRow[oWidget._rowNumberColName] = (i+1);
+                    }
+                    aData.push(oRow);
+                }
+            });
+
+            return aData;
+        },
+        convertDataToArray: function(aDataRows) {
+            var aData = [];
+            var domEl = this._dom;
+            var oWidget = this;
+            var oColNames = this._colNames;
+            var aColHeaders = domEl.jspreadsheet.getHeaders().split(',');
+            var oColIdxCache = {};
+            aDataRows.forEach(function(oRow, i){
+                var oRowIndexed = {};
+                var aRow = [];
+                var sHeaderName, iColIdx, iLastIdx;
+                for (var sColName in oRow) {
+                    if (oColIdxCache[sColName] !== undefined) {
+                        oColIdxCache[sColName].forEach(function(iColIdx) {
+                            oRowIndexed[iColIdx] = oRow[sColName];
+                        });
+                    }
+        
+                    Object.keys(oColNames)
+                    .filter(key => oColNames[key] === sColName)
+                    .forEach(function(sHeaderName) {
+                        var fnFormatter;
+                        if (! sHeaderName) return;
+                        iColIdx = aColHeaders.indexOf(sHeaderName);
+                        if (iColIdx >= 0) {
+                            fnFormatter = oWidget.getColumnModel(iColIdx).formatter;
+                            oRowIndexed[iColIdx] = fnFormatter ? fnFormatter(oRow[sColName]) : oRow[sColName];
+                            oColIdxCache[sColName] = [...(oColIdxCache[sColName] || []), ...[iColIdx]];
+                        }
+                    });
+                }
+                
+                iLastIdx = -1;
+                Object.keys(oRowIndexed).sort(function(a, b){return a-b}).forEach(function(iIdx) {
+                    while (iIdx > iLastIdx + 1) {
+                        aRow.push(null);
+                        iLastIdx++;
+                    }
+                    aRow.push(oRowIndexed[iIdx]);
+                    iLastIdx++;
+                });
+                
+                aData.push(aRow);
+            });
+
+            return aData;
+        },
+
+        setDisabled: function(bDisable) {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+            var iColNo = 1;
+            oWidget._disabled = bDisable;
+            oJExcel.getConfig().columns.forEach(function(oColCfg, iColIdx){
+                var fnDisabler;
+                var aCells = [];
+                if (oColCfg.type === 'hidden') {
+                    return;
+                }
+                iColNo++;
+                if (oColCfg.readOnly === true) {
+                    return;
+                }
+                switch (true) {
+                    case oColCfg.type === 'checkbox':
+                        fnDisabler = function(domCell){
+                            $(domCell).children('input').prop('disabled', bDisable);
+                        };
+                        break;
+                }
+                oJExcel.getColumnData(iColNo).forEach(function(mVal, iRowIdx){
+                    aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColNo) + (iRowIdx + 1)));
+                });
+                aCells.forEach(function(domCell, iRowIdx){
+                    if (bDisable) {
+                        if (oWidget.hasChanged(iColIdx, iRowIdx)) {
+                            oWidget.restoreInitValue(iColIdx, iRowIdx); 
+                        }
+                        domCell.classList.add('readonly');
+                    } else {
+                        domCell.classList.remove('readonly');
+                    }
+                    if (fnDisabler !== undefined) {
+                        fnDisabler(domCell);
+                    }
+                });
+            });
+        },
+
+        isDisabled: function(){
+            return this._disabled;
+        }
+    };
     
-    {$this->buildJsFixAutoColumnWidth()}
+    {$this->buildJsInitPlugins()}
     {$this->buildJsFixContextMenuPosition()}
 
 JS;
     }
     
-    protected function buildJsFixAutoColumnWidth() : string
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsInitPlugins() : string
     {
-        return "{$this->buildJsJqueryElement()}.find('colgroup col').attr('width','');";
+        $pluginsJs = '';
+        $cfg = $this->getFacade()->getConfig();
+        if ($cfg->hasOption('LIBS.JEXCEL.PLUGINS')) {
+            foreach ($cfg->getOption('LIBS.JEXCEL.PLUGINS') as $var => $path) {
+                $pluginsJs = "{$var}({$this->buildJsJqueryElement()}[0].exfWidget.getJExcel())";
+            }
+        }
+        return <<<JS
+        
+        {$this->buildJsJqueryElement()}[0].jssPlugins = [
+            $pluginsJs
+        ];
+JS;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixContextMenuPosition() : string
     {
         // Move contex menu to body to fix positioning errors when there is a parent with position:relative
@@ -251,6 +859,10 @@ JS;
             // with visible columns. This is important because a user would not understand
             // why his column keeps gettin a sequence-number even if there are no visible
             // naming conflicts.
+            if ($col->getCellWidget() instanceof iCanBeRequired && $col->getCellWidget()->isRequired() && $col->isEditable()) {
+                $col->setCaption($col->getCaption() . ' *');
+            }
+            
             if ($col->isHidden() === true) {
                 $col->setCaption($col->getCaption() . ' (hidden)');
             }
@@ -275,6 +887,12 @@ JS;
         return $colNames;
     }
         
+    /**
+     * 
+     * @param string $rowNrJs
+     * @param string $cellNodeJs
+     * @return string
+     */
     protected function buildJsOnUpdateTableRowColors(string $rowNrJs, string $cellNodeJs) : string
     {
         if ($this->getWidget()->getStriped() === true) {
@@ -290,11 +908,20 @@ JS;
         return '';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildCssClassForStripedRows() : string
     {
         return 'datagrid-row-alt';
     }
     
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFixedFootersOnLoad(string $jqSelfJs) : string
     {
         $js = '';
@@ -330,21 +957,38 @@ JS;
         return $js;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunctionName() : string
     {
         return $this->buildJsFunctionPrefix() . 'fixedFootersSpread';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpread() : string
     {
         return $this->buildJsFixedFootersSpreadFunctionName() . '()';
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunction() : string
     {
         return 'function ' . $this->buildJsFixedFootersSpreadFunctionName() . '() {' . $this->buildJsFixedFootersSpreadFunctionBody() . '}';
     }
     
+    /**
+     * 
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     * @return string
+     */
     protected function buildJsFixedFootersSpreadFunctionBody() : string
     {
         $js = '';
@@ -375,7 +1019,7 @@ JS;
                                 sFirstVal = 0;
                             }
                             aData[0][$idx] = (sFirstVal + fDif){$toFixedJs};
-                            jqSelf.jexcel('setData', aData);
+                            jqSelf.jspreadsheet('setData', aData);
                         }
 
 JS;
@@ -401,7 +1045,7 @@ JS;
         return <<<JS
 
                         var jqSelf = {$this->buildJsJqueryElement()};
-                        var aData = jqSelf.jexcel('getData');
+                        var aData = jqSelf.jspreadsheet('getData');
 
                         if (aData.length <= {$this->getMinSpareRows()}) return;
                         
@@ -409,12 +1053,24 @@ JS;
 
 JS;
     }
-        
+       
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @param string $idxJs
+     * @return string
+     */
     protected function buildJsFooterValueGetterByColumnIndex(string $jqSelfJs, string $idxJs) : string
     {
         return $jqSelfJs . ".find('thead.footer td[data-x=\"' + {$idxJs} + '\"]').text()";
     }
     
+    /**
+     * 
+     * @param string $dataJs
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFooterRefresh(string $dataJs, string $jqSelfJs) : string
     {
         if ($this->hasFooter() === false) {
@@ -436,6 +1092,11 @@ JS;
 JS;
     }
         
+    /**
+     * 
+     * @param string $jqSelfJs
+     * @return string
+     */
     protected function buildJsFooterGetter(string $jqSelfJs) : string
     {
         return <<<JS
@@ -471,11 +1132,14 @@ JS;
     }
     
     /**
+     * Returns the column properties to create an editor appropriate the columns cell widget.
+     * 
+     * Returns NULL if a standard editor is to be used (just an editable cell)!
      * 
      * @param DataColumn $col
-     * @return string
+     * @return string|NULL
      */
-    protected function buildJsJExcelColumn(DataColumn $col) : string
+    protected function buildJsJExcelColumnEditorOptions(DataColumn $col) : ?string
     {
         $cellWidget = $col->getCellWidget();
         $options = '';
@@ -488,15 +1152,29 @@ JS;
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
                 $numberType = $cellWidget->getValueDataType();
                 if ($numberType->getBase() === 10) {
+                    $decSep = ($cellWidget instanceof InputNumber) ? $cellWidget->getDecimalSeparator() : $numberType->getDecimalSeparator();
+                    $tsdSep = ($cellWidget instanceof InputNumber) ? $cellWidget->getThousandsSeparator() : $numberType->getGroupSeparator();
+                    $options .= "allowEmpty: true, decimal:'{$decSep}',";
+                    // FIXME what to do with the thousands/group-separator???
                     $type = "numeric";
-                    $decimal = $numberType->getDecimalSeparator();
-                    //$options .= "mask: '{$this->buildMaskNumeric($numberType, $decimal)}',decimal:'{$decimal}',";
+                    // Add a mask for DataSpreadSheet but not for the DataImporter (it needs to accept any number format!)
+                    if ($this->getWidget() instanceof DataSpreadSheet) {
+                        $options .= "mask: '{$this->buildMaskNumeric($numberType, $decSep, $tsdSep)}',";
+                    }
+                    //$type = "numeral";
+                    //$options .= "mask: '0', decimal:'{$decimal}', thousands:'{$thousands}',";
                 }
                 $align = EXF_ALIGN_RIGHT;
                 break;
             case $cellWidget instanceof InputCheckBox:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof BooleanDataType:
                 $type = "checkbox";
+                $align = "center";
+                break;
+            case $cellWidget instanceof InputText:
+            case $cellWidget instanceof Text:
+                $type = "text";
+                $options = 'wordWrap: true,';
                 break;
             case $cellWidget instanceof InputSelect:
                 $type = 'autocomplete';
@@ -504,8 +1182,33 @@ JS;
                 $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget);
                 break;
             default:
-                $type = "text";
-                $align = EXF_ALIGN_LEFT;
+                return null;
+        }
+        
+        $align = $align ? 'align: "' . $align . '",' : 'align: "left",';
+        return <<<JS
+                type: "$type",
+                $options
+                $align
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param DataColumn $col
+     * @return string
+     */
+    protected function buildJsJExcelColumn(DataColumn $col) : string
+    {
+        $options = $this->buildJsJExcelColumnEditorOptions($col);
+        
+        if ($options === null) {
+            $options = <<<JS
+                type: "text",
+                align: "left",
+
+JS;
         }
         
         if ($col->isEditable() === false) {
@@ -513,45 +1216,112 @@ JS;
         }
         
         $width = $col->getWidth();
-        if ($width->isFacadeSpecific() === true) {
-            if (StringDataType::endsWith($width->getValue(), 'px') === true) {
+        $widthJs = '';
+        switch (true) {
+            case $width->isFacadeSpecific() === true && StringDataType::endsWith($width->getValue(), 'px'):
                 $widthJs = str_replace('px', '', $width->getValue());
-            }
+                break;
+            case $width->isFacadeSpecific():
+            case $width->isPercentual():
+                $widthJs = $this->escapeString($width->getValue());
+                break;
+            case $width->isRelative():
+                $widthJs = $this->getWidthRelativeUnit() * $width->getValue();
+                break;
+            default:
+                $widthJs = "'auto'";
         }
         
         if ($widthJs) {
             $widthJs = "width: {$widthJs},";
         }
         
-        $align = $align ? 'align: "' . $align . '",' : '';
-        
         return <<<JS
 
             {
                 title: "{$col->getCaption()}",
-                type: "{$type}",
                 {$widthJs}
-                {$align}
                 {$options}
             }
 JS;
     }
-        
+      
+    /**
+     * 
+     * @param InputSelect $cellWidget
+     * @throws FacadeLogicError
+     * @throws FacadeUnsupportedWidgetPropertyWarning
+     * @return string
+     */
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
             throw new FacadeLogicError('TODO');
         }
-        
+        $filterJs = '';
         if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading() === false) {
             if ($cellWidget->getAttribute()->isRelation()) {
                 $rel = $cellWidget->getAttribute()->getRelation();
                 
                 if ($cellWidget instanceof InputComboTable) {
-                    $srcSheet = $cellWidget->getTable()->prepareDataSheetToRead(DataSheetFactory::createFromObject($rel->getRightObject()));
+                    $srcSheet = $cellWidget->getOptionsDataSheet();
+                    
+                    // See if the widget has additional filters
+                    // If so, add any attributes required for them to the $srcSheet
+                    $filters = $cellWidget->getFilters();
+                    if ($filters !== null) {
+                        foreach ($filters->getConditions() as $cond) {
+                            $expr = $cond->getValueLeftExpression();
+                            if (! $expr->isReference() && ! $expr->isConstant()) {
+                                $srcSheet->getColumns()->addFromExpression($expr);
+                            }  
+                            $expr = $cond->getValueRightExpression();
+                            if (! $expr->isReference() && ! $expr->isConstant()) {
+                                $srcSheet->getColumns()->addFromExpression($expr);
+                            } 
+                        }
+                    }
+                    foreach ($srcSheet->getFilters()->getConditions() as $cond) {
+                        if ($cond->getRightExpression()->isReference()) {
+                            $srcSheet->getFilters()->removeCondition($cond);
+                        }
+                    }
                     $srcIdName = $cellWidget->getValueColumn()->getDataColumnName();
                     $srcLabelName = $cellWidget->getTextColumn()->getDataColumnName();
                     $srcSheet->dataRead(0, 0); // Read all rows regardless of the settings in the data sheet!!!
+
+                    // If the widget has additional filters, generate the JS to evaluate them
+                    // here and put it into the `filter` property of the column
+                    if ($filters !== null) {
+                        $conditionJs = <<<JS
+
+            var aSourcenew = [];
+            var oConditionGroup = {'operator': "{$filters->getConditionGroup()->getOperator()}"};
+            var aConditions = [];
+JS;
+                        foreach ($filters->getConditions() as $key => $cond) {
+                            $valueExpr = $cond->getValueRightExpression();
+                            $colName = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($cond->getValueLeftExpression()->toString());
+                            $conditionJs .= <<<JS
+
+            var sFilterValue_{$key} = {$this->buildJsFilterPropertyValue($valueExpr, $cellWidget)};
+            var sColumnName_{$key} = '_' + "{$colName}";
+            aConditions.push({'columnName': sColumnName_{$key}, 'comparator': "{$cond->getComparator()}", 'value':sFilterValue_{$key}})
+JS;
+                        }
+                        $conditionJs .= <<<JS
+
+            oConditionGroup.conditions = aConditions;
+JS;
+                        $filterJs = <<<JS
+
+filter: function(instance, cell, x, y, source) {
+{$conditionJs}
+            aSourceNew = exfTools.data.filterRows(source, oConditionGroup);
+            return aSourceNew;
+        },
+JS;
+                    }
                 } else {
                     $srcSheet = DataSheetFactory::createFromObject($rel->getRightObject());
                     
@@ -572,7 +1342,13 @@ JS;
                 
                 $srcData = [];
                 foreach ($srcSheet->getRows() as $row) {
-                    $srcData[] = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
+                    $data = ['id' => $row[$srcIdName], 'name' => $row[$srcLabelName]];
+                    
+                    foreach ($srcSheet->getColumns() as $col) {
+                        $key = '_' . \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($col->getExpressionObj()->toString());
+                        $data[$key] = $row[$col->getName()];
+                    }
+                    $srcData[] = $data;
                 }
             } else {
                 $srcData = [];
@@ -587,9 +1363,13 @@ JS;
             
         }
         
-        return "source: {$srcJson},";
+        return "options: {newOptions: false}, source: {$srcJson}, {$filterJs}";
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function hasFooter() : bool
     {
         foreach ($this->getWidget()->getColumns() as $col) {
@@ -600,21 +1380,53 @@ JS;
         return false;
     }
         
+    /**
+     * 
+     * @return int
+     */
     protected function getMinSpareRows() : int
     {
         return $this->getAllowAddRows() === true ? 1 : 0;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getAllowAddRows() : bool
     {
         $widget = $this->getWidget();
         return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToAddRows());
     }
     
+    /**
+     * 
+     * @return bool
+     */
     protected function getAllowDeleteRows() : bool
     {
         $widget = $this->getWidget();
-        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows());
+        return ($widget instanceof DataImporter) || ($widget instanceof DataSpreadSheet && $widget->getAllowToDeleteRows() === true);
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function getAllowToDragRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowToDragRows() === true;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getAllowEmptyRows() : bool
+    {
+        $widget = $this->getWidget();
+        return ($widget instanceof DataSpreadSheet) && $widget->getAllowEmptyRows() === true;
     }
      
     /**
@@ -634,35 +1446,76 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
-        $rows = $this->buildJsConvertArrayToData("{$this->buildJsJqueryElement()}.jexcel('getData', false)");
+        $dataObj = $this->getMetaObjectForDataGetter($action);
         
-        // If we have an action, that is based on another object and does not have an input mapper for
-        // the widgets's object, the data should become a subsheet. Otherwise we just return the data
-        // as-is.
-        if ($widget->isEditable() && $action && ! $action->getMetaObject()->is($widget->getMetaObject()) && $action->getInputMapper($widget->getMetaObject()) === null) {
-            // If the action is based on the same object as the widget's parent, use the widget's
-            // logic to find the relation to the parent. Otherwise try to find a relation to the
-            // action's object and throw an error if this fails.
-            if ($widget->hasParent() && $action->getMetaObject()->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
-                $relAlias = $relPath->toString();
-            } elseif ($relPath = $action->getMetaObject()->findRelationPath($widget->getMetaObject())) {
-                $relAlias = $relPath->toString();
-            }
-            
-            if ($relAlias === null || $relAlias === '') {
-                throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $action->getMetaObject()->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
-            }
-            
-            $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
-            
-            $data = <<<JS
+        // Determine the columns we need in the actions data
+        $colNamesList = implode(',', $widget->getActionDataColumnNames());
+        
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+            $customMode = $action->getWidgetDefinedIn()->getInputRows();
+        } else {
+            $customMode = null;
+        }
+        
+        switch (true) {
+            // If there is no action or the action 
+            case $customMode === DataButton::INPUT_ROWS_ALL:
+            case $action === null:
+            case $widget->isEditable() 
+            && $action->implementsInterface('iModifyData')
+            && $dataObj->is($widget->getMetaObject()):
+                $data = <<<JS
     {
-        oId: '{$action->getMetaObject()->getId()}',
+        oId: '{$this->getWidget()->getMetaObject()->getId()}',
+        rows: aRows
+    }
+    
+JS;
+                break;
+                
+            // If the button requires none of the rows explicitly
+            case $customMode === DataButton::INPUT_ROWS_NONE:
+                return '{}';
+                
+            // If we have an action, that is based on another object and does not have an input mapper for
+            // the widgets's object, the data should become a subsheet.
+            case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:
+            case $widget->isEditable() 
+            && $action->implementsInterface('iModifyData')
+            && ! $dataObj->is($widget->getMetaObject()) 
+            && $action->getInputMapper($widget->getMetaObject()) === null:
+                // If the action is based on the same object as the widget's parent, use the widget's
+                // logic to find the relation to the parent. Otherwise try to find a relation to the
+                // action's object and throw an error if this fails.
+                if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
+                    $relAlias = $relPath->toString();
+                } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
+                    $relAlias = $relPath->toString();
+                }
+                
+                if ($relAlias === null || $relAlias === '') {
+                    throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
+                }
+                
+                $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
+                
+                // FIXME the check for visibility in case of empty data is there to prevent data loss if
+                // jExcel was hidden. This happened in UI5 in a Tab, that got hidden after a certain action.
+                // The jExcel in that tab was visible and got an HTML element. Once the dialog was closed and
+                // reopened, the tab was not visible anymore and for some reason the jExce inside did not get
+                // proper data. Not sure, if hidden subsheet excels shoud maybe be excluded from the data in
+                // general?
+                $data = <<<JS
+    {
+        oId: '{$dataObj->getId()}',
         rows: [
             {
                 '{$relAlias}': function(){
                     var oData = {$configurator_element->buildJsDataGetter()};
-                    oData.rows = {$rows}
+                    if (aRows.length === 0 && {$this->buildJsCheckHidden('jqEl')}) {
+                        return {};
+                    }
+                    oData.rows = aRows;
                     return oData;
                 }()
             }
@@ -673,18 +1526,40 @@ JS;
     }
     
 JS;
-        } else {
-        
-            $data = <<<JS
+                break;
+                
+            // If we are reading, than we need the special data from the configurator
+            // widget: filters, sorters, etc.
+            case $action instanceof iReadData:
+                return $this->getFacade()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter($action);
+            
+            // In all other cases, get the selected rows as a regular table would do
+            default:
+                $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
-        rows: {$rows}
+        rows: (aRows || []).filter(function(oRow, i){
+            return {$this->buildJsJqueryElement()}.jspreadsheet('getSelectedRows', true).indexOf(i) >= 0;
+        })
     }
-    
-JS;
+
+JS;         
         }
             
-        return "function(){ {$this->buildJsFixedFootersSpread()}; return {$data} }()";
+        return <<<JS
+        (function(){ 
+            var jqEl = {$this->buildJsJqueryElement()};
+            var aRows;
+            if (jqEl.length === 0) return {};
+            aRows = {$this->buildJsConvertArrayToData("jqEl.jspreadsheet('getData', false)")};
+            // Remove any keys, that are not in the columns of the widget
+            aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
+
+            {$this->buildJsFixedFootersSpread()}; 
+
+            return {$data} 
+        })()
+JS;
     }
      
     /**
@@ -700,107 +1575,85 @@ JS;
 !function() {    
     var oData = {$jsData};    
     var aData = [];
+    var jqCtrl = {$this->buildJsJqueryElement()};
+    if (jqCtrl.length === 0) {
+        return;
+    }
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
+        jqCtrl[0].exfWidget._initData = oData.rows;
+    } else {
+        jqCtrl[0].exfWidget._initData = [];
     }
-    if (aData.length > 0) {
-        {$this->buildJsJqueryElement()}.jexcel('setData', aData);
+    if (aData.length === 0) {
+        for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
+            aData.push([]);
+        }
     }
+    jqCtrl.jspreadsheet('setData', aData);
+    {$this->buildJsResetSelection('jqCtrl')};
+    jqCtrl[0].exfWidget.refreshConditionalProperties();
 }()
 
 JS;
     }
-        
+       
+    /**
+     * 
+     * @param string $arrayOfArraysJs
+     * @return string
+     */
     protected function buildJsConvertArrayToData(string $arrayOfArraysJs) : string
     {
-        return <<<JS
-function() {
-    var aDataArray = {$arrayOfArraysJs};
-    var aData = [];
-    var jExcel = {$this->buildJsJqueryElement()};
-    var oColNames = jExcel.data('_exfColumnNames');
-    aDataArray.forEach(function(aRow, i){
-        var oRow = {};
-        var sHeaderName;
-        var sColName;
-        aRow.forEach(function(val, iColIdx){
-            try {
-                sHeaderName = jExcel.jexcel('getHeader', iColIdx);
-            } catch (e) {
-                sHeaderName = '';
-            }
-            sColName = oColNames[sHeaderName];
-            if (sColName) {
-                oRow[sColName] = val;
-            }
-        });
-        aData.push(oRow);
-    });
-    
-    for (var i = 0; i < {$this->getMinSpareRows()}; i++) {
-        aData.pop();
-    }
-    return aData;
-}()
-
-JS;
+        return "{$this->buildJsJqueryElement()}[0].exfWidget.convertArrayToData({$arrayOfArraysJs})";
     }
     
+    /**
+     * 
+     * @param string $arrayOfObjectsJs
+     * @return string
+     */
     protected function buildJsConvertDataToArray(string $arrayOfObjectsJs) : string
     {
-        return <<<JS
-        
-function() {
-    var aDataRows = {$arrayOfObjectsJs};
-    var aData = [];
-    var jExcel = {$this->buildJsJqueryElement()};
-    var oColNames = jExcel.data('_exfColumnNames');
-    var aColHeaders = jExcel.jexcel('getHeaders').split(',');
-    var oColIdxCache = {};
-    aDataRows.forEach(function(oRow, i){
-        var oRowIndexed = {};
-        var aRow = [];
-        var sHeaderName, iColIdx, iLastIdx;
-        for (var sColName in oRow) {
-            iColIdx = oColIdxCache[sColName];
-            if (iColIdx !== undefined) {
-                oRowIndexed[iColIdx] = oRow[sColName];
-            }
-
-            sHeaderName = Object.keys(oColNames).find(key => oColNames[key] === sColName);
-            if (! sHeaderName) continue;
-            iColIdx = aColHeaders.indexOf(sHeaderName);
-            if (iColIdx >= 0) {
-                oRowIndexed[iColIdx] = oRow[sColName];
-                oColIdxCache[sColName] = iColIdx;
-            }
-        }
-        
-        iLastIdx = -1;
-        Object.keys(oRowIndexed).sort(function(a, b){return a-b}).forEach(function(iIdx) {
-            while (iIdx > iLastIdx + 1) {
-                aRow.push(null);
-                iLastIdx++;
-            }
-            aRow.push(oRowIndexed[iIdx]);
-            iLastIdx++;
-        });
-        
-        aData.push(aRow);
-    });
-    
-    return aData;
-}()
-
-JS;
+        return "{$this->buildJsJqueryElement()}[0].exfWidget.convertDataToArray({$arrayOfObjectsJs})";
     }
     
+    /**
+     * 
+     * @param DataColumn $col
+     * @return bool
+     */
+    protected function needsDataFormatting(DataColumn $col) : bool
+    {
+        switch (true) {
+            // No formatting if explicitly disabled
+            case $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting():
+                return false;
+            // No formatting for dropdowns (need raw values here!)
+            case $col->getCellWidget() instanceof InputSelect:
+                return false;
+            // Force formatting for numbers and columns without special editors
+            case $col->getDataType() instanceof NumberDataType:
+            case $this->buildJsJExcelColumnEditorOptions($col) === null:
+                return true;
+        }
+        // No formatting by default
+        return false;
+    }
     
+    /**
+     * 
+     * @return string
+     */
     public function buildJsDataResetter() : string
     {
-        return "{$this->buildJsJqueryElement()}.jexcel('setData', [ [] ])";
+        return "(function(){ {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function buildJsFunctionsForJExcel() : string
     {
         return <<<JS
@@ -816,29 +1669,41 @@ JS;
      */
     public function buildJsDestroy() : string
     {
-        return "jexcel.destroy({$this->buildJsJqueryElement()}[0], true); $('.exf-partof-{$this->getId()}').remove();";
+        return "jspreadsheet.destroy({$this->buildJsJqueryElement()}[0], false); $('.exf-partof-{$this->getId()}').remove();";
     }
     
-    protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null) : string
+    /**
+     * 
+     * @param NumberDataType $dataType
+     * @param string $decimalSeparator
+     * @return string
+     */
+    protected function buildMaskNumeric(NumberDataType $dataType, string $decimalSeparator = null, string $groupSeparator = null, int $groupLenght = 3) : string
     {
+        $groupSeparator = $groupSeparator ?? $dataType->getGroupSeparator();
+        $decimalSeparator = $decimalSeparator ?? $dataType->getDecimalSeparator();
+        
+        /*
         if ($dataType->getPrecisionMax() === 0) {
             return '0';
         }
         
         if ($dataType->getPrecisionMin() === null && $dataType->getPrecisionMax() === null) {
             return '';
-        }
+        }*/
         
-        if ($decimalSeparator === null) {
-            $decimalSeparator = $dataType->getDecimalSeparator();
+        $format = '';
+        if ($groupSeparator) {
+            $format = '#' . $groupSeparator . '##';
         }
+        $format .= '0';
         
-        $format = '#.##' . $decimalSeparator;
         $minPrecision = $dataType->getPrecisionMin();
-        $maxPrecision = $dataType->getPrecisionMax();
-        for ($i = 1; $i <= $maxPrecision; $i++) {
-            $ph = $minPrecision !== null && $i <= $minPrecision ? '0' : '#';
-            $format .= $ph;
+        if ($minPrecision > 0) {
+            $format .= $decimalSeparator;
+            for ($i = 1; $i <= $minPrecision; $i++) {
+                $format .= '0';
+            }
         }
         
         return $format;
@@ -866,6 +1731,187 @@ $.ajaxSetup({
         return data;
     }
 });
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param string $oExcelElJs
+     * @param string $iColJs
+     * @param string $iRowJs
+     * @return string
+     */
+    protected function buildJsOnUpdateApplyValuesFromWidgetLinks(string $oExcelElJs, string $iColJs, string $iRowJs) : string
+    {
+        $linkedColIdxsJs = '[';
+        foreach ($this->getWidget()->getColumns() as $colIdx => $col) {
+            $cellWidget = $col->getCellWidget();
+            if ($cellWidget->hasValue() === false) {
+                continue;
+            }
+            $valueExpr = $cellWidget->getValueExpression();
+            if ($valueExpr->isReference() === true) {
+                $linkedColIdxsJs .= $colIdx . ',';
+                $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
+                $addLocalValuesToRowJs .= <<<JS
+                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+
+JS;
+            }    
+        }
+        $linkedColIdxsJs .= ']';
+        return <<<JS
+
+            var aLinkedCols = $linkedColIdxsJs;
+            if (! aLinkedCols.includes($iColJs)) {
+                $addLocalValuesToRowJs
+            }
+JS;
+    }
+    
+    /**
+     *
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter($columnName = null, $row = null)
+    {
+        if (is_null($columnName)) {
+            if ($this->getWidget()->hasUidColumn() === true) {
+                $col = $this->getWidget()->getUidColumn();
+            } else {
+                throw new FacadeRuntimeError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            }
+        } else {
+            if (! $col = $this->getWidget()->getColumnByDataColumnName($columnName)) {
+                $col = $this->getWidget()->getColumnByAttributeAlias($columnName);
+            }
+        }
+        
+        $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        
+        return <<<JS
+(function(){
+    var aAllRows = {$this->buildJsDataGetter()}.rows;
+    var aSelectedIdxs = $('#{$this->getId()}').jspreadsheet('getSelectedRows', true);
+    var aVals = [];
+    aSelectedIdxs.forEach(function(iRowIdx){
+        aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+    })
+    return aVals.join('{$delimiter}');
+})()
+JS;
+    }
+    
+    /**
+     * 
+     * @param string $elementJs
+     * @return string
+     */
+    protected function buildJsResetSelection(string $elementJs) : string
+    {
+        return "$elementJs.data('_exfSelection', {x1: null, y1: null, x2: null, y2: null})";
+    }
+    
+    private function buildJsFilterPropertyValue(ExpressionInterface $expr, WidgetInterface $cellWidget = null) : string
+    {
+        switch (true) {
+            case $expr->isReference() === true:
+                $link = $expr->getWidgetLink($cellWidget);
+                if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
+                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                }
+                break;
+            case $expr->isFormula() === false && $expr->isMetaAttribute() === false:
+                $valueJs = "'" . str_replace('"', '\"', $expr->toString()) . "'";
+                break;
+            default:
+                throw new WidgetConfigurationError($this->getWidget(), 'Cannot use expression "' . $expr->toString() . '" in the filter value: only scalar values and widget links supported!');
+        }
+        
+        return $valueJs;
+    }
+    
+    /**
+     * @return void
+     */
+    protected function registerConditionalPropertiesOfColumns() 
+    {
+        foreach ($this->getWidget()->getColumns() as $col) {
+            if ($condProp = $col->getDisabledIf()) {
+                $this->registerConditionalPropertyUpdaterOnLinkedElements(
+                    $condProp,
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()",
+                    "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()"
+                );
+            }
+        }
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        // Make sure to avoid errors if JExcel is not (yet) initialized in the DOM
+        // This might happen for example if it is placed inside a (temporary) invisible
+        // dev.
+        $required = $this->getWidget() instanceof iCanBeRequired ? $this->getWidget()->isRequired() : false;
+        $bRequiredJs = $required ? 'true' : 'false';
+        return <<<JS
+
+(function(jqExcel) {
+    var bRequired = $bRequiredJs;
+    if (jqExcel.length === 0) {
+        return bRequired ? false : true;
+    }
+    jqExcel[0].exfWidget.validateAll();
+    return jqExcel.find('.exf-spreadsheet-invalid').length === 0;
+})({$this->buildJsJqueryElement()})
+        
+JS;
+    }
+    
+    protected function buildJsCheckHidden(string $jqElement) : string
+    {
+        return "($jqElement.parents().filter(':visible').length !== $jqElement.parents().length)";
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function buildJsEmpty() : string
+    {
+        return $this->buildJsDataSetter('[]');
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AjaxFacadeElementInterface::buildJsCallFunction()
+     */
+    public function buildJsCallFunction(string $functionName = null, array $parameters = []) : string
+    {
+        switch (true) {
+            case $functionName === DataTable::FUNCTION_EMPTY:
+                return "setTimeout(function(){ {$this->buildJsEmpty()} }, 0);";
+        }
+        return parent::buildJsCallFunction($functionName, $parameters);
+    }
+    
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $disableJs = $trueOrFalse ? 'true' : 'false';
+        return <<<JS
+        
+        (function(jqEl, bDisable){
+            if (jqEl.length === 0) {
+                return;
+            }
+            jqEl[0].exfWidget.setDisabled($disableJs);
+        })({$this->buildJsJqueryElement()}, $disableJs);
 
 JS;
     }

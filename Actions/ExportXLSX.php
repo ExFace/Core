@@ -4,9 +4,6 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Factories\ConditionFactory;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\BooleanDataType;
@@ -17,8 +14,13 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\CommonLogic\Utils\XLSXWriter;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\NumberEnumDataType;
 
 /**
  * Exports data to an Excel file (XLSX).
@@ -81,21 +83,24 @@ class ExportXLSX extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget) : array
+    protected function writeHeader(array $exportedColumns) : array
     {
         $headerTypes = [];
         $columnOptions = [];
         $output = [];
         $indexes = [];
-        foreach ($dataWidget->getColumns() as $col) {
+        foreach ($exportedColumns as $widget) {
+            if ($widget instanceof iShowDataColumn && $widget->isExportable(true) === false) {
+                continue;
+            }
             $colOptions = [];
             // Name der Spalte
-            if ($this->getUseAttributeAliasAsHeader() === false) {
-                $colName = $col->getCaption();
+            if ($this->getUseAttributeAliasAsHeader() === true && ($widget instanceof iShowDataColumn) && $widget->isBoundToDataColumn()) {
+                $colName = $widget->getAttributeAlias();
             } else {
-                $colName = $col->getAttributeAlias();
+                $colName = $widget->getCaption();
             }
-            $colId = $col->getDataColumnName();
+            $colId = $widget->getDataColumnName();
             
             // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
             // geschrieben.
@@ -106,17 +111,32 @@ class ExportXLSX extends ExportJSON
             }
             
             // Datentyp der Spalte
-            $headerTypes[$colName] = $this->getExcelDataType($col->getDataType());
+            switch (true) {
+                case $widget instanceof iHaveValue:
+                    $dataType = $widget->getValueDataType();
+                    break;
+                case $widget instanceof DataColumn:
+                    $dataType = $widget->getDataType();
+                    break;
+                case ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute():
+                    $dataType = $widget->getAttribute()->getDataType();
+                    break;
+                default:
+                    $dataType = DataTypeFactory::createBaseDataType($this->getWorkbench());
+                    break;
+            }
+            $headerTypes[$colName] = $this->getExcelDataType($dataType);
             
             // Width
-            if ($col->getDataType() instanceof TimestampDataType || $col->getDataType() instanceof DateTimeDataType) {
+            if ($dataType instanceof TimestampDataType || $dataType instanceof DateTimeDataType) {
                 $colOptions['width'] = '19';
-            } elseif ($col->getDataType() instanceof StringDataType) {
+            } elseif ($dataType instanceof StringDataType || $dataType instanceof NumberEnumDataType) {
                 $colOptions['width'] = '25';
             }
             
             // Visibility
-            if ($col->isHidden() === true) {
+            // if the column is hidden and wasn't explicitly set to be exportable it will be hidden in the xlsx
+            if ($widget->isHidden() === true && ($widget instanceof DataColumn && $widget->isExportable(false) === false)) {
                 $colOptions['hidden'] = true;
             }
             
@@ -244,7 +264,7 @@ class ExportXLSX extends ExportJSON
         // Zeitpunkt des Exports
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
             $translator->translate('ACTION.EXPORTXLSX.TIMESTAMP'),
-            date($translator->translate('LOCALIZATION.DATE.DATETIME_FORMAT'))
+            DateTimeDataType::formatDateLocalized(new \DateTime(), $this->getWorkbench())
         ]);
         
         // Exportiertes Objekt
@@ -258,57 +278,12 @@ class ExportXLSX extends ExportJSON
             $translator->translate('ACTION.EXPORTXLSX.FILTER') . ':'
         ]);
         // Filter mit Captions von der DataTable auslesen
-        $dataTableFilters = [];
-        foreach ($this->getWidgetDefinedIn()->getInputWidget()->getFilters() as $filter) {
-            $dataTableFilters[$filter->getInputWidget()->getAttributeAlias()] = $filter->getInputWidget()->getCaption();
-        }
-        // Gesetzte Filter am DataSheet durchsuchen
-        foreach ($dataSheet->getFilters()->getConditions() as $condition) {
-            if (! is_null($filterValue = $condition->getValue()) && $filterValue !== '') {
-                // Name
-                if (array_key_exists(($filterExpression = $condition->getExpression())->toString(), $dataTableFilters)) {
-                    $filterName = $dataTableFilters[$filterExpression->toString()];
-                } else if ($filterExpression->isMetaAttribute()) {
-                    $filterName = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())->getName();
-                } else {
-                    $filterName = '';
-                }
-                
-                // Comparator
-                $filterComparator = $condition->getComparator();
-                if (substr($filterComparator, 0, 1) == '=') {
-                    // Wird sonst vom XLSX-Writer in eine Formel umgewandelt.
-                    $filterComparator = ' ' . $filterComparator;
-                }
-                
-                // Wert, gehoert der Filter zu einer Relation soll das Label und nicht
-                // die UID geschrieben werden
-                if ($filterExpression->isMetaAttribute()) {
-                    if (($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
-                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
-                        $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
-                        $uidColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute())->getName();
-                        if ($relatedObject->hasLabelAttribute()) {
-                            $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
-                        } else {
-                            $labelColName = $uidColName;
-                        }
-                        $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($relatedObject->getUidAttribute()), $filterValue, $condition->getComparator()));
-                        $filterValueRequestSheet->dataRead();
-                        
-                        if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($labelColName))) {
-                            $filterValue = $requestValue;
-                        }
-                    }
-                }
-                
-                // Zeile schreiben
-                $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
-                    $filterName,
-                    $filterComparator,
-                    $filterValue
-                ]);
-            }
+        $filters = $this->getFilterData($dataSheet);
+        foreach ($filters as $key => $value) {
+            $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
+                $key,
+                $value,
+            ]);
         }
     }
     
@@ -338,6 +313,8 @@ class ExportXLSX extends ExportJSON
                 return 'price';
             case ($dataType instanceof IntegerDataType):
                 return 'integer';
+            case ($dataType instanceof NumberEnumDataType):
+                return 'string';
             case ($dataType instanceof NumberDataType):
                 return '';
             default:

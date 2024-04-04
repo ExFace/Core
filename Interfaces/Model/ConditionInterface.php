@@ -5,19 +5,19 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
- * A condition is a simple conditional predicate consisting of a (left) expression,
- * a comparator (e.g. =, <, etc.) and a (right) value expression: e.g. "expr = a" or 
- * "date > 01.01.1970", etc.
+ * A condition is a simple conditional predicate to compare two expressions.
  * 
- * Conditions can be combined to condition groups (see CondtionGroupInterface) using 
- * logical operators like AND, OR, etc.
+ * Each condition (e.g. `expression = value` or `date > 01.01.1970`) consists of 
+ * - a (left) expression,
+ * - a comparator (e.g. =, <, etc.) and 
+ * - a (right) value expression
  * 
- * Conditions are immutable!
+ * Depending on the comparator, the value may be a scalar or an array (for IN-comparators).
  * 
- * TODO make the value an expression too, not just a scalar.
- * 
- * @author Andrej Kabachnik
+ * @see ConditionGroupInterface
  *
+ * @author Andrej Kabachnik
+ *        
  */
 interface ConditionInterface extends ConditionalExpressionInterface
 {
@@ -29,6 +29,12 @@ interface ConditionInterface extends ConditionalExpressionInterface
     public function getExpression() : ExpressionInterface;
     
     /**
+     * 
+     * @return ExpressionInterface
+     */
+    public function getLeftExpression() : ExpressionInterface;
+    
+    /**
      * Returns the value to compare to
      *
      * @return mixed
@@ -36,12 +42,18 @@ interface ConditionInterface extends ConditionalExpressionInterface
     public function getValue() : ?string;
     
     /**
+     * 
+     * @return ExpressionInterface
+     */
+    public function getRightExpression() : ExpressionInterface;
+    
+    /**
      * Changes right side of the condition.
      *
-     * @param string $value
+     * @param string|NULL $value
      * @return ConditionInterface
      */
-    public function setValue(string $value) : ConditionInterface;
+    public function setValue(?string $value) : ConditionInterface;
     
     /**
      * Removes the right side of the condition (as if it was never set).
@@ -80,5 +92,11 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return string|boolean
      */
     public function getAttributeAlias();
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function willIgnoreEmptyValues() : bool;
 }
 

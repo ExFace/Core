@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * The UserContext shows the logged in User and some user-related controls like a logout button.
@@ -28,7 +29,7 @@ class UserContext extends AbstractContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
      */
-    public function getIcon()
+    public function getIcon() : ?string
     {
         $user = $this->getWorkbench()->getSecurity()->getAuthenticatedUser();
         if ($user->isAnonymous() === true) {
@@ -65,6 +66,7 @@ class UserContext extends AbstractContext
               "height" => "100%",
               "object_alias" => "exface.Core.USER",
               "columns_in_grid" => "1",
+              "read_only" => true,
               "widgets" => [
                   [
                       "widget_type" => "Message",
@@ -76,22 +78,18 @@ class UserContext extends AbstractContext
                       "attribute_alias" => "UID"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "USERNAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "FIRST_NAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "attribute_alias" => "LAST_NAME",
                       "width" => "100%"
                   ],
                   [
-                      "widget_type" => "Display",
                       "caption" => "Language",
                       "attribute_alias" => "LOCALE",
                       "width" => "100%"
@@ -113,7 +111,7 @@ class UserContext extends AbstractContext
             // add fields to the context widget. Reading data for the prefill is done below
             // after the IF.
             $prefillData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER');
-            $prefillData->getFilters()->addConditionFromString('USERNAME', $token->getUsername());
+            $prefillData->getFilters()->addConditionFromString('USERNAME', $token->getUsername(), ComparatorDataType::EQUALS);
             
         // when user is not logged in, build context with login button and message that user is not logged in    
         } else {
@@ -135,17 +133,7 @@ class UserContext extends AbstractContext
               ],
               "buttons" => [
                 [
-                    "action" => [
-                        "alias" => "exface.Core.ShowLoginDialog",
-                        "input_mapper" => [
-                            "column_to_column_mappings" => [
-                                [
-                                    "from" => 'username',
-                                    "to" => 'username'
-                                ]    
-                            ]
-                        ]
-                    ],
+                    "action_alias" => "exface.Core.ShowLoginDialog",
                     "visibility" => WidgetVisibilityDataType::PROMOTED
                 ]
               ]

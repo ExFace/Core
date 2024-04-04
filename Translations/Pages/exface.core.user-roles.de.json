@@ -1,5 +1,5 @@
 {
-    "NAME": "Rollen",
+    "NAME": "Benutzerrollen",
     "DESCRIPTION": "Gruppieren von Nutzern für Berechtigungen",
     "INTRO": null,
     "CONTENT.CAPTION.USERS": "Benutzer",

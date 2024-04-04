@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Clears the entire cache of the workbench.
@@ -18,6 +20,18 @@ use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
  */
 class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
 {
+    private $clearOpCache = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getIcon()
+     */
+    public function getIcon() : ?string
+    {
+        return parent::getIcon() ?? Icons::RECYCLE;
+    }
+    
     /**
      * 
      * {@inheritDoc}
@@ -26,7 +40,14 @@ class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction): ResultInterface
     {
         $this->getWorkbench()->getCache()->clear();
-        return ResultFactory::createMessageResult($task, $this->translate('RESULT'));
+        $resultText = $this->translate('RESULT');
+        if ($this->getClearOpcache()) {
+            if (! opcache_reset()) {
+                throw new ActionRuntimeError($this, 'Could not clear OPcache!');
+            }
+            $resultText .= ' ' . $this->translate('RESULT_OPCACHE');
+        }
+        return ResultFactory::createMessageResult($task, $this->getResultMessageText() ?? $resultText);
     }
     
     /**
@@ -48,5 +69,29 @@ class ClearCache extends AbstractAction implements iCanBeCalledFromCLI
     {
         return [];
     }
-
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getClearOpcache() : bool
+    {
+        return $this->clearOpCache;
+    }
+    
+    /**
+     * Set to TRUE to clear PHPs OPCache too
+     * 
+     * @uxon-property clear_opcache
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ClearCache
+     */
+    public function setClearOpcache(bool $value) : ClearCache
+    {
+        $this->clearOpCache = $value;
+        return $this;
+    }
 }

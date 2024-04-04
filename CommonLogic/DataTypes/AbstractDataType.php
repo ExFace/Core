@@ -16,6 +16,8 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Traits\MetaModelPrototypeTrait;
 use exface\Core\Uxon\DatatypeSchema;
 use exface\Core\Exceptions\SecurityException;
+use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Factories\MessageFactory;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -39,9 +41,13 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $defaultEditorUxon = null;
     
+    private $defaultDisplayUxon = null;
+    
     private $validationErrorCode = null;
     
     private $validationErrorText = null;
+    
+    private $validationErrorMessage = null;
     
     private $value = null;
     
@@ -91,7 +97,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getName()
      */
-    public function getName()
+    public function getName() : string
     {
         if (is_null($this->name)) {
             $name = substr(get_class($this), (strrpos(get_class($this), "\\") + 1));
@@ -218,7 +224,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValidValue()
      */
-    public function isValidValue($string)
+    public function isValidValue($string) : bool
     {
         try {
             static::cast($string);
@@ -266,7 +272,7 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * 
+     * Alias of the data type
      * 
      * @uxon-property alias
      * @uxon-type metamodel:datatype
@@ -302,7 +308,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getApp()
      */
-    public function getApp()
+    public function getApp() : AppInterface
     {
         return is_null($this->app) ? $this->getWorkbench()->getApp($this->selector->getAppSelector()) : $this->app;
     }
@@ -318,12 +324,17 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
-    public function copy()
+    public function copy() : self
     {
         return clone $this;
     }
     
     /**
+     * Returns the UXON configuration of the data type
+     * 
+     * This UXON corresponds to the data type config in Administration > Metamodel > Data types
+     * and the custom data type configuration in each attribute. It does not include default
+     * editor and display widgets as they are defined separately!
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
@@ -331,8 +342,8 @@ abstract class AbstractDataType implements DataTypeInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->setProperty('name', $this->getName());
-        
+        // IDEA add default_editor_widget and default_display_widget here? Are they part of the config UXON? In the model
+        // administration UI they actually are not.
         return $uxon;
     }
     
@@ -351,7 +362,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getShortDescription()
      */
-    public function getShortDescription()
+    public function getShortDescription() : ?string
     {
         return $this->shortDescription;
     }
@@ -361,7 +372,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setShortDescription()
      */
-    public function setShortDescription($shortDescription)
+    public function setShortDescription(string $shortDescription) : DataTypeInterface
     {
         $this->shortDescription = $shortDescription;
         return $this;
@@ -372,7 +383,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function getDefaultEditorUxon()
+    public function getDefaultEditorUxon() : UxonObject
     {
         if (is_null($this->defaultEditorUxon)) {
             $this->defaultEditorUxon = new UxonObject();
@@ -393,7 +404,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorUxon()
      */
-    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon)
+    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon) : DataTypeInterface
     {
         $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
@@ -402,11 +413,43 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorWidget()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function setDefaultEditorWidget(UxonObject $uxon)
+    public function getDefaultDisplayUxon() : UxonObject
     {
-        return $this->setDefaultEditorUxon($uxon);
+        if (is_null($this->defaultDisplayUxon)) {
+            $this->defaultDisplayUxon = new UxonObject();
+        }
+        
+        // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
+        // widget type later in the code might put in their defaults potentially uncompatible
+        // with properties set here or anywhere inbetween.
+        if (! $this->defaultDisplayUxon->hasProperty('widget_type')) {
+            $this->defaultDisplayUxon->setProperty('widget_type', 'Display');
+        }
+        
+        return $this->defaultDisplayUxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayUxon()
+     */
+    public function setDefaultDisplayUxon(UxonObject $defaultDisplayUxon) : DataTypeInterface
+    {
+        $this->defaultDisplayUxon = $defaultDisplayUxon;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultDisplayWidget()
+     */
+    public function setDefaultDisplayWidget(UxonObject $uxon) : DataTypeInterface
+    {
+        return $this->setDefaultDisplayUxon($uxon);
     }
 
     /**
@@ -414,7 +457,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorCode()
      */
-    public function getValidationErrorCode()
+    public function getValidationErrorCode() : ?string
     {
         return $this->validationErrorCode;
     }
@@ -427,34 +470,57 @@ abstract class AbstractDataType implements DataTypeInterface
      * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorCode()
      */
-    public function setValidationErrorCode($validationErrorCode)
+    public function setValidationErrorCode(string $validationErrorCode) : DataTypeInterface
     {
         $this->validationErrorCode = $validationErrorCode;
         return $this;
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorText()
-     */
-    public function getValidationErrorText()
-    {
-        return $this->validationErrorText;
-    }
 
     /**
      * An explanation text for validation errors - typically explaining, what the data type expects.
+     * 
+     * This property only has effect if no validation error code is set - otherwise the
+     * message will be loaded from the meta model using that code.
      * 
      * @uxon-property validation_error_text
      * @uxon-type string
      * 
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorText()
      */
-    public function setValidationErrorText($string)
+    public function setValidationErrorText(string $string) : DataTypeInterface
     {
         $this->validationErrorText = $string;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorMessage()
+     */
+    public function getValidationErrorMessage() : ?MessageInterface
+    {
+        if ($this->validationErrorMessage === null) {
+            if ($this->validationErrorCode !== null) {
+                $this->validationErrorMessage = MessageFactory::createFromCode($this->getWorkbench(), $this->validationErrorCode);
+            } elseif ($this->validationErrorText !== null) {
+                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $this->validationErrorText);
+            } elseif ('' !== $generatedMessage = $this->getValidationDescription()) {
+                $this->validationErrorMessage = MessageFactory::createError($this->getWorkbench(), $generatedMessage);
+            }
+        }
+        
+        return $this->validationErrorMessage;
+    }
+    
+    /**
+     * Returns an autogenerated description of the technical validation in case no error message/code defined
+     * 
+     * @return string
+     */
+    protected function getValidationDescription() : string 
+    {
+        return '';    
     }
     
     /**
@@ -542,5 +608,17 @@ abstract class AbstractDataType implements DataTypeInterface
         return $this->sensitive;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::format()
+     */
+    public function format($value = null) : string
+    {
+        $val = $value !== null ? $this->parse($value) : $this->getValue();
+        if ($val === null || $val === EXF_LOGICAL_NULL) {
+            return '';
+        }
+        return $val;
+    }
 }
-?>

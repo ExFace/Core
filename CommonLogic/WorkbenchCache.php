@@ -7,10 +7,10 @@ use Psr\SimpleCache\CacheInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfBoundsException;
-use Symfony\Component\Cache\Simple\ArrayCache;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\Cache\Adapter\ApcuAdapter;
 
 /**
  * Default implementation of the WorkbenchCacheInterface.
@@ -20,6 +20,8 @@ use Symfony\Component\Cache\Psr16Cache;
  */
 class WorkbenchCache implements WorkbenchCacheInterface
 {
+    const KEY_RESERVED_CHARS = ["\\", '/', '[', ']', '(', ')', '@', ':'];
+    
     private $workbench = null;
     private $mainPool = null;
     private $pools = [];
@@ -82,15 +84,19 @@ class WorkbenchCache implements WorkbenchCacheInterface
      */
     public function clear()
     {
-        // Clear main cache pool
-        try {
-            $ok = $this->mainPool->clear();
-        } catch (\Throwable $e) {
-            $ok = false;
-            $this->workbench->getLogger()->logException($e);
+        $ok = true;
+        
+        // Clear APCU cache if it is enabled
+        if ($this->workbench->getConfig()->getOption('CACHE.USE_APCU') === true && $this::isAPCUAvailable()) {
+            try {
+                $ok = apcu_clear_cache() === false ? false : $ok;
+            } catch (\Throwable $e){
+                $ok = false;
+                $this->workbench->getLogger()->logException($e);
+            }
         }
         
-        // Empty cache dir
+        // Empty cache dir in any case
         try {
             $filemanager = $this->workbench->filemanager();
             $filemanager::emptyDir($filemanager->getPathToCacheFolder());
@@ -98,6 +104,18 @@ class WorkbenchCache implements WorkbenchCacheInterface
             $ok = false;
             $this->workbench->getLogger()->logException($e);
         }
+        
+        // Clear cache pools currently being used
+        try {
+            $ok = $this->mainPool->clear() === false ? false : $ok;
+            foreach ($this->pools as $pool) {
+                $ok = $pool->clear() === false ? false : $ok;
+            }
+        } catch (\Throwable $e) {
+            $ok = false;
+            $this->workbench->getLogger()->logException($e);
+        }
+        
         
         return $ok;
     }
@@ -146,16 +164,25 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * 
      * @param WorkbenchInterface $workbench
      * @param string $name
-     * @return CacheInterface
      */
-    public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null): CacheInterface
+    public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null, bool $psr16 = true)
     {
-        if ($workbench->getConfig()->getOption('CACHE.ENABLED') === false) {
-            $psr6Cache = new ArrayAdapter();
-        } else {
-            $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
+        $config = $workbench->getConfig();
+        switch (true) {
+            case $config->getOption('CACHE.ENABLED') === false:
+                $psr6Cache = new ArrayAdapter();
+                break;
+            case $config->getOption('CACHE.USE_APCU') === true && static::isAPCUAvailable():
+                $psr6Cache = new ApcuAdapter($name ?? '_workbench', 0);
+                break;
+            default:
+                $psr6Cache = new PhpFilesAdapter($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
+                break;
         }
-        return new Psr16Cache($psr6Cache);
+        if ($psr16) {
+            return new Psr16Cache($psr6Cache);
+        }
+        return $psr6Cache;
     }
 
     /**
@@ -198,6 +225,16 @@ class WorkbenchCache implements WorkbenchCacheInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchCacheInterface::hasPool()
+     */
+    public function hasPool(string $name) : bool
+    {
+        return $this->pools[$name] ? true : false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchCacheInterface::getPoolDefault()
      */
     public function getPoolDefault()
@@ -213,5 +250,14 @@ class WorkbenchCache implements WorkbenchCacheInterface
     public function isDisabled() : bool
     {
         return $this->getWorkbench()->getConfig()->getOption('CACHE.ENABLED') === false;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected static function isAPCUAvailable() : bool
+    {
+        return function_exists('apcu_clear_cache');
     }
 }

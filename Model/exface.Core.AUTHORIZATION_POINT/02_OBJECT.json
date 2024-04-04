@@ -81,16 +81,16 @@
     "rows": [
         {
             "CREATED_ON": "2020-03-05 12:17:38",
-            "MODIFIED_ON": "2020-05-05 10:36:43",
+            "MODIFIED_ON": "2023-12-20 09:53:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea5edb3ee5cbe8b9920205857feb80",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "Authorization Point",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
@@ -193,6 +193,9 @@
                                             },
                                             {
                                                 "attribute_alias": "TARGET_ACTION_APPLICABLE"
+                                            },
+                                            {
+                                                "attribute_alias": "TARGET_APP_APPLICABLE"
                                             },
                                             {
                                                 "attribute_alias": "TARGET_FACADE_APPLICABLE"

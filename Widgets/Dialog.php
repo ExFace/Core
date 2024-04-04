@@ -15,9 +15,25 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Interfaces\Actions\iCallOtherActions;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
+ * 
+ * A dialog MUST be opened via action (in most cases, pressing a button with `exface.Core.ShowDialog` 
+ * or a derivative). 
+ * 
+ * A dialog will mostly also contain buttons itself. These special `DialogButton`s can close their
+ * parent dialog automatically or leave it open (`close_dialog`). This way, stacks of open dialogs
+ * can be created.
+ * 
+ * ## Lazy loading
+ * 
+ * Most facades will send a server request when the open-button is pressed to lazy load the dialog, however 
+ * this behavior can be explicitly toggled by setting `lazy_loading:false` for a specific dialog. These
+ * dialogs will still need a button to open, but they will be definitely rendered together with the
+ * button itself - regardless of the default rendering approach of the facade.
  * 
  * @author Andrej Kabachnik
  */
@@ -26,6 +42,8 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $hide_close_button = false;
 
     private $close_button = null;
+    
+    private $close_button_action = null;
 
     private $maximizable = true;
 
@@ -34,6 +52,8 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $header = null;
     
     private $hide_header = null;
+    
+    private $cacheable = true;
 
     protected function init()
     {
@@ -110,9 +130,52 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
             if ($this->getHideCloseButton()) {
                 $btn->setHidden(true);
             }
+            if ($this->hasCloseButtonAction()) {
+                $btn->setAction($this->getCloseButtonActionUxon());
+            }
             $this->close_button = $btn;
         }
         return $this->close_button;
+    }
+    
+    /**
+     * Sets the action, that the close button will trigger.
+     * 
+     * @uxon-property close_button_action
+     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-template {"alias": ""}
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iDefineAction::setAction()
+     */
+    public function setCloseButtonAction($uxon) : Dialog
+    {
+        $this->close_button_action = $uxon;
+        if ($this->close_button !== null) {
+            $this->close_button->setAction($uxon);
+        }
+        return $this;
+    }
+    
+    /**
+     * Returns NULL or the UXON for the close button action
+     * 
+     * @return UxonObject|NULL
+     */
+    public function getCloseButtonActionUxon() : ?UxonObject
+    {
+        return $this->close_button_action;
+    }
+    
+    /**
+     * Returns true if the close button has an action uxon
+     * 
+     * @return boolean
+     */
+    public function hasCloseButtonAction() : bool
+    {
+        return $this->close_button_action !== null;
     }
     
     /**
@@ -179,6 +242,10 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         return $this;
     }
 
+    /**
+     * 
+     * @return mixed|NULL
+     */
     public function isMaximized()
     {
         return $this->maximized;
@@ -319,6 +386,7 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     public function setHideHeader(bool $boolean) : iHaveHeader
     {
         $this->hide_header = $boolean;
+        return $this;
     }
     
     /**
@@ -360,5 +428,116 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
         }
         return $dataSheet;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getInputWidgets()
+     */
+    public function getInputWidgets(int $depth = null) : array
+    {
+        $result = parent::getInputWidgets($depth);
+        if ($this->hasHeader() && ($depth === null || $depth > 1)) {
+            $result = array_merge($result, $this->getHeader()->getInputWidgets($depth ? $depth - 1 : null));
+        }
+        return $result;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isCacheable() : bool
+    {
+        return $this->cacheable;
+    }
+    
+    /**
+     * Set to FALSE to make the dialog fully load every time
+     * 
+     * By default, dialogs may be partially cached by the facade to reduce network load:
+     * e.g. only the prefill data may be loaded. Set this to FALSE to force loading the
+     * entire dialog every time!
+     * 
+     * @uxon-property cacheable
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Dialog
+     */
+    public function setCacheable(bool $value) : Dialog
+    {
+        $this->cacheable = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns the button that opened the dialog or NULL if not available
+     *
+     * @return iTriggerAction|NULL
+     */
+    public function getOpenButton() : ?iTriggerAction
+    {
+        if ($this->hasParent()) {
+            $parent = $this->getParent();
+            if ($parent instanceof iTriggerAction) {
+                return $parent;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Returns the action that opened the dialog or NULL if not available
+     *
+     * @return iShowDialog|NULL
+     */
+    public function getOpenAction() : ?iShowDialog
+    {
+        if ($button = $this->getOpenButton()) {
+            if ($button->hasAction()) {
+                $action = $button->getAction();
+                switch (true) {
+                    // If the action shows a dialog, that's it
+                    case $action instanceof iShowDialog:
+                        return $action;
+                        // If the action calls other actions, see if one of them fits: that is, it shows exactly
+                        // our dialog. It is importantch to check for the dialog id as CallAction action might
+                        // have multiple actions calling each their own dialog!
+                    case $action instanceof iCallOtherActions:
+                            $thisDialogId = $this->getId();
+                            foreach ($action->getActionsRecursive() as $innerAction) {
+                                if (($innerAction instanceof iShowDialog) && $innerAction->getDialogWidget()->getId() === $thisDialogId) {
+                                    return $innerAction;
+                                }
+                            }
+                            break;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Returns inner widgets of this Dialog, its DialogHeader and any nested containers recursively
+     * 
+     * NOTE: in contranst to other containers, this method includes not only members of the `widgets`
+     * list, but also widgets from the `header`!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgetsRecursive()
+     */
+    public function getWidgetsRecursive(callable $filterCallback = null, int $depth = null) : array
+    {
+        $result = parent::getWidgetsRecursive($filterCallback, $depth);
+        if ($this->hasHeader()) {
+            $header = $this->getHeader();
+            $result[] = $header;
+            if ($depth !== 1) {
+                $result = array_merge($result, $header->getWidgetsRecursive($filterCallback, $depth ? $depth - 1 : null));
+            }
+        }
+        return $result;
+    }
 }
-?>

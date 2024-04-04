@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use Psr\Http\Message\UriInterface;
-use exface\Core\DataTypes\BooleanDataType;
 use function GuzzleHttp\Psr7\uri_for;
 
 /**
@@ -19,6 +18,8 @@ class ResultUri extends ResultMessage implements ResultUriInterface
     private $autoRedirect = true;
     
     private $openInNewWindow = false;
+    
+    private $download = false;
     
     /**
      * 
@@ -68,9 +69,9 @@ class ResultUri extends ResultMessage implements ResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::getAutoRedirect()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::isAutoRedirect()
      */
-    public function getAutoRedirect() : bool
+    public function isAutoRedirect() : bool
     {
         return $this->autoRedirect;
     }
@@ -80,9 +81,9 @@ class ResultUri extends ResultMessage implements ResultUriInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setAutoRedirect()
      */
-    public function setAutoRedirect($trueOrFalse) : ResultUriInterface
+    public function setAutoRedirect(bool $trueOrFalse) : ResultUriInterface
     {
-        $this->autoRedirect = BooleanDataType::cast($trueOrFalse);
+        $this->autoRedirect = $trueOrFalse;
         return $this;
     }
     
@@ -91,18 +92,18 @@ class ResultUri extends ResultMessage implements ResultUriInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setOpenInNewWindow()
      */
-    public function setOpenInNewWindow($trueOrFalse): ResultUriInterface
+    public function setOpenInNewWindow(bool $trueOrFalse): ResultUriInterface
     {
-        $this->openInNewWindow = BooleanDataType::cast($trueOrFalse);
+        $this->openInNewWindow = $trueOrFalse;
         return $this;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::getOpenInNewWindow()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::isOpenInNewWindow()
      */
-    public function getOpenInNewWindow(): bool
+    public function isOpenInNewWindow(): bool
     {
         return $this->openInNewWindow;
     }
@@ -117,4 +118,24 @@ class ResultUri extends ResultMessage implements ResultUriInterface
         return parent::isEmpty() && ! $this->hasUri();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::isDownload()
+     */
+    public function isDownload() : bool
+    {
+        return $this->download;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setDownload()
+     */
+    public function setDownload(bool $value) : ResultUriInterface
+    {
+        $this->download = $value;
+        return $this;
+    }
 }

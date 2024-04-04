@@ -44,6 +44,14 @@
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "DISABLED_FLAG",
+            "attribute_alias": "DISABLED_FLAG"
+        },
+        {
+            "name": "PRIORITY",
+            "attribute_alias": "PRIORITY"
         }
     ],
     "rows": [
@@ -60,7 +68,9 @@
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Hash Passwords",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         },
         {
             "CREATED_ON": "2020-07-14 11:33:05",
@@ -84,7 +94,30 @@
             "OBJECT": "0x31343400000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Prevent deleting anonymous user",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
+        },
+        {
+            "CREATED_ON": "2024-02-13 12:07:13",
+            "MODIFIED_ON": "2024-02-13 12:29:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ee93a20a9d03c693a2025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/PreventDuplicatesBehavior.php",
+            "CONFIG_UXON": {
+                "compare_attributes": [
+                    "USERNAME"
+                ],
+                "on_duplicate_single_row": "error",
+                "on_duplicate_multi_row": "error"
+            },
+            "OBJECT": "0x31343400000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Prevent username duplicates",
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

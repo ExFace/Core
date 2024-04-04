@@ -2,6 +2,7 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Returns the current date with the option to define a specific format.
@@ -15,10 +16,10 @@ use exface\Core\DataTypes\DateDataType;
  * - `=TODAY('yyyy-MM-dd')` = 2020-03-25
  * - `=TODAY('dd.MM.yyyy')` = 25.03.2020
  *
- * See http://userguide.icu-project.org/formatparse/datetime for a complete guide to
+ * See https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax for a complete guide to
  * the ICU date format syntax.
  *
- * @link http://userguide.icu-project.org/formatparse/datetime
+ * @link https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
  */
 class Today extends Now
 {
@@ -30,5 +31,15 @@ class Today extends Now
     protected function getFormatDefault() : string
     {
         return DateDataType::DATE_ICU_FORMAT_INTERNAL;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Formulas\Now::getDataType()
+     */
+    public function getDataType()
+    {
+        return DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
     }
 }

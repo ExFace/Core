@@ -81,22 +81,50 @@
     "rows": [
         {
             "CREATED_ON": "2020-04-07 09:01:49",
-            "MODIFIED_ON": "2020-05-04 06:56:19",
+            "MODIFIED_ON": "2023-08-29 12:46:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea78ae6a2c1977ac460205857feb80",
-            "READABLE_FLAG": "1",
-            "WRITABLE_FLAG": "1",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 1,
             "COMMENTS": "",
             "DOCS": "",
             "NAME": "External User Role",
-            "INHERIT_DATA_SOURCE_BASE_OBJECT": "1",
+            "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "User role in an external system synchronized by an authenticator",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "columns_in_grid": 1,
+                "height": "auto",
+                "maximized": false,
+                "widgets": [
+                    {
+                        "widget_type": "Message",
+                        "type": "info",
+                        "value": "If the role sync is set up for the selected authenticator, you can map external role IDs to user roles here. User roles in this list will be automatically give to or withdrawn from a user if the respective external IDs are present or absent in the role list provided by the authenticator. That is, if a role is synced, a user will only be able to get it in the external system. Should it be assigned within the workbench, it will be removed with the next sync.\n\nRoles, that are not in this list are completely controlled by the workbench. If a role mapping in this list is marked as inactive, this role will not be synced anymore, but users will keep the internal role previously assigned by this mapping."
+                    },
+                    {
+                        "attribute_alias": "AUTHENTICATOR"
+                    },
+                    {
+                        "attribute_alias": "ALIAS"
+                    },
+                    {
+                        "attribute_alias": "NAME"
+                    },
+                    {
+                        "attribute_alias": "USER_ROLE"
+                    },
+                    {
+                        "attribute_alias": "ACTIVE_FLAG"
+                    }
+                ]
+            },
             "ALIAS": "USER_ROLE_EXTERNAL",
             "DATA_ADDRESS": "exf_user_role_external"
         }

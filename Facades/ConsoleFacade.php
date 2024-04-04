@@ -24,6 +24,14 @@ use exface\Core\CommonLogic\Security\AuthenticationToken\CliEnvAuthToken;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 use exface\Core\Interfaces\Exceptions\AuthenticationExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputInterface;
+use exface\Core\Events\Facades\OnCliCommandReceivedEvent;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\CommonLogic\Selectors\FacadeSelector;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 
 /**
  * Command line interface facade based on Symfony Console.
@@ -67,6 +75,8 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * 
  * ```
  * 
+ * @triggers \exface\Core\Events\Facades\OnCliCommandReceivedEvent
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -88,14 +98,39 @@ class ConsoleFacade extends Application implements FacadeInterface
         $this->exface = $selector->getWorkbench();
         $this->selector = $selector;
         $this->setCommandLoader(new CommandLoader($this));
+        // If run from CLI, authenticate the user and check authorization for CLI facade.
+        // Otherwise the security stuff is handled by the web facades.
         if ($this->isPhpScriptRunInCli() === true) {
             try {
                 $this->authenticateCliUser();
             } catch (AuthenticationExceptionInterface $e) {
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::ERROR);
                 // Do nothing - the console can still be run in anonymous mode
-            }
+            } 
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Symfony\Component\Console\Application::doRun()
+     */
+    public function doRun(InputInterface $input, OutputInterface $output)
+    {
+        // Trigger the command-received event. This will also lead to facade authorization
+        $this->getWorkbench()->eventManager()->dispatch(new OnCliCommandReceivedEvent($this, (string) $input));
+        return parent::doRun($input, $output);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Symfony\Component\Console\Application::renderThrowable()
+     */
+    public function renderThrowable(\Throwable $e, OutputInterface $output): void
+    {
+        $this->getWorkbench()->getLogger()->logException($e);
+        parent::renderThrowable($e, $output);
     }
 
     /**
@@ -127,11 +162,29 @@ class ConsoleFacade extends Application implements FacadeInterface
      */
     public function is($facade_alias) : bool
     {
-        if (strcasecmp($this->getAlias(), $facade_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $facade_alias) === 0) {
-            return true;
-        } else {
-            return false;
+        // TODO add detection if facade is a derivative (subclass)
+        return $this->isExactly($facade_alias);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Facades\FacadeInterface::isExactly()
+     */
+    public function isExactly($selectorOrString) : bool
+    {
+        $selector = $selectorOrString instanceof FacadeSelectorInterface ? $selectorOrString : new FacadeSelector($this->getWorkbench(), $selectorOrString);
+        switch(true) {
+            case $selector->isFilepath():
+                $selectorClassPath = StringDataType::substringBefore($selector->toString(), '.' . FileSelectorInterface::PHP_FILE_EXTENSION);
+                $facadeClassPath = FilePathDataType::normalize(get_class($this));
+                return strcasecmp($selectorClassPath, $facadeClassPath) === 0;
+            case $selector->isClassname():
+                return strcasecmp(trim(get_class($this), "\\"), trim($selector->toString(), "\\")) === 0;
+            case $selector->isAlias():
+                return strcasecmp($this->getAliasWithNamespace(), $selector->toString()) === 0;
         }
+        return false;
     }
 
     /**
@@ -229,9 +282,9 @@ class ConsoleFacade extends Application implements FacadeInterface
      * 
      * @throws AuthenticationFailedError
      * 
-     * @return CliEnvAuthToken
+     * @return AuthenticationTokenInterface
      */
-    protected function authenticateCliUser() : CliEnvAuthToken
+    protected function authenticateCliUser() : AuthenticationTokenInterface
     {
         $token = new CliEnvAuthToken($this);
         return $this->getWorkbench()->getSecurity()->authenticate($token);
@@ -244,30 +297,6 @@ class ConsoleFacade extends Application implements FacadeInterface
      */
     static public function isPhpScriptRunInCli()
     {
-        if ( defined('STDIN') )
-        {
-            return true;
-        }
-        
-        if ( php_sapi_name() === 'cli' )
-        {
-            return true;
-        }
-        
-        if ( array_key_exists('SHELL', $_ENV) ) {
-            return true;
-        }
-        
-        if ( empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0)
-        {
-            return true;
-        }
-        
-        if ( !array_key_exists('REQUEST_METHOD', $_SERVER) )
-        {
-            return true;
-        }
-        
-        return false;
+        return ServerSoftwareDataType::isCLI();
     }
 }

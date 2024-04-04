@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 /**
  * Data type for binary data (e.g. media file contents, etc.).
@@ -26,11 +27,13 @@ use exface\Core\Exceptions\RuntimeException;
  * @author Andrej Kabachnik
  *
  */
-class BinaryDataType extends StringDataType
+class BinaryDataType extends AbstractDataType
 {
     const ENCODING_BASE64 = 'base64';
     const ENCODING_HEX = 'hex';
     const ENCODING_BINARY = 'binary';
+    
+    private $lengthMax = null;
     
     private $encoding = self::ENCODING_BASE64;
     
@@ -61,7 +64,40 @@ class BinaryDataType extends StringDataType
                 }
                 break;
         }
+        
+        // validate length
+        $length = mb_strlen($string);
+        if ($this->getMaxSizeInBytes() > 0 && $length < $this->getMaxSizeInBytes()){
+            $excValue = '';
+            if (! $this->isSensitiveData()) {
+                $excValue = '"' . StringDataType::truncate($string, 60, false, false, true) . '" (' . $length . ')';
+            }
+            throw $this->createValidationError('The size of the binary ' . $excValue . ' is larger, than the maximum for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengthMin() . ')!');
+        }
         return $string;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $text = '';
+        if ($this->getMaxSizeInBytes() > 0) {
+            $lengthCond = ' ≤ ' . $this->getMaxSizeInMB();
+        }
+        if ($lengthCond) {
+            $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
+        }
+        
+        if ($text !== '') {
+            $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $text . '.';
+        }
+        
+        return $text;
     }
     
     /**
@@ -94,7 +130,7 @@ class BinaryDataType extends StringDataType
     }
     
     /**
-     * Maximum size of data in bytes (same as `length_max`)
+     * Maximum size of data in bytes (similar to `length_max` for strings)
      * 
      * @uxon-property max_size
      * @uxon-type integer
@@ -102,9 +138,10 @@ class BinaryDataType extends StringDataType
      * @param int $bytes
      * @return BinaryDataType
      */
-    public function setMaxSize(int $bytes) : BinaryDataType
+    public function setLengthMax(int $bytes) : BinaryDataType
     {
-        return $this->setLengthMax($bytes);
+        $this->lengthMax = $bytes;
+        return $this;
     }
     
     /**
@@ -113,7 +150,7 @@ class BinaryDataType extends StringDataType
      */
     public function getMaxSizeInBytes() : ?int
     {
-        return $this->getLengthMax();
+        return $this->lengthMax;
     }
     
     /**
@@ -125,7 +162,7 @@ class BinaryDataType extends StringDataType
         if ($this->getMaxSizeInBytes() === null) {
             return null;
         }
-        return $this->getMaxSizeInBytes() / 1000000;
+        return $this->getMaxSizeInBytes() / 1024 / 1024;
     }
     
     /**
@@ -206,11 +243,53 @@ class BinaryDataType extends StringDataType
     public static function convertHexToBinary(string $hexString) : string
     {
         $hexString = stripos($hexString, HexadecimalNumberDataType::HEX_PREFIX) === 0 ? substr($hexString, 2) : $hexString;
-        $binary = hex2bin($hexString, true);
+        $binary = hex2bin($hexString);
         if ($binary === false) {
             throw new DataTypeCastingError('Cannot convert hexadecimal to binary: invalid hexadecimal number!');
         }
         return $binary;
+    }
+    
+    /**
+     * Converts a given Base64 string to a data URI with the provided mime type
+     * 
+     * @param string $base64
+     * @param string $mimeType
+     * @return string
+     */
+    public static function convertBase64ToDataUri(string $base64, string $mimeType) : string
+    {
+        return 'data:' . $mimeType . ';base64,' . $base64;
+    }
+    
+    /**
+     * Extracts the Base64-encoded data from a data-URI
+     * 
+     * @param string $dataURL
+     * @return string
+     */
+    public static function convertDataUriToBase64(string $dataURL) : string
+    {
+        list(, $data) = explode(';', $dataURL, 2);
+        list($enc, $data)      = explode(',', $data, 2);
+        switch (strtolower($enc)) {
+            case 'base64': return $data;
+            default:
+                throw new DataTypeCastingError('Invalid encoding "' . $enc . "' found in data URI!");
+        }
+    }
+    
+    /**
+     * Extracts the mime-type from a data-URI
+     * 
+     * @param string $dataURL
+     * @return string
+     */
+    public static function convertDataUriToMimeType(string $dataURL) : string
+    {
+        $tmp = explode(';', $dataURL, 1);
+        list(, $mime) = explode(':', $tmp);
+        return $mime;
     }
     
     /**
@@ -279,5 +358,29 @@ class BinaryDataType extends StringDataType
             default:
                 throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a binary string!');
         }
+    }
+    
+    /**
+     * Converts the given data from the current encoding to a data URI.
+     * 
+     * @param string $mimeType
+     * @param string $value
+     * @throws RuntimeException
+     * @return string|NULL
+     */
+    public function convertToDataUri(string $mimeType, string $value = null) : ?string
+    {
+        $value = $value ?? $this->getValue();
+        if ($value === null) {
+            return $value;
+        }
+        switch ($this->getEncoding()) {
+            case self::ENCODING_BINARY: $b64 = self::convertBinaryToBase64($value);
+            case self::ENCODING_BASE64: $b64 = $value;
+            case self::ENCODING_HEX: $b64 = self::convertHexToBase64($value);
+            default:
+                throw new RuntimeException('Cannot convert binary data in ' . $this->getEncoding() . ' to a data URI!');
+        }
+        return self::convertBase64ToDataUri($b64, $mimeType);
     }
 }

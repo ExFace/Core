@@ -16,9 +16,13 @@ use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 class UserRoleSelector extends AbstractSelector implements UserRoleSelectorInterface
 {
     
-    const AUTHENTICATED_USER_ROLE_OID = '0x11ea6fa3cab9a380a3480205857feb80';
+    const AUTHENTICATED_USER_ROLE_UID = '0x11ea6fa3cab9a380a3480205857feb80';
     
     const AUTHENTICATED_USER_ROLE_ALIAS = 'exface.Core.AUTHENTICATED';
+    
+    const ANONYMOUS_USER_ROLE_UID = '0x11ea6c44b4d365f6a3480205857feb80';
+    
+    const ANONYMOUS_USER_ROLE_ALIAS = 'exface.Core.ANONYMOUS';
     
     use UidSelectorTrait;
     

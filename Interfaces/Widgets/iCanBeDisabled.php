@@ -21,10 +21,12 @@ interface iCanBeDisabled extends WidgetInterface
      * but other widgets can. Disabled widgets also deliver data to actions. To prevent this, make the widget
      * readonly.
      *
-     * @param bool|NULL $trueOrFalseOrNull            
+     * @param bool|NULL $trueOrFalseOrNull   
+     * @param string $reason
+     *          
      * @return WidgetInterface
      */
-    public function setDisabled(?bool $trueOrFalseOrNull) : WidgetInterface;
+    public function setDisabled(?bool $trueOrFalseOrNull, string $reason = null) : WidgetInterface;
     
     /**
      * 

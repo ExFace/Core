@@ -9,6 +9,6 @@ namespace exface\Core\Events\Installer;
  * @author Andrej Kabachnik
  *        
  */
-class OnInstallEvent extends AbstractAppInstallerEvent
+class OnInstallEvent extends OnBeforeInstallEvent
 {
 }

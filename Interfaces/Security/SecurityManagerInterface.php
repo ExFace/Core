@@ -7,7 +7,10 @@ use exface\Core\CommonLogic\Selectors\AuthorizationPointSelector;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
 
 /**
- * Interface for the central security provider for the workbench.
+ * Interface for the central security provider for the workbench: taking care of authentication
+ * (which user is it?) and authorization (what is the authenticated user allowed to do?).
+ * 
+ * @link Docs/developer_docs/Security/index.md
  * 
  * @author Andrej Kabachnik
  *

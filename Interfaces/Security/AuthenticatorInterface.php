@@ -51,9 +51,37 @@ interface AuthenticatorInterface extends AuthenticationProviderInterface
     public function getName() : string;
     
     /**
-     * Get the time a user should stayed logged in after he logged in with this authenticator.
+     * How long (in seconds) a user should stayed logged in using the given token.
+     * 
+     * Returns `NULL` if the lifetime is not explicitly defined. 
+     * Returns `0` for one-time-only tokens.
      *
+     * @param AuthenticationTokenInterface $token
      * @return int|NULL
      */
-    public function getTokenLifetime() : ?int;
+    public function getTokenLifetime(AuthenticationTokenInterface $token) : ?int;
+    
+    /**
+     * Renew the lifetime of a remembered token every X seconds.
+     * 
+     * A positive value means, the lifetime of a remembered token is relative to the latest user activity:
+     * the lifetime-counter of the token will be restarted every time it reaches this age while the user 
+     * is active.
+     * 
+     * The value `0` will make the lifetime absolute: the token will expire regardless of the users activity
+     * - even right in the middle of it.
+     * 
+     * The value `NULL` means, the default interval of the system is to be used - similarly to the 
+     * `getTokenLifetime()` method.
+     * 
+     * @return int|NULL
+     */
+    public function getTokenRefreshInterval() : ?int;
+    
+    /**
+     * Returns TRUE if the authenticator is disabled and can not be used to authenticate and FALSE otherwise
+     * 
+     * @return bool
+     */
+    public function isDisabled() : bool;
 }

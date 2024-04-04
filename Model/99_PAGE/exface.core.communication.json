@@ -1,0 +1,190 @@
+{
+    "uid": "0x11ecad0b27c711b2ad0b025041000001",
+    "alias_with_namespace": "exface.core.communication",
+    "menu_parent_page_selector": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": 6,
+    "menu_visible": true,
+    "name": "Communication",
+    "description": "Manage communication channels and message templates",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2022-01-22 15:54:09",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2023-09-19 11:35:04",
+    "contents": {
+        "widget_type": "SplitHorizontal",
+        "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+        "panels": [
+            {
+                "width": "50%",
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "caption": "Communication channels",
+                        "id": "communication_channel_table",
+                        "filters": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "ALIAS"
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_PROTOTYPE"
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "MUTE_FLAG"
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_PROTOTYPE__LABEL"
+                            },
+                            {
+                                "attribute_alias": "DATA_CONNECTION__LABEL"
+                            },
+                            {
+                                "calculation": "=Left(DESCRIPTION, 60)"
+                            },
+                            {
+                                "attribute_alias": "APP__ALIAS"
+                            },
+                            {
+                                "attribute_alias": "ALIAS"
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "CREATED_ON",
+                                "direction": "desc"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.CommunicationChannelChangeConnectionDialog"
+                            },
+                            {
+                                "widget_type": "MenuButton",
+                                "caption": "Mute",
+                                "icon": "volume-off",
+                                "buttons": [
+                                    {
+                                        "action_alias": "exface.Core.CommunicationChannelMute"
+                                    },
+                                    {
+                                        "action_alias": "exface.Core.CommunicationChannelUnmute"
+                                    }
+                                ]
+                            },
+                            {
+                                "action_alias": "exface.Core.CommunicationChannelRestoreDefaults"
+                            },
+                            {
+                                "caption": "View in-app notifications",
+                                "action": {
+                                    "alias": "exface.Core.GoToPage",
+                                    "page_alias": "exface.core.notifications"
+                                }
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject",
+                                "visibility": "optional"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "widgets": [
+                    {
+                        "widget_type": "DataTable",
+                        "caption": "Message templates",
+                        "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+                        "filters": [
+                            {
+                                "attribute_alias": "COMMUNICATION_CHANNEL",
+                                "hidden": true,
+                                "value": "=communication_channel_table!UID",
+                                "comparator": "==",
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "ALIAS"
+                            },
+                            {
+                                "attribute_alias": "APP"
+                            },
+                            {
+                                "attribute_alias": "MESSAGE_UXON",
+                                "input_widget": {
+                                    "widget_type": "Input",
+                                    "width": 1,
+                                    "height": 1
+                                }
+                            }
+                        ],
+                        "columns": [
+                            {
+                                "attribute_alias": "NAME"
+                            },
+                            {
+                                "attribute_alias": "COMMUNICATION_CHANNEL__LABEL"
+                            },
+                            {
+                                "attribute_alias": "APP__ALIAS"
+                            },
+                            {
+                                "attribute_alias": "ALIAS"
+                            }
+                        ],
+                        "sorters": [
+                            {
+                                "attribute_alias": "NAME",
+                                "direction": "asc"
+                            }
+                        ],
+                        "buttons": [
+                            {
+                                "action_alias": "exface.Core.ShowObjectCreateDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectEditDialog",
+                                "bind_to_double_click": true
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowNotificationMassEditDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                            },
+                            {
+                                "action_alias": "exface.Core.DeleteObject",
+                                "visibility": "optional"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

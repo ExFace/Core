@@ -24,6 +24,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\Interfaces\Actions\iCreateData;
+use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 
 /**
  * This behavior locks it's object by calling configurable lock and unlock actions.
@@ -105,12 +106,27 @@ class LockingBehavior extends AbstractBehavior
     
     private $actionsToLockFor = [];
     
-    public function register() : BehaviorInterface
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     */
+    protected function registerEventListeners() : BehaviorInterface
     {
+        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData'], $this->getPriority());
         
-        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData']);
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     */
+    protected function unregisterEventListeners() : BehaviorInterface
+    {
+        $this->getWorkbench()->eventManager()->removeListener(OnActionPerformedEvent::getEventName(), [$this, 'handleBeforeReadData']);
         
-        $this->setRegistered(true);
         return $this;
     }
     
@@ -119,7 +135,7 @@ class LockingBehavior extends AbstractBehavior
         $action = $event->getAction();
         
         try {
-            if ($action->getMetaObject()->is($this->getObject()) === false) {
+            if ($action->getMetaObject()->isExactly($this->getObject()) === false) {
                 return;
             }
         } catch (ActionObjectNotSpecifiedError $e) {
@@ -133,7 +149,11 @@ class LockingBehavior extends AbstractBehavior
             return;
         }
         
+        // TODO add logbook explaining, what the behavior does
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        
         if ($this->unlockOnEditorClose($action, $task, $event->getTransaction()) !== null) {
+            $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
             return;
         }
         
@@ -153,6 +173,8 @@ class LockingBehavior extends AbstractBehavior
                 $this->lockOnEditorInit($widget, $sheet, $event->getTransaction());
             }
         }
+        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
     }
     
     protected function unlockOnEditorClose(ActionInterface $action, TaskInterface $task, DataTransactionInterface $transaction) : ?ResultInterface
@@ -184,7 +206,7 @@ class LockingBehavior extends AbstractBehavior
         if ($closeBtn->hasAction() === false) {
             $closeBtn->setAction($this->getUnlockActionUxon());
         } else {
-            throw new BehaviorRuntimeError($this->getObject(), 'Cannot add unlock-action to a close-button, that already has an action attached!');
+            throw new BehaviorRuntimeError($this, 'Cannot add unlock-action to a close-button, that already has an action attached!');
         }
     }
     
@@ -272,7 +294,7 @@ class LockingBehavior extends AbstractBehavior
     {
         $uxon = $this->lockActionUxon;
         if ($uxon->isEmpty()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Required property lock_action not set for LockingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '!', '75DBQ3G');
+            throw new BehaviorConfigurationError($this, 'Required property lock_action not set for LockingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '!', '75DBQ3G');
         }
         return $uxon;
     }
@@ -301,7 +323,7 @@ class LockingBehavior extends AbstractBehavior
     {
         $uxon = $this->unlockActionUxon;
         if ($uxon->isEmpty()) {
-            throw new BehaviorConfigurationError($this->getObject(), 'Required property unlock_action not set for LockingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '!', '75DBQ3G');
+            throw new BehaviorConfigurationError($this, 'Required property unlock_action not set for LockingBehavior of object "' . $this->getObject()->getAliasWithNamespace() . '!', '75DBQ3G');
         }
         return $uxon;
     }

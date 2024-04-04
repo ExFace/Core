@@ -4,26 +4,35 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSourceFactory;
 use exface\Core\Interfaces\DataSources\TextualQueryConnectorInterface;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\TranslationPlaceholders;
+use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
 /**
  * Runs explicitly specified data source queries with placeholders filled from input data.
  * 
  * Allows to run custom queries on supporting data sourcers like SQL, OLAP, etc. The data
  * connection MUST implement the interface `TextualQueryConnectorInterface` for this to work!
+ * 
+ * **NOTE:** Since this action is mainly used trigger some internal functionality in the data
+ * source (e.g. database stored procedures, etc.), it is generally concidered as a data
+ * changing action. In particular, it will automatically have `effects` on its object and
+ * possibly other meta objects - just like the action `UpdateData` would do.  
  * 
  * ## Example
  * 
@@ -65,18 +74,20 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
+class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery, iModifyData
 {
     private $queries = [];
 
+    private $queryAttributeAlias = null;
+
     private $data_connection = null;
-    
+
     private $dataSource = null;
 
     private $aplicable_to_object_alias = null;
 
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::init()
      */
@@ -87,12 +98,20 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     }
 
     /**
+     * Merges the queries defined in the queries property with the queries defined by the query_attribute_alias property.
+     * Queries property queries are executed first.
      *
+     * @param TaskInterface $task
      * @return string[]
      */
-    public function getQueries() : array
+    public function getQueries(TaskInterface $task): array
     {
-        return $this->queries;
+        $data = $task->getInputData();
+        $queryAttributeScripts = [];
+        if ($this->getQueryAttributeAlias()) {
+            $queryAttributeScripts = $data->getColumnValues($this->getQueryAttributeAlias());
+        }
+        return array_merge($this->queries, $queryAttributeScripts);
     }
 
     /**
@@ -101,7 +120,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      * @uxon-property queries
      * @uxon-type array
      * @uxon-template [""]
-     * 
+     *
      * @param UxonObject $query_strings
      * @return \exface\Core\Actions\CustomDataSourceQuery
      */
@@ -112,11 +131,34 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     }
 
     /**
-     * 
+     * @return null|string
+     */
+    public function getQueryAttributeAlias(): ?string
+    {
+        return $this->queryAttributeAlias;
+    }
+
+    /**
+     * An attribute-alias of the meta-object that holds queries to run in data source language (e.g. SQL).
+     *
+     * @uxon-property query_attribute_alias
+     * @uxon-type string
+     *
+     * @param string $queryAttributeAlias
+     * @return CustomDataSourceQuery
+     */
+    public function setQueryAttributeAlias(string $queryAttributeAlias): CustomDataSourceQuery
+    {
+        $this->queryAttributeAlias = $queryAttributeAlias;
+        return $this;
+    }
+
+    /**
+     *
      * @param string $string
      * @return \exface\Core\Actions\CustomDataSourceQuery
      */
-    public function addQuery(string $string) : CustomDataSourceQuery
+    public function addQuery(string $string): CustomDataSourceQuery
     {
         $this->queries[] = $string;
         return $this;
@@ -214,28 +256,26 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     {
         $counter = 0;
         $data_sheet = $this->getInputDataSheet($task);
-        
-        foreach ($this->getQueries() as $query) {
+
+        foreach ($this->getQueries($task) as $query) {
             $queryRuns = [];
             
-            // See if the query has any placeholders
-            foreach (StringDataType::findPlaceholders($query) as $ph) {
-                /* @var $col \exface\Core\CommonLogic\DataSheets\DataColumn */
-                if (! $col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
-                    throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
-                }
-                // Replace the placeholder for each row and save each resulting query into
-                // an array.
-                foreach ($col->getValues(false) as $rowNr => $val) {
-                    $queryRuns[$rowNr] = StringDataType::replacePlaceholder($queryRuns[$rowNr] ?? $query, $ph, $val);
-                }
+            $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+            $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
+            $renderer->addPlaceholder(new ExcludedPlaceholders('~notification:', '[#', '#]'));
+            foreach (array_keys($data_sheet->getRows()) as $rowNo) {
+                $rowRenderer = clone $renderer;
+                $rowRenderer->setDefaultPlaceholderResolver(
+                    (new DataRowPlaceholders($data_sheet, $rowNo, ''))
+                    ->setFormatValues(false)
+                );
+                $rowRenderer->addPlaceholder(
+                    (new FormulaPlaceholders($this->getWorkbench(), $data_sheet, $rowNo))
+                    //->setSanitizeAsUxon(true)
+                );
+                $queryRuns[] = $rowRenderer->render($query);
             }
-            
-            // If $queryRuns is empty (= no placeholders found), add the entire query
-            if (empty($queryRuns) === true) {
-                $queryRuns[] = $query;
-            }
-            
             // Perform the queries and save the total affected rows of the last query in $counter
             $counter = 0;
             foreach ($queryRuns as $queryRun){

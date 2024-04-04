@@ -145,33 +145,67 @@ class CompoundAttribute extends Attribute implements CompoundAttributeInterface
             throw new InvalidArgumentException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getName() . '" (alias ' . $this->getAliasWithRelationPath() . ') from object "' . $this->getObject()->getAliasWithNamespace() . '": the condition is not based on this compound attribute!');
         }
         
-        $group = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $this->getObject());
-        
-        if ($condition->isEmpty() === false) {
-            $valueParts = $this->splitValue($condition->getValue());
-        } else {
-            $valueParts = [];
-        }
-        
         switch ($condition->getComparator()) {
             case ComparatorDataType::EQUALS:
             case ComparatorDataType::EQUALS_NOT:
-            case ComparatorDataType::IS:
-            case ComparatorDataType::IS_NOT:
+                $group = ConditionGroupFactory::createAND($this->getObject(), $condition->willIgnoreEmptyValues());
+                if ($condition->isEmpty() === false) {
+                    $valueParts = $this->splitValue($condition->getValue());
+                } else {
+                    $valueParts = [];
+                }
                 foreach ($this->getComponents() as $idx => $comp) {
                     $group->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[$idx], $condition->getComparator());
+                }
+                break;
+            // In case of non-exact comparison the use might search for a part of the value.
+            // So not all compound parts will be present. This is a bit complicated. 
+            // If we have a compond value `xxx-yyy-z` the user might search search for 
+            // `x`, `y` `xxx-y`, `x-y`, etc. For now we assume, that having exactly one
+            // part like `x` means, it can be anywhere. If there are multiple parts,
+            // they are assumed to start with the first one. Not sure, if this is a
+            // a notable problem...
+            case ComparatorDataType::IS:
+            case ComparatorDataType::IS_NOT:
+                $group = ConditionGroupFactory::createAND($this->getObject(), $condition->willIgnoreEmptyValues());
+                if ($condition->isEmpty() === false) {
+                    $valueParts = array_filter($this->splitValue($condition->getValue()), function($val){
+                        return $val !== '' && $val !== null;
+                    });
+                } else {
+                    $valueParts = [];
+                }
+                if (count($valueParts) === 1) {
+                    $orGroup = ConditionGroupFactory::createOR($this->getObject(), $condition->willIgnoreEmptyValues());
+                    foreach ($this->getComponents() as $idx => $comp) {
+                        $orGroup->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[0], $condition->getComparator());
+                    }
+                    $group->addNestedGroup($orGroup);
+                } else {
+                    foreach ($this->getComponents() as $idx => $comp) {
+                        $group->addConditionFromString($comp->getAttribute()->getAliasWithRelationPath(), $valueParts[$idx], $condition->getComparator());
+                    }
                 }
                 break;
             case ComparatorDataType::IN:
             case ComparatorDataType::NOT_IN:
                 $values = is_array($condition->getValue()) ? $condition->getValue() : explode($this->getValueListDelimiter(), $condition->getValue());
+                $newComparator = $condition->getComparator() === ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
+                // If it's an IN with only a single value, simply transform it to an EQUALS
+                // compound IN (5-1) -> (comp1 = 5 AND comp2 = 1)
                 if (count($values) === 1) {
-                    $newComparator = $condition->getComparator() === ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
-                    return $this->splitCondition(ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $condition->getValue(), $newComparator));
+                    $group = $this->splitCondition(ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $condition->getValue(), $newComparator, $condition->willIgnoreEmptyValues()));
+                } else {
+                    // If the IN has multiple values, split each value as if it was an EQUALS and put them all
+                    // into an OR-group: compound IN (5-1, 5-2) -> (comp1 = 5 AND comp2 = 1) OR (comp1 = 5 AND comp2 = 2)
+                    $group = ConditionGroupFactory::createOR($this->getObject(), $condition->willIgnoreEmptyValues());
+                    foreach ($values as $value) {
+                        $valueCond = ConditionFactory::createFromExpression($this->getWorkbench(), $condition->getExpression(), $value, $newComparator, $condition->willIgnoreEmptyValues());
+                        $valueCondGrp = $this->splitCondition($valueCond);
+                        $group->addNestedGroup($valueCondGrp);
+                    }
                 }
-                
-                // TODO transform IN-conditions into lot's of ANDs and ORs
-                //break;
+                break;
             default:
                 throw new RuntimeException('Cannot split condition "' . $condition->toString() . '" for compound attribute "' . $this->getAliasWithRelationPath() . '" from object "' . $this->getObject()->getAliasWithNamespace() . '": a generic split is not possible for comparator "' . $condition->getComparator() . '"!');
         }

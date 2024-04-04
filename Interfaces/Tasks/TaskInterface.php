@@ -11,19 +11,27 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
+interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, iCanBeCopied
 {    
     /**
      * 
      * @return ActionSelectorInterface
      */
     public function getActionSelector() : ActionSelectorInterface;
+    
+    /**
+     * 
+     * @return ActionInterface
+     */
+    public function getAction() : ActionInterface;
     
     /***
      * 
@@ -106,9 +114,9 @@ interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUx
     
     /**
      * 
-     * @return FacadeInterface
+     * @return FacadeInterface|NULL
      */
-    public function getFacade() : FacadeInterface;
+    public function getFacade() : ?FacadeInterface;
     
     /**
      * 

@@ -1,25 +1,43 @@
-# Facade authorization point
+# Facade authorization points
 
-This authorization point allows to restrict access to specific facades to selected user roles only. These facades could then only be used by users with these roles regardless of the resources being accessed through the facade.
+Facades should use their own authorization points to allow authorization for resources they provide access to. By default, the authorization points described in the following chapters are provided.
 
-Most facades are accessible by any user by default (even unauthorized guests) - permissions are defined for the resources behind the facade like pages, actions, etc. However, there are facades, that have their own logic and do not work with instances of the metamodel: e.g. the `DocsFacade` in the core, that is responsible for rendering the app documentation or custom facades built to expose web services. In these cases, the facade authorization point can be used to create simple authorization rules without the overhead to write a custom AP.
+Note, that facade authorization points are the outer-most security tear of the workbench. The define, if a user is authorized to query a facade. Depending on the nature of the facade, other authorization points may be triggered subsequently: e.g.
 
-## How to restrict access to a facade
+- GUI facades will attempt to perform actions on UI pages, thus triggering [action](Action_AP.md) and [page](Page_AP.md) authorization points.
+- CLI facades will also perform actions, but are generally not bound to pages
+- the `HttpFileServerFacade` will query data sources triggering the [Data authorization point](Data_AP.md)
 
-### Restrict access for all users except for certain user roles
+## HTTP request authorization point
 
-By default every newly added facade is accessible by any user by default, if it is needed to make a facade only accessible by a certain user group, for example if it is a facade to expose a web service, there are only a few rules to add to the Authorization Point for facades.
+This authorization point is used in all standard HTTP facades. It is denying by default, so HTTP access needs to be permitted explicitly. However, most facades come with their own preconfigured policies: for example GUI facades will generally be allowed for everyone, while API facades like the built-in `HttpTaskFacade` is only available for logged in users.
 
-First the `Policy combining algorithm` of the authorization point needs to be set to `Permit overrides`, which basically means that if a policy exists that permits access to facade, users with the role, configured in that policy, will have permission to a facade, no matter other policies that include that role. The `Default Effect` of the authorization point needs to beset to `Permit`. This means if no policy can be applied for for a user he will have access to the facade.
+Policies can be applied to all requests or only to those matching conditions like `url_path_pattern`, `body_pattern`, etc. This can be used to restrict access to certain areas similarly to the authorization logic of many typical router-based frameworks. For example, using these conditions, you can restrict access to certain areas of the documentation via the `DocsFacade`.
 
-Second to deny every user role access to that facade add a policy for the facade authorization point. The policy needs to have the `Effect` `Deny`, no `User role` set and as `Facade` the facade that should be to restricted.
-After doing that no user will have access to that facade, so there has to be an other policy added, that will permit access for the user role that should have access.
+## Command line authorization point
 
-Third add another policy to the autorization point with the effect `Permit`, the same facade as `Facade` and as `User role` the role that should have access to the facade.
+This authorization point is used by the `ConsoleFacade` to control access from the local command line on the server. It is permissive by default:
+ 
+- The `Policy combining algorithm` is `Permit overrides`, which basically means that if a policy exists that permits access to the facade, users with the role configured in that policy, will have access, no matter what other policies are applicable to that role. 
+- The `Default Effect` is `Permit`. This means, if no policy can be applied for a user, access will be granted.
+
+### Restrict CLI access for all users except for certain user roles
+
+1. Deny every user role access to that facade add a policy for the facade authorization point. After doing that no user will have access to that facade, so there has to be an other policy added, that will permit access for the user role that should have access.
+  - Effect: `Deny`
+  - User role: none
+  - Facade: the desired CLI facade - e.g. `ConsoleFacade`
+2. Add another policy to the autorization point with the effect `Permit`, the same facade as `Facade` and as `User role` the role that should have access to the facade.
 
 With these two policies no user has access to the facade, except the users that have the role as definied in the second policy.
 When the facade should also be accessible for users with another user role just add another policy, with the same settings like the policy granting access for the first user role, but with the second user role as `User role`.
 
-### Restrict access for one user role
+### Deny CLI access for one user role
 
-To only restrict access for one user role add one policy to the facade authorization point. The `Effect` of the policy needs to be `Deny`, as `Facade` set the facade the access should be restricted for and as `User role` the user role which should not have access to the facade. With that policy, being the only policy affecting that facade, every user will have access to the facade except the users having the role definied in the just added policy.
+To only restrict access for one user role add the following policy to the facade authorization point: 
+
+- Effect: `Deny`, 
+- Facade: the desired CLI facade - e.g. `ConsoleFacade`
+- User role: the user role which should not have access to the facade. 
+
+With that policy, being the only policy affecting that facade, every user will have access to the facade except the users having the role definied in the just added policy.

@@ -38,7 +38,7 @@ class InvalidArgumentException extends \InvalidArgumentException implements Erro
      */
     public function getDefaultLogLevel()
     {
-        return LoggerInterface::ERROR;
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

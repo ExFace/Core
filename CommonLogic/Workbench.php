@@ -7,17 +7,15 @@ use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
-use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Communication\CommunicatorInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
@@ -32,6 +30,10 @@ use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\CommonLogic\Model\App;
+use exface\Core\Factories\LoggerFactory;
+use exface\Core\CommonLogic\Communication\Communicator;
 
 class Workbench implements WorkbenchInterface
 {
@@ -62,33 +64,46 @@ class Workbench implements WorkbenchInterface
     private $vendor_dir_path = null;
 
     private $installation_path = null;
+    
+    private $installation_name = null;
 
     private $request_params = null;
     
     private $security = null;
+    
+    private $communicator = null;
+    
+    private $startTime = null;
 
     public function __construct(array $config = null)
     {   
+        $this->startTime = microtime(true);
+        
+        $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
+        $this->installation_path = Filemanager::pathNormalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
+        
         $cfg = $this->getConfig();
         
         if ($config !== null) {
             foreach ($config as $option => $value) {
                 $cfg->setOption($option, $value);
             }
-        }
+        }        
         
-        // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
-        if ($cfg->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $cfg->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
-            $this->setInstallationPath($installation_path);
-        } 
+        // Similarly, use the installation folder name as the unique name of the installation
+        // if not specified in the config (and save this for later)
+        if (! $cfg->hasOption('SERVER.INSTALLATION_NAME') || ! ($instName = $cfg->getOption('SERVER.INSTALLATION_NAME'))) {
+            $instName = FilePathDataType::findFileName($this->getInstallationPath(), false);
+            $cfg->setOption('SERVER.INSTALLATION_NAME', $instName, App::CONFIG_SCOPE_SYSTEM);
+        }
+        $this->installation_name = $instName;
+        
         
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
         if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
-            $classLoader = new \SplClassLoader(null, array(
-                $this->getVendorDirPath()
-            ));
+            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path]);
             $classLoader->register();
         }
         
@@ -96,24 +111,31 @@ class Workbench implements WorkbenchInterface
         require_once ('Constants.php');
     }
 
+    /**
+     * Make sure the workbench is stopped properly before the instance is destroyed.
+     * @return void
+     */    
     public function __destruct()
     {
         $this->stop();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::start()
+     */
     public function start()
     {
+        $config = $this->getConfig();
+        
         // Init logger
         $logger = $this->getLogger();
 
         // Start the error handler
-        $dbg = new Debugger($logger);
+        $dbg = new Debugger($logger, $config, $this->startTime);
         $this->setDebugger($dbg);
-        $config = $this->getConfig();
-        if ($config->getOption('DEBUG.PRETTIFY_ERRORS')) {
-            $dbg->setPrettifyErrors(true);
-        }
-
+        
         $this->eventManager()->dispatch(new OnStartEvent($this));
         
         // init data module
@@ -140,14 +162,11 @@ class Workbench implements WorkbenchInterface
         $this->security = new SecurityManager($this);
         
         if ($config->getOption('MONITOR.ENABLED')) {
-            Monitor::register($this);
+            Monitor::register($this, $this->startTime);
         }
         
         // Now the workbench is fully loaded and operational
         $this->started = true;
-        
-        // Finally load the autoruns
-        $this->autorun();
     }
 
     /**
@@ -237,12 +256,12 @@ class Workbench implements WorkbenchInterface
     public function getApp($selectorOrString) : AppInterface
     {
         if ($selectorOrString instanceof AppSelectorInterface) {
-            if ($app = $this->running_apps_selectors[$selectorOrString->toString()]) {
+            if ($app = ($this->running_apps_selectors[$selectorOrString->toString()] ?? null)) {
                 return $app;
             }
             $selector = $selectorOrString;
         } elseif (is_string($selectorOrString)) {
-            if ($app = $this->running_apps_selectors[$selectorOrString]) {
+            if ($app = ($this->running_apps_selectors[$selectorOrString] ?? null)) {
                 return $app;
             }
             $selector = new AppSelector($this, $selectorOrString);
@@ -329,9 +348,9 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     * Returns the central event manager (dispatcher)
-     *
-     * @return EventManagerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::eventManager()
      */
     public function eventManager()
     {
@@ -342,50 +361,29 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     * Returns the absolute path of the ExFace installation folder
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getInstallationPath()
      */
-    public function getInstallationPath()
+    public function getInstallationPath() : string
     {
-        if (is_null($this->installation_path)) {
-            $this->installation_path = Filemanager::pathNormalize($this->getVendorDirPath() . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
-        }
         return $this->installation_path;
     }
     
     /**
-     * Changes the path to the installation folder and the vendor folder for this instance.
      * 
-     * @param string $absolute_path
-     * @return Workbench
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getInstallationName()
      */
-    private function setInstallationPath($absolute_path)
+    public function getInstallationName() : string
     {
-        if ($this->isStarted()){
-            throw new RuntimeException('Cannot override installation path after the workbench has started!');
-        }
-        
-        if (! is_dir($absolute_path)){
-            throw new UnexpectedValueException('Cannot override default installation path with "' . $absolute_path . '": folder does not exist!');
-        }
-        
-        $this->installation_path = $absolute_path;
-        $this->vendor_dir_path = $absolute_path . DIRECTORY_SEPARATOR . Filemanager::FOLDER_NAME_VENDOR;
-        return $this;
-    }
-    
-    private function getVendorDirPath()
-    {
-        if (is_null($this->vendor_dir_path)){
-            $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
-        }
-        return $this->vendor_dir_path;
+        return $this->installation_name;
     }
 
     /**
-     *
-     * @return Filemanager
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::filemanager()
      */
     public function filemanager()
     {
@@ -408,75 +406,16 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\Log\LoggerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getLogger()
      */
     public function getLogger()
     {
         if (is_null($this->logger)) {
-            $this->logger = Log::getErrorLogger($this);
+            $this->logger = LoggerFactory::createDefaultLogger($this);
         }
         return $this->logger;
-    }
-    
-    /**
-     * Makes the given app get automatically instantiated every time the workbench
-     * is started.
-     * 
-     * The app will be added to the AUTORUN_APPS config option of the installation
-     * scope. 
-     * 
-     * NOTE: Autorun apps can be temporarily disabled in the config by changing 
-     * their respective value to FALSE.
-     * 
-     * @param AppInterface $app
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function addAutorunApp(AppInterface $app)
-    {
-        $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
-        $autoruns->setProperty($app->getAliasWithNamespace(), true);
-        $this->getConfig()->setOption('AUTORUN_APPS', $autoruns, AppInterface::CONFIG_SCOPE_INSTALLATION);
-        return $this;
-    }
-    
-    /**
-     * Removes the give app from the AUTORUN_APPS config option in the installation scope.
-     * 
-     * NOTE: this will completely the remove the app from the list. To disable
-     * the autorun temporarily, it's flag-value in the config can be set to FALSE.
-     * 
-     * @param AppInterface $app
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function removeAutorunApp(AppInterface $app)
-    {
-        $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
-        $autoruns->unsetProperty($app->getAliasWithNamespace());
-        $this->getConfig()->setOption('AUTORUN_APPS', $autoruns, AppInterface::CONFIG_SCOPE_INSTALLATION);
-        return $this;
-    }
-    
-    /**
-     * Instantiates all apps in the AUTORUN_APPS config option.
-     * 
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    protected function autorun()
-    {
-        try {
-            $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
-        } catch (ConfigOptionNotFoundError $e){
-            $this->getLogger()->logException($e);
-        }
-        
-        foreach ($autoruns as $app_alias => $flag){
-            if ($flag){
-                $this->getApp($app_alias);
-            }
-        }
-        
-        return $this;
     }
     
     /**
@@ -489,6 +428,11 @@ class Workbench implements WorkbenchInterface
         return $this->security;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TaskHandlerInterface::handle()
+     */
     public function handle(TaskInterface $task) : ResultInterface
     {
         if (! $task->hasAction()) {
@@ -497,6 +441,11 @@ class Workbench implements WorkbenchInterface
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
+     */
     public function getAppFolder(AppSelectorInterface $selector) : string 
     {
         return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $selector->getAppAlias());
@@ -528,5 +477,18 @@ class Workbench implements WorkbenchInterface
         }
         
         return '';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getCommunicator()
+     */
+    public function getCommunicator(): CommunicatorInterface
+    {
+        if ($this->communicator === null) {
+            $this->communicator = new Communicator($this);
+        }
+        return $this->communicator;
     }
 }

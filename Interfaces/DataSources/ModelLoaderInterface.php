@@ -31,6 +31,14 @@ use exface\Core\Interfaces\Security\AuthorizationPointInterface;
 use exface\Core\Interfaces\UserImpersonationInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
+use exface\Core\Interfaces\Model\MessageInterface;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
+use exface\Core\Interfaces\Communication\CommunicationChannelInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
+use exface\Core\Interfaces\Communication\CommunicationTemplateInterface;
+use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 
 interface ModelLoaderInterface extends WorkbenchDependantInterface
 {
@@ -200,20 +208,14 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
     
     /**
      * 
-     * @param UserSelectorInterface $selector
-     */
-    public function loadUser(UserSelectorInterface $selector) : UserInterface;
-    
-    /**
-     * 
      * @param UserInterface $user
      * 
      * @throws UserNotFoundError
      * @throws UserNotUniqueError
      * 
-     * @return UserInterface
+     * @return UserInterface|UserSelectorInterface
      */
-    public function loadUserData(UserInterface $user) : UserInterface;
+    public function loadUserData($user) : UserInterface;
     
     /**
      * Loads data from database and builds the tree structure for the given tree, returning an array of root nodes for the tree.
@@ -231,4 +233,43 @@ interface ModelLoaderInterface extends WorkbenchDependantInterface
      * @return DataConnectionInterface
      */
     public function loadDataConnection(DataConnectionSelectorInterface $selector) : DataConnectionInterface;
+    
+    /**
+     * Enriches a given message by loading its model from the data connection
+     * 
+     * @triggers \exface\Core\Events\Model\OnMessageLoadedEvent for every message
+     * 
+     * @param MessageInterface $message
+     * @return MessageInterface
+     */
+    public function loadMessageData(MessageInterface $message) : MessageInterface;
+    
+    /**
+     *
+     * @param AppInterface|AppSelectorInterface $appOrSelector
+     * @throws AppNotFoundError
+     * @return AppInterface
+     */
+    public function loadApp($appOrSelector) : AppInterface;
+    
+    /**
+     * 
+     * @param CommunicationChannelSelectorInterface $selector
+     * @return CommunicationChannelInterface
+     */
+    public function loadCommunicationChannel(CommunicationChannelSelectorInterface $selector) : CommunicationChannelInterface;
+    
+    /**
+     *
+     * @param CommunicationTemplateSelectorInterface[] $selectors
+     * @throws CommunicationTemplateNotFoundError::
+     * @return CommunicationTemplateInterface[]
+     */
+    public function loadCommunicationTemplates(array $selectors) : array;
+    
+    /**
+     * 
+     * @return ModelLoaderInterface
+     */
+    public function clearCache() : ModelLoaderInterface;
 }

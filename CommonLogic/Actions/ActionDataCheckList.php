@@ -1,0 +1,61 @@
+<?php
+namespace exface\Core\CommonLogic\Actions;
+
+use exface\Core\CommonLogic\EntityList;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\ActionDataCheckListInterface;
+use exface\Core\Interfaces\DataSheets\DataCheckInterface;
+
+/**
+ *
+ * @author Andrej Kabachnik
+ *        
+ * @method DataCheckInterface get()
+ * @method DataCheckInterface getFirst()
+ * @method DataCheckInterface[] getAll()
+ * @method DataCheckInterface|DataCheckInterface[] getIterator()
+ *        
+ */
+class ActionDataCheckList extends EntityList implements ActionDataCheckListInterface
+{
+    private $disabled = false;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::getAction()
+     */
+    public function getAction() : ActionInterface
+    {
+        return $this->getParent();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::getForObject()
+     */
+    public function getForObject(MetaObjectInterface $object) : ActionDataCheckListInterface
+    {
+        return $this->filter(function(DataCheckInterface $check) use ($object) {
+            return $check->isApplicableToObject($object);
+        });
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::disableAll()
+     */
+    public function setDisabled(bool $trueOrFalse): ActionDataCheckListInterface
+    {
+        $this->disabled = $trueOrFalse;
+        return $this;
+    }
+    
+    public function isDisabled() : bool
+    {
+        return $this->disabled;
+    }
+}

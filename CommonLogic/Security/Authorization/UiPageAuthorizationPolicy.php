@@ -15,6 +15,9 @@ use exface\Core\CommonLogic\Selectors\UserRoleSelector;
 use exface\Core\CommonLogic\Selectors\UiPageGroupSelector;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
+use exface\Core\Exceptions\Security\AccessDeniedError;
 
 /**
  * Policy to restrict access to UI pages and navigation (menu) items.
@@ -104,28 +107,32 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
             }
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
             }
             
             if ($this->pageGroupSelector !== null && $menuItem->isInGroup($this->pageGroupSelector) === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'Page group does not match');
             } else {
                 $applied = true;
             }
             
             // Return unapplicable if page is not published and the policy cannot be applied to unpublished items
             if ($menuItem->isPublished() === false && $this->isApplicableToUnpublished() === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'Page not published, but policy applies to published only');
             } else {
                 $applied = true;
             }
             
             if ($applied === false) {
-                return PermissionFactory::createNotApplicable($this);
+                return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
             }
+        } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
+            $menuItem->getWorkbench()->getLogger()->logException($e);
+            return PermissionFactory::createDenied($this, $e->getMessage());
         } catch (\Throwable $e) {
+            $menuItem->getWorkbench()->getLogger()->logException(new AuthorizationRuntimeError('Indeterminate permission for policy "' . $this->getName() . '" due to error: ' . $e->getMessage(), null, $e));
             return PermissionFactory::createIndeterminate($e, $this->getEffect(), $this);
         }
         

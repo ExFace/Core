@@ -2,9 +2,11 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 class RequestContextScope extends AbstractContextScope
 {
+    private $vars = [];
     
     const SUBREQUEST_SEPARATOR = ':';
 
@@ -19,8 +21,6 @@ class RequestContextScope extends AbstractContextScope
      * @var string $subrequest_id
      */
     private $subrequest_id = null;
-    
-    private $baseUrl = null;
 
     /**
      * There is nothing to load in the request context scope, as it only lives for one request
@@ -92,7 +92,7 @@ class RequestContextScope extends AbstractContextScope
     {
         $ids = explode(self::SUBREQUEST_SEPARATOR, $value);
         $this->main_request_id = $ids[0];
-        if (! is_null($ids[1])) {
+        if (count($ids) > 1) {
             $this->setSubrequestId($ids[1]);
         }
         return $this;
@@ -136,22 +136,34 @@ class RequestContextScope extends AbstractContextScope
     }
     
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::setVariable()
      */
-    public function getUrlBase() : string
+    public function setVariable(string $name, $value, string $namespace = null) : ContextScopeInterface
     {
-        return $this->baseUrl;
+        $this->vars[($namespace !== null ? $namespace . '_' : '') . $name] =  $value;
+        return $this;
     }
     
     /**
      * 
-     * @param string $value
-     * @return RequestContextScope
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::unsetVariable()
      */
-    public function setUrlBase(string $value) : RequestContextScope
+    public function unsetVariable(string $name, string $namespace = null) : ContextScopeInterface
     {
-        $this->baseUrl = $value;
+        unset($this->vars[($namespace !== null ? $namespace . '_' : '') . $name]);
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::getVariable()
+     */
+    public function getVariable(string $name, string $namespace = null)
+    {
+        return $this->vars[($namespace !== null ? $namespace . '_' : '') . $name];
     }
 }

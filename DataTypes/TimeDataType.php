@@ -4,16 +4,29 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class TimeDataType extends AbstractDataType
 {    
+    const TIME_FORMAT_INTERNAL = 'H:i:s';
+    
+    const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
+    
+    const PERIOD_HOUR = 'h';
+    
+    const PERIOD_MINUTE = 'm';
+    
+    const PERIOD_SECOND = 's';
+    
     private $showSeconds = false;
     
     private $amPm = false;
     
-    const TIME_FORMAT_INTERNAL = 'H:i:s';
+    private $format = null;
     
-    const TIME_ICU_FORMAT_INTERNAL = 'HH:mm:ss';
+    private $timeZone = null;
+    
+    private $timeZoneDependent = false;
     
     /**
      * 
@@ -89,7 +102,7 @@ class TimeDataType extends AbstractDataType
      * @param \DateTime $date
      * @return string
      */
-    public static function formatTimeNormalized(\DateTime $date)
+    public static function formatTimeNormalized(\DateTimeInterface $date)
     {    
         return $date->format(self::TIME_FORMAT_INTERNAL);
     }
@@ -129,6 +142,10 @@ class TimeDataType extends AbstractDataType
      */
     public function getFormat() : string
     {
+        if ($this->format !== null) {
+            return $this->format;
+        }
+        
         $format = $this->getAmPm() ? 'hh:mm' : 'HH:mm';
         if ($this->getShowSeconds() === true) {
             $format .= ':ss';
@@ -159,7 +176,7 @@ class TimeDataType extends AbstractDataType
     }
     
     /**
-     * Set to TRUE to show the seconds.
+     * Set to TRUE to show the seconds (has no effect when custom `format` specified!).
      * 
      * @uxon-property show_seconds
      * @uxon-type boolean
@@ -184,7 +201,7 @@ class TimeDataType extends AbstractDataType
     }
     
     /**
-     * Set to TRUE to use the 12-h format with AM/PM.
+     * Set to TRUE to use the 12-h format with AM/PM (has no effect when custom `format` specified!).
      * 
      * @uxon-property am_pm
      * @uxon-type boolean
@@ -199,4 +216,187 @@ class TimeDataType extends AbstractDataType
         return $this;
     }
     
+    /**
+     * Display format for the time - see ICU formatting: https://unicode-org.github.io/icu/userguide/format_parse/datetime/#datetime-format-syntax
+     *
+     * Typical formats are:
+     *
+     * - `HH:mm` -> 21:00
+     * - `HH:mm:ss` -> 21:00:00
+     * - `hh:mm a` -> 9:00 pm
+     *
+     * For most numerical fields, the number of characters specifies the field width. For example, if
+     * h is the hour, 'h' might produce '5', but 'hh' produces '05'. For some characters, the count
+     * specifies whether an abbreviated or full form should be used, but may have other choices, as
+     * given below.
+     *
+     * Text within single quotes is not interpreted in any way (except for two adjacent single quotes).
+     * Otherwise all ASCII letter from a to z and A to Z are reserved as syntax characters, and require
+     * quoting if they are to represent literal characters. Two single quotes represents a literal
+     * single quote, either inside or outside single quotes.
+     *
+     * Any characters in the pattern that are not in the ranges of [`a`..`z`] and [`A`..`Z`] will be treated as
+     * quoted text. For instance, characters like `:`, `.`, ` `, `#` and `@` will appear in the resulting time text
+     * even they are not enclosed within single quotes.The single quote is used to 'escape' letters. Two single quotes
+     * in a row, whether inside or outside a quoted sequence, represent a 'real' single quote.
+     *
+     * ## Available placeholders
+     *
+     *  | Symbol |    Meaning             |    Example            |    Result         |
+     *  | ------ | ----------------- | ----------       | ---------         |
+     *  |    a   |    am/pm marker     |    a    |    pm    |
+     *  |    h   |    hour in am/pm (1~12)    |    h    |    7    |
+     *  |        |        |    hh    |    7    |
+     *  |    H   |    hour in day (0~23)    |    H    |    0    |
+     *  |        |        |    HH    |    0    |
+     *  |    k   |    hour in day (1~24)    |    k    |    24    |
+     *  |        |        |    kk    |    24    |
+     *  |    K   |    hour in am/pm (0~11)    |    K    |    0    |
+     *  |        |        |    KK    |    0    |
+     *  |    m   |    minute in hour    |    m    |    4    |
+     *  |        |        |    mm    |    4    |
+     *  |    s   |    second in minute    |    s    |    5    |
+     *  |        |        |    ss    |    5    |
+     *  |    S   |    fractional second - truncates (like other time fields)    |    S    |    2    |
+     *  |        |    to the count of letters when formatting. Appends    |    SS    |    23    |
+     *  |        |    zeros if more than 3 letters specified. Truncates at    |    SSS    |    235    |
+     *  |        |    three significant digits when parsing.     |    SSSS    |    2350    |
+     *  |    A   |    milliseconds in day    |    A    |    61201235    |
+     *  |    '   |    escape for text    |    '    |    (nothing)    |
+     *  |    ''  |    two single quotes produce one    |    ' '    |    '    |
+     *
+     * @uxon-property format
+     * @uxon-type string
+     * @uxon-template HH:mm:ss
+     *
+     * @param string $format
+     * @return DateDataType
+     */
+    public function setFormat(string $value) : TimeDataType
+    {
+        $this->format = $value;
+        return $this;
+    }
+    
+    /**
+     * Add hours (`h`), minutes (`m`) or seconds (`s`) to a time value.
+     * 
+     * @param string $timeString
+     * @param int $number
+     * @param string $period
+     * @return string|NULL
+     */
+    public static function addInterval(string $timeString, int $number, string $period = self::PERIOD_HOUR) : ?string
+    {
+        if ($timeString === '' || $timeString === null) {
+            return $timeString;
+        }
+        if ($number === 0) {
+            return $timeString;
+        }
+        
+        $dateTime = static::castToPhpDateTime($timeString);
+        $result = DateTimeDataType::addInterval($dateTime, $number, $period, true);
+        
+        return static::formatTimeNormalized($result);
+    }
+    
+    protected static function castToPhpDateTime($timeString, string $fromTimeZone = null) : \DateTimeInterface
+    {
+        if ($fromTimeZone !== null && $fromTimeZone !== date_default_timezone_get()) {
+            $tz = new \DateTimeZone($fromTimeZone);
+        } else {
+            $tz = null;
+        }
+        return new \DateTime(static::cast($timeString), $tz);
+    }
+    
+    /**
+     * 
+     * @param \DateTimeInterface $dateTime
+     * @return string
+     */
+    public static function castFromPhpDateTime(\DateTimeInterface $dateTime) : string
+    {
+        return static::formatTimeNormalized($dateTime);
+    }
+    
+    /**
+     *
+     * @param string|\DateTimeInterface $time
+     * @param string $fromTimeZone
+     * @param string $toTimeZone
+     * @param bool $returnPhpDate
+     * @return string|\DateTimeInterface|NULL
+     */
+    public static function convertTimeZone($time, string $fromTimeZone, string $toTimeZone)
+    {
+        if ($time === null || $time === '') {
+            return null;
+        }
+        if (! $time instanceof \DateTimeInterface) {
+            $time = static::castToPhpDateTime($time, $fromTimeZone);
+        }
+        $time->setTimezone(new \DateTimeZone($toTimeZone));
+        return static::formatTimeNormalized($time);
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getFormatToTimeZone() : ?string
+    {
+        return $this->timeZone;
+    }
+    
+    /**
+     * If set, the value will be displayed in the specified timezone
+     *
+     * @uxon-property format_to_time_zone
+     * @uxon-type timezone
+     *
+     * @param string $value
+     * @return DateDataType
+     */
+    public function setFormatToTimeZone(string $value) : DateDataType
+    {
+        $this->timeZone = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isTimeZoneDependent() : bool
+    {
+        return $this->timeZoneDependent;
+    }
+    
+    /**
+     * Set to TRUE if this time is to be adjusted with respect to time zone differences
+     * 
+     * @uxon-property time_zone_dependent
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return TimeDataType
+     */
+    public function setTimeZoneDependent(bool $value) : TimeDataType
+    {
+        $this->timeZoneDependent = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    public static function getTimeZoneDefault(WorkbenchInterface $workbench) : string
+    {
+        return date_default_timezone_get();
+    }
 }

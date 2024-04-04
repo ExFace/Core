@@ -6,6 +6,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataPreloader;
 
+/**
+ * @deprecated replaced by the PWA model
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 interface iCanPreloadData extends WidgetInterface
 {
     /**

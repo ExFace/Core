@@ -7,14 +7,12 @@ use Symfony\Component\Security\Core\Authentication\Provider\LdapBindAuthenticati
 use Symfony\Component\Ldap\Ldap;
 use Symfony\Component\Ldap\Adapter\ExtLdap\Adapter;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DomainUsernamePasswordAuthToken;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Exceptions\Security\AuthenticationFailedError;
+use exface\Core\Widgets\Form;
 
 /**
  * Performs authentication via the Symfony LdapBindAuthenticationProvider.
@@ -79,13 +77,16 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             $domain = $token->getDomain();
             $this->setDnString($domain . '\{username}');
         }
-        parent::authenticate($token);
-        if ($this->getCreateNewUsers() === true) {
-            $this->createUserWithRoles($this->getWorkbench(), $token);
-        } else {
-            if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
-                throw new AuthenticationFailedError($this, 'Authentication failed, no PowerUI user with that username exists and none was created!', '7AL3J9X');
+        $authenticatedToken = parent::authenticate($token);
+        if ($authenticatedToken->isAnonymous() === false) {
+            if ($this->getCreateNewUsers(true) === true) {
+                $user = $this->createUserWithRoles($this->getWorkbench(), $token);
+            } else {
+                if (empty($this->getUserData($this->getWorkbench(), $token)->getRows())) {
+                    throw new AuthenticationFailedError($this, "Authentication failed, no workbench user '{$token->getUsername()}' exists: either create one manually or enable `create_new_users` in authenticator configuration!", '7AL3J9X');
+                }
             }
+            $this->syncUserRoles($user, $authenticatedToken);
         }
         return $token;
     }
@@ -217,17 +218,19 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginWidget()
+     * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator::createLoginForm()
      */
-    public function createLoginWidget(iContainOtherWidgets $container) : iContainOtherWidgets
+    protected function createLoginForm(Form $emptyForm) : Form
     {
-        $container->setWidgets(new UxonObject([
+        $domains = $this->getDomains() ?? [];
+        $emptyForm->setWidgets(new UxonObject([
             [
                 'data_column_name' => 'DOMAIN',
                 'widget_type' => 'InputSelect',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.DOMAIN'),
-                'selectable_options' => $this->getDomains() ?? [],
-                'required' => true
+                'selectable_options' => $domains,
+                'required' => true,
+                'value' => count($domains) === 1 ? $domains[0] : null
             ],[
                 'attribute_alias' => 'USERNAME',
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.LDAP.USERNAME'),
@@ -242,18 +245,16 @@ class SymfonyLdapBindAuthenticator extends SymfonyAuthenticator
             ]
         ]));
         
-        if ($container instanceof iLayoutWidgets) {
-            $container->setColumnsInGrid(1);
-        }
+        $emptyForm->setColumnsInGrid(1);
         
-        if ($container instanceof iHaveButtons && $container->hasButtons() === false) {
-            $container->addButton($container->createButton(new UxonObject([
+        if ($emptyForm->hasButtons() === false) {
+            $emptyForm->addButton($emptyForm->createButton(new UxonObject([
                 'action_alias' => 'exface.Core.Login',
                 'align' => EXF_ALIGN_OPPOSITE,
                 'visibility' => WidgetVisibilityDataType::PROMOTED
             ])));
         }
         
-        return $container;
+        return $emptyForm;
     }
 }

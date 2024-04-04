@@ -16,6 +16,8 @@ class InputJson extends InputText
 {
     private $schema = null;
     
+    private $minimalistic = false;
+    
     /**
      * If not set explicitly, the width of a JSON editor will be "max".
      * 
@@ -60,4 +62,28 @@ class InputJson extends InputText
         return $this;
     }
     
+    /**
+     *
+     * @return bool
+     */
+    public function isMinimalistic() : bool
+    {
+        return $this->minimalistic;
+    }
+    
+    /**
+     * Set to TRUE for most minimalistic editor - as few controls as possible.
+     *
+     * @uxon-property minimalistic
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return InputUxon
+     */
+    public function setMinimalistic(bool $value) : InputUxon
+    {
+        $this->minimalistic = $value;
+        return $this;
+    }
 }

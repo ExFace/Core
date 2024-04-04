@@ -2,12 +2,12 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * A relation in the metamodel symbolizes a key-based relationship between to objects.
@@ -33,32 +33,8 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-interface MetaRelationInterface extends WorkbenchDependantInterface
-{
-    /**
-     * 
-     * @param Workbench $workbench
-     * @param RelationCardinalityDataType $cardinality
-     * @param string $uid
-     * @param string $alias
-     * @param string $aliasModifier
-     * @param string $name
-     * @param MetaObjectInterface $leftObject
-     * @param MetaAttributeInterface $leftKeyAttribute
-     * @param string $rightObjectUid
-     * @param string $rightObjectKeyAttributeUid
-     */
-    public function __construct(
-        Workbench $workbench, 
-        RelationCardinalityDataType $cardinality, 
-        string $uid, 
-        string $alias, 
-        string $aliasModifier = '', 
-        MetaObjectInterface $leftObject, 
-        MetaAttributeInterface $leftKeyAttribute, 
-        string $rightObjectUid, 
-        string $rightObjectKeyAttributeUid = null);
-    
+interface MetaRelationInterface extends WorkbenchDependantInterface, iCanBeCopied
+{    
     /**
      * Returns the unique id of the attribute, where the relation is defined.
      * 
@@ -115,6 +91,13 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * @return MetaAttributeInterface
      */
     public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface;
+    
+    /**
+     * Returns TRUE if the right key of this relation is not specified explictily (thus defaults to the UID)
+     * 
+     * @return bool
+     */
+    public function getRightKeyIsUnspecified() : bool;
        
     /**
      * Returns the attribute of the left object, that holds the relation key.
@@ -188,13 +171,6 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * @return MetaRelationInterface
      */
     public function reverse() : MetaRelationInterface;
-    
-    /**
-     * Clones the attribute keeping the model and object
-     *
-     * @return MetaRelationInterface
-     */
-    public function copy() : MetaRelationInterface;
     
     /**
      *
