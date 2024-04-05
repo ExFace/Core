@@ -141,7 +141,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         try {
             $connection->transactionStart();
             $upScript = $migration->getUpScript();
-            if ($migration->isFromDb() === false) {
+            if ($migration->isFromDb() === false || $migration->isFailed()) {
                 $upScript = $this->addFunctions($upScript);
             }
 
