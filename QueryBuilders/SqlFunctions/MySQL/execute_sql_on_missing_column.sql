@@ -1,7 +1,7 @@
 CREATE PROCEDURE execute_sql_on_missing_column(
     IN name_of_table VARCHAR(255),
     IN name_of_column VARCHAR(255),
-    IN sql_statement VARCHAR(65535)
+    IN sql_statement VARCHAR(21845)
 )
 BEGIN
     -- Check if the column exists
