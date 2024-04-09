@@ -529,5 +529,14 @@ class MySqlConnector extends AbstractSqlConnector
     {
         return new MySqlModelBuilder($this);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::escapeString()
+     */
+    public function escapeString(string $string) : string
+    {
+        return mysqli_real_escape_string($this->getCurrentConnection(), $string);
+    }
 }
-?>

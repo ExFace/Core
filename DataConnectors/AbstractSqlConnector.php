@@ -402,4 +402,18 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         $container->addWidget($loginForm);
         return $container;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::escapeString()
+     */
+    public function escapeString(string $string) : string
+    {
+        if (function_exists('mb_ereg_replace')) {
+            return mb_ereg_replace('[\x00\x0A\x0D\x1A\x22\x27\x5C]', '\\\0', $string);
+        } else {
+            return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
+        }
+    }
 }
