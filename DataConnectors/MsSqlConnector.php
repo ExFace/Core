@@ -669,4 +669,31 @@ class MsSqlConnector extends AbstractSqlConnector
     {
         return parent::getCharacterSet() ?? $this->getConnectionOptions()['CharacterSet'];
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::escapeString()
+     */
+    public function escapeString(string $string) : string
+    {
+        if (is_numeric($string)) return $string;
+        
+        // Remove invisible ASCII control chars like \x00 (NUL), etc.
+        $toRemove = [
+            '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
+            '/%1[0-9a-f]/',             // url encoded 16-31
+            '/[\x00-\x08]/',            // 00-08
+            '/\x0b/',                   // 11
+            '/\x0c/',                   // 12
+            '/[\x0e-\x1f]/'             // 14-31
+        ];
+        foreach ($toRemove as $regex) {
+            $string = preg_replace($regex, '', $string );
+        }
+        // Escape single quotes with another single quote
+        $string = str_replace("'", "''", $string );
+        
+        return $string;
+    }
 }

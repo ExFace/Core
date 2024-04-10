@@ -48,6 +48,11 @@ interface SqlDataConnectorInterface extends DataConnectionInterface, TextualQuer
      * @return void
      */
     public function freeResult(SqlDataQuery $query);
+    
+    /**
+     * 
+     * @param string $string
+     * @return string
+     */
+    public function escapeString(string $string) : string;
 }
-
-?>
