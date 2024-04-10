@@ -10,9 +10,11 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This context displays a menu with URLs to be opened in a browser-dialog (e.g. as quick access to app docs)
+ * or in a new tab of the browser.
  * 
  * Example configuration:
  * 
@@ -24,7 +26,8 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
  * 		"menu_items": {
  * 			"App docs": "api/docs/",
  * 			"App-desiner tutorial": "api/docs/exface/Core/Docs/Tutorials/BookClub_walkthrough/index.md",
- * 			"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md" 
+ * 			"Customizing the context bar": "api/docs/exface/Core/Docs/Administration/Configuration/Customizing_the_context_bar.md",
+ *          "App doc PDF": {"url": "vendor/customer/app/Docs/documentation.pdf", "open_in_new_window": true}
  *      }
  *  }
  * 
@@ -68,26 +71,45 @@ class DocsContext extends AbstractContext
     {       
         $buttonsUxon = new UxonObject();
         
-        foreach ($this->getMenuItems() as $title => $url) {
-            $buttonsUxon->append(new UxonObject([
-                'caption' => $title,
-                'icon' => Icons::BOOK,
-                'action' => [
-                    'alias' => 'exface.Core.ShowDialog',
-                    'dialog' => [
-                        'caption' => $title,
-                        'cacheable' => false,
-                        'height' => '80%',
-                        'width' => '2',
-                        'widgets' => [
-                            [
-                                'widget_type' => 'Browser',
-                                'url' => $url
+        foreach ($this->getMenuItems() as $title => $item) {
+            if (is_array($item) === false) {
+                $url = $item;
+            } else {
+                $url = $item['url'];
+                $newWindow = $item['open_in_new_window'] ?? false;
+            }
+            if ($newWindow === true) {
+                $buttonsUxon->append(new UxonObject([
+                    'caption' => $title,
+                    'icon' => Icons::EXTERNAL_LINK_SQUARE,
+                    'action' => [
+                        'alias' => 'exface.Core.GoToUrl',
+                        'url' => $url,
+                        'open_in_new_window' => true,
+                        'input_rows_min' => 0
+                    ]
+                ]));
+            } else {
+                $buttonsUxon->append(new UxonObject([
+                    'caption' => $title,
+                    'icon' => Icons::BOOK,
+                    'action' => [
+                        'alias' => 'exface.Core.ShowDialog',
+                        'dialog' => [
+                            'caption' => $title,
+                            'cacheable' => false,
+                            'height' => '80%',
+                            'width' => '2',
+                            'widgets' => [
+                                [
+                                    'widget_type' => 'Browser',
+                                    'url' => $url
+                                ]
                             ]
                         ]
                     ]
-                ]
-            ]));
+                ]));
+            }
         }
         
         $menu = WidgetFactory::createFromUxonInParent($container, new UxonObject([
