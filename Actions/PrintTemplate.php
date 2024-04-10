@@ -52,7 +52,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * 
  * - `data_sheet` to load the data 
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * `[#dataPlaceholderNamesome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
@@ -65,7 +65,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * `data_sheet` used in the configuration of the data placeholder contains placeholders itself: in this
  * case, the `[#~input:ORDERNO#]`, with will be replace by the order number from the input data before
  * the sheet is read. The `row_template` now may contain global placeholders and those from it's
- * data placeholder rows - prefixed with `~data:`.
+ * data placeholder rows - prefixed with the respective placeholder name.
  * 
  * ```
  * {
@@ -73,7 +73,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  *      "filename": "Order [#~input:ORDERNO#].html",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "columns": [
@@ -391,8 +391,8 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
      * and a configuration for its contents:
      * 
      * - `data_sheet` to load the data 
-     * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`.
-     * 
+     * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#dataPlaceholderName:some_attribute#]`.
+     * - nested `data_placeholders` to use inside each data placeholder
      * 
      * @uxon-property template
      * @uxon-type string
