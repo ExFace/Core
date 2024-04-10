@@ -13,11 +13,15 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 /**
  * Replaces a placeholder with data sheet rows rendered from a provided row template.
  * 
- * important onfiguration options:
+ * Inside the row template you can access the loaded data via `[#thisPlacehlderName:ATTR#]` where
+ * `thisPlacehlderName` is the name of the data placeholder and `ATTR` is the data column name in
+ * the loaded data sheet.
+ * 
+ * Important onfiguration options:
  * 
  * - `data_sheet` to load the data 
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * `[#thisPlacehlderName:some_attribute#]`, `[#thisPlacehlderName:=Formula()#]`.
  * - `data_placeholders` to add nested structures of the same type
  * 
  * ## Examples 
@@ -39,7 +43,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "filters": {
@@ -67,7 +71,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th><th>Discounts</th></tr>[#positions#]</table>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td><td>Dicsounts</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td><td>Dicsounts</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "filters": {
@@ -79,7 +83,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *              },
  *              "data_placeholders": {
  *                  "discounts": {
- *                      "row_template": "<div>- [#~data:name#]: [#~data:value#]</div>",
+ *                      "row_template": "<div>- [#positions:name#]: [#positions:value#]</div>",
  *                      "data_sheet": {
  *                          "object_alias": "my.App.ORDER_POSITION_DISCOUNT",
  *                          "filters": {
@@ -123,12 +127,12 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
      * @param TemplateRendererInterface $baseRowRenderer
      * @param string $dataRowPlaceholdersPrefix
      */
-    public function __construct(string $placeholder, UxonObject $configUxon, BracketHashStringTemplateRenderer $configRenderer, TemplateRendererInterface $baseRowRenderer, string $dataRowPlaceholdersPrefix = '~data:')
+    public function __construct(string $placeholder, UxonObject $configUxon, BracketHashStringTemplateRenderer $configRenderer, TemplateRendererInterface $baseRowRenderer, string $dataRowPlaceholdersPrefix = null)
     {
         $this->workbench = $configRenderer->getWorkbench();
         $this->rowRenderer = $baseRowRenderer;
-        $this->prefix = $dataRowPlaceholdersPrefix;
         $this->placeholder = $placeholder;
+        $this->prefix = $dataRowPlaceholdersPrefix ?? $this->placeholder . ':';
         
         $configRenderer->setIgnoreUnknownPlaceholders(true);
         $renderedUxon = UxonObject::fromJson($configRenderer->render($configUxon->toJson()));
@@ -145,15 +149,27 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
         $phValsSheet = $this->getDataSheet();
         $phValsSheet->dataRead();
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
-        
         $phRowTpl = $this->getRowTemplate();
+        
+        // Before the new syntax using `[#prefix:` for data placeholders, there was a hardcoded special
+        // placeholder `[#~data:`. Here we check, if this legacy syntax is used. If so, a special row
+        // placeholder renderer will be added in addition to the normal one in the foreach() below. 
+        $legacyPrefix = '~data:';
+        $legacyPrefixFound = stripos($phRowTpl, '[#' . $legacyPrefix) !== false;
+        
         $phRendered = '';
         foreach (array_keys($phValsSheet->getRows()) as $rowNo) {
             $currentRowRenderer = $this->rowRenderer->copy();
+            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
+            if ($legacyPrefixFound === true) {
+                $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $legacyPrefix));
+            }
             
             if ($dataPhsUxon !== null) {
                 // Prepare a renderer for the data_placeholders config
                 $dataTplRenderer = new BracketHashStringTemplateRenderer($phValsSheet->getWorkbench());
+                // In the config of the nested renderer there will be access the data sheet of this 
+                // resolver via `[#thisPlacehlderName:...#]`
                 $dataTplRenderer->addPlaceholder(
                     (new DataRowPlaceholders($phValsSheet, $rowNo, $this->placeholder . ':'))
                     ->setFormatValues(false)
@@ -166,14 +182,18 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
                 
                 // Create group-resolver with resolvers for every data_placeholder and use
                 // it as the default resolver for the input row renderer
-                $phResolver = new PlaceholderGroup();
+                $dataPhsResolverGroup = new PlaceholderGroup();
+                // Make sure to copy the row renderer before passing it to nested data resolvers! Otherwise we
+                // will run into infinite recursion if at least one placeholder cannt be resolved: the current
+                // row renderer will get the resolver group as default placeholder resolver, which will also have
+                // affect on the base renderer (if it is used directly), etc.
+                $dataPhsBaseRenderer = $currentRowRenderer->copy();
                 foreach ($dataPhsUxon->getPropertiesAll() as $ph => $phConfig) {
-                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $currentRowRenderer));
+                    $dataPhsResolverGroup->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $dataPhsBaseRenderer));
                 }
-                $currentRowRenderer->setDefaultPlaceholderResolver($phResolver);
+                $currentRowRenderer->setDefaultPlaceholderResolver($dataPhsResolverGroup);
             }
             
-            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
             $phRendered .= $currentRowRenderer->render($phRowTpl);
         }
         

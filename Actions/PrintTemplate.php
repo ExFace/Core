@@ -185,11 +185,14 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
                 
                 // Create group-resolver with resolvers for every data_placeholder and use
                 // it as the default resolver for the input row renderer
-                $phResolver = new PlaceholderGroup();
+                $dataPhsResolverGroup = new PlaceholderGroup();
+                $dataPhsBaseRenderer = $currentRowRenderer->copy();
                 foreach ($dataPhsUxon->getPropertiesAll() as $ph => $phConfig) {
-                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $currentRowRenderer));
+                    // Add a resolver for the data-placeholder: e.g. `[#ChildrenData#]` for the entire child sub-template 
+                    // and `[#ChildrenData:ATTR1#]` to address child-data values inside that sub-template
+                    $dataPhsResolverGroup->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $dataPhsBaseRenderer));
                 }
-                $currentRowRenderer->setDefaultPlaceholderResolver($phResolver);
+                $currentRowRenderer->setDefaultPlaceholderResolver($dataPhsResolverGroup);
             }
             // placeholders for the resulting file
             $filePath = $this->getFilePathAbsolute($currentRowRenderer);
