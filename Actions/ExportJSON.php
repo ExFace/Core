@@ -19,12 +19,12 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -235,7 +235,7 @@ class ExportJSON extends ReadData implements iExportData
             
             foreach ($dataSheet->getColumns() as $col) {
                 $type = $col->getDataType();
-                if ($type instanceof NumberEnumDataType) {
+                if ($type instanceof EnumDataTypeInterface) {
                     $values = $col->getValues();
                     $newValues = [];
                     foreach ($values as $val) {
@@ -329,6 +329,8 @@ class ExportJSON extends ReadData implements iExportData
         // If the exported data is a pivot-sheet, the columns we get from the widget will not be enough.
         // We need to remove the columns being pivoted and add those, that result from transposing
         // value columns.
+        // TODO Shouldn't we add a column as first column that contains all captions of the transposed columns, else we wont see
+        // in the export for what information the values actually stand for
         if ($exportedSheet instanceof PivotSheetInterface) {
             $widgetsBeforePivot = $widgets;
             $widgets = [];
