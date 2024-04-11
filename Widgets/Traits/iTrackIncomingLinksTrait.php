@@ -52,7 +52,9 @@ trait iTrackIncomingLinksTrait
         }
         
         foreach ($this->incomingLinks as $existing) {
-            if ($link->getSourceWidget() === $existing->getSourceWidget() && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
+            if ($link->hasSourceWidget() === true 
+            && $link->getSourceWidget() === $existing->getSourceWidget() 
+            && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
                 return;
             }
         }
