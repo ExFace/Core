@@ -144,7 +144,7 @@ class WidgetSchema extends UxonSchema
         
         $presets[] = [
             'UID' => '',
-            'NAME' => 'Form/Panel/WidgetGroup with all attributes',
+            'NAME' => 'Container with all attributes - e.g. Dialog, Form, Panel or WidgetGroup',
             'PROTOTYPE__LABEL' => 'Container',
             'DESCRIPTION' => '',
             'PROTOTYPE' => $containerPrototype,
@@ -157,7 +157,7 @@ class WidgetSchema extends UxonSchema
         if (! empty($editableWigets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Form/Panel/WidgetGroup with all editable attributes',
+                'NAME' => 'Container with all editable attributes - e.g. Dialog, Form, Panel or WidgetGroup',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
@@ -169,7 +169,7 @@ class WidgetSchema extends UxonSchema
             
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Tab with all editable attributes',
+                'NAME' => 'Tab with all editable attributes - e.g. Dialog, Form, Panel or WidgetGroup',
                 'PROTOTYPE__LABEL' => 'Tab',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $tabPrototype,
@@ -183,7 +183,7 @@ class WidgetSchema extends UxonSchema
         if (! empty($visibleWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Form/Panel/WidgetGroup with all visible attributes',
+                'NAME' => 'Container with all visible attributes - e.g. Dialog, Form, Panel or WidgetGroup',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
@@ -197,7 +197,7 @@ class WidgetSchema extends UxonSchema
         if (! empty($defaultDisplayWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Form/Panel/WidgetGroup with default display editable attributes',
+                'NAME' => 'Container with default display editable attributes - e.g. Dialog, Form, Panel or WidgetGroup',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
@@ -211,7 +211,7 @@ class WidgetSchema extends UxonSchema
         if (! empty($requiredWidgets)) {
             $presets[] = [
                 'UID' => '',
-                'NAME' => 'Form/Panel/WidgetGroup with all required attributes',
+                'NAME' => 'Container with all required attributes - e.g. Dialog, Form, Panel or WidgetGroup',
                 'PROTOTYPE__LABEL' => 'Container',
                 'DESCRIPTION' => '',
                 'PROTOTYPE' => $containerPrototype,
