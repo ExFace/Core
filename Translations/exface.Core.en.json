@@ -387,6 +387,10 @@
 	
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
 	
+	"WIDGET.BUTTON.ERROR_DATA_TO_LARGE": "Data too large!",
+	"WIDGET.BUTTON.ERROR_DATA_MAX_SIZE": "Max size: %size_formatted%.",
+	"WIDGET.BUTTON.ERROR_DATA_TO_LARGE_DESCRIPTION": "For security reasons the maximum size of a data sent to your web server is limited.\n\nTry to send the data in parts: e.g. if you are uploading files, upload them separately. Bear in mind, that data and files are enncoded for transmission, which increases their size!",
+	
 	"WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Cancel",
 	"WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
 	
@@ -481,6 +485,11 @@
 	"WIDGET.IMAGEGALLERY.HINT_EMPTY": "No files found",
 	
 	"WIDGET.NAVTILES.EMPTY": "This menu is empty or you don't have permissions for its items.",
+	
+	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Only the following file types allowed: %extensions%!",
+	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Only the following content types allowed: %mimetypes%!",
+	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "File too large: max. %mb% MB allowed!",
+	"WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG": "File name too long: max. %length% characters allowed!",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Next", 
 	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Back", 
