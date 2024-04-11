@@ -59,11 +59,12 @@ class StringDataType extends AbstractDataType
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $and = $translator->translate('DATATYPE.VALIDATION.AND');
         $text = '';
-        if ($this->getLengthMin() > 0) {
-            $lengthCond = ' ≥ ' . $this->getLengthMin();
+        if (0 < $length = $this->getLengthMin()) {
+            $lengthCond = ' ≥ ' . $length;
         }
-        if ($this->getLengthMax() > 0) {
-            $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $this->getLengthMax();
+        if (0 < $length = $this->getLengthMax()) {
+            $lengthFormatted = $length < 2048 ? $length : ByteSizeDataType::formatWithScale($length);
+            $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $lengthFormatted;
         }
         if ($lengthCond) {
             $text .= $translator->translate('DATATYPE.VALIDATION.LENGTH_CONDITION', ['%condition%' => $lengthCond]);
