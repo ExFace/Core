@@ -22,7 +22,7 @@ class ArrayDataType extends AbstractDataType
      * @throws DataTypeCastingError
      * @return array
      */
-    public static function cast($val)
+    public static function cast($val) : array
     {
         if (is_array($val) === false) {
             throw new DataTypeCastingError('Cannot cast ' . gettype($val) . ' to array!');
@@ -197,5 +197,11 @@ class ArrayDataType extends AbstractDataType
             $array,
             array_unique(array_map( "mb_strtolower", $array ))
         );
+    }
+
+    public static function any(array $array)
+    {
+        foreach ($array as $ignored) return true;
+        return false;
     }
 }
