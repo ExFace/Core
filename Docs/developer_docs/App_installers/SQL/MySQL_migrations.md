@@ -25,6 +25,64 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 ```
 
+## Foreign keys and indexes
+
+### Drop index if exists
+
+```
+set @table_name = 'my_table';
+set @index_name = 'my_index';
+set @var=if(
+	(SELECT true 
+		FROM information_schema.statistics 
+		WHERE table_schema = DATABASE() 
+			AND TABLE_NAME = @table_name 
+			AND INDEX_NAME = @index_name
+	) = true,
+    CONCAT('ALTER TABLE `', @table_name, '` DROP INDEX `', @index_name, '`'),
+    'SELECT CONCAT(\'Index "\', @my_index, \'" does not exist!\''
+);
+prepare stmt from @var;
+execute stmt;
+deallocate prepare stmt;
+```
+
+### Drop foreign key
+
+```
+set @table_name = 'my_table';
+set @index_name = 'my_index';
+/* Remove foreign key */
+set @var=if(
+	(SELECT true 
+		FROM information_schema.TABLE_CONSTRAINTS 
+		WHERE CONSTRAINT_SCHEMA = DATABASE()
+		    AND TABLE_NAME        = @table_name
+		    AND CONSTRAINT_NAME   = @index_name
+		    AND CONSTRAINT_TYPE   = 'FOREIGN KEY'
+    ) = true,
+    CONCAT('ALTER TABLE `', @table_name, '` DROP FOREIGN KEY `', @index_name, '`'),
+    'SELECT CONCAT(\'Foreign key "\', @my_index, \'" does not exist!\''
+);
+prepare stmt from @var;
+execute stmt;
+deallocate prepare stmt;
+/* Remove index */
+set @var=if(
+	(SELECT true 
+		FROM information_schema.statistics 
+		WHERE table_schema = DATABASE() 
+			AND TABLE_NAME = @table_name 
+			AND INDEX_NAME = @index_name
+	) = true,
+    CONCAT('ALTER TABLE `', @table_name, '` DROP INDEX `', @index_name, '`'),
+    'SELECT CONCAT(\'Index "\', @my_index, \'" does not exist!\''
+);
+prepare stmt from @var;
+execute stmt;
+deallocate prepare stmt;
+```
+
 ## Conditional statements (IFs)
 
 ### Checking engine version
