@@ -694,10 +694,11 @@ class DataInstaller extends AbstractAppInstaller
         $cacheKey = $objectSelector . '::' . ($appRelationAttribute ?? '') . '::' . $sorterAttribute . '::' . implode(',', $excludeAttributeAliases);
         if (null === $ds = $this->dataSheets[$cacheKey] ?? null) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objectSelector);
-            $ds->getSorters()
-                ->addFromString($sorterAttribute, SortingDirectionsDataType::ASC)
-                ->addFromString($ds->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::ASC);
-            
+            $ds->getSorters()->addFromString($sorterAttribute, SortingDirectionsDataType::ASC);
+            if ($ds->getMetaObject()->hasUidAttribute()) {
+                $ds->getSorters()->addFromString($ds->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::ASC);
+            }
+                
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
                     continue;
