@@ -231,7 +231,13 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
             $remove_function_script = $this->getRemoveFunctionScript($functions);
             $connection->transactionStart();
             if (empty($remove_function_script) === false) {
-                $connection->runSql($remove_function_script, true)->freeResult();
+                try {
+                    $connection->runSql($remove_function_script, true)->freeResult();
+                } catch (\Throwable $eCleanup) {
+                    $eCleanup = new InstallerRuntimeError($this, 'Error in SQL cleanup after migration failure. ' . $eCleanup->getMessage(), null, $eCleanup);
+                    $this->getWorkbench()->getLogger()->logException($eCleanup);
+                    // Do not throw the exception here - cleanup errors are not critical!
+                }
             }
 
             $connection->runSql($sql_script)->freeResult();
