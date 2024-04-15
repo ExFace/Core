@@ -1402,6 +1402,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
+        if ($this->getMainObject()->isExactly($relq->getMainObject()) && $qpart->getAlias() === $relq_attribute_alias) {
+            throw new QueryBuilderException('Cannot build SQL query: found circular self-reference "' . $relq_attribute_alias . '" for object ' . $this->getMainObject()->__toString());
+        }
+        
         $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
