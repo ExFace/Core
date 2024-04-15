@@ -216,41 +216,33 @@ class JsonDataType extends TextDataType
         }
         return json_encode($obj, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
-    
+
     /**
-     * Validate json against a specified json schema. 
-     * 
-     * @param string|array|\stdClass $stringOrObjectOrArray
-     * @param string|array|\stdClass $stringOrObjectOrArray
-     * @param string $schema
-     * @throws JsonSchemaValidationError
+     * Validate json against a specified json schema.
+     *
+     * @param string|array|object  $json
+     * @param string|\StdClass $schemaJson
      * @return bool
      */
-    public static function validateJsonSchema($json, $schemaJson) : bool
+    public static function validateJsonSchema(mixed $json, mixed $schemaJson) : bool
     {
-    	$convertIntoStdClass = function ($mixedJson) {    		
-    		switch (true){
-    			case is_string($mixedJson):
-    				return json_decode($mixedJson);
-    			case is_object($mixedJson) && $mixedJson instanceof \stdClass:
-    				return $mixedJson;
-    			case is_array($mixedJson):
-    				return (object)$mixedJson;
-    		}
-    	};
-    	
+        if (is_string($schemaJson) === false && $schemaJson instanceof \StdClass === false) {
+            throw new InvalidArgumentException('Unable to validate JSON schema. Schema has an invalid format.');
+        }
+
     	$validator = (new Validator());
-    	$validator->validate($convertIntoStdClass($json), $convertIntoStdClass($schemaJson));
-    	
-    	
-        if (count($validator->getErrors()) !== 0) {
-        	throw new JsonSchemaValidationError(
-        		$validator->getErrors(), 
-        		'Given json does not match given schema',
-        		null,
-        	    null,
-                'Invalid json schema',
-        	    $json);
+        $json = is_string($json) ? json_decode($json) : $json;
+        $schemaJson = is_string($schemaJson) ? json_decode($schemaJson) : $schemaJson;
+        $validator->validate($json, $schemaJson);
+
+        $errors = $validator->getErrors();
+        if (count($errors) > 0) {
+            throw new JsonSchemaValidationError(
+                $errors,
+                'Given json does not match given schema',
+                null,
+                null,
+                $json);
         }
         
         return $validator->isValid();
