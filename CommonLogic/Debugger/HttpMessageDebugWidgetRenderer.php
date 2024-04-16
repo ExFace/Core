@@ -10,6 +10,7 @@ use Psr\Http\Message\ResponseInterface;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\JsonDataType;
 use Psr\Http\Message\ServerRequestInterface;
+use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
  * Renders debug widget tabs for PSR7 requests and responses
@@ -19,9 +20,9 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
 {
-    const MAX_BODY_PRINT_SIZE = 1024*1024; // 1 mb in bytes
+    const MAX_BODY_PRINT_SIZE = 200*1024; // 200 kb in bytes
     
-    const MAX_PARAM_PRINT_SIZE = 1024*10; // 10 kb in bytes 
+    const MAX_PARAM_PRINT_SIZE = 10*1024; // 10 kb in bytes 
     
     private $request = null;
     
@@ -234,8 +235,9 @@ return $debug_widget;
             if ($bodySize === null || $bodySize === 0) {
                 return 'Message body is empty.';
             } 
-            
             $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
+            
+            $messageBody = 'Message body: ' . ByteSizeDataType::formatWithScale($bodySize) . ' of "' . $contentType . '"' . PHP_EOL;
             switch (true) {
                 case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
                     if (! $message->getBody()->isReadable() && $message instanceof ServerRequestInterface) {
@@ -243,7 +245,7 @@ return $debug_widget;
                     } else {
                         $bodyString = $message->getBody()->__toString();
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```
 {$this->prettifyUrlParams($bodyString)}
@@ -259,11 +261,16 @@ MD;
                                 return $this->prettifyTruncateValue($val);
                             }
                         });
+                        $messageBody .= 'Message truncated!' . PHP_EOL;
                         $prettified = JsonDataType::prettify($jsonArray);
+                        if (mb_strlen($prettified) > self::MAX_BODY_PRINT_SIZE) {
+                            $prettified = mb_substr($prettified, 0, self::MAX_BODY_PRINT_SIZE);
+                            $prettified = $this->prettifyTruncateValue($prettified);
+                        }
                     } else {
                         $prettified = JsonDataType::prettify($json);
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```json
 {$prettified}
@@ -272,13 +279,13 @@ MD;
                     break;
                 case stripos($contentType, 'xml') !== false:
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        return 'XML message body is too big to display: ' . $this->prettifySize($bodySize);
+                        return 'XML message body is too big to display: ' . ByteSizeDataType::formatWithScale($bodySize);
                     }
                     $domxml = new \DOMDocument();
                     $domxml->preserveWhiteSpace = false;
                     $domxml->formatOutput = true;
                     $domxml->loadXML($message->getBody());
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```xml
 {$domxml->saveXML()}
@@ -287,10 +294,10 @@ MD;
                     break;
                 case stripos($contentType, 'html') !== false:
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        return 'HTML message body is too big to display: ' . $this->prettifySize($bodySize);
+                        return 'HTML message body is too big to display: ' . ByteSizeDataType::formatWithScale($bodySize);
                     }
                     $prettified = HtmlDataType::prettify($message->getBody()->__toString());
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```html
 {$prettified}
@@ -301,7 +308,7 @@ MD;
                     if (! $message->getBody()->isReadable()) {
                         return 'Message body is no readable or detached!';
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```
 {$message->getBody()->__toString()}
@@ -344,24 +351,7 @@ MD;
      */
     protected function prettifyTruncateValue(string $value, int $length = 100) : string
     {
-        return mb_substr($value, 0, $length) . '... (truncated value of ' . $this->prettifySize(mb_strlen($value)) . ')';
-    }
-    
-    /**
-     * 
-     * @param int $bytes
-     * @return string
-     */
-    protected function prettifySize(int $bytes) : string
-    {
-        switch (true) {
-            case $bytes > 1024 * 1024:
-                return round($bytes / 1024 / 1024, 1) . ' mb';
-            case $bytes > 1024:
-                return round($bytes / 1024, 1) . ' kb';
-            default:
-                return $bytes . ' b';
-        }
+        return mb_substr($value, 0, $length) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')';
     }
     
     /**
