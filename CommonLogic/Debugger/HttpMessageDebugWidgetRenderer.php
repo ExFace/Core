@@ -362,7 +362,7 @@ MD;
     protected function isSensitiveData(string $headerName) : bool
     {
         switch (true) {
-            case strcasecmp($headerName, 'Authorization') === 0:
+            case stripos($headerName, 'auth') !== false:
             case stripos($headerName, 'key') !== false:
                 return true;
         }
