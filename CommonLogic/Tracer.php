@@ -29,6 +29,9 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Events\BehaviorEventInterface;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
+use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
+use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
+use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -220,6 +223,20 @@ class Tracer extends Profiler
             'logEvent'
         ]);
         $event_manager->addListener(OnContextInitEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ]);
+        
+        // HTTP events
+        $event_manager->addListener(OnHttpRequestReceivedEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ]);
+        $event_manager->addListener(OnHttpRequestHandlingEvent::getEventName(), [
+            $this,
+            'logEvent'
+        ]);
+        $event_manager->addListener(OnHttpBeforeResponseSentEvent::getEventName(), [
             $this,
             'logEvent'
         ]);
