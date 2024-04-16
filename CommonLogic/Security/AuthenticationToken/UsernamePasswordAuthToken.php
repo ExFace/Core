@@ -54,7 +54,7 @@ class UsernamePasswordAuthToken implements PasswordAuthenticationTokenInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Security\AuthenticationTokenInterface::getUsername()
+     * @see \exface\Core\Interfaces\UserImpersonationInterface::getUsername()
      */
     public function getUsername() : ?string
     {

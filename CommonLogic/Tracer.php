@@ -42,7 +42,9 @@ use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
  */
 class Tracer extends Profiler
 {
-    private $log_handlers = [];
+    private $logHandler = null;
+    
+    private $filePath = null;
     
     private $disabled = false;
     
@@ -78,9 +80,7 @@ class Tracer extends Profiler
     public function disable() : Tracer
     {
         $this->disabled = true;
-        foreach ($this->log_handlers as $handler){
-            $handler->setDisabled(true);
-        }
+        $this->logHandler->setDisabled(true);
         return $this;
     }
     
@@ -91,9 +91,7 @@ class Tracer extends Profiler
     public function enable() : Tracer
     {
         $this->disabled = false;
-        foreach ($this->log_handlers as $handler){
-            $handler->setDisabled(false);
-        }
+        $this->logHandler->setDisabled(false);
         return $this;
     }
     
@@ -110,11 +108,15 @@ class Tracer extends Profiler
      *
      * @return string
      */
-    protected function getTraceFileName(){
-        $workbench = $this->getWorkbench();
-        $now = \DateTime::createFromFormat('U.u', microtime(true));
-        $time = $now->format("Y-m-d H-i-s-u");
-        return $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
+    protected function getTraceFilePath() : string
+    {
+        if ($this->filePath === null) {
+            $workbench = $this->getWorkbench();
+            $now = \DateTime::createFromFormat('U.u', microtime(true));
+            $time = $now->format("Y-m-d H-i-s-u");
+            $this->filePath = $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
+        }
+        return $this->filePath;
     }
     
     /**
@@ -124,22 +126,18 @@ class Tracer extends Profiler
     {
         // Log everything
         $workbench = $this->getWorkbench();
-        $this->log_handlers = [
-            new BufferingHandler(
-                new MonologCsvFileHandler(
-                    $this->getWorkbench(),
-                    "Tracer", 
-                    $this->getTraceFileName(), 
-                    $workbench->filemanager()->getPathToLogDetailsFolder(),
-                    LoggerInterface::DEBUG,
-                    LoggerInterface::DEBUG,
-                    LoggerInterface::DEBUG
-                )
+        $this->logHandler = new BufferingHandler(
+            new MonologCsvFileHandler(
+                $this->getWorkbench(),
+                "Tracer", 
+                $this->getTraceFilePath(), 
+                $workbench->filemanager()->getPathToLogDetailsFolder(),
+                LoggerInterface::DEBUG,
+                LoggerInterface::DEBUG,
+                LoggerInterface::DEBUG
             )
-        ];
-        foreach ($this->log_handlers as $handler){
-            $workbench->getLogger()->appendHandler($handler);
-        }
+        );
+        $workbench->getLogger()->appendHandler($this->logHandler);
     }
     
     /**
@@ -467,5 +465,16 @@ class Tracer extends Profiler
      */
     public function stopWorkbench(OnBeforeStopEvent $event = null) {
         $this->getWorkbench()->getLogger()->info('Performance summary: ' . $this->getDurationTotal() . ' ms total, ' . $this->conncetionsCnt . ' connections opened in ' . $this->connectionsTotalMS . ' ms, ' . $this->dataQueriesCnt . ' data queries in ' . $this->dataQueriesTotalMS . ' ms', [], $this);
+        $this->logHandler->flush();
+    }
+    
+    /**
+     * @return void
+     */
+    public function __destruct()
+    {
+        if ($this->disabled === true){
+            @unlink($this->getTraceFilePath());
+        }
     }
 }
