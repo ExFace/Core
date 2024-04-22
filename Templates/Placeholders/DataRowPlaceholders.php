@@ -11,10 +11,18 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 /**
- * Resolves placeholders to facade propertis: `~facade:property`.
+ * Fills placehodlers with values from each data row - e.g. `~datarow:ATTRIBUTE` or `~datarow:=Formula()`.
  * 
- * Technically this resolver calls the getter method of the property - e.g.
- * `~facade:theme` is resolved by calling `getTheme()` on the facade.
+ * This fills placeholders with data from a single data sheet row. The default placeholder prefix is
+ * `~datarow:`, but it may be different in specific scenarios - please refer to the documentation of
+ * the action or behavior, that handles the templates. Assuming, the prefix is `~datarow:`, the following
+ * placeholder type would be available:
+ * 
+ * - `~datarow:MY_ATTRIBUTE` - resolves to the value of the data sheet column with an attribute. The
+ * attribute must be present in the data sheet of course.
+ * - `~datarow:MY_COLUMN_NAME` - explicitly references a column by its name - just in case the name
+ * differs from the attribute alias
+ * - `~datarow:=Formula()` - a formula, that will be resolved with data from this row
  *
  * @author Andrej Kabachnik
  */
