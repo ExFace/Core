@@ -257,9 +257,9 @@
         },
         {
             "CREATED_ON": "2020-07-15 09:14:19",
-            "MODIFIED_ON": "2020-07-15 09:32:20",
+            "MODIFIED_ON": "2024-04-22 17:20:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea892190b84c7889210205857feb80",
             "OBJECT": "0x31343400000000000000000000000000",
             "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
@@ -275,7 +275,8 @@
                     "multi_select": true,
                     "filters": [
                         {
-                            "attribute_alias": "USERNAME"
+                            "attribute_alias": "USERNAME",
+                            "comparator": "["
                         },
                         {
                             "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
@@ -288,7 +289,8 @@
                             "attribute_alias": "DISABLED_FLAG"
                         },
                         {
-                            "attribute_alias": "LAST_NAME"
+                            "attribute_alias": "LAST_NAME",
+                            "comparator": "["
                         },
                         {
                             "attribute_alias": "LOCALE"
