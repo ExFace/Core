@@ -29,52 +29,45 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropSource;
  *      "widget_type": "DataTable",
  *      "object_alias": "exface.Core.ATTRIBUTE",
  *      "filters": [
- *          {
- *              "attribute_alias": "OBJECT"
- *          },
- *          {
- *              "attribute_alias": "OBJECT__DATA_SOURCE"
- *          }
+ *          {"attribute_alias": "OBJECT"},
+ *          {"attribute_alias": "OBJECT__DATA_SOURCE"}
  *      ],
  *      "columns": [
- *          {
- *              "attribute_alias": "OBJECT__LABEL"
- *          },
- *          {
- *              "attribute_alias": "LABEL"
- *          },
- *          {
- *              "attribute_alias": "ALIAS"
- *          },
- *          {
- *              "attribute_alias": "RELATED_OBJ__LABEL",
- *              "caption": "Relation to"
- *          }
+ *          {"attribute_alias": "OBJECT__LABEL"},
+ *          {"attribute_alias": "LABEL"},
+ *          {"attribute_alias": "RELATED_OBJ__LABEL", "caption": "Relation to"}
  *      ],
  *      "sorters": [
- *          {
- *              "attribute_alias": "OBJECT__LABEL",
- *              "direction": "desc"
- *          }
+ *          {"attribute_alias": "OBJECT__LABEL", "direction": "desc"}
  *      ],
  *      "buttons": [
- *          {
- *              "action_alias": "exface.Core.UpdateData"
- *          },
- *          {
- *              "action_alias": "exface.Core.ShowObjectCreateDialog"
- *          },
- *          {
- *              "action_alias": "exface.Core.ShowObjectEditDialog",
- *              "bind_to_double_click": true
- *          },
- *          {
- *              "action_alias": "exface.Core.DeleteObject"
- *          }
+ *          {"action_alias": "exface.Core.UpdateData"},
+ *          {"action_alias": "exface.Core.ShowObjectCreateDialog"},
+ *          {"action_alias": "exface.Core.ShowObjectEditDialog", "bind_to_double_click": true},
+ *          {"action_alias": "exface.Core.DeleteObject"}
  *      ]
  *  }
  * 
  * ```
+ * 
+ * ## Common settings
+ * 
+ * ### Handling long text values: wrapping and truncating
+ * 
+ * By default each textual cell of a table will only contain a single line. Thus, all rows will
+ * will have the same height and will be easy to read and scroll. On the other hand, columns with
+ * long texts will produce very wide columns. There are multiple options to achieve compromises:
+ * 
+ * - use `nowrap:false` for certain columns or the entire table. The table will attempt to
+ * optimize column width wrapping long values. How exactly this will look, largely depends on the
+ * facade being used and your specific data. In any case, rows will get "thicker" and may all have
+ * different height, which will make the table harder to read.
+ * - use `Text` as `cell_widget` and configure `multi_line` behavior explicitly. In particular, you
+ * can limit the number of lines produces via `multi_line_max_lines`.
+ * - use `width_max` on columns if supported by the facade used
+ * - use fixed `width` columns, which will truncate the value, but keep the full value as tooltip
+ * - use the formula `=Truncate(YOUR_ATTRIBUTE, 60)` to cut off the value after a certain length,
+ * which will probably produce the most stable results, but will also truncate tooltips.
  * 
  * ## Editable tables
  *  
