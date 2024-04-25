@@ -33,6 +33,7 @@ use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -183,15 +184,30 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         $fromSheetWasEmpty = $fromSheet->isEmpty();
+        $freshStamp = $fromSheet->getFreshStamp();
         
         if ($logbook !== null) {
             $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
             $logbook->addIndent(1);
         }
         $diagram = 'flowchart LR';
+        $diagram .= "\n\tFromSheet(From-sheet) -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         
         // Make sure, the from-sheet has everything needed
-        $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns, $logbook);
+        try {
+            $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns, $logbook);
+        } catch (\Throwable $e) {
+            if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+            if (! ($e instanceof DataMapperExceptionInterface)) {
+                $e = new DataMapperRuntimeError($this, $fromSheet, 'Failed to read missing data for data mapper', null, $e, $logbook);
+            }
+            throw $e;
+        }
+        
+        if ($freshStamp !== $fromSheet->getFreshStamp()) {
+            $diagram .= "RefreshFromSheet[Read missing data]";
+            $diagram .= "\n\tRefreshFromSheet -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
+        }
         
         // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
@@ -260,7 +276,6 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         // Apply mappers
         if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
-        $diagram .= "\n\tFromSheet(From-sheet) -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         $lastClass = null;
         $lastMapCnt = 1;
         foreach ($this->getMappings() as $i => $map) {
@@ -332,7 +347,6 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($logbook !== null) $logbook->addLine('Checking input data for missing columns');
-        
         // If the sheet is empty, just fill it with the required columns and read everything 
         // (no UID values to filter in this case)
         if ($data_sheet->isEmpty()) {
@@ -345,6 +359,8 @@ class DataSheetMapper implements DataSheetMapperInterface
             $data_sheet->dataRead();
             return $data_sheet;
         }
+        
+        $refreshed = false;
         
         // TODO #DataCollector needs to be used here instead of all the following logic
         
@@ -410,8 +426,13 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $data_sheet->getColumns()->addFromExpression($expr);
                 }
             }
-            if (! empty($addedCols) && $logbook !== null) {
-                $logbook->addLine('Found ' . count($addedCols) . ' columns to read for the mapper: `' . implode('`, `', $addedExprs) . '`', 1);
+            
+            if ($logbook !== null) {
+                if (! empty($addedCols)) {
+                    $logbook->addLine('Found ' . count($addedCols) . ' columns to read for the mapper: `' . implode('`, `', $addedExprs) . '`', 1);
+                } else {
+                    $logbook->addLine('All columns required for mapping found in from-data', 1);
+                }
             }
             
             // If columns were added to the original sheet, that need data to be loaded,
@@ -419,6 +440,12 @@ class DataSheetMapper implements DataSheetMapperInterface
             // in the original sheet (= the input values) are not overwrittten by the read
             // operation.
             if (! $data_sheet->isFresh() && $this->getReadMissingFromData() === true){
+                // Don't read anything if the object is not readable at all. 
+                if ($data_sheet->getMetaObject()->isReadable() === false) {
+                    $logbook->addLine('**WARNING:** it seems, the from-data as not fresh and needs to be read, but the object ' . $data_sheet->getMetaObject()->__toString() . ' is explicitly marked as not readable. The data will not be refreshed!');
+                    return $data_sheet;
+                }
+                
                 $additionSheet->getFilters()->addConditionFromColumnValues($data_sheet->getUidColumn());
                 $additionSheet->dataRead();
                 
@@ -437,6 +464,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                         // It is important to check both because formula might lead to more columns being added.
                         if (in_array($addedCol, $addedCols, true) || $data_sheet->getColumns()->getByExpression($addedCol->getExpressionObj()) === FALSE) {
                             $data_sheet->setCellValue($addedCol->getName(), $rowNo, $row[$addedCol->getName()]);
+                            $refreshed = true;
                         }
                     }
                 }
@@ -446,7 +474,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 }
             }
         } else { 
-            // No UIDs or not fresh
+            // The original from-data has no UIDs or was not fresh right from the beginning
             // See if any attributes required for the missing columns are related in the way described above
             // the if(). If so, load the data separately and put it into the from-sheet. This is mainly usefull
             // for formulas.
@@ -499,6 +527,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                             $reqRelSheet->dataRead();
                             foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                                 $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
+                                $refreshed = true;
                             }
                             
                             if ($logbook !== null) $logbook->addLine('Read ' . $reqRelSheet->countRows() . ' rows for columns related to mapped data (object "' . $reqRelSheet->getMetaObject()->getAliasWithNamespace() . '")', 1);
@@ -508,7 +537,12 @@ class DataSheetMapper implements DataSheetMapperInterface
                 } // END foreach($map->getRequiredExpressions($data_sheet))
             } // END foreach($this->getMappings())
         } // END if($data_sheet->hasUidColumn(true) && $data_sheet->isFresh())
-            
+          
+        // Make sure the data is marked as fresh now to prevent further unneeded refreshes
+        if ($refreshed === true) {
+            $data_sheet->setFresh(true);
+        }
+        
         return $data_sheet;
     }
     

@@ -571,6 +571,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function isFresh() : bool;
     
     /**
+     * Returns a unique tag generated when the data is refreshed
+     * 
+     * The fresh stamp changes with every read operation or with every explicit setting data. Thus, comparing two stamps
+     * from the same data sheet will give you an idea of whether the data was refreshed at the mean time.
+     * 
+     * @return string|NULL
+     */
+    public function getFreshStamp() : ?string;
+    
+    /**
      * Explicitly marks the sheet as fresh (TRUE) or not (FALSE).
      * 
      * @param bool $value
