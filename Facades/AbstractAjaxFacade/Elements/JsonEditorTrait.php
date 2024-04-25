@@ -164,8 +164,13 @@ JS;
             $uxonInitScripts = '';
         }
         
+        $disabledJs = $this->getWidget()->isDisabled() ? 'true' : 'false';
+        
+        // Note: for some reason the global variable and oEditor are not the same over
+        // time and get decoupled somehow... That's why setDisabled() could not be attached
+        // to oEditor and needed to be moved to the container.
         return <<<JS
-                   var {$this::buildJsEditorGetter($uxonEditorId)} = new JSONEditor(
+                   var oEditor = new JSONEditor(
                         document.getElementById("{$uxonEditorId}"),
                         { 
                             {$this->buildJsEditorOptions()}
@@ -173,8 +178,30 @@ JS;
         
                         {$this->getWidget()->getValueWithDefaults()}
                     );
+                    var {$this::buildJsEditorGetter($uxonEditorId)} = oEditor;
         
-                    {$this::buildJsEditorGetter($uxonEditorId)}.expandAll();
+                    oEditor.expandAll();
+
+                    oEditor.container.setDisabled = function(bTrueOrFalse) {
+                        var oEditor = {$this::buildJsEditorGetter($uxonEditorId)};
+                        if (bTrueOrFalse === undefined) {
+                            bTrueOrFalse = oEditor.container._exfDisabled;
+                        } else {
+                            oEditor.container._exfDisabled = bTrueOrFalse;
+                        }
+
+                        if (oEditor.getMode() === 'code') {
+                            if (bTrueOrFalse === true) {
+                                oEditor.aceEditor?.setReadOnly(true);
+                            } else {
+                                oEditor.aceEditor?.setReadOnly(true);
+                            }
+                        }
+                        
+                        return oEditor;
+                    };
+                    oEditor.container.setDisabled({$disabledJs});
+                    
                     $('#{$uxonEditorId}').parents('.exf-input').children('label').css('vertical-align', 'top');
                     {$uxonInitScripts}
         			
@@ -207,7 +234,7 @@ JS;
     protected function buildJsEditorModes($isWidgetDisabled) : string
     {
         if ($isWidgetDisabled) {
-            return "['view']";
+            return "['code', 'view']";
         }
         return "['code', 'tree']";
     }
@@ -224,24 +251,26 @@ JS;
             $script = <<<JS
 
             if (newMode === 'tree') {
-                var json = {$this::buildJsEditorGetter($uxonEditorId)}.get();
+                var json = oEditor.get();
                 {$this::buildJsPresetHintTrigger($uxonEditorId, 'json')}
             } else {
                 {$this::buildJsPresetHintHide($uxonEditorId)}
             }
-
 JS;
         }
         
         return <<<JS
         
         function(newMode, oldMode){
+            var oEditor = {$this::buildJsEditorGetter($uxonEditorId)};
+            setTimeout(function(){
+                oEditor.container.setDisabled();
+            }, 10);
             $script
         }    
 
 JS;
     }
-    
    
     protected function buildJsEditorOptions() : string
     {
@@ -2030,5 +2059,11 @@ JS;
     protected function buildJsRequiredGetter() : string
     {
         return $this->getWidget()->isRequired() ? "true" : "false";   
+    }
+    
+    public function buildJsSetDisabled(bool $trueOrFalse) : string
+    {
+        $disabledJs = $trueOrFalse ? 'true' : 'false';
+        return $this::buildJsEditorGetter($this->getId()) . ".container.setDisabled({$disabledJs})";
     }
 }
