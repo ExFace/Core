@@ -208,11 +208,8 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
      */
     protected function createResponseAccessDenied(ServerRequestInterface $request, string $content = null) : ResponseInterface
     {
-        $content = $content ?? 'Anonymous access denied!';
-        $exception = new AuthenticationFailedError($this->workbench->getSecurity(), $content);
-        
         if ($this->facade instanceof AbstractAjaxFacade) {
-            return $this->facade->createResponseFromError($exception, $request);
+            throw new AuthenticationFailedError($this->workbench->getSecurity(), $content ?? 'Anonymous access denied!');
         } else {
             return new Response(403, [], $content);
         }
@@ -342,6 +339,9 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
             $usr = $uxon->getProperty('username');
             $this->addTokenExtractor(
                 function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($usr, $pwdHeader) {
+                    if (! $request->hasHeader($pwdHeader)) {
+                        return null;
+                    }
                     $pwd = $request->getHeaderLine($pwdHeader);
                     return new MetamodelUsernamePasswordAuthToken($usr, $pwd, $facade);
                 }
@@ -366,6 +366,9 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
             $keyHeader = $uxon->getProperty('key_http_header');
             $this->addTokenExtractor(
                 function(ServerRequestInterface $request, HttpFacadeInterface $facade) use ($keyHeader) {
+                    if (! $request->hasHeader($keyHeader)) {
+                        return null;
+                    }
                     $pwd = $request->getHeaderLine($keyHeader);
                     return new ApiKeyAuthToken($pwd, null, $facade);
                 }
