@@ -281,7 +281,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                     $lastResult = $action->handle($t, $tx);
                 } catch (\Throwable $e) {
                     if ($idx === 0) {
-                        $diagram .= " {$lbId}ERR(Error)";
+                        $diagram .= PHP_EOL . "$diagramShapeId --> {$lbId}ERR(Error)";
                         $diagram .= PHP_EOL . "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}";
                     }
                     $diagram .= PHP_EOL . "style {$diagramShapeId} {$logbook->getFlowDiagramStyleError()}";
