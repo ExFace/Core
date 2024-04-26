@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Factories\DataPointerFactory;
@@ -68,7 +67,7 @@ class Html extends Display
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::setValue()
+     * @see \exface\Core\Widgets\Value::setValue()
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {

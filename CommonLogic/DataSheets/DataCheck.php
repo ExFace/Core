@@ -12,6 +12,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Standard implementation of DataCheckInterface
@@ -30,6 +31,8 @@ class DataCheck implements DataCheckInterface
     private $workbench = null;
     
     private $onlyObjectAlias = null;
+    
+    private $applyToSubsheetsRelationPathString = null;
     
     /**
      * 
@@ -80,13 +83,68 @@ class DataCheck implements DataCheckInterface
         if (! $this->isApplicable($data)) {
             throw new DataCheckNotApplicableError($data, 'Data check not applicable to given data!', null, null, $this);
         }
-        $filter = $this->getConditionGroup($data->getMetaObject());
         
+        if (null !== $subsheetRelStr = $this->getApplyToSubsheetsOfRelation()) {
+            $badData = $this->findViolationsInSubsheets($data, $subsheetRelStr);
+        } else {
+            $badData = $this->findViolationsViaFilter($data, $this->getConditionGroup($data->getMetaObject()));
+        }
+        return $badData;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $data
+     * @param ConditionGroupInterface $filter
+     * @throws DataCheckNotApplicableError
+     * @return DataSheetInterface
+     */
+    protected function findViolationsViaFilter(DataSheetInterface $data, ConditionGroupInterface $filter) : DataSheetInterface
+    {
         try {
             return $data->extract($filter, true);
         } catch (DataSheetExtractError $e) {
             throw new DataCheckNotApplicableError($data, 'Cannot validate data: information required for conditions is not available in the data sheet!', null, $e);
         }
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $data
+     * @param string $subsheetRelationPath
+     * @return DataSheetInterface
+     */
+    protected function findViolationsInSubsheets(DataSheetInterface $data, string $subsheetRelationPath) : DataSheetInterface
+    {
+        $subsheetCol = $data->getColumns()->getByExpression($subsheetRelationPath);
+        if (! $subsheetCol) {
+            return $data->copy()->removeRows();
+        }
+        $innerCheckUxon = $this->exportUxonObject()->withPropertiesRemoved(['apply_to_subsheets_of_relation']);
+        $innerCheck = new DataCheck($this->getWorkbench(), $innerCheckUxon);
+        $badRows = [];
+        foreach ($subsheetCol->getValues(false) as $rowNr => $sheetArr) {
+            if (! $sheetArr) {
+                continue;
+            }
+            
+            $nestedSheet = DataSheetFactory::createFromAnything($this->getWorkbench(), $sheetArr);
+            if ($nestedSheet === null || $nestedSheet->isEmpty(true) === true) {
+                continue;
+            }
+            
+            try {
+                $innerCheck->check($nestedSheet);
+            } catch (DataCheckFailedError $e) {
+                $badRows[] = $rowNr;
+            }
+        }
+        
+        $badData = $data->copy()->removeRows();
+        foreach ($badRows as $rowNr) {
+            $badData->addRow($data->getRow($rowNr), false, false, $rowNr);
+        }
+        return $badData;
     }
     
     /**
@@ -266,6 +324,33 @@ class DataCheck implements DataCheckInterface
     protected function setOperator(string $value) : DataCheck
     {
         $this->conditionGroupUxon->setProperty('operator', $value);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getApplyToSubsheetsOfRelation() : ?string
+    {
+        return $this->applyToSubsheetsRelationPathString;
+    }
+    
+    /**
+     * Check data in nested sheets within the given column instead of checking the main sheet
+     * 
+     * Note: if the main data sheet does not contain a column matching the provided reverse
+     * relation, the check will not fail. No data is concidered not wrong.
+     * 
+     * @uxon-property apply_to_subsheets_of_relation
+     * @uxon-type metamodel:relation
+     * 
+     * @param string $value
+     * @return DataCheck
+     */
+    protected function setApplyToSubsheetsOfRelation(string $value) : DataCheck
+    {
+        $this->applyToSubsheetsRelationPathString = $value;
         return $this;
     }
 }

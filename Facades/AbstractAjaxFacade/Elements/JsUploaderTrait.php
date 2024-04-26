@@ -52,6 +52,7 @@ trait JsUploaderTrait
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength() ?? 'null';
         $maxFileSize = $this->getUploader()->getMaxFileSizeMb() ?? 'null';
         
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         return <<<JS
             (function(oFileObj, fnOnError){
                 var sError;
@@ -63,25 +64,25 @@ trait JsUploaderTrait
                 if (aExtensions && aExtensions.length > 0) {
                     var fileExt = (/(?:\.([^.]+))?$/).exec((file.name || '').toLowerCase())[1];
                     if (! aExtensions.includes(fileExt)) {
-                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED', ['%extensions%' => implode(', ', $extensions)]))};
+                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED', ['%extensions%' => implode(', ', $extensions)]))};
                     }
                 }
                 // Check mime type
                 if (aMimeTypes && aMimeTypes.length > 0) {
                     if (! aMimeTypes.includes((file.type || '').toLowerCase())) {
-                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED', ['%mimetypes%' => implode(', ', $mimeTypes)]))};
+                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED', ['%mimetypes%' => implode(', ', $mimeTypes)]))};
                     }
                 }
                 // Check size
                 if (fMaxFileSize && fMaxFileSize > 0) {
                     if (fMaxFileSize * 1000000 < file.size) {
-                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => $this->getUploader()->getMaxFileSizeMb()]))};
+                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => $this->getUploader()->getMaxFileSizeMb()]))};
                     }
                 }
                 // Check filename length
                 if (iMaxNameLength && iMaxNameLength > 0) {
                     if (iMaxNameLength < file.name.length) {
-                        sError = {$this->escapeString($this->translate('WIDGET.UPLOADER.ERROR_FILE_NAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
+                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILE_NAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
                     }
                 }
 

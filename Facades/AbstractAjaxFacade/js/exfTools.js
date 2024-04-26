@@ -1055,6 +1055,26 @@
 				}
 				return text;
 			}
+		},
+		number: {
+			/**
+			 * Transform `2048` to `2 KB`
+			 *
+			 * @param {float} [fBytes]
+			 * @param {int} [iDecimals]
+			 * @return {string}
+			 */
+			formatBytes: function(fBytes, iDecimals = 2) {
+			    if (!+fBytes) return '0';
+			
+			    const k = 1024;
+			    const dm = iDecimals < 0 ? 0 : iDecimals;
+			    const aSizes = ['', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+			
+			    const i = Math.floor(Math.log(fBytes) / Math.log(k));
+			
+			    return `${parseFloat((fBytes / Math.pow(k, i)).toFixed(dm))} ${aSizes[i]}`;
+			}
 		}
 	}
 	

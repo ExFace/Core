@@ -24,6 +24,8 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     private $autoZoomMax = null;
     
     private $visibility = null;
+
+    private $showPopupOnClick = true;
     
     /**
      * The type (prototype class) of the layer.
@@ -81,6 +83,11 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     {
         return $this->autoZoomMax;
     }
+
+    public function getShowPopupOnClick(): bool
+    {
+        return $this->showPopupOnClick;
+    }
     
     /**
      * Maximum zoom level for auto_zoom_to_see_all
@@ -97,6 +104,25 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
         return $this;
     }
     
+    /**
+     * 
+     * Show popup on click event with provided information
+     * 
+     * @uxon-property show_popup_on_click
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean $value
+     * @return AbstractMapLayer
+     *
+     */
+    protected function setShowPopupOnClick(bool $value) : AbstractMapLayer
+    {
+        $this->showPopupOnClick = $value;
+        return $this;
+    }
+
+
     /**
      *
      * {@inheritDoc}

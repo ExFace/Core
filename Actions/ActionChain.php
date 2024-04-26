@@ -216,17 +216,35 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $results = [];
         $t = $task;
         $logbook = $this->getLogBook($task);
-        $lbId = $logbook->getId();
+        $logbook->addLine('### Important action properties:');
+        $logbook->addLine("`skip_action_if_input_empty`: `" . ($this->getSkipActionsIfInputEmpty() ? 'true' : 'false') . "`", +1);
+        $logbook->addLine("`use_single_transaction`: `" . ($this->getUseSingleTransaction() ? 'true' : 'false') . "`", +1);
+        $logbook->addLine("`use_input_data_of_action`: `" . ($this->getUseInputDataOfAction() ?? ' ') . "`", +1);
+        $logbook->addLine("`use_result_of_action`: `" . ($this->getUseResultOfAction() ?? ' ') . "`", +1);
+        $logbook->addLine('### Workflow');
+        
+        $actions = $this->getActions();
+        $idxLast = count($actions) - 1;
+        
         // Prepare the flow diagram in mermaid.js syntax
         // Place the nodes from left to right, if there are max. 3 nodes and top-down if there are more
-        $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR') . PHP_EOL;
-        $diagram .= "{$lbId}T(Task) -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| {$lbId}0" . PHP_EOL;
-        $logbook->setIndentActive(1);
-        foreach ($this->getActions() as $idx => $action) {
+        $lbId = $logbook->getId();
+        $diagram .= 'graph ' . (count($this->getActions()) > 3 ? 'TD' : 'LR');
+        $diagram .= PHP_EOL . "{$lbId}T(Task)";
+        foreach ($actions as $idx => $action) {
+            $diagram .= PHP_EOL . "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]";
+        }
+        
+        foreach ($actions as $idx => $action) {
+            $diagramShapeId = "{$lbId}{$idx}";
+            if ($idx === 0) {
+                $diagram .= PHP_EOL . "{$lbId}T";
+            }
             // Skip show-dialog actions. It does not make sense to really perform them within the chain.
             // Instead, they are currently called separately by the front-end similar to front-end-actions
             // - see `JQueryButtonTrait::buildJsClickActionChain()` for details
             if ($action instanceof iShowDialog) {
+                $diagram .= " .-> {$diagramShapeId}";
                 continue;
             }
             
@@ -250,27 +268,23 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             // Every action gets the data resulting from the previous action as input data
             $t = $t->copy()->setInputData($inputSheet);
             
-            if ($idx === 0) {
-                // mermaid: id0[alias]
-                $diagram .= "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]";
-            }
-            
             // Perform the action if it should not be skipped
             $skip = ($this->getSkipActionsIfInputEmpty() === true && $inputSheet->isEmpty() && $action->getInputRowsMin() !== 0);
-            $logbook->addLine(($skip ? 'SKIP' : 'DO') . " {$action->getAliasWithNamespace()} on {$inputSheet->countRows()} rows of {$inputSheet->getMetaObject()->__toString()} (`skip_action_if_input_empty: " . ($this->getSkipActionsIfInputEmpty() ? 'true' : 'false') . "`, `input_rows_min: {$action->getInputRowsMin()}`)");
-            if ($skip === false) {
-                if ($idx > 0) {
-                    // id0[alias] -->|N| id1[alias]
-                    $diagram .= " -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
-                }
+            $logbook->addLine("[{$idx}] **" . ($skip ? 'Skip' : 'Do') . "** {$action->getAliasWithNamespace()} on {$inputSheet->countRows()} rows of {$inputSheet->getMetaObject()->__toString()} (`input_rows_min: {$action->getInputRowsMin()}`)");
+            if ($skip === true) {
+                // mermaid: ... .-x 1[alias]
+                $diagram .= " .-x {$diagramShapeId}";
+            } else {
+                // mermaid: ... -->|...| id1[alias]
+                $diagram .= " -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| $diagramShapeId";
                 try {
                     $lastResult = $action->handle($t, $tx);
                 } catch (\Throwable $e) {
                     if ($idx === 0) {
-                        $diagram .= " --> {$lbId}ERR(Error)" . PHP_EOL;
-                        $diagram .= "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}" . PHP_EOL;
+                        $diagram .= " {$lbId}ERR(Error)";
+                        $diagram .= PHP_EOL . "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}";
                     }
-                    $diagram .= "style {$lbId}{$idx} {$logbook->getFlowDiagramStyleError()}" . PHP_EOL;
+                    $diagram .= PHP_EOL . "style {$diagramShapeId} {$logbook->getFlowDiagramStyleError()}";
                     $logbook->setFlowDiagram($diagram);
                     throw $e;
                 }
@@ -283,18 +297,17 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 }
                 // Determine the input data for the next action: either take that of the last data result or
                 // the explicitly specified step id in `user_result_of_action`
-                // mermaid: 1 // in preparation for the next --> ...
-                if (($freezeInputIdx === null || $freezeInputIdx > $idx) && $lastResult instanceof ResultData) {
-                    $inputSheet = $lastResult->getData();
-                    $diagram .= $idx > 0 ? "{$lbId}{$idx}[{$action->getAliasWithNamespace()}]" : '';
+                // mermaid: preparation for the next --> ...
+                if ($freezeInputIdx === null || $freezeInputIdx > $idx) {
+                    if ($lastResult instanceof ResultData) {
+                        $inputSheet = $lastResult->getData();
+                    }
+                    $diagram .= $idx < $idxLast ? PHP_EOL . $diagramShapeId : '';
                 } else {
                     // If the input is always taken from a certain step, the arrow needs to start from the
                     // step before it!
-                    $diagram .= $idx > 0 ? $lbId . ($freezeInputIdx === 0 ? 'T' : ($freezeInputIdx-1)) : '';
+                    $diagram .= $idx < $idxLast ? PHP_EOL . $lbId . ($freezeInputIdx > 0 ? ($freezeInputIdx-1) : 'T') : '';
                 }
-            } else {
-                // mermaid: 0[alias] .-x 1[alias]
-                $diagram .= " .-x {$lbId}{$idx}[{$action->getAliasWithNamespace()}]" . PHP_EOL;
             }
         }
         
@@ -319,7 +332,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         }
         
         $chainResultArrowComment = ($chainResult instanceof ResultDataInterface) ? "|" . DataLogBook::buildMermaidTitleForData($chainResult->getData()) . "|" : '';
-        $diagram .= " -->{$chainResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
+        $diagram .= PHP_EOL . "{$lbId}{$resultIdx} -->{$chainResultArrowComment} {$lbId}R(Result)" . PHP_EOL;
+        $logbook->setIndentActive(0);
         $logbook->setFlowDiagram($diagram);
         
         $chainResult->setDataModified($chainDataModified);
@@ -461,6 +475,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
      */
     public function getUseSingleTransaction() : bool
     {
+        if ($this->getAutocommit() === false) {
+            return true;
+        }
         return $this->use_single_transaction;
     }
 

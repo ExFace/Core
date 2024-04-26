@@ -17,6 +17,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Groups multiple conditions and/or condition groups using a logical operator like AND, OR, etc.
@@ -687,6 +688,36 @@ class ConditionGroup implements ConditionGroupInterface
             $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator, $ignoreEmptyValue ?? $this->ignoreEmptyValues));
         }
         
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param MetaAttributeInterface|string $attributeOrAlias
+     * @return ConditionGroupInterface
+     */
+    public function addConditionForAttributeIsNull($attributeOrAlias) : ConditionGroupInterface
+    {
+        if ($attributeOrAlias instanceof MetaAttributeInterface) {
+            $this->addConditionFromAttribute($attributeOrAlias, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);
+        } else {
+            $this->addConditionFromString($attributeOrAlias, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param MetaAttributeInterface|string $attributeOrAlias
+     * @return ConditionGroupInterface
+     */
+    public function addConditionForAttributeIsNotNull($attributeOrAlias) : ConditionGroupInterface
+    {
+        if ($attributeOrAlias instanceof MetaAttributeInterface) {
+            $this->addConditionFromAttribute($attributeOrAlias, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS_NOT);
+        } else {
+            $this->addConditionFromString($attributeOrAlias, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS_NOT);
+        }
         return $this;
     }
     

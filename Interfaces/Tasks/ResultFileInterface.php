@@ -28,6 +28,12 @@ interface ResultFileInterface extends ResultStreamInterface
      * 
      * @return string
      */
+    public function getFilename() : string;
+    
+    /**
+     * 
+     * @return string
+     */
     public function getPathAbsolute() : string;
     
     /**

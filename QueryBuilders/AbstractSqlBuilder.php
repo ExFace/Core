@@ -1402,6 +1402,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
+        if ($this->getMainObject()->isExactly($relq->getMainObject()) && $qpart->getAlias() === $relq_attribute_alias) {
+            throw new QueryBuilderException('Cannot build SQL query: found circular self-reference "' . $relq_attribute_alias . '" for object ' . $this->getMainObject()->__toString());
+        }
+        
         $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
@@ -2178,23 +2182,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
-        // IDEA some data type specific procession here
         switch (true) {
             case $data_type instanceof BooleanDataType:
                 $output = $value ? 1 : 0;
                 break;
             case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
                 return EXF_LOGICAL_NULL;
+            // No need to check if the value is valid JSON to search for it - any string is OK
             case $data_type instanceof JsonDataType:
                 $output =  "'" . $this->escapeString($value) . "'";
                 break;
-            case $data_type instanceof StringDataType:
-            case $data_type instanceof DateDataType:
-            case $data_type instanceof TimeDataType:
+            // In most cases apply the same checks and formatting as for INSERT/UPDATE statements
+            default:
                 $output = $this->prepareInputValue($value, $data_type, $dataAddressProps, false);
                 break;
-            default:
-                $output = $this->escapeString($value);
         }
         return $output;
     }

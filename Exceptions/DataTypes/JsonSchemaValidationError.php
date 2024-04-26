@@ -22,7 +22,6 @@ use exface\Core\DataTypes\JsonDataType;
  */
 class JsonSchemaValidationError extends UnexpectedValueException
 {
-    private $context;
     private $errors = [];
     private $json;
     
@@ -31,10 +30,9 @@ class JsonSchemaValidationError extends UnexpectedValueException
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface::__construct()
      */
-    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $context = null, $json = null)
+    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $json = null)
     {
         parent::__construct($message, $alias, $previous);
-        $this->context = $context;
         $this->json = $json;
         $this->errors = $validationErrors;
     }
@@ -50,7 +48,7 @@ class JsonSchemaValidationError extends UnexpectedValueException
     	foreach ($this->errors as $error){
     		switch (true) {
     			case is_array($error):
-	    			$messages[] = $error['message'];    
+	    			$messages[] = $error['property'] . ': ' . $error['message'];
 	    			break;
     			case is_string($error):
     				$messages[] = $error;
@@ -58,11 +56,6 @@ class JsonSchemaValidationError extends UnexpectedValueException
     	}
         
         return $messages;
-    }
-
-    public function getContext() : ?string
-    {
-        return $this->context;
     }
     
     public function getJson() : ?string
@@ -73,6 +66,34 @@ class JsonSchemaValidationError extends UnexpectedValueException
     public function getErrors() : array
     {
         return $this->errors;
+    }
+
+    public function getFormattedErrors() : array
+    {
+        $errors = $this->getErrors();
+
+        switch (true)
+        {
+            case array_key_exists('details', $errors):
+                $newErrorFormat = [];
+                foreach ($errors['details'] as $errorDetail) {
+                    $newErrorFormat[] = [
+                        'source' => $errorDetail['property'],
+                        'message' => $errorDetail['message']];
+                }
+                $errors['details'] = $newErrorFormat;
+                return $errors;
+            case is_array($errors[0]):
+                $newErrorFormat = [];
+                foreach ($errors as $error) {
+                    $newErrorFormat[] = [
+                        'source' => $error['property'],
+                        'message' => $error['message']];
+                }
+                return $newErrorFormat;
+            default:
+                return $errors;
+        }
     }
     
     public function createDebugWidget(DebugMessage $debugWidget)

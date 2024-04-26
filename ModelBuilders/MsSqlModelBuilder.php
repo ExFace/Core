@@ -74,11 +74,11 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 case "''":
                 case "('')":
                 case '(NULL)':
-                $default = '';
-                $isRequired = 0;
+                    $default = '';
+                    $isRequired = 0;
             }
             
-            $rows[] = array(
+            $row = [
                 'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $this->generateAlias($col['COLUMN_NAME']),
                 'DATATYPE' => $this->getDataTypeId($dataType),
@@ -88,7 +88,14 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
                 'EDITABLEFLAG' => $isEditable,
                 'DEFAULT_VALUE' => $default,
                 'UIDFLAG' => $isUid
-            );
+            ];
+            
+            $dataTypeProps = $this->getDataTypeConfig($dataType, $type);
+            if (! $dataTypeProps->isEmpty()) {
+                $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();
+            }
+            
+            $rows[] = $row;
         }
         return $rows;
     }

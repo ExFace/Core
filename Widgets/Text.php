@@ -25,6 +25,8 @@ class Text extends Display implements iShowText, iCanWrapText
     private $style = null;
     
     private $multiLine = true;
+    
+    private $multiLineMaxLines = null;
 
     public function getText()
     {
@@ -166,4 +168,35 @@ class Text extends Display implements iShowText, iCanWrapText
         return $this->setMultiLine(! $value);
     }
 
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getMultiLineMaxLines() : ?int
+    {
+        return $this->multiLineMaxLines;
+    }
+    
+    /**
+     * Limit the maximum number of lines rendered for a multi-line text widget
+     * 
+     * This can be useful in tables or other situations with limited vertical space. The exact behavior
+     * will depend on the facade used. The text will mostly get truncated, but the tooltip (if present)
+     * will still include the entire text.
+     * 
+     * @uxon-property multi_line_max_lines
+     * @uxon-type integer
+     * 
+     * @param int $value
+     * @return Text
+     */
+    public function setMultiLineMaxLines($value) : Text
+    {
+        $value = intval($value);
+        if ($value === 0) {
+            $value = null;
+        }
+        $this->multiLineMaxLines = $value;
+        return $this;
+    }
 }

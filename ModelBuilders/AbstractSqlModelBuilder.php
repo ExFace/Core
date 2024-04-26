@@ -274,14 +274,23 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case $sqlType === 'DATE':
                 $data_type = DataTypeFactory::createFromString($workbench, DateDataType::class);
                 break;
-            case strpos($sqlType, 'TEXT') !== false:
+            case stripos($sqlType, 'TEXT') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, TextDataType::class);
+                if ($length !== null && $length > 0) {
+                    $data_type->setLengthMax($length);
+                }
                 break;
-            case strpos($sqlType, 'BINARY') !== false:
+            case stripos($sqlType, 'BINARY') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, HexadecimalNumberDataType::class);
                 break;
-            case strpos($sqlType, 'BLOB') !== false:
+            case stripos($sqlType, 'BLOB') !== false:
                 $data_type = DataTypeFactory::createFromString($workbench, BinaryDataType::class);
+                break;
+            case stripos($sqlType, 'CHAR') !== false:
+                $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
+                if ($length !== null && $length > 0) {
+                    $data_type->setLengthMax($length);
+                }
                 break;
             default:
                 $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
@@ -298,7 +307,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     protected function getDataTypeConfig(DataTypeInterface $type, string $source_data_type, $length = null, $scale = null) : UxonObject
     {
-        return new UxonObject();
+        return $type->exportUxonObject();
     }
 
     /**
