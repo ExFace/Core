@@ -30,7 +30,7 @@ class BufferingHandler implements LogHandlerInterface
      * @param string $minLevel
      * @param string $maxLevel
      */
-    function __construct(LogHandlerInterface $handler)
+    public function __construct(LogHandlerInterface $handler)
     {
         $this->handler = $handler;
     }
@@ -45,11 +45,23 @@ class BufferingHandler implements LogHandlerInterface
         $this->messages[] = array("level" => $level, "message" => $message, "context" => $context, "sender" => $sender);
     }
     
-    public function __destruct(){
+    /**
+     * Force-dump all buffered messages to the inner logger
+     * 
+     * @return void
+     */
+    public function flush()
+    {
+        foreach ($this->messages as $message){
+            $this->handler->handle($message['level'], $message['message'], $message['context'], $message['sender']);
+        }
+        $this->messages = [];
+    }
+    
+    public function __destruct()
+    {
         if (! $this->isDisabled()){
-            foreach ($this->messages as $message){
-                $this->handler->handle($message['level'], $message['message'], $message['context'], $message['sender']);
-            }
+            $this->flush();
         }
     }
     

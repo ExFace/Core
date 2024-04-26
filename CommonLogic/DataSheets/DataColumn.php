@@ -219,7 +219,13 @@ class DataColumn implements DataColumnInterface
                     }
                 }
                 try {
-                    return $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
+                    $attrDataType = $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
+                    if ($this->hasAggregator()) {
+                        $this->data_type = $this->getAggregator()->getResultDataType($attrDataType);
+                    } else {
+                        $this->data_type = $attrDataType;
+                    }
+                    return $this->data_type;
                 } catch (MetaAttributeNotFoundError $e) {
                     // ignore expressions with invalid attribute aliases
                 }

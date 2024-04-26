@@ -52,6 +52,8 @@ class MonologCsvFileHandler implements LogHandlerInterface
     
     /** @var Logger $monolog */
     private $monolog = null;
+    
+    private $disabled = false;
 
     /**
      * 
@@ -81,6 +83,9 @@ class MonologCsvFileHandler implements LogHandlerInterface
      */
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        if ($this->disabled === true) {
+            return;
+        }
         if ($sender !== null) {
             $context['sender'] = $sender;
         }
@@ -141,5 +146,16 @@ class MonologCsvFileHandler implements LogHandlerInterface
         }
             
         return $this->monolog;
+    }
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return MonologCsvFileHandler
+     */
+    public function setDisabled(bool $trueOrFalse) : MonologCsvFileHandler
+    {
+        $this->disabled = $trueOrFalse;
+        return $this;
     }
 }

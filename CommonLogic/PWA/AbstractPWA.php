@@ -38,6 +38,7 @@ use exface\Core\CommonLogic\Security\Authorization\UiPageAuthorizationPoint;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Widgets\Parts\PrefillModel;
+use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 
 abstract class AbstractPWA implements PWAInterface
 {
@@ -514,8 +515,12 @@ abstract class AbstractPWA implements PWAInterface
             $task->setPageSelector($row['PAGE']);
             $task->setWidgetIdTriggeredBy($row['TRIGGER_WIDGET_ID']);
             $task->setMetaObjectSelector($row['OBJECT']);
-            $action = $task->getAction();
-            $this->addAction($action, $task->getWidgetTriggeredBy(), $row['UID']);
+            try {
+                $action = $task->getAction();
+                $this->addAction($action, $task->getWidgetTriggeredBy(), $row['UID']);
+            } catch (AccessPermissionDeniedError $e) {
+                // Ignore actions, that are not permitted for this user
+            }
         }
         
         // Load routes

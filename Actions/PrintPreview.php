@@ -13,6 +13,9 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Factories\TaskFactory;
+use exface\Core\Interfaces\Tasks\ResultFileInterface;
 
 /**
  * Renders a preview for a provided print action
@@ -32,6 +35,8 @@ class PrintPreview extends GoToUrl
     private $printActionSelectorAttributeAlias = null;
     
     private $previewLabelAttributeAlias = null;
+    
+    private $callActionInsteadOfPreview = false;
     
     /**
      * 
@@ -68,7 +73,10 @@ class PrintPreview extends GoToUrl
         if ($previewDataLabel === null || $previewDataLabel === '') {
             $previewSheet->getSorters()->addFromString($printAction->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::DESC);
         } else {
-            $previewSheet->getFilters()->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+            $previewCondGrp = ConditionGroupFactory::createOR($previewSheet->getMetaObject());
+            $previewCondGrp->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+            $previewCondGrp->addConditionFromAttribute($previewSheet->getUidColumn()->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+            $previewSheet->setFilters($previewCondGrp);
         }
         $previewSheet->dataRead(1);
         
@@ -78,12 +86,21 @@ class PrintPreview extends GoToUrl
             } else {
                 $preview = 'Could not find suitable example data for print preview';
             }
+            $result = ResultFactory::createHTMLResult($task, $preview);
         } else {
-            $prints = $printAction->renderTemplate($previewSheet);
-            $preview = reset($prints);
+            if ($this->getCallActionInsteadOfPreview() === false) {
+                $prints = $printAction->renderTemplate($previewSheet);
+                $preview = reset($prints);
+                $result = ResultFactory::createHTMLResult($task, $preview);
+            } else {
+                $task = TaskFactory::createFromDataSheet($previewSheet, ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $task->getFacade());
+                $result = $printAction->handle($task);
+                if ($result instanceof ResultFileInterface) {
+                    $result->setDownloadable(false);
+                }
+            }
         }
         
-        $result = ResultFactory::createHTMLResult($task, $preview);
         return $result;
     }
     
@@ -106,11 +123,7 @@ class PrintPreview extends GoToUrl
      */
     protected function getPrintAction(TaskInterface $task, DataSheetInterface $inputData) : iRenderTemplate
     {
-        if ($inputData->getMetaObject()->is('exface.Core.OBJECT_ACTION')) {
-            $actionCol = $inputData->getColumns()->get('ALIAS_WITH_NS');
-        } else {
-            $actionCol = $inputData->getColumns()->getByExpression($this->getPrintActionSelectorAttributeAlias());
-        }
+        $actionCol = $inputData->getColumns()->getByExpression($this->getPrintActionSelectorAttributeAlias());
         
         foreach ($actionCol->getValues() as $selector) {
             $action = ActionFactory::createFromString($this->getWorkbench(), $selector/*, $this->getWidgetDefinedIn()*/);
@@ -168,6 +181,31 @@ class PrintPreview extends GoToUrl
     public function setPreviewLabelAttribute(string $value) : PrintPreview
     {
         $this->previewLabelAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function getCallActionInsteadOfPreview() : bool
+    {
+        return $this->callActionInsteadOfPreview;
+    }
+    
+    /**
+     * Set to TRUE to perform the action regularly and download the result instead of rendering a preview
+     * 
+     * @uxon-property call_action_instead_of_preview
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return PrintPreview
+     */
+    public function setCallActionInsteadOfPreview(bool $value) : PrintPreview
+    {
+        $this->callActionInsteadOfPreview = $value;
         return $this;
     }
 }

@@ -31,12 +31,13 @@ Since the Web PI does not offer most recent versions of PHP, it is probably a go
 		- `bin`
 		- `logs`
 		- `tmp`
-		- `wincache` (if required)
+		- `wincache` (if required - see below)
 2. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
 3. Unpack it into `C:\Program Files\PHP\bin`
 4. Follow the guides above to register it as a FastCGI module in IIS
-5. Give the users `IUSR` and `IIS AppPool\DefaultAppPool` read/write and modify permissions for the folders `tmp` and `logs`.
-6. The other folders will be used in `php.ini` - see below.
+5. Give the user, that IIS will use to run PHP read/write permissions for the folders `tmp` and `logs`. If not absolutely sure, what you are doing, give permissions to these users:
+	- `IUSR` 
+	- `IIS AppPool\DefaultAppPool`
 
 ### Rewrite Module installation
 
@@ -45,7 +46,7 @@ For the workbench to work properly, the support for rewrite rules needs to be en
 1. [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
 2. Run the installer. No additional configuration is required.
 
-### WinCache Extension Installation
+### WinCache extension installation (only PHP < 8!)
 
 The WinCache extension is recommended for PHP < 8 in addition to opcache. It accelerates PHP on IIS greatly. So far there is no WinCache for PHP 8.
 
@@ -63,7 +64,7 @@ where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `
 ### SQL Server extension
 
 1. [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
-2. Copy `php_sqlsrv_74_nts.dll` (or similar) to the `ext` folder of PHP. Use the `ts`/`nts` version according to your PHP binaries (see above)
+2. Copy `php_sqlsrv_81_nts.dll` (or similar) to the `ext` folder of PHP.
 3. Add the extension to `php.ini` as shown below
 
 ## php.ini Settings
@@ -156,8 +157,7 @@ Make sure the configuration file `System.config.json` exists and add the followi
 	    "host": "SERVER\\INSTANCE",
 	    "database": "<database>",
 	    "character_set": "UTF-8"
-  	},
-	"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller"
+  	}
 }
 ```
 
@@ -198,6 +198,12 @@ See [security docs](../Security/Securing_installation_folders.md) for a list of 
 By default IIS does not show error details to users except for local users. If you need to see the details, access the app from the server itself via `http://localhost/...`.
 
 Additionally, detailed tracing can be enabled as described here: https://4sysops.com/archives/iis-failed-request-tracing/
+
+### PHP runs with the wrong user
+
+PHP is being run by the IIS as a certain Windows user. Which one depends on the configuration of the IIS website user. If the user is not explicitly defined as described above in "Set up SQL Server Windows authentication", the anonymous user of the default website will be used. It can be changed in `Site > Authentication > Anonymous Authentication > Edit`. 
+
+This can be a solution to various issues related to differences in environment variables: e.g. missing Git in the PATH variable of a certain user.
 
 ### Missing context bar / IIS changes status code from 200 to 500 WITHOUT any logging or error description
 

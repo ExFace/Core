@@ -95,7 +95,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     abstract public function buildHtml();
 
     /**
-     * Returns JavaScript headers, needed for the element as an array of lines.
+     * Returns JavaScript and CSS headers, needed for the element as an array of lines.
+     * 
      * Make sure, it is always an array, as it is quite possible, that multiple elements
      * require the same include and we will need to make sure, it is included only once.
      * The array provides an easy way to get rid of identical lines.

@@ -9,15 +9,22 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Replaces a placeholder with data sheet rows rendered from a provided row template.
  * 
- * important onfiguration options:
+ * Inside the row template you can access the loaded data via `[#thisPlacehlderName:ATTR#]` where
+ * `thisPlacehlderName` is the name of the data placeholder and `ATTR` is the data column name in
+ * the loaded data sheet.
+ * 
+ * Important onfiguration options:
  * 
  * - `data_sheet` to load the data 
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * `[#thisPlacehlderName:some_attribute#]`, `[#thisPlacehlderName:=Formula()#]`.
+ * - `row_delimiter` to define a custom separator between row templates - e.g. a comma
+ * - `outer_template` to wrap all the rendered `row_templates` adding a common title or similar
  * - `data_placeholders` to add nested structures of the same type
  * 
  * ## Examples 
@@ -39,7 +46,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "filters": {
@@ -63,11 +70,11 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  * order position.
  * 
  * ```
- * {
+ *  {
  *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th><th>Discounts</th></tr>[#positions#]</table>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td><td>Dicsounts</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td><td>Dicsounts</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "filters": {
@@ -79,7 +86,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *              },
  *              "data_placeholders": {
  *                  "discounts": {
- *                      "row_template": "<div>- [#~data:name#]: [#~data:value#]</div>",
+ *                      "row_template": "<div>- [#positions:name#]: [#positions:value#]</div>",
  *                      "data_sheet": {
  *                          "object_alias": "my.App.ORDER_POSITION_DISCOUNT",
  *                          "filters": {
@@ -93,7 +100,7 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
  *              }
  *          }
  *      }
- * }
+ *  }
  * 
  * ```
  *
@@ -115,6 +122,10 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     
     private $prefix = null;
     
+    private $outerTemplate = null;
+    
+    private $rowDelimiter = '';
+    
     /**
      * 
      * @param string $placeholder to replace 
@@ -123,12 +134,12 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
      * @param TemplateRendererInterface $baseRowRenderer
      * @param string $dataRowPlaceholdersPrefix
      */
-    public function __construct(string $placeholder, UxonObject $configUxon, BracketHashStringTemplateRenderer $configRenderer, TemplateRendererInterface $baseRowRenderer, string $dataRowPlaceholdersPrefix = '~data:')
+    public function __construct(string $placeholder, UxonObject $configUxon, BracketHashStringTemplateRenderer $configRenderer, TemplateRendererInterface $baseRowRenderer, string $dataRowPlaceholdersPrefix = null)
     {
         $this->workbench = $configRenderer->getWorkbench();
         $this->rowRenderer = $baseRowRenderer;
-        $this->prefix = $dataRowPlaceholdersPrefix;
         $this->placeholder = $placeholder;
+        $this->prefix = $dataRowPlaceholdersPrefix ?? $this->placeholder . ':';
         
         $configRenderer->setIgnoreUnknownPlaceholders(true);
         $renderedUxon = UxonObject::fromJson($configRenderer->render($configUxon->toJson()));
@@ -145,15 +156,27 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
         $phValsSheet = $this->getDataSheet();
         $phValsSheet->dataRead();
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
-        
         $phRowTpl = $this->getRowTemplate();
-        $phRendered = '';
+        
+        // Before the new syntax using `[#prefix:` for data placeholders, there was a hardcoded special
+        // placeholder `[#~data:`. Here we check, if this legacy syntax is used. If so, a special row
+        // placeholder renderer will be added in addition to the normal one in the foreach() below. 
+        $legacyPrefix = '~data:';
+        $legacyPrefixFound = stripos($phRowTpl, '[#' . $legacyPrefix) !== false;
+        
+        $rowsRendered = [];
         foreach (array_keys($phValsSheet->getRows()) as $rowNo) {
             $currentRowRenderer = $this->rowRenderer->copy();
+            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
+            if ($legacyPrefixFound === true) {
+                $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $legacyPrefix));
+            }
             
             if ($dataPhsUxon !== null) {
                 // Prepare a renderer for the data_placeholders config
                 $dataTplRenderer = new BracketHashStringTemplateRenderer($phValsSheet->getWorkbench());
+                // In the config of the nested renderer there will be access the data sheet of this 
+                // resolver via `[#thisPlacehlderName:...#]`
                 $dataTplRenderer->addPlaceholder(
                     (new DataRowPlaceholders($phValsSheet, $rowNo, $this->placeholder . ':'))
                     ->setFormatValues(false)
@@ -166,15 +189,24 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
                 
                 // Create group-resolver with resolvers for every data_placeholder and use
                 // it as the default resolver for the input row renderer
-                $phResolver = new PlaceholderGroup();
+                $dataPhsResolverGroup = new PlaceholderGroup();
+                // Make sure to copy the row renderer before passing it to nested data resolvers! Otherwise we
+                // will run into infinite recursion if at least one placeholder cannt be resolved: the current
+                // row renderer will get the resolver group as default placeholder resolver, which will also have
+                // affect on the base renderer (if it is used directly), etc.
+                $dataPhsBaseRenderer = $currentRowRenderer->copy();
                 foreach ($dataPhsUxon->getPropertiesAll() as $ph => $phConfig) {
-                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $currentRowRenderer));
+                    $dataPhsResolverGroup->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $dataPhsBaseRenderer));
                 }
-                $currentRowRenderer->setDefaultPlaceholderResolver($phResolver);
+                $currentRowRenderer->setDefaultPlaceholderResolver($dataPhsResolverGroup);
             }
             
-            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
-            $phRendered .= $currentRowRenderer->render($phRowTpl);
+            $rowsRendered[] = $currentRowRenderer->render($phRowTpl);
+        }
+        $phRendered = implode($this->getRowDelimiter(), $rowsRendered);
+        
+        if (! $phValsSheet->isEmpty(false) && null !== $outerTpl = $this->getOuterTemplate()) {
+            $phRendered = StringDataType::replacePlaceholder($outerTpl, '~rows', $phRendered); 
         }
         
         return [$this->placeholder => $phRendered];
@@ -217,9 +249,15 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     /**
      * The template string for each row of the loaded data
      * 
+     * Available placeholders:
+     * 
+     * - `thisPlacehlderName:COLUMN` - any column from the data defined within this placeolder
+     * - `thisPlacehlderName:=Concat(ATTR1, ', ', ATTR2)` - a formula evaluated 
+     * in the context of the current data row
+     * 
      * @uxon-property row_template
      * @uxon-type string
-     * @uxon-template <tr><td>[#~data:some_attribute#]</td></tr>
+     * @uxon-template <tr><td>[#thisPlacehlderName:some_attribute#]</td></tr>
      * @uxon-required true
      * 
      * @param string $value
@@ -254,10 +292,63 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     
     /**
      * 
+     * @return string|NULL
+     */
+    protected function getOuterTemplate() : ?string
+    {
+        return $this->outerTemplate;
+    }
+    
+    /**
+     * A wrapper around all the data rows - e.g. a title, that would only be shown if there is at least one row.
+     * 
+     * IMPORTANT: make sure to include the placeholder `[#~rows#]` at the point, which will be
+     * replaced by all the rendered `row_template`s. 
+     * 
+     * @uxon-property outer_template
+     * @uxon-type string
+     * @uxon-template [#~rows#]
+     * 
+     * @param string $value
+     * @return DataSheetPlaceholder
+     */
+    protected function setOuterTemplate(string $value) : DataSheetPlaceholder
+    {
+        $this->outerTemplate = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getRowDelimiter() : string
+    {
+        return $this->rowDelimiter;
+    }
+    
+    /**
+     * Separator between rows - e.g. a comma, if needed.
+     * 
+     * @uxon-property row_delimiter
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return DataSheetPlaceholder
+     */
+    protected function setRowDelimiter(string $value) : DataSheetPlaceholder
+    {
+        $this->rowDelimiter = $value;
+        return $this;
+    }
+    
+    /**
+     * 
      * @return \exface\Core\CommonLogic\UxonObject
      */
     public function exportUxonObject()
     {
+        // TODO
         return new UxonObject();
     }
 }

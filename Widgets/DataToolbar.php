@@ -175,7 +175,6 @@ class DataToolbar extends Toolbar
         
         if ($this->getIncludeSearchActions()) {
             $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
-            
             $search_button = $this->search_button_group->createButton();
             $search_button
                 ->setActionAlias('exface.Core.RefreshWidget')
@@ -184,6 +183,15 @@ class DataToolbar extends Toolbar
                 ->setAlign(EXF_ALIGN_OPPOSITE);
             
             $this->search_button_group->addButton($search_button);
+            
+            $reset_button = $this->search_button_group->createButton();
+            $reset_button
+                ->setActionAlias('exface.Core.ResetWidget')
+                ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.RESETWIDGET.NAME'))
+                ->setIcon(Icons::UNDO)
+                ->setAlign(EXF_ALIGN_OPPOSITE);
+            
+            $this->search_button_group->addButton($reset_button);
         }
         $this->included_buttons_initialized = true;
         return;

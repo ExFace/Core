@@ -4,13 +4,13 @@ Unfortunately writing fail-safe SQL is pretty complicated with MS SQL Server. He
 
 ## Tables
 
-Replace `{TABLE_NAME}` with the name of your desired table and `dbo` if using a different schema.
+Replace `YourTableName` with the name of your desired table and `dbo` if using a different schema.
 
 ### Create a table
 
 ```
-IF OBJECT_ID ('{TABLE_NAME}', N'U') IS NULL 
-CREATE TABLE "{TABLE_NAME}" (
+IF OBJECT_ID ('YourTableName', N'U') IS NULL 
+CREATE TABLE "YourTableName" (
 	"Id" BIGINT NOT NULL,
 	PRIMARY KEY ("Id")
 );
@@ -19,8 +19,8 @@ CREATE TABLE "{TABLE_NAME}" (
 ### Drop a table
 
 ```
-DECLARE @table NVARCHAR(max) = 'Bundesland';
-DECLARE @schema NVARCHAR(max) = 'bmdb';
+DECLARE @table NVARCHAR(max) = 'YourTableName';
+DECLARE @schema NVARCHAR(max) = 'dbo';
 DECLARE @stmt NVARCHAR(max);
 
 IF OBJECT_ID (CONCAT(@schema, '.', @table), N'U') IS NOT NULL
@@ -59,22 +59,22 @@ END
 
 ## Columns
 
-Replace `{TABLE_NAME}` and `{COLUMN_NAME}` with the name of the respective table/column names. Also replace `dbo` if using a different schema. 
+Replace `YourTableName` and `YourColumnName` with the name of the respective table/column names. Also replace `dbo` if using a different schema. 
 
 ### Add columns - nullable
 
 ```
-IF COL_LENGTH('dbo.{TABLE_NAME}','{COLUMN_NAME}') IS NULL
-ALTER TABLE "dbo"."{TABLE_NAME}"
-	ADD "{COLUMN_NAME}" INT NULL;
+IF COL_LENGTH('dbo.YourTableName','YourColumnName') IS NULL
+ALTER TABLE "dbo"."YourTableName"
+	ADD "YourColumnName" INT NULL;
 ```
 
 ### Add columns - not nullable, with default values
 
 ```
-IF COL_LENGTH('dbo.{TABLE_NAME}','{COLUMN_NAME}') IS NULL
-ALTER TABLE "dbo"."{TABLE_NAME}"
-	ADD "{COLUMN_NAME}" INT NOT NULL DEFAULT 0;
+IF COL_LENGTH('dbo.YourTableName','YourColumnName') IS NULL
+ALTER TABLE "dbo"."YourTableName"
+	ADD "YourColumnName" INT NOT NULL DEFAULT 0;
 ```
 
 ### Add columns - not nullable, without default values
@@ -82,15 +82,15 @@ ALTER TABLE "dbo"."{TABLE_NAME}"
 IF adding a required column without a default value, we need to provide values for already existing rows explicitly. Technically, we can add a nullable column, set values and make it not-nullable afterwards.
 
 ```
-IF COL_LENGTH('dbo.{TABLE_NAME}', '{COLUMN_NAME}') IS NULL
+IF COL_LENGTH('dbo.YourTableName', 'YourColumnName') IS NULL
 BEGIN
-	ALTER TABLE "dbo"."{TABLE_NAME}"
-		ADD "{COLUMN_NAME}" BIGINT NULL
+	ALTER TABLE "dbo"."YourTableName"
+		ADD "YourColumnName" BIGINT NULL
 
-	EXEC sys.sp_executesql @query = N'UPDATE dbo.{TABLE_NAME} SET {COLUMN_NAME} = 0;'
+	EXEC sys.sp_executesql @query = N'UPDATE dbo.YourTableName SET YourColumnName = 0;'
 
-	ALTER TABLE "dbo"."{TABLE_NAME}"
-		ALTER COLUMN "{COLUMN_NAME}" BIGINT NOT NULL
+	ALTER TABLE "dbo"."YourTableName"
+		ALTER COLUMN "YourColumnName" BIGINT NOT NULL
 END
 ```
 
@@ -108,12 +108,12 @@ ALTER TABLE [dbo].[my_table] ALTER COLUMN [col2] nvarchar(max) NULL;
 When removing a column, we need to drop all related constraints first. Of course, we must check if the column really exists too!
 
 ```
-IF COL_LENGTH('dbo.{TABLE_NAME}', '{COLUMN_NAME}') IS NOT NULL
+IF COL_LENGTH('dbo.YourTableName', 'YourColumnName') IS NOT NULL
 BEGIN
 	DECLARE @sql NVARCHAR(MAX),
 			@schema NVARCHAR(50) = 'dbo',
-			@table NVARCHAR(50) = '{TABLE_NAME}',
-			@column NVARCHAR(50) = '{COLUMN_NAME}'
+			@table NVARCHAR(50) = 'YourTableName',
+			@column NVARCHAR(50) = 'YourColumnName'
 	/* DROP default constraints	*/
 	WHILE 1=1
 	BEGIN
@@ -146,10 +146,25 @@ END
 ### Add/Remove multiple columns
 
 ```
-ALTER TABLE [dbo].[{TABLE_NAME}]
-	ADD 	[{COLUMN_NAME_1}] NVARCHAR(max) NULL,
-			[{COLUMN_NAME_2}] NVARCHAR(max) NULL;
+ALTER TABLE [dbo].[YourTableName]
+	ADD 	[YourColumnName1] NVARCHAR(max) NULL,
+			[YourColumnName2] NVARCHAR(max) NULL;
 
+```
+
+## Indexes
+
+### Add an index
+
+```
+If IndexProperty(Object_Id('dbo.YourTableName'), 'YourIndexName', 'IndexID') IS NULL
+CREATE INDEX [YourIndexName] ON [dbo].[YourTableName] (col1, col2);
+```
+
+### Remove an index
+
+```
+DROP INDEX IF EXISTS [YourIndexName] ON [dbo].[YourTableName];
 ```
 
 ## Data
@@ -157,7 +172,7 @@ ALTER TABLE [dbo].[{TABLE_NAME}]
 ### Initial data
 
 ```
-MERGE dbo.{TABLE_NAME} with(HOLDLOCK) as target
+MERGE dbo.YourTableName with(HOLDLOCK) as target
 	USING (VALUES 
 		(1001, 'InitDB', 'InitDB', GETDATE(), GETDATE(), 'Name1'),
 		(1002, 'InitDB', 'InitDB', GETDATE(), GETDATE(), 'Name2')

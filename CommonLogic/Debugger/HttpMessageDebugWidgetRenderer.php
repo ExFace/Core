@@ -10,6 +10,7 @@ use Psr\Http\Message\ResponseInterface;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\JsonDataType;
 use Psr\Http\Message\ServerRequestInterface;
+use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
  * Renders debug widget tabs for PSR7 requests and responses
@@ -19,9 +20,9 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class HttpMessageDebugWidgetRenderer implements iCanGenerateDebugWidgets
 {
-    const MAX_BODY_PRINT_SIZE = 1024*1024; // 1 mb in bytes
+    const MAX_BODY_PRINT_SIZE = 100*1024; // 100 kb in bytes
     
-    const MAX_PARAM_PRINT_SIZE = 1024*10; // 10 kb in bytes 
+    const MAX_PARAM_PRINT_SIZE = 10*1024; // 10 kb in bytes 
     
     private $request = null;
     
@@ -234,8 +235,9 @@ return $debug_widget;
             if ($bodySize === null || $bodySize === 0) {
                 return 'Message body is empty.';
             } 
-            
             $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
+            
+            $messageBody = ByteSizeDataType::formatWithScale($bodySize) . ' of type "' . $contentType . '".' . PHP_EOL . PHP_EOL;
             switch (true) {
                 case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
                     if (! $message->getBody()->isReadable() && $message instanceof ServerRequestInterface) {
@@ -243,7 +245,7 @@ return $debug_widget;
                     } else {
                         $bodyString = $message->getBody()->__toString();
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```
 {$this->prettifyUrlParams($bodyString)}
@@ -253,17 +255,20 @@ MD;
                 case stripos($contentType, 'json') !== false:
                     $json = $message->getBody()->__toString();
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        $jsonArray = JsonDataType::decodeJsonAsArray($json);
+                        $jsonArray = JsonDataType::decodeJson($json, true);
                         array_walk_recursive($jsonArray, function($val, $key){
                             if (is_string($val) && mb_strlen($val) > self::MAX_PARAM_PRINT_SIZE) {
                                 return $this->prettifyTruncateValue($val);
                             }
                         });
                         $prettified = JsonDataType::prettify($jsonArray);
+                        if (mb_strlen($prettified) > self::MAX_BODY_PRINT_SIZE) {
+                            $prettified = $this->prettifyTruncateValue($prettified, self::MAX_BODY_PRINT_SIZE);
+                        }
                     } else {
                         $prettified = JsonDataType::prettify($json);
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```json
 {$prettified}
@@ -272,25 +277,28 @@ MD;
                     break;
                 case stripos($contentType, 'xml') !== false:
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        return 'XML message body is too big to display: ' . $this->prettifySize($bodySize);
+                        $prettified = $this->prettifyTruncateValue($message->getBody()->__toString(), self::MAX_BODY_PRINT_SIZE);
+                    } else {
+                        $domxml = new \DOMDocument();
+                        $domxml->preserveWhiteSpace = false;
+                        $domxml->formatOutput = true;
+                        $domxml->loadXML($message->getBody());
+                        $prettified = $domxml->saveXML();
                     }
-                    $domxml = new \DOMDocument();
-                    $domxml->preserveWhiteSpace = false;
-                    $domxml->formatOutput = true;
-                    $domxml->loadXML($message->getBody());
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```xml
-{$domxml->saveXML()}
+{$prettified}
 ```
 MD;
                     break;
                 case stripos($contentType, 'html') !== false:
                     if ($bodySize > self::MAX_BODY_PRINT_SIZE) {
-                        return 'HTML message body is too big to display: ' . $this->prettifySize($bodySize);
+                        $prettified = $this->prettifyTruncateValue($message->getBody()->__toString(), self::MAX_BODY_PRINT_SIZE);
+                    } else {
+                        $prettified = HtmlDataType::prettify($message->getBody()->__toString());
                     }
-                    $prettified = HtmlDataType::prettify($message->getBody()->__toString());
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```html
 {$prettified}
@@ -301,17 +309,28 @@ MD;
                     if (! $message->getBody()->isReadable()) {
                         return 'Message body is no readable or detached!';
                     }
-                    $messageBody = <<<MD
+                    $messageBody .= <<<MD
                             
 ```
-{$message->getBody()->__toString()}
+{$this->prettifyTruncateValue($message->getBody()->__toString(), self::MAX_BODY_PRINT_SIZE)}
 ```
 MD;
                     break;
             }
             
         } catch (\Throwable $e) {
-            $messageBody = 'Error reading message body: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+            $message = $e->getMessage();
+            if (stripos($message, 'stack trace') !== false) {
+                $message = "Error reading message body!\n" . $message;
+            } else {
+                $message .= 'Error reading message body: ' . $message . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+            }
+            $messageBody .= <<<MD
+            
+```
+{$message}
+```
+MD;
         }
         
         return $messageBody;
@@ -344,24 +363,10 @@ MD;
      */
     protected function prettifyTruncateValue(string $value, int $length = 100) : string
     {
-        return mb_substr($value, 0, $length) . '... (truncated value of ' . $this->prettifySize(mb_strlen($value)) . ')';
-    }
-    
-    /**
-     * 
-     * @param int $bytes
-     * @return string
-     */
-    protected function prettifySize(int $bytes) : string
-    {
-        switch (true) {
-            case $bytes > 1024 * 1024:
-                return round($bytes / 1024 / 1024, 1) . ' mb';
-            case $bytes > 1024:
-                return round($bytes / 1024, 1) . ' kb';
-            default:
-                return $bytes . ' b';
+        if (mb_strlen($value) <= $length) {
+            return $value;
         }
+        return mb_substr($value, 0, $length) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')';
     }
     
     /**
@@ -372,7 +377,7 @@ MD;
     protected function isSensitiveData(string $headerName) : bool
     {
         switch (true) {
-            case strcasecmp($headerName, 'Authorization') === 0:
+            case stripos($headerName, 'auth') !== false:
             case stripos($headerName, 'key') !== false:
                 return true;
         }

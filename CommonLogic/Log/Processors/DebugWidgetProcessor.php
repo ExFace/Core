@@ -47,34 +47,51 @@ class DebugWidgetProcessor
         }
         
         $sender = $record['context'][$this->sourceContextKey];
-        $debugWidgetData = null;
+        $debugger = $this->workbench->getDebugger();
+        $debugWidgetUxon = null;
         if ($sender && ($sender instanceof iCanGenerateDebugWidgets)) {
             try {
                 $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
-                $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
+                $debugWidgetUxon = $debugWidget->exportUxonObject();
             } catch (\Throwable $e){
                 // If errors occur when creating debug widgets, log these errors separately
+                $debugWidgetUxon = new UxonObject([
+                    'widget_type' => 'DebugMessage',
+                    'tabs' => []
+                ]);
                 if ($sender instanceof ExceptionInterface){
-                    $debugWidgetData = $this->createHtmlFallback($this->workbench->getDebugger()->printException($sender, true));
+                    $originalErrorUxon = $this->createHtmlFallback($debugger->printException($sender, true));
+                    $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
+                        'caption' => 'Original error',
+                        'widgets' => [
+                            $originalErrorUxon->toArray()
+                        ]
+                    ]));
                 }
-                $this->workbench->getLogger()->logException($e);
+                $renderErrorUxon = $this->createHtmlFallback($debugger->printException($sender, true));
+                $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
+                    'caption' => 'Rendering exception',
+                    'widgets' => [
+                        $renderErrorUxon->toArray()
+                    ]
+                ]));
             }
         }
         
         // If there is no sender or an problem with it, but the context contains an 
         // error, use the error fallback to create a debug widget
-        if ($debugWidgetData === null && ($e = $record['context']['exception'] ?? null) instanceof \Throwable){
-            $debugWidgetData = $this->createHtmlFallback($this->workbench->getDebugger()->printException($e, true));
+        if ($debugWidgetUxon === null && ($e = $record['context']['exception'] ?? null) instanceof \Throwable){
+            $debugWidgetUxon = $this->createHtmlFallback($debugger->printException($e, true));
         } 
         
         // If all the above fails, simply dump the entire record to the debug widget
-        if ($debugWidgetData === null) {
+        if ($debugWidgetUxon === null) {
             $dump = $record;
             unset($dump['formatted']);
-            $debugWidgetData = $this->createHtmlFallback($this->workbench->getDebugger()->printVariable($dump, true));
+            $debugWidgetUxon = $this->createHtmlFallback($debugger->printVariable($dump, true));
         }
         
-        $record[$this->targetRecordKey] = $debugWidgetData;
+        $record[$this->targetRecordKey] = $debugWidgetUxon->toJson(true);
         
         return $record;
     }
@@ -87,15 +104,16 @@ class DebugWidgetProcessor
      * debug widget.
      *
      * @param string $html
-     * @return string
+     * @return UxonObject
      */
-    protected function createHtmlFallback($html){
+    protected function createHtmlFallback($html) : UxonObject
+    {
         $uxon = new UxonObject([
             'widget_type' => 'Html',
             'width' => '100%',
             'html' => $html
         ]);
-        return $uxon->toJson(true);
+        return $uxon;
     }
     
     /**

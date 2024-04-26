@@ -27,6 +27,7 @@ use exface\Core\Actions\CallAction;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
+use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
  * 
@@ -43,6 +44,8 @@ trait JqueryButtonTrait {
     private $onSuccessJs = [];
     
     private $onErrorJs = [];
+    
+    private static $sizeErrors = [];
     
     /**
      * Returns the JS code to refresh all neccessary widgets after the button's action succeeds.
@@ -353,7 +356,7 @@ JS;
                 $js = $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData); break;
             // Reset input or other widget - don't need input data here
             case $action instanceof ResetWidget:
-                $js = $this->buildJsResetWidgets(); break;
+                $js = $this->buildJsClickResetWidget($action); break;
             // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
                 $js = $this->buildJsClickCallWidgetFunction($action); break;
@@ -649,11 +652,12 @@ JS;
         $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
         $output .= "
-						if (" . $this->getInputElement()->buildJsValidator() . ") {
-							" . $this->buildJsBusyIconShow() . "
+						if ({$this->getInputElement()->buildJsValidator()}) {
+                            {$this->buildJsCheckRequestDataSize($jsRequestData, $this->getAjaxPostSizeMax())}
+							{$this->buildJsBusyIconShow()}
 							$.ajax({
 								type: 'POST',
-								url: '" . $this->getAjaxUrl() . "',
+								url: '{$this->getAjaxUrl()}',
                                 {$headers} 
 								data: {	
 									{$this->buildJsRequestCommonParams($widget, $action)}
@@ -714,7 +718,7 @@ JS;
 								}
 							});
 						} else {
-							" . $this->getInputElement()->buildJsValidationError() . "
+							{$this->getInputElement()->buildJsValidationError()}
 						}
 					";
         
@@ -909,6 +913,23 @@ JS;
         
 JS;
     }
+    
+    /**
+     * Returns the JS code to reset the input widget of the action
+     *
+     * @param ActionInterface $action
+     * @return string
+     */
+    protected function buildJsClickResetWidget(ActionInterface $action) : string
+    {
+        return <<<JS
+        
+                {$this->getInputElement()->buildJsResetter()};
+                {$this->buildJsTriggerActionEffects($action)};
+                {$this->buildJsCloseDialog()};
+                
+JS;
+    }
 
     protected function buildJsUndoUrl(ActionInterface $action) : string
     {
@@ -1099,5 +1120,47 @@ JS;
                 return "$('#{$this->getId()}').focus()";
         }
         return parent::buildJsCallFunction($functionName, $parameters);
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    protected function getAjaxPostSizeMax() : ?int
+    {
+        $iniVal = ini_get('post_max_size');
+        if ($iniVal === null) {
+            return null;
+        }
+        try {
+            $bytes = ByteSizeDataType::cast($iniVal);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logExceptions($e);
+            return null;
+        }
+        return $bytes;
+    }
+    
+    protected function buildJsCheckRequestDataSize(string $jsRequestData, int $bytes = null) : string
+    {
+        if ($bytes === null) {
+            return '';
+        }
+        
+        if (null === $msgs = $this::$sizeErrors[$bytes]) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $messageJs = $this->escapeString("{$translator->translate('WIDGET.BUTTON.ERROR_DATA_TO_LARGE')}\n\n{$translator->translate('WIDGET.BUTTON.ERROR_DATA_TO_LARGE_DESCRIPTION')}\n\n{$translator->translate('WIDGET.BUTTON.ERROR_DATA_MAX_SIZE', ['%size_formatted%' => ByteSizeDataType::formatWithScale($bytes)])}");
+            $titleJs = $this->escapeString($translator->translate('ERROR.CAPTION') . ' 7V9OSYM');
+            $this::$sizeErrors[$bytes] = [$titleJs, $messageJs];
+        } else {
+            list($titleJs, $messageJs) = $msgs;
+        }
+        return <<<JS
+        
+                            if ($.param($jsRequestData).length > ($bytes - 1000)) {
+                                {$this->buildJsShowMessageError($messageJs, $titleJs)}
+                                return;
+                            }
+JS;
     }
 }

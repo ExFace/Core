@@ -158,6 +158,20 @@ HTML;
         $zoom = $this->getZoomInitial();
         $lat = $widget->getCenterLatitude() ?? 0;
         $lon = $widget->getCenterLongitude() ?? 0;
+
+        $popupJs = $this->getWidget()->getShowPopupOnClick() ?  $this->buildJsLeafletPopup('"Location info"', $this->buildJsLeafletPopupList("[
+            {
+                caption: 'Latitude',
+                value: latlng.lat + '°'
+            },{
+                caption: 'Longitude',
+                value: latlng.lng + '°'
+            },{
+                caption: 'Altitude',
+                value: latlng.alt ? latlng.alt + 'm' : '?'
+            }
+        ]"), "[latlng.lat,latlng.lng]") : '';
+
         
         return <<<JS
 
@@ -170,18 +184,8 @@ HTML;
     .on('contextmenu', function(e) {
         var latlng = e.latlng;
         var layer = e.target;
-        {$this->buildJsLeafletPopup('"Location info"', $this->buildJsLeafletPopupList("[
-            {
-                caption: 'Latitude',
-                value: latlng.lat + '°'
-            },{
-                caption: 'Longitude',
-                value: latlng.lng + '°'
-            },{
-                caption: 'Altitude',
-                value: latlng.alt ? latlng.alt + 'm' : '?'
-            }
-        ]"), "[latlng.lat,latlng.lng]")}
+       
+        {$popupJs} 
     });
     $('#{$this->getIdLeaflet()}').data('_exfLeaflet', {$this->buildJsLeafletVar()});
 
@@ -233,6 +237,11 @@ JS;
         if (null !== $val = $widget->getZoomMax()) {
             $mapOptions .= "
         maxZoom: {$val},";
+        }
+
+        if (!$widget->getDoubleClickToZoom()) {
+            $mapOptions .= "
+        doubleClickZoom: false,";
         }
         
         return $mapOptions;
@@ -774,7 +783,7 @@ JS;
         if ($layer !== null && $layer->hasTooltip()) {
             $markerProps .= 'title: oRow.' . $layer->getTooltipColumn()->getDataColumnName() . ',';
         }
-        
+
         return <<<JS
             (function(){
                 var oLeaflet = {$this->buildJsLeafletVar()};
@@ -865,7 +874,7 @@ JS;
                 value: {$formatter->buildJsFormatter("feature.properties?.data['{$col->getDataColumnName()}']")} },";
         }
         
-        $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer');
+        $showPopupJs = $layer->getShowPopupOnClick() ? $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'layer') : '';
         
         // Add auto-zoom
         if ($layer->getAutoZoomToSeeAll() === true || $layer->getAutoZoomToSeeAll() === null && count($this->getWidget()->getDataLayers()) === 1){
@@ -899,23 +908,82 @@ JS;
                 $onDrawJs = $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueSetter('JSON.stringify(oFeature.geometry)');
             }
             $drawInitJs = <<<JS
-            oMap.on('draw:edited', function (e) {
-                var layers = e.layers;
-                layers.eachLayer(function (oLayer) {
-                    var oFeature = oLayer.toGeoJSON();
-                    oFeature.properties.data = {};
-                    {$onDrawJs}
-                });
-            });
-            oMap.on('draw:created', function (e) {
+
+            // Callback when a shape is created
+            oMap.on('pm:create', function (e) {
+                // Delete old shape when new shape is created
                 var oParentLayer = {$this->buildJsLayerGetter($layer, 'oMap')}.layer;
                 var oFeature = e.layer.toGeoJSON();
                 oFeature.properties.data = {};
+                oFeature.properties.draggable = true;
                 {$onDrawJs}
+                e.layer.remove();
                 oParentLayer.clearLayers();
                 oParentLayer.addData(oFeature);
             });
 
+
+            // When user presses on drag mode
+            oMap.on("pm:globaldragmodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        // Save the new coords of adjusted shape in model
+                        item.on('pm:dragdisable', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+
+                    // disable drag function for non-editable shapes
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disableLayerDrag) {
+                        item?.pm?.disableLayerDrag();
+                    }
+                })
+            });
+
+            // When user presses on edit mode
+            oMap.on("pm:globaleditmodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    // enable callback for edit action
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        item.on('pm:update', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+                    // disable edit function for non-editable shapes
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disable) {
+                        item?.pm?.disable();
+                    }
+                })
+            });
+
+            // When user presses on rotate mode
+            oMap.on("pm:globalrotatemodetoggled", function (e) {
+                if (!e.enabled) return;
+                oMap.eachLayer(item => {
+                    // enable callback for rotate action
+                    if (item?.feature?.properties?.draggable && item?.pm) {
+                        item.on('pm:rotatedisable', function (updatedEvent) {
+                            var oFeature = updatedEvent.layer.toGeoJSON();
+                            oFeature.properties.data = {};
+                            oFeature.properties.draggable = true;
+                            {$onDrawJs}
+                        });
+                    }
+                    if (item?.feature && !item?.feature?.properties?.draggable && item?.pm?.disableRotate) {
+                        item?.pm?.disableRotate();
+                    }
+                })
+            });
+            
+            
 JS;
         }
         
@@ -935,6 +1003,7 @@ JS;
                     
                     oLayer.clearLayers();
                     oLayer.addData(aGeoJson);
+                    oLayer.bringToFront();
                     {$autoZoomJs}
                 })();
                 
@@ -959,7 +1028,7 @@ JS;
 
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
-                        
+                    oLayer.bringToBack();
                     {$autoZoomJs}
                 })();
                 
@@ -991,7 +1060,7 @@ JS;
 
                         oLayer.clearLayers();
                         oLayer.addData(aFeatures);
-                            
+                        oLayer.bringToBack();
                         {$autoZoomJs}
                     ")}
                 })();
@@ -1026,6 +1095,22 @@ JS;
         } else {
             $tooltipJs = '';
         }
+
+
+        $onClickJs = <<<JS
+                 (function () {
+                        var jqIcon = $(e.target.getElement());
+                            if (jqIcon.hasClass('exf-map-shape-selected')) {
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = null;
+                                jqIcon.removeClass('exf-map-shape-selected');
+                            } else {
+                                $('#{$this->getIdLeaflet()} .leaflet-interactive').removeClass('exf-map-shape-selected');
+                                {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
+                                jqIcon.addClass('exf-map-shape-selected');
+                            }
+                            {$this->getOnChangeScript()}
+                        }())
+JS;
             
         return <<<JS
             
@@ -1039,11 +1124,41 @@ JS;
                     {$tooltipJs}
                     
                     layer.on('mouseover',function(ev) {
-                        $(ev.target.getElement()).addClass('exf-map-shape-selected');
+                        $(ev.target.getElement()).addClass('exf-map-shape-hover');
                     });
                     layer.on('mouseout',function(ev) {
-                        $(ev.target.getElement()).removeClass('exf-map-shape-selected');
+                        $(ev.target.getElement()).removeClass('exf-map-shape-hover');
                     })
+
+                    var timer = 0;
+                    layer.on('click', function (e) {
+                        clearTimeout(timer);
+                        timer = setTimeout(function() {
+                            {$onClickJs}
+                        }, 200)
+                    });
+
+                    layer.on('dblclick', function (e) {
+                        clearTimeout(timer);
+                        $('#{$this->getIdLeaflet()} .leaflet-interactive').removeClass('exf-map-shape-selected');
+                        {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
+                        var jqIcon = $(e.target.getElement());
+                        jqIcon.addClass('exf-map-shape-selected');    
+                        {$this->getOnChangeScript()}
+                    });
+
+                    layer.on('mousedown', function (e) {
+                        // right click
+                        const { originalEvent } = e;
+                        if (originalEvent.which === 3 || originalEvent.button === 2)
+                        {
+                            $('#{$this->getIdLeaflet()} .leaflet-interactive').removeClass('exf-map-shape-selected');
+                            {$this->buildJsLeafletVar()}._exfState.selectedFeature = feature;
+                            var jqIcon = $(e.target.getElement());
+                            jqIcon.addClass('exf-map-shape-selected');    
+                            {$this->getOnChangeScript()}
+                        }
+                    });
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
@@ -1065,6 +1180,10 @@ JS;
             
             oLayer._exfRefresh = function() {
                 {$exfRefreshJs}
+                if (oMap?.pm?.disableDraw) {
+                    oMap.pm.disableDraw();
+                    oMap.pm.disableGlobalEditMode();
+                }
             }
             
             oMap.on('exfRefresh', oLayer._exfRefresh);
@@ -1401,7 +1520,9 @@ JS;
             
             if ($this->hasLeafletDraw() === true) {
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
+                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.JS') . '"></script>';
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
+                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.CSS') . '"/>';
             }
         }
         
@@ -1439,7 +1560,7 @@ JS;
         switch (true) {
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
-                $rows = "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data : []";
+                $rows = "{$this->buildJsLeafletVar()}?._exfState.selectedFeature ? {$this->buildJsLeafletVar()}?._exfState.selectedFeature.properties.data : []";
                 break;
             
             // If the button requires none of the rows explicitly
@@ -1454,12 +1575,12 @@ JS;
             default:
                 $rows = $this->buildJsLeafletGetSelectedRows();
         }
-        return "{oId: {$this->buildJsLeafletVar()}._exfState.selectedFeature ? {$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.object : '{$widget->getMetaObject()->getId()}', rows: $rows}";
+        return "{oId: {$this->buildJsLeafletVar()}?._exfState.selectedFeature ? {$this->buildJsLeafletVar()}?._exfState.selectedFeature.properties.object : '{$widget->getMetaObject()->getId()}', rows: $rows}";
     }
     
     protected function buildJsLeafletGetSelectedRows() : string
     {
-        return "{$this->buildJsLeafletVar()}._exfState.selectedFeature ? [{$this->buildJsLeafletVar()}._exfState.selectedFeature.properties.data] : []";
+        return "{$this->buildJsLeafletVar()}?._exfState.selectedFeature ? [{$this->buildJsLeafletVar()}?._exfState.selectedFeature.properties.data] : []";
     }
     
     /**
@@ -1669,8 +1790,19 @@ JS;
             remove: false
         }
     };
-    const drawControl = new L.Control.Draw(oDrawOpts);
-    oMap.addControl(drawControl);
+
+    // Adjust which controls on geoman to be shown
+    oMap.pm.addControls({
+        drawMarker: false,
+        drawPolygon: true,
+        editMode: true,
+        drawPolyline: false,
+        removalMode: false,
+        drawText: false,
+        drawCircleMarker: false,
+        rotateMode: true,
+        cutPolygon: false,
+    });
 })($oMapJs);
 JS;
     }

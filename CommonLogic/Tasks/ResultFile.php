@@ -3,9 +3,10 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
-use Symfony\Component\Config\Resource\ReflectionClassResource;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MimeTypeDataType;
 
 /**
  * Task result containing a file.
@@ -53,6 +54,16 @@ class ResultFile extends ResultMessage implements ResultFileInterface
         $this->pathAbsolute = $filemanager::pathNormalize($path);
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getFilename()
+     */
+    public function getFilename() : string
+    {
+        return FilePathDataType::findFileName($this->getPathAbsolute());
+    }
 
     /**
      * 
@@ -72,7 +83,7 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     public function getMimeType(): string
     {
         if (is_null($this->mimeType)) {
-            return GuzzleHttp\Psr7\mimetype_from_filename($this->getPathAbsolute());
+            return MimeTypeDataType::findMimeTypeOfFile($this->getPathAbsolute());
         }
         return $this->mimeType;
     }

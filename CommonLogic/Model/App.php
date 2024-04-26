@@ -620,23 +620,32 @@ class App implements AppInterface
      */
     public function get($selectorOrString, $selectorClass = null, array $constructorArguments = null)
     {
-        if (! array_key_exists((string) $selectorOrString, $this->selector_cache)) {
-            // has() will cache the class
-            if (! $this->has($selectorOrString)) {
-                $type = $selectorOrString instanceof SelectorInterface ? ucfirst($selectorOrString->getComponentType()) : '';
-                throw new AppComponentNotFoundError($type . ' "' . $selectorOrString . '" not found in app ' . $this->getAliasWithNamespace());
-            }
-        }
-        
         if ($selectorOrString instanceof SelectorInterface) {
             $selector = $selectorOrString;
+            $selectorString = $selector->toString();
+            $selectorClass = get_class($selector);
         } elseif ($selectorClass !== null) {
-            $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
+            $selectorString = $selectorOrString;
+            $selector = null;
         } else {
             throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
         }
         
-        $cache = $this->selector_cache[$selector->toString()][get_class($selector)];
+        if ((! array_key_exists($selectorString, $this->selector_cache)) || (! array_key_exists($selectorClass, $this->selector_cache[$selectorString]))) {
+            // has() will cache the class
+            $has = false;
+            if ($selector !== null) {
+                $has = $this->has($selector);
+            } else {
+                $has = $this->has($selectorString, $selectorClass);
+            }
+            if ($has === false) {
+                $type = $selector !== null ? ucfirst($selector->getComponentType()) : $selectorClass;
+                throw new AppComponentNotFoundError($type . ' "' . $selectorOrString . '" not found in app ' . $this->getAliasWithNamespace());
+            }
+        }
+        
+        $cache = $this->selector_cache[$selectorString][$selectorClass];
         if ($cache !== null) {
             $selector = $cache['selector'];
             $class = $cache['class'] ?? null;
@@ -671,27 +680,30 @@ class App implements AppInterface
      */
     public function has($selectorOrString, $selectorClass = null)
     {
-        if (array_key_exists((string) $selectorOrString, $this->selector_cache)) {
-            return true;
-        }
-        
         if ($selectorOrString instanceof SelectorInterface) {
             $selector = $selectorOrString;
+            $selectorString = $selector->toString();
+            $selectorClass = get_class($selector);
         } elseif ($selectorClass !== null) {
+            $selectorString = $selectorOrString;
             $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
         } else {
             throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
         }
         
+        if ((array_key_exists($selectorString, $this->selector_cache)) && (array_key_exists($selectorClass, $this->selector_cache[$selectorString]))) {
+            return true;
+        }
+        
         try {
             $class = $this->getPrototypeClass($selector);
             if (class_exists($class)){
-                $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'class' => $class];
+                $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'class' => $class];
                 return true;
             } else {
                 $instance = $this->loadFromModel($selector);
                 if ($instance !== null) {
-                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'instance' => $instance];
+                    $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } else {
                     return false;

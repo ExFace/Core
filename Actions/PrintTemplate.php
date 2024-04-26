@@ -52,7 +52,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * 
  * - `data_sheet` to load the data 
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#~data:some_attribute#]`, `[#~data:=Formula()#]`.
+ * `[#dataPlaceholderNamesome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
@@ -65,7 +65,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * `data_sheet` used in the configuration of the data placeholder contains placeholders itself: in this
  * case, the `[#~input:ORDERNO#]`, with will be replace by the order number from the input data before
  * the sheet is read. The `row_template` now may contain global placeholders and those from it's
- * data placeholder rows - prefixed with `~data:`.
+ * data placeholder rows - prefixed with the respective placeholder name.
  * 
  * ```
  * {
@@ -73,7 +73,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  *      "filename": "Order [#~input:ORDERNO#].html",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
+ *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "columns": [
@@ -143,7 +143,7 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
         foreach ($contents as $filePath => $fileContents) {
             file_put_contents($filePath, $fileContents);
         }
-        $result = ResultFactory::createFileResult($task, $filePath);
+        $result = ResultFactory::createFileResult($task, $filePath, $this->isDownloadable());
         
         return $result;
     }
@@ -185,11 +185,14 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
                 
                 // Create group-resolver with resolvers for every data_placeholder and use
                 // it as the default resolver for the input row renderer
-                $phResolver = new PlaceholderGroup();
+                $dataPhsResolverGroup = new PlaceholderGroup();
+                $dataPhsBaseRenderer = $currentRowRenderer->copy();
                 foreach ($dataPhsUxon->getPropertiesAll() as $ph => $phConfig) {
-                    $phResolver->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $currentRowRenderer));
+                    // Add a resolver for the data-placeholder: e.g. `[#ChildrenData#]` for the entire child sub-template 
+                    // and `[#ChildrenData:ATTR1#]` to address child-data values inside that sub-template
+                    $dataPhsResolverGroup->addPlaceholderResolver(new DataSheetPlaceholder($ph, $phConfig, $dataTplRenderer, $dataPhsBaseRenderer));
                 }
-                $currentRowRenderer->setDefaultPlaceholderResolver($phResolver);
+                $currentRowRenderer->setDefaultPlaceholderResolver($dataPhsResolverGroup);
             }
             // placeholders for the resulting file
             $filePath = $this->getFilePathAbsolute($currentRowRenderer);
@@ -388,8 +391,8 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
      * and a configuration for its contents:
      * 
      * - `data_sheet` to load the data 
-     * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#~data:some_attribute#]`.
-     * 
+     * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. `[#dataPlaceholderName:some_attribute#]`.
+     * - nested `data_placeholders` to use inside each data placeholder
      * 
      * @uxon-property template
      * @uxon-type string

@@ -102,6 +102,8 @@ class DataSheet implements DataSheetInterface
     private $invalid_data_flag = false;
     
     private $is_fresh = true;
+    
+    private $is_fresh_tag = null;
 
     // properties NOT to be copied on copy()
     private $exface;
@@ -2590,6 +2592,7 @@ class DataSheet implements DataSheetInterface
             $col->setFresh($value);
         }
         $this->is_fresh = $value;
+        $this->is_fresh_tag = uniqid($this->getColumns()->count(), true);
         return $this;
     }
 
@@ -2606,6 +2609,11 @@ class DataSheet implements DataSheetInterface
             }
         }
         return $this->is_fresh;
+    }
+    
+    public function getFreshStamp() : ?string
+    {
+        return $this->is_fresh_tag;
     }
 
     public function getRowsLimit() : ?int

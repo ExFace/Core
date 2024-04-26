@@ -135,11 +135,16 @@ class ResultFactory extends AbstractStaticFactory
      * 
      * @param TaskInterface $task
      * @param string $path
+     * @param bool $downloadable
      * @return ResultFileInterface
      */
-    public static function createFileResult(TaskInterface $task, string $path) : ResultFileInterface
+    public static function createFileResult(TaskInterface $task, string $path, bool $downloadable = null) : ResultFileInterface
     {
-        return (new ResultFile($task))->setPath($path);
+        $result = (new ResultFile($task))->setPath($path);
+        if ($downloadable === true) {
+            $result->setDownloadable(true);
+        }
+        return $result;
     }
     
     /**
