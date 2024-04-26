@@ -230,10 +230,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($inheritMode === self::INHERIT_COLUMNS_OWN_ATTRIBUTES && (! $fromCol->isAttribute() || $fromCol->getAttribute()->isRelated())) {
                     continue;
                 }
-                $processedNames[] = $fromCol->getName();
+                $processedNames[] = "`{$fromCol->getName()}`";
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
-            if ($logbook !== null) $logbook->addLine(count($processedNames) . ' columns (mode "' . $inheritMode . '"): ' . implode(', ', $processedNames));
+            if ($logbook !== null) $logbook->addLine(count($processedNames) . " columns (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             try {
                 $toSheet->importRows($fromSheet);
             } catch (\Throwable $e) {
@@ -246,7 +246,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         
         // Inherit filters if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
-            if ($logbook !== null) $logbook->addLine('Filters: ' . $fromSheet->getFilters()->__toString());
+            if ($logbook !== null) $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
             try {
                 $toSheet->setFilters($fromSheet->getFilters());
             } catch (\Throwable $e) {
@@ -263,9 +263,9 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $processedNames = [];
                 foreach ($fromSheet->getSorters()->getAll() as $sorter) {
                     $toSheet->getSorters()->add($sorter);
-                    $processedNames[] = $sorter->__toString();
+                    $processedNames[] = "`{$sorter->__toString()}`";
                 }
-                if ($logbook !== null) $logbook->addLine(count($processedNames) . ' sorters: ' . implode(', ', $processedNames));
+                if ($logbook !== null) $logbook->addLine(count($processedNames) . " sorters (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             } catch (\Throwable $e) {
                 if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage(), null, null, $logbook);
