@@ -1092,9 +1092,9 @@ abstract class AbstractAction implements ActionInterface
             if ($this->hasInputDataPreset()) {
                 $logbook->addDataSheet('Input preset', $this->getInputDataPreset());
                 $sheet = $this->getInputDataPreset()->importRows($sheet);
-                $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "| Task";
+                $diagram .= "\n\t Task(Task) -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "| Task";
             } 
-            $diagram .= "\n\t Task -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
+            $diagram .= "\n\t Task(Task) -->|" . DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } elseif ($this->hasInputDataPreset()) {
             // If the task has no data, use the preset data
             $sheet = $this->getInputDataPreset();
@@ -1103,7 +1103,7 @@ abstract class AbstractAction implements ActionInterface
         } elseif ($task->hasMetaObject(true)) {
             // If there is neither task nor preset data, create a new data sheet
             $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
-            $diagram .= "\n\t Task -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
+            $diagram .= "\n\t Task(Task) -->|" .  DataLogBook::buildMermaidTitleForData($sheet) . "|";
         } else {
             throw new ActionInputMissingError($this, 'No input data found for action "' . $this->getAliasWithNamespace() . '"!');
         }
@@ -1117,6 +1117,7 @@ abstract class AbstractAction implements ActionInterface
         $prevSection = $logbook->getSectionActive();
         $logbook->removeSection('Input data');
         $logbook->addSection('Input data');
+        $logbook->setIndentActive(0);
         $logbook->addCodeBlock('[#input_diagram#]', 'mermaid');
         $logbook->addLine('Looking for input mappers from object ' . $sheet->getMetaObject()->__toString());
 
