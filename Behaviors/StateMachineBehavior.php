@@ -32,6 +32,7 @@ use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -86,6 +87,8 @@ class StateMachineBehavior extends AbstractBehavior
     private $behaviors = null;
     
     private $displayWidgetWidth = null;
+    
+    private $logbook = null;
     
     /**
      * 
@@ -477,7 +480,7 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $state = $this->states[$state_id];
         if ($state === null) {
-            throw new BehaviorRuntimeError($this, 'Unknown state machine state "' . $state_id . '" for object ' . $this->getObject()->__toString() . '!');
+            throw new BehaviorRuntimeError($this, 'Unknown state machine state "' . $state_id . '" for object ' . $this->getObject()->__toString() . '!', null, null, $this->logbook);
         }
         return $state;
     }
@@ -592,7 +595,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         // Throw an error if the current state is not in the state machine definition!
         if ($current_state && ! $this->getState($current_state)) {
-            throw new BehaviorRuntimeError($this, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
+            throw new BehaviorRuntimeError($this, 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL', null, $this->logbook);
         }
         
         $state = $this->getState($current_state);
@@ -667,7 +670,7 @@ class StateMachineBehavior extends AbstractBehavior
         
         $stateCol = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute());
         if (! $stateCol) {
-            throw new BehaviorRuntimeError($this, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!');
+            throw new BehaviorRuntimeError($this, 'Cannot check if DELETE operation allowed in current state of ' . $thisObj->__toString() . ': no state value found in input data of action!', null, null, $this->logbook);
         }
         
         foreach ($states as $state) {
@@ -712,9 +715,15 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        $this->logbook = $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->addDataSheet('Input data', $data_sheet);
+        $logbook->addLine('Received input data with ' . $data_sheet->getMetaObject()->__toString());
         
-        if ($this->hasTransitionRestrictions()) {
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        
+        if ($this->hasTransitionRestrictions() === true) {
+            $logbook->addLine('Checking, if state transition is allowed');
+            $logbook->addIndent(+1);
             
             // Read the unchanged object from the database
             $check_sheet = DataSheetFactory::createFromObject($thisObj);
@@ -729,6 +738,7 @@ class StateMachineBehavior extends AbstractBehavior
             }
             
             $check_sheet->dataRead();
+            $logbook->addDataSheet('Check sheet', $check_sheet);
             $check_cnt = count($check_column->getValues());
             
             // Check if the state column is present in the sheet, if so get the old value and check
@@ -743,6 +753,7 @@ class StateMachineBehavior extends AbstractBehavior
                     // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
                     foreach ($updated_column->getValues() as $row_nr => $updated_val) {
                         $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
+                        $logbook->addLine("Transition from `" . ($check_val ?? 'null') . "` to `" . ($updated_val ?? 'null') . "` on row {$row_nr}");
                         $from_state = $this->getState($check_val);
                         $to_state = $this->getState($updated_val);
                         if ($from_state->isTransitionAllowed($to_state) === false) {
@@ -762,6 +773,7 @@ class StateMachineBehavior extends AbstractBehavior
                     $updated_val = $updated_column->getValues()[0];
                     $to_state = $this->getState($updated_val);
                     foreach ($check_column->getValues() as $row_nr => $check_val) {
+                        $logbook->addLine("Transition from `" . ($check_val ?? 'null') . "` to `" . ($updated_val ?? 'null') . "` on row {$row_nr}");
                         $from_state = $this->getState($check_val);
                         if ($from_state->isTransitionAllowed($to_state) === false) {
                             $error = 'state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed';    
@@ -781,7 +793,9 @@ class StateMachineBehavior extends AbstractBehavior
                     throw new StateMachineTransitionError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $error . '!', '6VC040N');
                 }
             }
-            
+            $logbook->addIndent(-1);
+        } else {
+            $logbook->addLine('No restrictions for state transitions defined. Any changes allowed!');
         }
         
         // Check all the updated attributes for disabled attributes, if a disabled attribute
