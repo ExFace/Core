@@ -391,7 +391,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     * Apply this policy (including possible filters) to related objects too.
+     * Apply this policy (including possible filters) to these listed related objects too.
      * 
      * For example, if you have an object called `COMPANY` and you need to make users of a certain
      * role only see `ORDER`s and `TASK`s of their own company, you can create the following policy:
@@ -426,6 +426,7 @@ class DataAuthorizationPolicy implements AuthorizationPolicyInterface
      *              "related_object": "my.App.ORDERPOS",
      *              "relation_path_from_policy_object": "ORDER__ORDERPOS"
      *          }
+     *          
      * ```
      * 
      * Assuming each order position is linked to a `PRODUCT`, you may or may not want to limit visibility
