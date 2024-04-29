@@ -456,8 +456,12 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
             $input->setDisabled(false);
         }
         
-        if ($disableCond = parent::getDisabledIf()) {
-            $input->setDisabledIf($disableCond->exportUxonObject());
+        // Inherit conditional properties
+        if (null !== $condProp = parent::getDisabledIf()) {
+            $input->setDisabledIf($condProp->exportUxonObject());
+        }
+        if (null !== $condProp = parent::getHiddenIf()) {
+            $input->setHiddenIf($condProp->exportUxonObject());
         }
         
         // Simply inherit do_not_prefill
@@ -1422,6 +1426,19 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     {
         $this->useHiddenInput = $value;
         return parent::setHidden($value);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDisabledIf()
+     */
+    public function setHiddenIf(UxonObject $value) : WidgetInterface
+    {
+        if ($this->isInputWidgetInitialized() === true) {
+            $this->getInputWidget()->setHiddenIf($value);
+        }
+        return parent::setHiddenIf($value);
     }
     
     /**
