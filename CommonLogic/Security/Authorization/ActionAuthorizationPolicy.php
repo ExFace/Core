@@ -36,6 +36,8 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * Policy for access to actions.
@@ -117,6 +119,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     private $appUidAppliesToObject = false;
     
     private $appUidAppliesToPage = false;
+    
+    private $applyIfUxon = null;
+    
+    private $applyIfConditionGroup = null;
     
     /**
      * 
@@ -267,6 +273,15 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 return PermissionFactory::createNotApplicable($this, 'User role does not match');
             } else {
                 $applied = true;
+            }
+            
+            // Match explicitly defined conditions
+            if (null !== $conditionGrp = $this->getApplyIf()) {
+                if ($conditionGrp->evaluate() === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                } else {
+                    $applied = true;
+                }
             }
             
             // See if trigger widget must be validatable
@@ -685,6 +700,44 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function setApplyIfTargetAppMatchesPageApp(bool $value) : ActionAuthorizationPolicy
     {
         $this->appUidAppliesToObject = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return UxonObject|NULL
+     */
+    protected function getApplyIfUxon() : ?UxonObject
+    {
+        return $this->applyIfUxon;
+    }
+    
+    /**
+     * 
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getApplyIf() : ?ConditionGroupInterface
+    {
+        if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon);
+        }
+        return $this->applyIfConditionGroup;
+    }
+    
+    /**
+     * Only apply this policy if the provided condition is matched
+     *
+     * @uxon-property apply_only_if
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     *
+     * @param UxonObject $value
+     * @return AbstractAuthorizationPoint
+     */
+    protected function setApplyIf(UxonObject $value) : AbstractAuthorizationPoint
+    {
+        $this->applyIfUxon = $value;
+        $this->applyIfConditionGroup = null;
         return $this;
     }
 }
