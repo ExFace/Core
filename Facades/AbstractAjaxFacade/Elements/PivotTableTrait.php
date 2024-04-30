@@ -5,6 +5,7 @@ use exface\Core\Widgets\Parts\Pivot\PivotValue;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Parts\Pivot\PivotLayout;
 
 /**
  * Common methods for facade elements based on the Pivottable.js library.
@@ -14,7 +15,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * ```
  * {
  *  "require": {
- *      "npm-asset/subtotal" : "^1"
+ *      "npm-asset/subtotal" : "1.11.0-alpha.0"
  *  }
  * }
  * 
@@ -108,11 +109,6 @@ JS;
             $renderersJs = <<<JS
 
             renderer: $.pivotUtilities.subtotal_renderers['Table With Subtotal'],
-            rendererOptions: {
-                rowSubtotalDisplay: {
-                    displayOnTop: false
-                }
-            },
 JS;
             
             // Values
@@ -120,6 +116,19 @@ JS;
                 $aggregatorsJs .= $this->buildJsAggregator($layout->getPivotValues()[0]);
             }
         }
+        
+        // Renderer options
+        $rendererOptions = [];
+        if ($layout->getShowColumnSubtotals() === PivotLayout::COLUMN_SUBTOTALS_BOTTOM) {
+            $rendererOptions['rowSubtotalDisplay']['displayOnTop'] = false;
+        }
+        if ($layout->getShowColumnSubtotals() === PivotLayout::COLUMN_SUBTOTALS_NONE) {
+            $rendererOptions['rowSubtotalDisplay']['disableFrom'] = 0;
+        }
+        if ($layout->getShowRowSubtotals() === PivotLayout::ROW_SUBTOTALS_NONE) {
+            $rendererOptions['colSubtotalDisplay']['disableFrom'] = 0;
+        }
+        $rendererOptionsJs = empty($rendererOptions) ? '' : 'rendererOptions: ' . json_encode($rendererOptions) . ',';
         
         // Columns
         $cols = [];
@@ -158,6 +167,7 @@ JS;
             rows: {$rowsJs},
             cols: {$colsJs},
             {$renderersJs}
+            {$rendererOptionsJs}
             {$aggregatorsJs}
         });
         {$cssOptionsJs}
