@@ -25,6 +25,10 @@ class PivotLayout implements WidgetPartInterface
     
     private $values = [];
     
+    private $showRowTotals = true;
+    
+    private $showColumnTotals = true;
+    
     /**
      * 
      * @throws WidgetConfigurationError
@@ -153,6 +157,56 @@ class PivotLayout implements WidgetPartInterface
             $this->values[] = $pivotValue;
             //$this->addDataColumn($pivotValue->getAttributeAlias());
         }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowRowTotals() : bool
+    {
+        return $this->showRowTotals;
+    }
+    
+    /**
+     * Set to FALSE to hide the grand total column at the end of the table
+     * 
+     * @uxon-property show_row_totals
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowRowTotals(bool $value) : PivotLayout
+    {
+        $this->showRowTotals = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowColumnTotals() : bool
+    {
+        return $this->showColumnTotals;
+    }
+    
+    /**
+     * Set to FALSE to hide the grand total row at the end of the table
+     * 
+     * @uxon-property show_column_totals
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowColumnTotals(bool $value) : PivotLayout
+    {
+        $this->showColumnTotals = $value;
         return $this;
     }
 }

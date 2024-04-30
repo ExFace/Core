@@ -135,6 +135,19 @@ JS;
         }
         $rowsJs = json_encode($rows);
         
+        // CSS classes for certain options
+        $cssOptionsJs = '';
+        if ($layout->getShowRowTotals() === false) {
+            $cssOptionsJs .= "jqEl.addClass('exf-pvt-no-row-total');\n";
+        } else {
+            $cssOptionsJs .= "jqEl.removeClass('exf-pvt-no-row-total');\n";
+        }
+        if ($layout->getShowColumnTotals() === false) {
+            $cssOptionsJs .= "jqEl.addClass('exf-pvt-no-column-total');\n";
+        } else {
+            $cssOptionsJs .= "jqEl.removeClass('exf-pvt-no-column-total');\n";
+        }
+        
         return <<<JS
 
     (function(jqEl, oData) {
@@ -147,6 +160,7 @@ JS;
             {$renderersJs}
             {$aggregatorsJs}
         });
+        {$cssOptionsJs}
     })({$this->buildJsJqueryElement()}, $oDataJs)
 JS;
     }
@@ -165,5 +179,15 @@ JS;
                 break;
         }
         return "aggregator: $aggregator(['{$key}'])";
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildCssElementClass()
+     */
+    public function buildCssElementClass()
+    {
+        return parent::buildCssElementClass() . ' exf-pivottable';
     }
 }
