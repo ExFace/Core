@@ -275,15 +275,6 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 $applied = true;
             }
             
-            // Match explicitly defined conditions
-            if (null !== $conditionGrp = $this->getApplyIf()) {
-                if ($conditionGrp->evaluate() === false) {
-                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
-                } else {
-                    $applied = true;
-                }
-            }
-            
             // See if trigger widget must be validatable
             if ($this->getActionTriggerWidgetMatch() !== null) {
                 // If the specific action does not require a trigger widget,
@@ -315,6 +306,26 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             } else {
                 $applied = true;
+            }
+            
+            // Match additional conditions
+            // IDEA added placeholders for input data???
+            if ($this->hasApplyIf() === true) {
+                $object = $object ?? $this->findObject($action);
+                $conditionGrp = $this->getApplyIf($object);
+                if ($task->hasInputData()) {
+                    if ($conditionGrp->evaluate($task->getInputData()) === false) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched in context of action input data');
+                    } else {
+                        $applied = true;
+                    }
+                } else {
+                    if ($conditionGrp->evaluate() === false) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                    } else {
+                        $applied = true;
+                    }
+                }
             }
             
             // Match page
@@ -704,37 +715,40 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     }
     
     /**
-     *
-     * @return UxonObject|NULL
+     * 
+     * @return bool
      */
-    protected function getApplyIfUxon() : ?UxonObject
+    protected function hasApplyIf() : bool
     {
-        return $this->applyIfUxon;
+        return $this->applyIfUxon !== null;
     }
     
     /**
      * 
      * @return ConditionGroupInterface|NULL
      */
-    protected function getApplyIf() : ?ConditionGroupInterface
+    protected function getApplyIf(MetaObjectInterface $baseObject) : ?ConditionGroupInterface
     {
         if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
-            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon);
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon, $baseObject);
         }
         return $this->applyIfConditionGroup;
     }
     
     /**
      * Only apply this policy if the provided condition is matched
+     * 
+     * If `apply_if` is defined, the policy will be applied if the condition resolves to `true` or
+     * will produce a `not applicable` result if it doesn't.
      *
-     * @uxon-property apply_only_if
+     * @uxon-property apply_if
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
      * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
      *
      * @param UxonObject $value
      * @return AbstractAuthorizationPoint
      */
-    protected function setApplyIf(UxonObject $value) : AbstractAuthorizationPoint
+    protected function setApplyIf(UxonObject $value) : ActionAuthorizationPolicy
     {
         $this->applyIfUxon = $value;
         $this->applyIfConditionGroup = null;
