@@ -34,11 +34,13 @@ class PivotLayout implements WidgetPartInterface
     
     private $showRowTotals = true;
     
-    private $showRowSubtotals = self::ROW_SUBTOTALS_RIGHT;
+    private $showRowSubtotals = self::ROW_SUBTOTALS_NONE;
     
     private $showColumnTotals = true;
     
-    private $showColumnSubtotals = self::COLUMN_SUBTOTALS_TOP;
+    private $showColumnSubtotals = self::COLUMN_SUBTOTALS_NONE;
+    
+    private $showSubtotals = true;
     
     /**
      * 
@@ -277,5 +279,14 @@ class PivotLayout implements WidgetPartInterface
         }
         $this->showColumnSubtotals = constant($const);
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasSubtotals() : bool
+    {
+        return $this->getShowColumnSubtotals() !== self::COLUMN_SUBTOTALS_NONE || $this->getShowRowSubtotals() !== self::ROW_SUBTOTALS_NONE;
     }
 }

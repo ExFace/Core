@@ -6,6 +6,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\Pivot\PivotLayout;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Common methods for facade elements based on the Pivottable.js library.
@@ -57,6 +58,9 @@ trait PivotTableTrait
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.CORE.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.SUBTOTAL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.UI.JS') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.LIBS.PLOTLY') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.RENDERERS.EXPORT') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.RENDERERS.CHARTS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.CORE.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.SUBTOTAL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.UI.CSS') . '" rel="stylesheet" media="screen">',
@@ -98,17 +102,23 @@ JS;
         
         if ($widget->isDisabled() !== true) {
             $constructorJs = 'pivotUI';
+            $renderers = $this->getPivotRenderersAvailable($layout);
+            if (count($renderers) > 1) {
+                $renderersJs = '$.extend(' . implode(',', $renderers) . ')';
+            } else {
+                $renderersJs = $renderers[0];
+            }
             $renderersJs = <<<JS
 
-            renderers: renderers,
-            rendererName: 'Table With Subtotal',
+            renderers: {$renderersJs},
+            //rendererName: '{$this->getPivotRendererSelected($layout)}',
 JS;
             $aggregatorsJs = '';
         } else {
             $constructorJs = 'pivot';
             $renderersJs = <<<JS
 
-            renderer: $.pivotUtilities.subtotal_renderers['Table With Subtotal'],
+            renderer: {$this->getPivotRenderersAvailable($layout)[0]}['{$this->getPivotRendererSelected($layout)}'],
 JS;
             
             // Values
@@ -157,13 +167,15 @@ JS;
             $cssOptionsJs .= "jqEl.removeClass('exf-pvt-no-column-total');\n";
         }
         
+        if ($layout->hasSubtotals()) {
+            $dataClassJs = "dataClass: $.pivotUtilities.SubtotalPivotData,";
+        }
+        
         return <<<JS
 
     (function(jqEl, oData) {
-        var dataClass = $.pivotUtilities.SubtotalPivotData;
-        var renderers = $.pivotUtilities.subtotal_renderers;
         jqEl.{$constructorJs}(oData, {
-            dataClass: dataClass,
+            {$dataClassJs}
             rows: {$rowsJs},
             cols: {$colsJs},
             {$renderersJs}
@@ -173,6 +185,35 @@ JS;
         {$cssOptionsJs}
     })({$this->buildJsJqueryElement()}, $oDataJs)
 JS;
+    }
+    
+    /**
+     * 
+     * @param PivotLayout $layout
+     * @return array
+     */
+    protected function getPivotRenderersAvailable(PivotLayout $layout) : array
+    {
+        if ($layout->hasSubtotals()) {
+            $arr = ['$.pivotUtilities.subtotal_renderers'];
+        } else {
+            $arr = [
+                '$.pivotUtilities.renderers'
+                ,'$.pivotUtilities.plotly_renderers'
+                ,'$.pivotUtilities.export_renderers'
+            ];
+        }
+        return $arr;
+    }
+    
+    protected function getPivotRendererSelected(PivotLayout $layout) : string
+    {
+        if ($layout->hasSubtotals()) {
+            $name = 'Table With Subtotal';
+        } else {
+            $name = 'Table';
+        }
+        return $name;
     }
     
     protected function buildJsAggregator(PivotValue $value) : string
