@@ -40,7 +40,7 @@ class PivotLayout implements WidgetPartInterface
     
     private $showColumnSubtotals = self::COLUMN_SUBTOTALS_NONE;
     
-    private $showSubtotals = true;
+    private $view = null;
     
     /**
      * 
@@ -288,5 +288,31 @@ class PivotLayout implements WidgetPartInterface
     public function hasSubtotals() : bool
     {
         return $this->getShowColumnSubtotals() !== self::COLUMN_SUBTOTALS_NONE || $this->getShowRowSubtotals() !== self::ROW_SUBTOTALS_NONE;
+    }
+    
+    /**
+     * 
+     * @param string $default
+     * @return string
+     */
+    public function getView(string $default = 'table') : string
+    {
+        return $this->view ?? $default;
+    }
+    
+    /**
+     * Initial view type - e.g. `table`
+     * 
+     * @uxon-property view
+     * @uxon-type [table,table_bar_chart,heatmap_per_column,chart_bars,chart_bars_stacked,chart_columns,chart_columns_stacked,chart_line,chart_area,chart_pies,export_tsv]
+     * @uxon-default table
+     * 
+     * @param string $value
+     * @return PivotLayout
+     */
+    public function setView(string $value) : PivotLayout
+    {
+        $this->view = $value;
+        return $this;
     }
 }
