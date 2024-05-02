@@ -6,7 +6,6 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Parts\Pivot\PivotLayout;
-use exface\Core\DataTypes\StringDataType;
 
 /**
  * Common methods for facade elements based on the Pivottable.js library.
@@ -47,6 +46,22 @@ use exface\Core\DataTypes\StringDataType;
  */
 trait PivotTableTrait 
 {    
+    private $viewRenderers = [
+        'table' => 'Table',
+        'table_bar_chart' => 'Table Barchart',
+        'heatmap' => 'Heatmap',
+        'heatmap_per_row' => 'Row Heatmap',
+        'heatmap_per_column' => 'Col Heatmap',
+        'chart_bars' => 'Horizontal Bar Chart',
+        'chart_bars_stacked' => 'Horizontal Stacked Bar Chart',
+        'chart_columns' => 'Bar Chart',
+        'chart_columns_stacked' => 'Bar Chart Stacked',
+        'chart_line' => 'Line Chart',
+        'chart_area' => 'Area Chart',
+        'chart_pies' => 'Multiple Pie Chart',
+        'export_tsv' => 'TSV Export'
+    ];
+    
     /**
      * 
      * @return string[]
@@ -108,10 +123,28 @@ JS;
             } else {
                 $renderersJs = $renderers[0];
             }
+            // Fire a custom event on every refresh. This will allow other
+            // Pivot widgets to follow the config of this one and display the same
+            // layout with another view (e.g. a chart)
+            // See https://pivottable.js.org/examples/onrefresh.html
             $renderersJs = <<<JS
 
             renderers: {$renderersJs},
-            //rendererName: '{$this->getPivotRendererSelected($layout)}',
+            rendererName: '{$this->getPivotRendererSelected($layout)}',
+            onRefresh: function(config) {
+                var oCfgCopy = JSON.parse(JSON.stringify(config));
+                //delete some values which are functions
+                delete oCfgCopy["aggregators"];
+                delete oCfgCopy["renderers"];
+                //delete some bulky default values
+                delete oCfgCopy["rendererOptions"];
+                delete oCfgCopy["localeStrings"];
+                {$this->buildJsJqueryElement()}.trigger('pivotrendered', {
+                    element_id: '{$this->getId()}',
+                    object_alias: '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}',
+                    config: oCfgCopy
+                });
+            },
 JS;
             $aggregatorsJs = '';
         } else {
@@ -208,12 +241,20 @@ JS;
     
     protected function getPivotRendererSelected(PivotLayout $layout) : string
     {
+        $view = $layout->getView('table');
         if ($layout->hasSubtotals()) {
-            $name = 'Table With Subtotal';
+            switch ($view) {
+                case 'table': $name = 'Table With Subtotal'; break; 
+                case 'table_bar_chart': $name = 'Table With Subtotal Bar Chart'; break; 
+                case 'heatmap': $name = 'Table With Subtotal Heatmap'; break; 
+                case 'heatmap_per_column': $name = 'Table With Subtotal Col Heatmap'; break; 
+                case 'heatmap_per_row': $name = 'Table With Subtotal Row Heatmap'; break; 
+                default: $name = $this->viewRenderers[$view];
+            }
         } else {
-            $name = 'Table';
+            $name = $this->viewRenderers[$view];
         }
-        return $name;
+        return $name ?? 'Table';
     }
     
     protected function buildJsAggregator(PivotValue $value) : string
