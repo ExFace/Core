@@ -182,6 +182,23 @@
 			},
             "READONLY": 0,
             "ALIAS": "objects_with_filebehavior"
+        },
+        {
+            "CREATED_ON": "2024-05-02 14:26:15",
+            "MODIFIED_ON": "2024-05-02 14:42:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efa82f2c2b7222a82f025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "TIME_ZONE": null,
+            "LABEL": "Fake SMTP for Debugging",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/SmtpToNotificationAdapter.php",
+            "CONFIG": {
+				"send_message_dump": true,
+				"from": "exface@exface.com"
+			},
+            "READONLY": 0,
+            "ALIAS": "fake_smtp_for_debugging"
         }
     ],
     "totals_rows": [],

@@ -30,6 +30,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Communication\UserRecipientInterface;
 use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\Exceptions\UnexpectedValueException;
+use Symfony\Component\Mailer\SentMessage;
 
 /**
  * Sends emails via SMTP
@@ -128,7 +129,7 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         if (! is_a($query, '\\axenox\\UrlDataxenox\\Notifier\\DataSources\\SymfonyNotifierMessageDataQuery')) {
             throw new DataConnectionQueryTypeError($this, 'Invalid query type for connector "' . $this->getAliasWithNamespace() . '": expecting "SymfonyNotifierMessageDataQuery", received "' . get_class($query) . '"!');
         }
-        $this->getTransport()->send($query->getMessage());
+        $this->sendEmail($query->getMessage());
         return $query;
     }
 
@@ -268,55 +269,14 @@ class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements 
         }
         
         try {
-            $sentMessage = $this->getTransport()->send($email);
+            $sentMessage = $this->sendEmail($email);
         } catch (\Throwable $e) {
-            $debug = <<<MD
-
-## Email message
-
-```
-{$email->toString()}
-```
-MD;
-            if ($e instanceof TransportExceptionInterface) {
-                $debug .= <<<MD
-                
-## SMTP log
-
-```
-{$e->getDebug()}
-```
-MD;
-            }
-            if ($sentMessage !== null) {
-                $debug .= <<<MD
-
-## Message debug output
-
-```
-{$sentMessage->getDebug()}
-```
-MD;
-            }
+            $debug = $this->buildMarkdownDebug($email, $sentMessage, $e);
             throw new CommunicationNotSentError($message, 'Failed to send email via "' . $this->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e, $this, $debug);
         }
         
         $debugCallback = function(DebugMessage $debugWidget) use ($email, $sentMessage) {
-            $debug = <<<MD
-            
-## Email message
-
-```
-{$email->toString()}
-```
-
-## SMTP log
-
-```
-{$sentMessage->getDebug()}
-```
-MD;
-
+            $debug = $this->buildMarkdownDebug($email, $sentMessage);
             $debugWidget->addTab(WidgetFactory::createFromUxonInParent($debugWidget, new UxonObject([
                 'widget_type' => 'Tab',
                 'caption' => 'SMTP debug',
@@ -333,6 +293,56 @@ MD;
         };
         
         return new CommunicationReceipt($message, $this, $debugCallback);
+    }
+    
+    /**
+     * 
+     * @param Email $email
+     * @return SentMessage
+     */
+    protected function sendEmail(Email $email) : SentMessage
+    {
+        return $this->getTransport()->send($email);
+    }
+    
+    /**
+     * 
+     * @param Email $email
+     * @param SentMessage $sentMessage
+     * @param \Throwable $e
+     * @return string
+     */
+    protected function buildMarkdownDebug(Email $email, SentMessage $sentMessage = null, \Throwable $e = null) : string
+    {
+        $debug = <<<MD
+        
+## Email message
+
+```
+{$email->toString()}
+```
+MD;
+        if ($e instanceof TransportExceptionInterface) {
+            $debug .= <<<MD
+    
+## SMTP log
+
+```
+{$e->getDebug()}
+```
+MD;
+        }
+        if ($sentMessage !== null) {
+            $debug .= <<<MD
+    
+## Message debug output
+
+```
+{$sentMessage->getDebug()}
+```
+MD;
+        }
+        return $debug;
     }
     
     /**
