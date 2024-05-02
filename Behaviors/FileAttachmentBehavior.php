@@ -88,6 +88,8 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     
     private $timeModifiedAttributeAlias = null;
     
+    private $maxFileSizeMb = null;
+    
     private $overrideFileAttributes = [];
     
     private $deleteFileWhenAttachmentDeleted = true;
@@ -342,7 +344,29 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      */
     public function getMaxFileSizeInMb(): ?float
     {
+        if ($this->maxFileSizeMb !== null) {
+            return $this->maxFileSizeMb;
+        }
         return $this->getFileBehavior()->getMaxFileSizeInMb();
+    }
+    
+    /**
+     * Maximum allowed file size in MB
+     * 
+     * The file size limit set for the attachment will override this setting of the linked
+     * file object. If not set for the attachment, the limit of the file object will be
+     * applied.
+     *
+     * @uxon-property max_file_size_in_mb
+     * @uxon-type number
+     *
+     * @param float $value
+     * @return FileAttachmentBehavior
+     */
+    protected function setMaxFileSizeInMb(float $value) : FileAttachmentBehavior
+    {
+        $this->maxFileSizeMb = $value;
+        return $this;
     }
     
     /**
