@@ -376,6 +376,7 @@
 	"WIDGET.BUTTON.ERROR_DATA_TO_LARGE": "Zu viele Daten!",
 	"WIDGET.BUTTON.ERROR_DATA_MAX_SIZE": "Max. Größe: %size_formatted%",
 	"WIDGET.BUTTON.ERROR_DATA_TO_LARGE_DESCRIPTION": "Aus Sicherheitsgründen wurde die maximale Größe einer Server-Anfrage durch Ihre IT beschränkt.\n\nBitte versuchen Sie die Daten zu stückeln: z.B. wenn Sie mehrere Dateien hochladen, laden Sie diese einzeln hoch. Bitte beachten Sie, dass Daten und Dateien beim Versand kodiert werden, wobei ihre Größe noch etwas wächst!",
+	"WIDGET.BUTTON.HINT_DATA_MAX_SIZE": "Max. Größe aller Daten zusammen: ca. %size_formatted%",
 	
 	"WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Abbrechen",
 	"WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
@@ -472,10 +473,17 @@
 	
 	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
 	
+	"WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Abbrechen",
+	
 	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Nur Dateitypen %extensions% erlaubt!",
 	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Nur Inhaltstypen %mimetypes%  erlaubt!",
 	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "Datei zu groß: max. %mb% MB erlaubt!",
 	"WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG": "Dateiname zu lang: max. %length% Zeichen erlaubt!",
+	"WIDGET.UPLOADER.HINT_EXTENSION_NOT_ALLOWED": "Nur Dateitypen %extensions% erlaubt.",
+	"WIDGET.UPLOADER.HINT_MIMETYPE_NOT_ALLOWED": "Nur Inhaltstypen %mimetypes%  erlaubt.",
+	"WIDGET.UPLOADER.HINT_FILE_TOO_BIG": "Eine Datei darf max. %mb% MB groß sein.",
+	"WIDGET.UPLOADER.HINT_FILENAME_TOO_LONG": "Der Dateiname darf max. %length% Zeichen lang sein.",
+	"WIDGET.UPLOADER.UPLOAD_EDIT_POPUP.TITLE": "Upload vorgesehen",
 	
 	"WIDGET.WIZARD.NEXT_STEP_BUTTON_CAPTION": "Weiter", 
 	"WIDGET.WIZARD.PREV_STEP_BUTTON_CAPTION": "Zurück", 

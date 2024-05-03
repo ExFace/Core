@@ -75,14 +75,14 @@ trait JsUploaderTrait
                 }
                 // Check size
                 if (fMaxFileSize && fMaxFileSize > 0) {
-                    if (fMaxFileSize * 1000000 < file.size) {
+                    if (fMaxFileSize * 1024*1024 < file.size) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => $this->getUploader()->getMaxFileSizeMb()]))};
                     }
                 }
                 // Check filename length
                 if (iMaxNameLength && iMaxNameLength > 0) {
                     if (iMaxNameLength < file.name.length) {
-                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILE_NAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
+                        sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
                     }
                 }
 
@@ -128,5 +128,31 @@ JS;
 JS;
         }
         return "'data:' + {$mimeTypeJs} + ';base64,' + btoa({$fileContentJs})";
+    }
+    
+    protected function getHintForUploadRestrictions() : string
+    {
+        $hint = '';
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        
+        $extensions = $this->getWidget()->getUploader()->getAllowedFileExtensions();
+        if (! empty($extensions)) {
+            $extensions = array_unique($extensions);
+            $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_EXTENSION_NOT_ALLOWED', ['%extensions%' => implode(', ', $extensions)]);
+        } 
+        
+        $mimeTypes = $this->getWidget()->getUploader()->getAllowedMimeTypes();
+        if (! empty($mimeTypes)) {
+            $mimeTypes = array_unique($mimeTypes);
+            $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_MIMETYPE_NOT_ALLOWED', ['%mimetypes%' => implode(', ', $mimeTypes)]);
+        }
+        
+        $maxFileSize = $this->getUploader()->getMaxFileSizeMb();
+        if ($maxFileSize !== null) {
+            $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_FILE_TOO_BIG', ['%mb%' => $maxFileSize]);
+        }
+        $maxFilenameLength = $this->getUploader()->getMaxFilenameLength();
+        $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_FILENAME_TOO_LONG', ['%length%' => $maxFilenameLength]);
+        return $hint;
     }
 }
