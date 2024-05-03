@@ -83,6 +83,7 @@ class Popup extends Form implements iAmClosable
      */
     public function getChildren() : \Iterator
     {        
+        yield from parent::getChildren();
         yield $this->getCloseButton();
     }
     
