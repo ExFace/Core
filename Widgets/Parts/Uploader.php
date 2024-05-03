@@ -659,7 +659,7 @@ class Uploader implements WidgetPartInterface
     
     public function hasUploadEditPopup() : bool
     {
-        return $this->isInstantUpload() === false /*&& $this->uploadEditPopupUxon !== null*/;
+        return $this->isInstantUpload() === false && $this->uploadEditPopupUxon !== null;
     }
     
     /**
