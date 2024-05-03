@@ -19,6 +19,8 @@ class DataCheckFailedError extends UnexpectedValueException implements DataCheck
     
     private $check = null;
     
+    private $badData = null;
+    
     /**
      *
      * @param DataSheetInterface $data_sheet
@@ -26,13 +28,16 @@ class DataCheckFailedError extends UnexpectedValueException implements DataCheck
      * @param string $alias
      * @param \Throwable $previous
      */
-    public function __construct(DataSheetInterface $data_sheet, $message, $alias = null, $previous = null, DataCheckInterface $check = null)
+    public function __construct(DataSheetInterface $data_sheet, $message, $alias = null, $previous = null, DataCheckInterface $check = null, DataSheetInterface $badData = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setDataSheet($data_sheet);
         if ($check !== null) {
-            $this->setCheck($check);
+            $this->check = $check;
+        }
+        if ($badData !== null) {
+            $this->badData = $badData;
         }
     }
     
@@ -46,10 +51,14 @@ class DataCheckFailedError extends UnexpectedValueException implements DataCheck
         return $this->check;
     }
     
-    protected function setCheck(DataCheckInterface $check) : DataCheckFailedError
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface::getBadData()
+     */
+    public function getBadData() : ?DataSheetInterface
     {
-        $this->check = $check;
-        return $this;
+        return $this->badData;
     }
     
     /**

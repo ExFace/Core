@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\ActionDataCheckListInterface;
 use exface\Core\Interfaces\DataSheets\DataCheckInterface;
+use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 
 /**
  *
@@ -34,9 +35,9 @@ class ActionDataCheckList extends EntityList implements ActionDataCheckListInter
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::getForObject()
+     * @see \exface\Core\Interfaces\DataSheets\DataCheckListInterface::getForObject()
      */
-    public function getForObject(MetaObjectInterface $object) : ActionDataCheckListInterface
+    public function getForObject(MetaObjectInterface $object) : DataCheckListInterface
     {
         return $this->filter(function(DataCheckInterface $check) use ($object) {
             return $check->isApplicableToObject($object);
@@ -54,6 +55,11 @@ class ActionDataCheckList extends EntityList implements ActionDataCheckListInter
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionDataCheckListInterface::isDisabled()
+     */
     public function isDisabled() : bool
     {
         return $this->disabled;

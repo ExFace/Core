@@ -5,76 +5,82 @@ use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Model\ConditionGroupInterface;
-use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Behaviors\DataSheetDeleteForbiddenError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
+use exface\Core\CommonLogic\DataSheets\DataCheck;
+use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
+use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 
 /**
  * Prevents the deletion of data if it matches the provided conditions.
  * 
  * ## Examples
  * 
- * ### Prevent deletion of record with ID = 123
+ * ### Prevent deletion of records in certain status
+ * 
+ * Lets asume, we have some docuements with a working state of `100` (Done),
+ * `101` (Cancelled) and `102` expired. States before `100` are work-in-progress
+ * while those after `100` are final. Now we need to prevent deletion of documents
+ * in final states except for those cancelled.
  * 
  * ```
  * {
- *  "condition_group": {
- *      "operator": "AND",
- *      "conditions": [
- *          {
- *              "expression": "ID",
- *              "comparator": "==",
- *              "value": 123
- *          }
- *      ]
- *  }
- * }
- * 
- * ```
- * 
- * ### Prevent deletion of records with STATUS >= 90, but no 95
- * 
- * ```
- * {
- *  "condition_group": {
+ *  "prevent_delete_if": [{
+ *      "error_text": "Cannot delete finished documents",
  *      "operator": "AND",
  *      "conditions": [
  *          {
  *              "expression": "STATUS",
  *              "comparator": ">=",
- *              "value": 90
+ *              "value": 100
  *          },{
  *              "expression": "STATUS",
  *              "comparator": "!==",
- *              "value": 95
+ *              "value": 101
  *          }
  *      ]
- *  }
+ *  }]
  * }
  * 
  * ```
  * 
- * ### Prevent deletion of customers with at least one order
+ * ### Prevent deletion of customers with at least one order or inquiry
  * 
- * In this case, the behavior should be attached to the `CUSTOMER` object. It will automatically
- * read the number of the customer's orders every time a customer is about to be deleted an compare
- * it to `0`.
+ * In this case, the behavior should be attached to the `CUSTOMER` object. It will 
+ * automatically read the number of the customer's orders and inquiries every time 
+ * a customer is about to be deleted an compare it to `0`.
+ * 
+ * In this example, we use two separate checks with different error messages, but
+ * we could also use a single one with an `OR` operator, of course.
  * 
  * ```
  * {
- *  "condition_group": {
- *      "operator": "AND",
- *      "conditions": [
- *          {
- *              "expression": "ORDER__ID:COUNT",
- *              "comparator": "!==",
- *              "value": 0
- *          }
- *      ]
- *  }
+ *  "prevent_delete_if": [
+ *      {
+ *          "error_text": "Cannot delete customers, that have orders!",
+ *          "operator": "AND",
+ *          "conditions": [
+ *              {
+ *                  "expression": "ORDER__ID:COUNT",
+ *                  "comparator": "!==",
+ *                  "value": 0
+ *              }
+ *          ]
+ *      },{
+ *          "error_text": "Cannot delete customers, that have inquiries!",
+ *          "operator": "AND",
+ *          "conditions": [
+ *              {
+ *                  "expression": "INQUIRY__ID:COUNT",
+ *                  "comparator": "!==",
+ *                  "value": 0
+ *              }
+ *          ]
+ *      }
+ *  ]
  * }
  * 
  * ```
@@ -83,7 +89,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  * 
  * ```
  * {
- *  "condition_group": {
+ *  "prevent_delete_if": [{
  *      "operator": "AND",
  *      "conditions": [
  *          {
@@ -92,7 +98,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
  *              "value": 0
  *          }
  *      ]
- *  }
+ *  }]
  * }
  * 
  * ```
@@ -104,7 +110,9 @@ class UndeletableBehavior extends AbstractBehavior
 {
     private $conditionGroupUxon = null;
     
-    private $conditionGroup = null;
+    private $preventDeleteIfUxon = null;
+    
+    private $dataCheckList = null;
     
     /**
      *
@@ -155,26 +163,6 @@ class UndeletableBehavior extends AbstractBehavior
         
         $dataSheet = $eventDataSheet->copy();
         
-        // add column to input data if not exists
-        foreach ($this->getConditionGroup()->getConditions() as $condition){
-            $expression = $condition->getExpression();
-            // differenciate between multiple forms of expressions, and handle them differently
-            switch (true){
-                case $expression->isMetaAttribute():
-                    $attribute = $dataSheet->getMetaObject()->getAttribute($condition->getAttributeAlias());
-                    if (! $dataSheet->getColumns()->getByAttribute($attribute)){
-                        $dataSheet->getColumns()->addFromAttribute($attribute);
-                    }
-                    break;
-                case $expression->isString():
-                case $expression->isFormula():
-                    $dataSheet->getColumns()->addFromExpression($expression);
-                    break;
-                default:
-                    throw new RuntimeException('Unsupported expression "' . $expression->toString() . '" in behavior "' . $this->getAlias() . '"!');
-            }
-       }
-        
         // attach label attribute to datasheet, if exists
         $labelAttributeAlias = $dataSheet->getMetaObject()->getLabelAttributeAlias();
         if ($labelAttributeAlias !== null){
@@ -192,84 +180,34 @@ class UndeletableBehavior extends AbstractBehavior
             $dataSheet->dataRead();
         }
         
-        $conditionGroup =  $this->getConditionGroup();
-        $result = false;
-        $errorCondition = null;
-        $operator = $conditionGroup->getOperator();
-        
-        // evaluate the dataset row by row and condition by condition, so that if an item is detected as being
-        // undeletable, the exact item and the crucial expression can be passed in the error message.
-        foreach($dataSheet->getRows() as $idx => $row){
-            $resRow = array();
-            $resSingleRow = null;
-            //evaluate all conditons regarding the current row in the datasheet
-            foreach ($conditionGroup->getConditions() as $con){
-                $resSingleCondition = $con->evaluate($dataSheet, $idx);
-                // interpret the result of the current expression
-                switch (true){
-                    case $operator == EXF_LOGICAL_AND && $resSingleCondition === false:
-                        $resSingleRow = false;
-                        break;
-                    case $operator == EXF_LOGICAL_OR && $resSingleCondition === true:
-                        $resSingleRow = true;
-                        $errorCondition = $con;
-                        break;
-                    case $operator == EXF_LOGICAL_AND && $resSingleCondition === true:
-                        // If the conditions are combined by an AND-operator, and the item found is true, then
-                        // store the current condition as an error-conditon in beforehand, just in case
-                        // the whole expressiongroup turns out to be true.
-                        // By that there will always be an expression to display if the deletion is forbidden.
-                        $errorCondition = $con;
-                    default:
-                        // If the result of the current conditiongroup isn't already concluded, attatch the
-                        // result for the current statement to an array.
-                        $resRow[] = $resSingleCondition;
-                }
-                //break if the result of the whole expressiongroup has already been concluded
-                if ($resSingleRow !== null){
-                    break;
+        foreach ($this->getDataChecks() as $check) {
+            if ($check->isApplicable($dataSheet)) {
+                try {
+                    $check->check($dataSheet);
+                } catch (DataCheckExceptionInterface $e) {
+                    if (null !== ($badData = $e->getBadData()) && $badData->countRows() === 1) {
+                        $rows = $badData->getRows();
+                        $idx = array_key_first($rows);
+                        $row = $rows[$idx];
+                        // check if the regarding row has an alias for throwing in the exeption
+                        if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
+                            $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
+                                '%row%' => '"' . $row[$labelAttributeAlias] . '"',
+                                '%object%' => $dataSheet->getMetaObject()->getName()
+                            ]);
+                        } else {
+                            $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
+                                '%row%' => $idx + 1,
+                                '%object%' => $dataSheet->getMetaObject()->getName()
+                            ]);
+                        }
+                    }
+                    
+                    $message .= ($message !== null ? ' ' : '') . $e->getMessage();
+                    
+                    throw (new DataSheetDeleteForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true); 
                 }
             }
-            
-            // if the result isn't concluded yet, analyze the array with the returnvalues of every evaluation made on the current row
-            if ($resSingleRow === null){
-                switch ($operator){
-                    case EXF_LOGICAL_AND:
-                        $resSingleRow = (in_array(false, $resRow, true) === false);
-                        break;
-                    case EXF_LOGICAL_OR:
-                        $resSingleRow = in_array(true, $resRow, true);
-                        break;
-                    case EXF_LOGICAL_XOR:
-                        $resSingleRow = count(array_filter($resRow, function(bool $val){return $val === true;})) === 1;
-                        break;
-                    default:
-                        throw new RuntimeException('Unsupported logical operator "' . $operator . '" in condition group "' . $conditionGroup->toString() . '"!');
-                }
-            }
-            
-            // if one single row in the datasheet is found to fulfill the given set of conditions, break.
-            if ($resSingleRow === true){
-                $result = true;
-                break;
-            }
-        }
-
-        if ($result === true) {
-            // check if the regarding row has an alias for throwing in the exeption
-            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){ 
-                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
-                    '%row%' => '"' . $row[$labelAttributeAlias] . '"',
-                    '%object%' => $dataSheet->getMetaObject()->getName() 
-                ]);
-            } else {
-                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
-                    '%row%' => $idx + 1,
-                    '%object%' => $dataSheet->getMetaObject()->getName()
-                ]);
-            }
-            
-            throw (new DataSheetDeleteForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true);    
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
@@ -277,31 +215,51 @@ class UndeletableBehavior extends AbstractBehavior
     }
     
     /**
-     * Prevent deletion if the data matches this condition group.
-     * 
-     * @uxon-property condition_group
-     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroupInterface
-     * @uxon-template {"operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}
+     * @deprecated use setPreventDeleteIf() instead
      * 
      * @param UxonObject $uxon
      * @return UndeletableBehavior
      */
     public function setConditionGroup(UxonObject $uxon) : UndeletableBehavior
     {
-        $this->conditionGroupUxon = $uxon;
+        $this->setPreventDeleteIf(new UxonObject([
+            [
+                $uxon->toArray()
+            ]
+        ]));
+        return $this;
+    }
+    
+    /**
+     * Prevent deleting a data item if any of these conditions match
+     * 
+     * @uxon-property prevent_delete_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     * 
+     * @param UxonObject $arrayOfDataChecks
+     * @return UndeletableBehavior
+     */
+    protected function setPreventDeleteIf(UxonObject $arrayOfDataChecksUxon) : UndeletableBehavior
+    {
+        $this->preventDeleteIfUxon = $arrayOfDataChecksUxon;
+        $this->dataCheckList = null;
         return $this;
     }
     
     /**
      * 
-     * @return ConditionGroupInterface
+     * @return DataCheckListInterface
      */
-    protected function getConditionGroup() : ConditionGroupInterface
+    protected function getDataChecks() : DataCheckListInterface
     {
-        if ($this->conditionGroup === null && $this->conditionGroupUxon !== null) {
-            $this->conditionGroup = ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->conditionGroupUxon, $this->getObject());
+        if ($this->dataCheckList === null) {
+            $this->dataCheckList = new BehaviorDataCheckList($this->getWorkbench(), $this);
+            foreach ($this->preventDeleteIfUxon as $uxon) {
+                $this->dataCheckList->add(new DataCheck($this->getWorkbench(), $uxon));
+            }
         }
-        return $this->conditionGroup;
+        return $this->dataCheckList;
     }
     
     /**
