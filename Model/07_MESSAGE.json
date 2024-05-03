@@ -2430,6 +2430,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2024-04-11 09:28:05",
+            "MODIFIED_ON": "2024-04-11 09:28:05",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ee81000a04c44c8100025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7V9OSYM",
+            "TITLE": "Data too large",
+            "DESCRIPTION": "",
+            "HINT": "For security reasons the maximum size of a data sent to your web server is limited. Try to send the data in parts: e.g. if you are uploading files, upload them separately. Bear in mind, that the resul",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

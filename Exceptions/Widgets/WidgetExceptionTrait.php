@@ -65,7 +65,7 @@ trait WidgetExceptionTrait {
             $parent = $widget;
             $parentUxon = new UxonObject();
             while ($parent->hasParent() && $parentUxon->isEmpty()) {
-                $parent = $widget->getParent();
+                $parent = $parent->getParent();
                 $parentUxon = $parent->exportUxonObjectOriginal();
             }
             

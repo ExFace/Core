@@ -18,6 +18,9 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AccessDeniedError;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * Policy to restrict access to UI pages and navigation (menu) items.
@@ -51,6 +54,10 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     private $effect = null;
     
     private $applyToUnpublished = false;
+    
+    private $applyIfUxon = null;
+    
+    private $applyIfConditionGroup = null;
     
     /**
      * 
@@ -104,6 +111,15 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
                 $user = $this->workbench->getSecurity()->getUser($userOrToken);
             } else {
                 $user = $userOrToken;
+            }
+            
+            // Match additional conditions
+            if (null !== $conditionGrp = $this->getApplyIf()) {
+                if ($conditionGrp->evaluate() === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                } else {
+                    $applied = true;
+                }
             }
             
             if ($this->userRoleSelector !== null && $user->hasRole($this->userRoleSelector) === false) {
@@ -192,5 +208,37 @@ class UiPageAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function isApplicableToUnpublished() : bool
     {
         return $this->applyToUnpublished;
+    }
+    
+    /**
+     *
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getApplyIf() : ?ConditionGroupInterface
+    {
+        if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon, MetaObjectFactory::createFromString($this->workbench, 'exface.Core.PAGE'));
+        }
+        return $this->applyIfConditionGroup;
+    }
+    
+    /**
+     * Only apply this policy if the provided condition is matched
+     * 
+     * If `apply_if` is defined, the policy will be applied if the condition resolves to `true` or
+     * will produce a `not applicable` result if it doesn't.
+     *
+     * @uxon-property apply_if
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     * 
+     * @param UxonObject $value
+     * @return AbstractAuthorizationPoint
+     */
+    protected function setApplyIf(UxonObject $value) : UiPageAuthorizationPolicy
+    {
+        $this->applyIfUxon = $value;
+        $this->applyIfConditionGroup = null;
+        return $this;
     }
 }

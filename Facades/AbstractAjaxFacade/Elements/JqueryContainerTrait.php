@@ -186,15 +186,13 @@ JS;
         }
         return <<<JS
 
-        function() {
-            var data = {$jsData};
+        (function(data) {
             var row = data.rows[0];
             if (! row || row.length === 0) {
                 return;
             }
             {$setters}
-        }()
-
+        })({$jsData})
 JS;
     }
          

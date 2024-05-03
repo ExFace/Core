@@ -630,8 +630,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             // The '!' in front of the IFFE is required because it would not get executed stand alone
             // resulting in a "SyntaxError: Function statements require a function name" instead.
             return <<<JS
-!function() {    
-    var oData = {$jsData};    
+(function(oData) {   
     if (oData !== undefined && Array.isArray(oData.rows) && oData.rows.length > 0) {
         var val;
         if (oData.rows.length === 1) {
@@ -645,7 +644,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
         }
         {$this->buildJsValueSetter('val')};
     }
-}()
+})({$jsData})
 
 JS;
         } 
