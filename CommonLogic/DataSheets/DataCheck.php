@@ -58,7 +58,7 @@ class DataCheck implements DataCheckInterface
         $badData = $this->findViolations($sheet);
         if (! $badData->isEmpty()) {
             $error = $this->getErrorText($badData);
-            throw (new DataCheckFailedError($sheet, $error, null, null, $this))->setUseExceptionMessageAsTitle(true);
+            throw (new DataCheckFailedError($sheet, $error, null, null, $this, $badData))->setUseExceptionMessageAsTitle(true);
         }
         return $sheet;
     }
@@ -175,9 +175,10 @@ class DataCheck implements DataCheckInterface
     
     /**
      * 
-     * @return string|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataCheckInterface::getErrorText()
      */
-    public function getErrorText() : ?string
+    public function getErrorText(DataSheetInterface $badData = null) : ?string
     {
         return $this->errorText;
     }

@@ -6,7 +6,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
- * Enumeration of comparators: `=`, `==`, `<`, `>`, etc.
+ * Logical comparison operators: `=`, `==`, `<`, `>`, etc.
  * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
  * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
@@ -15,7 +15,7 @@ use exface\Core\Exceptions\RuntimeException;
  * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
  * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
  * - `!==` - the inverse of `EQUALS`
- * - `[` - IN-comparator - compares to each vaule in a list via EQUALS. Becomes true if the left
+ * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
  * value equals at least on of the values in the list within the right value. The list on the
  * right side must consist of numbers or strings separated by commas or the attribute's value
  * list delimiter if filtering over an attribute. The right side can also be another type of
@@ -24,6 +24,9 @@ use exface\Core\Exceptions\RuntimeException;
  * list within the right value. The list on the right side must consist of numbers or strings separated 
  * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
  * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+ * - `][` - MATCH-comparator - compares two lists with each other. Becomes TRUE when there is at least 
+ * one element, that is present in both lists.
+ * - `!][` - the inverse of `][` . Becomes TRUE if no element is part of both lists.
  * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
  * comparable types: e.g. numbers or dates.
  * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
@@ -67,13 +70,12 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const NOT_IN = '![';
     
     /**
-     * @const MATCH compares to list with each other. Becomes true when there is at least one element in both lists.
+     * @const MATCH compares two lists with each other. Becomes true when there is at least one element in both lists.
      */
     const MATCH = '][';
     
     /**
-     * @const NOT_MATCH the inverse von `][` . Becomes true when there is no element in both lists.
-     * list within the right value.
+     * @const NOT_MATCH the inverse of `][` . Becomes true when there is no element, that is part of both lists.
      */
     const NOT_MATCH = '!][';
     

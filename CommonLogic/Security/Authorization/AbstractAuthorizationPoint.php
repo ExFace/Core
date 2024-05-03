@@ -13,6 +13,7 @@ use exface\Core\Events\Security\OnAuthorizedEvent;
 use exface\Core\Interfaces\Security\PermissionInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AuthorizationRuntimeError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Base class for core authorization points.

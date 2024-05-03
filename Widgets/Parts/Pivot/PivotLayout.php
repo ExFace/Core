@@ -17,6 +17,13 @@ use exface\Core\Widgets\PivotTable;
  */
 class PivotLayout implements WidgetPartInterface
 {
+    const COLUMN_SUBTOTALS_TOP = 'top';
+    const COLUMN_SUBTOTALS_BOTTOM = 'bottom';
+    const COLUMN_SUBTOTALS_NONE = 'none';
+    
+    const ROW_SUBTOTALS_RIGHT = 'right';
+    const ROW_SUBTOTALS_NONE = 'none';
+    
     use DataWidgetPartTrait;
     
     private $columns = [];
@@ -24,6 +31,16 @@ class PivotLayout implements WidgetPartInterface
     private $rows = [];
     
     private $values = [];
+    
+    private $showRowTotals = true;
+    
+    private $showRowSubtotals = self::ROW_SUBTOTALS_NONE;
+    
+    private $showColumnTotals = true;
+    
+    private $showColumnSubtotals = self::COLUMN_SUBTOTALS_NONE;
+    
+    private $view = null;
     
     /**
      * 
@@ -153,6 +170,149 @@ class PivotLayout implements WidgetPartInterface
             $this->values[] = $pivotValue;
             //$this->addDataColumn($pivotValue->getAttributeAlias());
         }
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getShowRowTotals() : bool
+    {
+        return $this->showRowTotals;
+    }
+    
+    /**
+     * Set to FALSE to hide the grand total column at the end of the table
+     *
+     * @uxon-property show_row_totals
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowRowTotals(bool $value) : PivotLayout
+    {
+        $this->showRowTotals = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getShowColumnTotals() : bool
+    {
+        return $this->showColumnTotals;
+    }
+    
+    /**
+     * Set to FALSE to hide the grand total row at the end of the table
+     *
+     * @uxon-property show_column_totals
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowColumnTotals(bool $value) : PivotLayout
+    {
+        $this->showColumnTotals = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowRowSubtotals() : string
+    {
+        return $this->showRowSubtotals;
+    }
+    
+    /**
+     * Show or hide subtotals for each set of columns in a row
+     * 
+     * @uxon-property show_row_subtotals
+     * @uxon-type [right,none]
+     * @uxon-default right
+     * 
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowRowSubtotals(string $value) : PivotLayout
+    {
+        $const = 'static::ROW_SUBTOTALS_' . mb_strtoupper($value);
+        if (! defined($const)) {
+            throw new WidgetConfigurationError($this->getPivotTable(), 'Invalid value "' . $value . '" for property "show_row_subtotals" of widget ' . $this->getWidget()->getWidgetType());
+        }
+        $this->showRowSubtotals = constant($const);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowColumnSubtotals() : string
+    {
+        return $this->showColumnSubtotals;
+    }
+    
+    /**
+     * Show or hide subtotals for each set of rows in a column
+     * 
+     * @uxon-property show_column_subtotals
+     * @uxon-type [top,bottom,none]
+     * @uxon-default top
+     * 
+     * @param bool $value
+     * @return PivotLayout
+     */
+    public function setShowColumnSubtotals(string $value) : PivotLayout
+    {
+        $const = 'static::COLUMN_SUBTOTALS_' . mb_strtoupper($value);
+        if (! defined($const)) {
+            throw new WidgetConfigurationError($this->getPivotTable(), 'Invalid value "' . $value . '" for property "show_column_subtotals" of widget ' . $this->getWidget()->getWidgetType());
+        }
+        $this->showColumnSubtotals = constant($const);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasSubtotals() : bool
+    {
+        return $this->getShowColumnSubtotals() !== self::COLUMN_SUBTOTALS_NONE || $this->getShowRowSubtotals() !== self::ROW_SUBTOTALS_NONE;
+    }
+    
+    /**
+     * 
+     * @param string $default
+     * @return string
+     */
+    public function getView(string $default = 'table') : string
+    {
+        return $this->view ?? $default;
+    }
+    
+    /**
+     * Initial view type - e.g. `table`
+     * 
+     * @uxon-property view
+     * @uxon-type [table,table_bar_chart,heatmap_per_column,chart_bars,chart_bars_stacked,chart_columns,chart_columns_stacked,chart_line,chart_area,chart_pies,export_tsv]
+     * @uxon-default table
+     * 
+     * @param string $value
+     * @return PivotLayout
+     */
+    public function setView(string $value) : PivotLayout
+    {
+        $this->view = $value;
         return $this;
     }
 }

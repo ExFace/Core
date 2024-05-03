@@ -36,6 +36,8 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\CommonLogic\Selectors\FacadeSelector;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * Policy for access to actions.
@@ -117,6 +119,10 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     private $appUidAppliesToObject = false;
     
     private $appUidAppliesToPage = false;
+    
+    private $applyIfUxon = null;
+    
+    private $applyIfConditionGroup = null;
     
     /**
      * 
@@ -300,6 +306,26 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
             } else {
                 $applied = true;
+            }
+            
+            // Match additional conditions
+            // IDEA added placeholders for input data???
+            if ($this->hasApplyIf() === true) {
+                $object = $object ?? $this->findObject($action);
+                $conditionGrp = $this->getApplyIf($object);
+                if ($task->hasInputData()) {
+                    if ($conditionGrp->evaluate($task->getInputData()) === false) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched in context of action input data');
+                    } else {
+                        $applied = true;
+                    }
+                } else {
+                    if ($conditionGrp->evaluate() === false) {
+                        return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                    } else {
+                        $applied = true;
+                    }
+                }
             }
             
             // Match page
@@ -685,6 +711,47 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
     protected function setApplyIfTargetAppMatchesPageApp(bool $value) : ActionAuthorizationPolicy
     {
         $this->appUidAppliesToObject = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasApplyIf() : bool
+    {
+        return $this->applyIfUxon !== null;
+    }
+    
+    /**
+     * 
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getApplyIf(MetaObjectInterface $baseObject) : ?ConditionGroupInterface
+    {
+        if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon, $baseObject);
+        }
+        return $this->applyIfConditionGroup;
+    }
+    
+    /**
+     * Only apply this policy if the provided condition is matched
+     * 
+     * If `apply_if` is defined, the policy will be applied if the condition resolves to `true` or
+     * will produce a `not applicable` result if it doesn't.
+     *
+     * @uxon-property apply_if
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     *
+     * @param UxonObject $value
+     * @return AbstractAuthorizationPoint
+     */
+    protected function setApplyIf(UxonObject $value) : ActionAuthorizationPolicy
+    {
+        $this->applyIfUxon = $value;
+        $this->applyIfConditionGroup = null;
         return $this;
     }
 }

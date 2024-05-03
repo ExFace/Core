@@ -5,6 +5,7 @@ use exface\Core\Widgets\Parts\Pivot\PivotValue;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Parts\Pivot\PivotLayout;
 
 /**
  * Common methods for facade elements based on the Pivottable.js library.
@@ -14,7 +15,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * ```
  * {
  *  "require": {
- *      "npm-asset/subtotal" : "^1"
+ *      "npm-asset/subtotal" : "1.11.0-alpha.0"
  *  }
  * }
  * 
@@ -45,6 +46,22 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 trait PivotTableTrait 
 {    
+    private $viewRenderers = [
+        'table' => 'Table',
+        'table_bar_chart' => 'Table Barchart',
+        'heatmap' => 'Heatmap',
+        'heatmap_per_row' => 'Row Heatmap',
+        'heatmap_per_column' => 'Col Heatmap',
+        'chart_bars' => 'Horizontal Bar Chart',
+        'chart_bars_stacked' => 'Horizontal Stacked Bar Chart',
+        'chart_columns' => 'Bar Chart',
+        'chart_columns_stacked' => 'Bar Chart Stacked',
+        'chart_line' => 'Line Chart',
+        'chart_area' => 'Area Chart',
+        'chart_pies' => 'Multiple Pie Chart',
+        'export_tsv' => 'TSV Export'
+    ];
+    
     /**
      * 
      * @return string[]
@@ -56,6 +73,9 @@ trait PivotTableTrait
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.CORE.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.SUBTOTAL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.UI.JS') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.LIBS.PLOTLY') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.RENDERERS.EXPORT') . '"></script>',
+            '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.RENDERERS.CHARTS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.CORE.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.SUBTOTAL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.PIVOTTABLE.UI.CSS') . '" rel="stylesheet" media="screen">',
@@ -97,22 +117,41 @@ JS;
         
         if ($widget->isDisabled() !== true) {
             $constructorJs = 'pivotUI';
+            $renderers = $this->getPivotRenderersAvailable($layout);
+            if (count($renderers) > 1) {
+                $renderersJs = '$.extend(' . implode(',', $renderers) . ')';
+            } else {
+                $renderersJs = $renderers[0];
+            }
+            // Fire a custom event on every refresh. This will allow other
+            // Pivot widgets to follow the config of this one and display the same
+            // layout with another view (e.g. a chart)
+            // See https://pivottable.js.org/examples/onrefresh.html
             $renderersJs = <<<JS
 
-            renderers: renderers,
-            rendererName: 'Table With Subtotal',
+            renderers: {$renderersJs},
+            rendererName: '{$this->getPivotRendererSelected($layout)}',
+            onRefresh: function(config) {
+                var oCfgCopy = JSON.parse(JSON.stringify(config));
+                //delete some values which are functions
+                delete oCfgCopy["aggregators"];
+                delete oCfgCopy["renderers"];
+                //delete some bulky default values
+                delete oCfgCopy["rendererOptions"];
+                delete oCfgCopy["localeStrings"];
+                {$this->buildJsJqueryElement()}.trigger('pivotrendered', {
+                    element_id: '{$this->getId()}',
+                    object_alias: '{$this->getWidget()->getMetaObject()->getAliasWithNamespace()}',
+                    config: oCfgCopy
+                });
+            },
 JS;
             $aggregatorsJs = '';
         } else {
             $constructorJs = 'pivot';
             $renderersJs = <<<JS
 
-            renderer: $.pivotUtilities.subtotal_renderers['Table With Subtotal'],
-            rendererOptions: {
-                rowSubtotalDisplay: {
-                    displayOnTop: false
-                }
-            },
+            renderer: {$this->getPivotRenderersAvailable($layout)[0]}['{$this->getPivotRendererSelected($layout)}'],
 JS;
             
             // Values
@@ -120,6 +159,19 @@ JS;
                 $aggregatorsJs .= $this->buildJsAggregator($layout->getPivotValues()[0]);
             }
         }
+        
+        // Renderer options
+        $rendererOptions = [];
+        if ($layout->getShowColumnSubtotals() === PivotLayout::COLUMN_SUBTOTALS_BOTTOM) {
+            $rendererOptions['rowSubtotalDisplay']['displayOnTop'] = false;
+        }
+        if ($layout->getShowColumnSubtotals() === PivotLayout::COLUMN_SUBTOTALS_NONE) {
+            $rendererOptions['rowSubtotalDisplay']['disableFrom'] = 0;
+        }
+        if ($layout->getShowRowSubtotals() === PivotLayout::ROW_SUBTOTALS_NONE) {
+            $rendererOptions['colSubtotalDisplay']['disableFrom'] = 0;
+        }
+        $rendererOptionsJs = empty($rendererOptions) ? '' : 'rendererOptions: ' . json_encode($rendererOptions) . ',';
         
         // Columns
         $cols = [];
@@ -135,20 +187,74 @@ JS;
         }
         $rowsJs = json_encode($rows);
         
+        // CSS classes for certain options
+        $cssOptionsJs = '';
+        if ($layout->getShowRowTotals() === false) {
+            $cssOptionsJs .= "jqEl.addClass('exf-pvt-no-row-total');\n";
+        } else {
+            $cssOptionsJs .= "jqEl.removeClass('exf-pvt-no-row-total');\n";
+        }
+        if ($layout->getShowColumnTotals() === false) {
+            $cssOptionsJs .= "jqEl.addClass('exf-pvt-no-column-total');\n";
+        } else {
+            $cssOptionsJs .= "jqEl.removeClass('exf-pvt-no-column-total');\n";
+        }
+        
+        if ($layout->hasSubtotals()) {
+            $dataClassJs = "dataClass: $.pivotUtilities.SubtotalPivotData,";
+        }
+        
         return <<<JS
 
     (function(jqEl, oData) {
-        var dataClass = $.pivotUtilities.SubtotalPivotData;
-        var renderers = $.pivotUtilities.subtotal_renderers;
         jqEl.{$constructorJs}(oData, {
-            dataClass: dataClass,
+            {$dataClassJs}
             rows: {$rowsJs},
             cols: {$colsJs},
             {$renderersJs}
+            {$rendererOptionsJs}
             {$aggregatorsJs}
         });
+        {$cssOptionsJs}
     })({$this->buildJsJqueryElement()}, $oDataJs)
 JS;
+    }
+    
+    /**
+     * 
+     * @param PivotLayout $layout
+     * @return array
+     */
+    protected function getPivotRenderersAvailable(PivotLayout $layout) : array
+    {
+        if ($layout->hasSubtotals()) {
+            $arr = ['$.pivotUtilities.subtotal_renderers'];
+        } else {
+            $arr = [
+                '$.pivotUtilities.renderers'
+                ,'$.pivotUtilities.plotly_renderers'
+                ,'$.pivotUtilities.export_renderers'
+            ];
+        }
+        return $arr;
+    }
+    
+    protected function getPivotRendererSelected(PivotLayout $layout) : string
+    {
+        $view = $layout->getView('table');
+        if ($layout->hasSubtotals()) {
+            switch ($view) {
+                case 'table': $name = 'Table With Subtotal'; break; 
+                case 'table_bar_chart': $name = 'Table With Subtotal Bar Chart'; break; 
+                case 'heatmap': $name = 'Table With Subtotal Heatmap'; break; 
+                case 'heatmap_per_column': $name = 'Table With Subtotal Col Heatmap'; break; 
+                case 'heatmap_per_row': $name = 'Table With Subtotal Row Heatmap'; break; 
+                default: $name = $this->viewRenderers[$view];
+            }
+        } else {
+            $name = $this->viewRenderers[$view];
+        }
+        return $name ?? 'Table';
     }
     
     protected function buildJsAggregator(PivotValue $value) : string
@@ -165,5 +271,15 @@ JS;
                 break;
         }
         return "aggregator: $aggregator(['{$key}'])";
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildCssElementClass()
+     */
+    public function buildCssElementClass()
+    {
+        return parent::buildCssElementClass() . ' exf-pivottable';
     }
 }

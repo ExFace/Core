@@ -19,6 +19,11 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\Widgets\Dialog;
+use exface\Core\Interfaces\TranslationInterface;
+use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\Widgets\ButtonGroup;
+use exface\Core\Widgets\Button;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -203,61 +208,22 @@ class NotificationContext extends AbstractContext
                 $grps[$grpCaption] = $btnGrp;
             }
             
-            $btn = $btnGrp->createButton(new UxonObject([
-                'caption' => $row['TITLE'],
-                'action' => [
-                    'alias' => 'exface.Core.ShowDialog',
-                    'widget' => UxonObject::fromJson($widgetJson)->setProperty('cacheable', false)
-                ]
-            ]));
-            
-            /* @var $dialog \exface\Core\Widgets\Dialog */
-            $dialog = $btn->getAction()->getWidget();
-            $dialog->setHeader(new UxonObject([
-                'widgets' => [
-                    [
-                        'widget_type' => 'WidgetGroup',
-                        'widgets' => [
-                            [
-                                'attribute_alias' => 'UID',
-                                'widget_type' => 'InputHidden',
-                                'value' => $row['UID']
-                            ],[
-                                'attribute_alias' => 'MODIFIED_ON',
-                                'widget_type' => 'InputHidden',
-                                'value' => $row['MODIFIED_ON']
-                            ],[
-                                'attribute_alias' => 'CREATED_BY_USER__USERNAME',
-                                'widget_type' => 'Display',
-                                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
-                                'value' => $row['CREATED_BY_USER__USERNAME']
-                            ], [
-                                'attribute_alias' => 'CREATED_ON',
-                                'widget_type' => 'Display',
-                                'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_SENT_AT'),
-                                'value' => DateTimeDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench())
-                            ]
-                            
-                        ]
+            try {
+                $btn = $btnGrp->createButton(new UxonObject([
+                    'caption' => $row['TITLE'],
+                    'action' => [
+                        'alias' => 'exface.Core.ShowDialog',
+                        'widget' => UxonObject::fromJson($widgetJson)->setProperty('cacheable', false)
                     ]
-                ]
-            ]));
-            
-            //add read button
-            $dialog->addButton($dialog->createButton(new UxonObject([
-                'action_alias' => 'exface.Core.NotificationRead',
-                'align' => $dialog->countButtons() <= 1 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
-                'visibility' => WidgetVisibilityDataType::NORMAL
-            ])));
-            
-            //add delete button
-            $dialog->addButton($dialog->createButton(new UxonObject([
-                'action_alias' => 'exface.Core.DeleteObject',
-                'align' => $dialog->countButtons() <= 2 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
-                'visibility' => WidgetVisibilityDataType::NORMAL,
-                'color' => Colors::SEMANTIC_ERROR
-            ])));
-            
+                ]));
+                $dialog = $btn->getAction()->getWidget();
+                $this->fillMessageDialog($dialog, $row, $translator);
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException(
+                    new ContextRuntimeError($this, 'Corrupted notification detected (UID "' . $row['UID'] . '"): ' . $e->getMessage(), null, $e)
+                );
+                $btn = $this->createMessageButtonForCorruptNotification($btnGrp, $row);
+            }
             
             if ($row['ICON'] !== null) {
                 $btn->setIcon($row['ICON']);
@@ -283,6 +249,90 @@ class NotificationContext extends AbstractContext
         }
         
         return $menu;
+    }
+    
+    /**
+     * 
+     * @param ButtonGroup $btnGrp
+     * @param string[] $row
+     * @return Button
+     */
+    protected function createMessageButtonForCorruptNotification(ButtonGroup $btnGrp, array $row) : Button
+    {
+        $btn = $btnGrp->createButton(new UxonObject([
+            'caption' => $row['TITLE'],
+            'action' => [
+                'alias' => 'exface.Core.ShowDialog',
+                'dialog' => [
+                    'cacheable' => false,
+                    'widgets' => [
+                        [
+                            'widget_type' => 'Message',
+                            'type' => 'error',
+                            'text' => 'Corrupted notification. This message cannot be displayed!'
+                        ]
+                    ]
+                ]
+            ]
+        ]));
+        return $btn;
+    }
+    
+    /**
+     * 
+     * @param Dialog $dialog
+     * @param string[] $row
+     * @param TranslationInterface $translator
+     * @return Dialog
+     */
+    protected function fillMessageDialog(Dialog $dialog, array $row, TranslationInterface $translator) : Dialog
+    {
+        $dialog->setHeader(new UxonObject([
+            'widgets' => [
+                [
+                    'widget_type' => 'WidgetGroup',
+                    'widgets' => [
+                        [
+                            'attribute_alias' => 'UID',
+                            'widget_type' => 'InputHidden',
+                            'value' => $row['UID']
+                        ],[
+                            'attribute_alias' => 'MODIFIED_ON',
+                            'widget_type' => 'InputHidden',
+                            'value' => $row['MODIFIED_ON']
+                        ],[
+                            'attribute_alias' => 'CREATED_BY_USER__USERNAME',
+                            'widget_type' => 'Display',
+                            'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_FROM'),
+                            'value' => $row['CREATED_BY_USER__USERNAME']
+                        ], [
+                            'attribute_alias' => 'CREATED_ON',
+                            'widget_type' => 'Display',
+                            'caption' => $translator->translate('CONTEXT.NOTIFICATION.MESSAGE_SENT_AT'),
+                            'value' => DateTimeDataType::formatDateLocalized(new \DateTime($row['CREATED_ON']), $this->getWorkbench())
+                        ]
+                        
+                    ]
+                ]
+            ]
+        ]));
+        
+        //add read button
+        $dialog->addButton($dialog->createButton(new UxonObject([
+            'action_alias' => 'exface.Core.NotificationRead',
+            'align' => $dialog->countButtons() <= 1 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
+            'visibility' => WidgetVisibilityDataType::NORMAL
+        ])));
+        
+        //add delete button
+        $dialog->addButton($dialog->createButton(new UxonObject([
+            'action_alias' => 'exface.Core.DeleteObject',
+            'align' => $dialog->countButtons() <= 2 ? EXF_ALIGN_OPPOSITE : EXF_ALIGN_DEFAULT,
+            'visibility' => WidgetVisibilityDataType::NORMAL,
+            'color' => Colors::SEMANTIC_ERROR
+        ])));
+        
+        return $dialog;
     }
     
     protected function getNotificationData() : ?DataSheetInterface
@@ -328,13 +378,14 @@ class NotificationContext extends AbstractContext
     public static function send(NotificationMessage $notification, array $userUids) : NotificationMessage
     {
         $title = $notification->getTitle() ?? StringDataType::truncate($notification->getText(), 60, true);
+        $bodyUxon= $notification->getBodyWidgetUxon();
         $widgetUxon = new UxonObject([
             'widget_type' => 'Dialog',
             'object_alias' => 'exface.Core.NOTIFICATION',
-            'width' => 1,
+            'width' => ($bodyUxon !== null && $bodyUxon->hasProperty('width') ? $bodyUxon->getProperty('width') : 1),
             'height' => 'auto',
             'caption' => $title,
-            'widgets' => $notification->getBodyWidgetUxon() ? [$notification->getBodyWidgetUxon()->toArray()] : [],
+            'widgets' => ($bodyUxon !== null ? [$bodyUxon->toArray()] : []),
             'buttons' => ($notification->getButtonsUxon() ? $notification->getButtonsUxon()->toArray() : [])
         ]);
         
