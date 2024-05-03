@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iAmClosable;
 
 /**
  * A special type of button to use in dialogs.
@@ -108,14 +109,14 @@ class DialogButton extends Button
      * if the button has a custom input widget.
      * 
      * @throws WidgetConfigurationError
-     * @return Dialog
+     * @return iAmClosable
      */
-    public function getDialog() : Dialog
+    public function getDialog() : iAmClosable
     {
         $input = $this->getInputWidget();
-        if ($input instanceof Dialog) {
+        if ($input instanceof iAmClosable) {
             return $input;
-        } elseif ($dialog = $this->getParentByClass(Dialog::class)) {
+        } elseif ($dialog = $this->getParentByClass(iAmClosable::class)) {
             return $dialog;
         }
         
