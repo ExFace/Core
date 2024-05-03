@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
+use exface\Core\Widgets\Popup;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 
 /**
@@ -69,7 +71,7 @@ class Uploader implements WidgetPartInterface
     
     private $allowedMimeTypes = [];
     
-    private $maxFilenameLength = 255;
+    private $maxFilenameLength = null;
     
     private $maxFileSizeMb = null;
     
@@ -94,6 +96,10 @@ class Uploader implements WidgetPartInterface
     private $uxon = null;
     
     private $checkedBehaviorForObject;
+    
+    private $uploadEditPopupUxon = null;
+    
+    private $uploadEditPopup = null;
     
     /**
      * 
@@ -231,7 +237,7 @@ class Uploader implements WidgetPartInterface
      */
     public function getMaxFilenameLength() : int
     {
-        return $this->maxFilenameLength;
+        return $this->maxFilenameLength ?? 255;
     }
     
     /**
@@ -599,17 +605,23 @@ class Uploader implements WidgetPartInterface
             if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
                 $this->setFileContentAttribute($attr->getAliasWithRelationPath());
             }
-            
             if ($this->filenameAttributeAlias === null && $attr = $behavior->getFilenameAttribute()) {
                 $this->setFilenameAttribute($attr->getAliasWithRelationPath());
             }
-            
             if ($this->mimeTypeAttributeAlias === null && $attr = $behavior->getMimeTypeAttribute()) {
                 $this->setFileMimeTypeAttribute($attr->getAliasWithRelationPath());
             }
-            
             if ($this->maxFileSizeMb === null && null !== $val = $behavior->getMaxFileSizeInMb()) {
                 $this->setMaxFileSizeMb($val);
+            }
+            if ($this->maxFilenameLength === null && null !== $val = $behavior->getMaxFilenameLength()) {
+                $this->setMaxFilenameLength($val);
+            }
+            if (empty($this->allowedMimeTypes) === true && empty($val = $behavior->getAllowedMimeTypes()) === false) {
+                $this->setAllowedMimeTypes($val);
+            }
+            if (empty($this->allowedFileExtensions) === true && empty($val = $behavior->getAllowedFileExtensions()) === false) {
+                $this->setAllowedFileExtensions($val);
             }
         }
         
@@ -643,5 +655,65 @@ class Uploader implements WidgetPartInterface
         }
             
         return $cols;
+    }
+    
+    public function hasUploadEditPopup() : bool
+    {
+        return $this->isInstantUpload() === false /*&& $this->uploadEditPopupUxon !== null*/;
+    }
+    
+    /**
+     * 
+     * @return Popup|NULL
+     */
+    public function getUploadEditPopup() : ?Popup
+    {
+        if (! $this->hasUploadEditPopup()) {
+            return null;
+        }
+        if ($this->uploadEditPopup === null) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            if ($this->uploadEditPopupUxon !== null) {
+                $uxon = $this->uploadEditPopupUxon;
+            } else {
+                $uxon = new UxonObject([
+                    'widgets' => [
+                        ['attribute_alias' => $this->getFilenameAttributeAlias(), 'disabled' => false]
+                    ]
+                ]);
+                if ($this->getWidget() instanceof iHaveColumns) {
+                    $aliasesAdded = [];
+                    foreach ($this->getWidget()->getColumns() as $col) {
+                        if ($col->isBoundToAttribute() && $col->getAttribute()->isEditable()) {
+                            if (! in_array($col->getAttributeAlias(), $aliasesAdded)) {
+                                $uxon->appendToProperty('widgets', new UxonObject(['attribute_alias' => $col->getAttributeAlias()]));
+                                $aliasesAdded[] = $col->getAttributeAlias();
+                            }
+                        }
+                    }
+                }
+            }
+            if (! $uxon->hasProperty('caption')) {
+                $uxon->setProperty('caption', $translator->translate('WIDGET.UPLOADER.UPLOAD_EDIT_POPUP.TITLE')); 
+            }
+            $this->uploadEditPopup = WidgetFactory::createFromUxonInParent($this->getWidget(), $uxon, 'Popup');
+        }
+        return $this->uploadEditPopup;
+    }
+    
+    /**
+     * Define a popup to be opened to edit the properties of an uploaded (but not yet saved!) file
+     * 
+     * @uxon-property upload_edit_popup
+     * @uxon-type \exface\Core\Widgets\Popup
+     * @uxon-template {"widgets": ["attribute_alias": ""]}
+     * 
+     * @param UxonObject $value
+     * @return Uploader
+     */
+    public function setUploadEditPopup(UxonObject $value) : Uploader
+    {
+        $this->uploadEditPopupUxon = $value;
+        return $this;
     }
 }

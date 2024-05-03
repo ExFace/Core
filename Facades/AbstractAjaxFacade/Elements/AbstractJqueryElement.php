@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Widgets\AbstractWidget;
+use exface\Core\DataTypes\ByteSizeDataType;
 
 /**
  * Implementation for the AjaxFacadeElementInterface based on jQuery.
@@ -236,6 +237,25 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
             $headers['X-Request-ID-Subrequest'] = $subrequest_id;
         }
         return $headers;
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    protected function getAjaxPostSizeMax() : ?int
+    {
+        $iniVal = ini_get('post_max_size');
+        if ($iniVal === null) {
+            return null;
+        }
+        try {
+            $bytes = ByteSizeDataType::cast($iniVal);
+        } catch (\Throwable $e) {
+            $this->getWorkbench()->getLogger()->logExceptions($e);
+            return null;
+        }
+        return $bytes;
     }
 
     /**
