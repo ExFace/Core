@@ -14,6 +14,8 @@ use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * The Container is a basic widget, that contains other widgets.
@@ -286,7 +288,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
                 $this->addWidget($w);
             } else {
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, $w, $this, null, $readonly);
+                try {
+                    $widget = WidgetFactory::createFromUxon($page, $w, $this, null, $readonly);
+                } catch (UxonParserError $e) {
+                    throw new WidgetConfigurationError($this, $e->getMessage(), null, $e);
+                }
                 $this->addWidget($widget);
             }
         }
