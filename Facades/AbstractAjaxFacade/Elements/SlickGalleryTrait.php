@@ -967,9 +967,9 @@ HTML;
     
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    protected function getHintForSlick()
+    protected function getHintForSlick() : ?string
     {
         $widget = $this->getWidget();
         $hint = $widget->getHint() ? $widget->getHint() : $widget->getCaption();
