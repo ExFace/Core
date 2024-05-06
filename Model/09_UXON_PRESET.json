@@ -5327,6 +5327,45 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2024-05-06 15:29:40",
+            "MODIFIED_ON": "2024-05-06 15:33:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efa337b18194daa337025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Enum with values and name",
+            "DESCRIPTION": "E.g. displaying `10 New`, `100 Finished`",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberEnumDataType.php",
+            "UXON": {
+                "values": {
+                    "": ""
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "datatype",
+            "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2024-05-06 15:30:24",
+            "MODIFIED_ON": "2024-05-06 15:33:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef999ccb772648999c025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Enum with names only",
+            "DESCRIPTION": "E.g. displaying only the names of its values, without the values themselves: `New`, `Finished`",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberEnumDataType.php",
+            "UXON": {
+                "show_values": false,
+                "values": {
+                    "": ""
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "datatype",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],
