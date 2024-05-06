@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2022-04-28 18:16:04",
+            "MODIFIED_ON": "2024-05-06 17:07:05",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -159,9 +159,7 @@
                                             {
                                                 "attribute_alias": "TARGET_ACTION_MODEL",
                                                 "required": true,
-                                                "input_widget": {
-                                                    "widget_type": "InputHidden"
-                                                }
+                                                "hidden": true
                                             }
                                         ],
                                         "row_grouper": {
@@ -241,6 +239,53 @@
                                             },
                                             {
                                                 "action_alias": "exface.Core.ShowObjectEditDialog"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "caption": "Usage",
+                                "widgets": [
+                                    {
+                                        "value": "=Concatenate('\"', ALIAS_WITH_NS, '\"')",
+                                        "widget_type": "InputHidden",
+                                        "display_only": true,
+                                        "id": "action_uxon_search_field"
+                                    },
+                                    {
+                                        "widget_type": "DataTable",
+                                        "object_alias": "exface.Core.SEARCH_RESULT",
+                                        "filters": [
+                                            {
+                                                "attribute_alias": "UXON",
+                                                "value": "=action_uxon_search_field"
+                                            },
+                                            {
+                                                "attribute_alias": "APP"
+                                            },
+                                            {
+                                                "attribute_alias": "OBJECT_TYPE"
+                                            },
+                                            {
+                                                "attribute_alias": "INSTANCE_NAME"
+                                            }
+                                        ],
+                                        "columns": [
+                                            {
+                                                "attribute_alias": "OBJECT_NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "INSTANCE_NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "ATTRIBUTE_NAME"
+                                            },
+                                            {
+                                                "attribute_alias": "APP__ALIAS"
+                                            },
+                                            {
+                                                "attribute_alias": "INSTANCE_ALIAS"
                                             }
                                         ]
                                     }
