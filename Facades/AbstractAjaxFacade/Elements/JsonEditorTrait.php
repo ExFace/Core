@@ -194,7 +194,7 @@ JS;
                             if (bTrueOrFalse === true) {
                                 oEditor.aceEditor?.setReadOnly(true);
                             } else {
-                                oEditor.aceEditor?.setReadOnly(true);
+                                oEditor.aceEditor?.setReadOnly(false);
                             }
                         }
                         
