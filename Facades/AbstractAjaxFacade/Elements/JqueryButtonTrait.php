@@ -1122,25 +1122,6 @@ JS;
         return parent::buildJsCallFunction($functionName, $parameters);
     }
     
-    /**
-     * 
-     * @return int|NULL
-     */
-    protected function getAjaxPostSizeMax() : ?int
-    {
-        $iniVal = ini_get('post_max_size');
-        if ($iniVal === null) {
-            return null;
-        }
-        try {
-            $bytes = ByteSizeDataType::cast($iniVal);
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logExceptions($e);
-            return null;
-        }
-        return $bytes;
-    }
-    
     protected function buildJsCheckRequestDataSize(string $jsRequestData, int $bytes = null) : string
     {
         if ($bytes === null) {

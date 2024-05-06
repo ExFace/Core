@@ -447,7 +447,13 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
         yield from parent::getChildren();
         
         if ($this->isUploadEnabled()) {
-            yield $this->getUploader()->getInstantUploadButton();
+            $uploader = $this->getUploader();
+            if ($uploader->isInstantUpload() === true) {
+                yield $this->getUploader()->getInstantUploadButton();
+            }
+            if ($this->getUploader()->hasUploadEditPopup() === true) {
+                yield $uploader->getUploadEditPopup();
+            }
         }
         
         return;
