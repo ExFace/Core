@@ -295,10 +295,11 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
                 break;
             // If the filter is bound to an attribute, use its default editor UXON
             case $this->isBoundToAttribute() === true:
+                $obj = $this->getMetaObject();
                 try {
-                    $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
+                    $attr = $obj->getAttribute($this->getAttributeAlias());
                 } catch (MetaAttributeNotFoundError $e) {
-                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+                    throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $this->getAttributeAlias() . '" in widget "' . $this->getParent()->getWidgetType() . '": attribute not found for object "' . $obj->getAliasWithNamespace() . '"!', '6T91AR9', $e);
                 }
                 
                 // Set a special caption for filters on relations, which is derived from the relation itself
@@ -306,13 +307,13 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
                 if (false === $uxon->hasProperty('caption') && $attr->isRelation()) {
                     // Get the relation from the object and not $attr->getRelation() because the latter would
                     // yield the wrong relation direction in case of reverse reltions.
-                    $uxon->setProperty('caption', $this->getMetaObject()->getRelation($this->getAttributeAlias())->getName());
+                    $uxon->setProperty('caption', $obj->getRelation($this->getAttributeAlias())->getName());
                 }
                 
                 // Try to use the default editor UXON of the attribute
                 switch (true) {
-                    case $attr->isRelation() === true && $this->getMetaObject()->getRelation($this->getAttributeAlias())->isReverseRelation() === true:
-                        $defaultEditorUxon = $this->getMetaObject()->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
+                    case $attr->isRelation() === true && $obj->getRelation($this->getAttributeAlias())->isReverseRelation() === true:
+                        $defaultEditorUxon = $obj->getRelation($this->getAttributeAlias())->getDefaultEditorUxon()->extend($uxon);
                         if (! $defaultEditorUxon->hasProperty('attribute_alias')) {
                             $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
                         }
