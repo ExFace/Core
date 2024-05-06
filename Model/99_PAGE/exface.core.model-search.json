@@ -11,21 +11,19 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2023-11-07 08:03:03",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-03-17 15:56:38",
+    "modified_on": "2024-05-06 17:08:54",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.SEARCH_RESULT",
         "filters": [
             {
-                "attribute_alias": "UXON",
-                "input_widget": {
-                    "widget_type": "Input",
-                    "height": 1,
-                    "width": 1
-                }
+                "attribute_alias": "UXON"
             },
             {
                 "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "OBJECT_TYPE"
             },
             {
                 "attribute_alias": "TABLE_NAME"
