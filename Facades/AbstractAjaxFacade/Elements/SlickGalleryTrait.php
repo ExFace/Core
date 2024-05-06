@@ -108,7 +108,7 @@ trait SlickGalleryTrait
     {
         return <<<HTML
 
-<div id="{$this->getIdOfSlick()}" class="slick-carousel horizontal" style="height: 100%">
+<div id="{$this->getIdOfSlick()}" class="slick-carousel horizontal" style="height: 100%" title={$this->escapeString($this->getHintForSlick(), true, true)}>
     <!-- Slides will be placed here programmatically -->
 </div>
 	
@@ -602,7 +602,7 @@ JS;
                         {$tooltipJs}
 
                         if (sMimeType === null || sMimeType.startsWith('image')) {
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" title=\"' + sTooltip + '\" alt=\"' + sTitle + '\" />'")});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplate("'<img src=\"' + sSrc + '\" src-download=\"' + sSrcLarge + '\" alt=\"' + sTitle + '\" />'", '', 'sTooltip')});
                         } else {
                             switch (sMimeType.toLowerCase()) {
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
@@ -647,9 +647,13 @@ JS;
      * @param string $cssClass
      * @return string
      */
-    protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '') : string
+    protected function buildJsSlideTemplate(string $imgJs, string $cssClass = '', string $sTooltipJs = '', bool $addPopupButton = false) : string
     {
-        return "'<div class=\"imagecarousel-item {$cssClass}\">' + {$imgJs} + '</div>'";
+        $buttonsHtml = '';
+        if ($addPopupButton === true) {
+            $buttonsHtml .= "<button><i class=\"fa fa-pencil-square\" aria-hidden=\"true\"></i></button>";
+        }
+        return "'<div class=\"imagecarousel-item {$cssClass}\" title=\"' + {$sTooltipJs} + '\">' + {$imgJs} + '{$buttonsHtml}</div>'";
     }
     
     /**
@@ -659,7 +663,7 @@ JS;
      * @param string $cssClass
      * @return string
      */
-    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null) : string
+    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null, bool $addPopupButton = false) : string
     {
         $sTooltipJs = $sTooltipJs ?? $sFileNameJs;
         return <<<JS
@@ -668,7 +672,7 @@ JS;
                                     case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                     default: sIcon = 'fa fa-file-o';
                                 }
-                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\" title=\"' + $sTooltipJs + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file')};
+                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file', $sTooltipJs, $addPopupButton)};
                             })()
 
 JS;
@@ -825,12 +829,12 @@ JS;
             if (file.type.startsWith('image')){
                 // If upload preview is available, use it - otherwise use an <img> with src set to the object URL
                 if (file.preview && file.preview.toDataURL().length > 1614) {
-                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append(file.preview)[0]);
+                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}).append(file.preview)[0]);
                 } else {
-                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', '.imagecarousel-pending')}).append('<img src="' + URL.createObjectURL(file) + '">')[0]);
+                    $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}).append('<img src="' + URL.createObjectURL(file) + '">')[0]);
                 }
-            } else {
-                $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', '.imagecarousel-pending')}));
+            } else {console.log('adding doc');
+                $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}));
             }
             fileReader.onload = function () {
                 var sContent = {$this->buildJsFileContentEncoder($uploader->getFileContentAttribute()->getDataType(), 'fileReader.result', 'file.type')};
@@ -947,5 +951,31 @@ HTML;
             </div>
             
 HTML;
+    }
+    
+    /**
+     *
+     * @return AbstractJqueryElement|NULL
+     */
+    protected function getUploadEditorElement() : ?AbstractJqueryElement
+    {
+        if ($this->getWidget()->isUploadEnabled() === false || $this->getWidget()->getUploader()->hasUploadEditPopup() === false) {
+            return null;
+        }
+        return $this->getFacade()->getElement($this->getWidget()->getUploader()->getUploadEditPopup());
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getHintForSlick()
+    {
+        $widget = $this->getWidget();
+        $hint = $widget->getHint() ? $widget->getHint() : $widget->getCaption();
+        if ($widget->isUploadEnabled() === true) {
+            $hint .= PHP_EOL . $this->getHintForUploadRestrictions();
+        }
+        return $hint;
     }
 }

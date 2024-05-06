@@ -14,6 +14,8 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * 
@@ -1035,6 +1037,15 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDefaultEditorUxon()
     {
+        $dataType = $this->getDataType();
+        // Relations need special default editors - InputComboTable or similar to select the related
+        // object rather than edit the value itself. But only for string or numeric data types! 
+        // Do not produce relation selectors for dates, booleans, binaries, etc.
+        if ($this->isRelation() && ($dataType instanceof NumberDataType || $dataType instanceof StringDataType)){
+            $makeRelationSelector = true;
+        } else {
+            $makeRelationSelector = false;
+        }
         // If there is no default widget uxon defined, use the UXON from the data type
         if ($this->default_editor_uxon === null) {
             if ($this->default_editor_uxon_string !== null) {
@@ -1043,7 +1054,7 @@ class Attribute implements MetaAttributeInterface
                 // Relations do not use the data type widget, but rather the special relation widget type from the config,
                 // which will be set set later on. Setting it here would not work if a default editor is specified, but
                 // no widget_type is set explicitly (why should a user do that if a decent type is selected by default?)
-                if ($this->isRelation()) {
+                if ($makeRelationSelector) {
                     $this->default_editor_uxon = new UxonObject();
                 } else {
                     $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
@@ -1052,7 +1063,7 @@ class Attribute implements MetaAttributeInterface
         }
         
         // If the attribute is a relation and no widget type was specified explicitly, take it from the config!
-        if ($this->isRelation() && ! $this->default_editor_uxon->hasProperty('widget_type')) {
+        if ($makeRelationSelector && ! $this->default_editor_uxon->hasProperty('widget_type')) {
             $this->default_editor_uxon = $this->default_editor_uxon->extend($this->getRelation()->getDefaultEditorUxon());
         }
         

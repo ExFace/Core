@@ -4,6 +4,8 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * Makes the object behave as a file regardless of its data source (e.g. files in DB, etc.)
@@ -33,6 +35,12 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     private $timeCreatedAttributeAlias = null;
     
     private $timeModifiedAttributeAlias = null;
+    
+    private $allowedFileExtensions = [];
+    
+    private $allowedMimeTypes = [];
+    
+    private $maxFilenameLength = 255;
     
     private $maxFileSizeMb = null;
     
@@ -185,6 +193,97 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     protected function setTimeModifiedAttribute(string $value) : FileBehavior
     {
         $this->timeModifiedAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    public function getAllowedFileExtensions() : array
+    {
+        return $this->allowedFileExtensions;
+    }
+    
+    /**
+     * Uploadable file types/extensions
+     *
+     * @uxon-property allowed_file_extensions
+     * @uxon-type array
+     * @uxon-template ["pdf"]
+     *
+     * @param array|UxonObject $value
+     * @return FileBehaviorInterface
+     */
+    public function setAllowedFileExtensions($value) : FileBehaviorInterface
+    {
+        if ($value instanceof UxonObject) {
+            $value = $value->toArray();
+        }
+        
+        if (! is_array($value)) {
+            throw new BehaviorConfigurationError($this, 'Invalid value "' . $value . '" for property `allowed_file_extensions` for object ' . $this->getObject()->__toString() . '!');
+        }
+        
+        $this->allowedFileExtensions = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    public function getAllowedMimeTypes() : array
+    {
+        return $this->allowedMimeTypes;
+    }
+    
+    /**
+     * Uploadable file types/extensions
+     *
+     * @uxon-property allowed_mime_types
+     * @uxon-type array
+     * @uxon-template ["application/pdf"]
+     *
+     * @param array|UxonObject $value
+     * @return FileBehaviorInterface
+     */
+    public function setAllowedMimeTypes($value) : FileBehaviorInterface
+    {
+        if ($value instanceof UxonObject) {
+            $value = $value->toArray();
+        }
+        
+        if (! is_array($value)) {
+            throw new BehaviorConfigurationError($this, 'Invalid value "' . $value . '" for property `allowed_mime_types` of FileBehavior for object ' . $this->getObject()->__toString() . '!');
+        }
+        
+        $this->allowedMimeTypes = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return int
+     */
+    public function getMaxFilenameLength() : int
+    {
+        return $this->maxFilenameLength;
+    }
+    
+    /**
+     * Maximum length of the filename (including the extension)
+     *
+     * @uxon-property max_filename_length
+     * @uxon-type integer
+     * @uxon-default 255
+     *
+     * @param int $value
+     * @return FileBehaviorInterface
+     */
+    public function setMaxFilenameLength(int $value) : FileBehaviorInterface
+    {
+        $this->maxFilenameLength = $value;
         return $this;
     }
     

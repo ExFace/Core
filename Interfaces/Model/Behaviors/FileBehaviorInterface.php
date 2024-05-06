@@ -43,6 +43,24 @@ interface FileBehaviorInterface extends BehaviorInterface
     public function getTimeModifiedAttribute() : ?MetaAttributeInterface;
     
     /**
+     *
+     * @return string[]
+     */
+    public function getAllowedFileExtensions() : array;
+    
+    /**
+     *
+     * @return string[]
+     */
+    public function getAllowedMimeTypes() : array;
+    
+    /**
+     *
+     * @return int
+     */
+    public function getMaxFilenameLength() : int;
+    
+    /**
      * 
      * @return float|NULL
      */
