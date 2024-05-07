@@ -182,7 +182,7 @@ class UxonSchema implements UxonSchemaInterface
                 $nextUxon = $uxon->getProperty($prop);
                 // See if the type of the property is a prototype class. If so, take
                 // it as the next prototype class
-                $firstType = $this->getPropertyTypes($prototypeClass, $prop)[0];
+                $firstType = $this->getPropertyTypes($prototypeClass ?? $this->getDefaultPrototypeClass(), $prop)[0];
                 if (strpos($firstType, '\\') === 0) {
                     $nextPrototype = $firstType;
                 }
