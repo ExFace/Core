@@ -262,17 +262,29 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         );
         
         if (null !== $filterProp = $this->getFilters()) {
-            $additionalFilter = $table->getConfiguratorWidget()->createFilterWidget(null, new UxonObject([
-                'hidden' => true,
-                'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
-            ]));
-            $table->addFilter($additionalFilter);
+            // Only add filters to the table if they are not based on live refs.
+            // It seems, live refs are not resolved when used in Filter widgets with custom
+            // condition_group. The leads to filtering for the expression of the live ref,
+            // which produces empty results. For example, in the default editor for a meta,
+            // there is an InputComboTable to select a custom key attribute for a relation.
+            // This InputComboTable filters for attributes of the current object. Adding a
+            // filter to the table as below will filter for `=related_object_selector!UID`
+            // which is not a valid value. This probably needs to be fixed by implementing
+            // live refs in Filter widgets with a custom condition_group.
+            if (false === $filterProp->hasWidgetLinks()) {
+                $additionalFilter = $table->getConfiguratorWidget()->createFilterWidget(null, new UxonObject([
+                    'hidden' => true,
+                    'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
+                ]));
+                $table->addFilter($additionalFilter);
+            }
         }
         
         $this->data_table = $table;
         
-        // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
-        // set, because the method may use autogeneration of the text column, which needs to know about the DataTable
+        // Ensure, that special columns needed for the InputComboTable are present. This must be 
+        // done after $this->data_table is set, because the method may use autogeneration of the 
+        // text column, which needs to know about the DataTable
         $this->addComboColumns();
         return $table;
     }
