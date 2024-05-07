@@ -49,14 +49,14 @@ class MapLayerUxonSchema extends UxonSchema
      * {@inheritDoc}
      * @see \exface\Core\Uxon\UxonSchema::getPropertyValueRecursive()
      */
-    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '', string $prototypeClass = null)
     {
         if ($propertyName === 'object_alias' && $dataUxon = $uxon->getProperty('data')) {
             if ($dataUxon->hasProperty('object_alias')) {
                 return $dataUxon->getProperty('object_alias');
             }
         }
-        return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue);
+        return parent::getPropertyValueRecursive($uxon, $path, $propertyName, $rootValue, $prototypeClass);
     }
     
     /**

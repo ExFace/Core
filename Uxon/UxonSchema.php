@@ -151,7 +151,7 @@ class UxonSchema implements UxonSchemaInterface
      * {@inheritdoc}
      * @see UxonSchemaInterface::getPropertyValueRecursive()
      */
-    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '', string $prototypeClass = null)
     {
         $value = $rootValue; 
         $prop = array_shift($path);
@@ -170,6 +170,8 @@ class UxonSchema implements UxonSchemaInterface
             // the parent schema)
             if (is_numeric($path[0])) {
                 $prop2 = array_shift($path);
+                // The prototype remains the same in this case!
+                $nextPrototype = $prototypeClass;
                 $nextStep = [$prop, $prop2];
                 $nextUxon = $uxon->getProperty($prop)->getProperty($prop2);
                 if (! ($nextUxon instanceof UxonObject)) {
@@ -178,9 +180,19 @@ class UxonSchema implements UxonSchemaInterface
             } else {
                 $nextStep = [$prop];
                 $nextUxon = $uxon->getProperty($prop);
+                // See if the type of the property is a prototype class. If so, take
+                // it as the next prototype class
+                $firstType = $this->getPropertyTypes($prototypeClass, $prop)[0];
+                if (strpos($firstType, '\\') === 0) {
+                    $nextPrototype = $firstType;
+                }
             }
-            $nextSchema = $this->getSchemaForClass($this->getPrototypeClass($uxon, $nextStep));
-            return $nextSchema->getPropertyValueRecursive($nextUxon, $path, $propertyName, $value);
+            
+            if ($nextPrototype === null) {
+                $nextPrototype = $this->getPrototypeClass($uxon, $nextStep, $prototypeClass);
+            }
+            $nextSchema = $this->getSchemaForClass($nextPrototype);
+            return $nextSchema->getPropertyValueRecursive($nextUxon, $path, $propertyName, $value, $nextPrototype);
         }
         
         return $value;
@@ -356,10 +368,13 @@ class UxonSchema implements UxonSchemaInterface
      */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
-        $firstType = $this->getUxonType($uxon, $path, $rootPrototypeClass);
+        /*$prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass, true);
+        $schema = $this->getSchemaForClass($prototypeClass);*/
+        $schema = $this;
+        $firstType = $schema->getUxonType($uxon, $path, $rootPrototypeClass);
         
         try {
-            $object = $this->getMetaObject($uxon, $path, $rootObject);
+            $object = $schema->getMetaObject($uxon, $path, $rootObject);
         } catch (MetaObjectNotFoundError $e) {
             // TODO better error handling to tell apart invalid object alias and no object alias.
             if ($rootObject !== null) {
@@ -368,7 +383,7 @@ class UxonSchema implements UxonSchemaInterface
             $object = null;
         }
         
-        return $this->getValidValuesForType($firstType, $search, $object);
+        return $schema->getValidValuesForType($firstType, $search, $object);
     }
     
     public function getUxonType(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : ?string

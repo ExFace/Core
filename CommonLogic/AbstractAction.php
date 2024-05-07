@@ -58,6 +58,7 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1011,7 +1012,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * @uxon-property input_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
-     * @uxon-template {"column_to_column_mappings": [{"from": "", "to": ""}]}
+     * @uxon-template {"from_object_alias": "", "to_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}
      * 
      * @see setInputMappers()
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()
@@ -1019,7 +1020,7 @@ abstract class AbstractAction implements ActionInterface
     public function setInputMapper(UxonObject $uxon)
     {
         if ($uxon->hasProperty('from_object_alias')) {
-            $from_object = $this->getWorkbench()->model()->getObject($uxon->getProperty('from_object_alias'));
+            $from_object = MetaObjectFactory::createFromString($this->getWorkbench(), $uxon->getProperty('from_object_alias'));
         } else {
             // The short notation for mappers allows to omit the from-object. In this case, the best-guess
             // will be assumed. If the action is defined in a widget, we will probably map from that
