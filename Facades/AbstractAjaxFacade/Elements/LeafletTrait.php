@@ -1124,10 +1124,12 @@ JS;
                     {$tooltipJs}
                     
                     layer.on('mouseover',function(ev) {
-                        $(ev.target.getElement()).addClass('exf-map-shape-hover');
+                        var domTarget = ev.target.getElement !== undefined ? ev.target.getElement() : ev.originalEvent.target;
+                        $(domTarget).addClass('exf-map-shape-hover');
                     });
                     layer.on('mouseout',function(ev) {
-                        $(ev.target.getElement()).removeClass('exf-map-shape-hover');
+                        var domTarget = ev.target.getElement !== undefined ? ev.target.getElement() : ev.originalEvent.target;
+                        $(domTarget).removeClass('exf-map-shape-hover');
                     })
 
                     var timer = 0;
