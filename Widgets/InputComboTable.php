@@ -261,6 +261,14 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             ->setIncludeInQuickSearch(true)
         );
         
+        if (null !== $filterProp = $this->getFilters()) {
+            $additionalFilter = $table->getConfiguratorWidget()->createFilterWidget(null, new UxonObject([
+                'hidden' => true,
+                'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
+            ]));
+            $table->addFilter($additionalFilter);
+        }
+        
         $this->data_table = $table;
         
         // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
@@ -569,9 +577,12 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     /**
      * Condition group to filter rows of the table.
      * 
-     * In contrast to `filters` inside the `table` definition, these filters here are meant to be evaluated
-     * after the data was read from the data source. Thus, they can contain live references to current
-     * values of other widgets.
+     * Similarly to `filters` inside the `table` definition, this can be used to filter the resulting
+     * autosuggest rows. 
+     * 
+     * Over the time, the difference between the two filter types has decreased, so they should work 
+     * more or less the same. There may be differences when using widget links in values in some facades 
+     * though. If anything goes wrong, try to set filters inside the `table` widget.
      *
      * For example, if we have a InputComboTable for customer ids, which is placed in a form, where the 
      * customer class can be selected explicitly in another InputComboTable or a InputSelect with the id 
