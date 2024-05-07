@@ -346,4 +346,22 @@ class ConditionalProperty implements WidgetPartInterface
         $this->onFalse = $widgetFunction;
         return $this;
     }
+    
+    /**
+     * Returns TRUE if any of the conditions use live references or FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function hasWidgetLinks() : bool
+    {
+        foreach ($this->getConditionGroup()->getConditionsRecursive() as $cond) {
+            if ($cond->getValueLeftExpression()->isReference() === true) {
+                return true;
+            }
+            if ($cond->getValueRightExpression()->isReference() === true) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
