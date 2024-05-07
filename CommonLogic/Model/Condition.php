@@ -21,6 +21,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -411,8 +412,47 @@ class Condition implements ConditionInterface
     }
 
     /**
-     * Imports data from UXON objects like {"object_alias": "...", "expression": "...", "value": "...", "comparator": "..."}
-     *
+     * Imports data from UXON objects in one of the supported formats. 
+     * 
+     * Supported formats:
+     * 
+     * ```
+     *  { 
+     *      "expression": "...", 
+     *      "value": "...", 
+     *      "comparator": "..."
+     *      "object_alias": "...",
+     *  }
+     *  
+     * ```
+     * 
+     * There is also a more generic format comparing two values instead of an expression
+     * and a scalar expclicitly. For now, one of the values MUST be an expression and the
+     * other one a scalar, but this is planned to change in future!
+     * 
+     * ```
+     *  { 
+     *      "value_left": "...", 
+     *      "value_right": "...", 
+     *      "comparator": "..."
+     *      "object_alias": "...",
+     *  }
+     *  
+     * ```
+     * 
+     * Also the legacy format with `attribute_alias` instead of `expression` is 
+     * still supported.
+     * 
+     * ```
+     *  { 
+     *      "attribute_alias": "...", 
+     *      "value": "...", 
+     *      "comparator": "..."
+     *      "object_alias": "...",
+     *  }
+     *  
+     * ```
+     * 
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()            
      */
     public function importUxonObject(UxonObject $uxon)
@@ -420,24 +460,48 @@ class Condition implements ConditionInterface
         if (! $this->isEmpty()) {
             throw new UxonParserError($uxon, 'Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
         }
-        if ($uxon->hasProperty('expression')) {
-            $expression = $uxon->getProperty('expression');
-        } elseif ($uxon->hasProperty('attribute_alias')) {
-            $expression = $uxon->getProperty('attribute_alias');
-        }
         if (! $objAlias = $uxon->getProperty('object_alias')) {
             throw new UxonParserError($uxon, 'Invalid UXON condition syntax: Missing object alias!');
         }
+        $obj = MetaObjectFactory::createFromString($this->getWorkbench(), $objAlias);
+        $expression = null;
+        switch (true) {
+            case $uxon->hasProperty('expression') === true:
+                $expressionStr = $uxon->getProperty('expression');
+                break;
+            case $uxon->hasProperty('attribute_alias') === true:
+                $expressionStr = $uxon->getProperty('attribute_alias');
+                break;
+            case $uxon->hasProperty('value_left') === true:
+                $val = $uxon->getProperty('value_left');
+                $expression = ExpressionFactory::createForObject($obj, $val);
+                if ($expression->isMetaAttribute() === true) {
+                    $value = $uxon->getProperty('value_right');
+                    break;
+                }
+                // Otherwise continue with the next case
+            case $uxon->hasProperty('value_right') === true:
+                $val = $uxon->getProperty('value_right');
+                $expression = ExpressionFactory::createForObject($obj, $val);
+                if ($expression->isMetaAttribute() === true) {
+                    $value = $uxon->getProperty('value_left');
+                    break;
+                }
+                // Otherwise continue with the next case
+            default:
+                throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
+        }
         try {
-            $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($objAlias)));
+            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr);
+            $this->setExpression($expression);
             if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
                 $this->setComparator($comp);
             }
             if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
                 $this->setIgnoreEmptyValues($ignoreEmpty);
             }
-            if ($uxon->hasProperty('value')){
-                $value = $uxon->getProperty('value');
+            if ($uxon->hasProperty('value') || $value !== null){
+                $value = $value ?? $uxon->getProperty('value');
                 // Apply th evalue only if it is not empty or ignore_empty_values is off
                 if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
                     if ($value instanceof UxonObject) {
@@ -448,8 +512,8 @@ class Condition implements ConditionInterface
                         if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
                             $comp = EXF_COMPARATOR_NOT_IN;
                         }
-                        if ($this->getExpression()->isMetaAttribute()) {
-                            $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
+                        if ($expression->isMetaAttribute()) {
+                            $glue = $expression->getAttribute()->getValueListDelimiter();
                         } else {
                             $glue = EXF_LIST_SEPARATOR;
                         }
