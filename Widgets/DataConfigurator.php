@@ -12,6 +12,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -120,9 +121,19 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function setFilters(UxonObject $uxon_objects)
     {
-        foreach ($uxon_objects as $uxon) {
-            $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
-            $this->addFilter($filter);
+        try {
+            foreach ($uxon_objects as $uxon) {
+                $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
+                $this->addFilter($filter);
+            }
+        } catch (\Throwable $e) {
+            if ($uxon_objects->hasProperty('operator')) {
+                throw new WidgetConfigurationError($this, 'Invalid configuration for `filters` in ' . $this->getDataWidget()->getWidgetType() . '. It seems like a condition group was used, but the filters of a widget expect filter widgets and not conditions for data!', null, $e);
+            }
+            if (! $e instanceof WidgetExceptionInterface) {
+                throw new WidgetConfigurationError($this, 'Invalid configuration for `filters` in ' . $this->getDataWidget()->getWidgetType() . '. ' . $e->getMessage(), null, $e);
+            }
+            throw $e;
         }
         return $this;
     }
