@@ -322,12 +322,16 @@ class Data
      * @param string $mouse_action            
      * @return DataButton[]
      */
-    public function getButtonsBoundToMouseAction($mouse_action)
+    public function getButtonsBoundToMouseAction($mouse_action, array $buttons = null)
     {
         $result = array();
-        foreach ($this->getButtons() as $btn) {
+        $buttons = $buttons ?? $this->getButtons();
+        foreach ($buttons as $btn) {
             if ($btn instanceof DataButton && $btn->getBindToMouseAction() == $mouse_action) {
                 $result[] = $btn;
+            }
+            if ($btn instanceof iHaveButtons) {
+                $result = array_merge($result, $this->getButtonsBoundToMouseAction($mouse_action, $btn->getButtons()));
             }
         }
         return $result;
