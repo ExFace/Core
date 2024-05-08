@@ -80,6 +80,7 @@ trait WidgetExceptionTrait {
 
 - Type `{$widget->getWidgetType()}`
 - ID: `{$widget->getId()}`
+- Page: `{$widget->getPage()->getAliasWithNamespace()}`
 - Called by action: `{$actionInfo}`
 
 ## Widget UXON
