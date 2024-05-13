@@ -222,11 +222,11 @@ class UndeletableBehavior extends AbstractBehavior
      */
     public function setConditionGroup(UxonObject $uxon) : UndeletableBehavior
     {
-        $this->setPreventDeleteIf(new UxonObject([
+        $this->setPreventDeleteIf(new UxonObject(
             [
                 $uxon->toArray()
             ]
-        ]));
+        ));
         return $this;
     }
     
