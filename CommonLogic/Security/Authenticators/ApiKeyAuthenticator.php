@@ -97,7 +97,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
      */
     protected function getNameDefault() : string
     {
-        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('SECURITY.SIGN_IN');
+        return 'API Keys';
     }
     
     /**
