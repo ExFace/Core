@@ -28,6 +28,7 @@ use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\Widgets\DialogButton;
 
 /**
  * 
@@ -436,6 +437,26 @@ JS;
                 return true;
         }
         return false;
+    }
+    
+    /**
+     * 
+     * @param ActionInterface $action
+     * @return bool
+     */
+    protected function isActionToCheckForUnsavedChanges(ActionInterface $action) : bool
+    {
+        switch (true) {
+            case $action instanceof SendToWidget:
+            case $action instanceof iCallWidgetFunction:
+            case $action instanceof iRunFacadeScript:
+                $checkChanges = false;
+                break;
+            default:
+                $checkChanges = true;
+                break;
+        }
+        return $checkChanges;
     }
     
     /**
