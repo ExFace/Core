@@ -153,7 +153,7 @@ SELECT
 	oa.name AS instance_name,
 	oa.alias AS instance_alias,
 	oa.oid AS oid,
-	'exf_data_type' AS "table_name",
+	'exf_object_action' AS "table_name",
 	oa.action_app_oid AS app_oid
 FROM exf_object_action oa
 WHERE oa.config_uxon IS NOT NULL
