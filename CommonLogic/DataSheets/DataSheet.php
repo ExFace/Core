@@ -947,9 +947,18 @@ class DataSheet implements DataSheetInterface
                         // know anything about our additional create-sheet!). Here we calculate
                         // the original sheet's row numbers an rethrow the exception with these
                         if (null !== $brokenRowsInCreateSheet = $e->getRowIndexes()) {
-                            $brokenRowIdxs = array_map(function(int $createRowIdx) use ($emptyUidRowsInCreateSheet, $emptyUidRows) { 
-                                return $emptyUidRows[array_search($createRowIdx, $emptyUidRowsInCreateSheet)]; 
-                            }, $brokenRowsInCreateSheet);
+                            $brokenRowIdxs = [];
+                            $createSheetUidCol = (! empty($missing_uids) ? $create_ds->getUidColumn() : null);
+                            foreach ($brokenRowsInCreateSheet as $brokenCreateIdx) {
+                                // If the create was due to missing UIDs, see if the error originated
+                                // from one of the first.
+                                if ($createSheetUidCol !== null && null !== $brokenUid = $createSheetUidCol->getValue($brokenCreateIdx)) {
+                                    $brokenRowIdxs = array_merge($brokenRowIdxs, $this->getUidColumn()->findRowsByValue($brokenUid));
+                                } else {
+                                    // If not, find the corresponding row among those with empty UID
+                                    $brokenRowIdxs[] = $emptyUidRows[array_search($brokenCreateIdx, $emptyUidRowsInCreateSheet)];
+                                }
+                            }
                         }
                         $eClass = get_class($e);
                         throw new $eClass($this, null, null, $e, $e->getColumnName(), $brokenRowIdxs);
