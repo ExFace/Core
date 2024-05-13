@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Widgets\DialogButton;
 use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * 
@@ -118,8 +119,8 @@ trait PopupTrait
             $btn->setCloseDialogAfterActionSucceeds(true);
         }
         $btn->setRefreshInput(false);
-        $btn->setShowIcon(false);
-        $btn->setCaption($this->translate('WIDGET.POPUP.CLOSE_BUTTON_CAPTION'));
+        $btn->setIcon(Icons::TIMES);
+        $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
         $btn->setAlign(EXF_ALIGN_OPPOSITE);
         if ($this->getHideCloseButton()) {
             $btn->setHidden(true);
