@@ -441,10 +441,10 @@ JS;
     
     /**
      * 
-     * @param ActionInterface|null $action
+     * @param ActionInterface $action
      * @return bool
      */
-    protected function isActionToCheckForUnsavedChanges(?ActionInterface $action) : bool
+    protected function isActionToCheckForUnsavedChanges(ActionInterface $action) : bool
     {
         switch (true) {
             case $action instanceof SendToWidget:
