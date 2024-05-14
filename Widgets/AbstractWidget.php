@@ -967,7 +967,7 @@ abstract class AbstractWidget implements WidgetInterface
         
         // Dev-hint
         if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- attribute alias '{$this->getAttributeAlias()}' \n- object '{$this->getMetaObject()->getAliasWithNamespace()}'"; 
+            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- Attribute alias: `{$this->getAttributeAlias()}` \n- Object: {$this->getMetaObject()->__toString()}"; 
         }
         return $hint;
     }
