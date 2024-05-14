@@ -124,7 +124,12 @@ HTML;
     {
         if ($this->getWidget()->isZoomable()) {
             if ($this->getWidget()->hasImageTitleColumn()) {
-                $lightboxCaption = "caption: function(element, info){ return $('<p></p>').html(exfTools.string.nl2br(element.title)).prop('outerHTML'); },";
+                $lightboxCaption = <<<JS
+            caption: function(element, info){ 
+                var sTitle = $(element).closest('.imagecarousel-item').prop('title');
+                return $('<p>asdf</p>').html(exfTools.string.nl2br(sTitle)).prop('outerHTML'); 
+            },
+JS;
             }
             
             $zoomOnClickJs = $this->getWidget()->isZoomOnClick() ? 'true' : 'false';

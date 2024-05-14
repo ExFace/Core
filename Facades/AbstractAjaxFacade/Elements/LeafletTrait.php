@@ -1521,9 +1521,7 @@ JS;
             }
             
             if ($this->hasLeafletDraw() === true) {
-                $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.JS') . '"></script>';
                 $includes[] = '<script src="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.JS') . '"></script>';
-                $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.DRAW.CSS') . '"/>';
                 $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.LEAFLET.GEOMAN.CSS') . '"/>';
             }
         }
