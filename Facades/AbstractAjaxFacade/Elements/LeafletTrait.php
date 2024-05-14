@@ -50,7 +50,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  *     	"npm-asset/leaflet.locatecontrol" : "~0.72",
  *     	"npm-asset/esri-leaflet" : "^3.0",
  *     	"npm-asset/leaflet.markercluster" : "^1.4",
- *      "npm-asset/proj4leaflet": "^1"
+ *      "npm-asset/proj4leaflet": "^1",
+ *      "npm-asset/geoman-io--leaflet-geoman-free": "^2"
  *     
  *      ```
  * 2. Add the config options to the facade:
@@ -67,7 +68,10 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  *  	"LIBS.LEAFLET.LOCATECONTROL_JS": "npm-asset/leaflet.locatecontrol/dist/L.Control.Locate.min.js",
  *  	"LIBS.LEAFLET.ESRI.JS": "npm-asset/esri-leaflet/dist/esri-leaflet.js",
  *  	"LIBS.LEAFLET.PROJ4.PROJ4JS": "npm-asset/proj4/dist/proj4.js",
+ *  	"LIBS.LEAFLET.GEOMAN.JS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.min.js",
+ *  	"LIBS.LEAFLET.GEOMAN.CSS": "npm-asset/geoman-io--leaflet-geoman-free/dist/leaflet-geoman.css",
  *  	"LIBS.LEAFLET.PROJ4.PROJ4LEAFLETJS": "npm-asset/proj4leaflet/src/proj4leaflet.js",
+ *  	"LIBS.LEAFLET.TRUF.JS": "exface/Core/Facades/AbstractAjaxFacade/js/leaflet/turf.min.js",
  *  
  *      ```
  * 3. Use the trait in your element by creating a globally accessible variable or 
