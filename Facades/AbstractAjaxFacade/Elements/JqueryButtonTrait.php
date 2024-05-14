@@ -28,7 +28,6 @@ use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
-use exface\Core\Widgets\DialogButton;
 
 /**
  * 
@@ -440,12 +439,13 @@ JS;
     }
     
     /**
-     * 
-     * @param ActionInterface $action
+     *  
+     * @param ActionInterface|NULL $action
      * @return bool
      */
-    protected function isActionToCheckForUnsavedChanges(ActionInterface $action) : bool
+    protected function isCheckForUnsavedChangesRequired(ActionInterface $action = null) : bool
     {
+        $action = $action ?? $this->getAction();
         switch (true) {
             case $action instanceof SendToWidget:
             case $action instanceof iCallWidgetFunction:
