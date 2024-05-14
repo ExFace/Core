@@ -659,7 +659,7 @@ class Uploader implements WidgetPartInterface
     
     public function hasUploadEditPopup() : bool
     {
-        return $this->isInstantUpload() === false && $this->uploadEditPopupUxon !== null;
+        return $this->isInstantUpload() === false /*&& $this->uploadEditPopupUxon !== null*/;
     }
     
     /**
@@ -681,8 +681,8 @@ class Uploader implements WidgetPartInterface
                         ['attribute_alias' => $this->getFilenameAttributeAlias(), 'disabled' => false]
                     ]
                 ]);
+                $aliasesAdded = [$this->getFilenameAttributeAlias()];
                 if ($this->getWidget() instanceof iHaveColumns) {
-                    $aliasesAdded = [];
                     foreach ($this->getWidget()->getColumns() as $col) {
                         if ($col->isBoundToAttribute() && $col->getAttribute()->isEditable()) {
                             if (! in_array($col->getAttributeAlias(), $aliasesAdded)) {
