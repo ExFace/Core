@@ -133,18 +133,7 @@ all SQL-installers.
 		
 ## <a name="skipping"></a>Skipping Migrations
 
-To skip a failed migration, find it in the migration log in `Administration > Logs` and disable it.
-
-To skip a migration, that had not been attempted yet, add the option `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` to the local configuration file of the app being installed and place the migration names in this array. Like this:
-
-```
-{
-  "INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS": [
-    "20190101_1200_01_NEW_column3_and_column4.sql",
-    "20190102_1300_02_NEW_column5_and_column6.sql"
-  ]	
-}	
-```
+TODO
 
 It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption()`. 
 
