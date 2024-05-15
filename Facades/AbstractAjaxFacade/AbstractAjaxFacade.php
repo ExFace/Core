@@ -637,29 +637,33 @@ HTML;
             }
         }
         
-        $headers = $this->buildHeadersCommon();
+        $headers = $this->buildHeadersCommon(); 
         $body = '';
-        
         switch (true) {
+            // If details needed, render a widget
             case $this->isShowingErrorDetails() === true:
+            // If authorization denied for an anonymous user, also render the widget
             case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
-                // If details needed, render a widget
                 $body = $this->buildHtmlFromError($exception, $request, $page);
                 $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
+            // Empty body for anonymous non-AJAX requests with errors for security resons
+            case $request !== null && $this->isRequestFrontend($request) && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+                $body = '';
+                break;
+            // Render error data for AJAX requests, so the JS can interpret it.
+            case $request !== null && $this->isRequestAjax($request):
+                $body = $this->encodeData($this->buildResponseDataError($exception));
+                $headers = array_merge($headers, $this->buildHeadersForAjax());
+                $headers['Content-Type'] = ['application/json;charset=utf-8'];
+                break;
+            // If we were rendering a widget, return HTML even for non-detail cases
             default:
-                if ($request !== null && $this->isRequestAjax($request)) {
-                    // Render error data for AJAX requests, so the JS can interpret it.
-                    $body = $this->encodeData($this->buildResponseDataError($exception));
-                    $headers = array_merge($headers, $this->buildHeadersForAjax());
-                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
-                } else {
-                    // If we were rendering a widget, return HTML even for non-detail cases
-                    $body = $this->buildHtmlFromError($exception, $request, $page);
-                    $headers = array_merge($headers, $this->buildHeadersForHtml());
-                    $headers['Content-Type'] = ['text/html;charset=utf-8'];
-                }
+                $body = $this->buildHtmlFromError($exception, $request, $page);
+                $headers = array_merge($headers, $this->buildHeadersForHtml());
+                $headers['Content-Type'] = ['text/html;charset=utf-8'];
+                break;
         }
         
         $headers = array_merge($headers, $this->buildHeadersForErrors());
