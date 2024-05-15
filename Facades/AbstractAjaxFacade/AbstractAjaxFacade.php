@@ -639,17 +639,19 @@ HTML;
         
         $headers = $this->buildHeadersCommon(); 
         $body = '';
+        $isAnonymous = $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous();
         switch (true) {
+            // If authorization denied for an anonymous user, also render the (login) widget
+            case $isAnonymous === true && $exception instanceof AuthorizationExceptionInterface:
+                return $this->createResponseUnauthorized($exception, $request, $page);
             // If details needed, render a widget
             case $this->isShowingErrorDetails() === true:
-            // If authorization denied for an anonymous user, also render the widget
-            case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
                 $body = $this->buildHtmlFromError($exception, $request, $page);
                 $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
             // Empty body for anonymous non-AJAX requests with errors for security resons
-            case $request !== null && $this->isRequestFrontend($request) && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
+            case $isAnonymous === true && $request !== null && $this->isRequestFrontend($request):
                 $body = '';
                 break;
             // Render error data for AJAX requests, so the JS can interpret it.
