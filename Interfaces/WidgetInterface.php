@@ -298,10 +298,11 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function setParent(WidgetInterface $widget);
 
     /**
-     *
-     * @return string
+     * 
+     * @param bool $includeDebugInfo
+     * @return string|NULL
      */
-    public function getHint();
+    public function getHint(bool $includeDebugInfo = true) : ?string;
 
     /**
      *

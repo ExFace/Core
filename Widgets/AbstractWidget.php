@@ -922,7 +922,7 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @see \exface\Core\Interfaces\WidgetInterface::getHint()
      */
-    public function getHint()
+    public function getHint(bool $includeDebugInfo = true) : ?string
     {
         if ($this->hint !== null) {
             $hint = $this->hint;
@@ -966,7 +966,7 @@ abstract class AbstractWidget implements WidgetInterface
         }
         
         // Dev-hint
-        if (($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
+        if ($includeDebugInfo === true && ($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
             $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- Attribute alias: `{$this->getAttributeAlias()}` \n- Object: {$this->getMetaObject()->__toString()}"; 
         }
         return $hint;
