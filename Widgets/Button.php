@@ -498,7 +498,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 $actionAliasHint = 'no action defined';
                 $actionObjectHint = 'no action defined';
             }
-            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
+            $hint =  ($hint ? StringDataType::endSentence($hint) : '') . "\n\nDebug-hints: \n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
         }
         
         return $hint;
