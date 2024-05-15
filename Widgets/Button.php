@@ -472,7 +472,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::getHint()
      */
-    public function getHint()
+    public function getHint(bool $includeDebugInfo = true) : ?string
     {
         $hint = parent::getHint();
         
@@ -490,7 +490,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
         
         // Dev-hint
-        if ($this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+        if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
             if ($this->hasAction()) {
                 $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
                 $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
