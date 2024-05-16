@@ -25,6 +25,19 @@ use exface\Core\DataTypes\ComparatorDataType;
 /**
  * Marks an object as attachment - a link between a document and a file
  * 
+ * ## Saving comments for each attachment
+ * 
+ * Attachments often include additional information beside the file itself.
+ * Aparat from the link to the object owning the attachment, a common
+ * scenario is saving descriptions or comments for each attachment. 
+ * 
+ * This can be greatly simplified by setting `comments_attribute` in this behavior. 
+ * This will tell all widgets with an `uploader`, that the user should be 
+ * able to add a comment to every file being uploaded. How exaclty this is 
+ * done, depends on the specific widget and the facade used, but it will
+ * certainly result in a consistent way to comment attachments accross the
+ * entire app.
+ * 
  * ## Deleting files (or not)
  * 
  * Normally, when an attachment is deleted, the attached file is deleted too. 
@@ -95,6 +108,8 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     private $maxFilenameLength = null;
     
     private $maxFileSizeMb = null;
+    
+    private $commentsAttributeAlias = null;
     
     private $overrideFileAttributes = [];
     
@@ -340,6 +355,39 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     protected function setTimeModifiedAttribute(string $value) : FileBehavior
     {
         $this->timeModifiedAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return MetaAttributeInterface|NULL
+     */
+    public function getCommentsAttribute() : ?MetaAttributeInterface
+    {
+        return $this->commentsAttributeAlias === null ? null : $this->getObject()->getAttribute($this->commentsAttributeAlias);
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasCommentsAttribute() : bool
+    {
+        return $this->commentsAttributeAlias !== null;
+    }
+    
+    /**
+     * The alias of the attribute to save attachment description or comments
+     * 
+     * @uxon-property comments_attribute
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return FileAttachmentBehavior
+     */
+    protected function setCommentsAttribute(string $value) : FileAttachmentBehavior
+    {
+        $this->commentsAttributeAlias = $value;
         return $this;
     }
     
