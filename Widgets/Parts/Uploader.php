@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\Widgets\Popup;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Behaviors\FileAttachmentBehavior;
 
 
 /**
@@ -31,6 +32,12 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
  * - `file_mime_type_attribute`
  * - `file_size_attribute`
  * - `file_modification_time_attribute`
+ * 
+ * Keep in mind, that different file storage types will require different attributes to be set
+ * explicitly when uploading: while a file system only requires the file itself and can determine
+ * size, mime type, etc. automatically, database-style storages will store all these attributes
+ * separately. The uploader will send data for those attributes, that are either writable or
+ * included in the uploader configuration explicitly.
  * 
  * ## Instant upload vs. inclusion in form data
  * 
@@ -57,6 +64,18 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
  * - `allowed_file_extensions`
  * - `max_filename_length`
  * - `max_file_size_mb`
+ * 
+ * ## Saving additional information with every file
+ * 
+ * In data widgets like `FileList` or `ImageGallery` with `instant_upload` set to `false`, 
+ * additional information can be collected for every file - typical examples are comments, 
+ * descriptions, categories, etc. The widget will offer an editor popup for pending uploads
+ * to add this information. This popup can be customized via `upload_edit_popup`. By default
+ * it will include the filename along with all other editable attributes from the columns
+ * of the data widget.
+ * 
+ * If the uploader is used for an object with `FileAttachmentBehavior`, the `comments_attribute`
+ * will be determined automatically if defined in the behavior.
  * 
  * @author Andrej Kabachnik
  * 
@@ -92,6 +111,8 @@ class Uploader implements WidgetPartInterface
     private $mimeTypeAttributeAlias = null;
     
     private $fileSizeAttributeAlias = null;
+    
+    private $commentsAttributeAlias = null;
     
     private $uxon = null;
     
@@ -596,20 +617,80 @@ class Uploader implements WidgetPartInterface
     }
     
     /**
+     *
+     * @return string|NULL
+     */
+    protected function getCommentsAttributeAlias() : ?string
+    {
+        return $this->commentsAttributeAlias;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasCommentsAttribute() : bool
+    {
+        return $this->commentsAttributeAlias !== null;
+    }
+    
+    /**
+     *
+     * @return MetaAttributeInterface
+     */
+    public function getCommentsAttribute() : MetaAttributeInterface
+    {
+        return $this->getMetaObject()->getAttribute($this->getCommentsAttributeAlias());
+    }
+    
+    /**
+     * If set, every upload will allow to add a description/comment
+     *
+     * If the uploader is based on an object with `FileAttachmentBehavior`, the `comments_attribute`
+     * can be determined automatically.
+     *
+     * @uxon-property comments_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return Uploader
+     */
+    public function setCommentsAttribute(string $value) : Uploader
+    {
+        $this->commentsAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
      * @return void
      */
     protected function guessAttributes()
     {
         /* @var $behavior \exface\Core\Behaviors\FileBehavior */
         if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            if ($this->fileContentAttributeAlias === null && $attr = $behavior->getContentsAttribute()) {
+            if ($this->fileContentAttributeAlias === null && null !== $attr = $behavior->getContentsAttribute()) {
                 $this->setFileContentAttribute($attr->getAliasWithRelationPath());
             }
-            if ($this->filenameAttributeAlias === null && $attr = $behavior->getFilenameAttribute()) {
+            if ($this->filenameAttributeAlias === null && null !== $attr = $behavior->getFilenameAttribute()) {
                 $this->setFilenameAttribute($attr->getAliasWithRelationPath());
             }
-            if ($this->mimeTypeAttributeAlias === null && $attr = $behavior->getMimeTypeAttribute()) {
-                $this->setFileMimeTypeAttribute($attr->getAliasWithRelationPath());
+            if ($this->mimeTypeAttributeAlias === null && null !== $attr = $behavior->getMimeTypeAttribute()) {
+                if ($attr->isWritable()) {
+                    $this->setFileMimeTypeAttribute($attr->getAliasWithRelationPath());
+                }
+            }
+            if ($this->fileSizeAttributeAlias === null && null !== $attr = $behavior->getFileSizeAttribute()) {
+                if ($attr->isWritable()) {
+                    $this->setFileSizeAttribute($attr->getAliasWithRelationPath());
+                }
+            }
+            if ($this->fileModificationTimeAttributeAlias === null && null !== $attr = $behavior->getMimeTypeAttribute()) {
+                if ($attr->isWritable()) {
+                    $this->setFileModificationTimeAttribute($attr->getAliasWithRelationPath());
+                }
+            }
+            if ($this->commentsAttributeAlias === null && ($behavior instanceof FileAttachmentBehavior) && null !== $attr = $behavior->getCommentsAttribute()) {
+                $this->setCommentsAttribute($attr->getAliasWithRelationPath());
             }
             if ($this->maxFileSizeMb === null && null !== $val = $behavior->getMaxFileSizeInMb()) {
                 $this->setMaxFileSizeMb($val);
@@ -653,13 +734,20 @@ class Uploader implements WidgetPartInterface
         if ($this->hasFileMimeTypeAttribute()) {
             $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getFileMimeTypeAttribute()->getAliasWithRelationPath());
         }
+        if ($this->hasCommentsAttribute()) {
+            $cols[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getCommentsAttribute()->getAliasWithRelationPath());
+        }
             
         return $cols;
     }
     
+    /**
+     * 
+     * @return bool
+     */
     public function hasUploadEditPopup() : bool
     {
-        return $this->isInstantUpload() === false /*&& $this->uploadEditPopupUxon !== null*/;
+        return $this->isInstantUpload() === false;
     }
     
     /**
@@ -676,12 +764,22 @@ class Uploader implements WidgetPartInterface
             if ($this->uploadEditPopupUxon !== null) {
                 $uxon = $this->uploadEditPopupUxon;
             } else {
+                $aliasesAdded = [];
                 $uxon = new UxonObject([
                     'widgets' => [
-                        ['attribute_alias' => $this->getFilenameAttributeAlias(), 'disabled' => false]
+                        [
+                            'attribute_alias' => $this->getFilenameAttributeAlias(), 
+                            'disabled' => false
+                        ]
                     ]
                 ]);
-                $aliasesAdded = [$this->getFilenameAttributeAlias()];
+                $aliasesAdded[] = $this->getFilenameAttributeAlias();
+                if ($this->hasCommentsAttribute()) {
+                    $uxon->appendToProperty('widgets', new UxonObject([
+                        'attribute_alias' => $this->getCommentsAttributeAlias()
+                    ]));
+                    $aliasesAdded[] = $this->getCommentsAttributeAlias();
+                }
                 if ($this->getWidget() instanceof iHaveColumns) {
                     foreach ($this->getWidget()->getColumns() as $col) {
                         if ($col->isBoundToAttribute() && $col->getAttribute()->isEditable()) {
@@ -706,7 +804,7 @@ class Uploader implements WidgetPartInterface
      * 
      * @uxon-property upload_edit_popup
      * @uxon-type \exface\Core\Widgets\Popup
-     * @uxon-template {"widgets": ["attribute_alias": ""]}
+     * @uxon-template {"widgets": [{"attribute_alias": ""}]}
      * 
      * @param UxonObject $value
      * @return Uploader
