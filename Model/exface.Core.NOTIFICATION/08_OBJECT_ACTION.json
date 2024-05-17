@@ -121,47 +121,56 @@
         },
         {
             "CREATED_ON": "2023-04-18 15:32:01",
-            "MODIFIED_ON": "2024-05-16 13:37:34",
+            "MODIFIED_ON": "2024-05-17 23:02:55",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed904d668417c0904d025041000001",
             "OBJECT": "0x11ebaf7bbfb71838af7b025041000001",
-            "ACTION_PROTOTYPE": "exface\/core\/Actions\/UpdateData.php",
+            "ACTION_PROTOTYPE": "exface\/core\/Actions\/ActionChain.php",
             "ALIAS": "NotificationAllRead",
             "NAME": "Mark All Read",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
-                "alias": "exface.core.UpdateData",
+                "alias": "exface.Core.ActionChain",
                 "input_rows_min": 0,
                 "object_alias": "exface.Core.NOTIFICATION",
                 "icon": "envelope-open-o",
-                "input_mapper": {
-                    "from_object_alias": "exface.Core.NOTIFICATION",
-                    "to_object_alias": "exface.Core.NOTIFICATION",
-                    "inherit_columns": "none",
-                    "column_to_column_mappings": [
-                        {
-                            "from": "=NOW()",
-                            "to": "READ_ON"
-                        },
-                        {
-                            "from": "=NullValue()",
-                            "to": "MODIFIED_ON"
+                "skip_actions_if_input_empty": true,
+                "actions": [
+                    {
+                        "alias": "exface.core.ReadData",
+                        "object_alias": "exface.Core.NOTIFICATION",
+                        "input_data_sheet": {
+                            "object_alias": "exface.Core.NOTIFICATION",
+                            "columns": [
+                                {
+                                    "attribute_alias": "UID"
+                                },
+                                {
+                                    "attribute_alias": "MODIFIED_ON"
+                                }
+                            ],
+                            "filters": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "expression": "USER",
+                                        "comparator": "==",
+                                        "value": "=USER('UID')"
+                                    },
+                                    {
+                                        "expression": "ISREAD",
+                                        "comparator": "==",
+                                        "value": 0
+                                    }
+                                ]
+                            }
                         }
-                    ],
-                    "column_to_filter_mappings": [
-                        {
-                            "from": "=USER('UID')",
-                            "to": "USER",
-                            "comparator": "=="
-                        },
-                        {
-                            "from": 0,
-                            "to": "ISREAD",
-                            "comparator": "=="
-                        }
-                    ]
-                }
+                    },
+                    {
+                        "alias": "exface.Core.NotificationRead"
+                    }
+                ]
             },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,
