@@ -11,6 +11,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * 
@@ -41,7 +42,7 @@ class ReadData extends AbstractAction implements iReadData
         // ask the widget, what columns it needs.
         // Note: there may also be cases, where data is read for another object - e.g. if the ReadData
         // action is part of an action chain. In this case, simply read the columns there are.
-        if ($dataWidget !== null && $dataWidget->getMetaObject()->is($data_sheet->getMetaObject())) {
+        if ($dataWidget !== null && ($dataWidget instanceof iSupportLazyLoading) && $this === $dataWidget->getLazyLoadingAction()) {
             $data_sheet = $dataWidget->prepareDataSheetToRead($data_sheet);
         }
         
