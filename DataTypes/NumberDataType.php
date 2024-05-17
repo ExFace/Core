@@ -196,8 +196,11 @@ class NumberDataType extends AbstractDataType
     public function setPrecisionMin($precisionMin)
     {
         $value = intval($precisionMin);
-        if ($this->getPrecisionMax() && $value > $this->getPrecisionMax()){
-            throw new DataTypeConfigurationError($this, 'Maximum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' greater than minimum precision ("' . $this->getPrecisionMin() . '")!', '6XALZHW');
+        if ($value > 100) {
+            throw new DataTypeConfigurationError($this, 'Number precision value too large: "' . $value . '"!');
+        }
+        if (null !== ($max = $this->getPrecisionMax()) && $value > $max){
+            throw new DataTypeConfigurationError($this, 'Maximum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' greater than minimum precision ("' . $max . '")!', '6XALZHW');
         }
         $this->precisionMin = $value;
         return $this;
@@ -231,8 +234,11 @@ class NumberDataType extends AbstractDataType
             $value = null;
         } else {
             $value = intval($precisionMax);
-            if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
-                throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+            if ($value > 100) {
+                throw new DataTypeConfigurationError($this, 'Number precision value too large: "' . $value . '"!');
+            }
+            if (null !== ($min = $this->getPrecisionMin()) && $value < $min){
+                throw new DataTypeConfigurationError($this, 'Maximum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than minimum precision ("' . $min . '")!', '6XALZHW');
             }
         }
         $this->precisionMax = $value;
