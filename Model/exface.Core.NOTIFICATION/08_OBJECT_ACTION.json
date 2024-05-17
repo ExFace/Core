@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-04-11 14:32:00",
-            "MODIFIED_ON": "2023-09-15 14:33:41",
+            "MODIFIED_ON": "2024-05-16 13:04:13",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed9a29db6c95aa9a29025041000001",
@@ -121,56 +121,47 @@
         },
         {
             "CREATED_ON": "2023-04-18 15:32:01",
-            "MODIFIED_ON": "2023-09-15 14:33:24",
+            "MODIFIED_ON": "2024-05-16 13:37:34",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed904d668417c0904d025041000001",
             "OBJECT": "0x11ebaf7bbfb71838af7b025041000001",
-            "ACTION_PROTOTYPE": "exface\/core\/Actions\/ActionChain.php",
+            "ACTION_PROTOTYPE": "exface\/core\/Actions\/UpdateData.php",
             "ALIAS": "NotificationAllRead",
             "NAME": "Mark All Read",
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": {
-                "alias": "exface.Core.ActionChain",
+                "alias": "exface.core.UpdateData",
                 "input_rows_min": 0,
                 "object_alias": "exface.Core.NOTIFICATION",
                 "icon": "envelope-open-o",
-                "skip_actions_if_input_empty": true,
-                "actions": [
-                    {
-                        "alias": "exface.core.ReadData",
-                        "object_alias": "exface.Core.NOTIFICATION",
-                        "input_data_sheet": {
-                            "object_alias": "exface.Core.NOTIFICATION",
-                            "columns": [
-                                {
-                                    "attribute_alias": "UID"
-                                },
-                                {
-                                    "attribute_alias": "MODIFIED_ON"
-                                }
-                            ],
-                            "filters": {
-                                "operator": "AND",
-                                "conditions": [
-                                    {
-                                        "expression": "USER",
-                                        "comparator": "==",
-                                        "value": "=USER('UID')"
-                                    },
-                                    {
-                                        "expression": "READ_ON",
-                                        "comparator": "==",
-                                        "value": "=NullValue()"
-                                    }
-                                ]
-                            }
+                "input_mapper": {
+                    "from_object_alias": "exface.Core.NOTIFICATION",
+                    "to_object_alias": "exface.Core.NOTIFICATION",
+                    "inherit_columns": "none",
+                    "column_to_column_mappings": [
+                        {
+                            "from": "=NOW()",
+                            "to": "READ_ON"
+                        },
+                        {
+                            "from": "=NullValue()",
+                            "to": "MODIFIED_ON"
                         }
-                    },
-                    {
-                        "alias": "exface.Core.NotificationRead"
-                    }
-                ]
+                    ],
+                    "column_to_filter_mappings": [
+                        {
+                            "from": "=USER('UID')",
+                            "to": "USER",
+                            "comparator": "=="
+                        },
+                        {
+                            "from": 0,
+                            "to": "ISREAD",
+                            "comparator": "=="
+                        }
+                    ]
+                }
             },
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": 0,
