@@ -28,15 +28,15 @@ class NumberDataType extends AbstractDataType
     
     private $base = 10;
     
-    private $groupDigits = true;
+    private $groupDigits = null;
     
-    private $groupLength = 3;
+    private $groupLength = null;
     
     private $groupSeparator = null;
     
-    private $emptyFormat = '';
+    private $emptyFormat = null;
     
-    private $showPlusSign = false;
+    private $showPlusSign = null;
     
     private $prefix = null;
     
@@ -336,7 +336,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getGroupDigits()
     {
-        return $this->groupDigits;
+        return $this->groupDigits ?? true;
     }
 
     /**
@@ -358,7 +358,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getGroupLength()
     {
-        return $this->groupLength;
+        return $this->groupLength ?? 3;
     }
     
     /**
@@ -422,7 +422,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getEmptyFormat() : string
     {
-        return $this->emptyFormat;
+        return $this->emptyFormat ?? '';
     }
     
     /**
@@ -542,7 +542,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getShowPlusSign() : bool
     {
-        return $this->showPlusSign;
+        return $this->showPlusSign ?? false;
     }
     
     /**
@@ -609,5 +609,51 @@ class NumberDataType extends AbstractDataType
     {
         $this->suffix = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        
+        if (null !== $val = $this->precisionMin) {
+            $uxon->setProperty('precision_min', $val);
+        }
+        if (null !== $val = $this->precisionMax) {
+            $uxon->setProperty('precision_max', $val);
+        }
+        if (null !== $val = $this->min) {
+            $uxon->setProperty('min', $val);
+        }
+        if (null !== $val = $this->max) {
+            $uxon->setProperty('max', $val);
+        }
+        if (null !== $val = $this->prefix) {
+            $uxon->setProperty('prefix', $val);
+        }
+        if (null !== $val = $this->suffix) {
+            $uxon->setProperty('suffix', $val);
+        }
+        if (null !== $val = $this->showPlusSign) {
+            $uxon->setProperty('show_plus_sign', $val);
+        }
+        if (null !== $val = $this->emptyFormat) {
+            $uxon->setProperty('empty_format', $val);
+        }
+        if (null !== $val = $this->groupDigits) {
+            $uxon->setProperty('group_digits', $val);
+        }
+        if (null !== $val = $this->groupLength) {
+            $uxon->setProperty('group_length', $val);
+        }
+        if (null !== $val = $this->groupSeparator) {
+            $uxon->setProperty('group_separator', $val);
+        }
+        
+        return $uxon;
     }
 }
