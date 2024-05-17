@@ -258,7 +258,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, NumberDataType::class);
                     if ($scale !== null) {
-                        $data_type->setPrecision($scale);
+                        $data_type->setPrecisionMax($scale);
                     }
                 }
                 break;
