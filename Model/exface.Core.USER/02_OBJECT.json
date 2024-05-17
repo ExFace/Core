@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2024-05-14 10:19:59",
+            "MODIFIED_ON": "2024-05-17 13:18:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11ed9f5019075a8a9f50025041000001",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x31343400000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -295,7 +295,7 @@
                                                                 "attribute_alias": "USER_ROLE__ALIAS"
                                                             },
                                                             {
-                                                                "attribute_alias": "USER_ROLE__USER_ROLE_USERS__AUTHENTICATOR_ID"
+                                                                "attribute_alias": "AUTHENTICATOR_ID"
                                                             },
                                                             {
                                                                 "attribute_alias": "USER_ROLE",
