@@ -89,4 +89,16 @@ class HexadecimalNumberDataType extends NumberDataType
         }
         return $val;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\NumberDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon->unsetProperty('base');
+        return $uxon;
+    }
 }
