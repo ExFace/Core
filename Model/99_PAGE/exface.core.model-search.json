@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2023-11-07 08:03:03",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-05-13 10:59:33",
+    "modified_on": "2024-05-13 11:29:33",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.SEARCH_RESULT",
@@ -337,6 +337,24 @@
                         }
                     }
                 ]
+            },
+            {
+                "caption": "Open page",
+                "action": {
+                    "alias": "exface.Core.GoToUrl",
+                    "url": "[#INSTANCE_ALIAS#].html",
+                    "open_in_new_window": true
+                },
+                "disabled_if": {
+                    "operator": "AND",
+                    "conditions": [
+                        {
+                            "value_left": "=~input!TABLE_NAME",
+                            "comparator": "!==",
+                            "value_right": "exf_page"
+                        }
+                    ]
+                }
             }
         ]
     }
