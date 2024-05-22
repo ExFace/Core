@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Model\MessageInterface;
 
 /**
