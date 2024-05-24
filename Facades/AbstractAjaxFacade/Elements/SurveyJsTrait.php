@@ -153,6 +153,7 @@ JS;
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.KNOCKOUT_JS') . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_SCRIPT') . '"></script>';
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_CSS') . '">';
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_CSS') . '">';
         
@@ -195,6 +196,7 @@ JS;
     if (oSurvey === null || oConfigCurrent !== oConfig) {
         oSurvey = new Survey.Model(oConfig);
         {$this->buildJsSurveyInit('oSurvey')};
+        console.log('render survey');
         oSurvey.render(jqContainer[0]);
         jqContainer.data('survey-config', oConfig);
 
