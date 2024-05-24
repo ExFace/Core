@@ -196,7 +196,6 @@ JS;
     if (oSurvey === null || oConfigCurrent !== oConfig) {
         oSurvey = new Survey.Model(oConfig);
         {$this->buildJsSurveyInit('oSurvey')};
-        console.log('render survey');
         oSurvey.render(jqContainer[0]);
         jqContainer.data('survey-config', oConfig);
 
