@@ -153,7 +153,9 @@ JS;
         
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.KNOCKOUT_JS') . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_JS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_SCRIPT') . '"></script>';
+        if ($facade->getConfig()->hasOption('LIBS.SURVEY.THEME_SCRIPT')) {
+            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_SCRIPT') . '"></script>';
+        }
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.SURVEY_CSS') . '">';
         $includes[] = '<link rel="stylesheet" type="text/css" href="' . $facade->buildUrlToSource('LIBS.SURVEY.THEME_CSS') . '">';
         
