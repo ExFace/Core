@@ -425,7 +425,7 @@ JS;
             var iXEnd = iXStart;
             var oColOpts = {};
 
-            el.jspreadsheet.parseCSV(data).forEach(function(aRow){
+            el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
                 aPastedData.push(aRow[0].split("\\t"));
             });
             iXEnd = iXStart + aPastedData[0].length;
