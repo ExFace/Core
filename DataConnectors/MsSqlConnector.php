@@ -214,34 +214,36 @@ class MsSqlConnector extends AbstractSqlConnector
             $stmtNo = 0;
             $this->resultCounter = 0;
             $this->multiqueryResults = [];
-            
-            $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
-            if ($stmt === false) {
-                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo + 1) . ' failed! ' . $this->getLastErrorMessage());
-            } else {
-                $query->setResultResource($stmt);
-            }
-            
-            // Consume the first result without calling sqlsrv_next_result.
-            $this->resultCounter = max(sqlsrv_rows_affected($stmt), 0);
-            $this->multiqueryResults[$stmtNo] = [];
-            while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-                $this->multiqueryResults[$stmtNo][] = $row;
-            }
-            
-            // Move to the next result and display results.
-            $next_result = sqlsrv_next_result($stmt);
-            while ($next_result === true) {
-                $stmtNo++;
-                $next_result = sqlsrv_next_result($stmt);
+
+            foreach ($query->getSqlBatches() as $batchNo => $sql) {
+                $stmt = sqlsrv_query($this->getCurrentConnection(), $sql);
+                if ($stmt === false) {
+                    throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo + 1) . ($batchNo > 0 ? ' in batch ' . $batchNo+1 : '') . ' failed! ' . $this->getLastErrorMessage());
+                } else {
+                    $query->setResultResource($stmt);
+                }
+                
+                // Consume the first result without calling sqlsrv_next_result.
                 $this->resultCounter += max(sqlsrv_rows_affected($stmt), 0);
                 $this->multiqueryResults[$stmtNo] = [];
                 while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
                     $this->multiqueryResults[$stmtNo][] = $row;
                 }
-            }
-            if($next_result === false) {
-                throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo+1) . ' failed! ' . $this->getLastErrorMessage());
+                
+                // Move to the next result and display results.
+                $next_result = sqlsrv_next_result($stmt);
+                while ($next_result === true) {
+                    $stmtNo++;
+                    $next_result = sqlsrv_next_result($stmt);
+                    $this->resultCounter += max(sqlsrv_rows_affected($stmt), 0);
+                    $this->multiqueryResults[$stmtNo] = [];
+                    while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+                        $this->multiqueryResults[$stmtNo][] = $row;
+                    }
+                }
+                if($next_result === false) {
+                    throw $this->createQueryError($query, 'SQL multi-query statement ' . ($stmtNo+1) . ' failed! ' . $this->getLastErrorMessage());
+                }
             }
         } else {
             if (StringDataType::startsWith($sql, 'INSERT', false) === true) {
@@ -695,5 +697,15 @@ class MsSqlConnector extends AbstractSqlConnector
         $string = str_replace("'", "''", $string );
         
         return $string;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getBatchDelimiterPatter()
+     */
+    protected function getBatchDelimiterPattern() : ?string
+    {
+        return '/^GO;?/m';
     }
 }
