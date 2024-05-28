@@ -241,6 +241,9 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
      */
     public function hasImageTitleColumn() : bool
     {
+        if ($this->imageTitleAttributeAlias === null) {
+            $this->guessColumns();
+        }
         return $this->imageTitleAttributeAlias !== null;
     }
     

@@ -46,9 +46,10 @@ interface UxonSchemaInterface extends WorkbenchDependantInterface
      * @param array $path
      * @param string $propertyName
      * @param string $rootValue
+     * @param string|NULL $prototypeClass
      * @return mixed
      */
-    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '');
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '', string $prototypeClass = null);
     
     /**
      * Returns an array with names of all properties of a given prototype class.

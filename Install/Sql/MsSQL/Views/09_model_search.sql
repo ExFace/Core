@@ -156,7 +156,7 @@ SELECT
 	oa.name AS instance_name,
 	oa.alias AS instance_alias,
 	oa.oid AS oid,
-	'exf_data_type' AS "table_name",
+	'exf_object_action' AS "table_name",
 	oa.action_app_oid AS app_oid
 FROM exf_object_action oa
 WHERE oa.config_uxon IS NOT NULL
@@ -230,3 +230,31 @@ SELECT
 	dc.app_oid
 FROM exf_data_connection dc
 WHERE dc.data_connector_config IS NOT NULL
+
+UNION ALL
+/* Scheduler: action UXON */
+SELECT 
+	sca.action_uxon,
+	'Scheduler' AS object_name,
+	'Action configuration' AS attribute_name,
+	sca.name AS instance_name,
+	NULL AS instance_alias,
+	sca.oid AS oid,
+	'exf_scheduler' AS "table_name",
+	sca.app_oid
+FROM exf_scheduler sca
+WHERE sca.action_uxon IS NOT NULL
+
+UNION ALL
+/* Scheduler: task UXON */
+SELECT 
+	sct.task_uxon,
+	'Scheduler' AS object_name,
+	'Task configuration' AS attribute_name,
+	sct.name AS instance_name,
+	NULL AS instance_alias,
+	sct.oid AS oid,
+	'exf_scheduler' AS "table_name",
+	sct.app_oid
+FROM exf_scheduler sct
+WHERE sct.task_uxon IS NOT NULL

@@ -637,29 +637,35 @@ HTML;
             }
         }
         
-        $headers = $this->buildHeadersCommon();
+        $headers = $this->buildHeadersCommon(); 
         $body = '';
-        
+        $isAnonymous = $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous();
         switch (true) {
+            // If authorization denied for an anonymous user, also render the (login) widget
+            case $isAnonymous === true && $exception instanceof AuthorizationExceptionInterface:
+                return $this->createResponseUnauthorized($exception, $request, $page);
+            // If details needed, render a widget
             case $this->isShowingErrorDetails() === true:
-            case $exception instanceof AuthorizationExceptionInterface && $this->getWorkbench()->getSecurity()->getAuthenticatedToken()->isAnonymous():
-                // If details needed, render a widget
                 $body = $this->buildHtmlFromError($exception, $request, $page);
                 $headers = array_merge($headers, $this->buildHeadersForHtml());
                 $headers['Content-Type'] = ['text/html;charset=utf-8'];
                 break;
+            // Empty body for anonymous non-AJAX requests with errors for security resons
+            case $isAnonymous === true && $request !== null && $this->isRequestFrontend($request):
+                $body = '';
+                break;
+            // Render error data for AJAX requests, so the JS can interpret it.
+            case $request !== null && $this->isRequestAjax($request):
+                $body = $this->encodeData($this->buildResponseDataError($exception));
+                $headers = array_merge($headers, $this->buildHeadersForAjax());
+                $headers['Content-Type'] = ['application/json;charset=utf-8'];
+                break;
+            // If we were rendering a widget, return HTML even for non-detail cases
             default:
-                if ($request !== null && $this->isRequestAjax($request)) {
-                    // Render error data for AJAX requests, so the JS can interpret it.
-                    $body = $this->encodeData($this->buildResponseDataError($exception));
-                    $headers = array_merge($headers, $this->buildHeadersForAjax());
-                    $headers['Content-Type'] = ['application/json;charset=utf-8'];
-                } else {
-                    // If we were rendering a widget, return HTML even for non-detail cases
-                    $body = $this->buildHtmlFromError($exception, $request, $page);
-                    $headers = array_merge($headers, $this->buildHeadersForHtml());
-                    $headers['Content-Type'] = ['text/html;charset=utf-8'];
-                }
+                $body = $this->buildHtmlFromError($exception, $request, $page);
+                $headers = array_merge($headers, $this->buildHeadersForHtml());
+                $headers['Content-Type'] = ['text/html;charset=utf-8'];
+                break;
         }
         
         $headers = array_merge($headers, $this->buildHeadersForErrors());
@@ -712,7 +718,7 @@ HTML;
      * 
      * @return bool
      */
-    protected function isShowingErrorDetails() : bool
+    public function isShowingErrorDetails() : bool
     {
         return $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
     }
@@ -761,14 +767,14 @@ HTML;
      */
     public function buildResponseDataError(\Throwable $exception, bool $forceHtmlEntities = true)
     {
-        $error = [
-            'code' => $exception->getCode(),
-            'message' => $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage(),
-        ];
-        
         if ($exception instanceof ExceptionInterface) {
+            $error = [];
             $error['code'] = $exception->getAlias();
             $error['logid'] = $exception->getId();
+            
+            if ($this->isShowingErrorDetails()) {
+                $error['message'] = $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage();
+            }
             
             $wb = $this->getWorkbench();
             $msg = $exception->getMessageModel($wb);
@@ -776,6 +782,12 @@ HTML;
             $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
             $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
             $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
+        } else {
+            $error = [];
+            $error['code'] = $exception->getCode();
+            if ($this->isShowingErrorDetails()) {
+                $error['message'] = $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage();
+            }
         }
         
         return [

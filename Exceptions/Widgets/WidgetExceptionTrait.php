@@ -57,7 +57,7 @@ trait WidgetExceptionTrait {
         if ($debug_widget->findChildById('widget_uxon_tab') === false) {
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');
-            $uxon_tab->setCaption('Widget UXON');
+            $uxon_tab->setCaption('Widget');
             
             $widget = $this->getWidget();
             $widgetUxon = $widget->exportUxonObjectOriginal();
@@ -78,9 +78,10 @@ trait WidgetExceptionTrait {
             
             $tabContents = <<<MD
 
-**Widget ID:** {$widget->getId()}
-
-**Called by action:** {$actionInfo}
+- Type `{$widget->getWidgetType()}`
+- ID: `{$widget->getId()}`
+- Page: `{$widget->getPage()->getAliasWithNamespace()}`
+- Called by action: `{$actionInfo}`
 
 ## Widget UXON
 

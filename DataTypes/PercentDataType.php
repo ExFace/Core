@@ -62,4 +62,18 @@ class PercentDataType extends NumberDataType
         }
         return parent::getSuffix();
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\NumberDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if (null !== $val = $this->showPercentSign) {
+            $uxon->setProperty('show_percent_sign', $val);
+        }
+        return $uxon;
+    }
 }

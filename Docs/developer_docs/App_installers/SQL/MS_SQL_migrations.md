@@ -152,12 +152,34 @@ ALTER TABLE [dbo].[YourTableName]
 
 ```
 
-## Indexes
+## Indexes and constraints
+
+### Checking for constraints in general
+
+```
+IF (OBJECT_ID('dbo.YourInexName', 'F') IS NOT NULL)
+```
+
+The second parameter is the type of the constraint:
+
+- `C` = CHECK constraint
+- `D` = DEFAULT (constraint or stand-alone)
+- `F` = FOREIGN KEY constraint
+- `PK` = PRIMARY KEY constraint
+- `UQ` = UNIQUE constraint
+
+Full List of types [here](http://technet.microsoft.com/en-us/library/ms190324.aspx):
+
+Specifically for indexs, the following works too:
+
+```
+IF IndexProperty(Object_Id('dbo.YourTableName'), 'YourIndexName', 'IndexID') IS NOT NULL
+```
 
 ### Add an index
 
 ```
-If IndexProperty(Object_Id('dbo.YourTableName'), 'YourIndexName', 'IndexID') IS NULL
+IF IndexProperty(Object_Id('dbo.YourTableName'), 'YourIndexName', 'IndexID') IS NULL
 CREATE INDEX [YourIndexName] ON [dbo].[YourTableName] (col1, col2);
 ```
 

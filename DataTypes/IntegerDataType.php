@@ -55,5 +55,20 @@ class IntegerDataType extends NumberDataType
         }
         return $num;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\NumberDataType::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon->unsetProperty('precision_min');
+        $uxon->unsetProperty('precision_max');
+        if ($uxon->hasProperty('group_digits') && $uxon->getProperty('group_digits') !== true) {
+            $uxon->unsetProperty('group_digits');
+        }
+        return $uxon;
+    }
 }
-?>

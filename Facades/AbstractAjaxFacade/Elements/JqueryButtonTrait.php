@@ -439,6 +439,27 @@ JS;
     }
     
     /**
+     *  
+     * @param ActionInterface|NULL $action
+     * @return bool
+     */
+    protected function isCheckForUnsavedChangesRequired(ActionInterface $action = null) : bool
+    {
+        $action = $action ?? $this->getAction();
+        switch (true) {
+            case $action instanceof SendToWidget:
+            case $action instanceof iCallWidgetFunction:
+            case $action instanceof iRunFacadeScript:
+                $checkChanges = false;
+                break;
+            default:
+                $checkChanges = true;
+                break;
+        }
+        return $checkChanges;
+    }
+    
+    /**
      * 
      * @param iCallOtherActions $action
      * @param AjaxFacadeElementInterface $input_element
