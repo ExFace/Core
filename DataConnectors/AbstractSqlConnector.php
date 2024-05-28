@@ -16,6 +16,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
+use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 
 /**
  *
@@ -79,7 +80,16 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         if (! $this->isConnected()) {
             $this->connect();
         }
-        $query->setConnection($this);        
+        $query->setConnection($this);       
+        if (! ($query instanceof SqlDataQuery)) {
+            throw new DataQueryFailedError($query, 'Invalid query type for connection ' . $this->getAliasWithNamespace() . ': only SQL queries supported!');
+        }
+        // If it is a multi-statement query and this connector supports batch delimiters, 
+        // ensure that the query has the correct delimiter. Splitting the query into batches
+        // is done by the connector itself. This step here is just normalization.
+        if ($query->isMultipleStatements() && $query->getBatchDelimiterPattern() === null && null !== $batchDelim = $this->getBatchDelimiterPattern()) {
+            $query->setBatchDelimiterPattern($batchDelim);
+        }
         return $this->performQuerySql($query);
     }
 
@@ -415,5 +425,18 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         } else {
             return preg_replace('~[\x00\x0A\x0D\x1A\x22\x27\x5C]~u', '\\\$0', $string);
         }
+    }
+    
+    /**
+     * Returns the batch delimiter regex pattern or NULL if batches are not supported by this connector.
+     * 
+     * Batch delimiters are used in some SQL engines like Microsoft SQL Server to write large SQL
+     * sripts to be split into batches at runtime. In MS SQL the batch delimiter is the `GO` keyword.
+     * 
+     * @return string|NULL
+     */
+    protected function getBatchDelimiterPattern() : ?string
+    {
+        return null;
     }
 }

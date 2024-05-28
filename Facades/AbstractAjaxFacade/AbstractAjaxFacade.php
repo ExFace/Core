@@ -718,7 +718,7 @@ HTML;
      * 
      * @return bool
      */
-    protected function isShowingErrorDetails() : bool
+    public function isShowingErrorDetails() : bool
     {
         return $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class);
     }
@@ -767,14 +767,14 @@ HTML;
      */
     public function buildResponseDataError(\Throwable $exception, bool $forceHtmlEntities = true)
     {
-        $error = [
-            'code' => $exception->getCode(),
-            'message' => $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage(),
-        ];
-        
         if ($exception instanceof ExceptionInterface) {
+            $error = [];
             $error['code'] = $exception->getAlias();
             $error['logid'] = $exception->getId();
+            
+            if ($this->isShowingErrorDetails()) {
+                $error['message'] = $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage();
+            }
             
             $wb = $this->getWorkbench();
             $msg = $exception->getMessageModel($wb);
@@ -782,6 +782,12 @@ HTML;
             $error['hint'] = $forceHtmlEntities ? htmlspecialchars($msg->getHint()) : $msg->getHint();
             $error['description'] = $forceHtmlEntities ? htmlspecialchars($msg->getDescription()) : $msg->getDescription();
             $error['type'] = $msg->getType(MessageTypeDataType::ERROR);
+        } else {
+            $error = [];
+            $error['code'] = $exception->getCode();
+            if ($this->isShowingErrorDetails()) {
+                $error['message'] = $forceHtmlEntities ? htmlspecialchars($exception->getMessage()) : $exception->getMessage();
+            }
         }
         
         return [
