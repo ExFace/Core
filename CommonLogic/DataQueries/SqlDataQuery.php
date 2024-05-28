@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\DataQueries;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\DebugMessage;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 class SqlDataQuery extends AbstractDataQuery
 {
@@ -19,6 +20,8 @@ class SqlDataQuery extends AbstractDataQuery
     private $connection = null;
     
     private $multipleStatements = false;
+    
+    private $batchDelimiter = null;
 
     /**
      *
@@ -201,6 +204,65 @@ class SqlDataQuery extends AbstractDataQuery
     public function forceMultipleStatements(bool $value) : SqlDataQuery
     {
         $this->multipleStatements = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if this multi-statement query needs to be split into multiple batches
+     * 
+     * @return bool
+     */
+    public function isMultipleBatches() : bool
+    {
+        return $this->batchDelimiter !== null && $this->isMultipleStatements() && preg_match($this->getBatchDelimiterPattern(), $this->getSql()) === 1;
+    }
+    
+    /**
+     * Splits the query into batches using the batch delimiter pattern
+     * 
+     * @see setBatchDelimiterPattern()
+     * @return string[]
+     */
+    public function getSqlBatches() : array
+    {
+        $fullSql = $this->getSql();
+        $delim = $this->getBatchDelimiterPattern();
+        $batches = preg_split($delim, $fullSql);
+        if ($batches === false || empty($batches)) {
+            return [$fullSql];
+        }
+        $filtered = [];
+        foreach ($batches as $sql) {
+            $sql = trim($sql);
+            if ($sql !== '' && $sql !== null) {
+                $filtered[] = $sql;
+            }
+        }
+        return $filtered;
+    }
+    
+    /**
+     * Returns the regex pattern to be used to split the query into multiple batches or NULL if no split needs to be done
+     * 
+     * @return string|NULL
+     */
+    public function getBatchDelimiterPattern() : ?string
+    {
+        return $this->batchDelimiter;
+    }
+    
+    /**
+     * Tells data connectors supporting SQL batches, how to split this query into multiple batches
+     * 
+     * @param string $value
+     * @return SqlDataQuery
+     */
+    public function setBatchDelimiterPattern(string $value) : SqlDataQuery
+    {
+        if (! RegularExpressionDataType::isRegex($value)) {
+            $value = '/' . preg_quote($value, '/') . '/';
+        }
+        $this->batchDelimiter = $value;
         return $this;
     }
 }

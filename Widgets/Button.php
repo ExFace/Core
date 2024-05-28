@@ -32,6 +32,8 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
+use exface\Core\Contexts\DebugContext;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -470,18 +472,33 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::getHint()
      */
-    public function getHint()
+    public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        if ($hint = parent::getHint()) {
-            return $hint;
+        $hint = parent::getHint();
+        
+        if (empty($hint) === true && $this->hasAction()) {
+            $hint = $this->getAction()->getHint();
         }
-        if (! ($this->hasAction() && $hint = $this->getAction()->getHint())) {
+        
+        if (empty($hint) === true) {
             $hint = $this->getCaption();
         }
         
         // Disabled reason
         if ($this->isDisabled() && $disabledReason = $this->getDisabledReason()) {
             $hint .= ($hint ? "\n\n" : '') . $disabledReason;
+        }
+        
+        // Dev-hint
+        if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            if ($this->hasAction()) {
+                $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
+                $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
+            } else {
+                $actionAliasHint = 'no action defined';
+                $actionObjectHint = 'no action defined';
+            }
+            $hint =  ($hint ? StringDataType::endSentence($hint) : '') . "\n\nDebug-hints: \n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
         }
         
         return $hint;

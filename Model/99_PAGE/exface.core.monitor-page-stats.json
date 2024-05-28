@@ -1,0 +1,89 @@
+{
+    "uid": "0x11efb002d12af7c4b002025041000001",
+    "alias_with_namespace": "exface.core.monitor-page-stats",
+    "menu_parent_page_selector": "0x11ebb1630a28048ab163025041000001",
+    "menu_index": 0,
+    "menu_visible": true,
+    "name": "Page Stats",
+    "description": "",
+    "intro": "",
+    "replaces_page_selector": null,
+    "created_by_user_selector": "0x31000000000000000000000000000000",
+    "created_on": "2024-05-06 09:18:18",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2024-05-06 10:44:53",
+    "contents": {
+        "widget_type": "PivotTable",
+        "object_alias": "exface.Core.MONITOR_ACTION",
+        "paginate": false,
+        "filters": [
+            {
+                "attribute_alias": "DATE",
+                "widget_type": "RangeSpinnerFilter"
+            },
+            {
+                "attribute_alias": "PAGE__APP",
+                "input_widget": {
+                    "widget_type": "InputComboTable",
+                    "multi_select": true
+                }
+            },
+            {
+                "attribute_alias": "PAGE__PAGE_GROUP_PAGES__PAGE_GROUP",
+                "input_widget": {
+                    "widget_type": "InputComboTable",
+                    "multi_select": true
+                }
+            },
+            {
+                "attribute_alias": "PAGE",
+                "comparator": "!==",
+                "value": "NULL",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "USER__USER_ROLE_USERS__USER_ROLE__ALIAS",
+                "value": "CLI_USER",
+                "comparator": "![",
+                "hidden": true
+            }
+        ],
+        "aggregate_by_attribute_alias": [
+            "PAGE",
+            "PAGE__LABEL",
+            "PAGE__APP__NAME",
+            "PAGE__MENU_PARENT__LABEL",
+            "DATE"
+        ],
+        "columns": [
+            {
+                "attribute_alias": "PAGE__APP__NAME"
+            },
+            {
+                "attribute_alias": "PAGE__LABEL"
+            },
+            {
+                "attribute_alias": "PAGE__MENU_PARENT__LABEL"
+            },
+            {
+                "attribute_alias": "DATE"
+            },
+            {
+                "calculation": "=Date(DATE, 'MMM')",
+                "caption": "Month"
+            },
+            {
+                "calculation": "=Date(DATE, 'MM')",
+                "caption": "Month No."
+            },
+            {
+                "calculation": "=Date(DATE, 'ww')",
+                "caption": "Week"
+            },
+            {
+                "attribute_alias": "UID:COUNT",
+                "caption": "Hits"
+            }
+        ]
+    }
+}

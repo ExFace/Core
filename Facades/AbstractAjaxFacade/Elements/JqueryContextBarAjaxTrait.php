@@ -26,7 +26,7 @@ trait JqueryContextBarAjaxTrait {
                     'visibility' => $context->getVisibility(),
                     'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
                     'color' => $context->getColor(),
-                    'hint' => $btn->getHint(),
+                    'hint' => $btn->getHint(false),
                     'indicator' => ! is_null($context->getIndicator()) ? $widget->getContextForButton($btn)->getIndicator() : '',
                     'bar_widget_id' => $btn->getId(),
                     'context_alias' => $context->getAliasWithNamespace()

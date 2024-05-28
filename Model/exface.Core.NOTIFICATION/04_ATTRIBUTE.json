@@ -445,7 +445,7 @@
         },
         {
             "CREATED_ON": "2023-04-11 18:21:34",
-            "MODIFIED_ON": "2023-04-17 11:25:43",
+            "MODIFIED_ON": "2024-05-15 17:43:38",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed91afed4b20e691af025041000001",
@@ -468,7 +468,7 @@
             "COPYABLEFLAG": 0,
             "ALIAS": "TEXT",
             "DATATYPE": "0x31310000000000000000000000000000",
-            "DATA_ADDRESS": "@MySQL:(JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].text')))\n@T-SQL:(JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].text'))",
+            "DATA_ADDRESS": "@MySQL:\n(CASE WHEN\n(JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) IS NULL OR (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) = '' THEN (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].text'))) ELSE (JSON_UNQUOTE(JSON_EXTRACT([#WIDGET_UXON#], '$.widgets[0].value'))) END)\n@T-SQL:(CASE WHEN\n(JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) IS NULL OR (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) = '' THEN (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].text')) ELSE (JSON_VALUE([#WIDGET_UXON#], '$.widgets[0].value')) END)",
             "OBJECT": "0x11ebaf7bbfb71838af7b025041000001",
             "FORMATTER": "",
             "DISPLAYORDER": null,

@@ -38,12 +38,12 @@ class DialogButton extends Button
      * @uxon-type boolean 
      * @uxon-default true
      * 
-     * @param bool|int|string $value
+     * @param bool $value
      * @return DialogButton
      */
-    public function setCloseDialogAfterActionSucceeds($value) : DialogButton
+    public function setCloseDialogAfterActionSucceeds(bool $value) : DialogButton
     {
-        $this->close_dialog_after_action_succeeds = BooleanDataType::cast($value);
+        $this->close_dialog_after_action_succeeds = $value;
         return $this;
     }
 

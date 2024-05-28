@@ -61,7 +61,7 @@
     "rows": [
         {
             "CREATED_ON": "2023-04-11 14:32:00",
-            "MODIFIED_ON": "2023-09-15 14:33:41",
+            "MODIFIED_ON": "2024-05-16 13:04:13",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed9a29db6c95aa9a29025041000001",
@@ -121,7 +121,7 @@
         },
         {
             "CREATED_ON": "2023-04-18 15:32:01",
-            "MODIFIED_ON": "2023-09-15 14:33:24",
+            "MODIFIED_ON": "2024-05-17 23:02:55",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ed904d668417c0904d025041000001",
@@ -159,9 +159,9 @@
                                         "value": "=USER('UID')"
                                     },
                                     {
-                                        "expression": "READ_ON",
+                                        "expression": "ISREAD",
                                         "comparator": "==",
-                                        "value": "=NullValue()"
+                                        "value": 0
                                     }
                                 ]
                             }

@@ -743,7 +743,11 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         if (null === $this->options_object) {
             if (! $this->getMetaObject()->isExactly($this->getOptionsObjectAlias())) {
-                $this->options_object = $this->getWorkbench()->model()->getObject($this->getOptionsObjectAlias());
+                try {
+                    $this->options_object = $this->getWorkbench()->model()->getObject($this->getOptionsObjectAlias());
+                } catch (\Throwable $e) {
+                    throw new WidgetConfigurationError($this, 'Cannot determine meta object for value selection in ' . $this->getWidgetType() . '!', null, $e);
+                }
             } else {
                 $this->options_object = $this->getMetaObject();
             }

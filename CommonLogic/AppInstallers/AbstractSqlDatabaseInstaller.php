@@ -719,6 +719,21 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns a string or regex pattern, that should separate SQL batches - e.g. the GO keyword in Microsoft SQL
+     * 
+     * The migration will be splitted with these delimiters as boundaries.
+     * 
+     * The batch delimiter can also be specified inside the migration using the marker from 
+     * `getBatchDelimiterMarker`. If the migration includes such a marker, it will override 
+     * the default value set in a specific SqlDatabaseInstaller implementation.
+     * 
+     * NOTE: The AbstractsSqlConnector also supports batch delimiters. Each connector has
+     * its own delimiter logic. There is also no universal way to redefine it in the SQL. 
+     * The two delimiter definitions - here and in the connectors - are independent and 
+     * do not interfere intentionally. This is because a migration might need batches even
+     * if the connector used does not support them or has a different logic. The installer
+     * will take care of splitting the SQL, thus the connector will never encounter batch 
+     * boundaries.
      * 
      * @param string $sql
      * @return string|NULL

@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\ExceptionTrait;
-use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Widgets\DebugMessage;
 
 /**

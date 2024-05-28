@@ -261,10 +261,30 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             ->setIncludeInQuickSearch(true)
         );
         
+        if (null !== $filterProp = $this->getFilters()) {
+            // Only add filters to the table if they are not based on live refs.
+            // It seems, live refs are not resolved when used in Filter widgets with custom
+            // condition_group. The leads to filtering for the expression of the live ref,
+            // which produces empty results. For example, in the default editor for a meta,
+            // there is an InputComboTable to select a custom key attribute for a relation.
+            // This InputComboTable filters for attributes of the current object. Adding a
+            // filter to the table as below will filter for `=related_object_selector!UID`
+            // which is not a valid value. This probably needs to be fixed by implementing
+            // live refs in Filter widgets with a custom condition_group.
+            if (false === $filterProp->hasWidgetLinks()) {
+                $additionalFilter = $table->getConfiguratorWidget()->createFilterWidget(null, new UxonObject([
+                    'hidden' => true,
+                    'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
+                ]));
+                $table->addFilter($additionalFilter);
+            }
+        }
+        
         $this->data_table = $table;
         
-        // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
-        // set, because the method may use autogeneration of the text column, which needs to know about the DataTable
+        // Ensure, that special columns needed for the InputComboTable are present. This must be 
+        // done after $this->data_table is set, because the method may use autogeneration of the 
+        // text column, which needs to know about the DataTable
         $this->addComboColumns();
         return $table;
     }
@@ -569,9 +589,12 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     /**
      * Condition group to filter rows of the table.
      * 
-     * In contrast to `filters` inside the `table` definition, these filters here are meant to be evaluated
-     * after the data was read from the data source. Thus, they can contain live references to current
-     * values of other widgets.
+     * Similarly to `filters` inside the `table` definition, this can be used to filter the resulting
+     * autosuggest rows. 
+     * 
+     * Over the time, the difference between the two filter types has decreased, so they should work 
+     * more or less the same. There may be differences when using widget links in values in some facades 
+     * though. If anything goes wrong, try to set filters inside the `table` widget.
      *
      * For example, if we have a InputComboTable for customer ids, which is placed in a form, where the 
      * customer class can be selected explicitly in another InputComboTable or a InputSelect with the id 

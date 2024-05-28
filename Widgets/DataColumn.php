@@ -1103,9 +1103,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::getHint()
      */
-    public function getHint()
+    public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        return $this->customHint ?? $this->getCellWidget()->getHint();
+        return $this->customHint ?? $this->getCellWidget()->getHint($includeDebugInfo);
     }
     
     /**

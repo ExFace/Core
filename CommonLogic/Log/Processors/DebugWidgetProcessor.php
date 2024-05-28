@@ -49,7 +49,10 @@ class DebugWidgetProcessor
         $sender = $record['context'][$this->sourceContextKey];
         $debugger = $this->workbench->getDebugger();
         $debugWidgetUxon = null;
+        // Let the sender render a debug widget if it can
         if ($sender && ($sender instanceof iCanGenerateDebugWidgets)) {
+            // If anything goes wrong, log a fallback-debug-widget for the sender AND
+            // the exception produced by the attempt to generate a debug widget
             try {
                 $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
                 $debugWidgetUxon = $debugWidget->exportUxonObject();
@@ -59,6 +62,7 @@ class DebugWidgetProcessor
                     'widget_type' => 'DebugMessage',
                     'tabs' => []
                 ]);
+                // Create a fallback debug widget for the $sender
                 if ($sender instanceof ExceptionInterface){
                     $originalErrorUxon = $this->createHtmlFallback($debugger->printException($sender, true));
                     $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
@@ -68,7 +72,8 @@ class DebugWidgetProcessor
                         ]
                     ]));
                 }
-                $renderErrorUxon = $this->createHtmlFallback($debugger->printException($sender, true));
+                // Create a fallback debug widget for the exception from the first rendering attempt
+                $renderErrorUxon = $this->createHtmlFallback($debugger->printException($e, true));
                 $debugWidgetUxon->appendToProperty('tabs', new UxonObject([
                     'caption' => 'Rendering exception',
                     'widgets' => [

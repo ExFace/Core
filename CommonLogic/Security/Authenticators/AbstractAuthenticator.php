@@ -553,13 +553,14 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
             // Get current workbench user-role-relations, that were added by this authenticator previously
             $localRolesSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_EXTERNAL');
             $localRolesCol = $localRolesSheet->getColumns()->addFromExpression('USER_ROLE__USER_ROLE_USERS__UID:LIST_DISTINCT');
+            $keepManualRolesFlagCol = $localRolesSheet->getColumns()->addFromExpression('KEEP_MANUAL_ASSIGNMENTS_FLAG');
             // Filter: ext. roles, that have connections with this user
             $localRolesSheet->getFilters()->addConditionFromString('USER_ROLE__USER_ROLE_USERS__USER', $user->getUid(), ComparatorDataType::EQUALS);
             // AND ext. role belongs to this authenticator
             $localRolesSheet->getFilters()->addConditionFromString('AUTHENTICATOR', $this->getId(), ComparatorDataType::EQUALS);
             // AND ext. role is active
             $localRolesSheet->getFilters()->addConditionFromString('ACTIVE_FLAG', 1, ComparatorDataType::EQUALS);
-             
+
             /* Example:
              * User 1 has Role1, Role2, Role3, Role 4
              * Role1 is a logical role (e.g. Admin)
@@ -577,21 +578,57 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
              *   - User loses Role1, but keeps all other roles - in particular Role2 because
              *   the ExtRole2 mapping is disabled
              * 4. The ExtRole2 mapping is set active and the user is synced with authenticator 1
-             *   - User loses Role2 because it is now actively synced 
+             *   - User loses Role2 because it is now actively synced. 
+             *   See more specific scenarios for local/manual roles below.
             */
             
             // Delete roles assigned by this sync previously
             $deleteSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
             $deleteCol = $deleteSheet->getColumns()->addFromUidAttribute();
             $deleteUids = [];
-            
+            $checkUids = [];
             $localRolesSheet->dataRead();
-            foreach ($localRolesCol->getValues() as $userRoleUsersUIDs) {
-                // $userRoleUsersUIDs can be `0x123` or `0x123,0x124,...`
-                foreach ($localRolesCol->getAttribute()->explodeValueList($userRoleUsersUIDs) as $uid) {
+
+            /*
+             * Scenarios for local/manually assigned roles:
+             * a) Keep manual assignments:
+             *    If local/manually assigned user roles are set to be kept with synchronization, the role is NOT added to $deleteSheet.
+             *    Thereby the role will not be removed with the next synchronization even if the user does not have the matching external role.
+             * b) Synchronize manual assignments:
+             *    If local/manually assigned user roles are set to be synchronized aswell, the role is added to $deleteSheet to be deleted before synchronizing external roles.
+             *    Thereby the role will only be kept if it can be synchronized with matching external roles.
+             */
+            foreach ($localRolesSheet->getRows() as $key => $row) {
+                // if KEEP_MANUAL_ASSIGNMENTS_FLAG is set to 1, then add this role to checkUids for further checks below
+                if ($keepManualRolesFlagCol->getValue($key) == 1) {
+                    foreach ($localRolesCol->getAttribute()->explodeValueList($localRolesCol->getValue($key)) as $uid) {
+                        $checkUids[] = $uid;
+                    }
+                }
+                // if KEEP_MANUAL_ASSIGNMENTS_FLAG is set to 0, then delete the role no matter if its a local or external role
+                else {
+                    foreach ($localRolesCol->getAttribute()->explodeValueList($localRolesCol->getValue($key)) as $uid) {
+                        $deleteUids[] = $uid;
+                    }
+                }
+            }
+            
+            // Filter the roles in $checkUids by the AUTHENTICATOR_ID
+            // a) if no AUTHENTICATOR_ID is set, then it is a local/manually assigned role. Then it should NOT be added to $deleteUids so that is is kept instead of deleted.
+            // b) if AUTHENTICATOR_ID is equal to the current authenticator used, then it is an external role and it should be added to $deleteUids to be deleted.
+            if (! empty($checkUids)) {
+                $checkSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.USER_ROLE_USERS');
+                $checkSheet->getColumns()->addFromExpression('AUTHENTICATOR_ID');
+                $checkCol = $checkSheet->getColumns()->addFromUidAttribute();
+                $checkCol->setValues($checkUids);
+                $checkSheet->getFilters()->addConditionFromString('AUTHENTICATOR_ID', $this->getId());
+                $checkSheet->getFilters()->addConditionFromColumnValues($checkCol);
+                $checkSheet->dataRead();
+                foreach ($checkCol->getValues() as $uid) {
                     $deleteUids[] = $uid;
                 }
             }
+            
             $deleteUids = array_unique($deleteUids);
             $deleteCol->setValues($deleteUids);
             if ($deleteSheet->countRows() !== 0) {
@@ -604,7 +641,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 if ($row['USER_ROLE'] !== null) {
                     $newRolesSheet->addRow([
                         'USER' => $user->getUid(),
-                        'USER_ROLE' => $row['USER_ROLE']
+                        'USER_ROLE' => $row['USER_ROLE'],
+                        'AUTHENTICATOR_ID' => $this->getId()
                     ]);
                 }
             }

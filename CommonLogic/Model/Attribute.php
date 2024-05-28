@@ -16,6 +16,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * 
@@ -195,8 +196,12 @@ class Attribute implements MetaAttributeInterface
     public function getDataType()
     {
         if (is_string($this->data_type) === true){
-            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type)->copy();
-            $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
+            try {
+                $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type)->copy();
+                $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
+            } catch (\Throwable $e) {
+                throw new MetaObjectModelError($this->getObject(), 'Cannot initialize data type for attribute ' . $this->__toString() . ' of object ' . $this->getObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+            }
         }
         return $this->data_type;
     }

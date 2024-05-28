@@ -42,6 +42,7 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -2047,6 +2048,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, array $dataAddressProps = [], $value_list_delimiter = EXF_LIST_SEPARATOR, bool $valueIsSQL = false)
     {
+        $valueRaw = $value;
         // Check if the value is of valid type.
         try {
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
@@ -2125,7 +2127,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.
-            return '/* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
+            $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+            return '/* ' . $subject . ' cannot pass comparison to "' . $valueRaw . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
                 . '1 = 0';
         }
         
