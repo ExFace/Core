@@ -79,6 +79,12 @@ interface AuthenticatorInterface extends AuthenticationProviderInterface
     public function getTokenRefreshInterval() : ?int;
     
     /**
+     * Returns TRUE if the authenticators login form should not be shown to the user
+     * 
+     */
+    public function getHideLoginForm() : bool;
+    
+    /**
      * Returns TRUE if the authenticator is disabled and can not be used to authenticate and FALSE otherwise
      * 
      * @return bool
