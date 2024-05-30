@@ -63,6 +63,8 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     private $onlyForFacades = [];
     
     private $syncRolesWithDataSheet = null;
+    
+    private $hideLoginForm = false;
 
     /**
      *
@@ -217,6 +219,30 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     {
         $this->lifetimeRefreshInterval = $seconds;
         return $this;
+    }
+    
+    /**
+     * Set TRUE to not show the login form of the authenticator even so it is enabled.
+     * That could be needed if you need a login with username and password for a specific facade
+     * but do not want the login mask to be shown for the users.
+     *
+     * @param bool $values
+     * @return AbstractAuthenticator
+     */
+    protected function setHideLoginForm(bool $values) : AbstractAuthenticator
+    {
+        $this->hideLoginForm = $values;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getHideLoginForm()
+     */
+    public function getHideLoginForm() : bool
+    {
+        return $this->hideLoginForm;
     }
     
     /**
