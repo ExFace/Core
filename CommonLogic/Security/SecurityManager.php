@@ -311,7 +311,7 @@ class SecurityManager implements SecurityManagerInterface
         }
         
         foreach ($this->getAuthenticators() as $authenticator) {
-            if ($authenticator->isDisabled()) {
+            if ($authenticator->isDisabled() || $authenticator->getHideLoginForm()) {
                 continue;
             }
             $loginPrompt = $authenticator->createLoginWidget($loginPrompt);
@@ -391,6 +391,16 @@ class SecurityManager implements SecurityManagerInterface
      * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::isDisabled()
      */
     public function isDisabled(): bool
+    {
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Security\AuthenticatorInterface::getHideLoginForm()
+     */
+    public function getHideLoginForm() : bool
     {
         return false;
     }
