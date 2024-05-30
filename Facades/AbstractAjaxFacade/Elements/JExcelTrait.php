@@ -1457,13 +1457,21 @@ JS;
             $customMode = null;
         }
         
+        $relPath = $widget->getObjectRelationPathToParent();
+        
+        
         switch (true) {
             // If there is no action or the action 
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
+            // Or the action is based on the same object (really the same one, not
+            // even a self-relation)
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
-            && $dataObj->is($widget->getMetaObject()):
+            && (
+                $dataObj->is($widget->getMetaObject())
+                && $widget->getObjectRelationPathToParent()->isEmpty() === true
+            ):
                 $data = <<<JS
     {
         oId: '{$this->getWidget()->getMetaObject()->getId()}',
@@ -1482,7 +1490,10 @@ JS;
             case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
-            && ! $dataObj->is($widget->getMetaObject()) 
+            && (
+                ! $dataObj->is($widget->getMetaObject()) 
+                || $widget->getObjectRelationPathToParent()->isEmpty() === false
+            )
             && $action->getInputMapper($widget->getMetaObject()) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
                 // logic to find the relation to the parent. Otherwise try to find a relation to the
