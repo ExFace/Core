@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2020-02-09 07:29:38",
-            "MODIFIED_ON": "2020-03-10 20:56:57",
+            "MODIFIED_ON": "2024-05-31 10:14:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11ed9f5019075a8a9f50025041000001",
             "UID": "0x11ea4b0de07b2dcab2cfe4b318306b9a",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -96,7 +96,20 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "maximized": false,
+                "height": "auto",
+                "columns_in_grid": 1,
+                "widgets": [
+                    {
+                        "attribute_alias": "USER_ROLE"
+                    },
+                    {
+                        "attribute_alias": "USER"
+                    }
+                ]
+            },
             "ALIAS": "USER_ROLE_USERS",
             "DATA_ADDRESS": "exf_user_role_users"
         }
