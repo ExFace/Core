@@ -23,65 +23,61 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Events\Installer\OnAppBackupEvent;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
- * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
+ * Saves all data of selected objects, that is related to the an app, in a subfolder of the app.
  * 
- * ## What is exported
+ * ## Configuration
  * 
- * By default, this installer will export the entire model of an app as JSON. You can also
- * add specific external content via `addModelDataSheet`. These data sheets (called
- * `additions`) will be exported into subfolders of the default `Model` folder (see below).
+ * ### Include some master data in an app package
  * 
- * ## Export folder and file structure
+ * This will place a JSON file for every added object in the folder `Data` inside the app.
  * 
- * The folder structure is outlined below. Each file is a data sheet UXON containing
- * all the model entities of it's type except for pages. Since the page installer logic
- * is more complex than simple replacement (and also for historical reasons), each page 
- * is stored in a separate file as it's UXON-export.
+ * Since `addDataToMerge()` is used, the installer will not delete any data - just add
+ * or update it. To replace the entire data completely use `addDataToReplace()` as as
+ * shown in the next example  
  * 
- * - app.alias.object_alias_1 <- object-bound model entities are saved in subfolder per object
- *      - 02_OBJECT.json
- *      - 03_OBJECT_BEHAVIORS.json
- *      - 04_ATTRIBUTE.json
- *      - 08_OBJECT_ACTION.json
- * - app.alias.object_alias_2
- * - ...
- * - 00_APP.json <- entities without an object binding are stored as data sheet UXON
- * - 01_DATATYPE.json
- * - ...
- * - 99_PAGES
- *      - app.alias.page_alias_1.json
- *      - app.alias.page_alias_2.json
- *      - ... 
+ * ```
+ *  $dataInstaller = new DataInstaller($this->getSelector(), 'Data');
+ *  $dataInstaller->addDataToMerge('axenox.ETL.webservice_type', 'CREATED_ON', 'app');
+ *  $installer->addInstaller($dataInstaller);
+ *      
+ * ```
  * 
- * In contrast to the regular UXON-export of a data sheet where the value of each column is
- * stored as a string, the model sheet columns containing UXON have prettyprinted JSON values.
- * This makes it easier to identify changes in larger UXON objects like default editors, aciton
- * configurations, etc.
+ * ### Include a more complex model
  * 
- * Object-bound entities like attributes, behaviors, etc. are saved per object in subfolders.
- * This simplifies change management greatly as it is difficult to diff large JSON files properly.
+ * This will produce a more complex folder structure - in this case, a subfolder for every
+ * flow with JSON files for the flow and its steps in the folder `Data/Flows`.
  * 
- * When installing, the files are processed in alphabetical order - more precisely in the order
- * of the numerc filename prefixes. For each entity type a data sheet is instantiated and 
- * `DataSheetInterface::dataReplaceByFilters()` is preformed filtered by the app - this makes
- * sure all possibly existing entities bound to this app are completely replaced by the contents
- * of the data sheet.
+ * ```
+ *  $dataInstaller = new DataInstaller($this->getSelector(), 'Data');
+ *  $dataInstaller->addDataToReplace('axenox.ETL.flow', 'CREATED_ON', 'app', [], 'Flows/[#alias#]/01_flow.json');
+ *  $dataInstaller->addDataToReplace('axenox.ETL.step', 'CREATED_ON', 'flow__app', [], 'Flows/[#flow__alias#]/02_steps.json');
+ *  $installer->addInstaller($dataInstaller);
+ * ```
  * 
- * Object-bound entities are first collected into a single large data sheet to make sure all
- * data is replaced at once.
+ * ## Folder structure
  * 
- * Pages are installed last by calling the dedicated `PageInstaller`.
+ * As shown above, the installer can be easily customized to save data in different file and folder
+ * structures. Each meta object is always exported and imported as a single DataSheet. However, you
+ * can split that sheet and save its contents in multiple files - thus, greatly simplifying version
+ * control. It is a good idea, to split data files in a way, that only closely related data is
+ * placed in the same file.
+ * 
+ * You can even change the folder sturcture without breaking backwards compatibility! 
  * 
  * ## Encryption
+ * 
  * Every content of a attribute with `EncryptedDataType` as data type will be exported as an encrypted string.
  * The used encryption salt will either be build from the app uid or you can provide a custom salt.
  * The custom salt has to be placed in the `Encryption.config.json` file in the `config` folder with the app alias (with namespace) as key.
  * The salt has to be 32 characters long. When importing the metamodell on a different PowerUi installation you will also need that config
  * file with that key you used for encryption.
- * You can use the followign website to create a salt:
- * `http://www.unit-conversion.info/texttools/random-string-generator/`
+ * 
+ * You can use the followign website to create a salt: `http://www.unit-conversion.info/texttools/random-string-generator/`
+ * 
  * CAREFUL: If you lose the used custom salt for encryption during the export you will not be able to restore the encrypted
  * data and the affected data will be lost.
  * 
@@ -89,22 +85,6 @@ use exface\Core\Events\Installer\OnAppBackupEvent;
  * 
  * NOTE: The `TimeStampingBehavior` of the model objects is disabled before install, so the
  * create/update stamps of the exported model are saved correctly.
- * 
- * ## Backwards compatibilty issues
- * 
- * Keep in mind, that the metamodel installer requires the current model in the DB to be
- * compatible with the model files it installs. In other words, if the exported attribute-sheet
- * has certain columns, the currently deployed metamodel for attributes themselves MUST have
- * attributes for each of these columns. The same goes for any other metamodel entity.
- * 
- * Thus, when attributes of model entities change, the compatibility between files and current
- * model must be restored at the time of installation. Here is a typical approach:
- * 
- * - Changes to the model (e.g. adding new attributes to objects, attributes, etc.) need to be applied 
- * in the core SQL migrations to make sure they are already there when loading this installer.
- * - Legacy model files (exported from older models) may need some transformation. This can be
- * applied in `applyCompatibilityFixesToFileContent()` or `applyCompatibilityFixesToDataSheet()`
- * depending on where the changes are easier to implement.
  * 
  * @author Andrej Kabachnik
  *
@@ -151,7 +131,6 @@ class DataInstaller extends AbstractAppInstaller
      */
     public function install(string $source_absolute_path) : \Iterator 
     {       
-        $modelChanged = false;
         $indent = $this->getOutputIndentation();
         yield $indent . $this->getName() . ":" . PHP_EOL;
         
@@ -159,51 +138,65 @@ class DataInstaller extends AbstractAppInstaller
         
         if (is_dir($srcPath)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
-            
-            foreach ($this->readModelSheetsFromFolders($srcPath) as $data_sheet) {
-                try {
-                    
-                    // Remove columns, that are not attributes. This is important to be able to import changes on the meta model itself.
-                    // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
-                    // as columns, which would lead to an error because the model entities for these columns are not there yet.
-                    foreach ($data_sheet->getColumns() as $column) {
-                        if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
-                            $data_sheet->getColumns()->remove($column);
-                        }
-                    }
-                    
-                    $this->disableBehaviors($data_sheet);
-                    
-                    // There were cases, when the attribute, that is being filtered over was new, so the filters
-                    // did not work (because the attribute was not there). The solution is to run an update
-                    // with create fallback in this case. This will cause filter problems, but will not delete
-                    // obsolete instances. This is not critical, as the probability of this case is extremely
-                    // low in any case and the next update will turn everything back to normal.
-                    if (! $this->checkFiltersMatchModel($data_sheet->getFilters())) {
-                        $data_sheet->getFilters()->removeAll();
-                        $counter = $data_sheet->dataUpdate(true, $transaction);
-                    } else {
-                        $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
-                        $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
-                    }
-                    
-                    if ($counter > 0) {
-                        $modelChanged = true;
-                        yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
-                    }
-                } catch (\Throwable $e) {
-                    throw new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
-                }
-            }
-            
-            if ($modelChanged === false) {
-                yield $indent.$indent."No changes found" . PHP_EOL;
-            }
-            
+            yield from $this->installModel($srcPath, $transaction, $indent);
             $transaction->commit();
         } else {
             yield $indent . "No {$this->getName()} files to install" . PHP_EOL;
         }
+    }
+    
+    /**
+     * 
+     * @param string $srcPath
+     * @param DataTransactionInterface $transaction
+     * @param string $indent
+     * @throws InstallerRuntimeError
+     * @return \Generator
+     */
+    protected function installModel(string $srcPath, DataTransactionInterface $transaction, string $indent) : \Generator
+    {
+        $modelChanged = false;
+        foreach ($this->readModelSheetsFromFolders($srcPath) as $data_sheet) {
+            try {
+                
+                // Remove columns, that are not attributes. This is important to be able to import changes on the meta model itself.
+                // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
+                // as columns, which would lead to an error because the model entities for these columns are not there yet.
+                foreach ($data_sheet->getColumns() as $column) {
+                    if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
+                        $data_sheet->getColumns()->remove($column);
+                    }
+                }
+                
+                $this->disableBehaviors($data_sheet);
+                
+                // There were cases, when the attribute, that is being filtered over was new, so the filters
+                // did not work (because the attribute was not there). The solution is to run an update
+                // with create fallback in this case. This will cause filter problems, but will not delete
+                // obsolete instances. This is not critical, as the probability of this case is extremely
+                // low in any case and the next update will turn everything back to normal.
+                if (! $this->checkFiltersMatchModel($data_sheet->getFilters())) {
+                    $data_sheet->getFilters()->removeAll();
+                    $counter = $data_sheet->dataUpdate(true, $transaction);
+                } else {
+                    $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
+                    $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
+                }
+                
+                if ($counter > 0) {
+                    $modelChanged = true;
+                    yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
+                }
+            } catch (\Throwable $e) {
+                throw new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
+            }
+        }
+        
+        if ($modelChanged === false) {
+            yield $indent.$indent."No changes found" . PHP_EOL;
+        }
+        
+        return $modelChanged;
     }
     
     protected function disableBehaviors(DataSheetInterface $data_sheet) : DataInstaller
@@ -264,8 +257,7 @@ class DataInstaller extends AbstractAppInstaller
         // the MD5-hash of the entire model definition (concatennated contents of all files). This data will be stored in the composer.json
         // and used in the installation process of the package
         foreach ($this->getModelSheets() as $nr => $ds) {
-            $ds->dataRead();
-            $files = $this->exportModelFile($dir, $ds, $this->getFilenamePrefix($nr), true, $dirOld);
+            $files = $this->exportModelFile($dir, $ds, $dirOld);
             /* TODO use the output of the exporter somehow - e.g.:
             foreach ($files as $file) {
                 yield $idt . $idt . $file;
@@ -332,16 +324,6 @@ class DataInstaller extends AbstractAppInstaller
             yield $this->getOutputIndentation() . 'Cleaned up temporary folders';
         }
         return;
-    }
-    
-    /**
-     * 
-     * @param int $fileIndex
-     * @return string
-     */
-    protected function getFilenamePrefix(int $fileIndex) : string
-    {
-        return str_pad($fileIndex + $this->filenameIndexStart, 2, '0', STR_PAD_LEFT) . '_';
     }
     
     /**
@@ -455,13 +437,26 @@ class DataInstaller extends AbstractAppInstaller
      * Writes JSON File of a $data_sheet to a specific location
      *
      * @param string $modelDir            
-     * @param DataSheetInterface $data_sheet
+     * @param DataSheetInterface $sheet
      * @param string $filename_prefix            
      * @return string[]
      */
-    protected function exportModelFile(string $modelDir, DataSheetInterface $data_sheet, $filename_prefix = null, $split_by_object = true, string $prevExportDir = null) : array
+    protected function exportModelFile(string $modelDir, DataSheetInterface $sheet, string $prevExportDir = null) : array
     {
-        if ($data_sheet->isEmpty()) {
+        $obj = $sheet->getMetaObject();
+        $objPath = $this->getModelFilePath($obj);
+        $objPathPhs = StringDataType::findPlaceholders($objPath);
+        $removeColNames = [];
+        foreach ($objPathPhs as $attrAlias) {
+            if (! $col = $sheet->getColumns()->getByExpression($attrAlias)) {
+                $col = $sheet->getColumns()->addFromExpression($attrAlias);
+                $removeColNames[] = $col->getName();
+            }
+        }
+        
+        $sheet->dataRead();
+        
+        if ($sheet->isEmpty()) {
             return [];
         }
         
@@ -469,41 +464,12 @@ class DataInstaller extends AbstractAppInstaller
             Filemanager::pathConstruct($modelDir);
         }
         
-        if ($split_by_object === true) {
-            $objectUids = [];
-            switch (true) {
-                case $data_sheet->getMetaObject()->isExactly('exface.Core.OBJECT'): 
-                    $col = $data_sheet->getUidColumn();
-                    $objectUids = $col->getValues(false);
-                    break;
-                case $data_sheet->getMetaObject()->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
-                    $col = $data_sheet->getColumns()->addFromExpression('COMPOUND_ATTRIBUTE__OBJECT');
-                    $removeObjectCol = true;
-                    $data_sheet->dataRead();
-                    $objectUids = array_unique($col->getValues(false));
-                    break;
-                // Never split objects of other apps for now - this has caused problems 
-                // with DataFlow steps, that have multiple relations to meta objects
-                // TODO add a more generic way to split exported data in subfolders
-                case $data_sheet->getMetaObject()->getNamespace() !== 'exface.Core':
-                    break;
-                default: 
-                    foreach ($data_sheet->getColumns() as $col) {
-                        if ($attr = $col->getAttribute()) {
-                            if ($attr->isRelation() && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') && $attr->isRequired()) {
-                                $objectUids = array_unique($col->getValues(false));
-                                break;
-                            }
-                        }
-                    }
-            }
-        }
         $result = [];
         $fileManager = $this->getWorkbench()->filemanager();
-        $fileName = $filename_prefix . $data_sheet->getMetaObject()->getAlias() . '.json';
+        $fileName = FilePathDataType::findFileName($objPath, true);
         /* @var $tsBehavior \exface\Core\Behaviors\TimeStampingBehavior */
         $excludeAttrs = [];
-        foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $tsBehavior) {
+        foreach ($obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $tsBehavior) {
             if ($tsBehavior->hasUpdatedByAttribute()) {
                 $excludeAttrs[] = $tsBehavior->getUpdatedByAttribute();
             }
@@ -511,32 +477,44 @@ class DataInstaller extends AbstractAppInstaller
                 $excludeAttrs[] = $tsBehavior->getUpdatedOnAttribute();
             }
         }
-        if ($split_by_object && ! empty($objectUids)) {
-            $rows = $data_sheet->getRows();
-            if ($removeObjectCol === true) {
-                $data_sheet->getColumns()->remove($col);
-            }
-            $uxon = $data_sheet->exportUxonObject();
-            $objectColumnName = $col->getName();
-            foreach ($objectUids as $objectUid) {
-                $filteredRows = array_values($this->filterRows($rows, $objectColumnName, $objectUid));
-                if ($removeObjectCol === true) {
-                    for ($i = 0; $i < count($filteredRows); $i++) {
-                        unset($filteredRows[$i][$objectColumnName]);
+        if (! empty($objPathPhs)) {
+            $rows = $sheet->getRows();
+            $rowsByPath = [];
+            foreach ($rows as $row) {
+                $objPathPhVals = [];
+                foreach ($objPathPhs as $ph) {
+                    $objPathPhVals[$ph] = $row[$ph] ?? null;
+                    if (in_array($ph, $removeColNames) === true) {
+                        unset($row[$ph]);
                     }
                 }
-                $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet, $filteredRows));
-                $subfolder = $this->getSubfolder($objectUid);
-                $folderPath = $modelDir . DIRECTORY_SEPARATOR . ($subfolder !== '' ? $subfolder . DIRECTORY_SEPARATOR : '');
-                $filePath = $folderPath . $fileName;
+                $rowPath = StringDataType::replacePlaceholders($objPath, $objPathPhVals);
+                $rowsByPath[$rowPath][] = $row;
+            }
+            foreach ($removeColNames as $colname) {
+                $sheet->getColumns()->removeByKey($colname);
+            }
+            
+            $uxon = $sheet->exportUxonObject();
+            foreach ($rowsByPath as $filePathRel => $filteredRows) {
+                // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
+                // diff with the previous version below will produces false positives!
+                $uxon->setProperty('rows', $filteredRows);
+                $filePath = $modelDir . DIRECTORY_SEPARATOR . $filePathRel;
+                $folderPath = FilePathDataType::findFolderPath($filePath);
                 $result[] = $filePath;
-                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . ($subfolder !== '' ? $subfolder . DIRECTORY_SEPARATOR : '') . $fileName;
+                $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $filePathRel;
+                $changesDetected = true;
                 if (file_exists($prevPath)) {
+                    $changesDetected = false;
                     $splitSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon)->copy();
                     $decryptedSheet = $splitSheet->copy()->removeRows()->addRows($splitSheet->getRowsDecrypted());
-                    $changesDetected = false;
                     foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
                         if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
+                            $changesDetected = true;
+                            break;
+                        }
+                        if (count($decryptedSheet->getRow(0)) !== count($prevSheet->getRow(0))) {
                             $changesDetected = true;
                             break;
                         }
@@ -546,26 +524,36 @@ class DataInstaller extends AbstractAppInstaller
                             break;
                         }
                     }
-                    if ($changesDetected === false) {
-                        if (! is_dir($folderPath));
-                        mkdir($folderPath);
-                        rename($prevPath, $filePath);
-                        $result[array_key_last($result)] .= ' - no change';
-                        continue;
-                    }
                 }
-                $result[array_key_last($result)] .= ' - changed ' . $data_sheet->countRows();
-                $fileManager->dumpFile($filePath, $uxon->toJson(true));
+                if ($changesDetected === false) {
+                    // If there were no changes, simply copy the previous file back to the
+                    // current model folder
+                    if (! is_dir($folderPath)) {
+                        $fileManager::pathConstruct($folderPath);
+                    }
+                    rename($prevPath, $filePath);
+                    $result[array_key_last($result)] .= ' - no change';
+                    continue;
+                } else {
+                    // For changes prettify the rows and dump the new JSON
+                    $uxon->setProperty('rows', $this->exportModelRowsPrettified($sheet, $filteredRows));
+                    $result[array_key_last($result)] .= ' - changed ' . $sheet->countRows();
+                    $fileManager->dumpFile($filePath, $uxon->toJson(true));
+                }
             }
         } else {
             $filePath = $modelDir . DIRECTORY_SEPARATOR . $fileName;
             $result[] = $filePath;
             $prevPath = $prevExportDir . DIRECTORY_SEPARATOR . $fileName;
             if (file_exists($prevPath)) {
-                $decryptedSheet = $data_sheet->copy()->removeRows()->addRows($data_sheet->getRowsDecrypted());
+                $decryptedSheet = $sheet->copy()->removeRows()->addRows($sheet->getRowsDecrypted());
                 $changesDetected = false;
                 foreach ($this->readModelSheetsFromFolders($prevPath) as $prevSheet) {
                     if ($decryptedSheet->countRows() !== $prevSheet->countRows()) {
+                        $changesDetected = true;
+                        break;
+                    }
+                    if (count($decryptedSheet->getRow(0)) !== count($prevSheet->getRow(0))) {
                         $changesDetected = true;
                         break;
                     }
@@ -581,9 +569,9 @@ class DataInstaller extends AbstractAppInstaller
                     return $result;
                 }
             }
-            $uxon = $data_sheet->exportUxonObject();
-            $uxon->setProperty('rows', $this->exportModelRowsPrettified($data_sheet));
-            $result[0] .= ' - changed ' . $data_sheet->countRows();
+            $uxon = $sheet->exportUxonObject();
+            $uxon->setProperty('rows', $this->exportModelRowsPrettified($sheet));
+            $result[0] .= ' - changed ' . $sheet->countRows();
             $contents = $uxon->toJson(true);
             $fileManager->dumpFile($filePath, $contents);
         }
@@ -634,31 +622,18 @@ class DataInstaller extends AbstractAppInstaller
     }
     
     /**
-     * Add a custom data sheet to be exported with the app
-     *
-     * @param string $subfolder
-     * @param DataSheetInterface $sheetToExport
-     * @param string $lastUpdateAttributeAlias
-     * @return DataInstaller
-     */
-    public function addModelDataSheet(string $subfolder, DataSheetInterface $sheetToExport, string $lastUpdateAttributeAlias = null) : DataInstaller
-    {
-        $this->modelInstaller->addModelDataSheet($subfolder, $sheetToExport, $lastUpdateAttributeAlias);
-        return $this;
-    }
-    
-    /**
      * Add an object to be exported with the app model replacing all rows on a target system when deploying
      *
      * @param string $objectSelector
      * @param string $sorterAttribute
      * @param string $appRelationAttribute
      * @param string[] $excludeAttributeAliases
+     * @param string $filePath
      * @return DataInstaller
      */
-    public function addDataToReplace(string $objectSelector, string $sorterAttribute, string $appRelationAttribute, array $excludeAttributeAliases = []) : DataInstaller
+    public function addDataToReplace(string $objectSelector, string $sorterAttribute, string $appRelationAttribute, array $excludeAttributeAliases = [], string $filePath = null) : DataInstaller
     {
-        $this->addDataOfObject($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases);
+        $this->addDataOfObject($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases, $filePath);
         return $this;
     }
     
@@ -669,11 +644,12 @@ class DataInstaller extends AbstractAppInstaller
      * @param string $sorterAttribute
      * @param string $appRelationAttribute
      * @param string[] $excludeAttributeAliases
+     * @param string $filePath
      * @return DataInstaller
      */
-    public function addDataToMerge(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataInstaller
+    public function addDataToMerge(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = [], string $filePath = null) : DataInstaller
     {
-        $this->addDataOfObject($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases);
+        $this->addDataOfObject($objectSelector, $sorterAttribute, $appRelationAttribute, $excludeAttributeAliases, $filePath);
         return $this;
     }
     
@@ -683,14 +659,16 @@ class DataInstaller extends AbstractAppInstaller
      * @param string $sorterAttribute
      * @param string $appRelationAttribute
      * @param string[] $excludeAttributeAliases
+     * @param string $filePath
      * @return DataSheetInterface
      */
-    protected function addDataOfObject(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = []) : DataInstaller
+    protected function addDataOfObject(string $objectSelector, string $sorterAttribute, string $appRelationAttribute = null, array $excludeAttributeAliases = [], string $filePath = null) : DataInstaller
     {
         $this->dataDefs[$objectSelector] = [
             'sorter' => $sorterAttribute,
             'app_relation' => $appRelationAttribute,
-            'exclude' => $excludeAttributeAliases
+            'exclude' => $excludeAttributeAliases,
+            'path' => $filePath
         ];
         return $this;
     }
@@ -737,8 +715,7 @@ class DataInstaller extends AbstractAppInstaller
                     break;
                     // If we know the UID at this moment, add a filter over the relation to the app
                 case $appUid !== null:
-                    // FIXME Change comparator from IS to EQUALS. It's IS only for backwards compatibilty during development
-                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::IS);
+                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::EQUALS);
                     $this->dataSheets[$cacheKey] = $ds;
                     break;
                     // If we don't konw the UID, do not cache the sheet - maybe the UID will be already
@@ -764,6 +741,42 @@ class DataInstaller extends AbstractAppInstaller
             $sheets[] = $this->createModelSheet($objAlias, $def['sorter'], $def['app_relation'], $def['exclude']);
         }
         return $sheets;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @throws InstallerRuntimeError
+     * @return string
+     */
+    protected function getModelFilePath(MetaObjectInterface $object) : string
+    {
+        $objAlias = $object->getAliasWithNamespace();
+        $def = $this->dataDefs[$objAlias] ?? null;
+        if ($def === null) {
+            throw new InstallerRuntimeError($this, 'Cannot determine file path for object ' . $object->__toString() . ': no installer configuration found!');
+        }
+        $path = $def['path'] ?? null;
+        if ($path === null) {
+            $defIdx = $this->getModelFileIndex($objAlias) ?? 0;
+            $prefix = str_pad($defIdx + $this->filenameIndexStart, 2, '0', STR_PAD_LEFT) . '_';
+            $path = $prefix . $object->getAlias() . '.json';
+        }
+        return FilePathDataType::normalize($path, DIRECTORY_SEPARATOR);
+    }
+    
+    /**
+     * 
+     * @param string $objectAlias
+     * @return int|NULL
+     */
+    protected function getModelFileIndex(string $objectAlias) : ?int
+    {
+        $idx = array_search($objectAlias, array_keys($this->dataDefs));
+        if ($idx === false) {
+            $idx = null;
+        }
+        return $idx;
     }
     
     /**
@@ -901,11 +914,14 @@ class DataInstaller extends AbstractAppInstaller
     }
     
     /**
+     * Returns an array of UXON objects with `<filename>@<abs_path>` for keys
+     * 
+     * These keys allow to easily sort the entire array by filename
      * 
      * @param string $absolutePath
      * @return UxonObject[]
      */
-    protected function readDataSheetUxonsFromFolder(string $absolutePath, array $ignoreNames = []) : array
+    protected function readDataSheetUxonsFromFolder(string $absolutePath) : array
     {
         $folderUxons = [];
         
@@ -916,9 +932,6 @@ class DataInstaller extends AbstractAppInstaller
         
         foreach (scandir($absolutePath) as $file) {
             if ($file == '.' || $file == '..') {
-                continue;
-            }
-            if (in_array($file, $ignoreNames)) {
                 continue;
             }
             $path = $absolutePath . DIRECTORY_SEPARATOR . $file;
@@ -985,15 +998,5 @@ class DataInstaller extends AbstractAppInstaller
             }
         }
         return true;
-    }
-    
-    /**
-     * 
-     * @param string $uid
-     * @return string
-     */
-    protected function getSubfolder(string $uid) : string
-    {
-        return '';
     }
 }

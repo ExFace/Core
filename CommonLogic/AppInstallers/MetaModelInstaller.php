@@ -3,12 +3,8 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\Behaviors\TimeStampingBehavior;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\Exceptions\Installers\InstallerRuntimeError;
-use exface\Core\Behaviors\ModelValidatingBehavior;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Saves all model entities and eventual custom added data as JSON files in the `Model` subfolder of the app.
@@ -95,10 +91,10 @@ class MetaModelInstaller extends DataInstaller
     
     const FOLDER_NAME_PAGES = '99_PAGE';
     
-    private $objectSheet = null;
-    
-    private $salt = null;
-    
+    /**
+     * 
+     * @param SelectorInterface $selectorToInstall
+     */
     public function __construct(SelectorInterface $selectorToInstall)
     {
         parent::__construct($selectorToInstall);
@@ -150,7 +146,33 @@ class MetaModelInstaller extends DataInstaller
      */
     public function install(string $source_absolute_path) : \Iterator 
     {
-        yield from $this->installModel($this->getSelectorInstalling(), $source_absolute_path);
+        $indent = $this->getOutputIndentation();
+        $model_source = $this->getDataFolderPathAbsolute($source_absolute_path);
+        yield $indent . "Model changes:" . PHP_EOL;
+        
+        if (is_dir($model_source)) {
+            $transaction = $this->getWorkbench()->data()->startTransaction();
+            $generator = $this->installModel($model_source, $transaction, $indent);
+            yield from $generator;
+            
+            $modelChanged = $generator->getReturn();
+            if ($modelChanged === true) {
+                // Make sure to clear the model cache after changes to ensure all objects loaded before and after this point have
+                // consistent models
+                $this->getWorkbench()->model()->clearCache();
+            }
+            
+            // Install pages.
+            $pageInstaller = $this->getPageInstaller();
+            $pageInstaller->setOutputIndentation($indent);
+            $pageInstaller->setTransaction($transaction);
+            yield from $pageInstaller->install($source_absolute_path);
+            
+            // Commit the transaction
+            $transaction->commit();
+        } else {
+            yield $indent . "No model files to install" . PHP_EOL;
+        }
     }
 
     /**
@@ -182,100 +204,6 @@ class MetaModelInstaller extends DataInstaller
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
         yield from $pageInstaller->backup($destinationAbsolutePath);
-    }
-
-    /**
-     *
-     * @param AppSelectorInterface $app_selector            
-     * @param string $source_absolute_path            
-     * @return string
-     */
-    protected function installModel(AppSelectorInterface $app_selector, $source_absolute_path) : \Iterator
-    {
-        $modelChanged = false;
-        $indent = $this->getOutputIndentation();
-        yield $indent . "Model changes:" . PHP_EOL;
-        
-        $model_source = $this->getDataFolderPathAbsolute($source_absolute_path);
-        
-        if (is_dir($model_source)) {
-            $transaction = $this->getWorkbench()->data()->startTransaction();
-            foreach ($this->readModelSheetsFromFolders($model_source) as $data_sheet) {
-                try {
-                    
-                    // Remove columns, that are not attributes. This is important to be able to import changes on the meta model itself.
-                    // The trouble is, that after new properties of objects or attributes are added, the export will already contain them
-                    // as columns, which would lead to an error because the model entities for these columns are not there yet.
-                    foreach ($data_sheet->getColumns() as $column) {
-                        if (! $column->isAttribute() || ! $column->getMetaObject()->hasAttribute($column->getAttributeAlias())) {
-                            $data_sheet->getColumns()->remove($column);
-                        }
-                    }
-                    
-                    if ($data_sheet->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
-                        if ($mod_col = $data_sheet->getColumns()->getByExpression('MODIFIED_ON')) {
-                            $mod_col->setIgnoreFixedValues(true);
-                        }
-                        if ($user_col = $data_sheet->getColumns()->getByExpression('MODIFIED_BY_USER')) {
-                            $user_col->setIgnoreFixedValues(true);
-                        }
-                    }
-                    
-                    // Disable timestamping behavior because it will prevent multiple installations of the same
-                    // model since the first install will set the update timestamp to something later than the
-                    // timestamp saved in the model files
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
-                    // Disable model validation because it would instantiate all objects when the object sheet is being saved,
-                    // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
-                    // at this point.
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
-                    
-                    // There were cases, when the attribute, that is being filtered over was new, so the filters
-                    // did not work (because the attribute was not there). The solution is to run an update
-                    // with create fallback in this case. This will cause filter problems, but will not delete
-                    // obsolete instances. This is not critical, as the probability of this case is extremely
-                    // low in any case and the next update will turn everything back to normal.
-                    if (! $this->checkFiltersMatchModel($data_sheet->getFilters())) {
-                        $data_sheet->getFilters()->removeAll();
-                        $counter = $data_sheet->dataUpdate(true, $transaction);
-                    } else {
-                        $deleteLocalRowsThatAreNotInTheSheet = ! $data_sheet->getFilters()->isEmpty();
-                        $counter = $data_sheet->dataReplaceByFilters($transaction, $deleteLocalRowsThatAreNotInTheSheet);
-                    }
-                    
-                    if ($counter > 0) {
-                        $modelChanged = true;
-                        yield $indent . $indent . $data_sheet->getMetaObject()->getName() . " - " . $counter . PHP_EOL;
-                    }
-                } catch (\Throwable $e) {
-                    $ex = new InstallerRuntimeError($this, 'Failed to install ' . $data_sheet->getMetaObject()->getAlias() . '-sheet: ' . $e->getMessage(), null, $e);
-                    throw $ex;
-                }
-            }
-            
-            if ($modelChanged === false) {
-                yield $indent.$indent . "No changes found" . PHP_EOL;
-            } else {
-                // Make sure to clear the model cache after changes to ensure all objects loaded before and after this point have 
-                // consistent models
-                $this->getWorkbench()->model()->clearCache();
-            }
-            
-            // Install pages.
-            $pageInstaller = $this->getPageInstaller();
-            $pageInstaller->setOutputIndentation($indent);
-            $pageInstaller->setTransaction($transaction);
-            yield from $pageInstaller->install($source_absolute_path);
-            
-            // Commit the transaction
-            $transaction->commit();
-        } else {
-            yield $indent . "No model files to install" . PHP_EOL;
-        }
     }
     
     /**
@@ -407,20 +335,32 @@ class MetaModelInstaller extends DataInstaller
     
     /**
      * 
-     * @param string $uid
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\DataInstaller::getModelFilePath()
      */
-    protected function getSubfolder(string $uid) : string
+    protected function getModelFilePath(MetaObjectInterface $object) : string
     {
-        if ($this->objectSheet !== null) {
-            $row = $this->objectSheet->getRow($this->objectSheet->getUidColumn()->findRowByValue($uid));
-            $alias = $this->getApp()->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $row['ALIAS'];
+        $folder = '';
+        switch (true) {
+            case $object->isExactly('exface.Core.OBJECT'):
+                $folder = '[#ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            case $object->isExactly('exface.Core.ATTRIBUTE_COMPOUND'):
+                $folder = '[#COMPOUND_ATTRIBUTE__OBJECT__ALIAS_WITH_NS#]' . DIRECTORY_SEPARATOR;
+                break;
+            default:
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isRelation() 
+                        && $attr->getRelation()->getRightObject()->isExactly('exface.Core.OBJECT') 
+                        && $attr->getRelation()->isForwardRelation() 
+                        && $attr->isRequired()
+                    ) {
+                        $folder = "[#{$attr->getAlias()}__ALIAS_WITH_NS#]" . DIRECTORY_SEPARATOR;
+                        break;
+                    }
+                }
         }
-        
-        if (! $alias) {
-            $alias = $this->getWorkbench()->model()->getObject($uid)->getAliasWithNamespace();
-        }
-        
-        return trim($alias);
+        $filename = parent::getModelFilePath($object);
+        return $folder . $filename;
     }
 }
