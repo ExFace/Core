@@ -617,7 +617,7 @@ class DataInstaller extends AbstractAppInstaller
     protected function filterRows(array $rows, string $filterRowName, string $filterRowValue)
     {
         $filter = new RowDataArrayFilter();
-        $filter->addAnd($filterRowName, $filterRowValue, EXF_COMPARATOR_EQUALS);
+        $filter->addAnd($filterRowName, $filterRowValue, ComparatorDataType::EQUALS);
         return $filter->filter($rows);
     }
     
@@ -715,7 +715,9 @@ class DataInstaller extends AbstractAppInstaller
                     break;
                     // If we know the UID at this moment, add a filter over the relation to the app
                 case $appUid !== null:
-                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::EQUALS);
+                    // Use IS and not EQUALS here for historical reasons. If changed to EQUALS
+                    // ALL existing model files will change!
+                    $ds->getFilters()->addConditionFromString($appRelationAttribute, $appUid, ComparatorDataType::IS);
                     $this->dataSheets[$cacheKey] = $ds;
                     break;
                     // If we don't konw the UID, do not cache the sheet - maybe the UID will be already
