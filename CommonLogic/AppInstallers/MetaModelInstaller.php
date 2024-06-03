@@ -6,7 +6,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
-use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Behaviors\ModelValidatingBehavior;
 use exface\Core\Interfaces\Selectors\SelectorInterface;

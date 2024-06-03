@@ -172,27 +172,7 @@ class DataInstaller extends AbstractAppInstaller
                         }
                     }
                     
-                    if ($data_sheet->getMetaObject()->is('exface.Core.BASE_OBJECT')) {
-                        if ($mod_col = $data_sheet->getColumns()->getByExpression('MODIFIED_ON')) {
-                            $mod_col->setIgnoreFixedValues(true);
-                        }
-                        if ($user_col = $data_sheet->getColumns()->getByExpression('MODIFIED_BY_USER')) {
-                            $user_col->setIgnoreFixedValues(true);
-                        }
-                    }
-                    
-                    // Disable timestamping behavior because it will prevent multiple installations of the same
-                    // model since the first install will set the update timestamp to something later than the
-                    // timestamp saved in the model files
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
-                    // Disable model validation because it would instantiate all objects when the object sheet is being saved,
-                    // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
-                    // at this point.
-                    foreach ($data_sheet->getMetaObject()->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
-                        $behavior->disable();
-                    }
+                    $this->disableBehaviors($data_sheet);
                     
                     // There were cases, when the attribute, that is being filtered over was new, so the filters
                     // did not work (because the attribute was not there). The solution is to run an update
@@ -224,6 +204,40 @@ class DataInstaller extends AbstractAppInstaller
         } else {
             yield $indent . "No {$this->getName()} files to install" . PHP_EOL;
         }
+    }
+    
+    protected function disableBehaviors(DataSheetInterface $data_sheet) : DataInstaller
+    {
+        $obj = $data_sheet->getMetaObject();
+        
+        // Disable timestamping behavior because it will prevent multiple installations of the same
+        // model since the first install will set the update timestamp to something later than the
+        // timestamp saved in the model files
+        foreach ($obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
+            $behavior->disable();
+            // Make sure to explicitly disable fixed values on update-columns
+            if (null !== $attr = $behavior->getUpdatedOnAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
+                $col->setIgnoreFixedValues(true);
+            }
+            if (null !== $attr = $behavior->getUpdatedByAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
+                $col->setIgnoreFixedValues(true);
+            }
+        }
+        
+        // Prevent duplicates behavior
+        /*foreach ($obj->getBehaviors()->getByPrototypeClass(PreventDuplicatesBehavior::class) as $behavior) {
+            $behavior->disable();
+        }*/
+        
+        // Disable model validation because it would instantiate all objects when the object sheet is being saved,
+        // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
+        // at this point.
+        foreach ($obj->getBehaviors()->getByPrototypeClass(ModelValidatingBehavior::class) as $behavior) {
+            $behavior->disable();
+        }
+        return $this;
     }
 
     /**
