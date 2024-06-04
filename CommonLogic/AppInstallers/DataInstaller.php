@@ -25,6 +25,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Events\Installer\OnAppBackupEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * Saves all data of selected objects, that is related to the an app, in a subfolder of the app.
@@ -584,20 +585,27 @@ class DataInstaller extends AbstractAppInstaller
         $rows = $rows ?? $sheet->getRowsDecrypted();
         foreach ($sheet->getColumns() as $col) {
             $dataType = $col->getDataType();
+            $colName = $col->getName();
             switch (true) {
                 case $dataType instanceof EncryptedDataType:
-                    $colName = $col->getName();
+                    $salt = $this->getAppSalt();
                     foreach ($rows as $i => $row) {
                         $val = $row[$colName];
                         if ($val !== null && $val !== '') {
-                            $salt = $this->getAppSalt();
                             $valEncrypted = EncryptedDataType::encrypt($salt, $val, EncryptedDataType::ENCRYPTION_PREFIX_DEFAULT);
                             $rows[$i][$colName] = $valEncrypted;
                         }
                     }
                     break;
+                case $dataType instanceof DateDataType:
+                    foreach ($rows as $i => $row) {
+                        $val = $row[$colName];
+                        if ($val !== null && $val !== '') {
+                            $rows[$i][$colName] = $dataType->cast($val);
+                        }
+                    }
+                    break;
                 case $dataType instanceof JsonDataType:
-                    $colName = $col->getName();
                     foreach ($rows as $i => $row) {
                         $val = $row[$colName];
                         if ($val !== null && $val !== '') {
