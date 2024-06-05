@@ -9,6 +9,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * Deletes objects in the input data from their data sources.
@@ -57,7 +58,12 @@ class DeleteObject extends AbstractAction implements iDeleteData
             throw new ActionInputInvalidObjectError($this, 'Cannot delete object ' . $this->getMetaObject()->__toString() . ' using input data of object ' . $input_data->getMetaObject()->__toString() . '!');
         }
         
-        $deletedRows = $input_data->dataDelete($transaction);
+        try {
+            $deletedRows = $input_data->dataDelete($transaction);
+        } catch (\Throwable $e) {
+            throw new ActionRuntimeError($this, 'Cannot delete data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+        }
+        
         
         if (null !== $message = $this->getResultMessageText()) {
             $message =  str_replace('%number%', $deletedRows, $message);
