@@ -80,8 +80,8 @@ class RouteConfigLoader implements MiddlewareInterface
      */
     protected function getRouteData(string $route) : array
     {
+        $route = strtok($route, '/');
         foreach ($this->routeData->getRows() as $row) {
-            $route = strtok($route, '/');
             if ($row[$this->routePatternAttributeAlias] && strcasecmp($route, $row[$this->routePatternAttributeAlias]) === 0 ) {
                 return $row;
             }
