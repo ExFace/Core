@@ -206,9 +206,9 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param MetaObjectInterface $related_object
      * @param number $max_depth
      * @param MetaRelationPathInterface $start_path
-     * @return MetaRelationPathInterface|boolean
+     * @return MetaRelationPathInterface|NULL
      */
-    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null);
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null) : ?MetaRelationPathInterface;
     
     /**
      * Returns an array with all attributes of this object having the specified data address (e.g.
