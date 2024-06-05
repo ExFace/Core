@@ -1766,9 +1766,10 @@ JS;
             $valueExpr = $cellWidget->getValueExpression();
             if ($valueExpr->isReference() === true) {
                 $linkedColIdxsJs .= $colIdx . ',';
-                $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
+                $link = $valueExpr->getWidgetLink($cellWidget);
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
                 $addLocalValuesToRowJs .= <<<JS
-                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetColumnId())}, true);
 
 JS;
             }    
