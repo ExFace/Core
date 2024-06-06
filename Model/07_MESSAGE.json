@@ -2444,6 +2444,20 @@
             "HINT": "For security reasons the maximum size of a data sent to your web server is limited. Try to send the data in parts: e.g. if you are uploading files, upload them separately. Bear in mind, that the resul",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2024-06-06 11:19:56",
+            "MODIFIED_ON": "2024-06-06 11:19:56",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef9fb1f19e0c009fb1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7W2J960",
+            "TITLE": "Multiple values found for a non-aggregated attribute in a single row",
+            "DESCRIPTION": "This error typically occurs, when trying to read some related attribute from a 1-to-n or n-to-m relation. E.g. when reading data for `exface.Core.USER`, you cannot simply read `USER_ROLE_USERS__USER_ROLE__LABEL` to get the role(s) of a user - it will end up in this error as soon as at least one user has more than one role. \n\nThe solution is to use aggregators for all reverser relations: simply replace `USER_ROLE_USERS__USER_ROLE__LABEL` with `USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT` to get a comma separated list of all roles for every user. Similarly, you can also use `:MIN` or `:MAX` for numbers.\n\nNote, that different data sources handle relations differently. Some may even have default fallbacks for such cases and will not produce this error at all. ",
+            "HINT": "Use an aggregation like `:LIST_DISTINCT` for attributes with reverse relations",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

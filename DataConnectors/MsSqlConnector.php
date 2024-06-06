@@ -13,6 +13,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
 
 /**
  * Microsoft SQL Server connector via the official sqlsrv PHP extension.
@@ -275,6 +276,9 @@ class MsSqlConnector extends AbstractSqlConnector
             case 2627:
             case 2601:
                 return new DataQueryConstraintError($query, $message, '73II64M');
+            // Subquery returns more than 1 row - SQL error code 1242
+            case 1242:
+                return new DataQueryRelationCardinalityError($query, $message);
             default:
                 return new DataQueryFailedError($query, $message, '6T2T2UI');
         }
