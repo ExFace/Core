@@ -1470,7 +1470,7 @@ JS;
             && $action->implementsInterface('iModifyData')
             && (
                 $dataObj->is($widgetObj)
-                && ($relPathToParent === null || $relPathToParent->isEmpty())
+                && ($relPathToParent === null || $relPathToParent->isEmpty() || $relPathToParent->getEndObject()->isExactly($dataObj) === false)
             ):
                 $data = <<<JS
     {
