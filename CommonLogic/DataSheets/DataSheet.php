@@ -1602,7 +1602,7 @@ class DataSheet implements DataSheetInterface
             $checkUidsCol = $checkUidsSheet->getColumns()->addFromUidAttribute();
             $checkUidsSheet->dataRead();
             if ($checkUidsSheet->isEmpty() === false) {
-                throw new DataSheetWriteError($this, 'Cannot create data with UIDs "' . implode($checkUidsCol->getAttribute()->getValueListDelimiter(), $checkUidsCol->getValues()) . '": these UIDs alread exist! Update on duplicate UIDs not supported yet in data sheets!');
+                throw new DataSheetWriteError($this, 'Cannot create ' . $this->getMetaObject()->__toString() . ' with UID(s) "' . implode($checkUidsCol->getAttribute()->getValueListDelimiter(), $checkUidsCol->getValues()) . '": these UIDs alread exist and a fallback to updates in this case is not supported yet in data sheets!');
             }
         }
         
