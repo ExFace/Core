@@ -50,7 +50,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     use iUseInputWidgetTrait;
     
     use iHaveIconTrait {
-        getIcon as getIconSetExplicitly;
+        getIcon as getIconFromButton;
+        getIconSet as getIconSetFromButton;
     }
     
     use iHaveColorTrait;
@@ -300,11 +301,25 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getIcon() : ?string
     {
-        $icon = $this->getIconSetExplicitly();
+        $icon = $this->getIconFromButton();
         if (! $icon && $this->getAction()) {
             return $this->getAction()->getIcon();
         }
         return $icon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIconSet()
+     */
+    public function getIconSet() : ?string
+    {
+        $iconSet = $this->getIconSetFromButton();
+        if (! $iconSet && $this->getAction()) {
+            return $this->getAction()->getIconSet();
+        }
+        return $iconSet;
     }
 
     /**
@@ -953,7 +968,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         // If show_icon is not set explicitly, set it to true when specifying an icon.
         // Indeed, if the user specifies and icon, it is expected to be show, isn't it?
-        if ($this->getIconSetExplicitly() !== null && $this->showIcon !== false) {
+        if ($this->getIconFromButton() !== null && $this->showIcon !== false) {
             return true;
         }
         return $this->showIcon ?? $default;
