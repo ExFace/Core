@@ -787,12 +787,21 @@ JS;
         if ($layer !== null && $layer->hasTooltip()) {
             $markerProps .= 'title: oRow.' . $layer->getTooltipColumn()->getDataColumnName() . ',';
         }
+        
+        // Define a custom projection if needed
+        if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
+            $proj = $layer->getProjection();
+            $projectionInit = "proj4.defs('{$proj->getName()}', '{$proj->getDefinition()}');";
+            $layerConstructor = 'L.Proj.geoJson';
+        } else {
+            $layerConstructor = 'L.geoJSON';
+        }
 
         return <<<JS
-            (function(){
-                var oLeaflet = {$this->buildJsLeafletVar()};
+            (function(oLeaflet){
+                $projectionInit
                 var oClusterLayer = {$clusterInitJs};
-                var oLayer = L.geoJSON(null, {
+                var oLayer = {$layerConstructor}(null, {
                     pointToLayer: function(feature, latlng) {
                         var bDraggable = feature.properties.draggable || false;
                         var oMarker = L.marker(latlng, { 
@@ -838,7 +847,7 @@ JS;
                 oLayer._exfRefresh();
                
                 return oClusterLayer ? oClusterLayer : oLayer;
-            })()
+            })({$this->buildJsLeafletVar()})
 JS;
     }
     
