@@ -11,6 +11,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Database AppInstaller for Apps with MySQL Database.
@@ -269,7 +270,7 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         $postfix = '';
         
         foreach ($this->findFunctions($script) as $funcName) {
-            $prefix .= $this->getFunctionCreateScript($funcName);
+            $prefix .= $this->getFunctionCreateScript($funcName) ?? '';
             $postfix .= $this->getFunctionDropScript($funcName);
         }
         
@@ -277,24 +278,47 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
     }
 
     /**
-     * Finds all functions within the script and returns their name in an array.
+     * Finds all external functions and stored procedures within the given SQL and returns their names in an array.
+     * 
+     * External means the stored procedure is used in in the SQL, but is not created in it.
      *
-     * e.g.
+     * E.g. the following provided SQL will produce the array below
+     * 
+     * ```
      * CALL add_column_if_missing('exf_pwa_dataset', 'incremental_flag', 'tinyint NOT NULL')
      * CALL remove_column_if_exists('exf_pwa_dataset', 'incremental_flag');
-     * --> [add_column_if_missing, remove_column_if_exists]
+     * 
+     * ```
+     * 
+     * --> `[add_column_if_missing, remove_column_if_exists]`
      *
      * @param string $script
      * @return array
      */
     protected function findFunctions(string $script) : array
     {
-        $pattern = '/CALL (?<functionNames>\w+)\(/';
-        preg_match_all($pattern, $script, $matches);
-        return array_unique($matches['functionNames']);
+        $callPattern = '/CALL (?<functionNames>\w+)\(/i';
+        $callMatches = [];
+        preg_match_all($callPattern, $script, $callMatches);
+        $calledNames = array_unique($callMatches['functionNames'] ?? []);
+        
+        $createPattern = '/CREATE PROCEDURE (?<functionNames>\w+)\(/i';
+        $createMatches = [];
+        preg_match_all($createPattern, $script, $createMatches);
+        $createdNames = array_unique($createMatches['functionNames'] ?? []);
+        
+        return array_diff($calledNames, $createdNames);
     }
     
-    protected function getFunctionCreateScript(string $funcName) : string
+    /**
+     * Returns the SQL to create a utility stored procedure or NULL if no such utility definition is found
+     * 
+     * @param string $funcName
+     * @throws NotImplementedError
+     * @throws UnexpectedValueException
+     * @return string|NULL
+     */
+    protected function getFunctionCreateScript(string $funcName) : ?string
     {
         $folder = $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath()
         . DIRECTORY_SEPARATOR . 'QueryBuilders'
@@ -302,14 +326,20 @@ class MySqlDatabaseInstaller extends AbstractSqlDatabaseInstaller
         . DIRECTORY_SEPARATOR . $this->getSqlDbType()
         . DIRECTORY_SEPARATOR;
         
-        $sql = file_get_contents($folder . $funcName . '.sql');
+        $filepath = $folder . $funcName . '.sql';
+        
+        if (false === file_exists($filepath)) {
+            return null;
+        }
+        
+        $sql = file_get_contents($filepath);
         if ($sql === '' || $sql === false) {
             throw new NotImplementedError('Requested SQL function \'' . $funcName
                 . '\' has not been implemented');
         }
 
         if (strrpos($sql, $this->delimiter) !== strlen($sql)-1) {
-            throw new InvalidArgumentException('Used SQL function \'' .$funcName
+            throw new UnexpectedValueException('Used SQL function \'' .$funcName
                 . '\' does not end with an delimiter! Please edit file.');
         }
         
