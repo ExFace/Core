@@ -18,6 +18,11 @@ use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
+use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
+use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
@@ -42,7 +47,9 @@ class DataSourceFileInfo implements FileInfoInterface
     
     const SLASH = '/';
     
-    private $pathname = null;
+    private $pathFromConstructor = null;
+    
+    private $uid = null;
     
     private $folder = null;
     
@@ -74,13 +81,42 @@ class DataSourceFileInfo implements FileInfoInterface
         $objectSelector = $matches[1] ?? null;
         $folder = $matches[2] ?? null;
         $filename = $matches[3] ?? null;
+        if ($filename === '') {
+            $filename = null;
+        }
         if ($folder === null || $objectSelector === null) {
             throw new UnexpectedValueException('Cannot parse virtual file path "' . $path . '".');
         }
-        $this->pathname = $path;
+        $this->pathFromConstructor = $path;
         $this->filenameMask = $filename;
         $this->folder = $folder;
         $this->object = MetaObjectFactory::createFromString($workbench, $objectSelector);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string|MetaObjectSelectorInterface|MetaObjectInterface $objectSelectorString
+     * @param string $uid
+     * @return DataSourceFileInfo
+     */
+    public static function fromObjectUID(WorkbenchInterface $workbench, $objectSelectorString, string $uid) : self
+    {
+        switch (true) {
+            case $objectSelectorString instanceof MetaObjectInterface:
+                $objectString = $objectSelectorString->getAliasWithNamespace();
+                break;
+            case $objectSelectorString instanceof MetaObjectSelectorInterface:
+                $objectString = $objectSelectorString->toString();
+                break;
+            case is_string($objectSelectorString):
+                $objectString = $objectSelectorString;
+                break;
+            default:
+                throw new InvalidArgumentException('Cannot instantiate file from object "' . $objectSelectorString . "': expecting object selector or object instance!");
+        }
+        $path = self::SCHEME . $objectString . self::SLASH . $uid;
+        return new self($path, $workbench);
     }
     
     /**
@@ -109,8 +145,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getFolderPath() : ?string
     {
-        // TODO
-        return null;
+        return FilePathDataType::findFolderPath($this->getPathAbsolute());
     }
     
     /**
@@ -173,11 +208,25 @@ class DataSourceFileInfo implements FileInfoInterface
             
             $this->fileData = DataSheetFactory::createFromObject($this->getMetaObject());
             $this->fileAttributes = $fileBeh->getFileAttributes();
+            $query = QueryBuilderFactory::createForObject($fileBeh->getObject());
+            $contentAttr = $fileBeh->getContentsAttribute();
+            $folderAttr = $fileBeh->getFolderAttribute();
             foreach ($this->fileAttributes as $attr) {
+                if (! $query->canReadAttribute($attr)) {
+                    continue;
+                }
+                // NEVER load content right away because it might be large and will slow down getting
+                // file information a lot! It can always be loaded explicitly when `getContent()` is called
+                if ($attr === $contentAttr) {
+                    //continue;
+                }
                 $this->fileData->getColumns()->addFromAttribute($attr);
             }
             
-            $this->fileData->getFilters()->addConditionFromAttribute($fileBeh->getFolderAttribute(), $this->getFolder(), ComparatorDataType::EQUALS);
+            if (! $folderAttr->getRelationPath()->isEmpty() && $this->getMetaObject()->hasUidAttribute()) {
+                $folderAttr = $this->getMetaObject()->getUidAttribute();
+            }
+            $this->fileData->getFilters()->addConditionFromAttribute($folderAttr, $this->getFolderName(), ComparatorDataType::EQUALS);
             if ($this->hasFilenameMask() && $filenameAttr = $this->getFileBehavior()->getFilenameAttribute()) {
                 $this->fileData->getFilters()->addConditionFromAttribute($filenameAttr, $this->getFilenameMask(), ComparatorDataType::EQUALS);
             }
@@ -185,10 +234,20 @@ class DataSourceFileInfo implements FileInfoInterface
             $this->fileData->dataRead();
             
             if ($this->fileData->countRows() > 1) {
-                throw new OverflowException('Ambiguous virtual file path "' . $this->getPathname() . '": ' . $this->fileData->countRows() . ' matching files found!');
+                throw new OverflowException('Ambiguous virtual file path "' . $this->getPath() . '": ' . $this->fileData->countRows() . ' matching files found!');
             }
         }
         return $this->fileData;
+    }
+    
+    protected function getFileDataColumn(MetaAttributeInterface $attribute) : DataColumnInterface
+    {
+        $fileData = $this->getFileDataSheet();
+        if (! $col = $fileData->getColumns()->getByAttribute($attribute)) {
+            $col = $fileData->getColumns()->addFromAttribute($attribute);
+            $fileData->dataRead();
+        }
+        return $col;
     }
     
     /**
@@ -198,7 +257,7 @@ class DataSourceFileInfo implements FileInfoInterface
     public function getContent()
     {
         if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
-            $val = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+            $val = $this->getFileDataColumn($attr)->getValue(0);
             $dataType = $attr->getDataType();
             if ($dataType instanceof BinaryDataType) {
                 switch (true) {
@@ -224,13 +283,13 @@ class DataSourceFileInfo implements FileInfoInterface
     {
         if ($this->filename === null) {
             if (null !== $attr = $this->getFileBehavior()->getFilenameAttribute()) {
-                $this->filename = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+                $this->filename = $this->getFileDataColumn($attr)->getValue(0);
             } elseif ($this->hasFilenameMask()) {
                 $this->filename = $this->getFilenameMask();
             }
         }
         if ($withExtension === false && $this->filename !== null) {
-            return StringDataType::substringBefore($this->filename, FilePathDataType::findFileName($this->filename, false));
+            return FilePathDataType::findFileName($this->filename, false);
         }
         return $this->filename ?? '';
     }
@@ -252,7 +311,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getPath() : string
     {
-        return $this->pathname;
+        return $this->pathFromConstructor;
     }
     
     /**
@@ -263,7 +322,7 @@ class DataSourceFileInfo implements FileInfoInterface
     public function getSize() : ?int
     {
         if (null !== $attr = $this->getFileBehavior()->getFileSizeAttribute()) {
-            return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+            return $this->getFileDataColumn($attr)->getValue(0);
         }
         return null;
     }
@@ -275,8 +334,8 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getMTime() : ?int
     {
-        if (null !== $attr = $this->getFileBehavior()->getTimeModifiedAttribute()) {
-            return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        if (null !== $dateTime = $this->getModifiedOn()) {
+            return $dateTime->getTimestamp();
         }
         return null;
         
@@ -289,8 +348,8 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getCTime() : ?int
     {
-        if (null !== $attr = $this->getFileBehavior()->getTimeCreatedAttribute()) {
-            return $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        if (null !== $dateTime = $this->getCreatedOn()) {
+            return $dateTime->getTimestamp();
         }
         return null;
     }
@@ -382,7 +441,10 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getModifiedOn(): ?DateTimeInterface
     {
-        return new \DateTimeImmutable('@' . $this->getMTime());
+        if (null !== $attr = $this->getFileBehavior()->getTimeModifiedAttribute()) {
+            return DateTimeDataType::castToPhpDate($this->getFileDataColumn($attr)->getValue(0));
+        }
+        return null;
     }
 
     /**
@@ -392,7 +454,10 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getCreatedOn(): ?\DateTimeInterface
     {
-        return new \DateTimeImmutable('@' . $this->getCTime());
+        if (null !== $attr = $this->getFileBehavior()->getTimeCreatedAttribute()) {
+            return DateTimeDataType::castToPhpDate($this->getFileDataColumn($attr)->getValue(0));
+        }
+        return null;
     }
 
     /**
@@ -402,11 +467,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getFolderInfo(): ?FileInfoInterface
     {
-        $folderPath = $this->getFolderPath();
-        if ($folderPath === null || $folderPath === '') {
-            return null;
-        }
-        return new DataSourceFileInfo($folderPath, $this->object->getWorkbench());
+        return null;
     }
     
     /**
@@ -426,7 +487,14 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getPathAbsolute(): string
     {
-        return $this->getPath();
+        $path = $this->getPath();
+        if (null !== ($filename = $this->getFilename(true)) && ! StringDataType::endsWith($path, $filename)) {
+            if ($this->hasFilenameMask() === true) {
+                $path = StringDataType::substringBefore($path, self::SLASH . $this->getFilenameMask(), $path, false, true);
+            }
+            $path .= self::SLASH . $filename;
+        }
+        return $path;
     }
 
     /**
@@ -467,8 +535,8 @@ class DataSourceFileInfo implements FileInfoInterface
     public function getMimetype(): ?string
     {
         $val = null;
-        if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
-            $val = $this->getFileDataSheet()->getColumns()->getByAttribute($attr)->getValue(0);
+        if (null !== $attr = $this->getFileBehavior()->getMimeTypeAttribute()) {
+            $val = $this->getFileDataColumn($attr)->getValue(0);
         }
         return $val;
     }
