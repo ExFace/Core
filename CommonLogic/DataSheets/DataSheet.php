@@ -785,7 +785,7 @@ class DataSheet implements DataSheetInterface
         foreach ($this->getFilters()->getConditionsRecursive() as $cond) {
             if ($cond->getExpression()->isMetaAttribute()) {
                 $condAttr = $cond->getExpression()->getAttribute();
-                if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr) && ! $cond->isEmpty()) {
+                if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr)) {
                     $foreignConditions[] = $cond;
                 }
             }
@@ -803,6 +803,9 @@ class DataSheet implements DataSheetInterface
                 /* @var $cond \exface\Core\CommonLogic\Model\Condition */
                 foreach ($queryFilters->getConditionsRecursive() as $cond) {
                     if ($cond->exportUxonObject()->toArray() === $foreignCond->exportUxonObject()->toArray()) {
+                        if ($foreignCond->isEmpty()) {
+                            $queryFilters->removeCondition($cond);
+                        }
                         $condAttr = $cond->getExpression()->getAttribute();
                         $condRelPath = $condAttr->getRelationPath();
                         if (! $condRelPath->isEmpty()) {
