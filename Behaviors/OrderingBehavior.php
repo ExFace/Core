@@ -3,9 +3,6 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Events\DataSheet\OnUpdateDataEvent;
-use exface\Core\Events\DataSheet\OnCreateDataEvent;
-use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
@@ -45,16 +42,17 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
  * Example config to order the menu postions of `exface.Core.PAGE`.
  *
  * ```
- * {
- *    "indexing_boundary_attributes": [
- *    "MENU_PARENT"
- *    ],
- *    "close_gaps": true,
- *    "order_index_attribute": "MENU_POSITION",
- *    "new_element_ontop": false,
- *    "starting_index": 1
- * }
- * ````
+ *  {
+ *      "indexing_boundary_attributes": [
+ *          "MENU_PARENT"
+ *      ],
+ *      "close_gaps": true,
+ *      "order_index_attribute": "MENU_POSITION",
+ *      "new_element_ontop": false,
+ *      "starting_index": 1
+ *  }
+ * 
+ * ```
  *
  * @author Miriam Seitz
  *        
@@ -182,7 +180,7 @@ class OrderingBehavior extends AbstractBehavior
                     break;
             }
 
-            $sheet->getColumns()->getByExpression($indexAttributeAlias)->setValue($rowIndex, $newIndex);
+            $sheet->setCellValue($indexAttributeAlias, $rowIndex, $newIndex);
             $changedRows++;
             $rowIndex ++;
         }
@@ -207,20 +205,21 @@ class OrderingBehavior extends AbstractBehavior
     {
         $updateSheets = [];
         $rowIndex = 0;
-        foreach ($sheet->getRows() as $row) {
+        foreach ($sheet->getRows() as $rowIndex => $row) {
             $indexAttributeAlias = $this->getIndexAttributeAlias();
             $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
             $eventValue = $row[$indexAttributeAlias];
             switch (true) {
+                case $eventValue === null:
+                    //$initValue = max($indexSheet->getColumns()->getByExpression($indexAttributeAlias)->getValues()) + 1;
+                    //$sheet->setCellValue($indexAttributeAlias, $rowIndex, $initValue);
+                    break;
             	case is_numeric($eventValue):
             		$updateSheet = $this->findNecessaryChangesInSequence($row, $indexAttributeAlias, $indexSheet, $logbook);
             		
             		// if closeGap changed the current event value we need to update the sheet that will be saved
             		if ($row[$indexAttributeAlias] != $eventValue){            			
-            			$sheet
-            				->getColumns()
-            				->getByExpression($indexAttributeAlias)
-            				->setValue($rowIndex, $row[$indexAttributeAlias]);
+            		    $sheet->setCellValue($indexAttributeAlias, $rowIndex, $row[$indexAttributeAlias]);
             		}
             		
             		if (count($updateSheet->getRows()) > 0) {            			
@@ -230,12 +229,10 @@ class OrderingBehavior extends AbstractBehavior
                 default:
                     throw new BehaviorConfigurationError(
                     	$this, 
-                    	'Datatype of ordering attribute \'' . $indexAttributeAlias . '\' not supported!', 
+                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid valur "' . $eventValue . "' encountered!", 
                     	$logbook);
                     break;
             }
-
-            $rowIndex ++;
         }
 
         return $updateSheets;
@@ -381,7 +378,7 @@ class OrderingBehavior extends AbstractBehavior
     /**
      *
      * @param DataSheetEventInterface $event
-     * @param array updateSheets
+     * @param array $updateSheets
      * @param LogBookInterface $logbook
      * @return void
      */
