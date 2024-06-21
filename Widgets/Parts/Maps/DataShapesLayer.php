@@ -19,6 +19,7 @@ use exface\Core\Widgets\Parts\DragAndDrop\DropToAction;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
+use exface\Core\DataTypes\WidgetVisibilityDataType;
 
 /**
  * 
@@ -72,6 +73,12 @@ class DataShapesLayer extends AbstractDataLayer
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
     
     private $dropToActions = [];
+    
+    private $colorOutlineScale = null;
+    
+    private $colorOutlineAttributeAlias = null;
+    
+    private $colorOutlineColumn = null;
     
     /**
      *
@@ -292,6 +299,7 @@ class DataShapesLayer extends AbstractDataLayer
         }
         
         $widget = $this->initDataWidgetColor($widget);
+        $widget = $this->initDataWidgetColorOutline($widget);
         $widget = $this->initDataWidgetValue($widget);
         
         return $widget;
@@ -357,5 +365,119 @@ class DataShapesLayer extends AbstractDataLayer
     public function isDropTarget(): bool
     {
         return ! empty($this->dropToActions);
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getColorOutlineScale() : array
+    {
+        return $this->colorOutlineScale ?? [];
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasColorOutlineScale() : bool
+    {
+        return $this->colorOutlineScale !== null;
+    }
+    
+    /**
+     * Specify a custom color scale for the outer border of the shape.
+     *
+     * The color map must be an object with values as keys and CSS color codes as values.
+     * The color code will be applied to all values between it's value and the previous
+     * one. In the below example, all values <= 10 will be red, values > 10 and <= 20
+     * will be colored yellow, those > 20 and <= 99 will have no special color and values
+     * starting with 100 (actually > 99) will be green.
+     *
+     * ```
+     * {
+     *  "10": "red",
+     *  "20": "yellow",
+     *  "99" : "",
+     *  "100": "green"
+     * }
+     *
+     * ```
+     *
+     * @uxon-property color_outline_scale
+     * @uxon-type color[]
+     * @uxon-template {"10": "red", "20": "yellow", "99": "", "100": "green"}
+     *
+     * @param UxonObject $value
+     * @return MapLayerInterface
+     */
+    public function setColorOutlineScale(UxonObject $value) : MapLayerInterface
+    {
+        $this->colorOutlineScale = $value->toArray();
+        ksort($this->colorOutlineScale);
+        return $this;
+    }
+    
+    /**
+    *
+    * @return string|NULL
+    */
+    public function getColorOutlineAttributeAlias() : ?string
+    {
+        return $this->colorOutlineAttributeAlias;
+    }
+    
+    /**
+     * Alias of the attribtue containing the exact color value or base value for the `color_scale`
+     *
+     * @uxon-property color_outline_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return MapLayerInterface
+     */
+    public function setColorOutlineAttributeAlias(string $value) : MapLayerInterface
+    {
+        $this->colorOutlineAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function hasColorOutline() : bool
+    {
+        return $this->getColorOutlineAttributeAlias() !== null;
+    }
+    
+    /**
+     *
+     * @return DataColumn|NULL
+     */
+    public function getColorOutlineColumn() : ?DataColumn
+    {
+        return $this->colorOutlineColumn;
+    }
+    
+    /**
+     *
+     * @param iShowData $widget
+     * @return iShowData
+     */
+    protected function initDataWidgetColorOutline(iShowData $widget) : iShowData
+    {
+        if (null !== $alias = $this->getColorOutlineAttributeAlias()) {
+            if (! $col = $widget->getColumnByAttributeAlias($alias)) {
+                $col = $widget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $alias,
+                    'visibility' => WidgetVisibilityDataType::HIDDEN
+                ]));
+                $widget->addColumn($col, 0);
+            }
+            $this->colorOutlineColumn = $col;
+        }
+        
+        return $widget;
     }
 }
