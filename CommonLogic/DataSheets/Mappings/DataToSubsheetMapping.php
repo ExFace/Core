@@ -169,7 +169,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
                     $subsheet = $subsheetMapper->map($fromSheet->copy()->removeRows()->addRows($fromRows));
                     $toRowsUnique[$toRowIdx][$subsheetCol->getName()] = $subsheet->exportUxonObject();
                     
-                    foreach ($this->getToAggregationsUxon() as $uxon) {
+                    foreach (($this->getToAggregationsUxon() ?? []) as $uxon) {
                         $aggrTo = $uxon->getProperty('to');
                         if (! $aggrToCol = $toSheet->getColumns()->getByExpression($aggrTo)) {
                             $aggrToCol = $toSheet->getColumns()->addFromExpression($aggrTo);
@@ -322,7 +322,7 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
         return $exprs;
     }
     
-    protected function getToAggregationsUxon() : UxonObject
+    protected function getToAggregationsUxon() : ?UxonObject
     {
         return $this->toAggregatedMappings;
     }
