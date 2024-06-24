@@ -27,17 +27,40 @@ use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\CommonLogic\Filesystem\DataSourceFileInfo;
+use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
+use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
+use exface\Core\Exceptions\NotFoundError;
+use exface\Core\Exceptions\Facades\FacadeRoutingError;
+use exface\Core\Interfaces\Filesystem\FileInterface;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
+use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 
 /**
  * Facade to upload and download files using virtual pathes.
  * 
- * ## Download
+ * ## Examples
+ * 
+ * - Download a file via object alias and UID
+ *      - `api/files/download/my.App.OBJECT_ALIAS/0x5468789`
+ *      - `api/files/download/my.App.OBJECT_ALIAS/0x5468789`
+ * - Stream/embed a file via object alias and UID
+ *      - `api/files/view/my.App.OBJECT_ALIAS/0x5468789`
+ * - Thumbnail with a ceratin size via object alias and UID
+ *      - `api/files/thumb/160x100/my.App.OBJECT_ALIAS/0x5468789`
+ *      - `api/files/thumb/x100/my.App.OBJECT_ALIAS/0x5468789`
+ *      - `api/files/thumb/160x/my.App.OBJECT_ALIAS/0x5468789`
+ * - Download a temp file
+ *      - `api/files/pickup/<path_relative_to_temp_folder>`
+ * - One-time links to get access without explicit authorization (e.g. for a PDF generator)
+ *      - `api/files/otl/my.App.OBJECT_ALIAS/0x5468789>`
+ * - Legacy URLs
+ *      - `api/files/my.App.OBJECT/0x687654698`
+ *      - `api/files/axenox.DevMan.ticket_file/base64%2CZGF0YS9...%3D%3D?&resize=260x190``
+ * 
+ * ## File location and references
  * 
  * Use the follosing url `api/files/my.App.OBJECT_ALIAS/uid` to download a file with the given `uid` value.
- * 
- * ### Image resizing
- * 
- * You can resize images by adding the URL parameter `&resize=WIDTHxHEIGHT`.
  * 
  * ### Encoding of UIDs
  * 
@@ -47,11 +70,15 @@ use exface\Core\DataTypes\DateDataType;
  * - Base64 encoded with prefix `base64,` AND URL encoded on top - this is the most secure way to pass the UID value, but is
  * not readable at all.
  * 
+ * ## Request types
+ * 
+ * You can resize images by adding the URL parameter `&resize=WIDTHxHEIGHT`.
+ * 
  * ## Upload
  * 
  * Not available yet
  * 
- * ## Access restriction
+ * ## Access restrictions
  * 
  * This facade can be accessed by any authenticated (logged in) user by default. Please modify authorization policies if required!
  * 
@@ -59,10 +86,14 @@ use exface\Core\DataTypes\DateDataType;
  *
  */
 class HttpFileServerFacade extends AbstractHttpFacade
-{    
-    private $otlUrlPathPart = 'otl';
+{   
+    const URL_PATH_DOWNLOAD = 'download';
+    const URL_PATH_VIEW = 'view';
+    const URL_PATH_OTL = 'otl';
+    const URL_PATH_THUMB = 'thumb';
+    const URL_PATH_PICKUP = 'pickup';
     
-    private $otlCacheName = '_onetimelink';
+    const CACHE_POOL_OTL = '_onetimelink';
 
     /**
      *
@@ -85,165 +116,212 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $path = ltrim(StringDataType::substringAfter($uri->getPath(), $this->getUrlRouteDefault()), "/");
         
         $pathParts = explode('/', $path);
-        $objSel = urldecode($pathParts[0]);
-        $uid = urldecode($pathParts[1]);
         // See if there are additional parameters
         $params = [];
         parse_str($uri->getQuery() ?? '', $params);
         
-        return $this->createResponseFromObjectUid($objSel, $uid, $params, $request);        
-    }
-    
-    protected function createResponseFromObjectUid(string $objSel, string $uid, array $params, ServerRequestInterface $originalRequest = null) : ResponseInterface
-    {
-        // Check file cache
-        $cachePath = $this->getFileCachePath($objSel, $uid, $params);
-        if (file_exists($cachePath) === true) {
-            $cachedBinary = file_get_contents($cachePath);
-            if (empty($cachedBinary)) {
-                $cachedBinary = null;
-            }
+        $pathStart = mb_strtolower($pathParts[0]);
+        $options = null;
+        switch ($pathStart) {
+            case self::URL_PATH_DOWNLOAD:
+            case self::URL_PATH_VIEW:
+                $mode = array_shift($pathParts);
+                break;
+            case self::URL_PATH_THUMB:
+                $mode = array_shift($pathParts);
+                $options = array_shift($pathParts);
+                break;
+            case self::URL_PATH_OTL:
+                // Should this ever happen? One-time-links are handled by the middleware, aren't they?
+            default:
+                if ($params['resize'] !== null) {
+                    $mode = self::URL_PATH_THUMB;
+                    $options = $params['resize'];
+                } else {
+                    $mode = self::URL_PATH_DOWNLOAD;
+                }
+                // $pathParts remain untouched!
         }
-        
-        // Decode UID if it is Base64 - this will be the case if the UID has special characters
-        // like slashes - they might be considered insecure by some servers, so the request
-        // will not be processed if they are not encoded
-        if (StringDataType::startsWith($uid, 'base64,')) {
-            $uid = base64_decode(substr($uid, 7));
-        }
-        
-        $headers = $this->buildHeadersCommon();
-        
-        // Create a data sheet to read file data
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $objSel);
-        if (! $ds->getMetaObject()->hasUidAttribute()) {
-            $e = new FacadeRuntimeError('Cannot serve file from object ' . $ds->getMetaObject()->__toString() . ': object has no UID attribute!');
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this->createResponseFromError($e, $originalRequest);
-        }
-        
-        // Add columns for important file attributes
-        $colFilename = null;
-        $colMime = null;
-        $colContents = null;
-        $attr = $this->findAttributeForContents($ds->getMetaObject());
-        $contentType = $attr->getDataType();
-        if ($attr) {
-            // Only add content column if there is no cache. Reading files
-            // may take quite a long time, so if we have a cache, we can quickly
-            // check other file attributes an only read the contens if the
-            // cache is stale.
-            if ($cachedBinary === null) {
-                $colContents = $ds->getColumns()->addFromAttribute($attr);
-            }
-        } else {
-            // Throw error if no matching file data could be found
-            $e = new FacadeRuntimeError('Cannot find file contents attribute for object ' . $ds->getMetaObject()->__toString());
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this->createResponseFromError($e, $originalRequest);
-        }
-        $attr = $this->findAttributeForMimeType($ds->getMetaObject());
-        if ($attr) {
-            $colMime = $ds->getColumns()->addFromAttribute($attr);
-        }
-        $attr = $this->findAttributeForFilename($ds->getMetaObject());
-        if ($attr) {
-            $colFilename = $ds->getColumns()->addFromAttribute($attr);
-        }
-        $attr = $this->findAttributeForMTime($ds->getMetaObject());
-        if ($attr) {
-            $colMTime = $ds->getColumns()->addFromAttribute($attr);
-        }
-        
-        $ds->getFilters()->addConditionFromAttribute($ds->getMetaObject()->getUidAttribute(), $uid, ComparatorDataType::EQUALS);
-        $ds->dataRead();
-        
-        if ($ds->isEmpty()) {
-            $e = new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '"');
-            $this->getWorkbench()->getLogger()->logException($e);
-            return $this->createResponseFromError($e, $originalRequest);
-        }
-        
-        // Compare cache file timestamp with last update time of file object
-        // If the file was modified later than the cache, delete the cache
-        // and restart request handling
-        if ($cachedBinary !== null && $colMTime !== null && DateDataType::convertToUnixTimestamp($colMTime->getValue(0)) > filemtime($cachePath)) {
-            unlink($cachePath);
-            return $this->createResponseFromObjectUid($objSel, $uid, $params, $originalRequest);
-        }
-        
-        $binary = null;
-        $headers = array_merge($headers, [
-            'Expires' => 0,
-            'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma' => 'public'
-        ]);
         
         switch (true) {
-            case $contentType instanceof BinaryDataType:
-                $binary = $cachedBinary ?? $contentType->convertToBinary($colContents->getValue(0));
-                $headers['Content-Transfer-Encoding'] = 'binary';
+            case count($pathParts) === 2:
+                $objSel = urldecode($pathParts[0]);
+                $uid = urldecode($pathParts[1]);
+                // Decode UID if it is Base64 - this will be the case if the UID has special characters
+                // like slashes - they might be considered insecure by some servers, so the request
+                // will not be processed if they are not encoded
+                if (StringDataType::startsWith($uid, 'base64,')) {
+                    $uid = base64_decode(substr($uid, 7));
+                }
+                $fileInfo = DataSourceFileInfo::fromObjectUID($this->getWorkbench(), $objSel, $uid);
                 break;
             default:
-                $binary = $cachedBinary ?? $colContents->getValue(0);
+                $fileInfo = new LocalFileInfo($pathParts[0]);
                 break;
         }
         
-        if (empty($binary)) {
-            throw new FileNotFoundError('Cannot find ' . $ds->getMetaObject()->__toString() . ' "' . $uid . '" on file storage!');
+        if (null !== $cacheInfo = $this->getCache($fileInfo, $options)) {
+            $fileInfo = $cacheInfo;
         }
         
-        // Create a response
-        if ($colMime !== null) {
-            $headers['Content-Type'] = $colMime->getValue(0);
-        }
-        if ($colFilename !== null) {
-            $headers['Content-Disposition'] = 'attachment; filename=' . $colFilename->getValue(0);
-        }
-        
-        // Resize images
-        if (null !== $resize = $params['resize'] ?? null) {
-            if (file_exists($cachePath)) {
-                $binary = file_get_contents($cachePath);
-            } else {
-                list($width, $height) = explode('x', $resize);
-                try {
-                    $binary = $this->resizeImage($binary, $width, $height);
-                } catch (\Throwable $e) {
-                    if ($colFilename !== null) {
-                        $text = $colFilename->getValue(0);
-                        $text = strtoupper(FilePathDataType::findExtension($text));
-                    } else {
-                        $text = 'FILE';
-                    }                
-                    $headers['Content-Type'] = 'image/jpeg';
-                    $headers['Content-Disposition'] = 'attachment; filename=placeholder.jpg';
-                    $binary = $this->createPlaceholderImage($text, $width, $height);
-                }
-            }
+        switch ($mode) {
+            case self::URL_PATH_PICKUP:
+            case self::URL_PATH_DOWNLOAD:
+                $response = $this->createResponseForDonwload($fileInfo);
+                break;
+            case self::URL_PATH_THUMB && $cacheInfo === null:
+                list($width, $height) = explode('x', $options);
+                $fileInfo = $this->createThumbnail($fileInfo, $width, $height);
+                $response = $this->createResponseForEmbedding($fileInfo);
+                break;
+            case self::URL_PATH_THUMB:
+            case self::URL_PATH_VIEW:
+                $response = $this->createResponseForEmbedding($fileInfo);
+                break;
         }
         
-        if ($cachedBinary === null) {
-            Filemanager::pathConstruct(FilePathDataType::findFolderPath($cachePath));
-            file_put_contents($cachePath, $binary);
+        if ($cacheInfo === null) {
+            $this->setCache($fileInfo, $options);
         }
-                        
-        return new Response(200, $headers, stream_for($binary));        
+        
+        return $response;        
     }
     
-    protected function getFileCachePath(string $objSel, string $uid, array $params) : string
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @param string $options
+     * @return FileInfoInterface|NULL
+     */
+    protected function getCache(FileInfoInterface $fileInfo, string $options = null) : ?FileInfoInterface
     {
-        if (null !== $resize = $params['resize'] ?? null) {
-            $filename = $resize;
-        } else {
-            $filename = 'original';
+        $cachePath = $this->getCachePath($fileInfo, $options);
+        $cacheInfo = null;
+        if ($cachePath !== null && file_exists($cachePath)) {
+            $cacheInfo = new LocalFileInfo($cachePath);
+            // Check if the cache not older than the original
+            if ($cacheInfo->getMTime() <= $fileInfo->getMTime()) {
+                return null;
+            }
+            // Check if the cache actually contains data
+            if (empty($cacheInfo->openFile()->read())) {
+                return null;
+            }
         }
-        $cacheFolder = $this->getWorkbench()->filemanager()->getPathToCacheFolder()
+        return $cacheInfo;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @return HttpFileServerFacade
+     */
+    protected function setCache(FileInfoInterface $fileInfo, string $options = null) : HttpFileServerFacade
+    {
+        $cachePath = $this->getCachePath($fileInfo, $options);
+        $folder = FilePathDataType::findFolderPath($cachePath);
+        if (! is_dir($folder)) {
+            Filemanager::pathConstruct($folder);
+        }
+        file_put_contents($cachePath, $fileInfo->openFile()->read());
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @return ResponseInterface
+     */
+    protected function createResponseFromFile(FileInfoInterface $fileInfo) : ResponseInterface
+    {
+        $type = $fileInfo->getMimetype();
+        if (null !== $type) {
+            $headers = $this->buildHeadersCommon(MimeTypeDataType::isBinary($type));
+            $headers['Content-Type'] = $type;
+        } else {
+            $headers = $this->buildHeadersCommon(false);            
+        }
+        return new Response(200, $headers, $fileInfo->openFile()->readStream());
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @return ResponseInterface
+     */
+    protected function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
+    {
+        $response = $this->createResponseFromFile($fileInfo);
+        $response->withHeader('Content-Disposition', 'attachment; filename=' . $fileInfo->getFilename());
+        return $response;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @return ResponseInterface
+     */
+    protected function createResponseForEmbedding(FileInfoInterface $fileInfo) : ResponseInterface
+    {
+        $response = $this->createResponseFromFile($fileInfo);
+        $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
+        return $response;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
+     */
+    protected function buildHeadersCommon(bool $asBinary = false) : array
+    {
+        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());
+        $commonHeaders = parent::buildHeadersCommon();
+        $headers = array_merge(
+            $commonHeaders, 
+            $facadeHeaders,      
+            [
+                'Expires' => 0,
+                'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'public'
+            ]
+        );
+        
+        if ($asBinary === true) {
+            $headers['Content-Transfer-Encoding'] = 'binary';
+        }
+        
+        return $headers;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @param string $options
+     * @return string
+     */
+    protected function getCachePath(FileInfoInterface $fileInfo, string $options = null) : string
+    {
+        if ($fileInfo instanceof LocalFileInfo) {
+            $path = $fileInfo->getFolderInfo()->getPathRelative();
+        } else {
+            $path = $fileInfo->getFolderPath();
+        }
+        
+        $ext = $fileInfo->getExtension();
+        $ext = (! empty($ext) ? '.' : '') . $ext;
+        $filename = $fileInfo->getFilename(false);
+        $filename = $filename . (! empty($options) ? '_' . $options : '');
+        
+        $path = str_replace('://', DIRECTORY_SEPARATOR, $path);
+        $path = str_replace(':', '_', $path);
+        $path = $this->getWorkbench()->filemanager()->getPathToCacheFolder()
             . DIRECTORY_SEPARATOR . 'HttpFileServerFacade'
-            . DIRECTORY_SEPARATOR . $objSel
-            . DIRECTORY_SEPARATOR . $uid
-            . DIRECTORY_SEPARATOR;
-        return $cacheFolder . $filename;
+            . DIRECTORY_SEPARATOR . FilePathDataType::normalize($path, DIRECTORY_SEPARATOR) 
+            . (empty($filename) ? '' : DIRECTORY_SEPARATOR . $filename) 
+            . $ext;
+        
+        return $path;
     }
     
     /**
@@ -254,7 +332,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
-        $middleware[] = new OneTimeLinkMiddleware($this, $this->getOtlUrlPathPart());
+        $middleware[] = new OneTimeLinkMiddleware($this, self::URL_PATH_OTL);
         
         $allowBasicAuth = $this->getWorkbench()->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.ALLOW_HTTP_BASIC_AUTH');
         if ($allowBasicAuth === true) {
@@ -314,12 +392,44 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, string $urlParams = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
-        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
-        $url = $facade->getUrlRouteDefault() . '/' . $object->getAliasWithNamespace() . '/' . ($urlEncodeUid ? urlencode($uid) : $uid);
+        $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_DOWNLOAD, $urlEncodeUid);
         if ($urlParams) {
             $url .= '?'. $urlParams;
         }
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param int $width
+     * @param int $height
+     * @param bool $urlEncodeUid
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToThumbnail(MetaObjectInterface $object, string $uid, int $width, int $height, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
+    {
+        $resize = $width . 'x' . $height;
+        $url = static::buildUrlForObjectUid($object, $uid, (self::URL_PATH_THUMB . '/' . $resize), $urlEncodeUid);
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param string $path
+     * @param bool $urlEncodeUid
+     * @return string
+     */
+    protected static function buildUrlForObjectUid(MetaObjectInterface $object, string $uid, string $path = '', bool $urlEncodeUid = true) : string
+    {
+        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        $url = $facade->getUrlRouteDefault() . ($path === null ? '' : '/' . $path);
+        $url .= '/' . $object->getAliasWithNamespace() . '/' . ($urlEncodeUid ? urlencode($uid) : $uid);
+        return $url;
     }
     
     /**
@@ -344,7 +454,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         $data['params'] = $params;        
         $cache->set($rand, $data);        
-        $url = $facade->getUrlRouteDefault() . '/' . $facade->getOtlUrlPathPart() . '/' . urlencode($rand);
+        $url = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($rand);
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
     
@@ -440,17 +550,47 @@ class HttpFileServerFacade extends AbstractHttpFacade
         return $attrs->count() === 1 ? $attrs->getFirst() : null;
     }
     
-    protected function resizeImage(string $src, int $width, int $height)
+    /**
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @param int $width
+     * @param int $height
+     * @return FileInfoInterface
+     */
+    protected function createThumbnail(FileInfoInterface $fileInfo, int $width = null, int $height = null) : FileInfoInterface
     {
-        $img = (new ImageManager())->make($src);
-        $img->resize($width, $height, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        });
-        return $img->encode();
+        switch (true) {
+            case stripos($fileInfo->getMimetype(), 'image') !== false:
+                try {
+                    $img = (new ImageManager())->make($fileInfo->openFile()->read());
+                    $img->resize($width, $height, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    });
+                    $binary = $img->encode();
+                    $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute(), $fileInfo->getMimetype());
+                    break;
+                } catch (\Throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
+                }
+            // IDEA add other thumbnails here - for office documents, pdfs, etc.?
+            default:
+                $text = mb_strtoupper($fileInfo->getExtension()) ?? 'FILE';
+                $binary = $this->createThumbnailAsPlaceholder($text, $width, $height);
+                $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute() . '_' . $width . 'x' . $height, 'image/jpeg');
+                break;
+        }
+        return $fileInfo;
     }
     
-    protected function createPlaceholderImage (string $text, int $width, int $height)
+    /**
+     * 
+     * @param string $text
+     * @param int $width
+     * @param int $height
+     * @return string
+     */
+    protected function createThumbnailAsPlaceholder (string $text, int $width, int $height) : string
     {
         $img = (new ImageManager())->canvas($width, $height);
         $posY = $height/2;
@@ -465,36 +605,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
     
     /**
      * 
-     * @return string
+     * @return CacheInterface
      */
-    protected function getOtlCacheName() : string
-    {
-        return $this->otlCacheName;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected function getOtlUrlPathPart() : string
-    {
-        return $this->otlUrlPathPart;
-    }
-    
     protected function getOtlCachePool() : CacheInterface
     {
-        return $this->getWorkbench()->getCache()->getPool($this->getOtlCacheName());
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::buildHeadersCommon()
-     */
-    protected function buildHeadersCommon() : array
-    {
-        $facadeHeaders = array_filter($this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.HEADERS.COMMON')->toArray());
-        $commonHeaders = parent::buildHeadersCommon();
-        return array_merge($commonHeaders, $facadeHeaders);
+        return $this->getWorkbench()->getCache()->getPool(self::CACHE_POOL_OTL);
     }
 }

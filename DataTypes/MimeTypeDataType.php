@@ -238,4 +238,20 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
     {
         return preg_match("@(application|audio|font|example|image|message|model|multipart|text|video|x-(?:[0-9A-Za-z!#$%&'*+.^_`|~-]+))/([0-9A-Za-z!#$%&'*+.^_`|~-]+)@", $str) === 1 ? true : false;
     }
+    
+    /**
+     * 
+     * @param string $type
+     * @return bool
+     */
+    public static function isBinary(string $type) : bool
+    {
+        switch (true) {
+            case stripos($type, 'text') !== false: return false;
+            case stripos($type, 'json') !== false: return false;
+            case stripos($type, 'xml') !== false: return false;
+            case stripos($type, 'html') !== false: return false;
+        }
+        return true;
+    }
 }
