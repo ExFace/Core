@@ -254,4 +254,17 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
         }
         return true;
     }
+    
+    /**
+     * 
+     * @param string $type
+     * @return bool
+     */
+    public static function isImage(string $type) : bool
+    {
+        switch (true) {
+            case stripos($type, 'image') === 0: return true;
+        }
+        return false;
+    }
 }
