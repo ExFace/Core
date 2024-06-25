@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts\Maps;
 
+use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Widgets\Parts\Maps\Interfaces\EditableMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
@@ -13,6 +14,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
 use exface\Core\Widgets\Parts\DragAndDrop\DropToAction;
@@ -20,6 +23,7 @@ use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Interfaces\Widgets\iHaveColorWithOutline;
 
 /**
  * 
@@ -34,7 +38,9 @@ class DataShapesLayer extends AbstractDataLayer
     ValueLabeledMapLayerInterface,
     EditableMapLayerInterface,
     CustomProjectionMapLayerInterface,
-    iCanBeDragAndDropTarget
+    iCanBeDragAndDropTarget,
+    iHaveColorWithOutline,
+    iCanBlink
 {
     const VALUE_POSITION_LEFT = 'left';
     
@@ -69,6 +75,8 @@ class DataShapesLayer extends AbstractDataLayer
     private $lineWeight = null;
     
     private $opacity = null;
+
+    private $isBlinking = false;
     
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
     
@@ -253,7 +261,7 @@ class DataShapesLayer extends AbstractDataLayer
      * @param float $value
      * @return GeoJSONLayer
      */
-    public function setLineWeight(float $value) : GeoJSONLayer
+    public function setLineWeight(float $value) : DataShapesLayer
     {
         $this->lineWeight = NumberDataType::cast($value);
         return $this;
@@ -277,7 +285,7 @@ class DataShapesLayer extends AbstractDataLayer
      * @param float $value
      * @return GeoJSONLayer
      */
-    public function setOpacity(float $value) : GeoJSONLayer
+    public function setOpacity(float $value) : DataShapesLayer
     {
         $this->opacity = NumberDataType::cast($value);
         return $this;
@@ -432,6 +440,44 @@ class DataShapesLayer extends AbstractDataLayer
         ksort($this->colorOutlineScale);
         return $this;
     }
+
+
+    /**
+     * Boolean flag to enable blinking of the shape
+     *
+     * @uxon-property is_blinking
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param string $value
+     * @return MapLayerInterface
+     */
+    public function setIsBlinking(bool $value) : MapLayerInterface
+    {
+        $this->isBlinking = $value;
+        return $this;
+    }
+
+
+    public function getIsBlinking() : bool
+    {
+        return $this->isBlinking;
+    }
+
+    public function isColorOutlineScaleRangeBased(DataTypeInterface $dataType = null) : bool
+    {
+        if (! $this->hasColor()) {
+            return false;
+        }
+        $dataType = $dataType ?? $this->getColorColumn()->getDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType:
+            case $dataType instanceof DateDataType:
+                return true;
+        }
+        
+        return false;
+    }
     
     /**
     *
@@ -548,5 +594,12 @@ class DataShapesLayer extends AbstractDataLayer
     public function getBlinkingFlagColumn() : ?DataColumn
     {
         return $this->blinkingColumn;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasProjectionDefinition(): bool {
+        return false;
     }
 }
