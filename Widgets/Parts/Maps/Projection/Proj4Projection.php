@@ -8,6 +8,9 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * Allows to use custom projections according to the proj4 definition format
  * 
+ * See https://epsg.io/ for details on the various projections and tools to
+ * play around with the conversion or verify coordinates on a map.
+ * 
  * ## Examples
  * 
  * ```
@@ -17,6 +20,14 @@ use exface\Core\CommonLogic\UxonObject;
  *  }
  *  
  * ```
+ * 
+ * ## Where to get the definitions?
+ * 
+ * 1. Go to https://epsg.io/
+ * 2. Search for the desired coordinat system
+ * 3. Under "Available transformations" pick `EPSG:4326` (also known as `WGS 84`)
+ * 4. Scroll down to the "Export" section
+ * 5. Select `Proj4js` and copy the projection name and the defintion
  * 
  * @author andrej.kabachnik
  *

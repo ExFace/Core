@@ -840,7 +840,6 @@ abstract class AbstractWidget implements WidgetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getObjectRelationPathToParent()
      */
     public function getObjectRelationPathToParent() : ?MetaRelationPathInterface
@@ -860,7 +859,7 @@ abstract class AbstractWidget implements WidgetInterface
                     break;
                 // If no path is known and the objects are not the same (checked above), attempt
                 // to find a path. Return NULL if this fails.
-                case $this->relation_path_to_parent_string === null:
+                default:
                     if ($path = $this->getMetaObject()->findRelationPath($this->getParent()->getMetaObject())) {
                         $this->relation_path_to_parent = $path;
                     } else {

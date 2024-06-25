@@ -65,6 +65,7 @@ class User implements UserInterface
     public function __construct(Workbench $exface, string $username = null, ModelLoaderInterface $loader = null)
     {
         $this->exface = $exface;
+        $username = $username === '' ? null : $username;
         $this->anonymous = ($username === null);
         if ($username !== null) {
             $this->username = $username;
@@ -74,7 +75,7 @@ class User implements UserInterface
     
     protected function loadData() : User
     {
-        if ($this->modelLoader !== null || $this->isAnonymous()) {
+        if ($this->modelLoader !== null) {
             $this->modelLoader->loadUserData($this);
             $this->modelLoaded = true;
         }
@@ -97,6 +98,11 @@ class User implements UserInterface
         return $this->uid;
     }
     
+    /**
+     * 
+     * @param string $value
+     * @return UserInterface
+     */
     public function setUid(string $value) : UserInterface
     {
         $this->uid = $value;

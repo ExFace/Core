@@ -10,6 +10,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\ColoredDataMapLayerInterface;
 use exface\Core\Widgets\Parts\Maps\Traits\ColoredLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Traits\ValueLabeledLayerTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Interfaces\CustomProjectionMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\Traits\CustomProjectionLayerTrait;
 
 /**
  * 
@@ -22,7 +24,8 @@ class DataPointsLayer extends AbstractDataLayer
     LatLngWidgetLinkMapLayerInterface,
     ColoredDataMapLayerInterface,
     ValueLabeledMapLayerInterface,
-    EditableMapLayerInterface
+    EditableMapLayerInterface,
+    CustomProjectionMapLayerInterface
 {
     const VALUE_POSITION_LEFT = 'left';
     
@@ -41,6 +44,8 @@ class DataPointsLayer extends AbstractDataLayer
     use ColoredLayerTrait;
     
     use ValueLabeledLayerTrait;
+    
+    use CustomProjectionLayerTrait;
     
     private $size = null;
     

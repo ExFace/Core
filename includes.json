@@ -1,0 +1,14 @@
+[
+    {
+        "name": "alnorris/SVG-Sanitizer",
+        "version": "dev-master",
+        "license": [
+	        "MIT"
+	    ],
+        "license_link": [
+        	"https://github.com/alnorris/SVG-Sanitizer/blob/master/LICENSE"
+        ],
+        "description": "Whitelist-based PHP SVG sanitizer",
+        "homepage": "https://github.com/alnorris/SVG-Sanitizer/tree/master"
+    }
+]

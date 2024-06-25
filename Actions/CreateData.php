@@ -57,7 +57,11 @@ class CreateData extends SaveData implements iCreateData
                     $clean_sheet->getColumns()->remove($col);
                 }
             }
-            $affected_rows += $clean_sheet->dataCreate(true, $transaction);
+            try {
+                $affected_rows += $clean_sheet->dataCreate(true, $transaction);
+            } catch (\Throwable $e) {
+                throw new ActionRuntimeError($this, 'Cannot create data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+            }
             if ($data_sheet->hasUidColumn(false)) {
                 $data_sheet->getUidColumn()->setValues($clean_sheet->getUidColumn()->getValues(false));
                 $data_sheet->merge($clean_sheet);
@@ -65,7 +69,11 @@ class CreateData extends SaveData implements iCreateData
                 throw new ActionRuntimeError($this, 'CreateData actions without UID columns in their input currently cannot use `ignore_related_objects_in_input_data`!');
             }
         } else {
-            $affected_rows += $data_sheet->dataCreate(true, $transaction);
+            try {
+                $affected_rows += $data_sheet->dataCreate(true, $transaction);
+            } catch (\Throwable $e) {
+                throw new ActionRuntimeError($this, 'Cannot save data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+            }
         }
         
         $this->setUndoDataSheet($data_sheet);

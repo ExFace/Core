@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -51,7 +52,11 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         if ($data_sheet->isEmpty()) {
             $affected_rows = 0;
         } else {
-            $affected_rows = $data_sheet->dataSave($transaction);
+            try {
+                $affected_rows = $data_sheet->dataSave($transaction);
+            } catch (\Throwable $e) {
+                throw new ActionRuntimeError($this, 'Cannot save data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+            }
         }
         
         $message = $this->getResultMessageText() ?? $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);

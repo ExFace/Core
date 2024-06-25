@@ -152,7 +152,7 @@ return $debug_widget;
                 $messageHeaders .= "| ----------- | ----- |" . PHP_EOL;
                 foreach ($message->getHeaders() as $header => $values) {
                     foreach ($values as $value) {
-                        if ($this->isSensitiveData($header)) {
+                        if ($this->isSensitiveData($header, $value)) {
                             $value = '***';
                         }
                         $value = $this->escapeMardownTableCellContents($value ?? '');
@@ -190,7 +190,7 @@ return $debug_widget;
             $mdTable  = "| Server parameter | Value |" . PHP_EOL;
             $mdTable .= "| ----------- | ----- |" . PHP_EOL;
             foreach ($message->getServerParams() as $param => $value) {
-                if ($this->isSensitiveData($param)) {
+                if ($this->isSensitiveData($param, $value)) {
                     $value = '***';
                 }
                 if (is_array($value) || is_object($value)) {
@@ -370,15 +370,17 @@ MD;
     }
     
     /**
-     *
+     * 
      * @param string $headerName
+     * @param mixed|null $value
      * @return bool
      */
-    protected function isSensitiveData(string $headerName) : bool
+    protected function isSensitiveData(string $headerName, $value) : bool
     {
         switch (true) {
             case stripos($headerName, 'auth') !== false:
             case stripos($headerName, 'key') !== false:
+            case is_string($value) && stripos($value, '-----BEGIN CERTIFICATE-----') === 0:
                 return true;
         }
         return false;
