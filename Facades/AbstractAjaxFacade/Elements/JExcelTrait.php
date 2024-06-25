@@ -1446,6 +1446,7 @@ JS;
     public function buildJsDataGetter(ActionInterface $action = null)
     {
         $widget = $this->getWidget();
+        $widgetObj = $widget->getMetaObject();
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
         // Determine the columns we need in the actions data
@@ -1457,16 +1458,23 @@ JS;
             $customMode = null;
         }
         
+        $relPathToParent = $widget->getObjectRelationPathToParent();
+        
         switch (true) {
             // If there is no action or the action 
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
+            // Or the action is based on the same object (really the same one, not
+            // even a self-relation)
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
-            && $dataObj->is($widget->getMetaObject()):
+            && (
+                $dataObj->is($widgetObj)
+                && ($relPathToParent === null || $relPathToParent->isEmpty() || $relPathToParent->getEndObject()->isExactly($dataObj) === false)
+            ):
                 $data = <<<JS
     {
-        oId: '{$this->getWidget()->getMetaObject()->getId()}',
+        oId: '{$widgetObj->getId()}',
         rows: aRows
     }
     
@@ -1477,27 +1485,32 @@ JS;
             case $customMode === DataButton::INPUT_ROWS_NONE:
                 return '{}';
                 
-            // If we have an action, that is based on another object and does not have an input mapper for
+            // If we have an action, that 
+            // - is based on another object OR the same object with an explicitly defined relation
+            // - AND does not have an input mapper for
             // the widgets's object, the data should become a subsheet.
             case $customMode === DataButton::INPUT_ROWS_ALL_AS_SUBSHEET:
             case $widget->isEditable() 
             && $action->implementsInterface('iModifyData')
-            && ! $dataObj->is($widget->getMetaObject()) 
-            && $action->getInputMapper($widget->getMetaObject()) === null:
+            && (
+                ! $dataObj->is($widgetObj) 
+                || ($relPathToParent !== null && $relPathToParent->isEmpty() === false && $relPathToParent->getEndObject()->isExactly($dataObj))
+            )
+            && $action->getInputMapper($widgetObj) === null:
                 // If the action is based on the same object as the widget's parent, use the widget's
                 // logic to find the relation to the parent. Otherwise try to find a relation to the
                 // action's object and throw an error if this fails.
-                if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && $relPath = $widget->getObjectRelationPathFromParent()) {
-                    $relAlias = $relPath->toString();
-                } elseif ($relPath = $dataObj->findRelationPath($widget->getMetaObject())) {
-                    $relAlias = $relPath->toString();
+                if ($widget->hasParent() && $dataObj->is($widget->getParent()->getMetaObject()) && null !== $relPathFromParent = $widget->getObjectRelationPathFromParent()) {
+                    $relAlias = $relPathFromParent->toString();
+                } elseif (null !== $relPathFromDataObj = $dataObj->findRelationPath($widgetObj)) {
+                    $relAlias = $relPathFromDataObj->toString();
                 }
                 
                 if ($relAlias === null || $relAlias === '') {
                     throw new WidgetConfigurationError($widget, 'Cannot use data from widget "' . $widget->getId() . '" with action on object "' . $dataObj->getAliasWithNamespace() . '": no relation can be found from widget object to action object', '7CYA39T');
                 }
                 
-                $configurator_element = $this->getFacade()->getElement($this->getWidget()->getConfiguratorWidget());
+                $configurator_element = $this->getFacade()->getElement($widget->getConfiguratorWidget());
                 
                 // FIXME the check for visibility in case of empty data is there to prevent data loss if
                 // jExcel was hidden. This happened in UI5 in a Tab, that got hidden after a certain action.
@@ -1537,7 +1550,7 @@ JS;
             default:
                 $data = <<<JS
     {
-        oId: '{$this->getWidget()->getMetaObject()->getId()}',
+        oId: '{$widgetObj->getId()}',
         rows: (aRows || []).filter(function(oRow, i){
             return {$this->buildJsJqueryElement()}.jspreadsheet('getSelectedRows', true).indexOf(i) >= 0;
         })
@@ -1753,9 +1766,10 @@ JS;
             $valueExpr = $cellWidget->getValueExpression();
             if ($valueExpr->isReference() === true) {
                 $linkedColIdxsJs .= $colIdx . ',';
-                $linkedEl = $this->getFacade()->getElement($valueExpr->getWidgetLink($cellWidget)->getTargetWidget());
+                $link = $valueExpr->getWidgetLink($cellWidget);
+                $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
                 $addLocalValuesToRowJs .= <<<JS
-                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter()}, true);
+                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetColumnId())}, true);
 
 JS;
             }    

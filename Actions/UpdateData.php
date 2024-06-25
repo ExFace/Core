@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
 {
@@ -46,7 +47,12 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         }*/
         $undoable = false;
         
-        $affectedRows = $data_sheet->dataUpdate(false, $transaction);
+        try {
+            $affectedRows = $data_sheet->dataUpdate(false, $transaction);
+        } catch (\Throwable $e) {
+            throw new ActionRuntimeError($this, 'Cannot update data of object ' . $this->getMetaObject()->__toString() . '. ' . $e->getMessage(), null, $e);
+        }
+        
         if (null !== $message = $this->getResultMessageText()) {
             $message =  str_replace('%number%', $affectedRows, $message);
         } else {

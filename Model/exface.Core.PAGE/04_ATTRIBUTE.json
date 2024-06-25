@@ -1019,9 +1019,9 @@
         },
         {
             "CREATED_ON": "2024-02-08 11:40:54",
-            "MODIFIED_ON": "2024-02-12 11:11:52",
+            "MODIFIED_ON": "2024-05-31 16:16:44",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x00000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eeb6ec8a0e3c74b6ec025041000001",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -1059,9 +1059,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": {
-                "length_max": 300
-            }
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2024-02-12 09:46:11",

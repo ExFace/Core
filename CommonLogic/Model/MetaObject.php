@@ -634,38 +634,45 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns the relation path to a given object or FALSE that object is not related to the current one.
-     * In contrast to
-     * find_relation() this method returns merely the relation path, not the relation itself.
-     * FIXME This does not work very well. It would be better to create a single finder method, that would return a relation and
-     * to make the relation know its path like the attributes do.
-     *
-     * @see find_relation()
-     *
-     * @param MetaObjectInterface $related_object            
-     * @param number $max_depth            
-     * @param MetaRelationPathInterface $start_path            
-     * @return MetaRelationPathInterface|boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::findRelationPath()
      */
-    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null)
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null) : ?MetaRelationPathInterface
     {
+        // FIXME This does not work very well. It would be better to create a single finder method, 
+        // that would return a relation and to make the relation know its path like the attributes do.
+        
         $path = $start_path ? $start_path : new RelationPath($this);
         
+        // If we are looking for self-relations, just check direct self-relation and do
+        // not attempt to find longer paths - this results in very strange relations.
+        if ($related_object->is($this)) {
+            foreach ($this->getRelations(RelationTypeDataType::REGULAR) as $rel) {
+                if ($rel->getRightObject()->is($this)) {
+                    $path->appendRelation($rel);
+                    return $path;
+                }
+            }
+        }
+        
+        // If the objects are different, try to find a direct relation. Otherwise
+        // continue to search for relations recursively
         if ($rel = $path->getEndObject()->findRelation($related_object)) {
             $path->appendRelation($rel);
         } elseif ($max_depth > 1) {
             $result = false;
             foreach ($this->getRelations() as $rel) {
                 $possible_path = $path->copy();
-                if ($result = $this->findRelationPath($related_object, $max_depth - 1, $possible_path->appendRelation($rel))) {
+                if ($result = $this->findRelationPath($related_object, ($max_depth - 1), $possible_path->appendRelation($rel))) {
                     return $result;
                 }
             }
         } else {
-            return false;
+            return null;
         }
         
-        return $path;
+        return $path->isEmpty() ? null : $path;
     }
 
     /**
