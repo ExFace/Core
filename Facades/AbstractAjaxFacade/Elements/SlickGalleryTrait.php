@@ -127,13 +127,20 @@ HTML;
                 $lightboxCaption = <<<JS
             caption: function(element, info){ 
                 var sTitle = $(element).closest('.imagecarousel-item').prop('title');
-                return $('<p>asdf</p>').html(exfTools.string.nl2br(sTitle)).prop('outerHTML'); 
+                return $('<p></p>').html(exfTools.string.nl2br(sTitle)).prop('outerHTML'); 
             },
 JS;
             }
             
             $zoomOnClickJs = $this->getWidget()->isZoomOnClick() ? 'true' : 'false';
             
+            // Initialize the Slick LightBox plugin. This adds another Slick gallery, that
+            // shows in a full-page overlay and allows to loop through all zoomable images
+            // of the original gallery.
+            // By default, this only works for `img` tags matching the `itemSelector`.
+            // To make it work with PDFs and potentially other things with iFrame preview,
+            // we use an on-show script, that hides the fake <img> tags and creates an
+            // iFrame instead.
             $lightboxInit = <<<JS
 
     $("#{$this->getIdOfSlick()}")
@@ -144,6 +151,23 @@ JS;
             return $("#{$this->getIdOfSlick()}").data('_exfZoomOnClick') || false;
         },
         {$lightboxCaption}
+    })
+    .on({
+        'show.slickLightbox': function(p1, p2){ 
+            var jqSlickBig = $($("#{$this->getIdOfSlick()}")[0].slickLightbox.slick[0]);
+            jqSlickBig.find('.slick-lightbox-slick-img').each(function(i, img) {
+                var jqImg = $(img);
+                var sSrc = jqImg.attr('src');
+                var iHeightCaption = 0;
+                if (sSrc.startsWith('iframe:')) {
+                    jqImg.attr('src', '');
+                    iHeightCaption = jqImg.siblings('.slick-lightbox-slick-caption').height();
+                    sSrc = sSrc.substring(7);
+                    jqImg.hide();
+                    $('<iframe src="' + sSrc + '" style="width: 90vw; height: calc(90vh - ' + iHeightCaption + 'px)"></iframe>').insertAfter(jqImg);
+                } 
+            });          
+        }
     })
     .data('_exfZoomOnClick', {$zoomOnClickJs});
 
@@ -613,7 +637,7 @@ JS;
                                 case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
                                 default: sIcon = 'fa fa-file-o';
                             }
-                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType', '', 'sTooltip')});
+                            $jqSlickJs.slick('slickAdd', {$this->buildJsSlideTemplateFile('sTitle', 'sMimeType', '', 'sTooltip', false, 'sSrcLarge')});
                         }
                     });
 
@@ -668,16 +692,22 @@ JS;
      * @param string $cssClass
      * @return string
      */
-    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null, bool $addPopupButton = false) : string
+    protected function buildJsSlideTemplateFile(string $sFileNameJs, string $sMimeTypeJs, string $cssClass = '', string $sTooltipJs = null, bool $addPopupButton = false, string $sSrcLargeJs = null) : string
     {
         $sTooltipJs = $sTooltipJs ?? $sFileNameJs;
+        $hiddenImg = $sSrcLargeJs === null ? '' : "<img class=\"imagecarousel-iframe\" src-download=\"iframe:' + $sSrcLargeJs + '\" />";
         return <<<JS
                             (function(){
+                                var sHiddenImg = '';
                                 switch ($sMimeTypeJs.toLowerCase()) {
-                                    case 'application/pdf': sIcon = 'fa fa-file-pdf-o'; break;
-                                    default: sIcon = 'fa fa-file-o';
+                                    case 'application/pdf': 
+                                        sIcon = 'fa fa-file-pdf-o';
+                                        sHiddenImg = '{$hiddenImg}';
+                                        break;
+                                    default: 
+                                        sIcon = 'fa fa-file-o';
                                 }
-                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\"></i><div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file', $sTooltipJs, $addPopupButton)};
+                                return {$this->buildJsSlideTemplate("'<i class=\"' + sIcon + '\"></i>' + sHiddenImg + '<div class=\"imagecarousel-title\">' + $sFileNameJs + '</div>'", $cssClass . ' imagecarousel-file', $sTooltipJs, $addPopupButton)};
                             })()
 
 JS;
@@ -838,7 +868,7 @@ JS;
                 } else {
                     $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplate('""', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}).append('<img src="' + URL.createObjectURL(file) + '">')[0]);
                 }
-            } else {console.log('adding doc');
+            } else {
                 $jqSlickJs.slick('slickAdd', $({$this->buildJsSlideTemplateFile('file.name', 'file.type', 'imagecarousel-pending', 'file.name', $uploader->hasUploadEditPopup())}));
             }
             fileReader.onload = function () {
