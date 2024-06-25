@@ -1337,6 +1337,24 @@ JS;
 JS;
     }
     
+    protected function buildJsLayerBlinking(MapLayerInterface $layer, string $oRowJs) : string
+    {
+        if (! ($layer instanceof DataShapesLayer)) {
+            return '';
+        }
+        if (null === $col = $layer->getBlinkingFlagColumn()) {
+            return '';
+        }
+        $blinkJs = <<<JS
+
+                            function(oRow){
+                                var mFlag = oRow['{$col->getDataColumnName()}'];
+                                return ! mFlag ? false : true;
+                            }({$oRowJs})
+JS;
+        return $blinkJs;
+    }
+    
     /**
      * 
      * @param MapLayerInterface $layer

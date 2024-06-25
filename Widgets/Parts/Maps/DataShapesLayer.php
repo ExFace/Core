@@ -80,6 +80,10 @@ class DataShapesLayer extends AbstractDataLayer
     
     private $colorOutlineColumn = null;
     
+    private $blinkingAttributeAlias = null;
+    
+    private $blinkingColumn = null;
+    
     /**
      *
      * @return string
@@ -287,15 +291,26 @@ class DataShapesLayer extends AbstractDataLayer
     protected function initDataWidget(iShowData $widget) : iShowData
     {
         $widget = parent::initDataWidget($widget);
-        if ($alias = $this->getShapesAttributeAlias()) {
+        if (null !== $alias = $this->getShapesAttributeAlias()) {
             if (! $col = $widget->getColumnByAttributeAlias($alias)) {
                 $col = $widget->createColumnFromUxon(new UxonObject([
-                    'attribute_alias' => $this->getShapesAttributeAlias(),
+                    'attribute_alias' => $alias,
                     'hidden' => true
                 ]));
                 $widget->addColumn($col);
             }
             $this->shapeColumn = $col;
+        }
+        
+        if (null !== $alias = $this->getBlinkingAttributeAlias()) {
+            if (! $col = $widget->getColumnByAttributeAlias($alias)) {
+                $col = $widget->createColumnFromUxon(new UxonObject([
+                    'attribute_alias' => $alias,
+                    'hidden' => true
+                ]));
+                $widget->addColumn($col);
+            }
+            $this->blinkingColumn = $col;
         }
         
         $widget = $this->initDataWidgetColor($widget);
@@ -479,5 +494,59 @@ class DataShapesLayer extends AbstractDataLayer
         }
         
         return $widget;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getBlinkingAttributeAlias() : ?string
+    {
+        return $this->blinkingAttributeAlias;
+    }
+    
+    /**
+     * Alias of a boolean attribtue that must be TRUE to make the shape blink
+     * 
+     * ## Examples
+     * 
+     * Blink when a boolean attribute ist TRUE.
+     * ```
+     *  {
+     *      "type": "DataShapes",
+     *      "blinking_attribute": "Status__ErrorFlag"
+     *  }
+     *  
+     * ```
+     * 
+     * Use a formula to calculate a boolean value from others
+     * ```
+     *  {
+     *      "type": "DataShapes",
+     *      "blinking_attribute": "=Calc(Status >= 20 AND Status < 30)"
+     *  }
+     *  
+     * ```
+     *
+     * @uxon-property blinking_attribute
+     * @uxon-type metamodel:attribute
+     * @uxon-required true
+     *
+     * @param string $value
+     * @return MapLayerInterface
+     */
+    public function setBlinkingAttribute(string $value) : MapLayerInterface
+    {
+        $this->blinkingAttributeAlias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return DataColumn|NULL
+     */
+    public function getBlinkingFlagColumn() : ?DataColumn
+    {
+        return $this->blinkingColumn;
     }
 }
