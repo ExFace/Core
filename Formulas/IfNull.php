@@ -30,6 +30,6 @@ class IfNull extends Formula
         if ($treatNullStringAsNull === true && mb_strtoupper($valueToCheck) === EXF_LOGICAL_NULL) {
             return $valueIfNull;
         }
-        return false;
+        return $valueToCheck;
     }
 }
