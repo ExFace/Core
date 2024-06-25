@@ -20,11 +20,25 @@ use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
 use exface\Core\Exceptions\Security\AccessDeniedError;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\DataTypes\IPDataType;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * Policy for access to HTTP facades.
  * 
- * Allows to restrict access via regular expressions for `url_path_pattern`, `url_query_pattern` and `body_pattern`.
+ * Allows to restrict access via regular expressions for 
+ * 
+ * - `url_path_pattern`, 
+ * - `url_query_pattern` and 
+ * - `body_pattern`
+ * 
+ * You can also apply IP filters using
+ * 
+ * - `client_ips`
+ * - `proxy_ips`
+ * 
+ * Last but not least, you can use the very generic `apply_if` to restrict the policy
+ * to ceratin dates or times, configuration options, etc.
  * 
  * @author Andrej Kabachnik
  *
@@ -54,6 +68,10 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     private $clientIps = [];
     
     private $proxyIps = [];
+    
+    private $applyIfUxon = null;
+    
+    private $applyIfConditionGroup = null;
     
     /**
      * 
@@ -178,6 +196,16 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
                 }
                 if ($ipMatched === false) {
                     return PermissionFactory::createNotApplicable($this, 'Client IP "' . $ip . '" does not match policy IP range/mask');
+                }
+            }
+            
+            // Match additional conditions
+            if ($this->hasApplyIf() === true) {
+                $conditionGrp = $this->getApplyIf();
+                if ($conditionGrp->evaluate() === false) {
+                    return PermissionFactory::createNotApplicable($this, 'Condition `apply_if` is not matched');
+                } else {
+                    $applied = true;
                 }
             }
             
@@ -359,5 +387,59 @@ class HttpRequestAuthorizationPolicy implements AuthorizationPolicyInterface
     public function getName() : ?string
     {
         return $this->name;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    protected function hasApplyIf() : bool
+    {
+        return $this->applyIfUxon !== null;
+    }
+    
+    /**
+     *
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getApplyIf() : ?ConditionGroupInterface
+    {
+        if ($this->applyIfConditionGroup === null && $this->applyIfUxon !== null) {
+            $this->applyIfConditionGroup = ConditionGroupFactory::createFromUxon($this->workbench, $this->applyIfUxon);
+        }
+        return $this->applyIfConditionGroup;
+    }
+    
+    /**
+     * Only apply this policy if the provided condition is matched
+     *
+     * If `apply_if` is defined, the policy will be applied if the condition resolves to `true` or
+     * will produce a `not applicable` result if it doesn't.
+     * 
+     * Example:
+     * 
+     * ```
+     *  {
+     *      "operator": "AND",
+     *      "conditions":[
+     *          {"expression": "=Time()","comparator": ">=","value": "10:00"},
+     *          {"expression": "=Time()","comparator": "<","value": "18:00"}
+     *      ]
+     *  }
+     *  
+     * ```
+     *
+     * @uxon-property apply_if
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}
+     *
+     * @param UxonObject $value
+     * @return AbstractAuthorizationPoint
+     */
+    protected function setApplyIf(UxonObject $value) : HttpRequestAuthorizationPolicy
+    {
+        $this->applyIfUxon = $value;
+        $this->applyIfConditionGroup = null;
+        return $this;
     }
 }
