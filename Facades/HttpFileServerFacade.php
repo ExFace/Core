@@ -9,10 +9,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
 use Intervention\Image\ImageManager;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
-use exface\Core\DataTypes\ComparatorDataType;
 use GuzzleHttp\Psr7\Response;
 use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -22,19 +20,14 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
-use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Behaviors\TimeStampingBehavior;
-use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Filesystem\DataSourceFileInfo;
 use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
-use exface\Core\Exceptions\Facades\FacadeRequestParsingError;
-use exface\Core\Exceptions\NotFoundError;
-use exface\Core\Exceptions\Facades\FacadeRoutingError;
-use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\Filesystem\InMemoryFile;
+use GuzzleHttp\Psr7\ServerRequest;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -52,7 +45,7 @@ use exface\Core\CommonLogic\Filesystem\InMemoryFile;
  *      - `api/files/thumb/160x/my.App.OBJECT_ALIAS/0x5468789`
  * - Download a temp file
  *      - `api/files/pickup/<path_relative_to_temp_folder>`
- * - One-time links to get access without explicit authorization (e.g. for a PDF generator)
+ * - One-time links to get access without explicit authorization (e.g. for a PDF generators)
  *      - `api/files/otl/my.App.OBJECT_ALIAS/0x5468789>`
  * - Legacy URLs
  *      - `api/files/my.App.OBJECT/0x687654698`
@@ -134,13 +127,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
             case self::URL_PATH_OTL:
                 // Should this ever happen? One-time-links are handled by the middleware, aren't they?
             default:
-                if ($params['resize'] !== null) {
-                    $mode = self::URL_PATH_THUMB;
-                    $options = $params['resize'];
-                } else {
-                    $mode = self::URL_PATH_DOWNLOAD;
-                }
+                $mode = self::URL_PATH_DOWNLOAD;
                 // $pathParts remain untouched!
+        }
+        
+        // Support for legacy resizing options, that still may be used somewhere via `=FileLink()` formula
+        if ($params['resize'] !== null) {
+            $mode = self::URL_PATH_THUMB;
+            $options = $params['resize'];
         }
         
         switch (true) {
@@ -440,22 +434,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param string $urlParams
      * @return string
      */
-    public static function buildUrlToOneTimeLink (MetaObjectInterface $object, string $uid, string $urlParams = null, bool $relativeToSiteRoot = true) : string
+    public static function buildUrlToOneTimeLink(WorkbenchInterface $workbench, string $url, bool $relativeToSiteRoot = true) : string
     {
-        $facade = FacadeFactory::createFromString(__CLASS__, $object->getWorkbench());
+        $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
         $cache = $facade->getOtlCachePool();        
-        $rand = UUIDDataType::generateUuidV4('');        
-        $data = [];
-        $data['object_alias'] = $object->getAliasWithNamespace();
-        $data['uid'] = $uid;
-        $params = [];
-        if ($urlParams) {
-            parse_str($urlParams, $params);
-        }
-        $data['params'] = $params;        
-        $cache->set($rand, $data);        
-        $url = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($rand);
-        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+        $rand = UUIDDataType::generateUuidV4('');      
+        $cache->set($rand, $url);        
+        $otl = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_OTL . '/' . urlencode($rand);
+        return $relativeToSiteRoot ? $otl : $workbench->getUrl() . '/' . $otl;
     }
     
     /**
@@ -467,15 +453,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
     {        
         $exface = $this->getWorkbench();
         $cache = $this->getOtlCachePool();
-        if ($cache->get($ident) === null) {
+        $url = $cache->get($ident, null);
+        if (null === $url) {
             $exface->getLogger()->logException(new FacadeRuntimeError("Cannot serve file for one time link ident '$ident'. No data found!"));
             return new Response(404, $this->buildHeadersCommon());
         }
-        $data = $cache->get($ident, null);
-        $objSel = $data['object_alias'];
-        $uid = $data['uid'];
-        $params = $data['params'];        
-        $response = $this->createResponseFromObjectUid($objSel, $uid, $params);
+        $request = new ServerRequest('GET', $url);
+        $response = $this->createResponse($request);
         $cache->delete($ident);        
         return $response;
     }
@@ -575,9 +559,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 }
             // IDEA add other thumbnails here - for office documents, pdfs, etc.?
             default:
-                $text = mb_strtoupper($fileInfo->getExtension()) ?? 'FILE';
+                $extension = $fileInfo->getExtension();
+                $text = mb_strtoupper($extension) ?? 'FILE';
                 $binary = $this->createThumbnailAsPlaceholder($text, $width, $height);
-                $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute() . '_' . $width . 'x' . $height, 'image/jpeg');
+                $thumbPath = $fileInfo->getPathAbsolute();
+                if ($extension) {
+                    $thumbPath = substr($thumbPath, 0, ((-1) * strlen($extension)));
+                }
+                $thumbPath .= 'jpg';
+                $fileInfo = new InMemoryFile($binary, $thumbPath, 'image/jpeg');
                 break;
         }
         return $fileInfo;
