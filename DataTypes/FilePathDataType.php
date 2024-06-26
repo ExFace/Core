@@ -177,7 +177,11 @@ class FilePathDataType extends StringDataType
      */
     public static function findExtension(string $path) : ?string
     {
-        return Path::getExtension($path);
+        $ext = Path::getExtension($path);
+        if ($ext === '') {
+            $ext = null;
+        }
+        return $ext;
     }
     
     /**
