@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
+use Composer\Semver\Comparator;
+use Composer\Semver\Semver;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -29,6 +31,8 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class RouteConfigLoader implements MiddlewareInterface
 {
+    const VERSION_REGULAR_EXPRESSION = '/\d.\d{2}.\d/';
+
     private $facade = null;
     
     private $routeData = null;
@@ -38,21 +42,25 @@ class RouteConfigLoader implements MiddlewareInterface
     private $routeConfigAttributeAlias = null;
     
     private $storeInRequestAttr = null;
-    
+
+    private $routeVersionAttributeAlias = null;
+
     /**
-     * 
+     *
      * @param HttpFacadeInterface $facade
-     * @param string $readUrlParam
-     * @param string $passToMethod
-     * @param string $taskAttributeName
+     * @param DataSheetInterface $routeData
+     * @param string[] $routePatternAttributeAlias
+     * @param string $routeConfigAttributeAlias
+     * @param string $storeInRequestAttr
      */
-    public function __construct(HttpFacadeInterface $facade, DataSheetInterface $routeData, string $routePatternAttributeAlias, string $routeConfigAttributeAlias, string $storeInRequestAttr = 'route')
+    public function __construct(HttpFacadeInterface $facade, DataSheetInterface $routeData, string $routePatternAttributeAlias, string $routeConfigAttributeAlias, string $routeVersionAttributeAlias = null, string $storeInRequestAttr = 'route')
     {
         $this->facade = $facade;
         $this->storeInRequestAttr = $storeInRequestAttr;
         $this->routeData = $routeData;
         $this->routePatternAttributeAlias = $routePatternAttributeAlias;
         $this->routeConfigAttributeAlias = $routeConfigAttributeAlias;
+        $this->routeVersionAttributeAlias = $routeVersionAttributeAlias;
     }
     
     /**
@@ -63,7 +71,7 @@ class RouteConfigLoader implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $path = $request->getUri()->getPath();
-        $path = StringDataType::substringAfter($path, $this->facade->getUrlRouteDefault() . '/', '');   
+        $path = StringDataType::substringAfter($path, $this->facade->getUrlRouteDefault() . '/', '');
         $routeData = $this->getRouteData($path);
         
         if (null !== $json = $routeData[$this->routeConfigAttributeAlias]) {
@@ -81,12 +89,32 @@ class RouteConfigLoader implements MiddlewareInterface
     protected function getRouteData(string $route) : array
     {
         $route = strtok($route, '/');
+        $version = trim(strtok($route), '/');
+        $hasValidVersion = preg_match(self::VERSION_REGULAR_EXPRESSION, $version);
+        $matchedRoute = null;
+        $highestVersion = null;
         foreach ($this->routeData->getRows() as $row) {
-            if ($row[$this->routePatternAttributeAlias] && strcasecmp($route, $row[$this->routePatternAttributeAlias]) === 0 ) {
-                return $row;
+            $currentRouteUrl = $row[$this->routePatternAttributeAlias];
+            $currentRouteVersion = $row[$this->routeVersionAttributeAlias];
+
+            if (strcasecmp($route, $currentRouteUrl) === 0) {
+                if ($hasValidVersion && $currentRouteVersion === $version) {
+                    return $row;
+                }
+
+                if (!$hasValidVersion) {
+                    if ($highestVersion === null || Comparator::greaterThan($currentRouteVersion, $highestVersion)) {
+                        $highestVersion = $currentRouteVersion;
+                        $matchedRoute = $row;
+                    }
+                }
             }
         }
-        
-        throw new FacadeRoutingError('No route configuration found for "' . $route . '"');
+
+        if ($matchedRoute === null) {
+            throw new FacadeRoutingError('No route configuration found for "' . $route . '"');
+        }
+
+        return $matchedRoute;
     }
 }
