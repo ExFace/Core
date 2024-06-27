@@ -165,6 +165,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 break;
             case self::URL_PATH_THUMB && $cacheInfo === null:
                 list($width, $height) = explode('x', $options);
+                $width = $width === '' ? null : intval($width);
+                $height = $height === '' ? null : intval($height);
                 $fileInfo = $this->createThumbnail($fileInfo, $width, $height);
                 $response = $this->createResponseForEmbedding($fileInfo);
                 break;
@@ -403,9 +405,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param bool $relativeToSiteRoot
      * @return string
      */
-    public static function buildUrlToThumbnail(MetaObjectInterface $object, string $uid, int $width, int $height, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
+    public static function buildUrlToThumbnail(MetaObjectInterface $object, string $uid, int $width = null, int $height = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
-        $resize = $width . 'x' . $height;
+        $resize = ($width ?? '') . 'x' . ($height ?? '');
         $url = static::buildUrlForObjectUid($object, $uid, (self::URL_PATH_THUMB . '/' . $resize), $urlEncodeUid);
         return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
     }
