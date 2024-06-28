@@ -21,6 +21,7 @@ use exface\Core\Widgets\Parts\WidgetInheriter;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
+use exface\Core\Widgets\ErrorMessage;
 
 /**
  * 
@@ -393,6 +394,6 @@ abstract class WidgetFactory extends AbstractStaticFactory
      */
     public static function createDebugMessage(WorkbenchInterface $workbench, MetaObjectInterface $baseObject = null) : DebugMessage
     {
-        return static::createOnBlankPage($workbench, 'DebugMessage', $baseObject);
+        return static::createOnBlankPage($workbench, 'DebugMessage', ($baseObject ?? 'exface.Core.MESSAGE'));
     }
 }

@@ -25,6 +25,7 @@ use exface\Core\Exceptions\SecurityException;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -74,48 +75,62 @@ class SecurityManager implements SecurityManagerInterface
     public function authenticate(AuthenticationTokenInterface $token): AuthenticationTokenInterface
     {      
         $errors = [];
+        $logbook = new MarkdownLogBook('Authentication');
+        $logbook->addLine('Token type: `' . get_class($token) . '` (' . ($token->isAnonymous() ? ' anonymous' : '`' . ($token->getUsername() ?? ' ') . '`') . ')');
         
         // Try all authenticators. If any of the work, stop and return the authenticated token
+        $logbook->addSection('Authenticators');
+        $logbook->addIndent(1);
         foreach ($this->getAuthenticators() as $authenticator) {
+            $logbook->addLine("`" . get_class($authenticator) . "`");
             if ($authenticator->isDisabled()) {
+                $logbook->addLine('Disabled', 1);
                 continue;
             }
             if ($authenticator->isSupported($token) === false) {
+                $logbook->addLine('Does not support token', 1);
                 continue;
             }
             try {
                 $authenticated = $authenticator->authenticate($token);
-                $this->storeAuthenticatedToken($authenticated);
-                $this->getWorkbench()->getLogger()->debug('Authenticated user "' . $authenticated->getUsername() . '" via "' . $authenticator->getName() . '"');
-                $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator);
-                $this->getWorkbench()->eventManager()->dispatch($event);
-                return $authenticated;
+                $logbook->addLine('Authenticated as `' . ($authenticated->getUsername() ?? ' ') . '`' . ($token->isAnonymous() ? ' (anonymous)' : ''), 1);
+                break;
             } catch (AuthenticationExceptionInterface $e) {
+                $logbook->addException($e, 1);
                 $errors[] = $e;
             }
         }
+        $logbook->addIndent(-1);
         
         // If no authenticators worked, the user is a guest
-        if ($token->isAnonymous() === true) {
-            $this->getWorkbench()->getLogger()->debug('Authenticated anonymous user');
-            $event = new OnAuthenticatedEvent($this->getWorkbench(), $token);
-            $this->getWorkbench()->eventManager()->dispatch($event);
-            $this->storeAuthenticatedToken($token);
-            return $token;
+        if ($authenticated === null) {
+            $logbook->addLine('None of the authenticators worked out');
+            if ($token->isAnonymous() === true) {
+                $logbook->addLine('**Result:** Authenticating as `anonymous` user because token is anonymous');
+                $authenticated = $token;
+                $authenticator = $this;
+            } else {
+                $logbook->addLine('**Result:** Throwing authentication error because token impersonates a user (has a username)');
+                switch (count($errors)) {
+                    case 0:
+                    case 1:
+                        throw new AuthenticationFailedError($this, 'Authentication failed!', null, ($errors[0] ?? null), $token, $logbook);
+                    default:
+                        $err = new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
+                        throw $err;
+                }
+            }
+        } else {
+            $logbook->addLine('**Result:** Authenticated as `' . $authenticated->getUsername() . '`');
         }
         
-        switch (count($errors)) {
-            case 0:
-                throw new AuthenticationFailedError($this, 'Authentication failed!');
-            case 1:
-                throw $errors[0];
-            default:
-                $err = new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
-                foreach ($errors as $e) {
-                    $this->getWorkbench()->getLogger()->logException($e);
-                }
-                throw $err;
-        }
+        $this->storeAuthenticatedToken($token);
+        $this->getWorkbench()->getLogger()->notice('Authenticated user "' . ($authenticated->isAnonymous() ? 'anonymous' : $authenticated->getUsername()) . '"', [], $logbook);
+        
+        $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator, $logbook);
+        $this->getWorkbench()->eventManager()->dispatch($event);
+        
+        return $authenticated;
     }
     
     /**
