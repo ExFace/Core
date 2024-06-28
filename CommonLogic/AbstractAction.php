@@ -892,7 +892,7 @@ abstract class AbstractAction implements ActionInterface
     public function getInputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
         foreach ($this->getInputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($fromObject)){
+            if ($fromObject->is($mapper->getFromMetaObject()) === true){
                 return $mapper;
             }
         }
@@ -1674,7 +1674,7 @@ abstract class AbstractAction implements ActionInterface
     public function getOutputMapper(MetaObjectInterface $fromObject) : ?DataSheetMapperInterface
     {
         foreach ($this->getOutputMappers() as $mapper){
-            if ($mapper->getFromMetaObject()->is($fromObject)){
+            if ($fromObject->is($mapper->getFromMetaObject()) === true){
                 return $mapper;
             }
         }
