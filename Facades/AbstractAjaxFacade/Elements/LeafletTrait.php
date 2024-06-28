@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\iCanBlink;
 use exface\Core\Widgets\Parts\Maps\DataMarkersLayer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
@@ -482,7 +483,7 @@ JS;
                     $asIfForAction = null;
                 }
                 $exfRefreshJs = <<<JS
-function() {
+                    function() {
                     var oData = {$linkedEl->buildJsDataGetter($asIfForAction)};
                     var aRows = oData.rows || [];
                     var aRowsSkipped = [];
@@ -528,6 +529,48 @@ function() {
 JS;
                     break;
             default:
+                $loaderJs = <<<JS
+             
+                    var aRowsSkipped = [];
+                    oLayer.clearLayers();
+                    aRows.forEach(function(oRow) {
+                        var fLatFrom = oRow['{$layer->getFromLatitudeColumn()->getDataColumnName()}'];
+                        var fLatTo = oRow['{$layer->getToLatitudeColumn()->getDataColumnName()}'];
+                        var fLngFrom = oRow['{$layer->getFromLongitudeColumn()->getDataColumnName()}'];
+                        var fLngTo = oRow['{$layer->getToLongitudeColumn()->getDataColumnName()}'];
+                        var oLine;
+
+                        switch (true) {
+                            case fLatFrom === null || fLatFrom === undefined:
+                            case fLatTo === null || fLatTo === undefined:
+                            case fLngFrom === null || fLngFrom === undefined:
+                            case fLngTo === null || fLngTo === undefined:
+                                aRowsSkipped.push(oRow);
+                                return;
+                        }
+
+                        oLine = L.polyline([
+                            [fLatFrom, fLngFrom],
+                            [fLatTo, fLngTo]
+                        ], {
+                            color: '{$color}',
+                            weight: {$layer->getWidth()}
+                        });
+
+                        oLine.properties = {
+                            layer: {$this->getWidget()->getLayerIndex($layer)},
+                            object: '{$layer->getMetaObject()->getId()}',
+                            data: oRow,
+                        };
+
+                        $showPopupJs
+                        oLayer.addLayer(oLine);
+                    });
+                    
+                    {$autoZoomJs}
+JS;
+
+
                 $exfRefreshJs = <<<JS
 function() {
                     var oParams = {
@@ -540,48 +583,7 @@ function() {
                         }
                     };
                     
-                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
-                        
-                        var aRowsSkipped = [];
-                        
-                        oLayer.clearLayers();
-                        aRows.forEach(function(oRow) {
-                            var fLatFrom = oRow['{$layer->getFromLatitudeColumn()->getDataColumnName()}'];
-                            var fLatTo = oRow['{$layer->getToLatitudeColumn()->getDataColumnName()}'];
-                            var fLngFrom = oRow['{$layer->getFromLongitudeColumn()->getDataColumnName()}'];
-                            var fLngTo = oRow['{$layer->getToLongitudeColumn()->getDataColumnName()}'];
-                            var oLine;
-
-                            switch (true) {
-                                case fLatFrom === null || fLatFrom === undefined:
-                                case fLatTo === null || fLatTo === undefined:
-                                case fLngFrom === null || fLngFrom === undefined:
-                                case fLngTo === null || fLngTo === undefined:
-                                    aRowsSkipped.push(oRow);
-                                    return;
-                            }
-
-                            oLine = L.polyline([
-                                [fLatFrom, fLngFrom],
-                                [fLatTo, fLngTo]
-                            ], {
-                                color: '{$color}',
-                                weight: {$layer->getWidth()}
-                            });
-
-                            oLine.properties = {
-                                layer: {$this->getWidget()->getLayerIndex($layer)},
-                                object: '{$layer->getMetaObject()->getId()}',
-                                data: oRow,
-                            };
-
-                            $showPopupJs
-                            oLayer.addLayer(oLine);
-                        });
-                        
-                        {$autoZoomJs}
-                        
-                    ")}
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "{$loaderJs}")}
                 }
 JS;
         }
@@ -710,6 +712,20 @@ function() {
 JS;
                 break;
             default: 
+
+                $dataLoader = <<<JS
+   
+                    var aGeoJson = [];
+                    var aRowsSkipped = [];
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
+                    oLayer.clearLayers();
+                    oLayer.addData(aGeoJson);
+                    {$autoZoomJs}    
+                    if (oClusterLayer !== null) {
+                        oClusterLayer.clearLayers().addLayer(oLayer);
+                    }
+JS;
+
                 $exfRefreshJs = <<<JS
 function() {
                     var oParams = {
@@ -721,23 +737,7 @@ function() {
                             oId: "{$dataWidget->getMetaObject()->getId()}"
                         }
                     };
-                    
-                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
-                        
-                        var aGeoJson = [];
-                        var aRowsSkipped = [];
-                        
-                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aGeoJson', 'aRowsSkipped')}
-                        
-                        oLayer.clearLayers();
-                        oLayer.addData(aGeoJson);
-                        {$autoZoomJs}
-                        
-                        if (oClusterLayer !== null) {
-                            oClusterLayer.clearLayers().addLayer(oLayer);
-                        }
-                        
-                    ")}
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "{$dataLoader}")}
                 }
 JS;
         }
@@ -896,6 +896,10 @@ JS;
         
         // Add styling and colors
         $color = $this->buildJsLayerColor($layer, 'feature.properties.data');
+        $outlineColor = $this->buildJsLayerOutlineColor($layer, 'feature.properties.data');
+        $shapeClassNameJS = $this->buildJsLayerBlinking($layer, 'feature.properties.data');
+        $outlineColor = $outlineColor ? $outlineColor : $color;
+        $styleJs = '';
         if (null !== $weight = $layer->getLineWeight()) {
             $styleJs .= "weight: $weight,";
         }
@@ -903,8 +907,10 @@ JS;
             $styleJs .= "opacity: $opacity,";
         }
         if ($color !== '' && $color !== "''") {
-            $styleJs .= "color: $color,";
+            $styleJs .= "fillColor: $color, color: $outlineColor,";
         }
+        $styleJs .= "className: $shapeClassNameJS,";
+
         
         // Define a custom projection if needed
         if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
@@ -1050,6 +1056,17 @@ JS;
             case $layer instanceof iUseData:
                 /* @var $dataWidget \exface\Core\Widgets\Data */
                 $dataWidget = $layer->getDataWidget();
+
+                $dataLoader = <<<JS
+
+                    var aFeatures = [];
+                    var aRowsSkipped = [];
+                    {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
+                    oLayer.clearLayers();
+                    oLayer.addData(aFeatures);
+                    oLayer.bringToBack();
+                    {$autoZoomJs}
+JS;
                 
                 $exfRefreshJs = <<<JS
                 
@@ -1064,18 +1081,7 @@ JS;
                         }
                     };
                     
-                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "
-                        
-                        var aFeatures = [];
-                        var aRowsSkipped = [];
-                        
-                        {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
-
-                        oLayer.clearLayers();
-                        oLayer.addData(aFeatures);
-                        oLayer.bringToBack();
-                        {$autoZoomJs}
-                    ")}
+                    {$this->buildJsLeafletDataLoader('oParams', 'aRows', "{$dataLoader}")}
                 })();
 JS;
         }
@@ -1177,6 +1183,7 @@ JS;
                 },
                 style: function(feature) {
                     var oStyle = { {$styleJs} };
+                    console.log(oStyle);
                     return oStyle;
                 },
                 pointToLayer: function(feature, latlng) {
@@ -1339,20 +1346,27 @@ JS;
     
     protected function buildJsLayerBlinking(MapLayerInterface $layer, string $oRowJs) : string
     {
-        if (! ($layer instanceof DataShapesLayer)) {
-            return '';
-        }
-        if (null === $col = $layer->getBlinkingFlagColumn()) {
-            return '';
-        }
-        $blinkJs = <<<JS
-
-                            function(oRow){
-                                var mFlag = oRow['{$col->getDataColumnName()}'];
-                                return ! mFlag ? false : true;
-                            }({$oRowJs})
+        switch (true) {
+            case (!($layer instanceof DataShapesLayer) || !($layer instanceof iCanBlink)):
+                return '""';
+        
+            case ($layer->getIsBlinking()):
+                return <<<JS
+                    function(oRow){
+                        return 'blinking-shape';
+                    }({$oRowJs})
 JS;
-        return $blinkJs;
+            default:
+                if (null === $col = $layer->getBlinkingFlagColumn()) {
+                    return '""';
+                }
+                return <<<JS
+                    function(oRow){
+                        var mFlag = oRow['{$col->getDataColumnName()}'];
+                        return mFlag ? 'blinking-shape' : 'normal-shape';
+                    }({$oRowJs})
+JS;
+        }
     }
     
     /**
@@ -1386,7 +1400,7 @@ function(){
                             }()
 JS;
                 break;
-            case ($layer instanceof iHaveColor) && null !== $colorCss = $layer->getColor():
+            case ($layer instanceof iHaveColor) && null !== $colorCss = $layer->getColor();
                 $colorJs = "'{$colorCss}'";
                 break;
             default:
@@ -1395,6 +1409,48 @@ JS;
         }
         return $colorJs;
     }
+
+
+    /**
+     * 
+     * @param MapLayerInterface $layer
+     * @param string $oRowJs
+     * @return string
+     */
+    protected function buildJsLayerOutlineColor(MapLayerInterface $layer, string $oRowJs) : string
+    {
+        $colorJs = "''";
+        $colorCss = '';
+        switch (true) {
+            case ($layer instanceof ColoredDataMapLayerInterface) && null !== $colorCol = $layer->getColorOutlineColumn():
+                $semanticColors = $this->getFacade()->getSemanticColors();
+                $semanticColorsJs = json_encode(! empty($semanticColors) ? $semanticColors : new \stdClass());
+                if ($layer->hasColorOutlineScale()) {
+                    $colorResolverJs = $this->buildJsScaleResolver('sVal', $layer->getColorOutlineScale(), $layer->isColorOutlineScaleRangeBased());
+                } else {
+                    $colorResolverJs = "{$oRowJs}['{$colorCol->getDataColumnName()}']";
+                }
+                $colorJs = <<<JS
+function(){
+                                var sVal = {$oRowJs}['{$colorCol->getDataColumnName()}'];
+                                var sColor = {$colorResolverJs};
+                                var oSemanticColors = $semanticColorsJs;
+                                if (oSemanticColors[sColor] !== undefined) {
+                                    sColor = oSemanticColors[sColor];
+                                }
+                                return sColor;
+                            }()
+
+JS;
+                break;
+            default:
+                $colorCss = $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+                $colorJs = "'{$colorCss}'";
+        }
+        return $colorJs;
+    }
+
+
     
     /**
      * 
