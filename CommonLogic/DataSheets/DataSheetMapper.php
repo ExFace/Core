@@ -179,7 +179,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
-        if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
+        if (! $fromSheet->getMetaObject()->is($this->getFromMetaObject())){
             throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
         }
         
