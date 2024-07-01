@@ -19,5 +19,6 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/phpoffice/phpspreadsheet/src"/>
 	<buildpathentry external="true" kind="lib" path="c:/wamp/www/exface/exface/vendor/robthree/twofactorauth/lib"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/justinrainbow/json-schema/src"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/composer/semver/src"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>
