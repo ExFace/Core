@@ -21,6 +21,7 @@ use exface\Core\CommonLogic\DataQueries\FileWriteDataQuery;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\MimeTypeDataType;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -513,7 +514,26 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($pathArray) . ' files exist!');
                 }
                 foreach ($pathArray as $i => $path) {
-                    $query->addFileToSave($path, $contentArray[$i]);
+                    // Cannot save anything to an empty path. This is not a real error though
+                    // - it may happen if multiple rows are saved and some do not really need
+                    // a file to be created
+                    if ($path === null) {
+                        continue;
+                    }
+                    
+                    $content = $contentArray[$i];
+                    // See if empty content is feasable for the expected mime type!
+                    // E.g. empty text files are OK, but an empty jpeg cannot be correct.
+                    if (empty($content)) {
+                        $ext = FilePathDataType::findExtension($path);
+                        if ($ext) {
+                            $type = MimeTypeDataType::guessMimeTypeOfExtension($ext);
+                            if (MimeTypeDataType::isBinary($type)) {
+                                throw new QueryBuilderException('Cannot create empty file "' . $path . '" of type "' . $type . '" - files of this type may not be empty!');
+                            }
+                        }
+                    }
+                    $query->addFileToSave($path, $content);
                 }
                 break;
             case count($contentQparts) > 1:

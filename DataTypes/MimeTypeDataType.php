@@ -75,24 +75,13 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
     
     /**
      * 
-     * @param string $absolutePath
-     * @return string|NULL
-     */
-    public static function guessMimeTypeOfFile(string $absolutePath) : ?string
-    {
-        $type = mime_content_type($absolutePath);
-        return $type !== false ? $type : null;
-    }
-    
-    /**
-     * 
      * @param string $fileExtension
      * @param string $default
      * @return string
      */
     public static function guessMimeTypeOfExtension(string $fileExtension, string $default = 'application/octet-stream') : string
     {
-        $fileExtension = strtolower($fileExtension);
+        $fileExtension = strtolower(trim($fileExtension));
         $mime = static::getMimeTypesByExtension()[$fileExtension];
         return $mime ?? $default;
     }
