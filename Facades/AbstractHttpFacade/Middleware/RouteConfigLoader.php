@@ -2,7 +2,6 @@
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use Composer\Semver\Comparator;
-use Composer\Semver\Semver;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -12,6 +11,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\SemanticVersionDataType;
 
 /**
  * Allows to load facade configuration stored in a meta object holding web routes and their parameters
@@ -31,8 +31,6 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class RouteConfigLoader implements MiddlewareInterface
 {
-    const VERSION_REGULAR_EXPRESSION = '/\d.\d{2}.\d/';
-
     private $facade = null;
     
     private $routeData = null;
@@ -90,7 +88,7 @@ class RouteConfigLoader implements MiddlewareInterface
     {
         $route = strtok($route, '/');
         $version = trim(strtok($route), '/');
-        $hasValidVersion = preg_match(self::VERSION_REGULAR_EXPRESSION, $version);
+        $hasValidVersion = SemanticVersionDataType::isValueVersion($version);
         $matchedRoute = null;
         $highestVersion = null;
         foreach ($this->routeData->getRows() as $row) {
@@ -103,7 +101,7 @@ class RouteConfigLoader implements MiddlewareInterface
                 }
 
                 if (!$hasValidVersion) {
-                    if ($highestVersion === null || Comparator::greaterThan($currentRouteVersion, $highestVersion)) {
+                    if ($highestVersion === null || SemanticVersionDataType::isVersionGreaterThan($currentRouteVersion, $highestVersion)) {
                         $highestVersion = $currentRouteVersion;
                         $matchedRoute = $row;
                     }
