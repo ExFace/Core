@@ -452,9 +452,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($logbook !== null) $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
                 
                 $uidCol = $data_sheet->getUidColumn();
+                $uidColName = $uidCol->getName();
                 foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
-                        $uid = $row[$uidCol->getName()];
+                        $uid = $row[$uidColName];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
                             throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping! Trying to read ' . $addedCol->getName(), null, null, $logbook);
