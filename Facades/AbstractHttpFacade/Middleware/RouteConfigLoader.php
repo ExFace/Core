@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
-use Composer\Semver\Comparator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -86,9 +85,10 @@ class RouteConfigLoader implements MiddlewareInterface
      */
     protected function getRouteData(string $route) : array
     {
-        $route = strtok($route, '/');
-        $version = trim(strtok($route), '/');
-        $hasValidVersion = SemanticVersionDataType::isValueVersion($version);
+        // url has to be: /service_name/version/routename like bmdb-gis-export/1.24.4/Massnahmen
+        $routeArray = explode('/', $route, 3);
+        $route = $routeArray[0];
+        $hasValidVersion = SemanticVersionDataType::isValueVersion($routeArray[1]);
         $matchedRoute = null;
         $highestVersion = null;
         foreach ($this->routeData->getRows() as $row) {
@@ -96,7 +96,7 @@ class RouteConfigLoader implements MiddlewareInterface
             $currentRouteVersion = $row[$this->routeVersionAttributeAlias];
 
             if (strcasecmp($route, $currentRouteUrl) === 0) {
-                if ($hasValidVersion && $currentRouteVersion === $version) {
+                if ($hasValidVersion && $currentRouteVersion === $routeArray[1]) {
                     return $row;
                 }
 
