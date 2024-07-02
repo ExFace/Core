@@ -763,7 +763,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $inputWidgetObject = $inputWidget->getMetaObject();
         $check = null;
         /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($action->getInputChecks() as $c) {
+        foreach ($action->getInputChecks()->getAll(true) as $c) {
             if ($c->isApplicableToObject($inputWidgetObject)) {
                 if ($check === null) {
                     $check = $c;

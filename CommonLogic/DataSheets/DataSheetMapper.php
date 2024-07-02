@@ -34,6 +34,8 @@ use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
+use exface\Core\Interfaces\DataSheets\DataCheckInterface;
+use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 
 /**
  * Maps data from one data sheet to another using different types of mappings for columns, filters, etc.
@@ -167,6 +169,8 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     private $removeDuplicateRows = null;
     
+    private $inputChecks = [];
+    
     public function __construct(Workbench $workbench)
     {
         $this->workbench = $workbench;
@@ -207,6 +211,16 @@ class DataSheetMapper implements DataSheetMapperInterface
         if ($freshStamp !== $fromSheet->getFreshStamp()) {
             $diagram .= "RefreshFromSheet[Read missing data]";
             $diagram .= "\n\tRefreshFromSheet -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
+        }
+        
+        if ($logbook !== null) $logbook->addLine('Checking input data:');
+        foreach ($this->getFromDataChecks() as $check) {
+            try {
+                if ($logbook !== null) $logbook->addLine('Checking `' . $check->getConditionGroup()->__toString() . '`', +1);
+                $check->check($fromSheet);
+            } catch (DataCheckExceptionInterface $e) {
+                throw new DataMapperRuntimeError($this, $fromSheet, $e->getMessage(), null, $e, $logbook);
+            }
         }
         
         // Create an empty to-sheet
@@ -1249,5 +1263,37 @@ class DataSheetMapper implements DataSheetMapperInterface
         $name = StringDataType::convertCasePascalToUnderscore($class);
         $name = StringDataType::substringAfter($name, 'data_', $name);
         return $name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getFromDataChecks()
+     */
+    public function getFromDataChecks() : array
+    {
+        return $this->inputChecks;
+    }
+    
+    /**
+     * Check from-data against these conditions before applying the mapper
+     *
+     * If any of these conditions are not met, the mapper will through an error. Each check may 
+     * contain it's own error message to make the errors better understandable for the user.
+     *
+     * @uxon-property from_data_invalid_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     *
+     * @param UxonObject $arrayOfDataChecks
+     * @return DataSheetMapper
+     */
+    protected function setFromDataInvalidIf(UxonObject $arrayOfDataChecks) : DataSheetMapper
+    {
+        $this->inputChecks = [];
+        foreach($arrayOfDataChecks as $uxon) {
+            $this->inputChecks[] = new DataCheck($this->getWorkbench(), $uxon, $this->getFromMetaObject());
+        }
+        return $this;
     }
 }
