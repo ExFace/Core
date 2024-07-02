@@ -53,10 +53,11 @@ trait JsConditionalPropertyTrait {
             if ($condition->getComparator() === ComparatorDataType::IN || $condition->getComparator() === ComparatorDataType::NOT_IN) {
                 $rightExpr = $condition->getValueRightExpression();
                 if ($rightExpr->isReference() === true) {
-                    $targetWidget = $rightExpr->getWidgetLink()->getTargetWidget();
+                    $rightLink = $rightExpr->getWidgetLink($this->getWidget());
+                    $targetWidget = $rightLink->getTargetWidget();
                     if (($targetWidget instanceof iShowSingleAttribute) && $targetWidget->isBoundToAttribute()) {
                         $delim = $targetWidget->getAttribute()->getValueListDelimiter();
-                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightExpr->getWidgetLink()->getTargetColumnId()) {
+                    } elseif ($targetWidget instanceof iHaveColumns && $colName = $rightLink->getTargetColumnId()) {
                         $targetCol = $targetWidget->getColumnByDataColumnName($colName);
                         if ($targetCol->isBoundToAttribute() === true) {
                             $delim = $targetCol->getAttribute()->getValueListDelimiter();
