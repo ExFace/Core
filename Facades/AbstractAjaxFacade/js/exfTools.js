@@ -704,6 +704,24 @@
 	                case '>=':
 	                	bResult = mLeft >= mRight;
 	                	break;
+					case '[[':
+	                case '![[':
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+								for (var j = 0; j < leftValues.length; j++) {
+				                    if (rightValues[i].trim().toLowerCase() !== leftValues[j].trim().toLowerCase()) {
+				                        return false;
+				                    }
+								}
+			                }
+			                return true;
+			            }();
+						if (sComparator === '![[') {
+							bResult = ! bResult;
+						}
+	                    break;
 	                case '[':
 	                case '![':
 	                    bResult = function() {

@@ -28,41 +28,49 @@ const EXF_WIDGET_VISIBILITY_PROMOTED = 90;
 const EXF_WIDGET_VISIBILITY_HIDDEN = 10;
 
 /**
+ * @deprecated use ComparatorDataType instead!
  * @const EXF_COMPARATOR_IN compares to each vaule in a list via EXF_COMPARATOR_IS.
  * At least one must suffice.
  */
 const EXF_COMPARATOR_IN = '[';
-
-const EXF_COMPARATOR_NOT_IN = '![';
-
 /**
- * @const EXF_COMPARATOR_MATCH compares two list on if at least one element matches.
- * At least one must suffice.
+ * @deprecated use ComparatorDataType instead!
+ * @var string
  */
-const EXF_COMPARATOR_MATCH = '][';
-
-const EXF_COMPARATOR_NOT_MATCH = '!][';
-
+const EXF_COMPARATOR_NOT_IN = '![';
 /**
+ * @deprecated use ComparatorDataType instead!
  * @const EXF_COMPARATOR_IS universal comparater - can be applied to any data type
  */
 const EXF_COMPARATOR_IS = '=';
-
-const EXF_COMPARATOR_IS_NOT = '!=';
-
 /**
+ * @deprecated use ComparatorDataType instead!
+ */
+const EXF_COMPARATOR_IS_NOT = '!=';
+/**
+ * @deprecated use ComparatorDataType instead!
  * @const EXF_COMPARATOR_EQUALS compares to a single value of the same data type
  */
 const EXF_COMPARATOR_EQUALS = '==';
-
+/**
+ * @deprecated use ComparatorDataType instead!
+ */
 const EXF_COMPARATOR_EQUALS_NOT = '!==';
-
+/**
+ * @deprecated use ComparatorDataType instead!
+ */
 const EXF_COMPARATOR_LESS_THAN = '<';
-
+/**
+ * @deprecated use ComparatorDataType instead!
+ */
 const EXF_COMPARATOR_LESS_THAN_OR_EQUALS = '<=';
-
+/**
+ * @deprecated use ComparatorDataType instead!
+ */
 const EXF_COMPARATOR_GREATER_THAN = '>';
-
+/**
+ * @deprecated use ComparatorDataType instead!
+ */
 const EXF_COMPARATOR_GREATER_THAN_OR_EQUALS = '>=';
 
 /*
