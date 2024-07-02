@@ -8,6 +8,8 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * Logical comparison operators: `=`, `==`, `<`, `>`, etc.
  * 
+ * ## Single value comparators
+ * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
  * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
  * insensitive for strings
@@ -15,18 +17,6 @@ use exface\Core\Exceptions\RuntimeException;
  * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
  * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
  * - `!==` - the inverse of `EQUALS`
- * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
- * value equals at least on of the values in the list within the right value. The list on the
- * right side must consist of numbers or strings separated by commas or the attribute's value
- * list delimiter if filtering over an attribute. The right side can also be another type of
- * expression (e.g. a formula or widget link), that yields such a list.
- * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
- * list within the right value. The list on the right side must consist of numbers or strings separated 
- * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
- * also be another type of expression (e.g. a formula or widget link), that yields such a list.
- * - `][` - MATCH-comparator - compares two lists with each other. Becomes TRUE when there is at least 
- * one element, that is present in both lists.
- * - `!][` - the inverse of `][` . Becomes TRUE if no element is part of both lists.
  * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
  * comparable types: e.g. numbers or dates.
  * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
@@ -36,19 +26,41 @@ use exface\Core\Exceptions\RuntimeException;
  * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
  * Both values must be of comparable types: e.g. numbers or dates.
  * 
- * @method ComparatorsDataType IN(\exface\Core\CommonLogic\Workbench $workbench)
- * @method ComparatorsDataType NOT_IN(\exface\Core\CommonLogic\Workbench $workbench)
+ * ## List comparators
+ * 
+ * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
+ * value equals at least on of the values in the list within the right value. The list on the
+ * right side must consist of numbers or strings separated by commas or the attribute's value
+ * list delimiter if filtering over an attribute. The right side can also be another type of
+ * expression (e.g. a formula or widget link), that yields such a list.
+ * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
+ * list within the right value. The list on the right side must consist of numbers or strings separated 
+ * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+ * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+ * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
+ * one element, that is present in both lists.
+ * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
+ * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list 
+ * are in the right list too
+ * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
+ * the right list.
+ * 
  * @method ComparatorsDataType IS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
- * @method ComparatorsDataType MATCH(\exface\Core\CommonLogic\Workbench $workbench)
- * @method ComparatorsDataType NOT_MATCH(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LESS_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType GREATER_THAN_OR_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType BETWEEN(\exface\Core\CommonLogic\Workbench $workbench)
+ * 
+ * @method ComparatorsDataType IN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType NOT_IN(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_INTERSECTS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_NOT_INTERSECTS(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
+ * @method ComparatorsDataType LIST_NOT_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
@@ -70,14 +82,24 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const NOT_IN = '![';
     
     /**
-     * @const MATCH compares two lists with each other. Becomes true when there is at least one element in both lists.
+     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when there is at least one element in both lists.
      */
-    const MATCH = '][';
+    const LIST_INTERSECTS = '][';
     
     /**
-     * @const NOT_MATCH the inverse of `][` . Becomes true when there is no element, that is part of both lists.
+     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when there is no element, that is part of both lists.
      */
-    const NOT_MATCH = '!][';
+    const LIST_NOT_INTERSECTS = '!][';
+    
+    /**
+     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are in the right list too.
+     */
+    const LIST_SUBSET = '[[';
+    
+    /**
+     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT in the right list.
+     */
+    const LIST_NOT_SUBSET = '![[';
     
     /**
      * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
@@ -164,7 +186,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::EQUALS_NOT:
             case self::IS_NOT:
             case self::NOT_IN:
-            case self::NOT_MATCH:
+            case self::LIST_NOT_INTERSECTS:
+            case self::LIST_NOT_SUBSET:
                 return true;
         }
         return false;
@@ -216,8 +239,10 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::IS_NOT: $inv = self::IS; break;
             case self::LESS_THAN: $inv = self::GREATER_THAN_OR_EQUALS; break;
             case self::LESS_THAN_OR_EQUALS: $inv = self::GREATER_THAN; break;
-            case self::MATCH: $inv = self::NOT_MATCH; break;
-            case self::NOT_MATCH: $inv = self::MATCH; break;
+            case self::LIST_INTERSECTS: $inv = self::LIST_NOT_INTERSECTS; break;
+            case self::LIST_NOT_INTERSECTS: $inv = self::LIST_INTERSECTS; break;
+            case self::LIST_SUBSET: $inv = self::LIST_NOT_SUBSET; break;
+            case self::LIST_NOT_SUBSET: $inv = self::LIST_SUBSET; break;
             default:
                 throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
         }
