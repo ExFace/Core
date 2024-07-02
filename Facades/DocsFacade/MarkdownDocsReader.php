@@ -23,6 +23,7 @@ class MarkdownDocsReader extends MarkdownReader
         if (strpos($urlPath, '?') !== false) {
             $query = StringDataType::substringAfter($urlPath, '?');
             $urlPath = StringDataType::substringBefore($urlPath, '?');
+            $filePath = $urlPath;
         }
         
         if ($urlPath === '' || $urlPath === '/' || $urlPath === 'index.md') {
@@ -32,7 +33,7 @@ class MarkdownDocsReader extends MarkdownReader
             $filePath = $indexPath;
         } 
         
-        if (isset($query)) {
+        if (isset($query) && substr($query, 0, 1) === 'q') {
             $search = $this->buildSearchResult($query);
             $searchPath = $this->workbench->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'search.md';
             file_put_contents($searchPath, $search);
