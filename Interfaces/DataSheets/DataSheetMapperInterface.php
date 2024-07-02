@@ -120,4 +120,10 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @return DataSheetMapperInterface
      */
     public function setRefreshDataAfterMapping(bool $trueOrFalse) : DataSheetMapperInterface;
+    
+    /**
+     *
+     * @return DataCheckInterface[]
+     */
+    public function getFromDataChecks() : array;
 }

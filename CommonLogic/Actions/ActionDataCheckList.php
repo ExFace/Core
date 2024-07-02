@@ -14,7 +14,6 @@ use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
  *        
  * @method DataCheckInterface get()
  * @method DataCheckInterface getFirst()
- * @method DataCheckInterface[] getAll()
  * @method DataCheckInterface|DataCheckInterface[] getIterator()
  *        
  */
@@ -63,5 +62,22 @@ class ActionDataCheckList extends EntityList implements ActionDataCheckListInter
     public function isDisabled() : bool
     {
         return $this->disabled;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\EntityList::getAll()
+     * @return DataCheckInterface[]
+     */
+    public function getAll(bool $includeInputMapperCheks = true)
+    {
+        $result = parent::getAll();
+        if ($includeInputMapperCheks === true) {
+            foreach ($this->getAction()->getInputMappers() as $inputMapper) {
+                $result = array_merge($result, $inputMapper->getFromDataChecks());
+            }
+        }
+        return $result;
     }
 }
