@@ -23,7 +23,7 @@ class MarkdownDocsReader extends MarkdownReader
         if (strpos($urlPath, '?') !== false) {
             $query = StringDataType::substringAfter($urlPath, '?');
             $urlPath = StringDataType::substringBefore($urlPath, '?');
-            $filePath = $urlPath;
+            $filePath = StringDataType::substringBefore($filePath, '?');
         }
         
         if ($urlPath === '' || $urlPath === '/' || $urlPath === 'index.md') {
