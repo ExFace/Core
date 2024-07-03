@@ -685,6 +685,23 @@
 					}
 				}
 				switch (sComparator) {
+	                case '=':
+	                case '!=':
+	                    bResult = function(){
+							var sR = (mRight || '').toString(); 
+							var sL = (mLeft || '').toString(); 
+							if (sR === '' && sL !== '') {
+								return false;
+							}
+							if (sR !== '' && sL === '') {
+								return false;
+							}
+							return (new RegExp(sR, 'i')).test(sL); 
+						}();
+						if (sComparator === '!=') {
+							bResult = ! bResult;
+						}
+	                    break;
 	                case '==':
 	                case '!==':
 	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
@@ -756,21 +773,28 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '=':
-	                case '!=':
-	                    bResult = function(){
-							var sR = (mRight || '').toString(); 
-							var sL = (mLeft || '').toString(); 
-							if (sR === '' && sL !== '') {
-								return false;
-							}
-							if (sR !== '' && sL === '') {
-								return false;
-							}
-							return (new RegExp(sR, 'i')).test(sL); 
-						}();
-						if (sComparator === '!=') {
-							bResult = ! bResult;
+	                case '[==':
+	                case '[!==':
+	                case '[<':
+	                case '[<=':
+	                case '[>':
+	                case '[>=':
+	                case '[=':
+	                case '[!=':
+						console.log(mLeft, sComparator, mRight);
+						if (mLeft === '' || mLeft === null || mLeft === undefined) {
+							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
+						} else {
+							bResult = function() {
+			                    var aLeftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                    var iLeftCnt = aLeftValues.length;
+			                    for (var i = 0; i < iLeftCnt; i++) {
+									if (false === exfTools.data.compareValues(aLeftValues[i], mRight, sComparator.substring(1), sMultiValDelim)) {
+										return false;
+									}
+								}
+								return true;
+							}();
 						}
 	                    break;
 	                default:
