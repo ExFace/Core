@@ -160,58 +160,37 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      */
     const LIST_NOT_SUBSET = '![[';
     
-    /**
-     * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
-     * If the left value is a string, becomes TRUE if it contains the right value. Case insensitive
-     * for strings.
-     */
     const LIST_EACH_IS = '[=';
     
-    /**
-     *
-     * @const IS_NOT yields TRUE if `IS` would result in FALSE
-     */
     const LIST_EACH_IS_NOT = '[!=';
     
-    /**
-     * @const EQUALS compares two single values of the same type. Normalizes the values before comparison
-     * though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020.
-     */
     const LIST_EACH_EQUALS = '[==';
     
-    /**
-     *
-     * @const EQUALS_NOT the opposite of `EQUALS`.
-     */
     const LIST_EACH_EQUALS_NOT = '[!==';
     
-    /**
-     *
-     * @const LESS_THAN yields TRUE if the left value is less than the right one. Both values must be of
-     * comparable types: e.g. numbers or dates.
-     */
     const LIST_EACH_LESS_THAN = '[<';
     
-    /**
-     *
-     * @const LESS_THAN_OR_EQUALS yields TRUE if the left value is less than or equal to the right one.
-     * Both values must be of comparable types: e.g. numbers or dates.
-     */
     const LIST_EACH_LESS_THAN_OR_EQUALS = '[<=';
     
-    /**
-     *
-     * @const GREATER_THAN yields TRUE if the left value is greater than the right one. Both values must be of
-     * comparable types: e.g. numbers or dates.
-     */
     const LIST_EACH_GREATER_THAN = '[>';
     
-    /**
-     *
-     * @const GREATER_THAN_OR_EQUALS yields TRUE if the left value is greater than or equal to the right one.
-     * Both values must be of comparable types: e.g. numbers or dates.
-     */
     const LIST_EACH_GREATER_THAN_OR_EQUALS = '[>=';
+    
+    const LIST_ANY_IS = ']=';
+    
+    const LIST_ANY_IS_NOT = ']!=';
+    
+    const LIST_ANY_EQUALS = ']==';
+    
+    const LIST_ANY_EQUALS_NOT = ']!==';
+    
+    const LIST_ANY_LESS_THAN = ']<';
+    
+    const LIST_ANY_LESS_THAN_OR_EQUALS = ']<=';
+    
+    const LIST_ANY_GREATER_THAN = ']>';
+    
+    const LIST_ANY_GREATER_THAN_OR_EQUALS = ']>=';
     
     
     /**
@@ -311,6 +290,15 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::LIST_EACH_IS_NOT: $inv = self::LIST_EACH_IS; break;
             case self::LIST_EACH_LESS_THAN: $inv = self::LIST_EACH_LESS_THAN_OR_EQUALS; break;
             case self::LIST_EACH_LESS_THAN_OR_EQUALS: $inv = self::LIST_EACH_LESS_THAN; break;
+            
+            case self::LIST_ANY_EQUALS: $inv = self::LIST_ANY_EQUALS_NOT; break;
+            case self::LIST_ANY_EQUALS_NOT: $inv = self::LIST_ANY_EQUALS; break;
+            case self::LIST_ANY_GREATER_THAN: $inv = self::LIST_ANY_GREATER_THAN_OR_EQUALS; break;
+            case self::LIST_ANY_GREATER_THAN_OR_EQUALS: $inv = self::LIST_ANY_GREATER_THAN; break;
+            case self::LIST_ANY_IS: $inv = self::LIST_ANY_IS_NOT; break;
+            case self::LIST_ANY_IS_NOT: $inv = self::LIST_ANY_IS; break;
+            case self::LIST_ANY_LESS_THAN: $inv = self::LIST_ANY_LESS_THAN_OR_EQUALS; break;
+            case self::LIST_ANY_LESS_THAN_OR_EQUALS: $inv = self::LIST_ANY_LESS_THAN; break;
                 
             default:
                 throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
@@ -324,17 +312,22 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $comparator
      * @return string|NULL
      */
-    public static function convertToListComparator(string $comparator) : ?string
+    public static function convertToListComparator(string $comparator, bool $trueIfAllListItemsMatch = false) : ?string
     {
         if (static::isListComparator($comparator, 'left')) {
             return $comparator;
         }
         switch ($comparator) {
-            case self::IN: $result = self::LIST_SUBSET; break;
-            case self::NOT_IN: $result = self::LIST_NOT_SUBSET; break;
+            case self::IN : 
+                $result = $trueIfAllListItemsMatch ? self::LIST_SUBSET : self::LIST_INTERSECTS; 
+                break;
+            case self::NOT_IN: 
+                $result = $trueIfAllListItemsMatch ? self::LIST_NOT_SUBSET : self::LIST_NOT_INTERSECTS; 
+                break;
             case self::BETWEEN: $result = null; break;
             default:
-                $result = '[' . $comparator;
+                $result = ($trueIfAllListItemsMatch ? '[' : ']') . $comparator;
+                break;
         }
         return $result;
     }
@@ -371,6 +364,14 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case $comparator === self::LIST_EACH_IS_NOT && $left === true:
             case $comparator === self::LIST_EACH_LESS_THAN && $left === true:
             case $comparator === self::LIST_EACH_LESS_THAN_OR_EQUALS && $left === true:
+            case $comparator === self::LIST_ANY_EQUALS && $left === true:
+            case $comparator === self::LIST_ANY_EQUALS_NOT && $left === true:
+            case $comparator === self::LIST_ANY_GREATER_THAN && $left === true:
+            case $comparator === self::LIST_ANY_GREATER_THAN_OR_EQUALS && $left === true:
+            case $comparator === self::LIST_ANY_IS && $left === true:
+            case $comparator === self::LIST_ANY_IS_NOT && $left === true:
+            case $comparator === self::LIST_ANY_LESS_THAN && $left === true:
+            case $comparator === self::LIST_ANY_LESS_THAN_OR_EQUALS && $left === true:
                 $result = true;
                 break;
             case $comparator === self::IN && $right === true:

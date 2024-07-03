@@ -825,7 +825,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             // Multi-select data widget can only handle list-comparators properly as their
             // value is mostly a list. 
             if ($dataMultiSelect === true) {
-                $comp = ComparatorDataType::convertToListComparator($comp);
+                $comp = ComparatorDataType::convertToListComparator($comp, false);
                 if ($comp === null) {
                     return null;
                 }
