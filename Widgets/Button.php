@@ -824,22 +824,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             
             // Multi-select data widget can only handle list-comparators properly as their
             // value is mostly a list. 
-            // IDEA actually, comparing against a list would meed to compare with every value
-            // in that list. Maybe we could add list-compatible comparators like `[=`, `[<`, etc.?
-            // For now, just do not add conditional properties if they contain incompatible
-            // comparators
             if ($dataMultiSelect === true) {
-                switch ($comp) {
-                    case ComparatorDataType::IS:
-                    case ComparatorDataType::EQUALS:
-                        $comp = ComparatorDataType::LIST_SUBSET;
-                        break;
-                    case ComparatorDataType::IS_NOT:
-                    case ComparatorDataType::EQUALS_NOT:
-                        $comp = ComparatorDataType::LIST_NOT_SUBSET;
-                        break;
-                    default:
-                        return null;
+                $comp = ComparatorDataType::convertToListComparator($comp);
+                if ($comp === null) {
+                    return null;
                 }
             } 
             

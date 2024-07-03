@@ -8,7 +8,7 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * Logical comparison operators: `=`, `==`, `<`, `>`, etc.
  * 
- * ## Single value comparators
+ * ## Scalar (single value) comparators
  * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
  * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
@@ -45,6 +45,10 @@ use exface\Core\Exceptions\RuntimeException;
  * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
  * the right list.
  * 
+ * ## Range comparators
+ * 
+ * - `..` - range between two values - e.g. `1 .. 5`
+ * 
  * @method ComparatorsDataType IS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
@@ -68,38 +72,6 @@ use exface\Core\Exceptions\RuntimeException;
 class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
 {
     use EnumStaticDataTypeTrait;
-    
-    /**
-     * @const IN compares to each vaule in a list via EQUALS. Becomes true if the left
-     * value equals at leas on of the values in the list within the right value.
-     */
-    const IN = '[';
-    
-    /**
-     * @const NOT_IN the inverse von `[` . Becomes true if the left value equals none of the values in the 
-     * list within the right value.
-     */
-    const NOT_IN = '![';
-    
-    /**
-     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when there is at least one element in both lists.
-     */
-    const LIST_INTERSECTS = '][';
-    
-    /**
-     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when there is no element, that is part of both lists.
-     */
-    const LIST_NOT_INTERSECTS = '!][';
-    
-    /**
-     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are in the right list too.
-     */
-    const LIST_SUBSET = '[[';
-    
-    /**
-     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT in the right list.
-     */
-    const LIST_NOT_SUBSET = '![[';
     
     /**
      * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
@@ -155,6 +127,92 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const GREATER_THAN_OR_EQUALS = '>=';
     
     const BETWEEN = '..';
+    
+    /**
+     * @const IN compares to each vaule in a list via EQUALS. Becomes true if the left
+     * value equals at leas on of the values in the list within the right value.
+     */
+    const IN = '[';
+    
+    /**
+     * @const NOT_IN the inverse von `[` . Becomes true if the left value equals none of the values in the
+     * list within the right value.
+     */
+    const NOT_IN = '![';
+    
+    /**
+     * @const LIST_INTERSECTS compares two lists with each other. Becomes true when there is at least one element in both lists.
+     */
+    const LIST_INTERSECTS = '][';
+    
+    /**
+     * @const LIST_NOT_INTERSECTS the inverse of `][`. Becomes true when there is no element, that is part of both lists.
+     */
+    const LIST_NOT_INTERSECTS = '!][';
+    
+    /**
+     * @const LIST_SUBSET compares two lists with each other. Becomes true when all elements of the left list are in the right list too.
+     */
+    const LIST_SUBSET = '[[';
+    
+    /**
+     * @const LIST_NOT_SUBSET the inverse of `[[`. Becomes true when at least one element of the left list is NOT in the right list.
+     */
+    const LIST_NOT_SUBSET = '![[';
+    
+    /**
+     * @const IS universal comparator similar to SQL's `LIKE`. Can compare different data types.
+     * If the left value is a string, becomes TRUE if it contains the right value. Case insensitive
+     * for strings.
+     */
+    const LIST_EACH_IS = '[=';
+    
+    /**
+     *
+     * @const IS_NOT yields TRUE if `IS` would result in FALSE
+     */
+    const LIST_EACH_IS_NOT = '[!=';
+    
+    /**
+     * @const EQUALS compares two single values of the same type. Normalizes the values before comparison
+     * though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020.
+     */
+    const LIST_EACH_EQUALS = '[==';
+    
+    /**
+     *
+     * @const EQUALS_NOT the opposite of `EQUALS`.
+     */
+    const LIST_EACH_EQUALS_NOT = '[!==';
+    
+    /**
+     *
+     * @const LESS_THAN yields TRUE if the left value is less than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     */
+    const LIST_EACH_LESS_THAN = '[<';
+    
+    /**
+     *
+     * @const LESS_THAN_OR_EQUALS yields TRUE if the left value is less than or equal to the right one.
+     * Both values must be of comparable types: e.g. numbers or dates.
+     */
+    const LIST_EACH_LESS_THAN_OR_EQUALS = '[<=';
+    
+    /**
+     *
+     * @const GREATER_THAN yields TRUE if the left value is greater than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     */
+    const LIST_EACH_GREATER_THAN = '[>';
+    
+    /**
+     *
+     * @const GREATER_THAN_OR_EQUALS yields TRUE if the left value is greater than or equal to the right one.
+     * Both values must be of comparable types: e.g. numbers or dates.
+     */
+    const LIST_EACH_GREATER_THAN_OR_EQUALS = '[>=';
+    
     
     /**
      * 
@@ -233,21 +291,103 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::EQUALS_NOT: $inv = self::EQUALS; break;
             case self::GREATER_THAN: $inv = self::LESS_THAN_OR_EQUALS; break;
             case self::GREATER_THAN_OR_EQUALS: $inv = self::LESS_THAN; break;
-            case self::IN: $inv = self::NOT_IN; break;
-            case self::NOT_IN: $inv = self::IN; break;
             case self::IS: $inv = self::IS_NOT; break;
             case self::IS_NOT: $inv = self::IS; break;
             case self::LESS_THAN: $inv = self::GREATER_THAN_OR_EQUALS; break;
             case self::LESS_THAN_OR_EQUALS: $inv = self::GREATER_THAN; break;
+            
+            case self::IN: $inv = self::NOT_IN; break;
+            case self::NOT_IN: $inv = self::IN; break;
             case self::LIST_INTERSECTS: $inv = self::LIST_NOT_INTERSECTS; break;
             case self::LIST_NOT_INTERSECTS: $inv = self::LIST_INTERSECTS; break;
             case self::LIST_SUBSET: $inv = self::LIST_NOT_SUBSET; break;
             case self::LIST_NOT_SUBSET: $inv = self::LIST_SUBSET; break;
+            
+            case self::LIST_EACH_EQUALS: $inv = self::LIST_EACH_EQUALS_NOT; break;
+            case self::LIST_EACH_EQUALS_NOT: $inv = self::LIST_EACH_EQUALS; break;
+            case self::LIST_EACH_GREATER_THAN: $inv = self::LIST_EACH_GREATER_THAN_OR_EQUALS; break;
+            case self::LIST_EACH_GREATER_THAN_OR_EQUALS: $inv = self::LIST_EACH_GREATER_THAN; break;
+            case self::LIST_EACH_IS: $inv = self::LIST_EACH_IS_NOT; break;
+            case self::LIST_EACH_IS_NOT: $inv = self::LIST_EACH_IS; break;
+            case self::LIST_EACH_LESS_THAN: $inv = self::LIST_EACH_LESS_THAN_OR_EQUALS; break;
+            case self::LIST_EACH_LESS_THAN_OR_EQUALS: $inv = self::LIST_EACH_LESS_THAN; break;
+                
             default:
                 throw new RuntimeException('Cannot invert comparator "' . $cmp . '"');
         }
         
         return $asString ? $inv : self::fromValue($comparatorOrString->getWorkbench(), $inv);
+    }
+    
+    /**
+     * 
+     * @param string $comparator
+     * @return string|NULL
+     */
+    public static function convertToListComparator(string $comparator) : ?string
+    {
+        if (static::isListComparator($comparator, 'left')) {
+            return $comparator;
+        }
+        switch ($comparator) {
+            case self::IN: $result = self::LIST_SUBSET; break;
+            case self::NOT_IN: $result = self::LIST_NOT_SUBSET; break;
+            case self::BETWEEN: $result = null; break;
+            default:
+                $result = '[' . $comparator;
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param string $comparator
+     * @param string $side
+     * @return bool
+     */
+    public static function isListComparator(string $comparator, string $side = null) : bool
+    {
+        switch ($side) {
+            case 'left':
+                $left = true;
+                $right = false;
+                break;
+            case 'right':
+                $left = false;
+                $right = true;
+                break;
+            case 'both':
+            default:
+                $left = true;
+                $right = true;
+                break;
+        }
+        switch (true) {
+            case $comparator === self::LIST_EACH_EQUALS && $left === true:
+            case $comparator === self::LIST_EACH_EQUALS_NOT && $left === true:
+            case $comparator === self::LIST_EACH_GREATER_THAN && $left === true:
+            case $comparator === self::LIST_EACH_GREATER_THAN_OR_EQUALS && $left === true:
+            case $comparator === self::LIST_EACH_IS && $left === true:
+            case $comparator === self::LIST_EACH_IS_NOT && $left === true:
+            case $comparator === self::LIST_EACH_LESS_THAN && $left === true:
+            case $comparator === self::LIST_EACH_LESS_THAN_OR_EQUALS && $left === true:
+                $result = true;
+                break;
+            case $comparator === self::IN && $right === true:
+            case $comparator === self::NOT_IN && $right === true:
+                $result = true;
+                break;
+            case $comparator === self::LIST_SUBSET:
+            case $comparator === self::LIST_NOT_SUBSET:
+            case $comparator === self::LIST_INTERSECTS:
+            case $comparator === self::LIST_NOT_INTERSECTS:
+                $result = true;
+                break;
+            default:
+                $result = false;
+                break;
+        }
+        return $result;
     }
 }
 ?>
