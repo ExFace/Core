@@ -685,8 +685,8 @@
 					}
 				}
 				switch (sComparator) {
-	                case '=':
-	                case '!=':
+	                case '=': 		// ComparatorDataType::IS
+	                case '!=': 		// ComparatorDataType::IS_NOT
 	                    bResult = function(){
 							var sR = (mRight || '').toString(); 
 							var sL = (mLeft || '').toString(); 
@@ -702,45 +702,27 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '==':
-	                case '!==':
+	                case '==': 		// ComparatorDataType::EQUALS
+	                case '!==': 	// ComparatorDataType::EQUALS_NOT
 	                	bResult = (mLeft === null ? '' : mLeft.toString()) == (mRight === null ? '' : mRight.toString());
 	                    if (sComparator === '!==') {
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '<':
+	                case '<': 		// ComparatorDataType::LESS_THAN
 	                	bResult = mLeft < mRight;
 	                	break;
-	                case '<=':
+	                case '<=': 		// ComparatorDataType::LESS_THAN_OR_EQUALS
 	                	bResult = mLeft <= mRight;
 	                	break;
-	                case '>':
+	                case '>': 		// ComparatorDataType::GREATER_THAN
 	                	bResult = mLeft > mRight;
 	                	break;
-	                case '>=':
+	                case '>=': 		// ComparatorDataType::GREATER_THAN_OR_EQUALS
 	                	bResult = mLeft >= mRight;
 	                	break;
-					case '[[':
-	                case '![[':
-	                    bResult = function() {
-			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
-							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
-			                for (var i = 0; i < rightValues.length; i++) {
-								for (var j = 0; j < leftValues.length; j++) {
-				                    if (rightValues[i].trim().toLowerCase() !== leftValues[j].trim().toLowerCase()) {
-				                        return false;
-				                    }
-								}
-			                }
-			                return true;
-			            }();
-						if (sComparator === '![[') {
-							bResult = ! bResult;
-						}
-	                    break;
-	                case '[':
-	                case '![':
+					case '[':		// ComparatorDataType::IN
+	                case '![':		// ComparatorDataType::NOT_IN
 	                    bResult = function() {
 			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
 			                var sLeftVal = (mLeft || '').toString().toLowerCase();
@@ -755,8 +737,8 @@
 							bResult = ! bResult;
 						}
 	                    break;
-					case '][':
-	                case '!][':
+					case '][': 		// ComparatorDataType::LIST_INTERSECTS
+	                case '!][':		// ComparatorDataType::LIST_NOT_INTERSECTS
 	                    bResult = function() {
 			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
 							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
@@ -773,27 +755,69 @@
 							bResult = ! bResult;
 						}
 	                    break;
-	                case '[==':
-	                case '[!==':
-	                case '[<':
-	                case '[<=':
-	                case '[>':
-	                case '[>=':
-	                case '[=':
-	                case '[!=':
-						console.log(mLeft, sComparator, mRight);
+	                case '[[': 		// ComparatorDataType::LIST_SUBSET
+	                case '![[': 	// ComparatorDataType::LIST_NOT_SUBSET
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+							var leftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+								for (var j = 0; j < leftValues.length; j++) {
+				                    if (rightValues[i].trim().toLowerCase() !== leftValues[j].trim().toLowerCase()) {
+				                        return false;
+				                    }
+								}
+			                }
+			                return true;
+			            }();
+						if (sComparator === '![[') {
+							bResult = ! bResult;
+						}
+	                    break;
+	                case '[==': 	// ComparatorDataType::LIST_EACH_EQUALS
+	                case '[!==': 	// ComparatorDataType::LIST_EACH_EQUALS_NOT
+	                case '[<': 		// ComparatorDataType::LIST_EACH_LESS_THAN
+	                case '[<=': 	// ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
+	                case '[>': 		// ComparatorDataType::LIST_EACH_GREATER_THAN
+	                case '[>=': 	// ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
+	                case '[=': 		// ComparatorDataType::LIST_EACH_IS
+	                case '[!=': 	// ComparatorDataType::LIST_EACH_IS_NOT
 						if (mLeft === '' || mLeft === null || mLeft === undefined) {
 							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
 						} else {
 							bResult = function() {
 			                    var aLeftValues = ((mLeft || '').toString()).split(sMultiValDelim);
 			                    var iLeftCnt = aLeftValues.length;
+			                    var sScalarComp = sComparator.substring(1);
 			                    for (var i = 0; i < iLeftCnt; i++) {
-									if (false === exfTools.data.compareValues(aLeftValues[i], mRight, sComparator.substring(1), sMultiValDelim)) {
+									if (false === exfTools.data.compareValues(aLeftValues[i], mRight, sScalarComp, sMultiValDelim)) {
 										return false;
 									}
 								}
 								return true;
+							}();
+						}
+	                    break;
+	                case ']==': 	// ComparatorDataType::LIST_ANY_EQUALS
+	                case ']!==': 	// ComparatorDataType::LIST_ANY_EQUALS_NOT
+	                case ']<': 		// ComparatorDataType::LIST_ANY_LESS_THAN
+	                case ']<=': 	// ComparatorDataType::LIST_ANY_LESS_THAN_OR_EQUALS
+	                case ']>': 		// ComparatorDataType::LIST_ANY_GREATER_THAN
+	                case ']>=': 	// ComparatorDataType::LIST_ANY_GREATER_THAN_OR_EQUALS
+	                case ']=': 		// ComparatorDataType::LIST_ANY_IS
+	                case ']!=': 	// ComparatorDataType::LIST_ANY_IS_NOT
+						if (mLeft === '' || mLeft === null || mLeft === undefined) {
+							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
+						} else {
+							bResult = function() {
+			                    var aLeftValues = ((mLeft || '').toString()).split(sMultiValDelim);
+			                    var iLeftCnt = aLeftValues.length;
+			                    var sScalarComp = sComparator.substring(1);
+			                    for (var i = 0; i < iLeftCnt; i++) {
+									if (true === exfTools.data.compareValues(aLeftValues[i], mRight, sScalarComp, sMultiValDelim)) {
+										return true;
+									}
+								}
+								return false;
 							}();
 						}
 	                    break;
