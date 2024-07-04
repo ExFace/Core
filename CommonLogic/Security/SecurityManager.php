@@ -124,7 +124,7 @@ class SecurityManager implements SecurityManagerInterface
             $logbook->addLine('**Result:** Authenticated as `' . $authenticated->getUsername() . '`');
         }
         
-        $this->storeAuthenticatedToken($token);
+        $this->storeAuthenticatedToken($authenticated);
         $this->getWorkbench()->getLogger()->notice('Authenticated user "' . ($authenticated->isAnonymous() ? 'anonymous' : $authenticated->getUsername()) . '"', [], $logbook);
         
         $event = new OnAuthenticatedEvent($this->getWorkbench(), $authenticated, $authenticator, $logbook);
