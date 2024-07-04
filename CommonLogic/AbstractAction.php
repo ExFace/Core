@@ -59,6 +59,7 @@ use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\Factories\MetaObjectFactory;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -1124,16 +1125,22 @@ abstract class AbstractAction implements ActionInterface
 
         // Apply the input mappers
         if ($mapper = $this->getInputMapper($sheet->getMetaObject())){
-            $inputData = $mapper->map($sheet, null, $logbook);
-            $this->input_mappers_used[] = [$inputData, $mapper];
-            $diagram .= " InputMapping";
-            $diagram .= "\n\t subgraph InputMapping[input_mapper]";
-            $mapperDiagrams = $logbook->getCodeBlocksInSection();
-            if (count($mapperDiagrams) === 2) {
-                $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
-                $logbook->removeLine(null, array_key_last($mapperDiagrams));
+            try {
+                $inputData = $mapper->map($sheet, null, $logbook);
+                $this->input_mappers_used[] = [$inputData, $mapper];
+            } catch (\Throwable $e) {
+                throw new ActionInputError($this, $e->getMessage(), null, $e);
+            } finally {
+                $diagram .= " InputMapping";
+                $diagram .= "\n\t subgraph InputMapping[input_mapper]";
+                $mapperDiagrams = $logbook->getCodeBlocksInSection();
+                if (count($mapperDiagrams) === 2) {
+                    $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
+                    $logbook->removeLine(null, array_key_last($mapperDiagrams));
+                }
+                $diagram .= "\n\t end";
+                $logbook->addPlaceholderValue('input_diagram', $diagram);
             }
-            $diagram .= "\n\t end";
             $diagram .= "\n\t InputMapping -->|" . DataLogBook::buildMermaidTitleForData($inputData) . "|";
         } else {
             $inputData = $sheet;
@@ -1151,12 +1158,10 @@ abstract class AbstractAction implements ActionInterface
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
-        $diagram .= "\n\t InputValidation -->";
-        $inputData = $this->validateInputData($inputData);
-        $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
-        
-        $diagram .= " Action[\"Action `{$this->getName()}`\"]";
+        $diagram .= "\n\t InputValidation --> Action[\"Action `{$this->getName()}`\"]";
         $logbook->addPlaceholderValue('input_diagram', $diagram);
+        $inputData = $this->validateInputData($inputData, $logbook);
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
         
         return $inputData;
     }
@@ -1191,7 +1196,7 @@ abstract class AbstractAction implements ActionInterface
      * @throws ActionInputInvalidObjectError
      * @return DataSheetInterface
      */
-    protected function validateInputData(DataSheetInterface $sheet) : DataSheetInterface
+    protected function validateInputData(DataSheetInterface $sheet, LogBookInterface $logbook) : DataSheetInterface
     {
         // Check if, there are restrictions on input data.
         if ($sheet->countRows() < $this->getInputRowsMin()) {
@@ -1204,17 +1209,33 @@ abstract class AbstractAction implements ActionInterface
             throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
         }
         
+        $logbook->addLine('Performing input validation on data of ' . $sheet->getMetaObject()->__toString() . '.');
+        $logbook->addIndent(+1);
         if ($this->getInputChecks()->isDisabled() === false) {
+            if ($this->getInputChecks()->isEmpty()) {
+                $logbook->addLine('No `ìnput_invalid_if` defined for this action');
+            }
             foreach ($this->getInputChecks() as $check) {
                 if ($check->isApplicable($sheet)) {
                     try {
                         $check->check($sheet);
+                        $logbook->addLine('Check `' . $check->__toString() . '` passed');
                     } catch (DataCheckExceptionInterface $e) {
+                        $eHint = '';
+                        if (null !== $e->getBadData()) {
+                            $eHint = ' on ' . $e->getBadData()->countRows() . ' rows';
+                        }
+                        $logbook->addLine('Check `' . $check->__toString() . '` failed' . $eHint);
                         throw new ActionInputError($this, $e->getMessage(), null, $e);
                     }
+                } else {
+                    $logbook->addLine('Check `' . $check->__toString() . '` not applicable');
                 }
             }
+        } else {
+            $logbook->addLine('Property `input_invalid_if` is explicitly disabled');
         }
+        $logbook->addIndent(-1);
         
         return $sheet;
     }

@@ -206,7 +206,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($freshStamp !== $fromSheet->getFreshStamp()) {
-            $diagram .= "RefreshFromSheet[Read missing data]";
+            $diagram .= " RefreshFromSheet[Read missing data]";
             $diagram .= "\n\tRefreshFromSheet -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         }
         
@@ -281,6 +281,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         $lastMapCnt = 1;
         foreach ($this->getMappings() as $i => $map) {
             try {
+                
                 $toSheet = $map->map($fromSheet, $toSheet, $logbook);
                 $mapClass = get_class($map);
                 if ($lastClass === $mapClass) {
@@ -292,7 +293,11 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $lastMapCnt = 1;
                 }
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                if ($logbook !== null) { 
+                    $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                    $diagram .= " MapperError(Error)";
+                    $logbook->addCodeBlock($diagram, 'mermaid');
+                }
                 if ($e instanceof DataMappingExceptionInterface) {
                     throw $e;
                 }
