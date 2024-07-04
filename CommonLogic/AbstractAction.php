@@ -1139,8 +1139,6 @@ abstract class AbstractAction implements ActionInterface
             $inputData = $sheet;
             $logbook->addLine('No input mapper found for object ' . $sheet->getMetaObject()->__toString());
         }
-        $diagram .= " Action[Action `{$this->getName()}`]";
-        $logbook->addPlaceholderValue('input_diagram', $diagram);
         
         $logbook->addDataSheet('Final input data', $inputData);
         
@@ -1152,8 +1150,13 @@ abstract class AbstractAction implements ActionInterface
         
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
+        $diagram .= " InputValidation[Input Validation]";
+        $diagram .= "\n\t InputValidation -->";
         $inputData = $this->validateInputData($inputData);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
+        
+        $diagram .= " Action[\"Action `{$this->getName()}`\"]";
+        $logbook->addPlaceholderValue('input_diagram', $diagram);
         
         return $inputData;
     }
