@@ -362,4 +362,14 @@ class DataCheck implements DataCheckInterface
         $this->applyToSubsheetsRelationPathString = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Stringable::__toString()
+     */
+    public function __toString() : string
+    {
+        return $this->getConditionGroup()->__toString();
+    }
 }
