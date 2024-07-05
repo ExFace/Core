@@ -49,7 +49,7 @@ trait ExceptionTrait {
 
     public function __construct($message, $alias = null, $previous = null)
     {
-        parent::__construct($message, null, $previous);
+        parent::__construct($message, 0, $previous);
         $this->setAlias($alias);
     }
 
