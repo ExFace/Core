@@ -31,6 +31,8 @@ use exface\Core\DataTypes\DateTimeDataType;
  * 
  * - `metamodel://my.app.ObjectAlias/uid_of_file/filename.ext`
  * - `metamodel://my.app.ObjectAlias/uid_of_file/*`
+ * - `metamodel://my.app.ObjectAlias/uid_of_file` - note, if it is a local file, the UID of it is a
+ * file path itself - e.g. `metamodel://axenox.DevMan.ticket_file/data/App/Attachments/705/360_F.jpg` 
  * - `metamodel://my.app.ObjectAlias/folder_attribute/*`
  * 
  * Currently no real (nested) folder structure is supported - you can't travel up the folder tree, but
@@ -87,6 +89,17 @@ class DataSourceFileInfo implements FileInfoInterface
         if ($folder === null || $objectSelector === null) {
             throw new UnexpectedValueException('Cannot parse virtual file path "' . $path . '".');
         }
+        // For local files the UID is the relative path of the file:
+        // e.g. `metamodel://axenox.DevMan.ticket_file/data/DevMan/TicketFiles/705/360_F.jpg`
+        // The regex above treats the entire UID as a filename though. So, we double-check here 
+        // if the filename contains directory separators. If so, we leave only the filename
+        // as $filename and transfer the path to the $folder variable.
+        // Not sure, if this is a good idea for all file systems...
+        if ($filename !== null && strpos($filename, '/') !== false) {
+            $folder = FilePathDataType::join([$folder, FilePathDataType::findFolderPath($filename)]);
+            $filename = FilePathDataType::findFileName($filename, true);
+        }
+        
         $this->pathFromConstructor = $path;
         $this->filenameMask = $filename;
         $this->folder = $folder;
@@ -218,15 +231,19 @@ class DataSourceFileInfo implements FileInfoInterface
                 // NEVER load content right away because it might be large and will slow down getting
                 // file information a lot! It can always be loaded explicitly when `getContent()` is called
                 if ($attr === $contentAttr) {
-                    //continue;
+                    continue;
                 }
                 $this->fileData->getColumns()->addFromAttribute($attr);
             }
             
-            if (! $folderAttr->getRelationPath()->isEmpty() && $this->getMetaObject()->hasUidAttribute()) {
-                $folderAttr = $this->getMetaObject()->getUidAttribute();
+            // FIXME what if there is no folder attribute? Don't we need to filter over the UID
+            // or something in this case?
+            if ($folderAttr !== null) {
+                if (! $folderAttr->getRelationPath()->isEmpty() && $this->getMetaObject()->hasUidAttribute()) {
+                    $folderAttr = $this->getMetaObject()->getUidAttribute();
+                }
+                $this->fileData->getFilters()->addConditionFromAttribute($folderAttr, $this->getFolderName(), ComparatorDataType::EQUALS);
             }
-            $this->fileData->getFilters()->addConditionFromAttribute($folderAttr, $this->getFolderName(), ComparatorDataType::EQUALS);
             if ($this->hasFilenameMask() && $filenameAttr = $this->getFileBehavior()->getFilenameAttribute()) {
                 $this->fileData->getFilters()->addConditionFromAttribute($filenameAttr, $this->getFilenameMask(), ComparatorDataType::EQUALS);
             }

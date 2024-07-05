@@ -532,7 +532,8 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      */
     public function getFolderAttribute(): ?MetaAttributeInterface
     {
-        return $this->rebase($this->getFileBehavior()->getFolderAttribute());
+        $folderAttr = $this->getFileBehavior()->getFolderAttribute();
+        return $folderAttr === null ? $folderAttr : $this->rebase($folderAttr);
     }
     
     /**

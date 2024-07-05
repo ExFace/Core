@@ -148,7 +148,7 @@ class InMemoryFile implements FileInterface, FileInfoInterface
      */
     public function getExtension() : string
     {
-        return FilePathDataType::findExtension($this->path);
+        return FilePathDataType::findExtension($this->path) ?? '';
     }
     
     /**
