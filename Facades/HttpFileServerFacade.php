@@ -176,6 +176,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 break;
         }
         
+        // IDEA Only use cache for non-local files? What is the point of caching local files?
         if ($cacheInfo === null) {
             $this->setCache($fileInfo, $options);
         }

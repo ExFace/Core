@@ -320,8 +320,33 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     public function getFolderAttribute() : ?MetaAttributeInterface
     {
         if ($this->folderAttributeAlias === null) {
+            // There was a bit of a conflict here... Since the DataSourceFileInfo expects
+            // the UID to be sort of a folder, it seems to be important to set this up
+            // explicitly for any file, that is stored in the database or similar. If
+            // it was not done by the app designer, it caused trouble.
+            // On the other hand, using the UID as the older is simply wrong for files
+            // stored in real file systems. So how to detect this properly? The current
+            // solution uses an explicitly provided folder attribute always and if that
+            // is not provided AND the UID is not used in any other file attribute, than
+            // it is assumed to be the UID.
+            // TODO perhaps, we have missed something. Actually, it should not be a big
+            // problem to have files without folders. But there was no time to dig into
+            // all the exceptions happening in this case.
             if ($this->getObject()->hasUidAttribute()) {
-                return $this->getObject()->getUidAttribute();
+                $uidAttr = $this->getObject()->getUidAttribute();
+                $uidAlias = $uidAttr->getAliasWithRelationPath();
+                $otherAliases = [
+                    $this->folderAttributeAlias,
+                    $this->contentsAttributeAlias,
+                    $this->filenameAttributeAlias,
+                    $this->mimeTypeAttributeAlias,
+                    $this->timeCreatedAttributeAlias,
+                    $this->timeModifiedAttributeAlias
+                ];
+                if (! in_array($uidAlias, $otherAliases)){
+                    $this->folderAttributeAlias = $uidAlias;
+                }
+                return $uidAttr;
             }
         }
         return $this->folderAttributeAlias === null ? null : $this->getObject()->getAttribute($this->folderAttributeAlias);
