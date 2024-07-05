@@ -436,10 +436,10 @@ class FileBuilder extends AbstractQueryBuilder
                             foreach ($values as $val) {
                                 $val = trim($val);
                                 if ($isPathNameFilter) {
-                                    $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                    $uidPaths[] = Filemanager::pathNormalize($val);
                                 }
                                 if ($isFolderFilter) {
-                                    $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                                    $pathPatterns[] = Filemanager::pathNormalize($val);
                                 }
                             }
                         }
