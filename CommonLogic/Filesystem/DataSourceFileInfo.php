@@ -301,7 +301,7 @@ class DataSourceFileInfo implements FileInfoInterface
      */
     public function getExtension() : string
     {
-        return FilePathDataType::findExtension($this->getFilename());    
+        return FilePathDataType::findExtension($this->getFilename()) ?? '';    
     }
     
     /**
