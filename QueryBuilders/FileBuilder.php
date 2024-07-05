@@ -429,7 +429,7 @@ class FileBuilder extends AbstractQueryBuilder
                             foreach ($values as $val) {
                                 $addrPhsValues[$qpart->getAlias()] = trim($val);
                                 foreach ($pathPatterns as $i => $pattern) {
-                                    $patterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                                    $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                                 }
                             }
                         } else {
