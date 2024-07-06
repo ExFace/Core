@@ -2598,29 +2598,32 @@
         },
         {
             "CREATED_ON": "2020-05-20 16:17:53",
-            "MODIFIED_ON": "2020-05-20 16:17:53",
+            "MODIFIED_ON": "2024-07-06 13:00:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea9ab5728e19948abc0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Prevent delete of rows with certain ids",
-            "DESCRIPTION": "Place comma-separated list of ids in the `value` property. Replace `UID` with the id of your UID attribute",
+            "NAME": "Prevent delete of rows after a certain status",
+            "DESCRIPTION": "This preset assumes, that your object has an numeric attribute with the alias `Status`. The behavior will prevent deletion of any rows with a status greater than `50 Active`. Use the `error_text` to provide a user-friendly explanation.",
             "PROTOTYPE": "exface\/Core\/Behaviors\/UndeletableBehavior.php",
             "UXON": {
-                "condition_group": {
-                    "operator": "AND",
-                    "conditions": [
-                        {
-                            "expression": "UID",
-                            "comparator": "[",
-                            "value": ""
-                        }
-                    ]
-                }
+                "prevent_delete_if": [
+                    {
+                        "error_text": "Active items cannot be deleted",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "Status",
+                                "comparator": ">=",
+                                "value": 50
+                            }
+                        ]
+                    }
+                ]
             },
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
-            "THUMBNAIL": null
+            "THUMBNAIL": ""
         },
         {
             "CREATED_ON": "2020-05-20 16:21:59",
