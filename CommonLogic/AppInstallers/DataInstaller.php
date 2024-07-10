@@ -210,13 +210,15 @@ class DataInstaller extends AbstractAppInstaller
         foreach ($obj->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class) as $behavior) {
             $behavior->disable();
             // Make sure to explicitly disable fixed values on update-columns
-            if (null !== $attr = $behavior->getUpdatedOnAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
-                $col->setIgnoreFixedValues(true);
+            if ($behavior->hasUpdatedOnAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedOnAttribute())) {
+                    $col->setIgnoreFixedValues(true);
+                }
             }
-            if (null !== $attr = $behavior->getUpdatedByAttribute()) {
-                if ($col = $data_sheet->getColumns()->getByAttribute($attr))
-                $col->setIgnoreFixedValues(true);
+            if ($behavior->hasUpdatedByAttribute()) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($behavior->getUpdatedByAttribute())) {
+                    $col->setIgnoreFixedValues(true);
+                }
             }
         }
         

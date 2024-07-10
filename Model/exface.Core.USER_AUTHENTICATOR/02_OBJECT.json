@@ -81,7 +81,7 @@
     "rows": [
         {
             "CREATED_ON": "2020-04-24 10:53:19",
-            "MODIFIED_ON": "2022-03-07 08:37:47",
+            "MODIFIED_ON": "2024-07-06 12:56:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea8619c8d1453697940205857feb80",
@@ -96,7 +96,27 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "Dialog",
+                "width": 1,
+                "columns_in_grid": 1,
+                "height": "auto",
+                "maximized": false,
+                "widgets": [
+                    {
+                        "attribute_alias": "AUTHENTICATOR"
+                    },
+                    {
+                        "attribute_alias": "AUTHENTICATOR_USERNAME"
+                    },
+                    {
+                        "attribute_alias": "USER"
+                    },
+                    {
+                        "attribute_alias": "DISABLED_FLAG"
+                    }
+                ]
+            },
             "ALIAS": "USER_AUTHENTICATOR",
             "DATA_ADDRESS": "exf_user_authenticator"
         }

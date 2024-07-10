@@ -74,7 +74,7 @@
         },
         {
             "CREATED_ON": "2022-05-05 09:06:21",
-            "MODIFIED_ON": "2022-05-05 10:23:54",
+            "MODIFIED_ON": "2024-07-05 12:56:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ec947bde10227a947b025041000001",
@@ -82,11 +82,15 @@
             "CONFIG_UXON": {
                 "filename_attribute": "FILENAME",
                 "contents_attribute": "CONTENTS",
-                "mime_type_attribute": "MIMETYPE"
+                "mime_type_attribute": "MIMETYPE",
+                "file_size_attribute": "SIZE",
+                "time_created_attribute": "CREATED_ON",
+                "time_modified_attribute": "MODIFIED_ON",
+                "folder_attribute": "PARENT_FOLDER"
             },
             "OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "Identify as file",
+            "NAME": "Allow to handle rows as files",
             "DESCRIPTION": "",
             "DISABLED_FLAG": 0,
             "PRIORITY": null

@@ -81,9 +81,9 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2024-05-17 13:18:57",
+            "MODIFIED_ON": "2024-07-06 12:55:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -475,8 +475,12 @@
                                                 }
                                             },
                                             {
-                                                "action_alias": "exface.Core.DeleteObject",
+                                                "action_alias": "exface.core.ShowObjectEditDialog",
+                                                "bind_to_double_click": true
+                                            },
+                                            {
                                                 "caption": "=Translate('exface.Core', 'ACTION.GENERIC.REMOVE')",
+                                                "action_alias": "exface.Core.DeleteObject",
                                                 "icon": "minus"
                                             },
                                             {
@@ -484,8 +488,8 @@
                                                 "action_alias": "exface.Core.DisableUserAuthenticator"
                                             },
                                             {
-                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ENABLE')",
-                                                "action_alias": "exface.Core.EnableUserAuthenticator"
+                                                "action_alias": "exface.Core.EnableUserAuthenticator",
+                                                "caption": "=Translate('exface.Core', 'ACTION.GENERIC.ENABLE')"
                                             },
                                             {
                                                 "action_alias": "exface.Core.ResetUserAuthenticator"

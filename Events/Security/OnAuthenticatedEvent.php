@@ -5,6 +5,7 @@ use exface\Core\Events\AbstractEvent;
 use exface\Core\Interfaces\Security\AuthenticationProviderInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Event fired after a user was authenticated by the workbench security.
@@ -22,7 +23,9 @@ class OnAuthenticatedEvent extends AbstractEvent
     
     private $workbench = null;
     
-    public function __construct(WorkbenchInterface $workbench, AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null)
+    private $logbook = null;
+    
+    public function __construct(WorkbenchInterface $workbench, AuthenticationTokenInterface $token, AuthenticationProviderInterface $provider = null, LogBookInterface $logbook = null)
     {
         $this->workbench = $workbench;
         $this->authenticationProvider = $provider;
@@ -57,5 +60,14 @@ class OnAuthenticatedEvent extends AbstractEvent
     public function getWorkbench() : WorkbenchInterface
     {
         return $this->workbench;
+    }
+    
+    /**
+     * 
+     * @return LogBookInterface|NULL
+     */
+    public function getLogbook() : ?LogBookInterface
+    {
+        return $this->logbook;
     }
 }

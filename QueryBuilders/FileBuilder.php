@@ -21,6 +21,8 @@ use exface\Core\CommonLogic\DataQueries\FileWriteDataQuery;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\MimeTypeDataType;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -285,6 +287,17 @@ class FileBuilder extends AbstractQueryBuilder
     
     /**
      *
+     * @param string $addr
+     * @return bool
+     */
+    protected function isFolderPathAddress(string $addr) : bool
+    {
+        return $addr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_RELATIVE
+        || $addr === self::ATTR_ADDRESS_PREFIX_FOLDER . self::ATTR_ADDRESS_PATH_ABSOLUTE;
+    }
+    
+    /**
+     *
      * @param string $dataAddress
      * @return bool
      */
@@ -314,10 +327,10 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($qpart->getFilters() as $filter) {
             if ($this->isFilename($filter)) {
                 switch ($filter->getComparator()) {
-                    case EXF_COMPARATOR_EQUALS:
-                    case EXF_COMPARATOR_IS:
+                    case ComparatorDataType::EQUALS:
+                    case ComparatorDataType::IS:
                         $mask = preg_quote($filter->getCompareValue());
-                        if ($filter->getComparator() === EXF_COMPARATOR_EQUALS) {
+                        if ($filter->getComparator() === ComparatorDataType::EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
                         $values[] = $mask;
@@ -377,7 +390,9 @@ class FileBuilder extends AbstractQueryBuilder
         foreach ($this->getFilters()->getFilters() as $qpart) {
             $addrPhsValues = [];
             $uidPaths = [];
-            if (($isPathNameFilter = $qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) || in_array($qpart->getAlias(), $addrPhs)) {
+            $isPathNameFilter = $this->isFilePathAddress($qpart->getDataAddress());
+            $isFolderFilter = $this->isFolderPathAddress($qpart->getDataAddress());
+            if ($isPathNameFilter || $isFolderFilter || in_array($qpart->getAlias(), $addrPhs)) {
                 // Path filters need to be applied after reading too as there may be trouble with 
                 // files with the same name in different (sub-)folders mathing the folder pattern
                 if ($isPathNameFilter && $this->getAttribute($qpart->getAlias())) {
@@ -390,34 +405,42 @@ class FileBuilder extends AbstractQueryBuilder
                     }
                 }
                 switch ($qpart->getComparator()) {
-                    case EXF_COMPARATOR_IS:
-                    case EXF_COMPARATOR_EQUALS:
+                    case ComparatorDataType::IS:
+                    case ComparatorDataType::EQUALS:
                         //if attribute alias is a placeholder in the path patterns, replace it with the value
                         if (in_array($qpart->getAlias(), $addrPhs)) {                            
                             $addrPhsValues[$qpart->getAlias()] = $qpart->getCompareValue();
-                            $newPatterns = [];
-                            foreach ($pathPatterns as $pattern) {
-                                $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                            foreach ($pathPatterns as $i => $pattern) {
+                                $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                             }
-                            $pathPatterns = $newPatterns;
                         } else {
-                            $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            if ($isPathNameFilter) {
+                                $uidPaths[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            }
+                            if ($isFolderFilter) {
+                                $pathPatterns[] = Filemanager::pathNormalize($qpart->getCompareValue());
+                            }
                         }
                         break;
-                    case EXF_COMPARATOR_IN:
+                    case ComparatorDataType::IN:
                         $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
                         //if attribute alias is a placeholder in the path patterns, replace it with the values (therefore creating more pattern entries)
                         if (in_array($qpart->getAlias(), $addrPhs)) {
                             foreach ($values as $val) {
                                 $addrPhsValues[$qpart->getAlias()] = trim($val);
-                                foreach ($pathPatterns as $pattern) {
-                                    $newPatterns[] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
+                                foreach ($pathPatterns as $i => $pattern) {
+                                    $pathPatterns[$i] = Filemanager::pathNormalize(StringDataType::replacePlaceholders($pattern, $addrPhsValues, false));
                                 }
                             }
-                            $pathPatterns = $newPatterns;
                         } else {
                             foreach ($values as $val) {
-                                $uidPaths[] = Filemanager::pathNormalize(trim($val));
+                                $val = trim($val);
+                                if ($isPathNameFilter) {
+                                    $uidPaths[] = Filemanager::pathNormalize($val);
+                                }
+                                if ($isFolderFilter) {
+                                    $pathPatterns[] = Filemanager::pathNormalize($val);
+                                }
                             }
                         }
                         break;
@@ -425,6 +448,7 @@ class FileBuilder extends AbstractQueryBuilder
                         $qpart->setApplyAfterReading(true);
                         $query->setFullScanRequired(true);
                 }
+                
                 if ($oper === EXF_LOGICAL_AND) {
                     if (! empty($uidPatterns)) {
                         foreach ($uidPaths as $path) {
@@ -513,7 +537,26 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Cannot update files: only ' . count($contentArray) . ' of ' . count($pathArray) . ' files exist!');
                 }
                 foreach ($pathArray as $i => $path) {
-                    $query->addFileToSave($path, $contentArray[$i]);
+                    // Cannot save anything to an empty path. This is not a real error though
+                    // - it may happen if multiple rows are saved and some do not really need
+                    // a file to be created
+                    if ($path === null) {
+                        continue;
+                    }
+                    
+                    $content = $contentArray[$i];
+                    // See if empty content is feasable for the expected mime type!
+                    // E.g. empty text files are OK, but an empty jpeg cannot be correct.
+                    if (empty($content)) {
+                        $ext = FilePathDataType::findExtension($path);
+                        if ($ext) {
+                            $type = MimeTypeDataType::guessMimeTypeOfExtension($ext);
+                            if (MimeTypeDataType::isBinary($type)) {
+                                throw new QueryBuilderException('Cannot create empty file "' . $path . '" of type "' . $type . '" - files of this type may not be empty!');
+                            }
+                        }
+                    }
+                    $query->addFileToSave($path, $content);
                 }
                 break;
             case count($contentQparts) > 1:

@@ -33,6 +33,7 @@ use exface\Core\CommonLogic\DataSheets\Mappings\VariableToColumnMapping;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
 
 /**
@@ -179,7 +180,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      */
     public function map(DataSheetInterface $fromSheet, bool $readMissingColumns = null, LogBookInterface $logbook = null) : DataSheetInterface
     {
-        if (! $this->getFromMetaObject()->is($fromSheet->getMetaObject())){
+        if (! $fromSheet->getMetaObject()->is($this->getFromMetaObject())){
             throw new DataMapperRuntimeError($this, $fromSheet, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!', null, null, $logbook);
         }
         
@@ -205,7 +206,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         
         if ($freshStamp !== $fromSheet->getFreshStamp()) {
-            $diagram .= "RefreshFromSheet[Read missing data]";
+            $diagram .= " RefreshFromSheet[Read missing data]";
             $diagram .= "\n\tRefreshFromSheet -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         }
         
@@ -280,6 +281,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         $lastMapCnt = 1;
         foreach ($this->getMappings() as $i => $map) {
             try {
+                
                 $toSheet = $map->map($fromSheet, $toSheet, $logbook);
                 $mapClass = get_class($map);
                 if ($lastClass === $mapClass) {
@@ -291,7 +293,11 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $lastMapCnt = 1;
                 }
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                if ($logbook !== null) { 
+                    $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                    $diagram .= " MapperError(Error)";
+                    $logbook->addCodeBlock($diagram, 'mermaid');
+                }
                 if ($e instanceof DataMappingExceptionInterface) {
                     throw $e;
                 }
@@ -452,9 +458,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($logbook !== null) $logbook->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $data_sheet->getUidColumn()->getName(), 1);
                 
                 $uidCol = $data_sheet->getUidColumn();
+                $uidColName = $uidCol->getName();
                 foreach ($additionSheet->getColumns() as $addedCol) {
                     foreach ($additionSheet->getRows() as $row) {
-                        $uid = $row[$uidCol->getName()];
+                        $uid = $row[$uidColName];
                         $rowNo = $uidCol->findRowByValue($uid);
                         if ($uid === null || $rowNo === false) {
                             throw new DataMapperRuntimeError($this, $data_sheet, 'Cannot load additional data in preparation for mapping! Trying to read ' . $addedCol->getName(), null, null, $logbook);
@@ -1234,6 +1241,43 @@ class DataSheetMapper implements DataSheetMapperInterface
         foreach ($uxon as $prop){
             $this->addMapping(new VariableToColumnMapping($this, $prop));
         }
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getFromDataChecks()
+     */
+    public function getFromDataChecks() : array
+    {
+        $checks = [];
+        foreach ($this->getMappings() as $mapping) {
+            if ($mapping instanceof DataCheckMapping) {
+                $checks = array_merge($checks, $mapping->getFromDataChecks());
+            }
+        }
+        return $checks;
+    }
+    
+    /**
+     * Check from-data against these conditions before applying the mapper
+     *
+     * If any of these conditions are not met, the mapper will through an error. Each check may
+     * contain it's own error message to make the errors better understandable for the user.
+     *
+     * @uxon-property from_data_invalid_if
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
+     * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
+     *
+     * @param UxonObject $arrayOfDataChecks
+     * @return DataSheetMapper
+     */
+    protected function setFromDataInvalidIf(UxonObject $arrayOfDataChecks) : DataSheetMapper
+    {
+        $this->addMapping(new DataCheckMapping($this, new UxonObject([
+            'from_data_invalid_if' => $arrayOfDataChecks
+        ])));
         return $this;
     }
     

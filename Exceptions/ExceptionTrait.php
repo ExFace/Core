@@ -20,6 +20,7 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\DataTypes\LogLevelDataType;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * This trait contains a default implementation of ExceptionInterface to be used on-top
@@ -75,7 +76,7 @@ trait ExceptionTrait {
         // Create a new error message
         /* @var $tabs \exface\Core\Widgets\ErrorMessage */
         $debug_widget = WidgetFactory::create($page, 'ErrorMessage');
-        $debug_widget->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.MESSAGE'));
+        $debug_widget->setMetaObject(MetaObjectFactory::createFromString($page->getWorkbench(), 'exface.Core.MESSAGE'));
         
         $debug_widget = $this->createDebugWidget($debug_widget);
         
