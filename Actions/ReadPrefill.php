@@ -170,7 +170,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         // Therefor we should check again after we load the actual data in the prefill if the prefill ist actually allowed
         // by checking again against the checks of the trigger action.
         if ($mainSheet !== null && $mainSheet->hasUidColumn()) {
-            $this->validateInputData($mainSheet);
+            $this->validateInputData($mainSheet, $logBook);
         }
         
         if ($mainSheet === null) {

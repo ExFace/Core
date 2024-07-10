@@ -34,6 +34,8 @@ use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -761,12 +763,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $inputWidgetObject = $inputWidget->getMetaObject();
         $check = null;
         /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($action->getInputChecks() as $c) {
+        foreach ($action->getInputChecks()->getAll(true) as $c) {
             if ($c->isApplicableToObject($inputWidgetObject)) {
                 if ($check === null) {
                     $check = $c;
                 } else {
-                    return null;
+                    continue;
                 }
             }
         }
@@ -801,6 +803,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
             'operator' => $condGrp->getOperator()
         ]);
         
+        if ($dataWidget instanceof iSupportMultiSelect) {
+            $dataMultiSelect = $dataWidget->getMultiSelect();
+        } else {
+            $dataMultiSelect = false;
+        }
+        
         // The data widget will be able to supply required data if each condition compares
         // an existing column with a scalar value
         foreach ($condGrp->getConditions() as $cond) {
@@ -812,9 +820,20 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 $col->setHidden(true);
                 $dataWidget->addColumn($col);
             }
+            $comp = $cond->getComparator();
+            
+            // Multi-select data widget can only handle list-comparators properly as their
+            // value is mostly a list. 
+            if ($dataMultiSelect === true) {
+                $comp = ComparatorDataType::convertToListComparator($comp, false);
+                if ($comp === null) {
+                    return null;
+                }
+            } 
+            
             $uxon->appendToProperty('conditions', new UxonObject([
                 "value_left" => "=~input!" . $col->getDataColumnName(),
-                "comparator" => $cond->getComparator(),
+                "comparator" => $comp,
                 "value_right" => $cond->getRightExpression()->__toString()
             ]));
         }

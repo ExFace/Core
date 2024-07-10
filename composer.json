@@ -59,7 +59,8 @@
 		"gajus/dindent" : "^2.0",
 		"robthree/twofactorauth" : "^1.8",
 		"npm-asset/eruda" : "^2",
-		"justinrainbow/json-schema" : "^5.2"
+		"justinrainbow/json-schema" : "^5.2",
+		"composer/semver" : "^3"
 	},
 	"bin" : [
 		"Facades/ConsoleFacade/bin/action"

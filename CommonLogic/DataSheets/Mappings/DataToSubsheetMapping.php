@@ -12,6 +12,8 @@ use exface\Core\DataTypes\RowArrayDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataMappingConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\DataTypes\ArrayDataType;
 
 /**
  * Puts values of selected column in a subsheet, mapping a large flat data sheet ot a smaller one with subsheets in each row
@@ -70,7 +72,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  *      "to_sheet_key_columns": [
  *          "APP"
  *      ],
- *      "to_subsheet_mappings": [
+ *      "subsheet_mapper": [
  *          {
  *              "subsheet_relation_path": "PAGE_GROUP_PAGES",
  *              "subsheet_mapper": {
@@ -98,6 +100,10 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
     private $fromKeyColumns = [];
     
     private $toKeyColumns = [];
+    
+    private $toAggregatedMappingsUxon = null;
+    
+    private $toAggregatedMappings = null;
     
     /**
      * 
@@ -148,11 +154,13 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
                 $fromRowsByKey[$fromKeyStr]['to_key'] = $toKey;
             }
             
+            
             // Calculate the new rows for the to-sheet
             foreach ($fromRowsByKey as $arr) {
                 $toKey = $arr['to_key'];
                 $fromKey = $arr['from_key'];
                 $fromRows = $arr['rows'];
+                
                 $filter = RowArrayDataType::filter();
                 foreach ($toKey as $toKeyColName => $keyPart) {
                     $filter->addAnd($toKeyColName, $keyPart, ComparatorDataType::EQUALS);
@@ -160,6 +168,22 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
                 foreach (array_keys($filter->filter($toRowsUnique, true)) as $toRowIdx) {
                     $subsheet = $subsheetMapper->map($fromSheet->copy()->removeRows()->addRows($fromRows));
                     $toRowsUnique[$toRowIdx][$subsheetCol->getName()] = $subsheet->exportUxonObject();
+                    
+                    foreach (($this->getToAggregationsUxon() ?? []) as $uxon) {
+                        $aggrTo = $uxon->getProperty('to');
+                        if (! $aggrToCol = $toSheet->getColumns()->getByExpression($aggrTo)) {
+                            $aggrToCol = $toSheet->getColumns()->addFromExpression($aggrTo);
+                        }
+                        $aggrFrom = $uxon->getProperty('from');
+                        $aggrFromAttrAlias = DataAggregation::stripAggregator($aggrFrom);
+                        $aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $aggrFrom);
+                        $aggrFromCol = $fromSheet->getColumns()->getByExpression($aggrFromAttrAlias);
+                        if (! $aggrFromCol) {
+                            throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot find data to aggregate in from-sheet: "' . $aggrFrom . '"!');
+                        }
+                        $aggrFromVals = array_column($fromRows, $aggrFromCol->getName());
+                        $toRowsUnique[$toRowIdx][$aggrTo] = $aggrToCol->getDataType()->parse(ArrayDataType::aggregateValues($aggrFromVals, $aggregator));
+                    }
                 }
             }
             $toSheet->removeRows()->addRows($toRowsUnique);
@@ -296,5 +320,26 @@ class DataToSubsheetMapping extends AbstractDataSheetMapping
             $exprs = array_merge($exprs, $map->getRequiredExpressions($dataSheet));
         }
         return $exprs;
+    }
+    
+    protected function getToAggregationsUxon() : ?UxonObject
+    {
+        return $this->toAggregatedMappings;
+    }
+    
+    /**
+     * Sum up values of these from-columns instead of putting them into a subsheet
+     * 
+     * @uxon-property to_aggregations
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     * 
+     * @param UxonObject $arrayOfColToColMappings
+     * @return DataToSubsheetMapping
+     */
+    protected function setToAggregations(UxonObject $arrayOfColToColMappings) : DataToSubsheetMapping
+    {
+        $this->toAggregatedMappings = $arrayOfColToColMappings;
+        return $this;
     }
 }

@@ -11,6 +11,7 @@ use exface\Core\Widgets\Traits\iHaveColorScaleTrait;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Parts\Maps\Interfaces\ValueLabeledMapLayerInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * This trait adds color related properties to a map layer
@@ -83,12 +84,12 @@ trait ColoredLayerTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColorScale::isColorScaleRangeBased()
      */
-    public function isColorScaleRangeBased() : bool
+    public function isColorScaleRangeBased(DataTypeInterface $dataType = null) : bool
     {
         if (! $this->hasColor()) {
             return false;
         }
-        $dataType = $this->getColorColumn()->getDataType();
+        $dataType = $dataType ?? $this->getColorColumn()->getDataType();
         switch (true) {
             case $dataType instanceof NumberDataType:
             case $dataType instanceof DateDataType:

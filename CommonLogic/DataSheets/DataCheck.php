@@ -13,6 +13,7 @@ use exface\Core\Exceptions\DataSheets\DataCheckNotApplicableError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetExtractError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\MetaObjectFactory;
 
 /**
  * Standard implementation of DataCheckInterface
@@ -32,19 +33,26 @@ class DataCheck implements DataCheckInterface
     
     private $onlyObjectAlias = null;
     
+    private $onlyObject = null;
+    
     private $applyToSubsheetsRelationPathString = null;
     
     /**
      * 
      * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
+     * @param MetaObjectInterface $onlyForObject
      */
-    public function __construct(WorkbenchInterface $workbench, UxonObject $uxon)
+    public function __construct(WorkbenchInterface $workbench, UxonObject $uxon, MetaObjectInterface $onlyForObject = null)
     {
         $this->workbench = $workbench;
         $this->conditionGroupUxon = new UxonObject([
             'operator' => EXF_LOGICAL_AND
         ]);
+        if ($onlyForObject !== null) {
+            $this->onlyObject = $onlyForObject;
+            $this->onlyObjectAlias = $onlyForObject->getAliasWithNamespace();
+        }
         $this->importUxonObject($uxon);
     }
     
@@ -154,10 +162,7 @@ class DataCheck implements DataCheckInterface
      */
     public function isApplicable(DataSheetInterface $data) : bool
     {
-        if (null !== $object = $this->getOnlyForObject()) {
-            return $data->getMetaObject()->is($object);
-        }
-        return true;
+        return $this->isApplicableToObject($data->getMetaObject());
     }
     
     /**
@@ -167,8 +172,8 @@ class DataCheck implements DataCheckInterface
      */
     public function isApplicableToObject(MetaObjectInterface $object) : bool
     {
-        if (null !== $object = $this->getOnlyForObject()) {
-            return $object->is($object);
+        if (null !== $onlyForObject = $this->getOnlyForObject()) {
+            return $object->is($onlyForObject);
         }
         return true;
     }
@@ -245,10 +250,12 @@ class DataCheck implements DataCheckInterface
     
     protected function getOnlyForObject() : ?MetaObjectInterface
     {
-        if (null !== $alias = $this->getOnlyForObjectAlias()) {
-            return $this->getWorkbench()->model()->getObject($alias);
+        if ($this->onlyObject === null) {
+            if (null !== $alias = $this->getOnlyForObjectAlias()) {
+                $this->onlyObject = MetaObjectFactory::createFromString($this->getWorkbench(), $alias);
+            }
         }
-        return null;
+        return $this->onlyObject;
     }
     
     /**
@@ -268,6 +275,7 @@ class DataCheck implements DataCheckInterface
     protected function setOnlyForObject(string $value) : DataCheck
     {
         $this->onlyObjectAlias = $value;
+        $this->onlyObject = null;
         return $this;
     }
     
@@ -353,5 +361,15 @@ class DataCheck implements DataCheckInterface
     {
         $this->applyToSubsheetsRelationPathString = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \Stringable::__toString()
+     */
+    public function __toString() : string
+    {
+        return $this->getConditionGroup()->__toString();
     }
 }

@@ -21,6 +21,8 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 
 /**
  * Marks an object as attachment - a link between a document and a file
@@ -530,7 +532,8 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      */
     public function getFolderAttribute(): ?MetaAttributeInterface
     {
-        return $this->getFileBehavior()->getFolderAttribute();
+        $folderAttr = $this->getFileBehavior()->getFolderAttribute();
+        return $folderAttr === null ? $folderAttr : $this->rebase($folderAttr);
     }
     
     /**
@@ -618,6 +621,15 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
     
     /**
+     * Separate columns of the attachment and the actual file data for any attachments being saved
+     * 
+     * The attachment data (just the link to the file) must be saved first. After it has been
+     * saved, we can actually save the file itself. This is particularly important if the
+     * files are saved with folder paths, that contain information about the attachment: e.g.
+     * the UID of the object being attached to - which is often the case.
+     * 
+     * Once the attachment is saved, all its data becomes available and can be used to save
+     * the file. This is done in `onDataSave`.
      * 
      * @param DataSheetEventInterface $event
      */
@@ -640,6 +652,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
                 return;
             }
         }
+        
+        // Strip any file-related columns, that cannot be saved directly to the attachment
+        // object. They will be handled later
         $fileCols = [];
         $fileVals = [];
         $fileObj = $this->getFileObject();
@@ -728,6 +743,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
     
     /**
+     * Saves the file data once the attachment has been saved
      * 
      * @param DataSheetEventInterface $event
      * @throws BehaviorRuntimeError
@@ -745,6 +761,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         
         $ds = $event->getDataSheet();
         
+        // See if any file data was previously stripped from this attachment sheet (in `onBeforeDataSave`)
         $pending = null; 
         $pendingKey = null;
         foreach ($this->pendingSheets as $i => $p) {
@@ -754,15 +771,22 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
                 break;
             }
         }
+        // If no file data is waiting - stop here
         if ($pending === null) {
             return;
         }
         
         $this->inProgress = true;
         
+        // See if the relation to the file object (= the path to the file its data source)
+        // is already included in the attachment data. If not, we will need to read it here
+        // explicitly. This actually happens very often because paths often include UIDs,
+        // document numbers and other data from the object being attached to.
         $fileRel = $this->getFileRelation();
         $leftKeyCol = $ds->getColumns()->getByAttribute($fileRel->getLeftKeyAttribute());
         if (! $leftKeyCol) {
+            // However, we can only read additional data if our attachment data has UIDs on
+            // every row!
             if (! $ds->hasUidColumn(true)) {
                 throw new BehaviorRuntimeError($this, 'Cannot save files to related storage: cannot read relation key "' . $fileRel->getLeftKeyAttribute()->getAliasWithRelationPath() . '"!');
             }
@@ -771,7 +795,18 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
             $leftKeyCol = $attachmentSheet->getColumns()->addFromAttribute($fileRel->getLeftKeyAttribute());
             $attachmentSheet->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
             $attachmentSheet->dataRead();
+            // IMPORTANT: make sure, the freshly read data has the same row order, as the event
+            // data. You never know for sure, how a file storage will sort the results by default!
+            try {
+                $this->sortDataSheetByRowOrder($attachmentSheet, $ds->getUidColumn()->getValues());
+            } catch (\Throwable $e) {
+                throw new BehaviorRuntimeError($this, 'Cannot read required file attachment data to save the corresponding files', null, $e);
+            }
         } else {
+            // IDEA we actually do not need to save ALL the attachment data again here
+            // It would be better just to save the file-related data. It would be better
+            // to create a new sheet here and only take system columns and the $leftKeyCol
+            // here.
             $attachmentSheet = $ds;
         }
         
@@ -793,6 +828,33 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $this->inProgress = false;
         
         return;
+    }
+    
+    /**
+     * Sorts the rows of the given sheet in order of the provided UID values
+     * 
+     * @param DataSheetInterface $sheetToSort
+     * @param mixed[] $orderedRowUids
+     * @throws DataSheetRuntimeError
+     * @return DataSheetInterface
+     */
+    protected function sortDataSheetByRowOrder(DataSheetInterface $sheetToSort, array $orderedRowUids) : DataSheetInterface
+    {
+        $bkpSheet = $sheetToSort->copy();
+        $bkpRows = $sheetToSort->getRows();
+        $bkpUidCol = $bkpSheet->getUidColumn();
+        $sheetToSort->removeRows();
+        foreach ($orderedRowUids as $uid) {
+            $bkpIdx = $bkpUidCol->findRowByValue($uid);
+            if ($uid === false || $uid === null) {
+                throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row UID "' . $uid . '" not found in sorted data');
+            }
+            $sheetToSort->addRow($bkpRows[$bkpIdx], false, false);
+        }
+        if ($sheetToSort->countRows() !== $bkpSheet->countRows()) {
+            throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row count mismatch!');
+        }
+        return $sheetToSort;
     }
     
     /**
