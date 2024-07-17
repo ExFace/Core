@@ -9,22 +9,24 @@ use exface\Core\DataTypes\DateTimeDataType;
 /**
  * Flattens a given date to a specified interval, e.g.
  * get the first day of a month or a specific time on that day.
+ * Dates will NOT roll over: If you select a start value that exceeds
+ * the bounds of your chosen interval, the start value will be clamped.
  *
  * **NOTE:** this formula always returns a date-time. Even if the input was a pure date!
  *
  * Supported intervals:
  *
- * - `Y` - years
- * - `M` - months
- * - 'W' - day of the week
- * - `D` - days (default)
- * - `h` - hours
- * - `m` - minutes
+ * - `Y` - month of current year
+ * - `M` - day of current month
+ * - `W` - day of current week
+ * - `D` - hour of current day
+ * - `h` - minute of current hour
+ * - `m` - second of current minute
  *
  * Examples:
  *
  * - `=DateAdd('2022-10-21 18:45:13' 'M', -1)` -> 2022-10-01 00:00:00
- * - `=DateAdd('2022-10-21 18:45:13' 'W', 5)` -> 2022-10-01 00:00:00
+ * - `=DateAdd('2022-10-21 18:45:13' 'W', 5)` -> 2022-10-19 00:00:00
  * - `=Date(DateAdd('2022-10-21 18:45:13', 'h', -1))` -> 2022-10-21 18:00:00
  * - `=DateAdd('2022-10-21 18:45:13')` -> 2022-10-21 00:00:00
  * - `=DateAdd('2024-02-21 18:45:13', 30, 'M')` -> 2024-02-29 00:00:00
@@ -49,9 +51,9 @@ class DateFlatten extends Formula
      * @param null $date
      * @param string $interval
      * @param int $startValue
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface | string
      */
-    public function run($date = null, string $interval = 'D', int $startValue = 0) : \DateTimeInterface
+    public function run($date = null, string $interval = 'D', int $startValue = 0) : \DateTimeInterface | string
     {
         if ($date === null || $date === '') {
             throw new UnexpectedValueException('Invalid date/time "' . $date . '" provided!');
@@ -65,17 +67,27 @@ class DateFlatten extends Formula
         if($interval == 's') {
             return DateTimeDataType::cast($date);
         }
-        $startValue = $this->clampDateDigit($startValue, $interval, $parsed['year'], $parsed['month']);
+
+        // Calculate offset by week, if selected.
+        if($interval == 'W') {
+            $weekDay = min( max ($startValue - 1, 0 ), 6 );
+            $startValue = $parsed['day'] - (($parsed['day'] - 1) % 7) + $weekDay;
+        }
+
+        // Clamp date to ensure bounds.
+        $startValue = $this->clampDateDigit(
+            $startValue,
+            self::INTERVAL_INDEX[$interval],
+            $parsed['year'],
+            $parsed['month']
+        );
 
         // Loop through date string, flattening anything below the desired cutoff.
         foreach (self::INTERVAL_INDEX as $indexedPeriod => $periodKey) {
             // Current index is at the desired cutoff.
             if($interval == $indexedPeriod) {
                 // Apply $startValue and return result.
-                $parsed[$periodKey] = $interval == 'W' ?
-                    $parsed['day'] - ($parsed['day'] % 7) + $startValue :
-                    $startValue;
-
+                $parsed[$periodKey] = $startValue;
                 return $this->composeDate($parsed);
             }
 
@@ -98,18 +110,14 @@ class DateFlatten extends Formula
      */
     private  function clampDateDigit(int $value, string $interval, int $year, int $month) : mixed
     {
-        switch (self::INTERVAL_INDEX[$interval]){
+        switch ($interval){
             case 'second':
             case 'minute':
                 $value = min( max ($value, 0 ), 59 ); break;
             case 'hour':
                 $value = min( max ($value, 0 ), 23 ); break;
             case 'day':
-                if($interval == 'W') {
-                    $value = min( max ($value, 1 ), 7 );
-                } else {
-                    $value = min( max ($value, 1 ), cal_days_in_month(CAL_GREGORIAN, $month,$year) );
-                }
+                $value = min( max ($value, 1 ), cal_days_in_month(CAL_GREGORIAN, $month,$year) );
                 break;
             case 'month':
                 $value = min( max ($value, 1 ), 12 ); break;
@@ -127,9 +135,9 @@ class DateFlatten extends Formula
     /**
      * Composes a new Date-Time object from parsed data.
      * @param $parsed
-     * @return bool|\DateTime|\DateTimeInterface|string|NULL
+     * @return \DateTimeInterface | string
      */
-    private function composeDate($parsed) : \DateTimeInterface
+    private function composeDate($parsed) : \DateTimeInterface | string
     {
         $result =
             $parsed['year'].'-'.
