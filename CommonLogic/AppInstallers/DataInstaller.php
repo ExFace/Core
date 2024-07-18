@@ -94,6 +94,8 @@ class DataInstaller extends AbstractAppInstaller
 {
     const ENCRYPTION_CONFIG_FILE = 'Encryption.config.json';
     
+    const CONFIG_OPTION_DISABLED = 'DISABLED';
+    
     private $path = 'Data';
     
     private $dataSheets = [];
@@ -103,6 +105,8 @@ class DataInstaller extends AbstractAppInstaller
     private $dataDefs = [];
     
     private $filenameIndexStart = 0;
+    
+    private $configOptionNamePrefix = 'INSTALLER.DATAINSTALLER.';
     
     /**
      * 
@@ -133,6 +137,11 @@ class DataInstaller extends AbstractAppInstaller
     public function install(string $source_absolute_path) : \Iterator 
     {       
         $indent = $this->getOutputIndentation();
+        if ($this->isDisabled() === true) {
+            yield $indent . 'Data installer disabled' . PHP_EOL;
+            return;
+        }
+        
         yield $indent . $this->getName() . ":" . PHP_EOL;
         
         $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
@@ -1010,5 +1019,35 @@ class DataInstaller extends AbstractAppInstaller
             }
         }
         return true;
+    }
+    
+    /**
+     * Returns TRUE if this installer was disabled in the configuration of the installed app.
+     *
+     * @return bool
+     */
+    protected function isDisabled() : bool
+    {
+        return $this->getConfigOption(static::CONFIG_OPTION_DISABLED) ?? false;
+    }
+    
+    /**
+     * Returns the value of a configuration option - one of the CONFIG_OPTION_xxx constants.
+     *
+     * This method automatically uses the config option prefix (namespace) of this
+     * installer.
+     *
+     * @param string $name
+     * @return string
+     */
+    protected function getConfigOption(string $name) : ?string
+    {
+        $config = $this->getApp()->getConfig();
+        $option = $this->configOptionNamePrefix . $name;
+        if ($config->hasOption($option)) {
+            return $config->getOption($option);
+        } else {
+            return null;
+        }
     }
 }
