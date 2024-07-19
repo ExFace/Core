@@ -18,7 +18,7 @@ use exface\Core\DataTypes\DateTimeDataType;
  *
  * - `Y` - month of current year
  * - `M` - day of current month
- * - `W` - day of current week
+ * - `W` - day of current week (1 = Monday, 7 = Sunday)
  * - `D` - hour of current day
  * - `h` - minute of current hour
  * - `m` - second of current minute
@@ -68,19 +68,19 @@ class DateFlatten extends Formula
             return DateTimeDataType::cast($date);
         }
 
-        // Calculate offset by week, if selected.
         if($interval == 'W') {
-            $weekDay = min( max ($startValue - 1, 0 ), 6 );
-            $startValue = $parsed['day'] - (($parsed['day'] - 1) % 7) + $weekDay;
+            // Offset date by weekday.
+            $parsed = date_parse($this->offsetByWeek($date, $parsed['year'], $parsed['month'], $parsed['day'], $startValue));
+            $startValue = $parsed['day'];
+        } else {
+            // Clamp date to ensure bounds.
+            $startValue = $this->clampDateDigit(
+                $startValue,
+                self::INTERVAL_INDEX[$interval],
+                $parsed['year'],
+                $parsed['month']
+            );
         }
-
-        // Clamp date to ensure bounds.
-        $startValue = $this->clampDateDigit(
-            $startValue,
-            self::INTERVAL_INDEX[$interval],
-            $parsed['year'],
-            $parsed['month']
-        );
 
         // Loop through date string, flattening anything below the desired cutoff.
         foreach (self::INTERVAL_INDEX as $indexedPeriod => $periodKey) {
@@ -97,6 +97,24 @@ class DateFlatten extends Formula
 
         // If we did not return by now, $interval must have been invalid.
         throw new UnexpectedValueException('Invalid period "' . $interval . '" provided! Period must be one of the following: \'Y\', \'M\', \'D\', \'h\' or \'m\'.');
+    }
+
+    /**
+     * Flattens a date to a specified day of the ongoing week.
+     *
+     * @param $date
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $startValue
+     * @return string
+     */
+    private function offsetByWeek($date, int $year, int $month, int $day, int $startValue) : string {
+        // Get current weekday as int, where 0 = Sunday and 6 = Saturday.
+        $currentWeekDay = date('w', mktime(0,0,0,$month,$day,$year));
+        // Get desired weekday as int, where 1 = Monday and 7 = Sunday, to account for rollover.
+        $desiredWeekDay = min( max ($startValue, 1 ), 7 );
+        return DateTimeDataType::addInterval($date, $desiredWeekDay - $currentWeekDay, 'D');
     }
 
     /**
