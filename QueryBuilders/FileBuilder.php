@@ -195,7 +195,11 @@ class FileBuilder extends AbstractQueryBuilder
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         if ($filenamePattern) {
+            // also add the pattern literal with escaped regex characters
+            // as the filename can contain '[' for example
+            $escapedPattern = preg_quote($filenamePattern);
             $query->addFilenamePattern($filenamePattern);
+            $query->addFilenamePattern($escapedPattern);
         }
         
         // Setup query
@@ -212,7 +216,11 @@ class FileBuilder extends AbstractQueryBuilder
             } 
             
             if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
+                $escapedPattern = preg_quote($pathEnd);
+                // also add the pattern literal with escaped regex characters
+                // as the filename can contain '[' for example
                 $query->addFilenamePattern($pathEnd);
+                $query->addFilenamePattern($escapedPattern);
             }         
         }
         
