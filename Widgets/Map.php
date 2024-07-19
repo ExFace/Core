@@ -91,6 +91,8 @@ class Map extends AbstractWidget implements
 
     private $showPopupOnClick = true;
 
+    private $showLoadingIndicator = true;
+
     /**
      * @var bool
      */
@@ -837,6 +839,31 @@ class Map extends AbstractWidget implements
     public function setShowScale(bool $value) : Map
     {
         $this->showScale = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowLoadingIndicator() : bool
+    {
+        return $this->showLoadingIndicator;
+    }
+    
+    /**
+     * Set to FALSE to hide the loading overlay while calling the data.
+     * 
+     * @uxon-property show_loading_indicator
+     * @uxon-type bool
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return Map
+     */
+    public function setShowLoadingIndicator(bool $value) : Map
+    {
+        $this->showLoadingIndicator = $value;
         return $this;
     }
 
