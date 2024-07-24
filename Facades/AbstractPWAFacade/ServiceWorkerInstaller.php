@@ -272,8 +272,12 @@ return $filename;
             $builder->addRouteFromUxon($id, $uxon);
         }
         $js = <<<JS
+
+let virtuallOffline = false;
+// Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {
-    if (event.tag === 'OfflineActionSync') {
+    // if event is OfflineActionSync and not in virtual offline mode, sync offline actions
+    if (event.tag === 'OfflineActionSync' && !virtuallOffline) {
 		event.waitUntil(
 			exfPWA
 			.actionQueue
@@ -298,6 +302,17 @@ self.addEventListener('sync', function(event) {
 				return Promise.reject(error);
 			})
 		)
+    }
+});
+
+self.addEventListener('message', function(event){
+    // if message contains virtuallyOfflineEnabled, set the flag
+    if (event.data && event.data.action === 'virtuallyOfflineEnabled') {
+        virtuallOffline = true;
+    }
+    // if message contains virtuallyOfflineDisabled, unset the flag
+    if (event.data && event.data.action === 'virtuallyOfflineDisabled') {
+        virtuallOffline = false;
     }
 });
 JS;
