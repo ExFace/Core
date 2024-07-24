@@ -149,12 +149,11 @@ class DataInstaller extends AbstractAppInstaller
     public function install(string $source_absolute_path) : \Iterator 
     {       
         $indent = $this->getOutputIndentation();
+        yield $indent . $this->getName() . ":" . PHP_EOL;
         if ($this->isDisabled() === true) {
-            yield $indent . $this->getClassName() . ' disabled' . PHP_EOL;
+            yield $indent . $indent . $this->getClassName() . ' disabled' . PHP_EOL;
             return;
         }
-        
-        yield $indent . $this->getName() . ":" . PHP_EOL;
         
         $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
         
