@@ -32,6 +32,16 @@ use exface\Core\DataTypes\DateDataType;
  * 
  * ## Configuration
  * 
+ * By default, this installer offers the following configuration options to control
+ * it's behavior on a specific installation. These options can be added to the config
+ * of the app being installed.
+ * 
+ * - `INSTALLER.DATAINSTALLER.DISABLED` - set to TRUE to disable this installer
+ * completely (e.g. if you wish to manage the database manually).
+ * 
+ * For any installer extending from the DataInstaller you have to change the `DATAINSTALLER`
+ * part in the configuration option with the classe name of the extending installer.
+ * 
  * ### Include some master data in an app package
  * 
  * This will place a JSON file for every added object in the folder `Data` inside the app.
@@ -96,6 +106,8 @@ class DataInstaller extends AbstractAppInstaller
     
     const CONFIG_OPTION_DISABLED = 'DISABLED';
     
+    const CONFIG_OPTION_PREFIX = 'INSTALLER';
+    
     private $path = 'Data';
     
     private $dataSheets = [];
@@ -106,7 +118,7 @@ class DataInstaller extends AbstractAppInstaller
     
     private $filenameIndexStart = 0;
     
-    private $configOptionNamePrefix = 'INSTALLER.DATAINSTALLER.';
+    private $className = null;
     
     /**
      * 
@@ -137,12 +149,11 @@ class DataInstaller extends AbstractAppInstaller
     public function install(string $source_absolute_path) : \Iterator 
     {       
         $indent = $this->getOutputIndentation();
+        yield $indent . $this->getName() . ":" . PHP_EOL;
         if ($this->isDisabled() === true) {
-            yield $indent . 'Data installer disabled' . PHP_EOL;
+            yield $indent . $indent . $this->getClassName() . ' disabled' . PHP_EOL;
             return;
         }
-        
-        yield $indent . $this->getName() . ":" . PHP_EOL;
         
         $srcPath = $this->getDataFolderPathAbsolute($source_absolute_path);
         
@@ -1043,11 +1054,25 @@ class DataInstaller extends AbstractAppInstaller
     protected function getConfigOption(string $name) : ?string
     {
         $config = $this->getApp()->getConfig();
-        $option = $this->configOptionNamePrefix . $name;
+        $option = static::CONFIG_OPTION_PREFIX . '.' . mb_strtoupper($this->getClassName()) . '.' . $name;
         if ($config->hasOption($option)) {
             return $config->getOption($option);
         } else {
             return null;
         }
+    }
+    
+    /**
+     * Returns the short name of the class, means name without namespace.
+     * 
+     * @return string
+     */
+    protected function getClassName() : string
+    {
+        if ($this->className === null) {
+            $refl = new \ReflectionClass($this);
+            $this->className = $refl->getShortName();
+        }
+        return $this->className;
     }
 }
