@@ -1072,20 +1072,24 @@ abstract class AbstractWidget implements WidgetInterface
     }
     
     /**
+     * May rely on a specific DOM structure, check 'see also' for more information.
      *
+     * @see \exface\UI5Facade\Facades\Elements\UI5Value::buildJsShowHideContainer()
      * @return ConditionalProperty|NULL
      */
     public function getHiddenIf() : ?ConditionalProperty
     {
-        if ($this->hidden_if === null) {
+        $hidden_if = $this->hidden_if;
+        if ($hidden_if === null) {
             return null;
         }
+
         
-        if (! ($this->hidden_if instanceof ConditionalProperty)) {
-            $this->hidden_if = new ConditionalProperty($this, 'hidden_if', $this->hidden_if);
+        if (! ($hidden_if instanceof ConditionalProperty)) {
+            $hidden_if = new ConditionalProperty($this, 'hidden_if', $hidden_if);
         }
         
-        return $this->hidden_if;
+        return $hidden_if;
     }
 
     /**
