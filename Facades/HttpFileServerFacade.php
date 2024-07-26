@@ -87,6 +87,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
     const URL_PATH_PICKUP = 'pickup';
     
     const CACHE_POOL_OTL = '_onetimelink';
+    
+    const DEFAULT_THUMBNAIL_WIDTH = 120;
 
     /**
      *
@@ -550,6 +552,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
             case stripos($fileInfo->getMimetype(), 'image') !== false:
                 try {
                     $img = (new ImageManager())->make($fileInfo->openFile()->read());
+                    
+                    if ($width === null && $height === null) {
+                        $width = static::DEFAULT_THUMBNAIL_WIDTH;                       
+                    }
                     $img->resize($width, $height, function ($constraint) {
                         $constraint->aspectRatio();
                         $constraint->upsize();
@@ -564,6 +570,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
             default:
                 $extension = $fileInfo->getExtension();
                 $text = mb_strtoupper($extension) ?? 'FILE';
+                
+                if ($width === null) {
+                    $width = $height ?? static::DEFAULT_THUMBNAIL_WIDTH;
+                }
+                if ($height === null) {
+                    $height = $width;
+                }
                 $binary = $this->createThumbnailAsPlaceholder($text, $width, $height);
                 $thumbPath = $fileInfo->getPathAbsolute();
                 if ($extension) {
