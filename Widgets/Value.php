@@ -233,7 +233,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                 $value = $valuePointer->getValue();
             }
             if ($valuePointer !== null) {
-                // Ignore empty values because if value is a live-references the ref would get overwritten
+                // Ignore empty values because if value is a live-reference, the ref address would get overwritten
                 // even without a meaningfull prefill value
                 if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
                     $this->setValue($value, false);
