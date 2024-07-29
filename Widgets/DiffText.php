@@ -150,24 +150,13 @@ class DiffText extends Value
         parent::doPrefill($data_sheet);
         
         if ($this->isValueToCompareBoundToAttribute() === true) {
-            $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare());
-            if ($expr !== null && $col = $data_sheet->getColumns()->getByExpression($expr)) {
-                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                    // TODO #OnPrefillChangeProperty
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } else {
-                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                    $value = $valuePointer->getValue();
-                }
-                // Ignore empty values because if value is a live-reference, the ref address would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->isValueToCompareBoundByReference() === false || ($value !== null && $value != '')) {
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare())) {
+                $this->doPrefillForExpression($data_sheet, $expr, 'value_to_compare', function($value){
                     $this->setValueToCompare($value ?? '');
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_to_compare', $valuePointer));
-                }
+                });
             }
         }
+        
         return;
     }
 
