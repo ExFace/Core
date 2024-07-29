@@ -1086,7 +1086,7 @@ abstract class AbstractWidget implements WidgetInterface
 
         
         if (! ($hidden_if instanceof ConditionalProperty)) {
-            $hidden_if = new ConditionalProperty($this, 'hidden_if', $hidden_if);
+            $this->hidden_if = new ConditionalProperty($this, 'hidden_if', $hidden_if);
         }
         
         return $hidden_if;
