@@ -15,6 +15,25 @@ use exface\Core\CommonLogic\Model\Expression;
  * and the text to compare to (the "new" text) is set by `attribute_alias_to_compare` or `value_to_compare`
  * respectively.
  * 
+ * ## Examples
+ * 
+ * ### Compare the current value of a text attribute with a backup
+ * 
+ * The following widget will compare the current value of the `DESCRIPTION` attribute
+ * of some object with the latest backup of it assuming the backup object is accessible
+ * via relation `BACKUP`.
+ * 
+ * Since the base value is the backup, any changes since the last backup will be highlighted
+ * as "new".
+ * 
+ * ```
+ *  {
+ *      "widget_type": "DiffText",
+ *      "attribute_alias": "BACKUP__DESCRIPTION:MAX_OF(CREATED_ON)",
+ *      "attribute_alias_to_compare": "DESCRIPTION"
+ *  }
+ * ```
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -131,24 +150,13 @@ class DiffText extends Value
         parent::doPrefill($data_sheet);
         
         if ($this->isValueToCompareBoundToAttribute() === true) {
-            $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare());
-            if ($expr !== null && $col = $data_sheet->getColumns()->getByExpression($expr)) {
-                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                    // TODO #OnPrefillChangeProperty
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } else {
-                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                    $value = $valuePointer->getValue();
-                }
-                // Ignore empty values because if value is a live-reference, the ref address would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->isValueToCompareBoundByReference() === false || ($value !== null && $value != '')) {
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare())) {
+                $this->doPrefillForExpression($data_sheet, $expr, 'value_to_compare', function($value){
                     $this->setValueToCompare($value ?? '');
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_to_compare', $valuePointer));
-                }
+                });
             }
         }
+        
         return;
     }
 
@@ -171,37 +179,44 @@ class DiffText extends Value
         
         return $data_sheet;
     }
-    /*
-    public function getLeftValue()
+    
+    /**
+     * @deprecated use setValue() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setLeftValue($value) : DiffText
     {
-        return $this->left_value;
+        return $this->setValue($value);
     }
     
-    public function setLeftValue($value)
+    /**
+     * @deprecated use setValueToCompare() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setRightValue($value) : DiffText
     {
-        $this->left_value = $value;
-        return $this;
+        return $this->setValueToCompare($value);
     }
     
-    public function getRightValue()
-    {
-        return $this->right_value;
-    }
-    
-    public function setRightValue($value)
-    {
-        $this->right_value = $value;
-        return $this;
-    }
-    
-    protected function setLeftAttributeAlias($value)
+    /**
+     * @deprecated use setAttributeAlias() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setLeftAttributeAlias($value) : DiffText
     {
         return $this->setAttributeAlias($value);
     }
     
-    protected function setRightAttributeAlias($value)
+    /**
+     * @deprecated use setAttributeAliasToCompare() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setRightAttributeAlias($value) : DiffText
     {
         return $this->setAttributeAliasToCompare($value);
     }
-    */
 }

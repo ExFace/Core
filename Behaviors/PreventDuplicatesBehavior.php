@@ -455,7 +455,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
         $compareCols = [];
         $missingCols = [];
         $missingAttrs = [];
-        $logbook->addLine('Will compare these attributes: ' . implode(', ', $this->getCompareAttributeAliases()));
+        $logbook->addLine('Will compare these attributes: `' . implode('`, `', $this->getCompareAttributeAliases()) . '`');
         foreach ($this->getCompareAttributeAliases() as $attrAlias) {
             $attr = $this->getObject()->getAttribute($attrAlias);
             if ($col = $eventDataCols->getByAttribute($attr)) {
