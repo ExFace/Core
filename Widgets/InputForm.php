@@ -158,7 +158,7 @@ class InputForm extends InputFormDesigner
                     $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                     $value = $valuePointer->getValue();
                 }
-                // Ignore empty values because if value is a live-references as the ref would get overwritten
+                // Ignore empty values because if value is a live-reference, the ref address would get overwritten
                 // even without a meaningfull prefill value
                 if ($this->isFormConfigBoundByReference() === false || ($value !== null && $value != '')) {
                     $this->setFormConfig($value ?? '');
