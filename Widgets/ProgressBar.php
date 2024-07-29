@@ -6,8 +6,6 @@ use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
@@ -71,6 +69,8 @@ class ProgressBar extends Display implements iCanBeAligned
     private $textMap = null;
     
     private $textAttributeAlias = null;
+    
+    private $textStaticValue = null;
     
     /**
      *
@@ -136,8 +136,11 @@ class ProgressBar extends Display implements iCanBeAligned
      * @param string $value
      * @return string|NULL
      */
-    public function getText(string $value) : ?string
+    public function getTextForValue(string $value) : ?string
     {
+        if ($this->textStaticValue !== null) {
+            return $this->textStaticValue;
+        }
         return static::findText($value, $this->getTextScale());
     }
     
@@ -323,22 +326,10 @@ class ProgressBar extends Display implements iCanBeAligned
     {
         parent::doPrefill($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
-            $textPrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias());
-            if ($textPrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($textPrefillExpression)) {
-                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                    // TODO #OnPrefillChangeProperty
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } else {
-                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                    $value = $valuePointer->getValue();
-                }
-                // Ignore empty values because if value is a live-reference, the ref address would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setValue($value, false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'text', $valuePointer));
-                }
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias())) {
+                $this->doPrefillForExpression($data_sheet, $expr, 'text', function($value){
+                    $this->setText($value ?? '');
+                });
             }
         }
         return;
@@ -364,5 +355,31 @@ class ProgressBar extends Display implements iCanBeAligned
             return $this->getMetaObject()->getAttribute($this->getTextAttributeAlias());
         }
         return $this->getAttribute();
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return ProgressBar
+     */
+    protected function setText(string $value) : ProgressBar
+    {
+        $this->textStaticValue = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getText() : ?string
+    {
+        if ($this->textStaticValue !== null) {
+            return $this->textStaticValue;   
+        }
+        if ($this->hasTextScale() && $this->hasValue()) {
+            static::findText($this->getValue(), $this->getTextScale());
+        }
+        return null;
     }
 }
