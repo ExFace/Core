@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11ed9f5019075a8a9f50025041000001",
     "created_on": "2024-05-15 09:12:42",
     "modified_by_user_selector": "0x11ed9f5019075a8a9f50025041000001",
-    "modified_on": "2024-07-29 15:11:41",
+    "modified_on": "2024-07-30 09:43:38",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.USER_ROLE",
@@ -102,7 +102,7 @@
                 ]
             },
             {
-                "caption": "AD groups of logged in user",
+                "caption": "AD groups of currently logged in user",
                 "width": "33%",
                 "widgets": [
                     {
@@ -111,6 +111,12 @@
                         "filters": [
                             {
                                 "attribute_alias": "displayName",
+                                "widget_type": "InputComboTable",
+                                "multi_select": true,
+                                "apply_on_change": true
+                            },
+                            {
+                                "attribute_alias": "id",
                                 "widget_type": "InputComboTable",
                                 "multi_select": true,
                                 "apply_on_change": true
