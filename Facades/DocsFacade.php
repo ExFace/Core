@@ -17,21 +17,17 @@ use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use DOMDocument;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
-use axenox\PDFPrinter\Interfaces\Actions\iCreatePdf;
-use axenox\PDFPrinter\Actions\Traits\iCreatePdfTrait;
 
 /**
  *
  * @author Andrej Kabachnik
  *
  */
-class DocsFacade extends AbstractHttpFacade implements iCreatePdf
+class DocsFacade extends AbstractHttpFacade
 {
-    use iCreatePdfTrait;
     
     private $processedLinks = [];
     private $processedLinksKey = 0;
-    private $dompdf = null;
     
     /**
      *
@@ -78,9 +74,6 @@ class DocsFacade extends AbstractHttpFacade implements iCreatePdf
                 
                 $response = $handler->handle($request);
                 $htmlString = $response->getBody()->__toString();
-                // Generate filename from html title of first docu page
-                preg_match('/<title>(.*?)<\/title>/is', $htmlString, $matches);
-                $filename = $matches[1] . '.pdf';
                 // Find all links in first docu page
                 $linksArray = $this->findLinksInHtml($htmlString);
                 // Create temp file for saving entire html content
