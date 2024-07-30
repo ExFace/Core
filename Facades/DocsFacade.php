@@ -88,6 +88,15 @@ class DocsFacade extends AbstractHttpFacade implements iCreatePdf
                 
                 $this->processLinks($tempFilePath, $linksArray);
                 
+                // attach print function to end of html to show print window when accessing the HTML
+                $printString = 
+                '<script type="text/javascript">
+                    window.onload = function() {
+                    window.print();
+                    };
+                </script>';
+                file_put_contents($tempFilePath, $printString, FILE_APPEND | LOCK_EX);
+                
                 $combinedBodyContent = file_get_contents($tempFilePath);
                 // Clean up the temporary file
                 unlink($tempFilePath);
@@ -95,13 +104,9 @@ class DocsFacade extends AbstractHttpFacade implements iCreatePdf
                 // Parse the body content of all links at the end of the body html tag of the first html doc page
                 $bodyCloseTagPosition = stripos($htmlString, '</body>');
                 $htmlString = substr_replace($htmlString, $combinedBodyContent, $bodyCloseTagPosition, 0);
-                
-                $this->setOrientation('portrait');
-                $pdf = $this->createPdf($htmlString);
-                
-                $response = new Response(200, [], $pdf);
-                $response = $response->withHeader('Content-Type', 'application/pdf')
-                ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+                $response = new Response(200, [], $htmlString);
+                $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
             case ($request->getQueryParams()['markdown'] === 'true'):
