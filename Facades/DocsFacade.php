@@ -165,7 +165,9 @@ class DocsFacade extends AbstractHttpFacade
                 $linkRequest = new ServerRequest('GET', $link);
                 $linkRequest = $linkRequest->withQueryParams(['markdown' => 'true']);
                 $linkResponse = $this->createResponse($linkRequest);
-                $htmlString = $linkResponse->getBody()->__toString();
+                // Adds a page break before start of each markdown file
+                $pageBreak = '<div style="page-break-before: always;">';
+                $htmlString = $pageBreak . $linkResponse->getBody()->__toString();
                 $linksArrayRecursive = $this->findLinksInHTML($htmlString);
                 
                 $htmlString = $this->replaceHref($htmlString);
