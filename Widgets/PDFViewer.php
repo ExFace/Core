@@ -37,6 +37,8 @@ class PDFViewer extends Display implements iFillEntireContainer
     
     private $fileNameAttributeAlias = null;
     
+    private $fileNameStaticValue = null;
+    
     /**
      * Returns TRUE if the PDF is represented by an URL and FALSE otherwise
      * 
@@ -188,25 +190,15 @@ class PDFViewer extends Display implements iFillEntireContainer
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         parent::doPrefill($data_sheet);
+        
         if ($this->isFilenameBoundToAttribute() === true) {
-            $filenamePrefillExpression = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFilenameAttributeAlias());
-            if ($filenamePrefillExpression !== null && $col = $data_sheet->getColumns()->getByExpression($filenamePrefillExpression)) {
-                if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                    // TODO #OnPrefillChangeProperty
-                    $valuePointer = DataPointerFactory::createFromColumn($col);
-                    $value = $col->aggregate($this->getAggregator());
-                } else {
-                    $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                    $value = $valuePointer->getValue();
-                }
-                // Ignore empty values because if value is a live-references as the ref would get overwritten
-                // even without a meaningfull prefill value
-                if ($this->isBoundByReference() === false || ($value !== null && $value != '')) {
-                    $this->setValue($value, false);
-                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'filename', $valuePointer));
-                }
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFilenameAttributeAlias())) {
+                $this->doPrefillForExpression($data_sheet, $expr, 'filename', function($value){
+                    $this->setFilename($value ?? '');
+                });
             }
         }
+        
         return;
     }
     
@@ -218,5 +210,25 @@ class PDFViewer extends Display implements iFillEntireContainer
     public function getFilenameDataColumnName()
     {
         return $this->isFilenameBoundToAttribute() ? DataColumn::sanitizeColumnName($this->getFilenameAttributeAlias()) : $this->getDataColumnName();
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getFilename() : ?string
+    {
+        return $this->fileNameStaticValue;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return PDFViewer
+     */
+    protected function setFilename(string $value) : PDFViewer
+    {
+        $this->fileNameStaticValue = $value;
+        return $this;
     }
 }

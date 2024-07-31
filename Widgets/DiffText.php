@@ -2,91 +2,141 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  * The DiffText widget compares two texts and shows a report highlighting the changes.
  * 
- * The texts can either be static or bound to attributes in the meta model via 
- * `left_attribute_alias` and `right_attribute_alias`. 
+ * The base ("old") text is defined by `attribute_alias` or `value` just like in any other value widget,
+ * and the text to compare to (the "new" text) is set by `attribute_alias_to_compare` or `value_to_compare`
+ * respectively.
  * 
- * Although the texts are called "left" and "right", their actual positioning 
- * depends on the facade.
+ * ## Examples
+ * 
+ * ### Compare the current value of a text attribute with a backup
+ * 
+ * The following widget will compare the current value of the `DESCRIPTION` attribute
+ * of some object with the latest backup of it assuming the backup object is accessible
+ * via relation `BACKUP`.
+ * 
+ * Since the base value is the backup, any changes since the last backup will be highlighted
+ * as "new".
+ * 
+ * ```
+ *  {
+ *      "widget_type": "DiffText",
+ *      "attribute_alias": "BACKUP__DESCRIPTION:MAX_OF(CREATED_ON)",
+ *      "attribute_alias_to_compare": "DESCRIPTION"
+ *  }
+ * ```
  * 
  * @author Andrej Kabachnik
  *        
  */
-class DiffText extends AbstractWidget
+class DiffText extends Value
 {
-    private $left_attribute_alias = NULL;
+    private $compareToAttributeAlias = null;
 
-    private $left_value = NULL;
-
-    private $right_attribute_alias = NULL;
-
-    private $right_value = NULL;
-
-    public function getLeftValue()
+    private $compareToValue = null;
+    
+    private $comparetToExpr = null;
+    
+    /**
+     *
+     * @return string
+     */
+    public function getAttributeAliasToCompare() : ?string
     {
-        return $this->left_value;
-    }
-
-    public function setLeftValue($value)
-    {
-        $this->left_value = $value;
-        return $this;
-    }
-
-    public function getRightValue()
-    {
-        return $this->right_value;
-    }
-
-    public function setRightValue($value)
-    {
-        $this->right_value = $value;
-        return $this;
-    }
-
-    public function getLeftAttributeAlias()
-    {
-        return $this->left_attribute_alias;
+        return $this->compareToAttributeAlias;
     }
     
     /**
-     * The alias of the attribute, which shall be the source of the left text
      *
-     * @uxon-property left_attribute_alias
+     * @return bool
+     */
+    public function isValueToCompareBoundToAttribute() : bool
+    {
+        return $this->compareToAttributeAlias !== null;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isValueToCompareBoundByReference() : bool
+    {
+        return ! $this->isValueToCompareBoundToAttribute() && $this->getValueToCompareExpression() && $this->getValueToCompareExpression()->isReference();
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
+     */
+    public function getValueToCompareDataColumnName()
+    {
+        return $this->isValueToCompareBoundToAttribute() ? DataColumn::sanitizeColumnName($this->getAttributeAliasToCompare()) : $this->getDataColumnName();
+    }
+    
+    /**
+     * Alias of the attribute containing the configuration for the form to be rendered
+     *
+     * @uxon-property attribute_alias_to_compare
      * @uxon-type metamodel:attribute
+     * @uxon-required true
      *
      * @param string $value
-     * @return \exface\Core\Widgets\DiffText
+     * @return DiffText
      */
-    public function setLeftAttributeAlias($value)
+    public function setAttributeAliasToCompare(string $value) : DiffText
     {
-        $this->left_attribute_alias = $value;
+        $this->compareToAttributeAlias = $value;
         return $this;
     }
-
-    public function getRightAttributeAlias()
-    {
-        return $this->right_attribute_alias;
-    }
-
+    
     /**
-     * The alias of the attribute, which shall be the source of the right text
-     * 
-     * @uxon-property right_attribute_alias
-     * @uxon-type metamodel:attribute
-     * 
-     * @param string $value
-     * @return \exface\Core\Widgets\DiffText
+     *
+     * @return string|NULL
      */
-    public function setRightAttributeAlias($value)
+    public function getValueToCompare() : ?string
     {
-        $this->right_attribute_alias = $value;
+        return $this->compareToValue;
+    }
+    
+    /**
+     *
+     * @return ExpressionInterface|NULL
+     */
+    public function getValueToCompareExpression() : ?ExpressionInterface
+    {
+        if ($this->compareToExpr === null) {
+            if ($this->isValueToCompareBoundToAttribute()) {
+                $this->compareToExpr = ExpressionFactory::createForObject($this->getMetaObject(), $this->getAttributeAliasToCompare());
+            }
+            if ($this->compareToValue !== null && Expression::detectCalculation($this->compareToValue)) {
+                $this->compareToExpr = ExpressionFactory::createForObject($this->getMetaObject(), $this->compareToValue);
+            }
+        }
+        return $this->compareToExpr;
+    }
+    
+    /**
+     * Widget link or static value for the form configuration
+     *
+     * @uxon-property value_to_compare
+     * @uxon-type metamodel:widget_link|string
+     *
+     * @param string $value
+     * @return DiffText
+     */
+    public function setValueToCompare(string $value) : DiffText
+    {
+        $this->compareToValue = $value;
+        $this->compareToExpr = null;
         return $this;
     }
 
@@ -97,31 +147,17 @@ class DiffText extends AbstractWidget
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
-        // Do not do anything, if the value is already set explicitly (e.g. a fixed value)
-        if (! $this->isPrefillable()) {
-            return;
+        parent::doPrefill($data_sheet);
+        
+        if ($this->isValueToCompareBoundToAttribute() === true) {
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare())) {
+                $this->doPrefillForExpression($data_sheet, $expr, 'value_to_compare', function($value){
+                    $this->setValueToCompare($value ?? '');
+                });
+            }
         }
         
-        // Do not do anything, if the values are already set explicitly (e.g. a fixed value)
-        if ($this->getLeftValue() && $this->getRightValue()) {
-            return;
-        }
-        
-        if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
-            if ($col = $data_sheet->getColumns()->getByExpression($this->getLeftAttributeAlias())) {
-                $pointer = DataPointerFactory::createFromColumn($col, 0);
-                $this->setLeftValue($pointer->getValue());
-                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'left_value', $pointer));
-            }
-            if ($col = $data_sheet->getColumns()->getByExpression($this->getRightAttributeAlias())) {
-                $pointer = DataPointerFactory::createFromColumn($col, 0);
-                $this->setRightValue($pointer->getValue());
-                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'right_value', $pointer));
-            }
-        } else {
-            throw new NotImplementedError('Prefilling DiffText with data sheets from related objects not implemented!');
-        }
-        return $this;
+        return;
     }
 
     /**
@@ -134,34 +170,53 @@ class DiffText extends AbstractWidget
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
-        if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
-            // If we are looking for attributes of the object of this widget, then just return the attribute_alias
-            $data_sheet->getColumns()->addFromExpression($this->getLeftAttributeAlias());
-            $data_sheet->getColumns()->addFromExpression($this->getRightAttributeAlias());
-        } else {
-            // Otherwise we are looking for attributes relative to another object
-            if ($this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
-                throw new NotImplementedError('Prefilling DiffText with data sheets from related objects not implemented!');
+        if ($this->isValueToCompareBoundToAttribute() === true) {
+            $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare());
+            if ($expr!== null) {
+                $data_sheet->getColumns()->addFromExpression($expr);
             }
         }
         
         return $data_sheet;
     }
-
+    
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
+     * @deprecated use setValue() instead
+     * @param string $value
+     * @return DiffText
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
+    protected function setLeftValue($value) : DiffText
     {
-        // Do not request any prefill data, if the values are already set explicitly (e.g. a fixed value)
-        if ($this->getLeftValue() && $this->getRightValue()) {
-            return $data_sheet;
-        }
-        
-        return $this->prepareDataSheetToRead($data_sheet);
+        return $this->setValue($value);
+    }
+    
+    /**
+     * @deprecated use setValueToCompare() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setRightValue($value) : DiffText
+    {
+        return $this->setValueToCompare($value);
+    }
+    
+    /**
+     * @deprecated use setAttributeAlias() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setLeftAttributeAlias($value) : DiffText
+    {
+        return $this->setAttributeAlias($value);
+    }
+    
+    /**
+     * @deprecated use setAttributeAliasToCompare() instead
+     * @param string $value
+     * @return DiffText
+     */
+    protected function setRightAttributeAlias($value) : DiffText
+    {
+        return $this->setAttributeAliasToCompare($value);
     }
 }
-?>
