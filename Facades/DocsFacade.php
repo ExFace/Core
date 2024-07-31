@@ -15,6 +15,7 @@ use exface\Core\Facades\DocsFacade\Middleware\AppUrlRewriterMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
 use DOMDocument;
+use DOMXPath;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 
@@ -80,8 +81,10 @@ class DocsFacade extends AbstractHttpFacade
                 $tempFilePath = tempnam(sys_get_temp_dir(), 'combined_content_');
                 
                 $this->processLinks($tempFilePath, $linksArray);
+                               
+                $htmlString = $this->replaceHref($htmlString);
                 
-                // attach print function to end of html to show print window when accessing the HTML
+                // Attach print function to end of html to show print window when accessing the HTML
                 $printString = 
                 '<script type="text/javascript">
                     window.onload = function() {
@@ -163,11 +166,15 @@ class DocsFacade extends AbstractHttpFacade
                 $linkRequest = $linkRequest->withQueryParams(['markdown' => 'true']);
                 $linkResponse = $this->createResponse($linkRequest);
                 $htmlString = $linkResponse->getBody()->__toString();
+                $linksArrayRecursive = $this->findLinksInHTML($htmlString);
+                
+                $htmlString = $this->replaceHref($htmlString);
+                $htmlString = $this->addIdToFirstHeading($link, $htmlString);
 
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
                 
-                $linksArrayRecursive = $this->findLinksInHTML($htmlString);
+                
                 if (!empty($linksArrayRecursive)) {
                     $this->processLinks($tempFilePath, $linksArrayRecursive);
                 }
@@ -189,6 +196,53 @@ class DocsFacade extends AbstractHttpFacade
     }
     
     /**
+     * Replaces the links to PDF external websites with links that jump to a PDF internal section
+     * From < a href="http://.../Section1.md">Section 1</a >
+     * To < a href="#Section1">Section 1</a >
+     * @param string $htmlString
+     * @return string|array|NULL
+     */
+    protected function replaceHref(string $htmlString): string {
+        // Define the pattern to search for the specific link. Use the filename of the markdown as the html id. 
+        // E.g. <a href="http://.../Section1.md">Section 1</a>
+        $pattern = '/<a href="[^"]*\/([^\/]+)\.md">(.*?)<\/a>/';
+        
+        // Define the replacement pattern e.g. <a href="#Section1">Section 1</a>
+        $replacement = '<a href="#$1">$2</a>';
+        
+        return preg_replace($pattern, $replacement, $htmlString);
+    }
+    
+    /**
+     * Adds the markdown file name as an id to the first heading of the markdown to be able to reference it with an href element.
+     * @param string $link
+     * @param string $htmlString
+     * @return string
+     */
+    protected function addIdToFirstHeading(string $link, string $htmlString): string {
+        // Find the markdown file name
+        preg_match('/\/([^\/]+)\.md$/', $link, $matches);
+        $idString = $matches[1];
+        
+        $doc = new DOMDocument();
+        // Suppress errors due to invalid HTML structure
+        libxml_use_internal_errors(true);
+        $doc->loadHTML($htmlString);
+        libxml_clear_errors();
+        
+        // Use XPath to find the first heading (h1-h6)
+        $xpath = new DOMXPath($doc);
+        $headers = $xpath->query('//h1 | //h2 | //h3 | //h4 | //h5 | //h6');
+        
+        if ($headers->length > 0) {
+            $firstHeader = $headers->item(0);
+            // Add the id attribute to the first heading element
+            $firstHeader->setAttribute('id', $idString);
+        }
+        return $doc->saveHTML();
+    }
+    
+    /**
      * Returns all links inside of a html string as an array
      * @param string $html
      * @return array
@@ -198,7 +252,6 @@ class DocsFacade extends AbstractHttpFacade
         // Suppress errors due to malformed HTML
         libxml_use_internal_errors(true);
         $dom->loadHTML($html);
-        // Clear the errors
         libxml_clear_errors();
         
         $links = $dom->getElementsByTagName('a');
