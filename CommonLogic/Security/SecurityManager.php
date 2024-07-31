@@ -26,6 +26,7 @@ use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Events\Security\OnAuthenticatedEvent;
 use exface\Core\Exceptions\Security\AuthenticationFailedMultiError;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
+use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 
 /**
  * Default implementation of the SecurityManagerInterface.
@@ -95,6 +96,13 @@ class SecurityManager implements SecurityManagerInterface
                 $authenticated = $authenticator->authenticate($token);
                 $logbook->addLine('Authenticated as `' . ($authenticated->getUsername() ?? ' ') . '`' . ($token->isAnonymous() ? ' (anonymous)' : ''), 1);
                 break;
+            } catch (AuthenticationIncompleteError $e) {
+                // If more user input is needed, throw the error as-is. The facade will take care of asking the user for whatever it needs
+                // IDEA the logbook is not used here. Add it to the exception somehow?
+                $logbook->addException($e, 1);
+                $logbook->addIndent(-1);
+                $logbook->addLine('**Result:** Need more user input');
+                throw $e;
             } catch (AuthenticationExceptionInterface $e) {
                 $logbook->addException($e, 1);
                 $errors[] = $e;
@@ -116,8 +124,7 @@ class SecurityManager implements SecurityManagerInterface
                     case 1:
                         throw new AuthenticationFailedError($this, 'Authentication failed!', null, ($errors[0] ?? null), $token, $logbook);
                     default:
-                        $err = new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
-                        throw $err;
+                        throw new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
                 }
             }
         } else {

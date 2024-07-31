@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Widgets\iCanAutoloadData;
 use exface\Core\Widgets\Traits\iCanAutoloadDataTrait;
 use exface\Core\Interfaces\Widgets\iCanBeDragAndDropTarget;
 use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * A map with support for different mapping data providers and data layers.
@@ -352,6 +353,12 @@ class Map extends AbstractWidget implements
         return;
     }
     
+    /**
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param string $coordinate
+     * @throws UnexpectedValueException
+     */
     protected function doPrefillCoordinate(DataSheetInterface $dataSheet, string $coordinate) 
     {
         switch ($coordinate) {
@@ -361,29 +368,20 @@ class Map extends AbstractWidget implements
                 break;
             case self::COORDINATE_LON:
                 $attrAlias = $this->getCenterLongitudeAttributeAlias();
-                $attrAlias = $this->getCenterLatitudeAttributeAlias();
                 $property = 'center_longitude';
+                break;
+            default:
+                throw new UnexpectedValueException('Cannot prefill map with unknown coordinate "' . $coordinate . '"!');
         }
         
-        $colName = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $attrAlias);
-        if ($col = $dataSheet->getColumns()->getByExpression($colName)) {
-            if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
-                // TODO #OnPrefillChangeProperty
-                $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = $col->aggregate($this->getAggregator());
-            } else {
-                $valuePointer = DataPointerFactory::createFromColumn($col, 0);
-                $value = $valuePointer->getValue();
-            }
-            
-            if ($this->isCenterBoundByReference() === false && $value !== null && $value != '') {
+        if (null !== $expr = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $attrAlias)) {
+            $this->doPrefillForExpression($dataSheet, $expr, $property, function($value) use ($coordinate) {
                 if ($coordinate === self::COORDINATE_LAT) {
                     $this->setCenterLatitude($value);
                 } else {
                     $this->setCenterLongitude($value);
                 }
-                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $property, $valuePointer));
-            }
+            });
         }
         
         return;
