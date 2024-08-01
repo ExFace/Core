@@ -28,6 +28,7 @@ use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 use GuzzleHttp\Psr7\ServerRequest;
+use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -564,7 +565,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
                     $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute(), $fileInfo->getMimetype());
                     break;
                 } catch (\Throwable $e) {
-                    $this->getWorkbench()->getLogger()->logException($e);
+                    $this->getWorkbench()->getLogger()->logException(new FileCorruptedError($e->getMessage(), null, $e, $fileInfo));
                 }
             // IDEA add other thumbnails here - for office documents, pdfs, etc.?
             default:
