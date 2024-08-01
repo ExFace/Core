@@ -61,8 +61,9 @@ use exface\Core\Exceptions\Filesystem\FileCorruptedError;
  * UID values MUST be properly encoded:
  * 
  * - URL encoded - unless they contain slashes (as many servers incl. Apache do not allow URL encoded slashes for security reasons)
- * - Base64 encoded with prefix `base64,` AND URL encoded on top - this is the most secure way to pass the UID value, but is
- * not readable at all.
+ * - Base64URL encoded with prefix `base64URL,` AND URL encoded on top: i.e. `url_encode(Base64URL(url_encode(value)))`. This is the 
+ * most reliable way to pass the UID value, but is not readable at all. For backwards compatibility also Base64 encoded values are 
+ * supported with prefix `Base64,`.
  * 
  * ## Request types
  * 
@@ -147,8 +148,14 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 // Decode UID if it is Base64 - this will be the case if the UID has special characters
                 // like slashes - they might be considered insecure by some servers, so the request
                 // will not be processed if they are not encoded
-                if (StringDataType::startsWith($uid, 'base64,')) {
-                    $uid = base64_decode(substr($uid, 7));
+                switch (true) {
+                    case StringDataType::startsWith($uid, 'base64URL,'):
+                        $uid = BinaryDataType::convertBase64URLToText(substr($uid, 10));
+                        $uid = urldecode($uid);
+                        break;
+                    case StringDataType::startsWith($uid, 'base64,'):
+                        $uid = BinaryDataType::convertBase64ToText(substr($uid, 7));
+                        break;
                 }
                 $fileInfo = DataSourceFileInfo::fromObjectUID($this->getWorkbench(), $objSel, $uid);
                 break;
