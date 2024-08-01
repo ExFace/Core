@@ -698,7 +698,7 @@ JS;
                         height: 35px;
                         margin-bottom: 4px;
                     }
-                    .jsoneditor-modal button {
+                    .jsoneditor-modal /*:not(.jsoneditor-modal button)*/ button.uxoneditor-input {
                         width: initial;
                         background: #f5f5f5;
                         cursor: pointer;
@@ -1353,7 +1353,8 @@ CSS;
                 modal.modalElem().querySelector(".uxoneditor-preset-preview"),
                 {
                     mode: 'view',
-                    mainMenuBar: false,
+                    modes: ['code', 'view'],
+                    mainMenuBar: true,
                     navigationBar: false
                 }
             );
