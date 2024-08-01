@@ -149,7 +149,7 @@ class InputForm extends InputFormDesigner
         parent::doPrefill($data_sheet);
         
         if ($this->isFormConfigBoundToAttribute() === true) {
-            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare())) {
+            if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFormConfigAttributeAlias())) {
                 $this->doPrefillForExpression($data_sheet, $expr, 'form_config', function($value){
                     $this->setFormConfig($value ?? '');
                 });
