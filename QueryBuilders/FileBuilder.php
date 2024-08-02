@@ -500,7 +500,7 @@ class FileBuilder extends AbstractQueryBuilder
                     if ($pathMatchesAllUids === true) {
                         unset($pathPatterns[$pathIdx]);
                     } else {
-                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time!');
+                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time: "' . $pathPattern . '" and "' . $uidPattern . '"');
                     }
                 }
                 if (empty($pathPatterns)) {

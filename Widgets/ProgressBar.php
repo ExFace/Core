@@ -327,9 +327,14 @@ class ProgressBar extends Display implements iCanBeAligned
         parent::doPrefill($data_sheet);
         if ($this->isTextBoundToAttribute() === true) {
             if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getTextAttributeAlias())) {
-                $this->doPrefillForExpression($data_sheet, $expr, 'text', function($value){
-                    $this->setText($value ?? '');
-                });
+                $this->doPrefillForExpression(
+                    $data_sheet, 
+                    $expr, 
+                    'text', 
+                    function($value){
+                        $this->setText($value ?? '');
+                    }
+                );
             }
         }
         return;
