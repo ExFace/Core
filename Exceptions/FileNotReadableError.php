@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Exceptions\Filesystem\FileInfoExceptionTrait;
+
 /**
  * Exception thrown if an file is not readable although it exists.
  *
@@ -8,4 +10,6 @@ namespace exface\Core\Exceptions;
  *        
  */
 class FileNotReadableError extends RuntimeException
-{}
+{
+    use FileInfoExceptionTrait;
+}
