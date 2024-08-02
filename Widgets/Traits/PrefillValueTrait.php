@@ -8,6 +8,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Widgets\iSupportAggregators;
 
 /**
  * This trait provides ready-to-use methods to handle prefill expressions in widgets
@@ -136,43 +137,52 @@ trait PrefillValueTrait
      * etc.
      *
      * @param DataSheetInterface $data_sheet
-     * @param ExpressionInterface|string $exprOrString
-     * @return void
+     * @param ExpressionInterface|string $prefillExpr
+     * @param string $propName
+     * @param callable $propSetter
+     * @param ExpressionInterface $staticValueExpr
      */
-    protected function doPrefillForExpression(DataSheetInterface $data_sheet, $exprOrString, string $propName, callable $propSetter)
+    protected function doPrefillForExpression(DataSheetInterface $data_sheet, $prefillExpr, string $propName, callable $propSetter, ExpressionInterface $staticValueExpr = null)
     {
-        $col = $data_sheet->getColumns()->getByExpression($exprOrString);
+        $col = $data_sheet->getColumns()->getByExpression($prefillExpr);
         if (! $col) {
             return;
         }
         
-        $expr = $exprOrString instanceof ExpressionInterface ? $exprOrString : $col->getExpressionObj();
         $value = null;
         $valuePointer = null;
         
         if (count($col->getValues(false)) > 1) {
-            if ($this->getAggregator()) {
+            if (($this instanceof iSupportAggregators) && null !== $aggr = $this->getAggregator()) {
                 $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = $col->aggregate($this->getAggregator());
+                $value = $col->aggregate($aggr);
             }
         } else {
             $valuePointer = DataPointerFactory::createFromColumn($col, 0);
             $value = $valuePointer->getValue();
         }
         
-        if ($valuePointer !== null) {
-            // Ignore empty values because if value is a live-reference, the ref address would get overwritten
-            // even without a meaningfull prefill value
-            if ($expr->isFormula()){
+        // Ignore empty values because if value is a live-reference, the ref address would get overwritten
+        // even without a meaningfull prefill value
+        if ($valuePointer === null) {
+            return;
+        }
+        
+        // Use the provided setter to put the prefill into the widget and throw the
+        // OnPrefillChangePropertyEvent to notify other code, that the prefill was applied.
+        switch (true) {
+            case $staticValueExpr !== null && $staticValueExpr->isFormula():
                 $propSetter($value);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $propName, $valuePointer));
                 // FIXME now, that there is a separate `calculation` property, wouldn't it be better
                 // to skip the prefill for widget with live-refs in general and not only for non-empty
                 // values?
-            } elseif ($expr->isReference() === false || ($value !== null && $value != '')) {
+                break;
+            case $staticValueExpr !== null && $staticValueExpr->isReference() === false:
+            case $value !== null && $value != '':
                 $propSetter($value);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $propName, $valuePointer));
-            }
+                break;
         }
         
         return;
