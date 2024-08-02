@@ -8,8 +8,6 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
-use exface\Core\Factories\DataPointerFactory;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
@@ -193,9 +191,14 @@ class PDFViewer extends Display implements iFillEntireContainer
         
         if ($this->isFilenameBoundToAttribute() === true) {
             if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFilenameAttributeAlias())) {
-                $this->doPrefillForExpression($data_sheet, $expr, 'filename', function($value){
-                    $this->setFilename($value ?? '');
-                });
+                $this->doPrefillForExpression(
+                    $data_sheet, 
+                    $expr, 
+                    'filename', 
+                    function($value){
+                        $this->setFilename($value ?? '');
+                    }
+                );
             }
         }
         
