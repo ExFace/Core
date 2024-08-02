@@ -171,6 +171,8 @@ trait PrefillValueTrait
         // Use the provided setter to put the prefill into the widget and throw the
         // OnPrefillChangePropertyEvent to notify other code, that the prefill was applied.
         switch (true) {
+            // If a value was set explicitly and that value is a formula, evaluate it and use for
+            // prefill
             case $staticValueExpr !== null && $staticValueExpr->isFormula():
                 $propSetter($value);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $propName, $valuePointer));
@@ -178,9 +180,12 @@ trait PrefillValueTrait
                 // to skip the prefill for widget with live-refs in general and not only for non-empty
                 // values?
                 break;
+            // If the value from the prefill sheet is NOT empty, use it for prefill
+            case $value !== null && $value != '':
+            // If the value IS empty, assume a prefill too, but only if the property is not bound
+            // by reference
             case $staticValueExpr === null:
             case $staticValueExpr->isReference() === false:
-            case $value !== null && $value != '':
                 $propSetter($value);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $propName, $valuePointer));
                 break;
