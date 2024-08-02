@@ -150,8 +150,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 // will not be processed if they are not encoded
                 switch (true) {
                     case StringDataType::startsWith($uid, 'base64URL,'):
-                        $uid = BinaryDataType::convertBase64URLToText(substr($uid, 10));
-                        $uid = urldecode($uid);
+                        $uid = BinaryDataType::convertBase64URLToText(substr($uid, 10), true);
                         break;
                     case StringDataType::startsWith($uid, 'base64,'):
                         $uid = BinaryDataType::convertBase64ToText(substr($uid, 7));

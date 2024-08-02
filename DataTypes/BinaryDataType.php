@@ -180,15 +180,17 @@ class BinaryDataType extends AbstractDataType
     
     /**
      * Converts a given string from Base64 to a binary string.
-     *  
+     * 
      * @param string $base64String
+     * @param bool $strict
+     * 
      * @throws DataTypeCastingError
      * 
      * @return string
      */
-    public static function convertBase64ToBinary(string $base64String) : string
+    public static function convertBase64ToBinary(string $base64String, bool $strict = true) : string
     {
-        $binary = base64_decode($base64String, true);
+        $binary = base64_decode($base64String, $strict);
         if ($binary === false) {
             throw new DataTypeCastingError('Cannot convert Base64 to binary: invalid Base64 string!');
         }
@@ -199,11 +201,17 @@ class BinaryDataType extends AbstractDataType
      * Decodes Base64 encoded text
      * 
      * @param string $base64String
+     * @param bool $unescapeUnicode
+     * @param bool $strict
      * @return string
      */
-    public static function convertBase64ToText(string $base64String) : string
+    public static function convertBase64ToText(string $base64String, bool $unescapeUnicode = true, bool $strict = false) : string
     {
-        return static::convertBase64ToBinary($base64String);
+        $result = static::convertBase64ToBinary($base64String, $strict);
+        if ($unescapeUnicode === true) {
+            $result = urldecode($result);
+        }
+        return $result;
     }
     
     /**
@@ -221,10 +229,14 @@ class BinaryDataType extends AbstractDataType
      * Encodes a given string as Base64.
      * 
      * @param string $string
+     * @param bool $escapeUnicode
      * @return string
      */
-    public static function convertTextToBase64(string $string) : string
+    public static function convertTextToBase64(string $string, bool $escapeUnicode = true) : string
     {
+        if ($escapeUnicode === true) {
+            $string = urlencode($string);
+        }
         return static::convertBinaryToBase64($string);
     }
     
@@ -320,13 +332,13 @@ class BinaryDataType extends AbstractDataType
      * @link https://base64.guru/developers/php/examples/base64url
      * 
      * @param string $data
-     * @throws DataTypeCastingError
+     * @param bool $escapeUnicode
      * @return string
      */
-    public static function convertTextToBase64URL(string $data) : string
+    public static function convertTextToBase64URL(string $data, bool $escapeUnicode = true) : string
     {
         // First of all you should encode $data to Base64 string
-        $b64 = base64_encode($data);
+        $b64 = static::convertTextToBase64($data, $escapeUnicode);
         // Convert Base64 to Base64URL by replacing “+” with “-” and “/” with “_”
         $url = strtr($b64, '+/', '-_');
         // Remove padding character from the end of line and return the Base64URL result
@@ -339,21 +351,19 @@ class BinaryDataType extends AbstractDataType
      * @link https://base64.guru/developers/php/examples/base64url
      * 
      * @param string $data
+     * @param bool $unescapeUnicode
      * @param boolean $strict
-     * @return boolean|string
+     * @return string
      */
-    public static function convertBase64URLToText(string $data, $strict = false) : string
+    public static function convertBase64URLToText(string $data, bool $unescapeUnicode = true, $strict = false) : string
     {
         // Convert Base64URL to Base64 by replacing “-” with “+” and “_” with “/”
         $b64 = strtr($data, '-_', '+/');
         // Add the correct number of `=` on the right
         $b64 = $b64 . str_repeat('=', 3 - ( 3 + strlen( $data )) % 4 );
         // Decode Base64 string and return the original data
-        $result = base64_decode($b64, $strict);
+        $result = static::convertBase64ToText($b64, $unescapeUnicode, $strict);
         
-        if ($result === false) {
-            throw new DataTypeCastingError('Cannot decode "' . StringDataType::truncate($data, 50, false, true, true) . '" from Base64URL!');
-        }
         return $result;
     }
     
