@@ -29,6 +29,7 @@ use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Facade to upload and download files using virtual pathes.
@@ -571,7 +572,19 @@ class HttpFileServerFacade extends AbstractHttpFacade
                     $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute(), $fileInfo->getMimetype());
                     break;
                 } catch (\Throwable $e) {
-                    $this->getWorkbench()->getLogger()->logException(new FileCorruptedError($e->getMessage(), null, $e, $fileInfo));
+                    if ($fileInfo->getSize() === NULL || $fileInfo->getSize() == 0) {
+                        $this->getWorkbench()->getLogger()->logException(new FileCorruptedError(
+                            'Can not create thumbnail, size of the file is 0 bytes!',
+                            null,
+                            $e,
+                            $fileInfo));
+                    } else {
+                        $this->getWorkbench()->getLogger()->logException(new FileCorruptedError(
+                            'Can not create thumbnail, file is probably corrupted!',
+                            null,
+                            $e,
+                            $fileInfo), LoggerInterface::ERROR);
+                    }
                 }
             // IDEA add other thumbnails here - for office documents, pdfs, etc.?
             default:

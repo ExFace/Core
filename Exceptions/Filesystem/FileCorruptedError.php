@@ -6,5 +6,15 @@ use exface\Core\Exceptions\RuntimeException;
 
 class FileCorruptedError extends RuntimeException implements FileSystemExceptionInterface
 {
-    use FileInfoExcpetionTrait;
+    use FileInfoExceptionTrait;
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
+     */
+    public function getDefaultAlias()
+    {
+        return '7WVU9TJ';
+    }
 }
