@@ -180,19 +180,38 @@ class BinaryDataType extends AbstractDataType
     
     /**
      * Converts a given string from Base64 to a binary string.
-     *  
+     * 
      * @param string $base64String
+     * @param bool $strict
+     * 
      * @throws DataTypeCastingError
      * 
      * @return string
      */
-    public static function convertBase64ToBinary(string $base64String) : string
+    public static function convertBase64ToBinary(string $base64String, bool $strict = true) : string
     {
-        $binary = base64_decode($base64String, true);
+        $binary = base64_decode($base64String, $strict);
         if ($binary === false) {
             throw new DataTypeCastingError('Cannot convert Base64 to binary: invalid Base64 string!');
         }
         return $binary;
+    }
+    
+    /**
+     * Decodes Base64 encoded text
+     * 
+     * @param string $base64String
+     * @param bool $unescapeUnicode
+     * @param bool $strict
+     * @return string
+     */
+    public static function convertBase64ToText(string $base64String, bool $unescapeUnicode = true, bool $strict = false) : string
+    {
+        $result = static::convertBase64ToBinary($base64String, $strict);
+        if ($unescapeUnicode === true) {
+            $result = urldecode($result);
+        }
+        return $result;
     }
     
     /**
@@ -204,6 +223,21 @@ class BinaryDataType extends AbstractDataType
     public static function convertBinaryToBase64(string $binaryString) : string
     {
         return base64_encode($binaryString);
+    }
+    
+    /**
+     * Encodes a given string as Base64.
+     * 
+     * @param string $string
+     * @param bool $escapeUnicode
+     * @return string
+     */
+    public static function convertTextToBase64(string $string, bool $escapeUnicode = true) : string
+    {
+        if ($escapeUnicode === true) {
+            $string = urlencode($string);
+        }
+        return static::convertBinaryToBase64($string);
     }
     
     /**
@@ -290,6 +324,47 @@ class BinaryDataType extends AbstractDataType
         $tmp = explode(';', $dataURL, 1);
         list(, $mime) = explode(':', $tmp);
         return $mime;
+    }
+    
+    /**
+     * Converts a string to Base64URL - a variation of Base64, that is safe to be used URLs
+     * 
+     * @link https://base64.guru/developers/php/examples/base64url
+     * 
+     * @param string $data
+     * @param bool $escapeUnicode
+     * @return string
+     */
+    public static function convertTextToBase64URL(string $data, bool $escapeUnicode = true) : string
+    {
+        // First of all you should encode $data to Base64 string
+        $b64 = static::convertTextToBase64($data, $escapeUnicode);
+        // Convert Base64 to Base64URL by replacing “+” with “-” and “/” with “_”
+        $url = strtr($b64, '+/', '-_');
+        // Remove padding character from the end of line and return the Base64URL result
+        return rtrim($url, '=');
+    }
+    
+    /**
+     * Decode data from Base64URL
+     * 
+     * @link https://base64.guru/developers/php/examples/base64url
+     * 
+     * @param string $data
+     * @param bool $unescapeUnicode
+     * @param boolean $strict
+     * @return string
+     */
+    public static function convertBase64URLToText(string $data, bool $unescapeUnicode = true, $strict = false) : string
+    {
+        // Convert Base64URL to Base64 by replacing “-” with “+” and “_” with “/”
+        $b64 = strtr($data, '-_', '+/');
+        // Add the correct number of `=` on the right
+        $b64 = $b64 . str_repeat('=', 3 - ( 3 + strlen( $data )) % 4 );
+        // Decode Base64 string and return the original data
+        $result = static::convertBase64ToText($b64, $unescapeUnicode, $strict);
+        
+        return $result;
     }
     
     /**

@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Exceptions\Filesystem\FileInfoExceptionTrait;
 
 /**
  * Exception thrown if an file was not found.
@@ -11,5 +12,6 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  */
 class FileNotFoundError extends NotFoundError implements ErrorExceptionInterface
 {
+    use FileInfoExceptionTrait;
 }
 ?>
