@@ -178,7 +178,8 @@ trait PrefillValueTrait
                 // to skip the prefill for widget with live-refs in general and not only for non-empty
                 // values?
                 break;
-            case $staticValueExpr !== null && $staticValueExpr->isReference() === false:
+            case $staticValueExpr === null:
+            case $staticValueExpr->isReference() === false:
             case $value !== null && $value != '':
                 $propSetter($value);
                 $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, $propName, $valuePointer));
