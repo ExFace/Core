@@ -5,8 +5,9 @@ use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\DateTimeDataType;
 
-trait FileInfoExcpetionTrait
+trait FileInfoExceptionTrait
 {
     private $fileInfo = null;
     
@@ -54,11 +55,26 @@ trait FileInfoExcpetionTrait
     {
         $md = '';
         if ($this->fileInfo !== null) {
+            $fileinfo = $this->fileInfo;
+            $created_on = $fileinfo->getCreatedOn()->format(DateTimeDataType::DATETIME_FORMAT_INTERNAL);
+            $modified_on = $fileinfo->getModifiedOn()->format(DateTimeDataType::DATETIME_FORMAT_INTERNAL);
             $md = <<<MD
 
-Filename: {$this->fileInfo->getFilename()}
+Filename: {$fileinfo->getFilename()}
 
+Path: {$fileinfo->getPathAbsolute()}
+
+Filesize: {$fileinfo->getSize()} bytes
+
+Created on: {$created_on}
+
+Modified on: {$modified_on}
+
+MimeType: {$fileinfo->getMimetype()}
+
+Type: {$fileinfo->getType()}
 MD;
+            
         }
         return $md;
     }
