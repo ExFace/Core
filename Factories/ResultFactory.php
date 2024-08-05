@@ -27,6 +27,8 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\CommonLogic\Tasks\ResultHTML;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
+use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 
 /**
  * Creates all kinds of task results. 
@@ -138,9 +140,16 @@ class ResultFactory extends AbstractStaticFactory
      * @param bool $downloadable
      * @return ResultFileInterface
      */
-    public static function createFileResult(TaskInterface $task, string $path, bool $downloadable = null) : ResultFileInterface
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param FileInfoInterface $fileInfo
+     * @param bool $downloadable
+     * @return ResultFileInterface
+     */
+    public static function createFileResult(TaskInterface $task, FileInfoInterface $fileInfo, bool $downloadable = null) : ResultFileInterface
     {
-        $result = (new ResultFile($task))->setPath($path);
+        $result = new ResultFile($task, $fileInfo);
         if ($downloadable === true) {
             $result->setDownloadable(true);
         }
@@ -150,12 +159,25 @@ class ResultFactory extends AbstractStaticFactory
     /**
      * 
      * @param TaskInterface $task
+     * @param string $pathAbsolute
+     * @param bool $downloadable
+     * @return ResultFileInterface
+     */
+    public static function createFileResultFromPath(TaskInterface $task, string $pathAbsolute, bool $downloadable = null) : ResultFileInterface
+    {
+        $fileInfo = new LocalFileInfo($pathAbsolute);
+        return static::createFileResult($task, $fileInfo, $downloadable);
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
      * @param string $path
      * @return ResultFileInterface
      */
-    public static function createDownloadResultFromFile(TaskInterface $task, string $path) : ResultFileInterface
+    public static function createDownloadResultFromFilePath(TaskInterface $task, string $path) : ResultFileInterface
     {
-        return (static::createFileResult($task, $path))->setDownloadable(true);
+        return static::createFileResultFromPath($task, $path, true);
     }
     
     /**

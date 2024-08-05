@@ -256,7 +256,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
      * @param FileInfoInterface $fileInfo
      * @return ResponseInterface
      */
-    protected function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
+    public function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
         $response->withHeader('Content-Disposition', 'attachment; filename=' . $fileInfo->getFilename());
