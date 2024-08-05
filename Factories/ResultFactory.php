@@ -136,13 +136,6 @@ class ResultFactory extends AbstractStaticFactory
     /**
      * 
      * @param TaskInterface $task
-     * @param string $path
-     * @param bool $downloadable
-     * @return ResultFileInterface
-     */
-    /**
-     * 
-     * @param TaskInterface $task
      * @param FileInfoInterface $fileInfo
      * @param bool $downloadable
      * @return ResultFileInterface
