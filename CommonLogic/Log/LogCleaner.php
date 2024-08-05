@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\Events\Workbench\OnCleanUpEvent;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\CommonLogic\Tracer;
 
 /**
  *  
@@ -33,8 +34,8 @@ class LogCleaner
         
         $workbench = $event->getWorkbench();        
         $config = $workbench->getConfig();
-        $maxDaysToKeep = $config->getOption('LOG.MAX_DAYS_TO_KEEP');        
-        if (0 === $maxDaysToKeep) {
+        $maxDaysLogs = $config->getOption('LOG.MAX_DAYS_TO_KEEP');        
+        if (0 === $maxDaysLogs) {
             return;
         }
         
@@ -47,8 +48,8 @@ class LogCleaner
         // Delete log detail files older than max days to keep.
         // If they are not due fordeletion or move them to subfolder.
         // Necessary for migration from old to new log deletion process.
-        $limitTime = max(0, time() - ($maxDaysToKeep * 24 * 60 * 60));
-        $detailsFiles = glob($detailsLogDir . '/*.' . $detailsLogFileExt);
+        $limitTime = max(0, time() - ($maxDaysLogs * 24 * 60 * 60));
+        $detailsFiles = glob($detailsLogDir . DIRECTORY_SEPARATOR . '*.' . $detailsLogFileExt);
         foreach ($detailsFiles as $detailFile) {
             if (is_writable($detailFile)) {
                 $mtime = filemtime($detailFile);
@@ -87,6 +88,28 @@ class LogCleaner
         }
         
         $event->addResultMessage("Cleaned up log files removing {$countFiles} expired log files and {$countDir} details subfolders.");
+        
+        // Delete old trace files too
+        $maxDaysTraces = $config->getOption('DEBUG.MAX_DAYS_TO_KEEP');
+        $limitTime = max(0, time() - ($maxDaysTraces * 24 * 60 * 60));
+        $logFiles = glob(
+            $coreLogDir . DIRECTORY_SEPARATOR .
+            Tracer::FOLDER_NAME_TRACES . DIRECTORY_SEPARATOR .
+            '*.csv'
+        );
+        $countDir = 0;
+        $countFiles = 0;
+        foreach ($logFiles as $logFile) {
+            if (is_writable($logFile)) {
+                $mtime = filemtime($logFile);
+                if ($mtime < $limitTime) {
+                    @unlink($logFile);
+                    $countFiles++;
+                }
+            }
+        }
+        
+        $event->addResultMessage("Cleaned up trace files removing {$countFiles} expired traces");
         
         return;
     }
