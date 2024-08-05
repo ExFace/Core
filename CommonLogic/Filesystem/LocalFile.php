@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Filesystem;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * 
@@ -46,7 +47,11 @@ class LocalFile implements FileInterface
      */
     public function read() : string
     {
-        return file_get_contents($this->getFileInfo()->getPathAbsolute());
+        $result = file_get_contents($this->getFileInfo()->getPathAbsolute());
+        if ($result === false) {
+            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!', null, null, $this->getFileInfo());
+        }
+        return $result;
     }
     
     /**
@@ -56,7 +61,11 @@ class LocalFile implements FileInterface
      */
     public function readStream()
     {
-        return fopen($this->fileInfo->getPath(true), $this->mode);
+        $result = fopen($this->fileInfo->getPath(true), $this->mode);
+        if ($result === false) {
+            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!', null, null, $this->getFileInfo());
+        }
+        return $result;
     }
     
     /**

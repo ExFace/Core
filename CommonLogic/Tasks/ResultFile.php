@@ -3,10 +3,8 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\FileNotReadableError;
-use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\DataTypes\MimeTypeDataType;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 
 /**
  * Task result containing a file.
@@ -18,9 +16,15 @@ class ResultFile extends ResultMessage implements ResultFileInterface
 {
     private $downloadable = false;
     
-    private $pathAbsolute = '';
+    private $fileInfo = null;
     
     private $mimeType = null;
+    
+    public function __construct(TaskInterface $task, FileInfoInterface $fileInfo = null)
+    {
+        parent::__construct($task);
+        $this->fileInfo = $fileInfo;
+    }
 
     /**
      * 
@@ -43,36 +47,14 @@ class ResultFile extends ResultMessage implements ResultFileInterface
         return $this;
     }
     
-    public function setPath(string $path): ResultFileInterface
-    {
-        $filemanager = $this->getWorkbench()->filemanager();
-        if ($filemanager::pathIsAbsolute($path)) {
-            $path = $path;
-        } else {
-            $path = $filemanager::pathJoin([$filemanager::getPathToBaseFolder(), $path]);
-        }
-        $this->pathAbsolute = $filemanager::pathNormalize($path);
-        return $this;
-    }
-    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getFilename()
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getFileInfo()
      */
-    public function getFilename() : string
+    public function getFileInfo() : FileInfoInterface
     {
-        return FilePathDataType::findFileName($this->getPathAbsolute());
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getPathAbsolute()
-     */
-    public function getPathAbsolute(): string
-    {
-        return $this->pathAbsolute;
+        return $this->fileInfo;
     }
     
     /**
@@ -82,10 +64,7 @@ class ResultFile extends ResultMessage implements ResultFileInterface
      */
     public function getMimeType(): string
     {
-        if (is_null($this->mimeType)) {
-            return MimeTypeDataType::findMimeTypeOfFile($this->getPathAbsolute());
-        }
-        return $this->mimeType;
+        return $this->mimeType ?? $this->fileInfo->getMimetype();
     }
     
     /**
@@ -102,41 +81,10 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getContents()
-     */
-    public function getContents() : string
-    {
-        $result = file_get_contents($this->getPathAbsolute());
-        if ($result === false) {
-            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!');
-        }
-        if ($result === false) {
-            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
-        }
-        return $result;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getResourceHandle()
-     */
-    public function getResourceHandle(string $mode = "r")
-    {
-        $handle = fopen($this->getPathAbsolute(), $mode);
-        if ($handle === false) {
-            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
-        }
-        return $handle;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
      */
     public function isEmpty() : bool
     {
-        return parent::isEmpty() && ! $this->getPathAbsolute();
+        return parent::isEmpty() && $this->fileInfo === null;
     }
 }
