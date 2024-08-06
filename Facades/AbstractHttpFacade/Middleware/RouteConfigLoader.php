@@ -95,24 +95,25 @@ class RouteConfigLoader implements MiddlewareInterface
     protected function getRouteData(string $path, array $routeComponents) : array
     {
         // url has to be: /service_name/version/route_name like bmdb-gis-export/1.24.4/Massnahmen
-        $hasValidVersion = $routeComponents[self::ROUTE_VERSION_ATTRIBUTE] !== null;
+        $version = $routeComponents[self::ROUTE_VERSION_ATTRIBUTE] ?? null;
         $matchedRoute = null;
-        $highestVersion = null;
+        $rowVersions = [];
         foreach ($this->routeData->getRows() as $row) {
             $currentRouteUrl = $row[$this->routePatternAttributeAlias];
-            $currentRouteVersion = $row[$this->routeVersionAttributeAlias];
-
             if (strcasecmp($routeComponents[self::ROUTE_NAME_ATTRIBUTE], $currentRouteUrl) === 0) {
-                if ($hasValidVersion && $currentRouteVersion === $routeComponents[self::ROUTE_VERSION_ATTRIBUTE]) {
-                    return $row;
-                }
-
-                if (!$hasValidVersion) {
-                    if ($highestVersion === null || SemanticVersionDataType::isVersionGreaterThan($currentRouteVersion, $highestVersion)) {
-                        $highestVersion = $currentRouteVersion;
-                        $matchedRoute = $row;
-                    }
-                }
+                $rowVersions[] = $row;
+            }
+        }
+        
+        // If no versions are used (= no version in URL or route definiton) and there is only one
+        // match, take it. Otherwise apply the version constraint and find the best fit.
+        if ($version === null && count($rowVersions) === 1 && empty($rowVersions[0][$this->routeVersionAttributeAlias])) {
+            $matchedRoute = $rowVersions[0];
+        } else {
+            $versions = array_column($rowVersions, $this->routeVersionAttributeAlias);
+            $bestMatch = SemanticVersionDataType::findVersionBest($version ?? SemanticVersionDataType::WILDCARD, $versions);
+            if ($bestMatch !== null) {
+                $matchedRoute = $rowVersions[array_search($bestMatch, $versions)]; 
             }
         }
 
