@@ -2,8 +2,6 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Model\Expression;
@@ -44,7 +42,49 @@ class DiffText extends Value
     private $compareToValue = null;
     
     private $comparetToExpr = null;
-    
+
+    private string $versionToRender = "diff_new";
+
+    const VALUE_TO_COMPARE_ALIAS = "value_to_compare";
+
+    const DIFF_CLASS = "difftext-diff";
+
+    const RENDER_OPTIONS = array(
+        "old",
+        "new",
+        "diff"
+    );
+
+    /**
+     * @return string
+     */
+    public function getVersionToRender(): string
+    {
+        return $this->versionToRender;
+    }
+
+    /**
+     * Selects which document version to render
+     *
+     * - **old**: Render original revision, without changes.
+     * - **new**: Render current revision, without changes.
+     * - **diff**: Render changes.
+     *
+     * @uxon-property version_to_render
+     * @uxon-type [old,new,diff]
+     * @uxon-default diff
+     *
+     * @param string $versionToRender
+     * @return void
+     */
+    public function setVersionToRender(string $versionToRender)
+    {
+        $versionToRender = strtolower($versionToRender);
+        if(in_array($versionToRender, self::RENDER_OPTIONS)) {
+            $this->versionToRender = $versionToRender;
+        }
+    }
+
     /**
      *
      * @return string
@@ -151,7 +191,7 @@ class DiffText extends Value
         
         if ($this->isValueToCompareBoundToAttribute() === true) {
             if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getAttributeAliasToCompare())) {
-                $this->doPrefillForExpression($data_sheet, $expr, 'value_to_compare', function($value){
+                $this->doPrefillForExpression($data_sheet, $expr, self::VALUE_TO_COMPARE_ALIAS, function($value){
                     $this->setValueToCompare($value ?? '');
                 });
             }

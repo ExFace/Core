@@ -2,6 +2,8 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Exceptions\DataTypes\HtmlValidationError;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -91,6 +93,13 @@ class PrintPreview extends GoToUrl
             if ($this->getCallActionInsteadOfPreview() === false) {
                 $prints = $printAction->renderTemplate($previewSheet);
                 $preview = reset($prints);
+
+                try {
+                    HtmlDataType::validateHtml($preview, false);
+                } catch (HtmlValidationError $error) {
+                    $preview = $this->buildErrorMessage($error);
+                }
+
                 $result = ResultFactory::createHTMLResult($task, $preview);
             } else {
                 $task = TaskFactory::createFromDataSheet($previewSheet, ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $task->getFacade());
@@ -102,6 +111,32 @@ class PrintPreview extends GoToUrl
         }
         
         return $result;
+    }
+
+    private function buildErrorMessage(HtmlValidationError $error) : string
+    {
+        $errorListing = '';
+        foreach ($error->getErrorMessages() as $errorMessage) {
+            $errorListing .= <<< HTML
+                <li><h4>{$errorMessage}</h4></li> 
+HTML;
+        }
+
+        return <<< HTML
+            <div id="html_validation_error">
+                <div id="message" class="exf-message error" style="text-align:center; background-color: #dd4b39; 
+                    padding: 5px; color: white; margin: 2px 0; min-height: 38px; color:white; !important">
+                    
+                    <h1>Invalid HTML detected: Fix all errors listed below!</h1>
+                    <h3>Use an external HTML validator for more information.</h3>
+                </div>
+                <div id="errors" style="background-color: lightgrey; padding: 5px;">
+                    <ul>
+                        {$errorListing}
+                    </ul>
+                </div>
+            </div>
+HTML;
     }
     
     /**
