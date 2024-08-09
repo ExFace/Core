@@ -5,6 +5,8 @@ use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Task result containing a file.
@@ -86,5 +88,23 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     public function isEmpty() : bool
     {
         return parent::isEmpty() && $this->fileInfo === null;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getContents()
+     */
+    public function getContents() : string
+    {
+        $path = $this->getFileInfo()->getPathAbsolute();
+        $result = file_get_contents($path);
+        if ($result === false) {
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!');
+        }
+        if ($result === false) {
+            throw new RuntimeException('Cannot read action result "' . $path . '"!');
+        }
+        return $result;
     }
 }
