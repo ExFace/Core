@@ -29,4 +29,10 @@ interface ResultFileInterface extends ResultStreamInterface
      * @return FileInfoInterface
      */
     public function getFileInfo() : FileInfoInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getContents() : string;
 }
