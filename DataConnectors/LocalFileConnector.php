@@ -248,7 +248,7 @@ class LocalFileConnector extends TransparentConnector
      * @uxon-type string
      *
      * @param string $value            
-     * @return \exface\Core\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\LocalFileConnector
      */
     public function setBasePath($value) : LocalFileConnector
     {
@@ -279,7 +279,7 @@ class LocalFileConnector extends TransparentConnector
      * @uxon-type boolean
      *
      * @param boolean $value            
-     * @return \exface\Core\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\LocalFileConnector
      */
     public function setUseVendorFolderAsBase(bool $value) : LocalFileConnector
     {
