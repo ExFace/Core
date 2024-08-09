@@ -97,12 +97,13 @@ class ResultFile extends ResultMessage implements ResultFileInterface
      */
     public function getContents() : string
     {
-        $result = file_get_contents($this->getPathAbsolute());
+        $path = $this->getFileInfo()->getPathAbsolute();
+        $result = file_get_contents($path);
         if ($result === false) {
-            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!');
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!');
         }
         if ($result === false) {
-            throw new RuntimeException('Cannot read action result "' . $this->getPathAbsolute() . '"!');
+            throw new RuntimeException('Cannot read action result "' . $path . '"!');
         }
         return $result;
     }
