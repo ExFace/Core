@@ -124,7 +124,7 @@ class SecurityManager implements SecurityManagerInterface
                     case 1:
                         throw new AuthenticationFailedError($this, 'Authentication failed!', null, ($errors[0] ?? null), $token, $logbook);
                     default:
-                        throw new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors);
+                        throw new AuthenticationFailedMultiError($this, 'Authentication failed! Tried ' . count($errors) . ' providers - see log details.' , null, $errors, $logbook);
                 }
             }
         } else {

@@ -23,6 +23,7 @@ use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -183,6 +184,8 @@ class FileBuilder extends AbstractQueryBuilder
     
     const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
+    const REGEX_DELIMITER = '/';
+    
     
     /**
      * 
@@ -195,11 +198,12 @@ class FileBuilder extends AbstractQueryBuilder
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         if ($filenamePattern) {
+            $query->addFilenamePattern($filenamePattern);
             // also add the pattern literal with escaped regex characters
             // as the filename can contain '[' for example
-            $escapedPattern = preg_quote($filenamePattern);
-            $query->addFilenamePattern($filenamePattern);
-            $query->addFilenamePattern($escapedPattern);
+            if (! RegularExpressionDataType::isRegex($filenamePattern)) {
+                $query->addFilenamePattern(preg_quote($filenamePattern));
+            }
         }
         
         // Setup query
@@ -216,11 +220,12 @@ class FileBuilder extends AbstractQueryBuilder
             } 
             
             if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
-                $escapedPattern = preg_quote($pathEnd);
+                $query->addFilenamePattern($pathEnd);
                 // also add the pattern literal with escaped regex characters
                 // as the filename can contain '[' for example
-                $query->addFilenamePattern($pathEnd);
-                $query->addFilenamePattern($escapedPattern);
+                if (! RegularExpressionDataType::isRegex($pathEnd)) {
+                    $query->addFilenamePattern(preg_quote($pathEnd));
+                }
             }         
         }
         
@@ -332,12 +337,13 @@ class FileBuilder extends AbstractQueryBuilder
         $values = [];
         $filtersApplied = [];
         $filename = null;
+        $pregDelim = self::REGEX_DELIMITER;
         foreach ($qpart->getFilters() as $filter) {
             if ($this->isFilename($filter)) {
                 switch ($filter->getComparator()) {
                     case ComparatorDataType::EQUALS:
                     case ComparatorDataType::IS:
-                        $mask = preg_quote($filter->getCompareValue());
+                        $mask = preg_quote($filter->getCompareValue(), $pregDelim);
                         if ($filter->getComparator() === ComparatorDataType::EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
@@ -354,11 +360,11 @@ class FileBuilder extends AbstractQueryBuilder
         if (! empty($values)) {
             switch ($qpart->getOperator()) {
                 case EXF_LOGICAL_OR:
-                    $filename = '/(' . implode('|', $values) . ')/i';
+                    $filename = "$pregDelim(" . implode('|', $values) . "){$pregDelim}i";
                     break;
                 case EXF_LOGICAL_AND: 
                     if (count($values) === 1) {
-                        $filename = '/' . $values[0] . '/i';
+                        $filename = $pregDelim . $values[0] . $pregDelim . 'i';
                         break;
                     } 
                 default:

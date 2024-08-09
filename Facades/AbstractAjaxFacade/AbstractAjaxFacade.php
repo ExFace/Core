@@ -67,6 +67,7 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\MessageTypeDataType;
 use function GuzzleHttp\Psr7\stream_for;
+use exface\Core\Factories\FacadeFactory;
 
 /**
  * 
@@ -438,7 +439,7 @@ HTML;
         $status_code = $result->getResponseCode();
         
         if ($result->isEmpty()) {
-            return new Response($status_code, $headers);
+            return new Response(204, $headers);
         }
         
         switch (true) {
@@ -460,7 +461,7 @@ HTML;
                 break;
                 
             case $result instanceof ResultFileInterface && $result->isDownloadable():
-                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getFileInfo()->getPathAbsolute());
                 $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
@@ -471,15 +472,9 @@ HTML;
                 break;
                 
             case $result instanceof ResultFileInterface && ! $result->isDownloadable():
-                $headers = array_merge($headers, [
-                    'Expires' => 0,
-                    'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
-                    'Pragma' => 'public'
-                ]);
-                $headers['Content-Transfer-Encoding'] = 'binary';
-                $headers['Content-Disposition'] = 'inline; filename=' . $result->getFilename();
-                $headers['Content-Type'] = $result->getMimeType();
-                return new Response(200, $headers, stream_for($result->getResourceHandle())); 
+                /* @var $fileServer \exface\Core\Facades\HttpFileServerFacade */
+                $fileServer = FacadeFactory::createFromString(HttpFileServerFacade::class, $this->getWorkbench());
+                return $fileServer->createResponseForDonwload($result->getFileInfo()); 
                 
             case $result instanceof ResultUriInterface:
                 if ($result instanceof ResultRedirect && $result->hasTargetPage()) {
