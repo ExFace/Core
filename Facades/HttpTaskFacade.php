@@ -157,7 +157,7 @@ class HttpTaskFacade extends AbstractHttpTaskFacade
                 break;
                 
             case $result instanceof ResultFileInterface:
-                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerFacade::buildUrlToDownloadFile($this->getWorkbench(), $result->getFileInfo()->getPathAbsolute());
                 $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.DOWNLOADFILE.RESULT_WITH_LINK', ['%url%' => $url]);
                 // Use extra response property "download" here instead of redirect, because if facades
                 // use simple redirects for downloads, this won't work for text-files or unknown mime types
