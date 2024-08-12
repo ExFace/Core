@@ -34,6 +34,8 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Contexts\DebugContext;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -627,6 +629,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return $this->attribute;
     }
 
+    /**
+     * 
+     * @return AggregatorInterface|NULL
+     */
     public function getAggregator() : ?AggregatorInterface
     {
         if ($this->aggregate_function === null) {
@@ -1105,7 +1111,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        return $this->customHint ?? $this->getCellWidget()->getHint($includeDebugInfo);
+        if ($this->customHint !== null) {
+            $hint = $this->customHint;
+            
+            // Dev-hint
+            if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+                $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug();
+            }
+            return $hint;
+        }
+        return $this->getCellWidget()->getHint($includeDebugInfo);
     }
     
     /**
