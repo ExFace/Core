@@ -491,7 +491,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        $hint = parent::getHint();
+        $hint = parent::getHint($includeDebugInfo);
         
         if (empty($hint) === true && $this->hasAction()) {
             $hint = $this->getAction()->getHint();
