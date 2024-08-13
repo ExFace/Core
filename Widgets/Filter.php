@@ -836,7 +836,9 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('comparator', $this->getComparator());
+        if (null !== $val = $this->getComparator()) {
+            $uxon->setProperty('comparator', $val);
+        }
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         if ($this->hasCustomConditionGroup() === true) {
