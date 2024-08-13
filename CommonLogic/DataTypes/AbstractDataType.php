@@ -185,6 +185,9 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public static function isValueLogicalNull($value) : bool
     {
+        if ($value === null) {
+            return false;
+        }
         return strcasecmp($value, EXF_LOGICAL_NULL) === 0;
     }
     
