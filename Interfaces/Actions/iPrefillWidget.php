@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Interface for actions that fetch prefill data for widgets.
@@ -118,7 +119,7 @@ interface iPrefillWidget extends ActionInterface
      *
      * @return string
      */
-    public function getPrefillDataRefresh() : string;
+    public function getPrefillDataRefresh(TaskInterface $task) : string;
     
     /**
      *
