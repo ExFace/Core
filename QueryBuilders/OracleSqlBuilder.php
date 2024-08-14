@@ -343,14 +343,22 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     {
         $this->setDirty(false);
         
+        $group_by = '';
         $totals_joins = array();
         $totals_core_selects = array();
         $totals_selects = array();
+        
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
                 $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
+                $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
+            }
+        }
+        // Make sure all JOINs required for data address placeholders are there
+        foreach ($this->getAttributes() as $qpart) {
+            if ($qpart->isUsedInPlaceholders() === true) {
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
