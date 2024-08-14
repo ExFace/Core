@@ -979,11 +979,13 @@ abstract class AbstractWidget implements WidgetInterface
     protected function getHintDebug() : string
     {
         $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
-        if (($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute()) {
-            $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
-        }
-        if (($this instanceof iHaveValue)) {
-            $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+        if ($this instanceof iShowSingleAttribute) {
+            if ($this->isBoundToAttribute()) {
+                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+            }
+            if ($this instanceof iHaveValue) {
+                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+            }
         }
         return $hint ?? '';
     }
