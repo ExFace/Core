@@ -1715,7 +1715,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $join .=  $left_join_on . ' = ' . $right_join_on;
             if ($customSelectWhere = $right_obj->getDataAddressProperty(self::DAP_SQL_SELECT_WHERE)) {
                 if (stripos($customSelectWhere, 'SELECT ') === false) {
-                    $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $rightTableAlias]);
+                    $join .= ' AND ' . $this->replacePlaceholdersInSqlAddress($customSelectWhere, null, ['~alias' => $rightTableAlias]);
                 } else {
                     $join .= $this->buildSqlComment('Cannot use SQL_SELECT_WHERE of object "' . $right_obj->getName() . '" (' . $right_obj->getAliasWithNamespace() . ') in a JOIN - a column may not be outer-joined to a subquery!');
                 }
@@ -2557,7 +2557,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
-        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId())), $custom_statement);
+        $table_alias = $table_alias ?? $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        $customWhere = $this->replacePlaceholdersInSqlAddress($custom_statement, null, ['~alias' => $table_alias]);
+        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . $customWhere;
     }
     
     /**
@@ -2612,7 +2614,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             // If the placeholder is not part of the query already, create a new query part.
-            if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
+            if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
+                $qpart->setUsedInPlaceholders(true);
+            } else {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
                     $qpart = new QueryPartSelect($ph_attribute_alias, $this, null, null);
@@ -2624,7 +2628,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // be part of the query and thus will also make sure, that all JOINs are there.
                 if ($ph_has_relation){
                     $this->setDirty(true);
-                    $this->addQueryPart($qpart->excludeFromResult(true));
+                    $qpart->excludeFromResult(true);
+                    $qpart->setUsedInPlaceholders(true);
+                    $this->addQueryPart($qpart);
                 }
             }
             if ($ph_has_relation) {
