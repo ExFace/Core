@@ -135,6 +135,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * distinguished by specific keys in a special column. The value of
      * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g.
      * `[#~alias#].mycolumn = 'myvalue'`.
+     * 
+     * You can also use attribute aliases as placeholders: e.g. `[#MY_ATTRIBUTE#]`
+     * or even `[#RELATION__RELATED_ATTRIBUTE#]`. Keep in mind, that using relations
+     * will produce JOINs or subselects in the resulting SQL, which whill ALWAYS
+     * be the case if they are used in parts of the data address of the object.
      *
      * @uxon-property SQL_SELECT_WHERE
      * @uxon-target object
