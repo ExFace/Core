@@ -23,6 +23,7 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 
 /**
  * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
@@ -251,7 +252,7 @@ class DataSourceFileInfo implements FileInfoInterface
             $this->fileData->dataRead();
             
             if ($this->fileData->countRows() > 1) {
-                throw new OverflowException('Ambiguous virtual file path "' . $this->getPath() . '": ' . $this->fileData->countRows() . ' matching files found!');
+                throw new DataSheetReadError($this->fileData, 'Ambiguous virtual file path "' . $this->getPath() . '": ' . $this->fileData->countRows() . ' matching files found!');
             }
         }
         return $this->fileData;

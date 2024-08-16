@@ -5,9 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use League\Csv\Writer;
 use exface\Core\CommonLogic\Constants\Icons;
 use League\Csv\Reader;
-use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
-use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Exports data to a csv file.
@@ -19,6 +17,12 @@ use exface\Core\Interfaces\WidgetInterface;
  * - `escape_char` - `\` by default
  * - `newline_sequence` - `\n` by default
  * - `bom_sequence` - empty by default
+ * 
+ * ## What data will be exported?
+ * 
+ * You can explicitly define the columns to be exported via `columns`. If you don't and the action is placed in a data
+ * widget (e.g. a `DataTable`), it will take all exportable columns of that data widget. Thus, you can exclude table 
+ * columns from the export by setting `exportable` to `false` in the column configuration. 
  * 
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
