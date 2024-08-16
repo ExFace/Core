@@ -235,7 +235,7 @@ class FilePathDataType extends StringDataType
         // sanitize filename
         $filename = preg_replace(
             '~
-        [<>:"/\\\|?*]|            # file system reserved https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+        [<>:"/\\\|?*]|           # file system reserved https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
         [\x00-\x1F]|             # control characters http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
         [\x7F\xA0\xAD]|          # non-printing characters DEL, NO-BREAK SPACE, SOFT HYPHEN
         [#\[\]@!$&\'()+,;=]|     # URI reserved https://www.rfc-editor.org/rfc/rfc3986#section-2.2
@@ -346,7 +346,7 @@ class FilePathDataType extends StringDataType
      * @param string $pathWithWildcards
      * @return bool
      */
-    public function isPattern(string $pathWithWildcards) : bool
+    public static function isPattern(string $pathWithWildcards) : bool
     {
         return strpos($pathWithWildcards, '*') !== false || strpos($pathWithWildcards, '?') !== false;
     }

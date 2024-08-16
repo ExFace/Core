@@ -196,37 +196,75 @@ class FileBuilder extends AbstractQueryBuilder
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
         // Calculate paths and filenames from the current filters
+        // TODO instead of working with an array of paths and filename pattersn, create
+        // a common method from filling a query with filters
+        // - full path with filename, but without wildcards -> addFilePath()
+        // - filename -> addFilenamePattern()
+        // - folder path -> addFolder()
+        // - paths with wildcards -> split into filenames and folders
+        // The current solution has trouble distinguishing between folder and file paths!
+        // Cases known to produce problems:
+        // - path and filename separately without wildcards - e.g. from DataSourceFileInfo
+        // - full path with filename (not separated into two filters)
+        // - folder with file name pattern (e.g. data address of `exface.Core.BEHAVIOR`)
+        // Perhaps we also need to normalize folder paths and enforce a trailing slash?
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
-        
+        $filenameFilters = [];
         // If there is a filename, add it to the query
-        if ($filenamePattern !== null && $filenamePattern !== '' && $filenamePattern !== '*') {
-            $foundFilename = true;
-            $query->addFilenamePattern($filenamePattern);
+        if ($filenamePattern === null || $filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
+            $filenamePattern = null;
         }
         
         // Now add each path
         foreach ($pathPatterns as $path) {
-            if ($path == '') {
+            if ($path === null || $path === '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
             
-            // If there is no filename, the path might contain it, so use the end of the path
-            // as filename pattern.
-            // TODO what actually the use case for stripping off the end of the path? Don't
-            // remember why this logic is here...
-            // If we do have file names, add the path directly
-            if (! $foundFilename && $pathEnd = FilePathDataType::findFileName($path, true)) {
-                $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
-                
-                if ($pathFolder) {
-                    $query->addFolder($pathFolder);
+            // The end of the path might contain a filename or mask too: e.g. the data
+            // address of exface.Core.BEHAVIOR is `/*/*/Behaviors/*.php`.
+            $pathEnd = FilePathDataType::findFileName($path, true);
+            if (strpos($pathEnd, '.') !== false || FilePathDataType::isPattern($pathEnd)) {
+                $path = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
+                switch (true) {
+                    case $filenamePattern === null:
+                        $filenamePattern = $pathEnd;
+                        break;
+                    case FilePathDataType::isPattern($pathEnd):
+                        $filenameFilters[] = $filenamePattern;
+                        $filenamePattern = $pathEnd;
+                        break;
+                    default:
+                        $filenameFilters[] = $pathEnd;
+                        break;
                 }
-                
-                $query->addFilenamePattern($pathEnd);
-            } else {
-                $query->addFolder($path);
             }
+        }
+        
+        if ($path !== null && $path !== '') {
+            $query->addFolder($path);
+        }
+        
+        if ($filenamePattern !== null) {
+            $query->addFilenamePattern($filenamePattern);
+        }
+        
+        if (! empty($filenameFilters)) {
+            $query->addFilter(function(FileInfoInterface $fileInfo) use ($filenameFilters) {
+                $filename = $fileInfo->getFilename(true);
+                foreach ($filenameFilters as $pattern) {
+                    if (RegularExpressionDataType::isRegex($pattern)) {
+                        $match = preg_match($pattern, $filename) === 1;
+                    } else {
+                        $match = strcasecmp($pattern, $filename) === 0;
+                    }
+                    if ($match === true) {
+                        return true;
+                    }
+                }
+                return false;
+            }, 'filename must match any of ["' . implode('", "', $filenameFilters) . '"]');
         }
         
         if (count($this->getSorters()) > 0) {
