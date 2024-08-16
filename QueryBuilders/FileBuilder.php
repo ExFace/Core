@@ -195,38 +195,38 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
+        // Calculate paths and filenames from the current filters
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
-        if ($filenamePattern) {
+        
+        // If there is a filename, add it to the query
+        if ($filenamePattern !== null && $filenamePattern !== '' && $filenamePattern !== '*') {
+            $foundFilename = true;
             $query->addFilenamePattern($filenamePattern);
-            // also add the pattern literal with escaped regex characters
-            // as the filename can contain '[' for example
-            if (! RegularExpressionDataType::isRegex($filenamePattern)) {
-                $query->addFilenamePattern(preg_quote($filenamePattern));
-            }
         }
         
-        // Setup query
+        // Now add each path
         foreach ($pathPatterns as $path) {
             if ($path == '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
             
-            $pathEnd = FilePathDataType::findFileName($path, true);
-            $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
-            
-            if ($pathFolder) {
-                $query->addFolder($pathFolder);
-            } 
-            
-            if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
-                $query->addFilenamePattern($pathEnd);
-                // also add the pattern literal with escaped regex characters
-                // as the filename can contain '[' for example
-                if (! RegularExpressionDataType::isRegex($pathEnd)) {
-                    $query->addFilenamePattern(preg_quote($pathEnd));
+            // If there is no filename, the path might contain it, so use the end of the path
+            // as filename pattern.
+            // TODO what actually the use case for stripping off the end of the path? Don't
+            // remember why this logic is here...
+            // If we do have file names, add the path directly
+            if (! $foundFilename && $pathEnd = FilePathDataType::findFileName($path, true)) {
+                $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
+                
+                if ($pathFolder) {
+                    $query->addFolder($pathFolder);
                 }
-            }         
+                
+                $query->addFilenamePattern($pathEnd);
+            } else {
+                $query->addFolder($path);
+            }
         }
         
         if (count($this->getSorters()) > 0) {

@@ -510,7 +510,7 @@ class Condition implements ConditionInterface
         try {
             $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr);
             $this->setExpression($expression);
-            if ($uxon->hasProperty('comparator') && $comp = $uxon->getProperty('comparator')) {
+            if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
             }
             if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {

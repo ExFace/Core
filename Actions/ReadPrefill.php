@@ -54,6 +54,7 @@ class ReadPrefill extends ReadData implements iPrefillWidget
         getPrefillDataPreset as getPrefillDataPresetViaTrait;
         hasPrefillDataPreset as hasPrefillDataPresetViaTrait;
         getPrefillDataSheet as getPrefillDataSheetViaTrait;
+        getPrefillDataRefresh as getPrefillDataRefreshViaTrait;
     }
 
     /**
@@ -437,5 +438,19 @@ class ReadPrefill extends ReadData implements iPrefillWidget
     public function isTriggerWidgetRequired() : ?bool
     {
         return true;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iPrefillWidget::getPrefillDataRefresh()
+     */
+    public function getPrefillDataRefresh(TaskInterface $task = null) : string
+    {
+        if ($task && ($action = $this->getPrefillTriggerAction($task))&& $action instanceof iPrefillWidget && $this->prefill_data_refresh === iPrefillWidget::REFRESH_AUTO) {
+            return $action->getPrefillDataRefresh();
+        }
+        
+        return $this->getPrefillDataRefreshViaTrait();
     }
 }

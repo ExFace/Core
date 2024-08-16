@@ -175,10 +175,10 @@ class SqlDataQuery extends AbstractDataQuery
         $sql_widget = WidgetFactory::create($page, 'Html', $sql_tab);
         $sql = $this->getSql();
         // Pretty print SQLs as long as they are not too big
-        if (strlen($sql) < 10000) {
+        if (strlen($sql) <= $debug_widget->getWorkbench()->getConfig()->getOption('DEBUG.SQL_FORMATTING_MAX_CHARS')) {
             $sql_formatted = \SqlFormatter::format($sql);
         } else {
-            $sql_formatted = $sql;
+            $sql_formatted = '<pre class="prettyprint lang-sql">' . $sql . '</pre>';
         }
         $sql_widget->setHtml('<div style="padding:10px;">' . $sql_formatted . '</div>');
         $sql_widget->setWidth('100%');
