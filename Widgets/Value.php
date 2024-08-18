@@ -223,9 +223,15 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($prefill_columns->isEmpty()) {
             return;
         }
-        $this->doPrefillForExpression($data_sheet, $prefill_columns->getFirst()->getExpressionObj(), self::VALUE_ALIAS, function($value){
-            $this->setValue($value, false);
-        });
+        $this->doPrefillForExpression(
+            $data_sheet, 
+            $prefill_columns->getFirst()->getExpressionObj(), 
+            'value', 
+            function($value){
+                $this->setValue($value, false);
+            }, 
+            $this->getValueExpression()
+        );
         return;
     }
     

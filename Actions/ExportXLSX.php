@@ -34,8 +34,21 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * By default, filtering will be enabled for all columns and the first row (headers) will be frozen. These features
  * are controlled by the properties `enable_column_filters` and `freeze_header_row` respectively.
  * 
+ * ## What data will be exported?
+ * 
+ * You can explicitly define the columns to be exported via `columns`. If you don't and the action is placed in a data
+ * widget (e.g. a `DataTable`), it will take all exportable columns of that data widget. Thus, you can exclude table 
+ * columns from the export by setting `exportable` to `false` in the column configuration. 
+ * 
+ * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
+ * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
+ * 
+ * ## Data type handling
+ * 
  * If the exported data uses custom data types, they can be mapped to Excel format expressions manually
  * using `data_type_map`.
+ * 
+ * ## Examples
  * 
  * Here is an example of the configuration for a machine-friendly export (no filters, no frozen rows, aliases as headers):
  * 
@@ -49,8 +62,6 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * 
  * ```
  * 
- * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
- * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  *  
  * @author SFL
  *
@@ -198,7 +209,7 @@ class ExportXLSX extends ExportJSON
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::getWriter()
      * 
-     * @return \XLSXWriter
+     * @return XLSXWriter
      */
     protected function getWriter()
     {

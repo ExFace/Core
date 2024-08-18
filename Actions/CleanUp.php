@@ -102,7 +102,7 @@ class CleanUp extends AbstractActionDeferred implements iCanBeCalledFromCLI
      * 
      * @uxon-property areas
      * @uxon-type array
-     * @uxon-template ["queues", "monitor]
+     * @uxon-template ["queues", "monitor"]
      * 
      * @param UxonObject $value
      * @return CleanUp

@@ -5,11 +5,10 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * Configurable form to collect structured data and save it in singe attribute
@@ -150,9 +149,15 @@ class InputForm extends InputFormDesigner
         
         if ($this->isFormConfigBoundToAttribute() === true) {
             if (null !== $expr = $this->getPrefillExpression($data_sheet, $this->getMetaObject(), $this->getFormConfigAttributeAlias())) {
-                $this->doPrefillForExpression($data_sheet, $expr, 'form_config', function($value){
-                    $this->setFormConfig($value ?? '');
-                });
+                $this->doPrefillForExpression(
+                    $data_sheet, 
+                    $expr, 
+                    'form_config', 
+                    function($value){
+                        $this->setFormConfig($value ?? '');
+                    },
+                    $this->getFormConfigExpression()
+                );
             }
         }
         

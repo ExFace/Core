@@ -186,7 +186,7 @@ trait iPrefillWidgetTrait
             $logBook->addLine('Potential prefill data found - now finding out if a refresh/read is needed.');
             $diagram .= "\n\t CollectPrefill -->|" . DataLogBook::buildMermaidTitleForData($data_sheet) . "| ";
             
-            $refresh = $this->getPrefillDataRefresh();
+            $refresh = $this->getPrefillDataRefresh($task);
             
             $logBook->addLine('Property `prefill_data_refresh` is `' . $refresh . '`:');
             $logBook->addIndent(1);
@@ -714,7 +714,7 @@ trait iPrefillWidgetTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iPrefillWidget::getPrefillDataRefresh()
      */
-    public function getPrefillDataRefresh() : string
+    public function getPrefillDataRefresh(TaskInterface $task = null) : string
     {
         return $this->prefill_data_refresh;
     }

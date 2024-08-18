@@ -344,7 +344,7 @@ class PrefillModel implements PrefillModelInterface
     public function getBindings() : array
     {
         $array = [];
-        foreach ($this->bindings as $widgetId => $bindings) {
+        foreach ($this->bindings as $bindings) {
             foreach ($bindings as $binding) {
                 $array[] = $binding;
             }

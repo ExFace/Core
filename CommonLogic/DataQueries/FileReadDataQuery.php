@@ -9,7 +9,23 @@ use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 
+/**
+ * A query to read files
+ * 
+ * This class allows to define which files to read. There are multiple options:
+ * 
+ * - `addFilePath()` to add individual paths
+ * - `addFolder()` to specify, in which folders to look for files
+ * - `addFilenamePattern()` to specify file name or name patterns to read from these
+ * folders
+ * - `addFilter()` to specify one or multiple callbacks to filter the result. The
+ * callback must have the following definition: `filter(FileInfoInterface $file) : bool`.
+ * 
+ * @author andrej.kabachnik
+ *
+ */
 class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterface
 {
     private $folders = [];
@@ -21,6 +37,12 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     private $fullScanRequired = false;
     
     private $filenamePatterns = null;
+    
+    private $filePaths = [];
+    
+    private $filters = [];
+    
+    private $filterDescriptions = [];
     
     private $resultGenerator = null;
     
@@ -75,6 +97,9 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
         
         $this->resultCache = [];
         foreach ($this->resultGenerator as $file) {
+            if (! $this->matchFiltersAll($file)) {
+                continue;
+            }
             $this->resultCache[] = $file;
             yield $file;
         }
@@ -100,6 +125,34 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
         $this->filenamePatterns[] = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getFilePaths(bool $withBasePath = true) : array
+    {
+        $paths = $this->filePaths;
+        if ($withBasePath === true && null !== $basePath = $this->getBasePath()) {
+            $sep = $this->getDirectorySeparator();
+            foreach ($paths as $i => $path) {
+                $paths[$i] = FilePathDataType::makeAbsolute($path, $basePath, $sep);
+            }
+        }
+        return $paths;
+    }
+    
+    /**
+     * Add an individual file path - absolute or relative to the base
+     * 
+     * @param array $value
+     * @return FileReadDataQuery
+     */
+    public function addFilePath(string $absoluteOrRelativePath) : FileReadDataQuery
+    {
+        $this->filePaths[] = $absoluteOrRelativePath;
+        return $this;
+    }
 
     /**
      * 
@@ -107,16 +160,14 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     public function getFolders(bool $withBasePath = false) : array
     {
-        if ($withBasePath) {
-            $paths = [];
-            $basePath = $this->getBasePath() ?? '';
+        $paths = $this->folders;
+        if ($withBasePath && null !== $basePath = $this->getBasePath()) {
             $sep = $this->getDirectorySeparator();
-            foreach ($this->folders as $path) {
-                $paths[] = FilePathDataType::makeAbsolute($path, $basePath, $sep);
+            foreach ($this->folders as $i => $path) {
+                $paths[$i] = FilePathDataType::makeAbsolute($path, $basePath, $sep);
             }
-            return $paths;
         }
-        return $this->folders;
+        return $paths;
     }
 
     /**
@@ -224,20 +275,26 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
      */
     protected function toMarkdown() : string
     {
-        $folders = MarkdownDataType::buildMarkdownListFromArray($this->getFolders(), 'none');
-        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns(), 'none');
+        $folders = MarkdownDataType::buildMarkdownListFromArray($this->getFolders(), 'none', '', true);
+        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns(), 'none', '', true);
         $depth = $this->getFolderDepth() === null ? '`null` (unlimited)' : "`{$this->getFolderDepth()}`";
+        $filters = '';
+        foreach ($this->filterDescriptions as $descr) {
+            $filters .= ($filters !== '' ? ', ' : '') . ($descr ? '`' . $descr . '`' : '`unnamed filter`');
+        }
         
         return <<<MD
 Base path: `{$this->getBasePath()}`
 
 Directory separator: `{$this->getDirectorySeparator()}`
         
-Folder depth: `{$depth}`
+Folder depth: {$depth}
 
 Folders: {$folders}
 
 Filename patterns: {$filenamePatterns}
+
+Filters: {$filters}
 
 MD;
     }
@@ -286,5 +343,33 @@ MD;
             return 0;
         }
         return count($this->resultCache);
+    }
+    
+    /**
+     * 
+     * @param callable $callback
+     * @param string $description
+     * @return FileReadDataQuery
+     */
+    public function addFilter(callable $callback, string $description = null) : FileReadDataQuery
+    {
+        $this->filters[] = $callback;
+        $this->filterDescriptions[(count($this->filters) - 1)] = $description;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $file
+     * @return bool
+     */
+    protected function matchFiltersAll(FileInfoInterface $file) : bool
+    {
+        foreach ($this->filters as $callback) {
+            if ($callback($file) === false) {
+                return false;
+            }
+        }
+        return true;
     }
 }
