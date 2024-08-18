@@ -60,6 +60,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $data_column_name = null;
     
     private $valueExpr = null;
+
+    const VALUE_ALIAS = "value";
     
     /**
      * 
@@ -399,7 +401,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $uxon = parent::exportUxonObject();
         
         if ($this->hasValue()) {
-            $uxon->setProperty('value', $this->getValueExpression()->toString());
+            $uxon->setProperty(self::VALUE_ALIAS, $this->getValueExpression()->toString());
         }
         if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
