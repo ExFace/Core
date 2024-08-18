@@ -36,6 +36,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Translation\TranslationsArray;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -965,10 +966,28 @@ abstract class AbstractWidget implements WidgetInterface
         }
         
         // Dev-hint
-        if ($includeDebugInfo === true && ($this instanceof iShowSingleAttribute) && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class) && $this->isBoundToAttribute() && $attr = $this->getAttribute()) {
-            $hint = StringDataType::endSentence($hint) . "\n\nDebug-hints: \n- Attribute alias: `{$this->getAttributeAlias()}` \n- Object: {$this->getMetaObject()->__toString()}"; 
+        if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
+            $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug(); 
         }
         return $hint;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = "\n\nDebug-hints:\n- Widget type: {$this->getWidgetType()}\n- Widget object: {$this->getMetaObject()->__toString()}";
+        if ($this instanceof iShowSingleAttribute) {
+            if ($this->isBoundToAttribute()) {
+                $hint .= "\n- Attribute alias: `{$this->getAttributeAlias()}`";
+            }
+            if ($this instanceof iHaveValue) {
+                $hint .= "\n- Data type: `{$this->getValueDataType()->getAliasWithNamespace()}`";
+            }
+        }
+        return $hint ?? '';
     }
 
     /**
@@ -980,7 +999,6 @@ abstract class AbstractWidget implements WidgetInterface
      * @uxon-translatable true
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::setHint()
      */
     public function setHint($value)

@@ -687,7 +687,8 @@ class DataSheet implements DataSheetInterface
                 }
                 // Otherwise add an IN-filter for foreign keys
                 $foreignKeysUidAlias = DataAggregation::stripAggregator($subsheet->getJoinKeyAliasOfSubsheet());
-                $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
+                $foreignKeysUidAttr = $subsheet->getMetaObject()->getAttribute($foreignKeysUidAlias);
+                $subsheet->getFilters()->addConditionFromString($foreignKeysUidAlias, implode($foreignKeysUidAttr->getValueListDelimiter(), $foreignKeys), EXF_COMPARATOR_IN);
                 
                 // Do not sort subsheets and do not count data in data source!
                 $subsheet->setAutoSort(false);

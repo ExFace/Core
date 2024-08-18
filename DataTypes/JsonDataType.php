@@ -136,9 +136,12 @@ class JsonDataType extends TextDataType
      * @param bool $prettify
      * @return string
      */
-    public static function encodeJson($anything, bool $prettify = false): string
+    public static function encodeJson($anything, bool $prettify = false): ?string
     {
-        $options = null;
+        if ($anything === null) {
+            return null;
+        }
+        $options = 0;
         if ($prettify === true) {
             $options = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
         }

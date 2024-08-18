@@ -18,8 +18,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Factories\DataPointerFactory;
-use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Widgets\Parts\Maps\Interfaces\BaseMapInterface;
 use exface\Core\Widgets\Parts\Maps\BaseMaps\OpenStreetMap;
 use exface\Core\Interfaces\Widgets\iCanAutoloadData;
@@ -375,13 +373,18 @@ class Map extends AbstractWidget implements
         }
         
         if (null !== $expr = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $attrAlias)) {
-            $this->doPrefillForExpression($dataSheet, $expr, $property, function($value) use ($coordinate) {
-                if ($coordinate === self::COORDINATE_LAT) {
-                    $this->setCenterLatitude($value);
-                } else {
-                    $this->setCenterLongitude($value);
+            $this->doPrefillForExpression(
+                $dataSheet, 
+                $expr, 
+                $property, 
+                function($value) use ($coordinate) {
+                    if ($coordinate === self::COORDINATE_LAT) {
+                        $this->setCenterLatitude($value);
+                    } else {
+                        $this->setCenterLongitude($value);
+                    }
                 }
-            });
+            );
         }
         
         return;

@@ -491,7 +491,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHint(bool $includeDebugInfo = true) : ?string
     {
-        $hint = parent::getHint();
+        $hint = parent::getHint(false);
         
         if (empty($hint) === true && $this->hasAction()) {
             $hint = $this->getAction()->getHint();
@@ -508,18 +508,28 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         
         // Dev-hint
         if ($includeDebugInfo === true && $this->getWorkbench()->getContext()->getScopeWindow()->hasContext(DebugContext::class)) {
-            if ($this->hasAction()) {
-                $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
-                $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
-            } else {
-                $actionAliasHint = 'no action defined';
-                $actionObjectHint = 'no action defined';
-            }
-            $hint =  ($hint ? StringDataType::endSentence($hint) : '') . "\n\nDebug-hints: \n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
+            $hint = ($hint ? StringDataType::endSentence($hint) : '') . $this->getHintDebug();
         }
         
         return $hint;
-    } 
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getHintDebug() : string
+    {
+        $hint = parent::getHintDebug();
+        if ($this->hasAction()) {
+            $actionAliasHint = "`{$this->getAction()->getAliasWithNamespace()}`";
+            $actionObjectHint = $this->getAction()->getMetaObject()->__toString();
+        } else {
+            $actionAliasHint = 'no action defined';
+            $actionObjectHint = 'no action defined';
+        }
+        return $hint . "\n- Action alias: {$actionAliasHint} \n- Action object: '{$actionObjectHint}' \n- Button object: {$this->getMetaObject()->__toString()}";
+    }
     
     /**
      *

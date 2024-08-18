@@ -121,6 +121,8 @@ class LocalFileConnector extends TransparentConnector
             $finder->name(array_unique($namePatterns));
         }
         
+        $explicitFiles = $query->getFilePaths(true);
+        
         try {
             // Remove case-insensitive duplicates on windows since file system paths are
             // case insensitive here
@@ -128,7 +130,7 @@ class LocalFileConnector extends TransparentConnector
                 $paths = ArrayDataType::filterUniqueCaseInsensitive($paths);
             }
             $finder->in($paths);
-            return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator()));
+            return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator(), $explicitFiles));
         } catch (\Exception $e) {
             throw new DataQueryFailedError($query, "Failed to read local files", null, $e);
         }
@@ -141,9 +143,12 @@ class LocalFileConnector extends TransparentConnector
      * @param string $directorySeparator
      * @return \Generator
      */
-    protected function createGenerator(Finder $finder, string $basePath = null, string $directorySeparator = '/') : \Generator
+    protected function createGenerator(Finder $finder, string $basePath = null, string $directorySeparator = '/', array $explicitFiles = []) : \Generator
     {
         foreach ($finder as $file) {
+            yield new LocalFileInfo($file, $basePath, $directorySeparator);
+        }
+        foreach ($explicitFiles as $file) {
             yield new LocalFileInfo($file, $basePath, $directorySeparator);
         }
     }
@@ -248,7 +253,7 @@ class LocalFileConnector extends TransparentConnector
      * @uxon-type string
      *
      * @param string $value            
-     * @return \exface\Core\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\LocalFileConnector
      */
     public function setBasePath($value) : LocalFileConnector
     {
@@ -279,7 +284,7 @@ class LocalFileConnector extends TransparentConnector
      * @uxon-type boolean
      *
      * @param boolean $value            
-     * @return \exface\Core\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\LocalFileConnector
      */
     public function setUseVendorFolderAsBase(bool $value) : LocalFileConnector
     {

@@ -23,6 +23,7 @@ use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\RegularExpressionDataType;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -183,6 +184,8 @@ class FileBuilder extends AbstractQueryBuilder
     
     const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
+    const REGEX_DELIMITER = '/';
+    
     
     /**
      * 
@@ -192,36 +195,76 @@ class FileBuilder extends AbstractQueryBuilder
     {
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
+        // Calculate paths and filenames from the current filters
+        // TODO instead of working with an array of paths and filename pattersn, create
+        // a common method from filling a query with filters
+        // - full path with filename, but without wildcards -> addFilePath()
+        // - filename -> addFilenamePattern()
+        // - folder path -> addFolder()
+        // - paths with wildcards -> split into filenames and folders
+        // The current solution has trouble distinguishing between folder and file paths!
+        // Cases known to produce problems:
+        // - path and filename separately without wildcards - e.g. from DataSourceFileInfo
+        // - full path with filename (not separated into two filters)
+        // - folder with file name pattern (e.g. data address of `exface.Core.BEHAVIOR`)
+        // Perhaps we also need to normalize folder paths and enforce a trailing slash?
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
-        if ($filenamePattern) {
-            // also add the pattern literal with escaped regex characters
-            // as the filename can contain '[' for example
-            $escapedPattern = preg_quote($filenamePattern);
-            $query->addFilenamePattern($filenamePattern);
-            $query->addFilenamePattern($escapedPattern);
+        $filenameFilters = [];
+        // If there is a filename, add it to the query
+        if ($filenamePattern === null || $filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
+            $filenamePattern = null;
         }
         
-        // Setup query
+        // Now add each path
         foreach ($pathPatterns as $path) {
-            if ($path == '') {
+            if ($path === null || $path === '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
             
+            // The end of the path might contain a filename or mask too: e.g. the data
+            // address of exface.Core.BEHAVIOR is `/*/*/Behaviors/*.php`.
             $pathEnd = FilePathDataType::findFileName($path, true);
-            $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
-            
-            if ($pathFolder) {
-                $query->addFolder($pathFolder);
-            } 
-            
-            if ($pathEnd && ($filenamePattern === null || $filenamePattern === '')) {
-                $escapedPattern = preg_quote($pathEnd);
-                // also add the pattern literal with escaped regex characters
-                // as the filename can contain '[' for example
-                $query->addFilenamePattern($pathEnd);
-                $query->addFilenamePattern($escapedPattern);
-            }         
+            if (strpos($pathEnd, '.') !== false || FilePathDataType::isPattern($pathEnd)) {
+                $path = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
+                switch (true) {
+                    case $filenamePattern === null:
+                        $filenamePattern = $pathEnd;
+                        break;
+                    case FilePathDataType::isPattern($pathEnd):
+                        $filenameFilters[] = $filenamePattern;
+                        $filenamePattern = $pathEnd;
+                        break;
+                    default:
+                        $filenameFilters[] = $pathEnd;
+                        break;
+                }
+            }
+        }
+        
+        if ($path !== null && $path !== '') {
+            $query->addFolder($path);
+        }
+        
+        if ($filenamePattern !== null) {
+            $query->addFilenamePattern($filenamePattern);
+        }
+        
+        if (! empty($filenameFilters)) {
+            $query->addFilter(function(FileInfoInterface $fileInfo) use ($filenameFilters) {
+                $filename = $fileInfo->getFilename(true);
+                foreach ($filenameFilters as $pattern) {
+                    if (RegularExpressionDataType::isRegex($pattern)) {
+                        $match = preg_match($pattern, $filename) === 1;
+                    } else {
+                        $match = strcasecmp($pattern, $filename) === 0;
+                    }
+                    if ($match === true) {
+                        return true;
+                    }
+                }
+                return false;
+            }, 'filename must match any of ["' . implode('", "', $filenameFilters) . '"]');
         }
         
         if (count($this->getSorters()) > 0) {
@@ -332,12 +375,13 @@ class FileBuilder extends AbstractQueryBuilder
         $values = [];
         $filtersApplied = [];
         $filename = null;
+        $pregDelim = self::REGEX_DELIMITER;
         foreach ($qpart->getFilters() as $filter) {
             if ($this->isFilename($filter)) {
                 switch ($filter->getComparator()) {
                     case ComparatorDataType::EQUALS:
                     case ComparatorDataType::IS:
-                        $mask = preg_quote($filter->getCompareValue());
+                        $mask = preg_quote($filter->getCompareValue(), $pregDelim);
                         if ($filter->getComparator() === ComparatorDataType::EQUALS) {
                             $mask = '^' . $mask . '$';
                         }
@@ -354,11 +398,11 @@ class FileBuilder extends AbstractQueryBuilder
         if (! empty($values)) {
             switch ($qpart->getOperator()) {
                 case EXF_LOGICAL_OR:
-                    $filename = '/(' . implode('|', $values) . ')/i';
+                    $filename = "$pregDelim(" . implode('|', $values) . "){$pregDelim}i";
                     break;
                 case EXF_LOGICAL_AND: 
                     if (count($values) === 1) {
-                        $filename = '/' . $values[0] . '/i';
+                        $filename = $pregDelim . $values[0] . $pregDelim . 'i';
                         break;
                     } 
                 default:
@@ -500,7 +544,7 @@ class FileBuilder extends AbstractQueryBuilder
                     if ($pathMatchesAllUids === true) {
                         unset($pathPatterns[$pathIdx]);
                     } else {
-                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time!');
+                        throw new QueryBuilderException('Cannot resolve AND-filter over filename and path patterns both at the same time: "' . $pathPattern . '" and "' . $uidPattern . '"');
                     }
                 }
                 if (empty($pathPatterns)) {
