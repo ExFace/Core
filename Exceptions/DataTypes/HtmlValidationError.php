@@ -5,12 +5,9 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\JsonDataType;
 
 /**
- * Exception thrown if a value does not fit a data type's model.
- *
- * This exception should be thrown on errors in the HtmlDataType::validateHtml() method.
+ * Exception thrown if an HTML fragment is validated and errors are found.
  *
  * @see DataTypeCastingError
  *
@@ -40,37 +37,64 @@ class HtmlValidationError extends UnexpectedValueException
         $this->errors = $validationErrors;
     }
 
+    /**
+     * 
+     * @param \LibXMLError $error
+     * @return HTmlValidationError
+     */
     public function addError(\LibXMLError $error) : HTmlValidationError
     {
         $this->errors[] = $error;
         return $this;
     }
 
+    /**
+     * 
+     * @return string[]
+     */
     public function getErrorMessages() : array
     {
         $messages = null;
         foreach ($this->errors as $error) {
-            $messages[] = $this->formatError($error);
+            $messages[$error->line] = $this->formatError($error);
         }
 
         return $messages;
     }
 
+    /**
+     * 
+     * @param \LibXMLError $error
+     * @return string
+     */
     private function formatError(\LibXMLError $error) : string
     {
         return 'Line '.$error->line.' - '.self::ERROR_LEVELS[$error->level].' '.$error->message;
     }
 
+    /**
+     * 
+     * @return \LibXMLError[]
+     */
     public function getErrors() : array
     {
         return $this->errors;
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function getHtml() : string
     {
         return $this->html;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::createDebugWidget()
+     */
     public function createDebugWidget(DebugMessage $debugWidget)
     {
         $debugWidget = parent::createDebugWidget($debugWidget);
@@ -105,4 +129,3 @@ MD;
         return $debugWidget;
     }
 }
-

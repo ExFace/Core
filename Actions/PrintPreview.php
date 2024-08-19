@@ -18,6 +18,7 @@ use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Renders a preview for a provided print action
@@ -95,9 +96,9 @@ class PrintPreview extends GoToUrl
                 $preview = reset($prints);
 
                 try {
-                    HtmlDataType::validateHtml($preview, false);
+                    $preview = HtmlDataType::validateHtml($preview);
                 } catch (HtmlValidationError $error) {
-                    $preview = $this->buildErrorMessage($error);
+                    $preview = $this->buildErrorMessage($error, $preview) . $preview;
                 }
 
                 $result = ResultFactory::createHTMLResult($task, $preview);
@@ -113,27 +114,32 @@ class PrintPreview extends GoToUrl
         return $result;
     }
 
-    private function buildErrorMessage(HtmlValidationError $error) : string
+    private function buildErrorMessage(HtmlValidationError $error, string $html) : string
     {
         $errorListing = '';
-        foreach ($error->getErrorMessages() as $errorMessage) {
+        $lines = StringDataType::splitLines($html);
+        foreach ($error->getErrorMessages() as $lineNo => $errorMessage) {
+            $excerpt = htmlspecialchars(implode(PHP_EOL, array_slice($lines, $lineNo - 15, 20)));
             $errorListing .= <<< HTML
-                <li><h4>{$errorMessage}</h4></li> 
+                <div style="font-weight: bold;">{$errorMessage}</div>
+                <pre style="background: #eee; overflow-x: auto; font-size: 80%">
+                    {$excerpt}
+                </pre> 
 HTML;
         }
 
         return <<< HTML
-            <div id="html_validation_error">
+            <div id="html_validation_error" style="margin-bottom: 2px;">
                 <div id="message" class="exf-message error" style="text-align:center; background-color: #dd4b39; 
                     padding: 5px; color: white; margin: 2px 0; min-height: 38px; color:white; !important">
                     
-                    <h1>Invalid HTML detected: Fix all errors listed below!</h1>
-                    <h3>Use an external HTML validator for more information.</h3>
+                    <h3>Invalid HTML detected: Fix all errors listed below!</h3>
+                    <p>Use an external HTML validator for more information.</p>
                 </div>
                 <div id="errors" style="background-color: lightgrey; padding: 5px;">
-                    <ul>
+                    <div>
                         {$errorListing}
-                    </ul>
+                    </div>
                 </div>
             </div>
 HTML;
