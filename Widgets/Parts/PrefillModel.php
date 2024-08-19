@@ -21,6 +21,8 @@ use exface\Core\Interfaces\Actions\iPrefillWidget;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Actions\ShowWidget;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Interfaces\Actions\iUseTemplate;
 
 class PrefillModel implements PrefillModelInterface
 {    
@@ -116,6 +118,10 @@ class PrefillModel implements PrefillModelInterface
                 $action = $foundStep;
             }
         }
+        
+        $eventMgr = $widget->getWorkbench()->eventManager();
+        $eventHandlersToRemove = [];
+        
         if (($action instanceof iShowWidget) && ($action->getPrefillWithInputData() || $action->getPrefillWithPrefillData() || $action->getPrefillWithFilterContext())) {
             // If a prefill is required, but there is no input data (e.g. a button with ShowObjectEditDialog was pressed and
             // the corresponding view or viewcontroller is being loaded), just fake the input data by reading the first row of
@@ -140,13 +146,14 @@ class PrefillModel implements PrefillModelInterface
             $prefillAppliedHandler = function($event) {
                 $this->addBindingPointer($event->getWidget(), $event->getPropertyName(), $event->getPrefillValuePointer());
             };
+            $eventHandlersToRemove[OnPrefillChangePropertyEvent::getEventName()] = $prefillAppliedHandler;
             $widget->getWorkbench()->eventManager()->addListener(OnPrefillChangePropertyEvent::getEventName(), $prefillAppliedHandler);
             
             // Listen to the OnBeforePrefill event and empty data before prefilling the action's widget
             // to make sure there are no hard-coded values! This is important because we added a dummy
             // UID value above and also because filter contexts will add values directly to the sheet.
             $widget = $action->getWidget();
-            $widget->getWorkbench()->eventManager()->addListener(OnPrefillDataLoadedEvent::getEventName(), function(OnPrefillDataLoadedEvent $event) use ($widget) {
+            $eventMgr->addListener(OnPrefillDataLoadedEvent::getEventName(), function(OnPrefillDataLoadedEvent $event) use ($widget) {
                 if ($event->getWidget() === $widget) {
                     $logBook = $event->getLogBook();
                     if ($logBook !== null) {
@@ -164,18 +171,17 @@ class PrefillModel implements PrefillModelInterface
                 return;
             });
                 
-            // Listen to OnBeforeActionInputValidated to disable any validators to ensure the
-            // dummy data does not cause validations to fail.
-            $widget->getWorkbench()->eventManager()->addListener(OnBeforeActionInputValidatedEvent::getEventName(), function(OnBeforeActionInputValidatedEvent $event) use ($action) {
-                if ($event->getAction() !== $action) {
-                    return;
-                }
+            // Disable any input validators: Listen to OnBeforeActionInputValidated to disable any validators 
+            // to ensure the dummy data does not cause validations to fail.
+            $disableInputChecksHandler = function(OnBeforeActionInputValidatedEvent $event) use ($action) {
                 $event->getAction()->getInputChecks()->setDisabled(true);
-            });
+            };
+            $eventHandlersToRemove[OnBeforeActionInputValidatedEvent::getEventName()] = $disableInputChecksHandler;
+            $eventMgr->addListener(OnBeforeActionInputValidatedEvent::getEventName(), $disableInputChecksHandler);
                     
-            // Listen to OnActionInputValidated to make sure, the input data of the action always
-            // has dummy data - even if it was modified by input mappers or anything else.
-            $widget->getWorkbench()->eventManager()->addListener(OnActionInputValidatedEvent::getEventName(), function(OnActionInputValidatedEvent $event) use ($action) {
+            // Undo any mappings of the dummy data: Listen to OnActionInputValidated to make sure, the input data 
+            // of the action always has dummy data - even if it was modified by input mappers or anything else.
+            $eventMgr->addListener(OnActionInputValidatedEvent::getEventName(), function(OnActionInputValidatedEvent $event) use ($action) {
                 if ($event->getAction() !== $action) {
                     return;
                 }
@@ -183,6 +189,17 @@ class PrefillModel implements PrefillModelInterface
                 $ds = $event->getDataSheet();
                 if (! $ds->isEmpty() && $ds->hasUidColumn()) {
                     $this->generateDummyData($ds);
+                }
+            });
+                    
+            // Prevent any printing/rendering action from using input data: Listen to OnBeforeActionPerformed
+            // and empty all templates for actions, that render them
+            $eventMgr->addListener(OnBeforeActionPerformedEvent::getEventName(), function(OnBeforeActionPerformedEvent $event) use ($action) {
+                if ($event->getAction() === $action) {
+                    return;
+                }
+                if ($event->getAction() instanceof iUseTemplate) {
+                    $event->getAction()->setTemplate('');
                 }
             });
                         
@@ -199,6 +216,11 @@ class PrefillModel implements PrefillModelInterface
         } catch (\Throwable $e) {
             // TODO
             throw $e;
+        } finally {
+            // Remove all temporary event handlers
+            foreach ($eventHandlersToRemove as $eventName => $handler) {
+                $eventMgr->removeListener($eventName, $handler);
+            }
         }
         
         return $widget;
