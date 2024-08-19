@@ -21,6 +21,7 @@ use exface\Core\Templates\Placeholders\TranslationPlaceholders;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
 use exface\Core\Interfaces\Actions\iRenderTemplate;
+use exface\Core\Interfaces\Actions\iUseTemplate;
 
 /**
  * This action prints data using a text-based template (e.g. HTML)
@@ -96,7 +97,7 @@ use exface\Core\Interfaces\Actions\iRenderTemplate;
  * @author Andrej Kabachnik
  *
  */
-class PrintTemplate extends AbstractAction implements iRenderTemplate
+class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTemplate
 {
     private $downloadable = true;
     
@@ -143,7 +144,11 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
         foreach ($contents as $filePath => $fileContents) {
             file_put_contents($filePath, $fileContents);
         }
-        $result = ResultFactory::createFileResultFromPath($task, $filePath, $this->isDownloadable());
+        if ($filePath) {
+            $result = ResultFactory::createFileResultFromPath($task, $filePath, $this->isDownloadable());
+        } else {
+            $result = ResultFactory::createEmptyResult($task);
+        }
         
         return $result;
     }
@@ -158,6 +163,11 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
     {
         $contents = [];
         $mainTpl = $this->getTemplate();
+        // If the template is empty, there is nothing to print (e.g. when simulating a prefill via PrefillModel)
+        if ($mainTpl === null || $mainTpl === '') {
+            return $contents;
+        }
+        
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
         
         $baseRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
@@ -333,7 +343,7 @@ class PrintTemplate extends AbstractAction implements iRenderTemplate
      * @param string $value
      * @return PrintTemplate
      */
-    public function setTemplatePath(string $value) : PrintTemplate
+    public function setTemplatePath(string $value) : iUseTemplate
     {
         $this->templatePath = FilePathDataType::isAbsolute($value) ? $value : FilePathDataType::join($this->getWorkbench()->filemanager()->getPathToVendorFolder(), $value);
         return $this;

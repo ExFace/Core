@@ -85,10 +85,16 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
         $fromValues = [];
         switch (true) {
             case StringDataType::startsWith($from, '~file', false):
-                if (! $result instanceof ResultFileInterface) {
-                    throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
-                }
                 switch (strtolower($from)) {
+                    // If the result is empty, all fields will be empty too
+                    case $result->isEmpty():
+                        $fromValues = [''];
+                        break;
+                    // TODO add logic to handle data results here 
+                    
+                    // Handle file results
+                    case ! $result instanceof ResultFileInterface:
+                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use `~file` as from-expression in an action mapper if the result of the mappers action is not a file!');
                     case '~file':
                     case '~file:contents':
                         $fromValues = [$result->getContents()];
