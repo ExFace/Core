@@ -12,6 +12,24 @@ use exface\Core\Widgets\Traits\SingleValueInputTrait;
 class InputCheckBox extends Input
 {
     use SingleValueInputTrait;
+    
+    /**
+     * Checks this checkbox
+     *
+     * @uxon-property check
+     *
+     * @var bool
+     */
+    const FUNCTION_CHECK = 'check';
+    
+    /**
+     * Unchecks this checkbox
+     *
+     * @uxon-property uncheck
+     *
+     * @var bool
+     */
+    const FUNCTION_UNCHECK = 'uncheck';
 
     /**
      * 
