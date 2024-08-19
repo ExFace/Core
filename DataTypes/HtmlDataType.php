@@ -31,7 +31,14 @@ class HtmlDataType extends TextDataType
         return (new Indenter())->indent($html);
     }
 
-    public static function validateHtml(string $html) : array
+    /**
+     * Parses the given HTML code and throws detailed errors and warnings if inconsistancies are found
+     * 
+     * @param string $html
+     * @throws HtmlValidationError
+     * @return string
+     */
+    public static function validateHtml(string $html) : string
     {
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
@@ -42,6 +49,6 @@ class HtmlDataType extends TextDataType
             throw new HtmlValidationError("HTML validation error", null, null, $html, $errors);
         }
 
-        return $errors;
+        return $html;
     }
 }
