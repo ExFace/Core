@@ -138,6 +138,35 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
     public function rebase(string $relation_path_to_new_base_object, callable $conditionFilterCallback = null) : ConditionGroupInterface;
     
     /**
+     * Returns a condition group based on the new object, that only includes conditions, that
+     * are applicable to the new object.
+     * 
+     * @param MetaObjectInterface $newObject
+     * @return ConditionGroupInterface
+     */
+    public function rebaseWithMatchingAttributesOnly(MetaObjectInterface $newObject) : ConditionGroupInterface;
+    
+    /**
+     * Returns a condition group based on the new object applying a custom callback to every 
+     * condition to transform it.
+     * 
+     * The callback must return a new condition based on the $newObject and must 
+     * have the following interface: 
+     * 
+     * ```
+     *  function(ConditionInterface $condition) : ConditionInterface
+     *  
+     * ```
+     * 
+     * If the callback returns `null`, the condition will be ignored.
+     * 
+     * @param MetaObjectInterface $newObject
+     * @param callable $conditionTransformer
+     * @return ConditionGroupInterface
+     */
+    public function rebaseCustom(MetaObjectInterface $newObject, callable $conditionTransformer) : ConditionGroupInterface;
+    
+    /**
      * Removes a given condition from this condition group (not from the nested groups!)
      *
      * @param ConditionInterface $condition
