@@ -140,6 +140,8 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     const INHERIT_NONE = 'none';
     
+    const INHERIT_MATCHING_ATTRIBUTES = 'matching_attributes';
+    
     const INHERIT_COLUMNS_OWN_ATTRIBUTES = 'own_attributes';
     
     const INHERIT_COLUMNS_OWN_SYSTEM_ATTRIBUTES = 'own_system_attributes';
@@ -231,6 +233,9 @@ class DataSheetMapper implements DataSheetMapperInterface
                 if ($inheritMode === self::INHERIT_COLUMNS_OWN_ATTRIBUTES && (! $fromCol->isAttribute() || $fromCol->getAttribute()->isRelated())) {
                     continue;
                 }
+                if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES && (! $fromCol->isAttribute() || ! $toSheet->getMetaObject()->hasAttribute($fromCol->getAttributeAlias()))) {
+                    continue;
+                }
                 $processedNames[] = "`{$fromCol->getName()}`";
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
@@ -249,7 +254,11 @@ class DataSheetMapper implements DataSheetMapperInterface
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
             if ($logbook !== null) $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
             try {
-                $toSheet->setFilters($fromSheet->getFilters());
+                if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES) {
+                    $toSheet->setFilters($fromSheet->getFilters()->rebaseWithMatchingAttributesOnly($toSheet->getMetaObject()));
+                } else {
+                    $toSheet->setFilters($fromSheet->getFilters());
+                }
             } catch (\Throwable $e) {
                 if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit filters in data mapper. ' . $e->getMessage(), null, null, $logbook);
@@ -927,7 +936,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * along with certain attributes of related objects.
      * 
      * @uxon-property inherit_columns
-     * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes]
+     * @uxon-type [all,none,own_attributes,own_system_attributes,all_system_attributes,matching_attributes]
      * @uxon-template own_system_attributes
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setInheritColumns()
@@ -949,7 +958,7 @@ class DataSheetMapper implements DataSheetMapperInterface
                 break;
         }
         
-        if ($value !== self::INHERIT_NONE){
+        if ($value !== self::INHERIT_NONE && $value !== self::INHERIT_MATCHING_ATTRIBUTES){
             if (! $this->canInheritColumns()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -993,7 +1002,7 @@ class DataSheetMapper implements DataSheetMapperInterface
      * This option can prevent this behavior.
      *
      * @uxon-property inherit_filters
-     * @uxon-type [all,none]
+     * @uxon-type [all,none,matching_attributes]
      * @uxon-template none
      *
      * {@inheritDoc}
@@ -1008,8 +1017,14 @@ class DataSheetMapper implements DataSheetMapperInterface
             case $value === false:
                 $value = self::INHERIT_NONE;
                 break;
+            default:
+                $value = mb_strtolower($value);
+                if (! defined('self::INHERIT_' . mb_strtoupper($value))) {
+                    throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_filters`');
+                }
+                break;
         }
-        if ($value !== self::INHERIT_NONE){
+        if ($value !== self::INHERIT_NONE && $value !== self::INHERIT_MATCHING_ATTRIBUTES){
             if (! $this->canInheritFilters()) {
                 throw new DataMapperConfigurationError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit filters from sheets of "' . $this->getFromMetaObject() . '"!');
             }
@@ -1049,6 +1064,12 @@ class DataSheetMapper implements DataSheetMapperInterface
                 break;
             case $value === false:
                 $value = self::INHERIT_NONE;
+                break;
+            default:
+                $value = mb_strtolower($value);
+                if (! defined('self::INHERIT_' . mb_strtoupper($value))) {
+                    throw new DataMapperConfigurationError($this, 'Invalid value "' . $value . '" for data mapper option `inherit_sorters`');
+                }
                 break;
         }
         if ($value !== self::INHERIT_NONE){
