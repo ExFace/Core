@@ -186,7 +186,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function buildHintText(string $hint_text = null, bool $remove_linebreaks = false)
     {
         $max_hint_len = $this->getHintMaxCharsInLine();
-        $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
+        $hint = $hint_text ? $hint_text : $this->getWidget()->getHint(false);
         $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
             $hint = trim(StringDataType::stripLineBreaks($hint));
