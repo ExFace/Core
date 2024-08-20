@@ -162,6 +162,12 @@ class Data
         }
         
         // Columns & Totals
+        // Add columns from this widget to the data if the object of the data is
+        // the same as that of the widget or inherits from it (= if we know, that
+        // the data sheet can read all the attributes required).
+        // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
+        // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
+        // around.
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
                 // If it's a calculated column, add the corresponding expression column
