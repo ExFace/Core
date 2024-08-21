@@ -114,6 +114,13 @@ class PrintPreview extends GoToUrl
         return $result;
     }
 
+    /**
+     * Generates HTML that displays the provided errors in a comprehensible format.
+     *
+     * @param HtmlValidationError $error
+     * @param string $html
+     * @return string
+     */
     private function buildErrorMessage(HtmlValidationError $error, string $html) : string
     {
         $errorListing = '';
