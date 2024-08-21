@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Facades\HttpBadRequestError;
 
 /**
  * Common base structure for HTTP facades designed to handle workbench tasks.
@@ -46,10 +47,10 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
             // and $request->getParsedBody() were empty. This does not lead to an error, so we double-check
             // here and throw a differen exception if this might be the case.
             if ($request->getBody()->getSize() > (100 * 1024) && empty($request->getParsedBody()) && empty($request->getUploadedFiles())) {
-                throw new RuntimeException('Could not parse large request: max. POST size exceeded? Check post_max_size and server configuration.');
+                throw new HttpBadRequestError($request, 'Could not parse large request: max. POST size exceeded? Check post_max_size and server configuration.');
             }
             // In any case, if there is no task - throw an error!
-            throw new UnexpectedValueException('No task data found in HTTP request');
+            throw new HttpBadRequestError($request, 'No task data found in HTTP request');
         }
         $result = $this->getWorkbench()->handle($task);
         return $this->createResponseFromTaskResult($request, $result);
