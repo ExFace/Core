@@ -13,6 +13,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
@@ -575,12 +576,12 @@ class Map extends AbstractWidget implements
      * @uxon-property center_latitude
      * @uxon-type number
      * 
-     * @param float $value
+     * @param float|string|NULL $value
      * @return Map
      */
-    public function setCenterLatitude(float $value) : Map
+    public function setCenterLatitude($value) : Map
     {
-        $this->centerLatitude = $value;
+        $this->centerLatitude = NumberDataType::cast($value);
         return $this;
     }
     
@@ -632,12 +633,12 @@ class Map extends AbstractWidget implements
      * @uxon-property center_longitude
      * @uxon-type number
      *
-     * @param float $value
+     * @param float|string|NULL $value
      * @return Map
      */
-    public function setCenterLongitude(float $value) : Map
+    public function setCenterLongitude($value) : Map
     {
-        $this->centerLongitude = $value;
+        $this->centerLongitude = NumberDataType::cast($value);
         return $this;
     }
     
