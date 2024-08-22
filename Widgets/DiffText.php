@@ -43,46 +43,76 @@ class DiffText extends Value
     
     private $comparetToExpr = null;
 
-    private string $versionToRender = "diff_new";
+    private string $layout;
 
     const VALUE_TO_COMPARE_ALIAS = "value_to_compare";
 
     const DIFF_CLASS = "difftext-diff";
 
-    const RENDER_OPTIONS = array(
-        "old",
-        "new",
-        "diff"
+    const LAYOUT_OPTIONS = array(
+        "left_old_right_diff", // Default
+        "left_new_right_diff",
+        "left_diff_right_new",
+        "left_diff_right_old",
     );
 
     /**
      * @return string
      */
-    public function getVersionToRender(): string
+    public function getLayout(): string
     {
-        return $this->versionToRender;
+        if(!in_array($this->layout, self::LAYOUT_OPTIONS)) {
+            $this->layout = self::LAYOUT_OPTIONS[0];
+        }
+
+        return $this->layout;
     }
 
     /**
-     * Selects which document version to render
+     * Returns the layout options as key-value pairs.
      *
-     * - **old**: Render original revision, without changes.
-     * - **new**: Render current revision, without changes.
-     * - **diff**: Render changes.
+     * Pairs have the format:
+     * - `["position"] => ["content"]`
+     * - for example `["left"] => ["old"]`
      *
-     * @uxon-property version_to_render
-     * @uxon-type [old,new,diff]
-     * @uxon-default diff
-     *
-     * @param string $versionToRender
-     * @return void
+     * @return array
      */
-    public function setVersionToRender(string $versionToRender)
+    public function getLayoutArray(): array
     {
-        $versionToRender = strtolower($versionToRender);
-        if(in_array($versionToRender, self::RENDER_OPTIONS)) {
-            $this->versionToRender = $versionToRender;
+        $result = array();
+        $components = explode("_", $this->getLayout());
+        for($i = 0; $i < count($components) - 1; $i+=2) {
+            $result[$components[$i]] = $components[$i+1];
         }
+
+        return $result;
+    }
+
+    /**
+     * Select one of four possible layouts:
+     *
+     * - `left_old_right_diff`: Render original ('value') on the left and changes on the right.
+     * - `left_new_right_diff`: Render revision ('value_to_compare') on the left and changes on the right.
+     * - `left_diff_right_old`: Render changes on the left and original ('value') on the right.
+     * - `left_diff_right_new`: Render changes on the left and revision ('value_to_compare') on the right.
+     *
+     * NOTE: Rendering changes means that all changes from 'value' to 'value_to_compare' are displayed in one document.
+     *
+     * @uxon-property layout
+     * @uxon-type [left_old_right_diff,left_new_right_diff,left_diff_right_old,left_diff_right_new]
+     * @uxon-default left_old_right_diff
+     *
+     * @param string $layout
+     * @return Object
+     */
+    public function setLayout(string $layout) : Object
+    {
+        $layout = strtolower($layout);
+        if(in_array($layout, self::LAYOUT_OPTIONS)) {
+            $this->layout = $layout;
+        }
+
+        return $this;
     }
 
     /**
