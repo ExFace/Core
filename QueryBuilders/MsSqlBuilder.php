@@ -147,7 +147,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $qpartAttr = $qpart->getAttribute();
             
             // First see, if the attribute has some kind of special data type (e.g. binary)
-            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE), 'binary') === 0) {
+            if (strcasecmp($qpartAttr->getDataAddressProperty(static::DAP_SQL_DATA_TYPE) ?? '', 'binary') === 0) {
                 $this->addBinaryColumn($qpart->getAlias());
             }
             

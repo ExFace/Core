@@ -1495,20 +1495,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * This method translates ExFace aggregators to SQL und thus will probably differ between SQL dialects.
      *
-     * @param QueryPart $qpart
+     * @param QueryPartAttribute $qpart
      * @param string $select_from
      * @param string $select_column
      * @param string $select_as
      * @param AggregatorInterface $aggregator
      * @return string
      */
-    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    protected function buildSqlSelectGrouped(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
     {
-        $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
+        $aggregator = $aggregator ?? $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
         // Can't just list binary values - need to transform them to strings first!
-        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty(self::DAP_SQL_DATA_TYPE),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggregator->getFunction() === AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
@@ -2528,8 +2528,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $this->binary_columns;
     }
     
-    protected function decodeBinary($value)
+    /**
+     * 
+     * @param string|NULL
+     * @return string|NULL
+     */
+    protected function decodeBinary($value) : ?string
     {
+        if ($value === null) {
+            return null;
+        }
         $hex_value = bin2hex($value);
         return ($hex_value ? '0x' : '') . $hex_value;
     }

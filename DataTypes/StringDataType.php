@@ -126,14 +126,17 @@ class StringDataType extends AbstractDataType
 
     /**
      *
-     * @param string $haystack            
+     * @param string|NULL $haystack            
      * @param string $needle            
-     * @param boolean $case_sensitive            
-     * @return boolean
+     * @param bool $case_sensitive            
+     * @return bool
      */
-    public static function startsWith($haystack, $needle, $case_sensitive = true)
+    public static function startsWith($haystack, string $needle, bool $case_sensitive = true) : bool
     {
-        $substr = mb_substr($haystack, 0, strlen($needle));
+        if ($haystack === null) {
+            return false;
+        }
+        $substr = mb_substr($haystack, 0, mb_strlen($needle));
         if ($case_sensitive) {
             return $substr === $needle;
         } else {
@@ -143,17 +146,20 @@ class StringDataType extends AbstractDataType
     
     /**
      *
-     * @param string $haystack
+     * @param string|NULL $haystack
      * @param string $needle
-     * @param boolean $case_sensitive
-     * @return boolean
+     * @param bool $case_sensitive
+     * @return bool
      */
-    public static function endsWith($haystack, $needle, $case_sensitive = true)
+    public static function endsWith($haystack, string $needle, bool $case_sensitive = true) : bool
     {
+        if ($haystack === null) {
+            return false;
+        }
         if ($case_sensitive) {
-            return mb_substr($haystack, (-1)*strlen($needle)) === $needle;
+            return mb_substr($haystack, (-1)*mb_strlen($needle)) === $needle;
         } else {
-            return mb_substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+            return mb_substr(mb_strtoupper($haystack), (-1)*mb_strlen($needle)) === mb_strtoupper($needle);
         }
     }
     

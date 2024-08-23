@@ -48,6 +48,9 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function isValidStaticValue($value)
     {
+        if ($value === null || $value === '') {
+            return false;
+        }
         return \IntlTimeZone::getCanonicalID($value) !== false;
     }
 }
