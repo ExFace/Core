@@ -59,6 +59,7 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
+use Throwable;
 
 /**
  * Default implementation of DataSheetInterface
@@ -715,7 +716,11 @@ class DataSheet implements DataSheetInterface
                     continue 2;
             }
             
-            $vals = $expr->evaluate($this);
+            try {
+                $vals = $expr->evaluate($this);
+            } catch (Throwable $e) {
+                throw new DataSheetReadError($this, $e->getMessage(), null, $e);
+            }
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on
                 // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
