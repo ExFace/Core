@@ -276,7 +276,7 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     protected function toMarkdown() : string
     {
         $folders = MarkdownDataType::buildMarkdownListFromArray($this->getFolders(), 'none', '', true);
-        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns(), 'none', '', true);
+        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns() ?? [], 'none', '', true);
         $depth = $this->getFolderDepth() === null ? '`null` (unlimited)' : "`{$this->getFolderDepth()}`";
         $filters = '';
         foreach ($this->filterDescriptions as $descr) {

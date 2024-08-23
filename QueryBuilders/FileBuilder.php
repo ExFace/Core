@@ -211,8 +211,9 @@ class FileBuilder extends AbstractQueryBuilder
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         $filenameFilters = [];
+        $folderPatterns = [];
         // If there is a filename, add it to the query
-        if ($filenamePattern === null || $filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
+        if ($filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
             $filenamePattern = null;
         }
         
@@ -225,25 +226,35 @@ class FileBuilder extends AbstractQueryBuilder
             // The end of the path might contain a filename or mask too: e.g. the data
             // address of exface.Core.BEHAVIOR is `/*/*/Behaviors/*.php`.
             $pathEnd = FilePathDataType::findFileName($path, true);
-            if (strpos($pathEnd, '.') !== false || FilePathDataType::isPattern($pathEnd)) {
-                $path = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
-                switch (true) {
-                    case $filenamePattern === null:
-                        $filenamePattern = $pathEnd;
-                        break;
-                    case FilePathDataType::isPattern($pathEnd):
-                        $filenameFilters[] = $filenamePattern;
-                        $filenamePattern = $pathEnd;
-                        break;
-                    default:
-                        $filenameFilters[] = $pathEnd;
-                        break;
-                }
+            $folder = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
+            if ($pathEnd === '') {
+                $pathEnd = null;
+            }
+            $pathEndIsFile = $pathEnd !== null && mb_strpos($pathEnd, '.') !== false;
+            $pathEndIsPattern = $pathEnd !== null && FilePathDataType::isPattern($pathEnd);
+            switch (true) {
+                case $pathEndIsFile === true && ! FilePathDataType::isPattern($path):
+                    $query->addFilePath($path);
+                    break;
+                case $pathEndIsFile === true:
+                case $pathEndIsPattern === true:
+                    $filenameFilters[] = $pathEnd;
+                    $folderPatterns[] = $folder;
+                    break;
+                // In case the path includes no file at all, assume it to be a folder
+                default:
+                    $folderPatterns[] = $path;
+                    break;
             }
         }
+
+        if ($filenamePattern === null && count($filenameFilters) === 1) {
+            $filenamePattern = $filenameFilters[0];
+            $filenameFilters = [];
+        }
         
-        if ($path !== null && $path !== '') {
-            $query->addFolder($path);
+        foreach ($folderPatterns as $folder) {
+            $query->addFolder($folder);
         }
         
         if ($filenamePattern !== null) {
@@ -254,10 +265,16 @@ class FileBuilder extends AbstractQueryBuilder
             $query->addFilter(function(FileInfoInterface $fileInfo) use ($filenameFilters) {
                 $filename = $fileInfo->getFilename(true);
                 foreach ($filenameFilters as $pattern) {
-                    if (RegularExpressionDataType::isRegex($pattern)) {
-                        $match = preg_match($pattern, $filename) === 1;
-                    } else {
-                        $match = strcasecmp($pattern, $filename) === 0;
+                    switch (true) {
+                        case RegularExpressionDataType::isRegex($pattern):
+                            $match = preg_match($pattern, $filename) === 1;
+                            break;
+                        case FilePathDataType::isPattern($pattern):
+                            $match = FilePathDataType::matchesPattern($filename, $pattern);
+                            break;
+                        default:
+                            $match = strcasecmp($pattern, $filename) === 0;
+                            break;
                     }
                     if ($match === true) {
                         return true;
