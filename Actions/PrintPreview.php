@@ -125,13 +125,24 @@ class PrintPreview extends GoToUrl
     {
         $errorListing = '';
         $lines = StringDataType::splitLines($html);
-        foreach ($error->getErrorMessages() as $lineNo => $errorMessage) {
-            $excerpt = htmlspecialchars(implode(PHP_EOL, array_slice($lines, $lineNo - 15, 20)));
+        foreach ($error->getErrorMessages() as $errorLineIndex => $errorMessage) {
+            $start = $errorLineIndex - 15;
+            $displayedLines = array_slice($lines, $start, 20);
+            foreach ($displayedLines as $index => $displayedLine) {
+                $currentLineIndex = $index + $start;
+                if($currentLineIndex == $errorLineIndex - 1) {
+                    $displayedLines[$index] = "ERR:\t\t".strtoupper($displayedLine)." <= ERROR";
+                } else {
+                    $displayedLines[$index] = ($currentLineIndex - 1).":\t\t".$displayedLine;
+                }
+            }
+
+            $excerpt = htmlspecialchars(implode(PHP_EOL, $displayedLines));
             $errorListing .= <<< HTML
-                <div style="font-weight: bold;">{$errorMessage}</div>
-                <pre style="background: #eee; overflow-x: auto; font-size: 80%">
-                    {$excerpt}
-                </pre> 
+<div style="font-weight: bold;">{$errorMessage}</div>
+<pre style="background: #eee; overflow-x: auto; font-size: 80%">
+{$excerpt}
+</pre> 
 HTML;
         }
 
