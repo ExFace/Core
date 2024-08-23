@@ -32,7 +32,7 @@ class HtmlDataType extends TextDataType
     }
 
     /**
-     * Parses the given HTML code and throws detailed errors and warnings if inconsistancies are found
+     * Parses the given HTML code and throws detailed errors and warnings if any inconsistencies are found.
      * 
      * @param string $html
      * @throws HtmlValidationError
