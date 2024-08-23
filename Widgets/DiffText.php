@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Behaviors\UndeletableBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -41,13 +42,22 @@ class DiffText extends Value
 
     private $compareToValue = null;
     
-    private $comparetToExpr = null;
+    private $compareToExpr = null;
 
-    private string $layout;
+    private array $config = array(
+        "left" => array(),
+        "right" => array()
+    );
 
     const VALUE_TO_COMPARE_ALIAS = "value_to_compare";
 
     const DIFF_CLASS = "difftext-diff";
+
+    const CONFIG_TITLE = "title";
+
+    const CONFIG_VERSION = "version";
+
+    const CONFIG_COLOR = "color";
 
     const LAYOUT_OPTIONS = array(
         "left_old_right_diff", // Default
@@ -56,36 +66,141 @@ class DiffText extends Value
         "left_diff_right_old",
     );
 
+    const CSS_COLOR_CODES = array(
+        "diffColor" => "#00a65a",
+        "diffClass" => "success",
+        "cleanColor" => "darkgrey",
+        "cleanClass" => "",
+    );
+
     /**
+     * Get the color for the title card of corresponding side.
+     *
+     * @param string $side
+     * @param bool $asCssClass
      * @return string
      */
-    public function getLayout(): string
+    public function getTitleColor(string $side, bool $asCssClass = false) : string
     {
-        if(!in_array($this->layout, self::LAYOUT_OPTIONS)) {
-            $this->layout = self::LAYOUT_OPTIONS[0];
+        if(!key_exists(self::CONFIG_COLOR, $this->config[$side])) {
+            $renderedVersion = $this->getRenderedVersion($side);
+            if(str_contains($renderedVersion, "diff")) {
+                $this->config[$side][self::CONFIG_COLOR]["color"] = self::CSS_COLOR_CODES["diffColor"];
+                $this->config[$side][self::CONFIG_COLOR]["class"] = self::CSS_COLOR_CODES["diffClass"];
+            } else {
+                $this->config[$side][self::CONFIG_COLOR]["color"] = self::CSS_COLOR_CODES["cleanColor"];
+                $this->config[$side][self::CONFIG_COLOR]["class"] = self::CSS_COLOR_CODES["cleanClass"];
+            }
         }
 
-        return $this->layout;
+        return $this->config[$side][self::CONFIG_COLOR][($asCssClass ? "class" : "color")];
     }
 
     /**
-     * Returns the layout options as key-value pairs.
+     * @param string $side
+     * @return string
+     */
+    public function getTitle(string $side) : string
+    {
+        // Invalid input, return empty.
+        if(!key_exists($side, $this->config)) {
+            return "";
+        }
+
+        $result = $this->config[$side][self::CONFIG_TITLE];
+        // Valid input and result, return result.
+        if (isset($result) && $result !== '') {
+            return $result;
+        }
+
+        // Result was invalid, return default.
+        $content = $this->config[$side][self::CONFIG_VERSION];
+        return match (true) {
+            str_contains($content, 'diff') => "Review Changes",
+            str_contains($content, 'new') => "Revision",
+            str_contains($content, 'old') => "Original",
+            default => "",
+        };
+    }
+
+    /**
+     * Set the title for the corresponding side.
      *
-     * Pairs have the format:
-     * - `["position"] => ["content"]`
-     * - for example `["left"] => ["old"]`
+     * A meaningful default based on the layout is chosen automatically for
+     * any side that didn't have its title set this way.
+     *
+     * @param string $side
+     * @param string $title
+     * @return Object
+     */
+    public function setTitle(string $side, string $title) : Object
+    {
+        if(key_exists($side, $this->config)) {
+            $this->config[$side][self::CONFIG_TITLE] = $title;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the left hand side title.
+     *
+     * @uxon-property title_left
+     * @uxon-type string
+     *
+     * @param $title
+     * @return void
+     */
+    public function setTitleLeft($title) : void
+    {
+        $this->setTitle("left", $title);
+    }
+
+    /**
+     * Set the right hand side title.
+     *
+     * @uxon-property title_right
+     * @uxon-type string
+     *
+     * @param $title
+     * @return void
+     */
+    public function setTitleRight($title) : void
+    {
+        $this->setTitle("right", $title);
+    }
+
+    /**
+     * Returns the layout configuration as multidimensional array.
+     *
+     * The array is structured as follows:
+     * - `[side] => [property]`
+     * - for example `["left"] => ["version"] = "old"`
      *
      * @return array
      */
-    public function getLayoutArray(): array
+    public function getConfig(): array
     {
-        $result = array();
-        $components = explode("_", $this->getLayout());
-        for($i = 0; $i < count($components) - 1; $i+=2) {
-            $result[$components[$i]] = $components[$i+1];
+        return $this->config;
+    }
+
+    /**
+     * Get the version to be rendered on the specified side.
+     *
+     * @param $side
+     * @return string
+     */
+    public function getRenderedVersion($side) : string
+    {
+        if(!key_exists($side, $this->config)) {
+            return "diff";
         }
 
-        return $result;
+        if(!key_exists(self::CONFIG_VERSION, $this->config[$side])) {
+            $this->setLayout(self::LAYOUT_OPTIONS[0]);
+        }
+
+        return $this->config[$side][self::CONFIG_VERSION];
     }
 
     /**
@@ -108,8 +223,13 @@ class DiffText extends Value
     public function setLayout(string $layout) : Object
     {
         $layout = strtolower($layout);
-        if(in_array($layout, self::LAYOUT_OPTIONS)) {
-            $this->layout = $layout;
+        if(!in_array($layout, self::LAYOUT_OPTIONS)) {
+            $layout = self::LAYOUT_OPTIONS[0];
+        }
+
+        $components = explode("_", $layout);
+        for($i = 0; $i < count($components) - 1; $i+=2) {
+            $this->config[$components[$i]][self::CONFIG_VERSION] = $components[$i+1];
         }
 
         return $this;
@@ -117,7 +237,7 @@ class DiffText extends Value
 
     /**
      *
-     * @return string
+     * @return ?string
      */
     public function getAttributeAliasToCompare() : ?string
     {
