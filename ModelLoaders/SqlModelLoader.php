@@ -1277,12 +1277,16 @@ SQL;
         $array = [];
         foreach ($result as $row) {
             $authPoint = AuthorizationPointFactory::createFromSelector(new AuthorizationPointSelector($this->getWorkbench(), ltrim($row['class'], "\\")));
+            $effect = trim($row['default_effect_local'] ?? '');
+            $effect = $effect === '' ? trim($row['default_effect_in_app'] ?? '') : $effect;
+            $algorithm = trim($row['combining_algorithm_local'] ?? '');
+            $algorithm = $algorithm === '' ? trim($row['combining_algorithm_in_app'] ?? '') : $algorithm;
             $authPoint
                 ->setName($row['name'])
                 ->setUid($row['oid'])
                 ->setDisabled(BooleanDataType::cast($row['disabled_flag']))
-                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['default_effect_local'])) ? $row['default_effect_local'] : $row['default_effect_in_app'])))
-                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), (! empty(trim($row['combining_algorithm_local'])) ? $row['combining_algorithm_local'] : $row['combining_algorithm_in_app'])));
+                ->setDefaultPolicyEffect(PolicyEffectDataType::fromValue($authPoint->getWorkbench(), $effect))
+                ->setPolicyCombiningAlgorithm(PolicyCombiningAlgorithmDataType::fromValue($authPoint->getWorkbench(), $algorithm));
             $array[] = $authPoint;
         }
         return $array;

@@ -42,7 +42,6 @@ class ChangeTimezone extends Formula
         if (! TimeZoneDataType::isValidStaticValue($toTz)) {
             throw new FormulaError("Can not convert value '{$dateTimeString}'. Timezone '{$toTz}' is not a valid timezone!");
         }
-        $test = DateTimeDataType::convertTimeZone($dateTimeString, $fromTz, $toTz);
         return DateTimeDataType::convertTimeZone($dateTimeString, $fromTz, $toTz);
     }
     
