@@ -1508,7 +1508,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
         // Can't just list binary values - need to transform them to strings first!
-        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggregator->getFunction() === AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        $aggrFunc = $aggregator->getFunction()->__toString();
+        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
