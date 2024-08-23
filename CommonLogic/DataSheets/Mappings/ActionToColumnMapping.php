@@ -165,7 +165,8 @@ class ActionToColumnMapping extends AbstractDataSheetMapping
      * Possible values:
      * 
      * - Name of a column in the result data sheet of the action
-     * - `~file` for the file contents in case the action produces a downloadable file
+     * - `~file:contents` for the file contents in case the action produces a downloadable file
+     * - `~file:mime_type` for the MIME type of the file (e.g. `text/html`)
      *
      * @uxon-property from
      * @uxon-type metamodel:attribute|'~file'
