@@ -129,7 +129,7 @@ class LocalFileConnector extends TransparentConnector
                 $paths = ArrayDataType::filterUniqueCaseInsensitive($paths);
             }
             if (! empty($explicitFiles)) {
-                $finder->append($explicitFiles);
+                $finder->append(array_filter($explicitFiles, 'file_exists'));
             }
             $finder->in($paths);
             return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator(), $explicitFiles));
