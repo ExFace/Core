@@ -8,6 +8,7 @@ use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use Traversable;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object.
@@ -422,7 +423,7 @@ class RelationPath implements MetaRelationPathInterface
      * {@inheritDoc}
      * @see \IteratorAggregate::getIterator()
      */
-    public function getIterator()
+    public function getIterator() : Traversable
     {
         return $this->relations;
     }
