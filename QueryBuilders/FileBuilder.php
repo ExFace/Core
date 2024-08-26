@@ -185,7 +185,8 @@ class FileBuilder extends AbstractQueryBuilder
     const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
     const REGEX_DELIMITER = '/';
-    
+
+    private $fullScanRequired = null;
     
     /**
      * 
@@ -752,38 +753,37 @@ class FileBuilder extends AbstractQueryBuilder
         
         $query = $this->buildQueryToRead();
         $performedQuery = $dataConnection->query($query);
-        $rownr = - 1;
-        $fullScan = $query->isFullScanRequired();
+        $rowsTotal = 0;
+        // FIXME how to make sure we only read ALL files if a total count is required?
+        // When reading, we don't know, if we will need the total count, it is fetched
+        // separately via count() method. We could 
+        // $fullScan = $query->isFullScanRequired;
+        $fullScan = true;
         $limit = $this->getLimit();
-        $offset = $this->getOffset();
+        $offset = $this->getOffset() ?? 0;
         foreach ($performedQuery->getFiles() as $file) {
-            // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
-            if (! $fullScan) {
-                $pagination_applied = true;
-                $rownr ++;
-                // Skip rows, that are positioned below the offset
-                if ($rownr < $this->getOffset()) {
-                    continue;
-                }
-                // Skip rest if we are over the limit
-                if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
-                    // increase rownr an additional time so we know more rows exist
-                    $rownr ++;
+            $rowsTotal++;
+            $limitReached = $limit > 0 && $rowsTotal > ($offset + $limit);
+            // Skip rows, that are positioned below the offset
+            if ($rowsTotal <= $offset) {
+                continue;
+            }
+            // Skip rest if we are over the limit
+            if ($limitReached === true) {
+                // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
+                if ($fullScan === false) {
                     break;
                 }
+            } else {
+                $result_rows[] = $this->buildResultRow($file);
             }
-            // Otherwise add the file data to the result rows
-            $result_rows[] = $this->buildResultRow($file);
         }
         $totalCount = count($result_rows) + $offset;
-        if ($rownr > $totalCount) {
-            $totalCount = $rownr;
+        if ($rowsTotal > $totalCount) {
+            $totalCount = $rowsTotal;
         }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
-        if (! $pagination_applied) {
-            $result_rows = $this->applyPagination($result_rows);
-        }
         $rowCount = count($result_rows);
         
         return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount), $totalCount);
@@ -1132,5 +1132,26 @@ class FileBuilder extends AbstractQueryBuilder
     protected function getDirectorySeparator() : string
     {
         return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DIRECTORY_SEPARATOR) ?? '/';
+    }
+
+    /**
+     *
+     * @param boolean $trueOrFalse
+     * @return FileBuilder
+     */
+    protected function setFullScanRequired(bool $trueOrFalse) : FileBuilder
+    {
+        $this->fullScanRequired = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     *
+     * @param FileReadDataQuery $query
+     * @return boolean
+     */
+    protected function isFullScanRequired(FileReadDataQuery $query) : bool
+    {
+        return $this->fullScanRequired ?? $query->isFullScanRequired();
     }
 }
