@@ -34,6 +34,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
+use exface\Core\Interfaces\Events\EventManagerInterface;
 
 class Workbench implements WorkbenchInterface
 {
@@ -352,7 +353,7 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::eventManager()
      */
-    public function eventManager()
+    public function eventManager() : EventManagerInterface
     {
         if ($this->event_manager === null) {
             $this->event_manager = new EventManager($this);
