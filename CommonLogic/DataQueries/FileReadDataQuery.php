@@ -16,12 +16,19 @@ use exface\Core\Interfaces\Filesystem\FileInfoInterface;
  * 
  * This class allows to define which files to read. There are multiple options:
  * 
- * - `addFilePath()` to add individual paths
- * - `addFolder()` to specify, in which folders to look for files
- * - `addFilenamePattern()` to specify file name or name patterns to read from these
- * folders
+ * - `addFolder()` to specify folders to search for files
+ * - `addFilenamePattern()` to specify file names or name patterns to read from these folders
+ * - `addFilePath()` to add individual paths to read in addition to the folders. These
+ * files are to be read even if they outside of the folders provided.
  * - `addFilter()` to specify one or multiple callbacks to filter the result. The
  * callback must have the following definition: `filter(FileInfoInterface $file) : bool`.
+ * Filters are applied to ALL files - those added explicitly and those found in folders.
+ * 
+ * IDEA it has become confusing, that addFolder()/addFilenamePattern() and addFilePath() are
+ * somewhat parallel ways to point the query to files. It is unclear, why the patterns only
+ * apply to files found in folders and not to those from the explicit paths. Perhaps, it would
+ * be a better idea to switch to addFolder($path, $filenamePattern) and addFilePath() as
+ * the two clearer alternatives.
  * 
  * @author andrej.kabachnik
  *
@@ -143,9 +150,13 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     }
     
     /**
-     * Add an individual file path - absolute or relative to the base
+     * Add an individual file path - absolute or relative to the base.
      * 
-     * @param array $value
+     * Individually added paths will be read directly - even if they are not inside
+     * any of the provided folders. However, filters set via `addFilters()` will
+     * be applied to these files too.
+     * 
+     * @param string $value
      * @return FileReadDataQuery
      */
     public function addFilePath(string $absoluteOrRelativePath) : FileReadDataQuery
