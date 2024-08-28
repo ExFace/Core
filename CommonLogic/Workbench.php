@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic;
+use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Exceptions\UxonSyntaxError;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
-use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
@@ -208,7 +209,13 @@ class Workbench implements WorkbenchInterface
      */
     public function getConfig()
     {
-        return $this->getCoreApp()->getConfig();
+        try {
+            return $this->getCoreApp()->getConfig();
+        } catch (UxonSyntaxError $e) {
+            throw new RuntimeException('Invalid workbench config sytax! ' . $e->getMessage(), null, $e);
+        }catch (\Throwable $e) {
+            throw new RuntimeException('Cannot load workbench config! ' . $e->getMessage(), null, $e);
+        }
     }
 
     /**
