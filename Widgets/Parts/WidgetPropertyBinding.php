@@ -217,7 +217,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 $this->doPrefillForExpression(
                     $dataSheet,
                     $expr,
-                    $this->getPropertyName(),
                     function($value){
                         // TODO
                         $this->setValue($value ?? '');
