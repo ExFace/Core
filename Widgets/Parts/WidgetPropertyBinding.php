@@ -375,7 +375,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function hasValue() : bool
     {
-        return $this->valueExprString === null && $this->valueExpr === null;
+        return $this->valueExprString !== null && $this->valueExpr !== null;
     }
     
     /**
