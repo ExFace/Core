@@ -180,7 +180,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function get($key)
     {
-        return $this->content_array[$key];
+        return $this->content_array[$key] ?? null;
     }
 
     /**

@@ -523,7 +523,7 @@ class SqlModelLoader implements ModelLoaderInterface
                     if ($row['priority'] !== null) {
                         $configUxon->setProperty('priority', $row['priority']);
                     }
-                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, $row['app_oid']);
+                    $behavior = BehaviorFactory::createFromUxon($object, $row['behavior'], $configUxon, ($row['app_oid'] ?? null));
                     $object->getBehaviors()->add($behavior, $row['oid']);
                 }
             }
@@ -1637,10 +1637,11 @@ SQL;
             }
             if ($parentNode === null || $parentNode->getChildNodesLoaded() === false) {
                 foreach ($rows as $row) {
-                    if ($row['oid'] !== $nodeId) {
-                        if ($this->nodes_loaded[$row['oid']] !== null && $this->nodes_loaded[$row['oid']]->getChildNodesLoaded() === true) {
+                    $rowId = $row['oid'] ?? null;
+                    if ($rowId !== null && $rowId !== $nodeId) {
+                        if ($this->nodes_loaded[$rowId] !== null && $this->nodes_loaded[$rowId]->getChildNodesLoaded() === true) {
                             // if the child node was already loaded before and also it's child, take that node
-                            $childNode = $this->nodes_loaded[$row['oid']];
+                            $childNode = $this->nodes_loaded[$rowId];
                             if ($parentNode !== null) {
                                 $childNode->setParentNode($parentNode);
                             }

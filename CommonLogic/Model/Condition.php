@@ -240,6 +240,11 @@ class Condition implements ConditionInterface
         // Determine the comparator if it is not given directly.
         // It can be derived from the value or set to a default value
         switch (true) {
+            case $value === null:
+            case is_string($value) === false:
+            case $value === '':
+                $comparator = ComparatorDataType::IS;
+                break;
             case strpos($value, '!==') === 0:
                 $comparator = ComparatorDataType::EQUALS_NOT;
                 $value = substr($value, 3);
@@ -302,6 +307,7 @@ class Condition implements ConditionInterface
                 break;
             default:
                 $comparator = ComparatorDataType::IS;
+                break;
         }
         
         if ($value !== null) {

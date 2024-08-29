@@ -59,7 +59,7 @@ class QuickSearchUrlParamReader implements MiddlewareInterface
     {
         $task = $this->getTask($request, $this->taskAttributeName, $this->facade);
         
-        $quick_search = $request->getQueryParams()[$this->urlParamQuickSearch];
+        $quick_search = $request->getQueryParams()[$this->urlParamQuickSearch] ?? null;
         
         if (is_null($quick_search)) {
             $quick_search = $request->getParsedBody()[$this->urlParamQuickSearch];
