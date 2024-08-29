@@ -244,7 +244,7 @@ class Condition implements ConditionInterface
             case is_string($value) === false:
             case $value === '':
                 $comparator = ComparatorDataType::IS;
-                break;
+                return $comparator;
             case strpos($value, '!==') === 0:
                 $comparator = ComparatorDataType::EQUALS_NOT;
                 $value = substr($value, 3);
@@ -319,11 +319,15 @@ class Condition implements ConditionInterface
             // a value enclosed in [] is actually a IN-statement
             $value = trim($value, "[]");
             $comparator = ComparatorDataType::IN;
-        } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
+        } elseif (
+            mb_strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
-                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
-            && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
+            && (
+                $base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface
+            )
+            && mb_strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false
+        ) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = ComparatorDataType::IN;
         } 
