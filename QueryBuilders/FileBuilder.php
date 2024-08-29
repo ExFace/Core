@@ -186,7 +186,7 @@ class FileBuilder extends AbstractQueryBuilder
     
     const REGEX_DELIMITER = '/';
 
-    private $fullScanRequired = null;
+    private $fullReadRequired = null;
     
     /**
      * 
@@ -516,7 +516,6 @@ class FileBuilder extends AbstractQueryBuilder
                         break;
                     default:
                         $qpart->setApplyAfterReading(true);
-                        $query->setFullScanRequired(true);
                 }
                 
                 if ($oper === EXF_LOGICAL_AND) {
@@ -535,9 +534,8 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileBuilder');
                 }
             } else {
-                $this->addAttribute($qpart->getExpression()->toString());
+                $this->addAttribute($qpart->getExpression()->__toString());
                 $qpart->setApplyAfterReading(true);
-                $query->setFullScanRequired(true);
             }
         }
         foreach ($pathPatterns as $path) {
@@ -758,18 +756,29 @@ class FileBuilder extends AbstractQueryBuilder
         // When reading, we don't know, if we will need the total count, it is fetched
         // separately via count() method. We could 
         // $fullScan = $query->isFullScanRequired;
+        // Full scan means, all FileInfo objects need to be instantiated and loaded.
+        // This is required, if we need to know, how many files there are in total or
+        // if we need all the data for postprocessing.
         $fullScan = true;
+        // Full read means, we not only need a full scan, but also need to fill all result
+        // rows by reading file properties and maybe even contents. This is the case if we
+        // need to filter result data, sort it or do any other in-memory operations.
+        // If we do not need a full read, we can avoid processing FileInfo data for rows,
+        // that are outside of the pagination window.
+        $fullRead = $this->isFullReadRequired($query);
         $limit = $this->getLimit();
         $offset = $this->getOffset() ?? 0;
         foreach ($performedQuery->getFiles() as $file) {
             $rowsTotal++;
             $limitReached = $limit > 0 && $rowsTotal > ($offset + $limit);
-            // Skip rows, that are positioned below the offset
+            // Skip rows, that are positioned below the offset if we neither need a count nor post-processing
             if ($rowsTotal <= $offset) {
-                continue;
+                if ($fullScan === false && $fullRead === false) {
+                    continue;
+                }
             }
-            // Skip rest if we are over the limit
-            if ($limitReached === true) {
+            // Skip rest if we are over the limit unless we need that rest for post-processing
+            if ($limitReached === true && $fullRead === false) {
                 // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
                 if ($fullScan === false) {
                     break;
@@ -778,12 +787,18 @@ class FileBuilder extends AbstractQueryBuilder
                 $result_rows[] = $this->buildResultRow($file);
             }
         }
+        $paginationApplied = $fullRead === false;
+
         $totalCount = count($result_rows) + $offset;
         if ($rowsTotal > $totalCount) {
             $totalCount = $rowsTotal;
         }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        if (! $paginationApplied) {
+            $result_rows = $this->applyPagination($result_rows);
+        }
         $rowCount = count($result_rows);
         
         return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount), $totalCount);
@@ -1141,17 +1156,40 @@ class FileBuilder extends AbstractQueryBuilder
      */
     protected function setFullScanRequired(bool $trueOrFalse) : FileBuilder
     {
-        $this->fullScanRequired = $trueOrFalse;
+        $this->fullReadRequired = $trueOrFalse;
         return $this;
     }
 
     /**
-     *
+     * Returns TRUE if all data must be read to perform the givn query
+     * 
+     * Since file queries are based on generators, it is important to know, if a query needs to really load all
+     * data (execute all generators) or can stop at some point. 
+     * 
      * @param FileReadDataQuery $query
      * @return boolean
      */
-    protected function isFullScanRequired(FileReadDataQuery $query) : bool
+    protected function isFullReadRequired(FileReadDataQuery $query) : bool
     {
-        return $this->fullScanRequired ?? $query->isFullScanRequired();
+        if ($this->fullReadRequired === true) {
+            return true;
+        }
+        if ($query->isFullScanRequired() === true) {
+            return true;
+        }
+        foreach ($this->getFilters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        foreach ($this->getSorters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        if (! empty($this->getAggregations())) {
+            return true;
+        }
+        return false;
     }
 }
