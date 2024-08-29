@@ -7,6 +7,7 @@ use exface\Core\Exceptions\FormulaError;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\MetaObjectFactory;
 
 /**
@@ -42,6 +43,7 @@ class Lookup extends Formula
         }
         
         $phs = $this->getRequiredPlaceholders();
+        $row = [];
         if (! empty($phs)) {
             $row = $this->getDataSheet()->getRow($this->getCurrentRowNumber());
             $objectAlias = StringDataType::replacePlaceholders($objectAlias, $row);
@@ -100,6 +102,9 @@ class Lookup extends Formula
     {
         $attrAlias = $this->getTokenStream()->getArguments()[0];
         $objAlias = $this->getTokenStream()->getArguments()[1];
+        if (! empty(StringDataType::findPlaceholders($objAlias))) {
+            return DataTypeFactory::createBaseDataType($this->getWorkbench());
+        }
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), $objAlias);
         if ($obj->hasAttribute($attrAlias)) {
             return $obj->getAttribute($attrAlias)->getDataType();
