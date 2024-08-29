@@ -217,7 +217,6 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 $this->doPrefillForExpression(
                     $dataSheet,
                     $expr,
-                    $this->getPropertyName(),
                     function($value){
                         // TODO
                         $this->setValue($value ?? '');
@@ -375,7 +374,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function hasValue() : bool
     {
-        return $this->valueExprString === null && $this->valueExpr === null;
+        return $this->valueExprString !== null && $this->valueExpr !== null;
     }
     
     /**
