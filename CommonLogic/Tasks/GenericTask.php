@@ -92,7 +92,7 @@ class GenericTask implements TaskInterface
      */
     public function getParameter($name)
     {
-        return $this->parameters[$name];
+        return $this->parameters[$name] ?? null;
     }
     
     /**
@@ -227,6 +227,7 @@ class GenericTask implements TaskInterface
      */
     public function getAction() : ActionInterface
     {
+        $widget = null;
         if ($this->action === null) {
             if ($this->isTriggeredByWidget()) {
                 $widget = $this->getWidgetTriggeredBy();
@@ -289,7 +290,7 @@ class GenericTask implements TaskInterface
             }
             
             if (! isset($action)) {
-                $action = ActionFactory::create($this->getActionSelector(), ($widget ? $widget : null));
+                $action = ActionFactory::create($this->getActionSelector(), $widget);
             }
             
             $this->action = $action;

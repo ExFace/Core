@@ -62,7 +62,7 @@ class PWAapiFacade extends HttpTaskFacade
         }
         
         $headers = $this->buildHeadersCommon();
-        $route = mb_strtolower($route);
+        $route = mb_strtolower($route ?? '');
         switch (true) {
             case $route === self::ROUTE_ACTION:
                 return parent::createResponse($request);
