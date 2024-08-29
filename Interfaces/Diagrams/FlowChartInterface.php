@@ -1,6 +1,6 @@
 <?php
 
-namespace Exface\Core\Interfaces\Debug\Diagrams;
+namespace Exface\Core\Interfaces\Diagrams;
 
 //
 interface FlowChartInterface

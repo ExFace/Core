@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\Diagrams;
 
-use exface\Core\Interfaces\Debug\Diagrams\FlowChartInterface;
+use exface\Core\Interfaces\Diagrams\FlowChartInterface;
 use JBZoo\MermaidPHP\Graph;
 use JBZoo\MermaidPHP\Link;
 use JBZoo\MermaidPHP\Node;

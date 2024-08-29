@@ -1,7 +1,7 @@
 <?php
 
 namespace Exface\Core\CommonLogic\Debugger\Diagrams;
-use exface\Core\Interfaces\Debug\Diagrams\FlowChartInterface;
+use exface\Core\Interfaces\Diagrams\FlowChartInterface;
 
 //core structure and functionality for any type of flowchart; abstract -> common functionality that can be reused by any specific type of flowchart AND allows subclasses to implement their own specific rendering logic while still reusing the core flowchart
 abstract class FlowChart implements FlowChartInterface
@@ -33,9 +33,9 @@ abstract class FlowChart implements FlowChartInterface
         return $this;
     }
 
-    protected function addLink(FlowChartNode $from, FlowChartNode $to, string $title, FlowChartNodeStyle $nodeStyle): self
+    protected function addLink(FlowChartNode $from, FlowChartNode $to, string $title, FlowChartNodeStyle $style): self
     {
-        $link = new FlowChartLink($from, $to, $title, $nodeStyle);
+        $link = new FlowChartLink($from, $to, $title, $style);
         $this->links[] = $link;
         return $this;
     }
