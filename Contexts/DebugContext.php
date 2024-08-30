@@ -411,13 +411,33 @@ class DebugContext extends AbstractContext
                                     ],
                                     'buttons' => [
                                         [
+                                            'caption' => 'Open trace',
                                             'action' => [
                                                 'alias' => 'exface.Core.ShowObjectInfoDialog',
                                                 'disable_buttons' => false
                                             ],
                                             'bind_to_double_click' => true
                                         ], [
+                                            'caption' => 'Delete trace',
                                             'action_alias' => 'exface.Core.DeleteObject'
+                                        ], [
+                                            'caption' => 'Start tracing',
+                                            'action' => [
+                                                'alias' => 'exface.Core.CallContext',
+                                                'context_scope' => $this->getScope()->getName(),
+                                                'context_alias' => $this->getAliasWithNamespace(),
+                                                'operation' => static::OPERATION_START_TRACING,
+                                                'icon' => Icons::TOGGLE_ON
+                                            ]
+                                        ], [
+                                            'caption' => 'Stop tracing',
+                                            'action' => [
+                                                'alias' => 'exface.Core.CallContext',
+                                                'context_scope' => $this->getScope()->getName(),
+                                                'context_alias' => $this->getAliasWithNamespace(),
+                                                'operation' => static::OPERATION_STOP_TRACING,
+                                                'icon' => Icons::TOGGLE_OFF
+                                            ]
                                         ]
                                     ]
                                 ]
