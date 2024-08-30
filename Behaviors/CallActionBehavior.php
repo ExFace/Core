@@ -331,7 +331,7 @@ class CallActionBehavior extends AbstractBehavior
             }
         } catch (\Throwable $e) {
             if ($this->isErrorIfActionFails()) {
-                throw new BehaviorRuntimeError($this, $e->getMessage(), null, $e, $logbook);
+                throw new BehaviorRuntimeError($this, 'Error in ' . $this->getAlias() . ' (' . $this->getName() . '): ' . $e->getMessage(), null, $e, $logbook);
             } 
             $logbook->addLine('**Failed** silently (silenced by `error_if_action_fails`): ' . $e->getMessage());
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
