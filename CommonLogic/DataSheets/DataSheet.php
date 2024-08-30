@@ -1329,7 +1329,9 @@ class DataSheet implements DataSheetInterface
                         if ($relNestedSheetCol === $col) {
                             continue;
                         }
-                        $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        if ($col->isAttribute() && $col->getAttribute()->isFilterable() && ! ($col->getDataType() instanceof DataSheetDataType)) {
+                            $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        }
                     }
                     // Read the data
                     $nestedUidSheet->dataRead();
