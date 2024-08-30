@@ -29,17 +29,15 @@ abstract class AbstractBehavior implements BehaviorInterface
     
     private $selector = null;
 
-    private $behavior = null;
-
     private $disabled = false;
 
     private $registered = false;
-
-    private $name_resolver = false;
     
     private $appSelectorOrString = null;
     
     private $priority = null;
+
+    private $name = null;
 
     public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null, string $appSelectorOrString = null)
     {
@@ -286,5 +284,16 @@ abstract class AbstractBehavior implements BehaviorInterface
     public function __toString() : string
     {
         return PhpClassDataType::findClassNameWithoutNamespace($this);
+    }
+
+    public function getName() : string
+    {
+        return $this->name;
+    }
+
+    protected function setName(string $name) : BehaviorInterface
+    {
+        $this->name = $name;
+        return $this;
     }
 }

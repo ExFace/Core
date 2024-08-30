@@ -517,6 +517,7 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
+                    $configUxon->setProperty('name', $row['name']);
                     if (intval($row['disabled_flag']) === 1) {
                         $configUxon->setProperty('disabled', true);
                     }

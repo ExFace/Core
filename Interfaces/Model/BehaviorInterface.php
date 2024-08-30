@@ -10,6 +10,11 @@ use exface\Core\Interfaces\AppInterface;
 
 interface BehaviorInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon, AliasInterface, iCanBeCopied
 {
+    /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
 
     /**
      *
