@@ -2982,7 +2982,50 @@ class DataSheet implements DataSheetInterface
         $this->rows = $sorter->sort($this->getRows());
         return $this;
     }
-    
+
+    /**
+     * Sorts a datasheet to match the order of another datasheet.
+     *
+     * A new instance is returned, that contains the values of the `sheetToSort`, sorted to match
+     * the order of the `sheetToMatch` based on their UID columns. Neither of the input sheets will be changed by this function.
+     *
+     * NOTE: Both sheets must have a UID column!
+     *
+     * @param DataSheetInterface $sheetToSort
+     * @param DataSheetInterface $sheetToMatch
+     * @return DataSheetInterface
+     */
+    public static function matchOrder(DataSheetInterface $sheetToSort, DataSheetInterface $sheetToMatch) : DataSheetInterface
+    {
+        $uidCol = $sheetToMatch->getUidColumn();
+        if(!$uidCol) {
+            throw new DataSheetColumnNotFoundError($sheetToSort, 'Could not sort to match order because no UID column was found in '.$sheetToMatch->getMetaObject()->getName().'!');
+        }
+
+        $orderToMatch = $uidCol->getValues();
+        $rows = $sheetToSort->getRows();
+        $result = $sheetToSort->copy();
+        $result->removeRows();
+
+        $uidCol = $sheetToSort->getUidColumn();
+        if(!$uidCol) {
+            throw new DataSheetColumnNotFoundError($sheetToSort, 'Could not sort to match order because no UID column was found in '.$this->getMetaObject()->getName().'!');
+        }
+
+        foreach ($orderToMatch as $uid) {
+            $targetIndex = $uidCol->findRowByValue($uid);
+            if ($uid === false || $uid === null) {
+                throw new DataSheetRuntimeError($sheetToSort, 'Cannot restore sorting order: row UID "' . $uid . '" not found in sorted data');
+            }
+            $result->addRow($rows[$targetIndex], false, false);
+        }
+        if ($result->countRows() !== $sheetToSort->countRows()) {
+            throw new DataSheetRuntimeError($sheetToSort, 'Cannot restore sorting order: row count mismatch!');
+        }
+
+        return $result;
+    }
+
     /**
      *
      * {@inheritdoc}
