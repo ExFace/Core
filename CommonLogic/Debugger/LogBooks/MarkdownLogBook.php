@@ -195,10 +195,19 @@ class MarkdownLogBook implements LogBookInterface
                 $str .= PHP_EOL . '## ' . $section . PHP_EOL;
             }
             foreach ($lines as $lineProps) {
-                if ($lineProps['indent'] === 0) {
+                $indent = $lineProps['indent'];
+                if ($indent === 0) {
                     $str .= PHP_EOL;
                 }
-                $str .= $this->convertIndentToString($lineProps['indent']) . $lineProps['text'] . PHP_EOL;
+                // Make ordinary text lines list items and indent code blocks
+                if ($this->isCodeBlock($lineProps['text']) === true) {
+                    // A code block normally starts with a line break (and maybe an indent),
+                    // so to avoid multiple line breaks breaking list strukture, we remove the line
+                    // break of the previous line before attaching the code block.
+                    $str = rtrim($str) . $this->indentLines($indent, $lineProps['text']) . PHP_EOL;
+                } else {
+                    $str .= $this->convertIndentToString($lineProps['indent']) . $lineProps['text'] . PHP_EOL;
+                }
             }
         }
         if (! empty($this->placeholders)) {
@@ -232,7 +241,7 @@ class MarkdownLogBook implements LogBookInterface
      * @param int $indent
      * @return string
      */
-    protected function convertIndentToString(int $indent) : string
+    protected function convertIndentToString(int $indent, bool $makeListItem = true) : string
     {
         if ($indent === 0) {
             return '';
@@ -241,7 +250,16 @@ class MarkdownLogBook implements LogBookInterface
         for ($i = 1; $i < $indent; $i++) {
             $str .= self::INDENT;
         }
-        return $str . '- ';
+        return $str . ($makeListItem === true ? '- ' : '');
+    }
+
+    protected function indentLines(int $indent, string $multiLineString) : string
+    {
+        $lines = StringDataType::splitLines($multiLineString);
+        foreach ($lines as $i => $line) {
+            $lines[$i] = $this->convertIndentToString($indent, false) . $line;
+        }
+        return implode(PHP_EOL, $lines);
     }
     
     /**
@@ -337,7 +355,7 @@ class MarkdownLogBook implements LogBookInterface
      */
     protected function isCodeBlock(string $line) : bool
     {
-        return strpos(trim($line), '```') === 0;
+        return mb_substr(trim($line), 0, 3) === '```';
     }
 
     /**
