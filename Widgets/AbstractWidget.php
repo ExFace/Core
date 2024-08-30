@@ -1389,11 +1389,6 @@ abstract class AbstractWidget implements WidgetInterface
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
                 
-                // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
-                if (($classOrInterface == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $classOrInterface) && ($widget instanceof Filter)) {
-                    continue;
-                }
-                
                 if ($widget instanceof $classOrInterface) {
                     $this->parentByType[$classOrInterface] = $widget;
                     break;
@@ -1405,6 +1400,25 @@ abstract class AbstractWidget implements WidgetInterface
             }
         }
         return $this->parentByType[$classOrInterface];
+    }
+
+    /**
+     * Returns an array of parent widgets with the given class or interface
+     * @param string $classOrInterface
+     * @return array
+     */
+    public function findParentsByClass(string $classOrInterface) : array
+    {
+        $result  = [];
+        $widget = $this;
+        while ($widget->getParent()) {
+            $widget = $widget->getParent();
+            if ($widget instanceof $classOrInterface) {
+                $result[] = $widget;
+            }
+        }
+        
+        return $result;
     }
     
     /**
