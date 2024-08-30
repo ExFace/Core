@@ -75,29 +75,55 @@ class DocsFacade extends AbstractHttpFacade
                 
                 $response = $handler->handle($request);
                 $htmlString = $response->getBody()->__toString();
-                // Find all links in first docu page
+                // Find all links in first document page
                 $linksArray = $this->findLinksInHtml($htmlString);
-                // Create temp file for saving entire html content
+                // Create temp file for saving entire html content for PDF
                 $tempFilePath = tempnam(sys_get_temp_dir(), 'combined_content_');
                 
                 $this->processLinks($tempFilePath, $linksArray);
-                               
+                $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
                 $htmlString = $this->replaceHref($htmlString);
                 
                 // Attach print function to end of html to show print window when accessing the HTML
-                $printString = 
-                '<script type="text/javascript">
+                // Also add an arrow as a header element to jump back to the first page in the PDF
+                $printString =
+                '<style>
+                    @media print {
+                        body {
+                            margin: 2cm; /* Margin for the body content */
+                        }
+                    
+                        /* Custom Header */
+                        header {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 2cm;
+                            text-align: right;
+                            font-size: 24px;
+                            font-weight: normal;
+                            line-height: 2cm;
+                            margin-right: 20px
+                        }
+                    }
+                </style>
+                    
+                <header>' . '<a href="#' . $requestUri . '">↑</a>' . '</header>
+                    
+                <script type="text/javascript">
                     window.onload = function() {
-                    window.print();
+                        window.print();
                     };
                 </script>';
+
                 file_put_contents($tempFilePath, $printString, FILE_APPEND | LOCK_EX);
                 
                 $combinedBodyContent = file_get_contents($tempFilePath);
                 // Clean up the temporary file
                 unlink($tempFilePath);
                 
-                // Parse the body content of all links at the end of the body html tag of the first html doc page
+                // Parse the body content of all links at the end of the body html tag of the first html document page
                 $bodyCloseTagPosition = stripos($htmlString, '</body>');
                 $htmlString = substr_replace($htmlString, $combinedBodyContent, $bodyCloseTagPosition, 0);
 
@@ -105,6 +131,7 @@ class DocsFacade extends AbstractHttpFacade
                 $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
+            // This case is for all links that are given to the processLinks function
             case ($request->getQueryParams()['markdown'] === 'true'):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
@@ -151,11 +178,12 @@ class DocsFacade extends AbstractHttpFacade
     }
     
     /**
-     * Recursivlely add all html of all docu links to a tempFile
+     * Recursivlely add the entire html of all document links to a tempFile
      * @param string $tempFilePath
      * @param array $linksArray
      */
-    protected function processLinks(string $tempFilePath, array $linksArray) {
+    protected function processLinks(string $tempFilePath, array $linksArray) 
+    {
         foreach ($linksArray as $link) {
             // Only process links that are markdown files and have not been processed before
             if (str_ends_with($link, '.md') && !in_array($link, $this->processedLinks)) {
@@ -163,6 +191,7 @@ class DocsFacade extends AbstractHttpFacade
                 $this->processedLinksKey = $this->processedLinksKey +1;
 
                 $linkRequest = new ServerRequest('GET', $link);
+                // Adds queryParam to jump to the right switch case inside of the createResponse function
                 $linkRequest = $linkRequest->withQueryParams(['markdown' => 'true']);
                 $linkResponse = $this->createResponse($linkRequest);
                 // Adds a page break before start of each markdown file
@@ -176,7 +205,6 @@ class DocsFacade extends AbstractHttpFacade
                 // Write the body content to the temporary file
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
                 
-                
                 if (!empty($linksArrayRecursive)) {
                     $this->processLinks($tempFilePath, $linksArrayRecursive);
                 }
@@ -189,7 +217,8 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $html
      * @return string
      */
-    protected function getBodyContent(string $html) : string {
+    protected function getBodyContent(string $html) : string 
+    {
         $bodyContent = '';
         if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
             $bodyContent = $matches[1];
@@ -200,32 +229,29 @@ class DocsFacade extends AbstractHttpFacade
     /**
      * Replaces the links to PDF external websites with links that jump to a PDF internal section
      * From < a href="http://.../Section1.md">Section 1</a >
-     * To < a href="#Section1">Section 1</a >
+     * To < a href="#http://.../Section1.md">Section 1</a >
      * @param string $htmlString
-     * @return string|array|NULL
+     * @return string
      */
-    protected function replaceHref(string $htmlString): string {
-        // Define the pattern to search for the specific link. Use the filename of the markdown as the html id. 
-        // E.g. <a href="http://.../Section1.md">Section 1</a>
-        $pattern = '/<a href="[^"]*\/([^\/]+)\.md">(.*?)<\/a>/';
+    protected function replaceHref(string $htmlString): string 
+    {
+        // Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
+        $pattern = '/<a href="([^"]*\/[^\/]+\.md)(?:\?render=pdf)?">(.*?)<\/a>/';
         
-        // Define the replacement pattern e.g. <a href="#Section1">Section 1</a>
+        // Define the replacement pattern e.g. <a href="#http://.../Section1.md">Section 1</a>
         $replacement = '<a href="#$1">$2</a>';
         
         return preg_replace($pattern, $replacement, $htmlString);
     }
     
     /**
-     * Adds the markdown file name as an id to the first heading of the markdown to be able to reference it with an href element.
+     * Adds the path/url of the markdown file as an id to the first heading of the markdown to be able to reference it with an href element.
      * @param string $link
      * @param string $htmlString
      * @return string
      */
-    protected function addIdToFirstHeading(string $link, string $htmlString): string {
-        // Find the markdown file name
-        preg_match('/\/([^\/]+)\.md$/', $link, $matches);
-        $idString = $matches[1];
-        
+    protected function addIdToFirstHeading(string $link, string $htmlString): string 
+    {
         $doc = new DOMDocument();
         // Suppress errors due to invalid HTML structure
         libxml_use_internal_errors(true);
@@ -239,7 +265,7 @@ class DocsFacade extends AbstractHttpFacade
         if ($headers->length > 0) {
             $firstHeader = $headers->item(0);
             // Add the id attribute to the first heading element
-            $firstHeader->setAttribute('id', $idString);
+            $firstHeader->setAttribute('id', $link);
         }
         return $doc->saveHTML();
     }
@@ -249,7 +275,8 @@ class DocsFacade extends AbstractHttpFacade
      * @param string $html
      * @return array
      */
-    protected function findLinksInHtml(string $html) : array {
+    protected function findLinksInHtml(string $html) : array 
+    {
         $dom = new DOMDocument();
         // Suppress errors due to malformed HTML
         libxml_use_internal_errors(true);
