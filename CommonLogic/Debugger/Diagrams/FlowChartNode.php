@@ -8,10 +8,9 @@ class FlowChartNode
     protected $title; // Node title
     protected $style; // Node style, instance of FlowChartNodeStyle
 
-    public function __construct(string $title, FlowChartNodeStyle $style)
+    public function __construct(string $title)
     {
         $this->title = $title;
-        $this->style = $style;
     }
 
     // returns title of node

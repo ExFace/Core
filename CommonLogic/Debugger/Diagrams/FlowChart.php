@@ -13,39 +13,39 @@ abstract class FlowChart implements FlowChartInterface
     // reference to the last node added
     protected $lastNode = null;
     
-    public function startNode(string $title, FlowChartNodeStyle $nodeStyle): FlowChartNode
+    public function startNode(string $title): FlowChartNode
     {
-        $node = new FlowChartNode($title, $nodeStyle);
+        $node = new FlowChartNode($title);
         $this->nodes[] = $node;
         $this->lastNode = $node;
         return $node; // ultimately returns a newly created 'Node' object
     }
     
-    public function continue(string $toTitle, string $linkTitle, FlowChartNodeStyle $nodeStyle): self
+    public function continue(string $toTitle, string $linkTitle): self
     {
-        $toNode = new FlowChartNode($toTitle, $nodeStyle);
+        $toNode = new FlowChartNode($toTitle);
         $this->nodes[] = $toNode;
         
         if ($this->lastNode !== null) {
-            $this->addLink($this->lastNode, $toNode, $linkTitle, $nodeStyle);
+            $this->addLink($this->lastNode, $toNode, $linkTitle);
         }
         $this->lastNode = $toNode;
         return $this;
     }
 
-    protected function addLink(FlowChartNode $from, FlowChartNode $to, string $title, FlowChartNodeStyle $style): self
+    protected function addLink(FlowChartNode $from, FlowChartNode $to, string $title): self
     {
-        $link = new FlowChartLink($from, $to, $title, $style);
+        $link = new FlowChartLink($from, $to, $title);
         $this->links[] = $link;
         return $this;
     }
 
-    public function endNode(string $toTitle, string $linkTitle, FlowChartNodeStyle $nodeStyle): void
+    public function endNode(string $toTitle, string $linkTitle): void
     {
-        $toNode = new FlowChartNode($toTitle, $nodeStyle);
+        $toNode = new FlowChartNode($toTitle);
         $this->nodes[] = $toNode;
         if ($this->lastNode !== null) {
-            $this->addLink($this->lastNode, $toNode, $linkTitle, $nodeStyle);
+            $this->addLink($this->lastNode, $toNode, $linkTitle);
         }
         $this->lastNode = $toNode;
     }

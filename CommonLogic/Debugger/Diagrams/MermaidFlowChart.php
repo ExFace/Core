@@ -14,16 +14,23 @@ class MermaidFlowChart
     {
         $graph = new Graph();
         
-        foreach ($flowChart->getLinks() as $link) {
-            // getNodeId: generates a valid Mermaid.js ID for each node
-            $graphNode1 = new Node($graph, $this->getNodeId($link->getNodeFrom()));
-            $graphNode2 = new Node($graph, $this->getNodeId($link->getNodeTo())); 
-            $graph->addNode($graphNode1);
-            $graph->addNode($graphNode2);
-            $graphLink = new Link($graphNode1, $graphNode2, $link->getTitle());
-            $graph->addLink($graphLink);
-        }
-        return $graph->render();
+       // Ensure we add all nodes to the graph first
+       $nodeMap = [];
+       foreach ($flowChart->getNodes() as $node) {
+           $nodeId = $this->getNodeId($node);
+           $graphNode = new Node($graph, $nodeId);
+           $graphNode->setText($node->getTitle());
+           $nodeMap[$nodeId] = $graphNode;
+           $graph->addNode($graphNode);
+       }
+
+       // Then add all links between nodes
+       foreach ($flowChart->getLinks() as $link) {
+           $fromNode = $nodeMap[$this->getNodeId($link->getNodeFrom())];
+           $toNode = $nodeMap[$this->getNodeId($link->getNodeTo())];
+           $graphLink = new Link($fromNode, $toNode, $link->getTitle());
+           $graph->addLink($graphLink);
+       }
     }
 
     protected function getNodeId(FlowChartNode $node) :string
