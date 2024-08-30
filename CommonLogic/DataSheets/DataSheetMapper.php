@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -189,10 +190,10 @@ class DataSheetMapper implements DataSheetMapperInterface
         $fromSheetWasEmpty = $fromSheet->isEmpty();
         $freshStamp = $fromSheet->getFreshStamp();
         
-        if ($logbook !== null) {
-            $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
-            $logbook->addIndent(1);
-        }
+        $logbook = $logbook ?? new MarkdownLogBook('Data mapper');
+        $logbook->addLine('Mapping ' . $fromSheet->countRows() . ' rows of **' . $fromSheet->getMetaObject()->__toString() . '** to **' . $this->getToMetaObject()->__toString() . '**');
+        $logbook->addIndent(1);
+            
         $diagram = 'flowchart LR';
         $diagram .= "\n\tFromSheet(From-sheet) -->|" . DataLogBook::buildMermaidTitleForData($fromSheet) . "|";
         
@@ -200,7 +201,7 @@ class DataSheetMapper implements DataSheetMapperInterface
         try {
             $fromSheet = $this->prepareFromSheet($fromSheet, $readMissingColumns, $logbook);
         } catch (\Throwable $e) {
-            if ($logbook !== null) $logbook->addLine('**ERROR:** ' . $e->getMessage());
+            $logbook->addLine('**ERROR:** ' . $e->getMessage());
             if (! ($e instanceof DataMapperExceptionInterface)) {
                 $e = new DataMapperRuntimeError($this, $fromSheet, 'Failed to read missing data for data mapper', null, $e, $logbook);
             }
@@ -216,10 +217,9 @@ class DataSheetMapper implements DataSheetMapperInterface
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
         // Inherit stuff
-        if ($logbook !== null) {
-            $logbook->addLine('Inheriting: ');
-            $logbook->addIndent(1);
-        }
+        $logbook->addLine('Inheriting: ');
+        $logbook->addIndent(1);
+
         // Inherit columns if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritColumns()){
             $processedNames = [];
@@ -239,20 +239,20 @@ class DataSheetMapper implements DataSheetMapperInterface
                 $processedNames[] = "`{$fromCol->getName()}`";
                 $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
             }
-            if ($logbook !== null) $logbook->addLine(count($processedNames) . " columns (mode `{$inheritMode}`): " . implode(', ', $processedNames));
+            $logbook->addLine(count($processedNames) . " columns (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             try {
                 $toSheet->importRows($fromSheet);
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit columns in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 columns');
+            $logbook->addLine('0 columns');
         }
         
         // Inherit filters if neccessary
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
-            if ($logbook !== null) $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
+            $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
             try {
                 if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES) {
                     $toSheet->setFilters($fromSheet->getFilters()->rebaseWithMatchingAttributesOnly($toSheet->getMetaObject()));
@@ -260,11 +260,11 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $toSheet->setFilters($fromSheet->getFilters());
                 }
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot inherit filters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 filters');
+            $logbook->addLine('0 filters');
         }
         
         // Inherit sorters if neccessary
@@ -275,17 +275,17 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $toSheet->getSorters()->add($sorter);
                     $processedNames[] = "`{$sorter->__toString()}`";
                 }
-                if ($logbook !== null) $logbook->addLine(count($processedNames) . " sorters (mode `{$inheritMode}`): " . implode(', ', $processedNames));
+                $logbook->addLine(count($processedNames) . " sorters (mode `{$inheritMode}`): " . implode(', ', $processedNames));
             } catch (\Throwable $e) {
-                if ($logbook !== null) $logbook->addLine('**ERROR**: ' . $e->getMessage());
+                $logbook->addLine('**ERROR**: ' . $e->getMessage());
                 throw new DataMapperRuntimeError($this, $fromSheet, 'Cannot sorters in data mapper. ' . $e->getMessage(), null, null, $logbook);
             }
         } else {
-            if ($logbook !== null) $logbook->addLine('0 sorters');
+            $logbook->addLine('0 sorters');
         }
         
         // Apply mappers
-        if ($logbook !== null) $logbook->addLine('Applying mappers:', -1);
+        $logbook->addLine('Applying mappers:', -1);
         $lastClass = null;
         $lastMapCnt = 1;
         foreach ($this->getMappings() as $i => $map) {
@@ -302,11 +302,10 @@ class DataSheetMapper implements DataSheetMapperInterface
                     $lastMapCnt = 1;
                 }
             } catch (\Throwable $e) {
-                if ($logbook !== null) { 
-                    $logbook->addLine('**ERROR:** ' . $e->getMessage());
-                    $diagram .= " MapperError(Error)";
-                    $logbook->addCodeBlock($diagram, 'mermaid');
-                }
+                $logbook->addLine('**ERROR:** ' . $e->getMessage());
+                $diagram .= " MapperError(Error)";
+                $logbook->addCodeBlock($diagram, 'mermaid');
+
                 if ($e instanceof DataMappingExceptionInterface) {
                     throw $e;
                 }
@@ -314,32 +313,30 @@ class DataSheetMapper implements DataSheetMapperInterface
             }
         }
         $diagram .= " ToSheet(To-sheet)";
-        if ($logbook !== null) $logbook->addIndent(-1);
+        $logbook->addIndent(-1);
         
         // Make sure the to-sheet is empty if the from-sheet was empty and the empty state is to be inherited
         if ($this->getInheritEmptyData() && $fromSheetWasEmpty) {
             $toSheet->removeRows();
-            if ($logbook !== null) $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`');
+            $logbook->addLine('Emptied to-data because `inherit_empty_data` is `true`');
         }
         
         // Refresh data if needed
         if ($this->getRefreshDataAfterMapping()) {
             $toSheet->dataRead();
-            if ($logbook !== null) $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows');
+            $logbook->addLine('Refreshed to-data: read ' . $toSheet->countRows() . ' rows');
         }
         
         // Remove duplicate rows if explicitly required or the sheet has a UID column. If there is a UID column,
         // we can be sure, that equal rows actually are the same data item.
         if ($this->getRemoveDuplicateRows() === true || ($toSheet->hasUidColumn(true) && $toSheet->countRows() > 1 && $this->getRemoveDuplicateRows() !== false)) {
             $duplicateRows = $toSheet->removeRowDuplicates();
-            if ($logbook !== null) $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows');
+            $logbook->addLine('Removed ' . count($duplicateRows) . ' duplicate rows rows');
         }
         
-        if ($logbook !== null) {
-            $logbook->addIndent(-1);
-            $logbook->addCodeBlock($diagram, 'mermaid');
-            $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
-        }
+        $logbook->addIndent(-1);
+        $logbook->addCodeBlock($diagram, 'mermaid');
+        $logbook->addLine("Mapper output: {$toSheet->countRows()} rows of {$toSheet->getMetaObject()->__toString()}");
         
         return $toSheet;
     }

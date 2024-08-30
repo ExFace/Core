@@ -1134,7 +1134,11 @@ abstract class AbstractAction implements ActionInterface
                 $diagram .= " InputMapping";
                 $diagram .= "\n\t subgraph InputMapping[input_mapper]";
                 $mapperDiagrams = $logbook->getCodeBlocksInSection();
-                if (count($mapperDiagrams) === 2) {
+                // Use the last mapper diagram as subgraph: e.g. remove it from the regular
+                // mapper output and place it into the main diagram.
+                // Take just the very last diagram - if there are nested mappers (e.g. subsheet mappers),
+                // they can produce interesting 
+                if (count($mapperDiagrams) >= 2) {
                     $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
                     $logbook->removeLine(null, array_key_last($mapperDiagrams));
                 }
@@ -1158,7 +1162,7 @@ abstract class AbstractAction implements ActionInterface
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
-        $diagram .= "\n\t InputValidation --> Action[\"Action `{$this->getName()}`\"]";
+        $diagram .= "\n\t InputValidation --> Action[\"Action: {$this->getName()}\"]";
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
