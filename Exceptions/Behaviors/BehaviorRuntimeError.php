@@ -18,7 +18,7 @@ class BehaviorRuntimeError extends AbstractBehaviorException
     
     public function __construct(BehaviorInterface $behavior, $message, $alias = null, $previous = null, LogBookInterface $logbook = null)
     {
-        parent::__construct($behavior, $message, null, $previous);
+        parent::__construct($behavior, $message, $alias, $previous);
         $this->logbook = $logbook;
     }
     
