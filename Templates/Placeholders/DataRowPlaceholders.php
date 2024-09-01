@@ -74,7 +74,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
                 $needExtraData = true;
             }
         }
-        
+        // TODO #DataCollector needs to be used here instead of all the following logic
         if ($needExtraData === true && $this->dataSheet->hasUidColumn()) {
             if ($this->dataSheet->getUidColumn()->hasEmptyValues()) {
                 throw new DataSheetMissingRequiredValueError($this->dataSheet, null, null, null, $this->dataSheet->getUidColumn(), $this->dataSheet->getUidColumn()->findEmptyRows());
