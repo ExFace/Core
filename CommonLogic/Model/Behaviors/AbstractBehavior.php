@@ -288,6 +288,9 @@ abstract class AbstractBehavior implements BehaviorInterface
 
     public function getName() : string
     {
+        if ($this->name === null) {
+            $this->name = PhpClassDataType::findClassNameWithoutNamespace($this) . ' of ' . $this->getObject()->__toString();
+        }
         return $this->name;
     }
 
