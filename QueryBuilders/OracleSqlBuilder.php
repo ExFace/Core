@@ -148,7 +148,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         // IDEA at this point, we could use the default aggregate function of the attributes. However it is probably a good
                         // idea to set the default aggregator somewhere in the qpart code, not in the query builders. If we set the aggregator
                         // to the default, this place will pass without a problem.
-                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                        $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                         continue;
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
@@ -184,7 +184,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // its UID column).
                 if ($group_by && $this->isObjectGroupSafe($qpart->getAttribute()->getObject()) === false) {
                     if (! $this->isQpartRelatedToAggregator($qpart)) {
-                        $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                        $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                         continue;
                     }
                 }
@@ -203,7 +203,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } elseif ($group_by && ! $qpart->getFirstRelation() && ! $qpart->getAggregator()) {
                     // If in a GROUP BY the attribute belongs to the main object and does not have an aggregate function, skip it - oracle cannot deal with it
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because the attribute belongs to the main object and does not have an aggregate function - oracle does not support this!' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because the attribute belongs to the main object and does not have an aggregate function - oracle does not support this!') . "\n";
                     continue;
                 } else {
                     // Otherwise the selects can rely on the joins
@@ -298,7 +298,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 } else {
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                 }
             }
             $select = substr($select, 2);

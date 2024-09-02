@@ -212,7 +212,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $exists = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         $query = $this->getDataConnection()->runSql('
-                -- Load object
+                /* Load object */
 				SELECT
                     o.*,
 					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
@@ -302,7 +302,7 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // select all attributes for this object
         $query = $this->getDataConnection()->runSql('
-                -- Load attributes
+                /* Load attributes */
 				SELECT
 					a.*,
 					' . $this->buildSqlUuidSelector('a.oid') . ' as oid,
@@ -512,7 +512,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // Load behaviors if needed
         if ($load_behaviors) {
             $query = $this->getDataConnection()->runSql("
-                -- Load behaviors
+                /* Load behaviors */
 				SELECT *, {$this->buildSqlUuidSelector('oid')} AS oid FROM exf_object_behaviors WHERE object_oid = {$objectUid}");
             if ($res = $query->getResultArray()) {
                 foreach ($res as $row) {
@@ -667,7 +667,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
         }
         $sql = "
-            -- Load data source
+            /* Load data source */
 			SELECT
 				ds.name as data_source_name,
 				ds.alias as data_source_alias,
@@ -821,7 +821,7 @@ class SqlModelLoader implements ModelLoaderInterface
         // data source table. If the updated had not yet been installed, these columns are
         // not selected.
         $sql = '
-            -- Load connection
+            /* Load connection */
 			SELECT
 				dc.*,
                 ' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
@@ -933,7 +933,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         
         $query = $this->getDataConnection()->runSql('
-                -- Load action
+                /* Load action */
 				SELECT
 					' . $this->buildSqlUuidSelector('oa.object_oid') . ' AS object_oid,
 					oa.action, 
@@ -1024,7 +1024,7 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         $attrId = HexadecimalNumberDataType::cast($attribute->getId());
         $query = $this->getDataConnection()->runSql("
-            -- Load compound attribute
+            /* Load compound attribute */
             SELECT
                 ac.*,
                 {$this->buildSqlUuidSelector('ac.attribute_oid')} as attribute_oid,
@@ -1111,7 +1111,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . MetamodelAliasDataType::cast($selector->getAppAlias(), true) . "')";
         }
         $query = $this->getDataConnection()->runSql('
-                -- Load data types
+                /* Load data types */
 				SELECT
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
@@ -1202,7 +1202,7 @@ SQL;
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('uru.user_role_oid'), 'exf_user_role_users uru', 'uru.user_oid = u.oid');
         
         $sql = <<<SQL
--- Load user
+/* Load user */
 SELECT
     u.*,
     {$this->buildSqlUuidSelector('u.oid')} AS oid,
@@ -1265,7 +1265,7 @@ SQL;
     public function loadAuthorizationPoints() : array
     {        
         $sql = <<<SQL
--- Load auth. points
+/* Load auth. points */
 SELECT 
     apt.*, 
     {$this->buildSqlUuidSelector('apt.oid')} AS oid,
@@ -1344,7 +1344,7 @@ SQL;
             }
             
             $sql = <<<SQL
--- Load policies
+/* Load policies */
 SELECT
     apol.*,
     {$this->buildSqlUuidSelector('apol.auth_point_oid')} AS auth_point_oid,
@@ -1433,7 +1433,7 @@ SQL;
         
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $query = $this->getDataConnection()->runSql("
--- Load page
+/* Load page */
             SELECT 
                 p.*,
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
@@ -1823,7 +1823,7 @@ SQL;
             ORDER BY parent_oid ASC, menu_index ASC, name ASC";
         $groupConcat = $this->buildSqlGroupConcat($this->buildSqlUuidSelector('pgp.page_group_oid'), 'exf_page_group_pages pgp', 'pgp.page_oid = p.oid');
         $sql = "
-            -- Load page tree
+            /* Load page tree */
             SELECT
                 {$this->buildSqlUuidSelector('p.oid')} as oid,
                 {$this->buildSqlUuidSelector('p.parent_oid')} as parent_oid,
@@ -1899,7 +1899,7 @@ SQL;
         
         if (! array_key_exists($messageCode, $this->messages_loaded)) {
             $sql = <<<SQL
--- Load message
+/* Load message */
 SELECT code, type, title, hint, description, {$this->buildSqlUuidSelector('app_oid')} AS app_oid
     FROM exf_message
     WHERE code = '{$messageCode}'
@@ -1943,7 +1943,7 @@ SQL;
         if ($this->apps_loaded === null) {
             $freshLoad = true;
             $sql = <<<SQL
--- Load app
+/* Load app */
 SELECT {$this->buildSqlUuidSelector('oid')} AS UID, app_alias AS ALIAS, app_name AS NAME, default_language_code AS DEFAULT_LANGUAGE_CODE
     FROM exf_app;
 SQL;
@@ -2012,7 +2012,7 @@ SQL;
         }
         
         $sql = <<<SQL
--- Load communication channel
+/* Load communication channel */
 SELECT 
     {$this->buildSqlUuidSelector('cc.oid')} AS UID,
     cc.name AS NAME,
@@ -2090,7 +2090,7 @@ SQL;
         $selectorWhere = implode(' OR ', $ors);
         
         $sql = <<<SQL
--- Load communication templates
+/* Load communication templates */
 SELECT
     {$this->buildSqlUuidSelector('ct.oid')} AS UID,
     ct.name AS NAME,
