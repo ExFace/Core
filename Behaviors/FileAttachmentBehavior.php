@@ -799,7 +799,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
             // IMPORTANT: make sure, the freshly read data has the same row order, as the event
             // data. You never know for sure, how a file storage will sort the results by default!
             try {
-                $attachmentSheet = DataSheet::matchOrder($attachmentSheet, $ds);
+                $attachmentSheet->sortLike($ds);
             } catch (\Throwable $e) {
                 throw new BehaviorRuntimeError($this, 'Cannot read required file attachment data to save the corresponding files', null, $e);
             }
