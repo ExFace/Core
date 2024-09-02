@@ -20,6 +20,17 @@ abstract class FlowChart implements FlowChartInterface
         $this->lastNode = $node;
         return $node; // ultimately returns a newly created 'Node' object
     }
+
+    /* 
+        // Possible method to consider in case of adding a Node such as 'Task prefill'
+        
+        public function addNode(string $title): FlowChartNode
+        {
+        $node = new FlowChartNode($title);
+        $this->nodes[] = $node;
+        $this->lastNode = $node;
+        return $node;
+        } */
     
     public function continue(string $toTitle, string $linkTitle): self
     {

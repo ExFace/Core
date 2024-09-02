@@ -12,25 +12,18 @@ class MermaidFlowChart
     // takes the FlowChartInterface object and converts nodes and links into Mermaid.js
     public function render(FlowChartInterface $flowChart) : string
     {
-        $graph = new Graph();
+        $graph = new Graph(['direction' => Graph::LEFT_RIGHT]);
         
-       // Ensure we add all nodes to the graph first
-       $nodeMap = [];
-       foreach ($flowChart->getNodes() as $node) {
-           $nodeId = $this->getNodeId($node);
-           $graphNode = new Node($graph, $nodeId);
-           $graphNode->setText($node->getTitle());
-           $nodeMap[$nodeId] = $graphNode;
-           $graph->addNode($graphNode);
-       }
-
-       // Then add all links between nodes
-       foreach ($flowChart->getLinks() as $link) {
-           $fromNode = $nodeMap[$this->getNodeId($link->getNodeFrom())];
-           $toNode = $nodeMap[$this->getNodeId($link->getNodeTo())];
-           $graphLink = new Link($fromNode, $toNode, $link->getTitle());
-           $graph->addLink($graphLink);
-       }
+        foreach ($flowChart->getLinks() as $link) {
+            // getNodeId: generates a valid Mermaid.js ID for each node
+            $nodeFromId = new Node($this->getNodeId($link->getNodeFrom()), $link->getNodeFrom()->getTitle());
+            $nodeToId = new Node($this->getNodeId($link->getNodeTo()), $link->getNodeTo()->getTitle());
+            $graph->addNode($nodeFromId);
+            $graph->addNode($nodeToId);
+            $graphLink = new Link($nodeFromId, $nodeToId, $link->getTitle());
+            $graph->addLink($graphLink);
+        }
+        return $graph->render();
     }
 
     protected function getNodeId(FlowChartNode $node) :string
