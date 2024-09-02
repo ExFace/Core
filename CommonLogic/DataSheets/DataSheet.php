@@ -2986,46 +2986,34 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Sorts a datasheet to match the order of another datasheet.
-     *
-     * A new instance is returned, that contains the values of the `sheetToSort`, sorted to match
-     * the order of the `sheetToMatch` based on their UID columns. Neither of the input sheets will be changed by this function.
-     *
-     * NOTE: Both sheets must have a UID column!
-     *
-     * @param DataSheetInterface $sheetToSort
-     * @param DataSheetInterface $sheetToMatch
-     * @return DataSheetInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sortLike()
      */
-    public static function matchOrder(DataSheetInterface $sheetToSort, DataSheetInterface $sheetToMatch) : DataSheetInterface
+    public function sortLike(DataSheetInterface $otherSheet) : DataSheetInterface
     {
-        $uidCol = $sheetToMatch->getUidColumn();
-        if(!$uidCol) {
-            throw new DataSheetColumnNotFoundError($sheetToSort, 'Could not sort to match order because no UID column was found in '.$sheetToMatch->getMetaObject()->getName().'!');
+        if (! $this->getMetaObject()->isExactly($otherSheet->getMetaObject())) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet based on a different object! The objects must be the same!');
         }
-
-        $orderToMatch = $uidCol->getValues();
-        $rows = $sheetToSort->getRows();
-        $result = $sheetToSort->copy();
-        $result->removeRows();
-
-        $uidCol = $sheetToSort->getUidColumn();
-        if(!$uidCol) {
-            throw new DataSheetColumnNotFoundError($sheetToSort, 'Could not sort to match order because no UID column was found in '.$this->getMetaObject()->getName().'!');
+        if (! $this->hasUidColumn(true) || ! $otherSheet->hasUidColumn(true)) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: both data sheet must have UID columns filled with values!');
         }
-
-        foreach ($orderToMatch as $uid) {
-            $targetIndex = $uidCol->findRowByValue($uid);
+        $orderedRowUids = $otherSheet->getUidColumn()->getValues();
+        $bkpSheet = $this->copy();
+        $bkpRows = $this->getRows();
+        $bkpUidCol = $bkpSheet->getUidColumn();
+        $this->removeRows();
+        foreach ($orderedRowUids as $uid) {
+            $bkpIdx = $bkpUidCol->findRowByValue($uid);
             if ($uid === false || $uid === null) {
-                throw new DataSheetRuntimeError($sheetToSort, 'Cannot restore sorting order: row UID "' . $uid . '" not found in sorted data');
+                throw new DataSheetRuntimeError($bkpSheet, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: row UID "' . $uid . '" found in sorted sheet, but not in the other sheet!');
             }
-            $result->addRow($rows[$targetIndex], false, false);
+            $this->addRow($bkpRows[$bkpIdx], false, false);
         }
-        if ($result->countRows() !== $sheetToSort->countRows()) {
-            throw new DataSheetRuntimeError($sheetToSort, 'Cannot restore sorting order: row count mismatch!');
+        if ($this->countRows() !== $bkpSheet->countRows()) {
+            throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row count mismatch!');
         }
-
-        return $result;
+        return $this;
     }
 
     /**

@@ -259,13 +259,19 @@ class ValidatingBehavior extends AbstractBehavior
             return;
         }
 
-        $onUpdate = $event instanceof OnBeforeUpdateDataEvent;
-        if(!$uxons = $this->tryGetRelevantUxons($onUpdate)) {
-            return;
+        if ($event instanceof OnBeforeUpdateDataEvent) {
+            $onUpdate = true;
+            $previousDataSheet = $event->getDataSheetWithOldData();
+            $changedDataSheet = $event->getDataSheet()->copy()->sortLike($previousDataSheet);
+        } else {
+            $onUpdate = false;
+            $previousDataSheet = null;
+            $changedDataSheet = $event->getDataSheet();
         }
 
-        $previousDataSheet = $onUpdate ? $event->getDataSheetWithOldData() : null;
-        $changedDataSheet = $onUpdate ? DataSheet::matchOrder($event->getDataSheet(), $previousDataSheet) : $event->getDataSheet();
+        if(! $uxons = $this->tryGetRelevantUxons($onUpdate)) {
+            return;
+        }
 
         // Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
         // extended from it.
