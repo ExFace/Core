@@ -23,7 +23,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
- * Allows to bind a widget property to an attribute, a data column or an expression in general
+ * Allows to bind a widget property to an attribute, a data column or an expression in general.
  * 
  * This class allows developers to quickly bind widget properties like `value` or `color` to data,
  * formulas or any other types of expressions.
@@ -38,6 +38,8 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     const BINDING_TYPE_ATTRIBUTE = 'attribute';
     
     const BINDING_TYPE_COLUMN = 'column';
+
+    const BINDING_TYPE_CALCULATION = 'calculation';
     
     const BINDING_TYPE_NONE = 'none';
     
@@ -96,11 +98,8 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     protected function setAttributeAlias(string $alias) : WidgetPropertyBindingInterface
     {
-        $this->dataBindingType = self::BINDING_TYPE_ATTRIBUTE;
         $this->attributeAlias = $alias;
-        if ($this->dataColumnName === null) {
-            $this->dataColumnName = DataColumn::sanitizeColumnName($alias);
-        }
+        $this->type = null;
         return $this;
     }
     
@@ -118,12 +117,23 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
         if ($this->getMetaObject()->hasAttribute($name)) {
             return $this->setAttributeAlias($name);
         }
-        
-        if ($this->dataBindingType !== self::BINDING_TYPE_ATTRIBUTE) {
-            $this->dataBindingType = self::BINDING_TYPE_ATTRIBUTE;
-        }
         $this->dataColumnName = DataColumn::sanitizeColumnName($name);
+        $this->type = null;
         return $this;
+    }
+
+    /**
+     * Bind this property to a calculation formula
+     * 
+     * @uxon-property calculation
+     * @uxon-type metamodel:formula
+     * 
+     * @param string $formula
+     * @return \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface
+     */
+    protected function setCalculation(string $formula) : WidgetPropertyBindingInterface
+    {
+        return $this->setValue($formula);
     }
     
     /**
@@ -133,7 +143,19 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     protected function getBindingType() : string
     {
         if ($this->dataBindingType === null) {
-            $this->dataBindingType = self::BINDING_TYPE_NONE;
+            switch (true) {
+                case $this->attributeAlias !== null:
+                    $this->dataBindingType = self::BINDING_TYPE_ATTRIBUTE;
+                    break;
+                case $this->hasValue() === true && $this->getValueExpression()->isFormula() === true:
+                    $this->dataBindingType = self::BINDING_TYPE_CALCULATION;
+                    break;
+                case $this->dataColumnName !== null:
+                    $this->dataBindingType = self::BINDING_TYPE_COLUMN;
+                    break;
+                default:
+                    $this->dataBindingType = self::BINDING_TYPE_NONE;
+            }
         }
         return $this->dataBindingType;
     }
@@ -155,17 +177,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function isBoundToDataColumn() : bool
     {
-        return $this->getBindingType() === self::BINDING_TYPE_COLUMN;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface::isBoundToData()
-     */
-    public function isBoundToData() : bool
-    {
-        return $this->isBoundToDataColumn() || $this->isBoundToAttribute();
+        return $this->getDataColumnName() !== null;
     }
     
     /**
@@ -301,13 +313,18 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function getDataColumnName()
     {
-        switch (true) {
-            case $this->isBoundToAttribute():
-            case $this->isBoundToDataColumn():
-                return $this->dataColumnName;
-                
+        if ($this->dataColumnName === null) {   
+            switch ($this->getBindingType()) {
+                case self::BINDING_TYPE_ATTRIBUTE:
+                    $this->dataColumnName = DataColumn::sanitizeColumnName($this->getAttributeAlias());
+                    break;
+                case self::BINDING_TYPE_CALCULATION:
+                    $this->dataColumnName = DataColumn::sanitizeColumnName($this->getValueExpression()->__toString());
+                    break;
+                // case self::BINDING_TYPE_COLUMN - won't happen as the name is already there    
+            }
         }
-        return null;
+        return $this->dataColumnName;
     }
     
     /**
@@ -336,11 +353,12 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 break;
             case is_scalar($value):
                 $this->valueExprString = $value;
-                $this->valueExpr = $value;
+                $this->valueExpr = null;
                 break;
             default:
                 throw new InvalidArgumentException('Invalid type of value for a widget property binding: expecting an expression as string or object, "' . get_class($value) . '" received.');
         }
+        $this->type = null;
         return $this;
     }
     
@@ -374,7 +392,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function hasValue() : bool
     {
-        return $this->valueExprString !== null && $this->valueExpr !== null;
+        return $this->valueExprString !== null || $this->valueExpr !== null;
     }
     
     /**
@@ -384,7 +402,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function isEmpty() : bool
     {
-        return $this->hasValue() === false && $this->isBoundToData() === false;
+        return $this->hasValue() === false && $this->isBoundToDataColumn() === false;
     }
     
     /**
