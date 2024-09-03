@@ -185,7 +185,8 @@ class FileBuilder extends AbstractQueryBuilder
     const ATTR_ADDRESS_IS_WRITABLE = 'is_writable';
     
     const REGEX_DELIMITER = '/';
-    
+
+    private $fullReadRequired = null;
     
     /**
      * 
@@ -196,37 +197,92 @@ class FileBuilder extends AbstractQueryBuilder
         $query = new FileReadDataQuery($this->getDirectorySeparator());
         
         // Calculate paths and filenames from the current filters
+        // TODO instead of working with an array of paths and filename pattersn, create
+        // a common method from filling a query with filters
+        // - full path with filename, but without wildcards -> addFilePath()
+        // - filename -> addFilenamePattern()
+        // - folder path -> addFolder()
+        // - paths with wildcards -> split into filenames and folders
+        // The current solution has trouble distinguishing between folder and file paths!
+        // Cases known to produce problems:
+        // - path and filename separately without wildcards - e.g. from DataSourceFileInfo
+        // - full path with filename (not separated into two filters)
+        // - folder with file name pattern (e.g. data address of `exface.Core.BEHAVIOR`)
+        // Perhaps we also need to normalize folder paths and enforce a trailing slash?
         $pathPatterns = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
         $filenamePattern = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
-        
+        $filenameFilters = [];
+        $folderPatterns = [];
         // If there is a filename, add it to the query
-        if ($filenamePattern !== null && $filenamePattern !== '' && $filenamePattern !== '*') {
-            $foundFilename = true;
-            $query->addFilenamePattern($filenamePattern);
+        if ($filenamePattern === '' || $filenamePattern === '*' || $filenamePattern === '*.*') {
+            $filenamePattern = null;
         }
         
         // Now add each path
         foreach ($pathPatterns as $path) {
-            if ($path == '') {
+            if ($path === null || $path === '') {
                 $path = $this->getMainObject()->getDataAddress();
             }
             
-            // If there is no filename, the path might contain it, so use the end of the path
-            // as filename pattern.
-            // TODO what actually the use case for stripping off the end of the path? Don't
-            // remember why this logic is here...
-            // If we do have file names, add the path directly
-            if (! $foundFilename && $pathEnd = FilePathDataType::findFileName($path, true)) {
-                $pathFolder = $pathEnd ? StringDataType::substringBefore($path, $query->getDirectorySeparator() . $pathEnd) : $path;
-                
-                if ($pathFolder) {
-                    $query->addFolder($pathFolder);
-                }
-                
-                $query->addFilenamePattern($pathEnd);
-            } else {
-                $query->addFolder($path);
+            // The end of the path might contain a filename or mask too: e.g. the data
+            // address of exface.Core.BEHAVIOR is `/*/*/Behaviors/*.php`.
+            $pathEnd = FilePathDataType::findFileName($path, true);
+            $folder = mb_substr($path, 0, (-1) * mb_strlen($pathEnd));
+            if ($pathEnd === '') {
+                $pathEnd = null;
             }
+            $pathEndIsFile = $pathEnd !== null && mb_strpos($pathEnd, '.') !== false;
+            $pathEndIsPattern = $pathEnd !== null && FilePathDataType::isPattern($pathEnd);
+            switch (true) {
+                case $pathEndIsFile === true && ! FilePathDataType::isPattern($path):
+                    $query->addFilePath($path);
+                    break;
+                case $pathEndIsFile === true:
+                case $pathEndIsPattern === true:
+                    $filenameFilters[] = $pathEnd;
+                    $folderPatterns[] = $folder;
+                    break;
+                // In case the path includes no file at all, assume it to be a folder
+                default:
+                    $folderPatterns[] = $path;
+                    break;
+            }
+        }
+
+        if ($filenamePattern === null && count($filenameFilters) === 1) {
+            $filenamePattern = $filenameFilters[0];
+            $filenameFilters = [];
+        }
+        
+        foreach ($folderPatterns as $folder) {
+            $query->addFolder($folder);
+        }
+        
+        if ($filenamePattern !== null) {
+            $query->addFilenamePattern($filenamePattern);
+        }
+        
+        if (! empty($filenameFilters)) {
+            $query->addFilter(function(FileInfoInterface $fileInfo) use ($filenameFilters) {
+                $filename = $fileInfo->getFilename(true);
+                foreach ($filenameFilters as $pattern) {
+                    switch (true) {
+                        case RegularExpressionDataType::isRegex($pattern):
+                            $match = preg_match($pattern, $filename) === 1;
+                            break;
+                        case FilePathDataType::isPattern($pattern):
+                            $match = FilePathDataType::matchesPattern($filename, $pattern);
+                            break;
+                        default:
+                            $match = strcasecmp($pattern, $filename) === 0;
+                            break;
+                    }
+                    if ($match === true) {
+                        return true;
+                    }
+                }
+                return false;
+            }, 'filename must match any of ["' . implode('", "', $filenameFilters) . '"]');
         }
         
         if (count($this->getSorters()) > 0) {
@@ -460,7 +516,6 @@ class FileBuilder extends AbstractQueryBuilder
                         break;
                     default:
                         $qpart->setApplyAfterReading(true);
-                        $query->setFullScanRequired(true);
                 }
                 
                 if ($oper === EXF_LOGICAL_AND) {
@@ -479,9 +534,8 @@ class FileBuilder extends AbstractQueryBuilder
                     throw new QueryBuilderException('Other filter operators than "' . EXF_LOGICAL_AND . '" or "'. EXF_LOGICAL_OR . '" are not supported by the FileBuilder');
                 }
             } else {
-                $this->addAttribute($qpart->getExpression()->toString());
+                $this->addAttribute($qpart->getExpression()->__toString());
                 $qpart->setApplyAfterReading(true);
-                $query->setFullScanRequired(true);
             }
         }
         foreach ($pathPatterns as $path) {
@@ -697,36 +751,52 @@ class FileBuilder extends AbstractQueryBuilder
         
         $query = $this->buildQueryToRead();
         $performedQuery = $dataConnection->query($query);
-        $rownr = - 1;
-        $fullScan = $query->isFullScanRequired();
+        $rowsTotal = 0;
+        // FIXME how to make sure we only read ALL files if a total count is required?
+        // When reading, we don't know, if we will need the total count, it is fetched
+        // separately via count() method. We could 
+        // $fullScan = $query->isFullScanRequired;
+        // Full scan means, all FileInfo objects need to be instantiated and loaded.
+        // This is required, if we need to know, how many files there are in total or
+        // if we need all the data for postprocessing.
+        $fullScan = true;
+        // Full read means, we not only need a full scan, but also need to fill all result
+        // rows by reading file properties and maybe even contents. This is the case if we
+        // need to filter result data, sort it or do any other in-memory operations.
+        // If we do not need a full read, we can avoid processing FileInfo data for rows,
+        // that are outside of the pagination window.
+        $fullRead = $this->isFullReadRequired($query);
         $limit = $this->getLimit();
-        $offset = $this->getOffset();
+        $offset = $this->getOffset() ?? 0;
         foreach ($performedQuery->getFiles() as $file) {
-            // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
-            if (! $fullScan) {
-                $pagination_applied = true;
-                $rownr ++;
-                // Skip rows, that are positioned below the offset
-                if ($rownr < $this->getOffset()) {
+            $rowsTotal++;
+            $limitReached = $limit > 0 && $rowsTotal > ($offset + $limit);
+            // Skip rows, that are positioned below the offset if we neither need a count nor post-processing
+            if ($rowsTotal <= $offset) {
+                if ($fullScan === false && $fullRead === false) {
                     continue;
                 }
-                // Skip rest if we are over the limit
-                if ($this->getLimit() > 0 && $rownr >= $offset + $limit) {
-                    // increase rownr an additional time so we know more rows exist
-                    $rownr ++;
+            }
+            // Skip rest if we are over the limit unless we need that rest for post-processing
+            if ($limitReached === true && $fullRead === false) {
+                // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
+                if ($fullScan === false) {
                     break;
                 }
+            } else {
+                $result_rows[] = $this->buildResultRow($file);
             }
-            // Otherwise add the file data to the result rows
-            $result_rows[] = $this->buildResultRow($file);
         }
+        $paginationApplied = $fullRead === false;
+
         $totalCount = count($result_rows) + $offset;
-        if ($rownr > $totalCount) {
-            $totalCount = $rownr;
+        if ($rowsTotal > $totalCount) {
+            $totalCount = $rowsTotal;
         }
         $result_rows = $this->applyFilters($result_rows);
         $result_rows = $this->applySorting($result_rows);
-        if (! $pagination_applied) {
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        if (! $paginationApplied) {
             $result_rows = $this->applyPagination($result_rows);
         }
         $rowCount = count($result_rows);
@@ -1077,5 +1147,49 @@ class FileBuilder extends AbstractQueryBuilder
     protected function getDirectorySeparator() : string
     {
         return $this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_DIRECTORY_SEPARATOR) ?? '/';
+    }
+
+    /**
+     *
+     * @param boolean $trueOrFalse
+     * @return FileBuilder
+     */
+    protected function setFullScanRequired(bool $trueOrFalse) : FileBuilder
+    {
+        $this->fullReadRequired = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if all data must be read to perform the givn query
+     * 
+     * Since file queries are based on generators, it is important to know, if a query needs to really load all
+     * data (execute all generators) or can stop at some point. 
+     * 
+     * @param FileReadDataQuery $query
+     * @return boolean
+     */
+    protected function isFullReadRequired(FileReadDataQuery $query) : bool
+    {
+        if ($this->fullReadRequired === true) {
+            return true;
+        }
+        if ($query->isFullScanRequired() === true) {
+            return true;
+        }
+        foreach ($this->getFilters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        foreach ($this->getSorters() as $qpart) {
+            if ($qpart->getApplyAfterReading() === true) { 
+                return true;
+            }
+        }
+        if (! empty($this->getAggregations())) {
+            return true;
+        }
+        return false;
     }
 }

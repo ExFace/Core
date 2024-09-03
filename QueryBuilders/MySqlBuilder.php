@@ -177,7 +177,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     break;
                 // Skip all non-group-safe attributes when aggregating
                 default:
-                    $select_comment .= '-- ' . $qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined' . "\n";
+                    $select_comment .= $this->buildSqlComment($qpart->getAlias() . ' is ignored because it is not group-safe or ambiguously defined') . "\n";
                     break;
             }
         }

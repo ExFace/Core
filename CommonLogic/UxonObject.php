@@ -80,21 +80,26 @@ class UxonObject implements \IteratorAggregate
      * 
      * The argument $normalizeKeyCase can be set to CASE_UPPER or CASE_LOWER to normalize all keys.
      *
-     * @param string $uxon      
+     * @param string|null $uxon      
      * @param int $normalizeKeyCase      
      * @return UxonObject
      */
     public static function fromJson($uxon, int $normalizeKeyCase = null)
     {
-        $array = json_decode(trim($uxon), true);
-        if (is_array($array)){
-            return static::fromArray($array, $normalizeKeyCase);
-        } else {
-            if ($uxon !== '' && $uxon !== null) {
-                throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!', null, null, $uxon);
-            }
+        if ($uxon === null || $uxon === '') {
             return new self();
         }
+
+        if (is_string($uxon) === false) {
+            throw new UxonSyntaxError('Cannot parse UXON string: ' . gettype($uxon) . ' is not a string!');
+        }
+        
+        $array = json_decode(trim($uxon), true);
+        if (is_array($array) === true){
+            return static::fromArray($array, $normalizeKeyCase);
+        } 
+        
+        throw new UxonSyntaxError('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!', null, null, $uxon);
     }
 
     /**

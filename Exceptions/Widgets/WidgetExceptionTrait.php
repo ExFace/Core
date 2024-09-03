@@ -78,8 +78,9 @@ trait WidgetExceptionTrait {
             
             $tabContents = <<<MD
 
-- Type `{$widget->getWidgetType()}`
-- ID: `{$widget->getId()}`
+# Widget `{$widget->getWidgetType()}`
+
+- Widget ID: `{$widget->getId()}`
 - Page: `{$widget->getPage()->getAliasWithNamespace()}`
 - Called by action: `{$actionInfo}`
 

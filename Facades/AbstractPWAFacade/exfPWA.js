@@ -303,7 +303,7 @@ self.addEventListener('sync', function(event) {
 			 * 		  }>} 		[aEffects]
 			 * @return Promise
 			 */
-			add : function(offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect) {
+			add : function(offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect, bSyncNow = true) {
 				if (_error) {
 					return Promise.resolve(null);
 				}
@@ -329,7 +329,7 @@ self.addEventListener('sync', function(event) {
 				}
 				return _actionsTable.put(oQueueItem)
 				.then(function(){
-					if (navigator.serviceWorker) {
+					if (navigator.serviceWorker && bSyncNow) {
 						navigator.serviceWorker.ready
 						.then(registration => registration.sync.register('OfflineActionSync'))
 						//.then(() => console.log("Registered background sync"))

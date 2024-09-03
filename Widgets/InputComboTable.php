@@ -197,7 +197,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     /**
      * Returns the DataTable, that is used for autosuggesting in a InputComboTable or false if a DataTable cannot be created
      *
-     * @return \exface\Core\Widgets\DataTable|boolean
+     * @return \exface\Core\Widgets\DataTable
      */
     public function getTable()
     {
@@ -345,47 +345,48 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     protected function addComboColumns()
     {
         $table = $this->getTable();
-        $table_meta_object = $this->getTable()->getMetaObject();
+        $tableObj = $this->getTable()->getMetaObject();
         
         // If there is no text column, use text_attribute_alias: first see if there already is a corresponding
         // column in the table and use it then, otherwise add one.
         if (! $this->getTextColumnId()) {
             // If there is no text column explicitly defined, take the label attribute as text column
-            if ($text_column = $this->getTable()->getColumnByAttributeAlias($this->getTextAttributeAlias())) {
+            if ($textCol = $this->getTable()->getColumnByAttributeAlias($this->getTextAttributeAlias())) {
                 // If the table already has a lable column, use it
-                $this->setTextColumnId($text_column->getId());
+                $this->setTextColumnId($textCol->getId());
             } else {
                 // If there is no label column yet, add it...
-                $text_column = $table->createColumnFromAttribute($table_meta_object->getAttribute($this->getTextAttributeAlias()));
+                $textCol = $table->createColumnFromAttribute($tableObj->getAttribute($this->getTextAttributeAlias()));
                 // ...but make it hidden if there are other columns there, because the regular columns are what the user actually
                 // wants to see - they will probably already contain the label data, but, perhaps, split into multiple columns.
                 if ($table->hasColumns()){
-                    $text_column->setHidden(true);
+                    $textCol->setHidden(true);
                 }
-                $table->addColumn($text_column);
-                $this->setTextColumnId($text_column->getId());
+                $table->addColumn($textCol);
+                $this->setTextColumnId($textCol->getId());
             }
         }
         
         // Same goes for the value column: use the first existing column for value_attribute_alias or create a new one.
         if (! $this->getValueColumnId()) {
-            if ($value_column = $this->getTable()->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
-                $this->setValueColumnId($value_column->getId());
+            if ($valueCol = $this->getTable()->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
+                $this->setValueColumnId($valueCol->getId());
             } else {
-                $value_column = $table->createColumnFromAttribute($table_meta_object->getAttribute($this->getValueAttributeAlias()), null, true);
-                $table->addColumn($value_column);
-                $this->setValueColumnId($value_column->getId());
+                $valueCol = $table->createColumnFromAttribute($tableObj->getAttribute($this->getValueAttributeAlias()), null, true);
+                $table->addColumn($valueCol);
+                $this->setValueColumnId($valueCol->getId());
             }
         }
         
         // Make sure, the table has the corret quick search filter
         // If not, the quick search would only get performed on the object label, which is not neccessarily 
         // the text attribute of the widget. And object without a label would not work at all
-        $quickSearchFilter = WidgetFactory::createFromUxon($this->getPage(), new UxonObject([
-            "widget_type" => 'InputHidden',
-            "attribute_alias" => $this->getTextAttributeAlias()
-        ]), $table);
-        $table->addFilter($quickSearchFilter, true);
+        if (! $tableObj->hasLabelAttribute() || $this->getTextAttribute() !== $tableObj->getLabelAttribute()) {
+            $quickSearchFilter = $table->getConfiguratorWidget()->createFilterWidget($this->getTextAttributeAlias(), new UxonObject([
+                'hidden' => true
+            ]));
+            $table->addFilter($quickSearchFilter, true);
+        }
         
         return $this;
     }

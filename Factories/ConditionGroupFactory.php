@@ -8,10 +8,8 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
-use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Instantiates condition groups

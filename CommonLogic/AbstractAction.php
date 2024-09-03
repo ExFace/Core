@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
@@ -54,6 +56,7 @@ use exface\Core\CommonLogic\DataSheets\DataCheck;
 use exface\Core\Interfaces\Exceptions\DataCheckExceptionInterface;
 use exface\Core\Events\Action\OnBeforeActionInputValidatedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
+use exface\Core\Widgets\ConfirmationMessage;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
@@ -151,6 +154,10 @@ abstract class AbstractAction implements ActionInterface
     private $logBooks = [];
     
     private $offlineStrategy = null;
+
+    private $confirmationForAction = null;
+
+    private $confirmationForUnsavedData = null;
 
     /**
      *
@@ -1134,7 +1141,11 @@ abstract class AbstractAction implements ActionInterface
                 $diagram .= " InputMapping";
                 $diagram .= "\n\t subgraph InputMapping[input_mapper]";
                 $mapperDiagrams = $logbook->getCodeBlocksInSection();
-                if (count($mapperDiagrams) === 2) {
+                // Use the last mapper diagram as subgraph: e.g. remove it from the regular
+                // mapper output and place it into the main diagram.
+                // Take just the very last diagram - if there are nested mappers (e.g. subsheet mappers),
+                // they can produce interesting 
+                if (count($mapperDiagrams) >= 2) {
                     $diagram .= str_replace(['flowchart LR', '```mermaid', '```'], '', $mapperDiagrams[array_key_last($mapperDiagrams)]);
                     $logbook->removeLine(null, array_key_last($mapperDiagrams));
                 }
@@ -1158,7 +1169,7 @@ abstract class AbstractAction implements ActionInterface
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
-        $diagram .= "\n\t InputValidation --> Action[\"Action `{$this->getName()}`\"]";
+        $diagram .= "\n\t InputValidation --> Action[\"Action: {$this->getName()}\"]";
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
@@ -1860,5 +1871,80 @@ abstract class AbstractAction implements ActionInterface
     {
         $this->offlineStrategy = OfflineStrategyDataType::cast($value);
         return $this;
+    }
+
+    /**
+     * Make the action ask for confirmation when its button is pressed
+     * 
+     * @uxon-property confirmation_for_action
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
+     * @uxon-template {"text": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     */
+    public function setConfirmationForAction(UxonObject $uxon) : ActionInterface
+    {
+        if ($this->isDefinedInWidget()) {
+            $parent = $this->getWidgetDefinedIn();
+            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+        } else {
+            // TODO what here?
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return WidgetInterface
+     */
+    public function getConfirmationForAction() : ?ConfirmationMessage
+    {
+        return $this->confirmationForAction;
+    }
+
+    public function hasConfirmationForAction() : bool
+    {
+        return $this->confirmationForAction !== null && $this->confirmationForAction->isDisabled() === false;
+    }
+
+    /**
+     * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * 
+     * @uxon-property confirmation_for_unsaved_data
+     * @uxon-type \exface\Core\Widgets\ConfirmationMessage
+     * @uxon-template {"text": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
+     */
+    public function setConfirmationForUnsavedData(UxonObject $uxon) : ActionInterface
+    {
+        if ($this->isDefinedInWidget()) {
+            $parent = $this->getWidgetDefinedIn();
+            $this->confirmationForAction = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+        } else {
+            // TODO what here?
+        }
+        return $this;
+    }
+
+    /**
+     * 
+     * @return mixed
+     */
+    public function getConfirmationForUnsavedData() : ?ConfirmationMessage
+    {
+        return $this->confirmationForUnsavedData;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasConfirmationForUnsavedData() : bool
+    {
+        // TODO move logic from JqueryButtonTrait::isCheckForUnsavedChangesRequired() here
+        return $this->confirmationForUnsavedData !== null && $this->confirmationForUnsavedData->isDisabled() === false;
     }
 }

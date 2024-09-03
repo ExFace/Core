@@ -19,7 +19,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 use exface\Core\Interfaces\Model\Behaviors\DataModifyingBehaviorInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;

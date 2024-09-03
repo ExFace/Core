@@ -1229,9 +1229,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * Another idea might be to enforce grouping after every reverse relation. Don't know, how it would look like in SQL though...
      *
      * @param QueryPart $qpart
-     * @param string|NULL $select_from
-     * @param string|NULL $select_column
-     * @param string|NULL|bool $select_as set to false or '' to remove the "AS xxx" part completely
+     * @param string|null $select_from
+     * @param string|null $select_column
+     * @param string|null|bool $select_as set to false or '' to remove the "AS xxx" part completely
      * @param AggregatorInterface|bool $aggregator set to FALSE to remove grouping completely
      * @param bool $make_groupable set to TRUE to force the result to be compatible with GROUP BY
      * 
@@ -1240,14 +1240,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, bool $make_groupable = null)
     {
         $output = '';
-        $comment = "\n-- buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")\n";
+        $comment = "\n" . $this->buildSqlComment("buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")") . "\n";
         $add_nvl = false;
         $attribute = $qpart->getAttribute();
         $address = $this->buildSqlDataAddress($qpart);
         
         // skip attributes with no select (e.g. calculated from other values via formatters)
         if (! $address && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT) && ! $qpart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)) {
-            return;
+            return '';
         }
         
         if (! $select_from) {
@@ -1495,20 +1495,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * 
      * This method translates ExFace aggregators to SQL und thus will probably differ between SQL dialects.
      *
-     * @param QueryPart $qpart
+     * @param QueryPartAttribute $qpart
      * @param string $select_from
      * @param string $select_column
      * @param string $select_as
      * @param AggregatorInterface $aggregator
      * @return string
      */
-    protected function buildSqlSelectGrouped(QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
+    protected function buildSqlSelectGrouped(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
     {
-        $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
+        $aggregator = $aggregator ?? $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
         
         // Can't just list binary values - need to transform them to strings first!
-        if (strcasecmp($qpart->getAttribute()->getDataAddressProperty(self::DAP_SQL_DATA_TYPE),'binary') === 0 && ($aggregator->getFunction() == AggregatorFunctionsDataType::LIST_ALL || $aggregator->getFunction() == AggregatorFunctionsDataType::LIST_DISTINCT)) {
+        $aggrFunc = $aggregator->getFunction()->__toString();
+        if (strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '','binary') === 0 && ($aggrFunc === AggregatorFunctionsDataType::LIST_ALL || $aggrFunc == AggregatorFunctionsDataType::LIST_DISTINCT)) {
             $select = $this->buildSqlSelectBinaryAsHEX($select);
         }
         
@@ -1838,7 +1839,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
             }
             throw new QueryBuilderException('Illegal SQL HAVING clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
-            return false;
         }
         
         // build the HAVING clause
@@ -1881,7 +1881,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                     break;
                 case $fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins):
-                    $where .= "\n-- buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")"
+                    $where .= "\n" . $this->buildSqlComment("buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")")
                            . "\n " . ($where ? $op . " " : '') . $fltr_string;
                     break;
             }
@@ -2528,8 +2528,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $this->binary_columns;
     }
     
-    protected function decodeBinary($value)
+    /**
+     * 
+     * @param string|NULL
+     * @return string|NULL
+     */
+    protected function decodeBinary($value) : ?string
     {
+        if ($value === null) {
+            return null;
+        }
         $hex_value = bin2hex($value);
         return ($hex_value ? '0x' : '') . $hex_value;
     }

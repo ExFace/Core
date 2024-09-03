@@ -7,11 +7,15 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Interfaces\Widgets\WidgetPropertyBindingInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * A ColorIndicator will change it's color depending the value of it's attribute.
  * 
- * Colors can be defined as a simple color scale (like in many other display widgets).
+ * Colors can be defined as a simple `color_scale` (like in many other display widgets). The `color_scale`
+ * is applied either to the value of the widget (e.g. defined by `attribute_alias`) or values of `color_attribute_alias`
+ * if it is explicitly defined.
  * 
  * ## Examples
  * 
@@ -27,6 +31,22 @@ use exface\Core\CommonLogic\UxonObject;
  *  }
  * }
  * 
+ * ``` 
+ *
+ * ### Color scale based on an attribute other than the widgets value
+ * 
+ * ```
+ * {
+ *  "widget_type": "ColorIndicator",
+ *  "attribute_alias": "name",
+ *  "color_attribute_alias": "percentage",
+ *  "color_scale": {
+ *      "0": "red",
+ *      "50": "yellow",
+ *      "100": "green"
+ *  }
+ * }
+ * 
  * ```
  * 
  * @author Andrej Kabachnik
@@ -34,22 +54,20 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class ColorIndicator extends Display implements iHaveColor
 {
-    const BINDING_PROPERTY_TEXT = 'text';
-    
-    private $fixedColor = null;
+    const BINDING_PROPERTY_COLOR = 'color';
     
     private $fill = true;
     
     private $colorOnly = null;
     
-    private $textBindingUxon = null;
+    private $colorBindingUxon = null;
     
-    private $textBinding = null;
+    private $colorBinding = null;
     
     protected function init()
     {
         parent::init();
-        $this->textBindingUxon = new UxonObject();
+        $this->colorBindingUxon = new UxonObject();
     }
     
     /**
@@ -59,21 +77,7 @@ class ColorIndicator extends Display implements iHaveColor
      */
     public function getColor($value = null) : ?string
     {
-        return $this->fixedColor ?? parent::getColor($value);
-    }
-
-    /**
-     * Use this fixed color
-     * 
-     * @uxon-property color
-     * @uxon-type color
-     * 
-     * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
-     */
-    public function setColor($color)
-    {
-        $this->fixedColor = $color;
-        return $this;
+        return $this->getColorBinding()->hasValue() ? $this->getColorBinding()->getValue() : parent::getColor($value);
     }
 
     /**
@@ -128,58 +132,58 @@ class ColorIndicator extends Display implements iHaveColor
     }
     
     /**
+     * The values of this attribute will be used for the color_scale (if it needs to be another attribute than `attribute_alias`)
      *
-     * @return string
-     */
-    public function getTextAttributeAlias() : string
-    {
-        return $this->textAttributeAlias;
-    }
-    
-    /**
-     * Makes the progressbar show the value of a different attribute than the one used for the progress.
-     *
-     * @uxon-property text_attribute_alias
+     * @uxon-property color_attribute_alias
      * @uxon-type metamodel:attribute
      *
      * @param string $value
      * @return ColorIndicator
      */
-    public function setTextAttributeAlias(string $value) : ColorIndicator
+    public function setColorAttributeAlias(string $value) : ColorIndicator
     {
-        $this->textBindingUxon->setProperty('attribute_alias', $value);
-        $this->textBinding = null;
+        $this->colorBindingUxon->setProperty('attribute_alias', $value);
+        $this->colorBinding = null;
         return $this;
     }
     
     /**
-     * A static text value
+     * Use this fixed color
      * 
-     * @uxon-property text
-     * @uxon-type string
+     * @uxon-property color
+     * @uxon-type color
      * 
-     * @param string $value
-     * @return ColorIndicator
+     * @see \exface\Core\Interfaces\Widgets\iHaveColor::setColor()
      */
-    protected function setText(string $value) : ColorIndicator
+    public function setColor($value)
     {
-        $this->textBindingUxon->setProperty('value', $value);
-        $this->textBinding = null;
+        if ($value instanceof UxonObject) {
+            $this->colorBindingUxon = $value;
+        } else {
+            $this->colorBindingUxon->setProperty('value', $value);
+        }
+        $this->colorBinding = null;
         return $this;
     }
     
     /**
      * 
      * @return WidgetPropertyBindingInterface
-     *//*
-    public function getTextBinding() : WidgetPropertyBindingInterface
+     */
+    public function getColorBinding() : WidgetPropertyBindingInterface
     {
         // Create emtpy binding if none was set explicitly
-        if ($this->textBinding === null) {
-            $this->textBinding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_TEXT, $this->textBindingUxon);
+        if ($this->colorBinding === null) {
+            $uxon = $this->colorBindingUxon;
+            $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
+            if ($binding->isEmpty() && $this->hasColorScale() && $this->isBoundToAttribute()) {
+                $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                $binding = new WidgetPropertyBinding($this, self::BINDING_PROPERTY_COLOR, $uxon);
+            }
+            $this->colorBinding = $binding;
         }
-        return $this->textBinding;
-    }*/
+        return $this->colorBinding;
+    }
     
     /**
      *
@@ -189,7 +193,7 @@ class ColorIndicator extends Display implements iHaveColor
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
-        //$data_sheet = $this->getTextBinding()->prepareDataSheetToRead($data_sheet);
+        $data_sheet = $this->getColorBinding()->prepareDataSheetToRead($data_sheet);
         return $data_sheet;
     }
     
@@ -201,7 +205,25 @@ class ColorIndicator extends Display implements iHaveColor
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         parent::doPrefill($data_sheet);
-        //$this->getTextBinding()->prefill($data_sheet);
+        $this->getColorBinding()->prefill($data_sheet);
         return;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Display::isColorScaleRangeBased()
+     */
+    
+    public function isColorScaleRangeBased() : bool
+    {
+        $dataType = $this->getColorBinding()->getDataType();
+        switch (true) {
+            case $dataType instanceof NumberDataType:
+            case $dataType instanceof DateDataType:
+                return true;
+        }
+        
+        return false;
     }
 }

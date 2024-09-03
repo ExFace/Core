@@ -95,7 +95,7 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return EventManagerInterface
      */
-    public function eventManager();
+    public function eventManager() : EventManagerInterface;
     
     /**
      * Returns the absolute path of the ExFace installation folder

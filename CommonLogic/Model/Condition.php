@@ -240,6 +240,11 @@ class Condition implements ConditionInterface
         // Determine the comparator if it is not given directly.
         // It can be derived from the value or set to a default value
         switch (true) {
+            case $value === null:
+            case is_string($value) === false:
+            case $value === '':
+                $comparator = ComparatorDataType::IS;
+                return $comparator;
             case strpos($value, '!==') === 0:
                 $comparator = ComparatorDataType::EQUALS_NOT;
                 $value = substr($value, 3);
@@ -302,6 +307,7 @@ class Condition implements ConditionInterface
                 break;
             default:
                 $comparator = ComparatorDataType::IS;
+                break;
         }
         
         if ($value !== null) {
@@ -313,11 +319,15 @@ class Condition implements ConditionInterface
             // a value enclosed in [] is actually a IN-statement
             $value = trim($value, "[]");
             $comparator = ComparatorDataType::IN;
-        } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
+        } elseif (
+            mb_strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
-                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface)
-            && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
+            && (
+                $base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof EnumDataTypeInterface
+            )
+            && mb_strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false
+        ) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = ComparatorDataType::IN;
         } 
@@ -327,6 +337,47 @@ class Condition implements ConditionInterface
 
     /**
      * The comparison operator used in this condition
+     * 
+     * ## Scalar (single value) comparators
+     * 
+     * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
+     * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+     * insensitive for strings
+     * - `!=` - yields TRUE if `IS` would result in FALSE
+     * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+     * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
+     * - `!==` - the inverse of `EQUALS`
+     * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `<=` - yields TRUE if the left value is less than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * - `>` - yields TRUE if the left value is greater than the right one. Both values must be of
+     * comparable types: e.g. numbers or dates.
+     * - `>=` - yields TRUE if the left value is greater than or equal to the right one. 
+     * Both values must be of comparable types: e.g. numbers or dates.
+     * 
+     * ## List comparators
+     * 
+     * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
+     * value equals at least on of the values in the list within the right value. The list on the
+     * right side must consist of numbers or strings separated by commas or the attribute's value
+     * list delimiter if filtering over an attribute. The right side can also be another type of
+     * expression (e.g. a formula or widget link), that yields such a list.
+     * - `![` - the inverse von `[` . Becomes true if the left value equals none of the values in the 
+     * list within the right value. The list on the right side must consist of numbers or strings separated 
+     * by commas or the attribute's value list delimiter if filtering over an attribute. The right side can 
+     * also be another type of expression (e.g. a formula or widget link), that yields such a list.
+     * - `][` - intersection - compares two lists with each other. Becomes TRUE when there is at least 
+     * one element, that is present in both lists.
+     * - `!][` - the inverse of `][`. Becomes TRUE if no element is part of both lists.
+     * - `[[` - subset - compares two lists with each other. Becomes true when all elements of the left list 
+     * are in the right list too
+     * - `![[` - the inverse of `][`. Becomes true when at least one element of the left list is NOT in 
+     * the right list.
+     * 
+     * ## Range comparators
+     * 
+     * - `..` - range between two values - e.g. `1 .. 5`
      * 
      * @uxon-property comparator
      * @uxon-type metamodel:comparator

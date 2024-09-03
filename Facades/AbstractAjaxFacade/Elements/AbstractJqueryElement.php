@@ -186,7 +186,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     public function buildHintText(string $hint_text = null, bool $remove_linebreaks = false)
     {
         $max_hint_len = $this->getHintMaxCharsInLine();
-        $hint = $hint_text ? $hint_text : $this->getWidget()->getHint();
+        $hint = $hint_text ? $hint_text : $this->getWidget()->getHint(false);
         $hint = htmlspecialchars($hint);
         if ($remove_linebreaks) {
             $hint = trim(StringDataType::stripLineBreaks($hint));
@@ -807,8 +807,13 @@ JS;
             return $config->getOption($opt);
         } else {
             $widget = $this->getWidget();
-            if ($widget instanceof iHaveIcon && $widget->getIconSet()) {
-                $prefix = $widget->getIconSet() . ' ' . $widget->getIconSet() . '-';
+            if ($widget instanceof iHaveIcon && null !== $iconSet = $widget->getIconSet()) {
+                // If it is an SVG icon, just return the general SVG icon CSS class. The icon itself must
+                // be added by the facade.
+                if ($iconSet === 'svg') {
+                    return 'exf-svg-icon';
+                }
+                $prefix = $iconSet . ' ' . $iconSet . '-';
             } else {
                 $prefix = $this->getFacade()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX');
             }

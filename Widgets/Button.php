@@ -137,9 +137,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         if ($this->action === null) {
             if ($this->action_alias !== null) {
-                $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
-                if ($this->action_uxon !== null) {
-                    $this->action->importUxonObject($this->action_uxon);
+                try {
+                    $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
+                    if ($this->action_uxon !== null) {
+                        $this->action->importUxonObject($this->action_uxon);
+                    }
+                } catch (\Throwable $e) {
+                    throw new WidgetConfigurationError($this, 'Error in Button widget: ' . $e->getMessage(), null, $e);
                 }
             } elseif ($this->action_uxon !== null) {
                 $this->action = ActionFactory::createFromUxon($this->getWorkbench(), $this->action_uxon, $this);

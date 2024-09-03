@@ -83,6 +83,7 @@ class LocalFileConnector extends TransparentConnector
     protected function performRead(FileReadDataQuery $query) : FileReadDataQuery
     {
         $paths = $query->getFolders(true);
+        $explicitFiles = $query->getFilePaths(true);
         
         // Prepare an array of absolute paths to search in
         // Note: $query->getBasePath() already includes the base path of this connection
@@ -90,7 +91,7 @@ class LocalFileConnector extends TransparentConnector
         $basePath = $query->getBasePath();
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
-        if (empty($paths)) {
+        if (empty($paths) && empty($explicitFiles) && $basePath !== '') {
             $paths[] = $basePath;
         }
         
@@ -106,7 +107,7 @@ class LocalFileConnector extends TransparentConnector
         // If there are no paths at this point, we don't have any existing folder to look in,
         // so add an empty result to the finder and return it. We must call in() or append()
         // to be able to iterate over the finder!
-        if (empty($paths)){
+        if (empty($paths) && empty($explicitFiles)){
             return $query->withResult([]);
         }
         
@@ -121,13 +122,14 @@ class LocalFileConnector extends TransparentConnector
             $finder->name(array_unique($namePatterns));
         }
         
-        $explicitFiles = $query->getFilePaths(true);
-        
         try {
             // Remove case-insensitive duplicates on windows since file system paths are
             // case insensitive here
             if (DIRECTORY_SEPARATOR === '\\') {
                 $paths = ArrayDataType::filterUniqueCaseInsensitive($paths);
+            }
+            if (! empty($explicitFiles)) {
+                $finder->append(array_filter($explicitFiles, 'file_exists'));
             }
             $finder->in($paths);
             return $query->withResult($this->createGenerator($finder, $basePath, $query->getDirectorySeparator(), $explicitFiles));
@@ -143,12 +145,9 @@ class LocalFileConnector extends TransparentConnector
      * @param string $directorySeparator
      * @return \Generator
      */
-    protected function createGenerator(Finder $finder, string $basePath = null, string $directorySeparator = '/', array $explicitFiles = []) : \Generator
+    protected function createGenerator(Finder $finder, string $basePath = null, string $directorySeparator = '/') : \Generator
     {
         foreach ($finder as $file) {
-            yield new LocalFileInfo($file, $basePath, $directorySeparator);
-        }
-        foreach ($explicitFiles as $file) {
             yield new LocalFileInfo($file, $basePath, $directorySeparator);
         }
     }

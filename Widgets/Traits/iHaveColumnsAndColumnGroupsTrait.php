@@ -376,7 +376,7 @@ trait iHaveColumnsAndColumnGroupsTrait
                     // If the element is an array itself (nested in columns), it is a column group
                     $column_groups[] = $c;
                     $last_element_was_a_column_group = true;
-                } elseif (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || $c->hasProperty('columns')) {
+                } elseif (strcasecmp($c->getProperty('widget_type') ?? '', 'DataColumnGroup') === 0 || $c->hasProperty('columns')) {
                     // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
                     // If so, it still is a column group
                     $column_groups[] = $c;

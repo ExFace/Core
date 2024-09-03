@@ -25,7 +25,8 @@ class BehaviorLogBook extends DataLogBook
         parent::__construct($title);
         $this->event = $event;
         $this->behavior = $behavior;
-        $this->addSection(PhpClassDataType::findClassNameWithoutNamespace($behavior) . ' of ' . $behavior->getObject()->__toString());
+        $this->addSection($behavior->getName());
+        $this->addLine(PhpClassDataType::findClassNameWithoutNamespace($behavior) . ' of ' . $behavior->getObject()->__toString());
         if ($event !== null) {
             $eventObj = $this->getObjectOfEvent($event);
             $this->addLine('Reacting to event `' . $event::getEventName() . '`' . ($eventObj !== null ? ' for object ' . $eventObj->__toString() : ''));
