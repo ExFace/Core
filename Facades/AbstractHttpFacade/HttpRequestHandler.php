@@ -85,7 +85,7 @@ class HttpRequestHandler implements HttpMiddlewareBusInterface
         }
         
         $stream = $response->getBody();
-        $isStreamByLine = $stream instanceof IteratorStream || $response->getHeader('Content-Type')[0] === 'text/plain-stream';
+        $isStreamByLine = $stream instanceof IteratorStream || stripos($response->getHeaderLine('Content-Type'), 'text/plain-stream') !== false;
         $chunk = $isStreamByLine ? 1 : 1024 * 8;
         
         try {

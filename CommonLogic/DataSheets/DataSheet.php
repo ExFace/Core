@@ -59,6 +59,7 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
+use Throwable;
 
 /**
  * Default implementation of DataSheetInterface
@@ -715,7 +716,11 @@ class DataSheet implements DataSheetInterface
                     continue 2;
             }
             
-            $vals = $expr->evaluate($this);
+            try {
+                $vals = $expr->evaluate($this);
+            } catch (Throwable $e) {
+                throw new DataSheetReadError($this, $e->getMessage(), null, $e);
+            }
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on
                 // the total rows. In this case, we need to slice them off and pass to set_column_values() separately.
@@ -1324,7 +1329,9 @@ class DataSheet implements DataSheetInterface
                         if ($relNestedSheetCol === $col) {
                             continue;
                         }
-                        $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        if ($col->isAttribute() && $col->getAttribute()->isFilterable() && ! ($col->getDataType() instanceof DataSheetDataType)) {
+                            $nestedUidSheet->getFilters()->addConditionFromColumnValues($col);
+                        }
                     }
                     // Read the data
                     $nestedUidSheet->dataRead();
@@ -2977,7 +2984,38 @@ class DataSheet implements DataSheetInterface
         $this->rows = $sorter->sort($this->getRows());
         return $this;
     }
-    
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sortLike()
+     */
+    public function sortLike(DataSheetInterface $otherSheet) : DataSheetInterface
+    {
+        if (! $this->getMetaObject()->isExactly($otherSheet->getMetaObject())) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet based on a different object! The objects must be the same!');
+        }
+        if (! $this->hasUidColumn(true) || ! $otherSheet->hasUidColumn(true)) {
+            throw new DataSheetRuntimeError($this, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: both data sheet must have UID columns filled with values!');
+        }
+        $orderedRowUids = $otherSheet->getUidColumn()->getValues();
+        $bkpSheet = $this->copy();
+        $bkpRows = $this->getRows();
+        $bkpUidCol = $bkpSheet->getUidColumn();
+        $this->removeRows();
+        foreach ($orderedRowUids as $uid) {
+            $bkpIdx = $bkpUidCol->findRowByValue($uid);
+            if ($uid === false || $uid === null) {
+                throw new DataSheetRuntimeError($bkpSheet, 'Cannot sort data sheet based on ' . $this->getMetaObject()->__toString() . ' like another sheet: row UID "' . $uid . '" found in sorted sheet, but not in the other sheet!');
+            }
+            $this->addRow($bkpRows[$bkpIdx], false, false);
+        }
+        if ($this->countRows() !== $bkpSheet->countRows()) {
+            throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row count mismatch!');
+        }
+        return $this;
+    }
+
     /**
      *
      * {@inheritdoc}

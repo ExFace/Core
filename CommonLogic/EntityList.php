@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use Traversable;
 
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace.
@@ -30,9 +31,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
 
     private $parent_object = null;
 
-    private $entity_name_resolver = null;
-
-    private $endity_factory_name = null;
+    private $entity_factory_name = null;
 
     /**
      * An EntityList is alway attached to some parent object, so a reference to that object is required in the constructor
@@ -181,7 +180,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function get($key)
     {
-        return $this->content_array[$key];
+        return $this->content_array[$key] ?? null;
     }
 
     /**
@@ -227,7 +226,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      *
      * @see IteratorAggregate::getIterator()
      */
-    public function getIterator()
+    public function getIterator() : Traversable
     {
         return new \ArrayIterator($this->content_array);
     }
@@ -237,7 +236,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function getParent()
     {
-        return $this->parent_sheet;
+        return $this->parent_object;
     }
 
     /**
@@ -247,7 +246,7 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
      */
     public function setParent($parent_object)
     {
-        $this->parent_sheet = $parent_object;
+        $this->parent_object = $parent_object;
         return $this;
     }
 

@@ -235,9 +235,18 @@ class ReadData extends AbstractAction implements iReadData
             return $baseWidget;
         }
         
-        if ($baseWidget !== null && ($baseWidget instanceof iHaveColumns)) {
+        // Use the input widget if the object of the exported data is the same as 
+        // that of the widget or inherits from it (= if we know, that the data sheet 
+        // can read all the attributes required).
+        // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
+        // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
+        // around.
+        if ($baseWidget !== null && ($baseWidget instanceof iHaveColumns) && $this->getMetaObject()->is($baseWidget->getMetaObject())) {
             $page = $baseWidget->getPage();
             $uxon = $baseWidget->exportUxonObject();
+            // Remove any explicitly set widget id because we are going to instantiate
+            // a new widget, which will fail with the same explicit id
+            $uxon->unsetProperty('id');
             $uxon->setProperty('columns', $uxonForCols);
         } else {
             $page = $task->getPageTriggeredOn();

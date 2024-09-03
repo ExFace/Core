@@ -9,16 +9,26 @@ use exface\Core\Interfaces\DataSources\FileDataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 
 /**
  * A query to read files
  * 
  * This class allows to define which files to read. There are multiple options:
  * 
- * - `addFilePath()` to add individual paths
- * - `addFolder()` to specify, in which folders to look for files
- * - `addFilenamePattern()` to specify file name or name patterns to read from these
- * folders
+ * - `addFolder()` to specify folders to search for files
+ * - `addFilenamePattern()` to specify file names or name patterns to read from these folders
+ * - `addFilePath()` to add individual paths to read in addition to the folders. These
+ * files are to be read even if they outside of the folders provided.
+ * - `addFilter()` to specify one or multiple callbacks to filter the result. The
+ * callback must have the following definition: `filter(FileInfoInterface $file) : bool`.
+ * Filters are applied to ALL files - those added explicitly and those found in folders.
+ * 
+ * IDEA it has become confusing, that addFolder()/addFilenamePattern() and addFilePath() are
+ * somewhat parallel ways to point the query to files. It is unclear, why the patterns only
+ * apply to files found in folders and not to those from the explicit paths. Perhaps, it would
+ * be a better idea to switch to addFolder($path, $filenamePattern) and addFilePath() as
+ * the two clearer alternatives.
  * 
  * @author andrej.kabachnik
  *
@@ -36,6 +46,10 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     private $filenamePatterns = null;
     
     private $filePaths = [];
+    
+    private $filters = [];
+    
+    private $filterDescriptions = [];
     
     private $resultGenerator = null;
     
@@ -90,6 +104,9 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
         
         $this->resultCache = [];
         foreach ($this->resultGenerator as $file) {
+            if (! $this->matchFiltersAll($file)) {
+                continue;
+            }
             $this->resultCache[] = $file;
             yield $file;
         }
@@ -133,9 +150,13 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     }
     
     /**
-     * Add an individual file path - absolute or relative to the base
+     * Add an individual file path - absolute or relative to the base.
      * 
-     * @param array $value
+     * Individually added paths will be read directly - even if they are not inside
+     * any of the provided folders. However, filters set via `addFilters()` will
+     * be applied to these files too.
+     * 
+     * @param string $value
      * @return FileReadDataQuery
      */
     public function addFilePath(string $absoluteOrRelativePath) : FileReadDataQuery
@@ -266,8 +287,12 @@ class FileReadDataQuery extends AbstractDataQuery implements FileDataQueryInterf
     protected function toMarkdown() : string
     {
         $folders = MarkdownDataType::buildMarkdownListFromArray($this->getFolders(), 'none', '', true);
-        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns(), 'none', '', true);
+        $filenamePatterns = MarkdownDataType::buildMarkdownListFromArray($this->getFilenamePatterns() ?? [], 'none', '', true);
         $depth = $this->getFolderDepth() === null ? '`null` (unlimited)' : "`{$this->getFolderDepth()}`";
+        $filters = '';
+        foreach ($this->filterDescriptions as $descr) {
+            $filters .= ($filters !== '' ? ', ' : '') . ($descr ? '`' . $descr . '`' : '`unnamed filter`');
+        }
         
         return <<<MD
 Base path: `{$this->getBasePath()}`
@@ -279,6 +304,8 @@ Folder depth: {$depth}
 Folders: {$folders}
 
 Filename patterns: {$filenamePatterns}
+
+Filters: {$filters}
 
 MD;
     }
@@ -327,5 +354,33 @@ MD;
             return 0;
         }
         return count($this->resultCache);
+    }
+    
+    /**
+     * 
+     * @param callable $callback
+     * @param string $description
+     * @return FileReadDataQuery
+     */
+    public function addFilter(callable $callback, string $description = null) : FileReadDataQuery
+    {
+        $this->filters[] = $callback;
+        $this->filterDescriptions[(count($this->filters) - 1)] = $description;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param FileInfoInterface $file
+     * @return bool
+     */
+    protected function matchFiltersAll(FileInfoInterface $file) : bool
+    {
+        foreach ($this->filters as $callback) {
+            if ($callback($file) === false) {
+                return false;
+            }
+        }
+        return true;
     }
 }

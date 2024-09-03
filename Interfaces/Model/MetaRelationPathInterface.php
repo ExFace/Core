@@ -143,9 +143,6 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      */
     public function reverse();
     
-    
-    public function getIterator();
-    
     /**
      * @return string
      */

@@ -164,7 +164,7 @@ class MetaObject implements MetaObjectInterface
             $aliasWithModifier = $alias . ($modifier ? '[' . $modifier . ']' : '');
         }
         
-        $rels = $this->relations[$alias];
+        $rels = $this->relations[$alias] ?? [];
         
         // If the object does not have a relation with a matching alias
         if (empty($rels)) {
@@ -382,7 +382,7 @@ class MetaObject implements MetaObjectInterface
      */
     protected function getAttributeCache($alias)
     {
-        return $this->attributes_alias_cache[$alias];
+        return $this->attributes_alias_cache[$alias] ?? null;
     }
 
     /**

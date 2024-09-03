@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -798,7 +799,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
             // IMPORTANT: make sure, the freshly read data has the same row order, as the event
             // data. You never know for sure, how a file storage will sort the results by default!
             try {
-                $this->sortDataSheetByRowOrder($attachmentSheet, $ds->getUidColumn()->getValues());
+                $attachmentSheet->sortLike($ds);
             } catch (\Throwable $e) {
                 throw new BehaviorRuntimeError($this, 'Cannot read required file attachment data to save the corresponding files', null, $e);
             }
@@ -828,33 +829,6 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $this->inProgress = false;
         
         return;
-    }
-    
-    /**
-     * Sorts the rows of the given sheet in order of the provided UID values
-     * 
-     * @param DataSheetInterface $sheetToSort
-     * @param mixed[] $orderedRowUids
-     * @throws DataSheetRuntimeError
-     * @return DataSheetInterface
-     */
-    protected function sortDataSheetByRowOrder(DataSheetInterface $sheetToSort, array $orderedRowUids) : DataSheetInterface
-    {
-        $bkpSheet = $sheetToSort->copy();
-        $bkpRows = $sheetToSort->getRows();
-        $bkpUidCol = $bkpSheet->getUidColumn();
-        $sheetToSort->removeRows();
-        foreach ($orderedRowUids as $uid) {
-            $bkpIdx = $bkpUidCol->findRowByValue($uid);
-            if ($uid === false || $uid === null) {
-                throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row UID "' . $uid . '" not found in sorted data');
-            }
-            $sheetToSort->addRow($bkpRows[$bkpIdx], false, false);
-        }
-        if ($sheetToSort->countRows() !== $bkpSheet->countRows()) {
-            throw new DataSheetRuntimeError($bkpSheet, 'Cannot restore sorting order: row count mismatch!');
-        }
-        return $sheetToSort;
     }
     
     /**

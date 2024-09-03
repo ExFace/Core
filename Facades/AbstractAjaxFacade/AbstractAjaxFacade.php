@@ -257,7 +257,7 @@ HTML;
      */
     protected function getElementClassForWidget(WidgetInterface $widget) : string
     {
-        $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
+        $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()] ?? null;
         if (is_null($elem_class)) {
             $elem_class_prefix = $this->getClassNamespace() . '\\Elements\\' . $this->getClassPrefix();
             $elem_class = $elem_class_prefix . $widget->getWidgetType();

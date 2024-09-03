@@ -5369,6 +5369,28 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "datatype",
             "THUMBNAIL": ""
+        },
+        {
+            "CREATED_ON": "2024-08-16 13:46:55",
+            "MODIFIED_ON": "2024-08-16 13:46:55",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11ef948b3cc08c78948b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Multi-select filter as InputComboTable with apply_on_change",
+            "DESCRIPTION": "Replace `widget_type` of the input widget with `InputComboTable`, `InputTags` or any other widget you like.",
+            "PROTOTYPE": "exface\/Core\/Widgets\/Filter.php",
+            "UXON": {
+                "attribute_alias": "",
+                "input_widget": {
+                    "widget_type": "InputComboTable",
+                    "multi_select": true,
+                    "apply_on_change": true
+                }
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/select_multi.gif"
         }
     ],
     "totals_rows": [],
