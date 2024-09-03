@@ -157,7 +157,11 @@ class ColorIndicator extends Display implements iHaveColor
      */
     public function setColor($value)
     {
-        $this->colorBindingUxon->setProperty('value', $value);
+        if ($value instanceof UxonObject) {
+            $this->colorBindingUxon = $value;
+        } else {
+            $this->colorBindingUxon->setProperty('value', $value);
+        }
         $this->colorBinding = null;
         return $this;
     }
