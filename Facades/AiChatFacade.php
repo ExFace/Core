@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\AI\AiPrompt;
 use exface\Core\CommonLogic\AI\Agents\SqlFilteringAgent;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -17,7 +19,7 @@ use function GuzzleHttp\Psr7\stream_for;
  * 
  * ## Examples
  * 
- * `POST api/aichat/exface.Core.SqlFilteringAgent/completions`
+ * `POST api/aichat/exface.Core.SqlFilteringAgent/completions?object=exface.Core.USER`
  * 
  * Body:
  * 
@@ -37,6 +39,8 @@ use function GuzzleHttp\Psr7\stream_for;
  */
 class AiChatFacade extends AbstractHttpFacade
 {
+    const REQUEST_ATTR_TASK = 'task';
+
     protected function createResponse(ServerRequestInterface $request) : ResponseInterface
     {
         $uri = $request->getUri();
@@ -55,7 +59,7 @@ class AiChatFacade extends AbstractHttpFacade
                 $responseCode = 200;
                 $headers['content-type'] = 'application/json';
                 $agent = $this->findAgent($agentSelector);
-                $prompt = new AiPrompt($this->getWorkbench(), $this, $request);
+                $prompt = $request->getAttribute(self::REQUEST_ATTR_TASK);
                 $response = $agent->handle($prompt);
                 $body = json_encode($response->toArray(), JSON_UNESCAPED_UNICODE);
                 break;
@@ -84,13 +88,17 @@ class AiChatFacade extends AbstractHttpFacade
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
-        
-        // IDEA Add some extra authentication here?
 
-        
+        // Generate a task and save it in the request attributes
+        $middleware[] = new TaskReader($this, self::REQUEST_ATTR_TASK, function(AiChatFacade $facade, ServerRequestInterface $request){
+            return new AiPrompt($facade->getWorkbench(), $facade, $request); 
+        });
+        // Search for the meta object seletor in `object` request parameter
+        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector', null, self::REQUEST_ATTR_TASK);
         
         // Add HTTP basic auth for simpler API testing. This allows to log in with
         // username and password from API clients like PostMan.
+        // TODO remove authentication after initial testing phase
         $middleware[] = new AuthenticationMiddleware($this, [
             [AuthenticationMiddleware::class, 'extractBasicHttpAuthToken']
         ]);
