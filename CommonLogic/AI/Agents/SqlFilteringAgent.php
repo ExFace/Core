@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\AI\AiResponse;
 use exface\Core\CommonLogic\AI\DbmlModel;
 use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 use exface\Core\DataConnectors\TransparentConnector;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataConnectionFactory;
 use exface\Core\Interfaces\AI\AiAgentInterface;
 use exface\Core\Interfaces\AI\AiPromptInterface;
@@ -27,7 +28,12 @@ class SqlFilteringAgent implements AiAgentInterface
     {
         // Only export objects, that have an SQL data source
         // Create a filter function that will take care of filtering meta objects
-        $targetConnectionAlias = $this->getTargetConnectionAlias($prompt);
+        if ($prompt->hasMetaObject()) {
+            $obj = $prompt->getMetaObject();
+            $targetConnectionAlias = $obj->getDataConnection()->getAliasWithNamespace();
+        } else {
+            throw new RuntimeException('Cannot generate AI filter: no base object specified in prompt');
+        }
         $objFilter = function(MetaObjectInterface $obj) use ($targetConnectionAlias) {
             $isSql = $obj->getDataConnection() instanceof SqlDataConnectorInterface;
             $isInTargetConnection = $obj->getDataConnection()->isExactly($targetConnectionAlias);
@@ -42,6 +48,8 @@ class SqlFilteringAgent implements AiAgentInterface
             
         You have the following DBML model: 
         {$dbmlModel->toDBML()}
+
+        
 
 TEXT;
         /* TODO
