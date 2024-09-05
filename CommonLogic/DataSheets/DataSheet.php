@@ -1634,7 +1634,7 @@ class DataSheet implements DataSheetInterface
                 throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
             } catch (\Throwable $eRollback) {
                 $this->getWorkbench()->getLogger()->logException($eRollback);
-                throw new DataSheetWriteError($this, 'Cannot rollback transaction after error! Initial error: $e->getMessage(), null, $e);
+                throw new DataSheetWriteError($this, 'Cannot rollback transaction after error! Initial error: ' . $e->getMessage(), null, $e);
             }
         }
         
