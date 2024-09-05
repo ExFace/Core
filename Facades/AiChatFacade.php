@@ -5,8 +5,8 @@ use exface\Core\CommonLogic\AI\AiPrompt;
 use exface\Core\CommonLogic\AI\Agents\SqlFilteringAgent;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\JsonBodyParser;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -89,12 +89,17 @@ class AiChatFacade extends AbstractHttpFacade
     {
         $middleware = parent::getMiddleware();
 
+        // Parse JSON body if it is a JSON and make it available via `$request->getParsedBody()`
+        $middleware[] = new JsonBodyParser();
+        
         // Generate a task and save it in the request attributes
         $middleware[] = new TaskReader($this, self::REQUEST_ATTR_TASK, function(AiChatFacade $facade, ServerRequestInterface $request){
             return new AiPrompt($facade->getWorkbench(), $facade, $request); 
-        });
-        // Search for the meta object seletor in `object` request parameter
-        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector', null, self::REQUEST_ATTR_TASK);
+        }, 
+        // URL parameters, that we need in the task
+        [
+            'object' => 'object_alias'
+        ]);
         
         // Add HTTP basic auth for simpler API testing. This allows to log in with
         // username and password from API clients like PostMan.
