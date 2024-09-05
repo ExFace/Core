@@ -14,7 +14,7 @@ interface MessageInterface extends WorkbenchDependantInterface
 {    
     public function getCode() : string;
     
-    public function getType() : string;
+    public function getType(string $default = null) : string;
     
     public function setType(string $value) : MessageInterface;
     
