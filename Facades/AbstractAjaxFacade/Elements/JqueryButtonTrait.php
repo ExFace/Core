@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Actions\ShowLookupDialog;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Actions\GoBack;
 use exface\Core\Widgets\Button;
@@ -448,6 +449,7 @@ JS;
         $action = $action ?? $this->getAction();
         switch (true) {
             case $action instanceof SendToWidget:
+            case $action instanceof ShowLookupDialog:
             case $action instanceof iCallWidgetFunction:
             case $action instanceof iRunFacadeScript:
                 $checkChanges = false;
