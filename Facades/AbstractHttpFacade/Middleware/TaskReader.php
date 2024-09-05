@@ -10,7 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Instantiates a task and saves it in the given request attribute
+ * PSR-15 middleware to instantiate a workbench task and save it in the given HTTP request attribute
  * 
  * The task is instantiated using a callable with the following structure:
  * `function($facade, $request) : HttpTaskInterface`.
@@ -25,9 +25,6 @@ use Psr\Http\Server\RequestHandlerInterface;
  * ]);
  * 
  * ```
- * 
- * TODO replace all TaskUrlParamReader middlewares with this one as a single task
- * reader using the UXON mapping
  * 
  * @author Andrej Kabachnik
  *

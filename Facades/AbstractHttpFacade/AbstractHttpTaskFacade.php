@@ -4,9 +4,7 @@ namespace exface\Core\Facades\AbstractHttpFacade;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Facades\HttpBadRequestError;
 
 /**
@@ -18,9 +16,6 @@ use exface\Core\Exceptions\Facades\HttpBadRequestError;
 abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
 {
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
-    const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
-    const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
-    const REQUEST_ATTRIBUTE_NAME_WIDGET = 'element';
     
     /**
      * Makes the facade create an HTTP response for the given request - after all middlewares were run.
@@ -69,35 +64,8 @@ abstract class AbstractHttpTaskFacade extends AbstractHttpFacade
      * 
      * @return string
      */
-    public function getRequestAttributeForAction() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_ACTION;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
     public function getRequestAttributeForTask() : string
     {
         return static::REQUEST_ATTRIBUTE_NAME_TASK;
-    }
-
-    /**
-     * 
-     * @return string
-     */
-    public function getRequestAttributeForPage() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_PAGE;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    public function getRequestAttributeForWidget() : string
-    {
-        return static::REQUEST_ATTRIBUTE_NAME_WIDGET;
     }
 }
