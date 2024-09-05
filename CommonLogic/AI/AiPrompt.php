@@ -8,11 +8,6 @@ class AiPrompt extends HttpTask implements AiPromptInterface
     public function getMessages() : array
     {
         $params = $this->getParameters();
-        if (empty($params)) {
-            $body = $this->getHttpRequest()->getBody()->__toString();
-            $json = json_decode($body, true);
-            $params = $json;
-        }
         return ($params['messages'] ?? $params['prompt']) ?? [];
     }
 
