@@ -2445,7 +2445,7 @@
             "TYPE": "ERROR",
             "DOCS": ""
         },
-		{
+        {
             "CREATED_ON": "2024-06-06 11:19:56",
             "MODIFIED_ON": "2024-06-06 11:19:56",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -2470,6 +2470,20 @@
             "TITLE": "File corrupted",
             "DESCRIPTION": "",
             "HINT": "The file can be read but is somehow corrupted which means for example a thumbnail of an image can not be created.",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2024-08-30 09:36:00",
+            "MODIFIED_ON": "2024-08-30 09:36:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef88e28108c8fe88e2025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "7XA82L1",
+            "TITLE": "Invalid use of data-to-subsheet mapping",
+            "DESCRIPTION": "",
+            "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
         }

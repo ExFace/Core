@@ -62,26 +62,26 @@ trait JsUploaderTrait
                 var iMaxNameLength = {$maxFilenameLength};
 
                 if (aExtensions && aExtensions.length > 0) {
-                    var fileExt = (/(?:\.([^.]+))?$/).exec((file.name || '').toLowerCase())[1];
+                    var fileExt = (/(?:\.([^.]+))?$/).exec((oFileObj.name || '').toLowerCase())[1];
                     if (! aExtensions.includes(fileExt)) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED', ['%extensions%' => implode(', ', $extensions)]))};
                     }
                 }
                 // Check mime type
                 if (aMimeTypes && aMimeTypes.length > 0) {
-                    if (! aMimeTypes.includes((file.type || '').toLowerCase())) {
+                    if (! aMimeTypes.includes((oFileObj.type || '').toLowerCase())) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED', ['%mimetypes%' => implode(', ', $mimeTypes)]))};
                     }
                 }
                 // Check size
                 if (fMaxFileSize && fMaxFileSize > 0) {
-                    if (fMaxFileSize * 1024*1024 < file.size) {
+                    if (fMaxFileSize * 1024*1024 < oFileObj.size) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILE_TOO_BIG', ['%mb%' => $this->getUploader()->getMaxFileSizeMb()]))};
                     }
                 }
                 // Check filename length
                 if (iMaxNameLength && iMaxNameLength > 0) {
-                    if (iMaxNameLength < file.name.length) {
+                    if (iMaxNameLength < oFileObj.name.length) {
                         sError = {$this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_FILENAME_TOO_LONG', ['%length%' => $this->getUploader()->getMaxFilenameLength()]))};
                     }
                 }
