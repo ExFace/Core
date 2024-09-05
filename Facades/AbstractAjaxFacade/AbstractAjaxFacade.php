@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade;
 
+use exface\Core\CommonLogic\Tasks\HttpTask;
+use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
@@ -29,7 +32,6 @@ use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Facades\HttpFileServerFacade;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\DataUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\PrefixedFilterUrlParamsReader;
@@ -66,7 +68,6 @@ use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\MessageTypeDataType;
-use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Factories\FacadeFactory;
 
 /**
@@ -405,11 +406,21 @@ HTML;
         $middleware = parent::getMiddleware();
         
         $middleware[] = new ContextBarApi($this, $this->buildHeadersForAjax());
-        
-        $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
-        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector');
-        $middleware[] = new TaskUrlParamReader($this, 'element', 'setWidgetIdTriggeredBy');
+
+        $middleware[] = new TaskReader(
+            $this, 
+            $this->getRequestAttributeForTask(), 
+            function(HttpFacadeInterface $facade, ServerRequestInterface $request){
+                return new HttpTask($facade->getWorkbench(), $facade, $request); 
+            }, 
+            // Map common URL parameters to task UXON properties
+            [
+                'action' => 'action_alias',
+                'resource' => 'page_alias',
+                'object' => 'object_alias',
+                'element' => 'widget_id'
+            ]
+        );
         
         $middleware[] = new DataUrlParamReader($this, 'data', 'setInputData');
         $middleware[] = new QuickSearchUrlParamReader($this, 'q', 'getInputData', 'setInputData');

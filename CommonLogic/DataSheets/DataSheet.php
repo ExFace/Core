@@ -1628,9 +1628,14 @@ class DataSheet implements DataSheetInterface
                 $new_uids[] = $row[$uidKey];
             }
         } catch (\Throwable $e) {
-            $transaction->rollback();
-            $commit = false;
-            throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
+            try {
+                $commit = false;
+                $transaction->rollback();
+                throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
+            } catch (\Throwable $eRollback) {
+                $this->getWorkbench()->getLogger()->logException($eRollback);
+                throw new DataSheetWriteError($this, 'Cannot rollback transaction after error! Initial error: ' . $e->getMessage(), null, $e);
+            }
         }
         
         // Save the new UIDs in the data sheet

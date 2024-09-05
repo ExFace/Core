@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\MetaObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -777,7 +779,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $inputWidgetObject = $inputWidget->getMetaObject();
         $check = null;
         /* @var $check \exface\Core\CommonLogic\DataSheets\DataCheck */
-        foreach ($action->getInputChecks()->getAll(true) as $c) {
+        foreach ($action->getInputChecks()->getAll() as $c) {
             if ($c->isApplicableToObject($inputWidgetObject)) {
                 if ($check === null) {
                     $check = $c;
@@ -799,7 +801,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         // If we have found a check, we need to make sure, the input widget will
         // be able to supply enough data.
         /* @var $condGrp \exface\Core\CommonLogic\Model\ConditionGroup */
-        $condGrp = $check->getConditionGroup($this->getMetaObject());
+        $condGrp = $check->getConditionGroup($inputWidgetObject);
         switch (true) {
             case $inputWidget instanceof iShowData:
                 return $this->getConditionalPropertyForData($inputWidget, $condGrp);
@@ -880,11 +882,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 return null;
             }
             $attrAlias = $cond->getExpression()->__toString();
-            if (! $this->getMetaObject()->hasAttribute($attrAlias)) {
+            if (! $containerWidget->getMetaObject()->hasAttribute($attrAlias)) {
                 return null;
             }
-            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias) {
-                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($this->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
+            $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                return ($child instanceof iTakeInput) && $child->getMetaObject()->isExactly($containerWidget->getMetaObject()) && $child->isBoundToAttribute() && $child->getAttributeAlias() === $attrAlias;
             });
             if (! $w = $matches[0] ?? null) {
                 /*
