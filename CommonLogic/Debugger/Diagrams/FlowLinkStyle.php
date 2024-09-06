@@ -3,12 +3,13 @@
 namespace Exface\Core\CommonLogic\Debugger\Diagrams;
 
 // holds style properties how a link should be visually represented
-class FlowChartLinkStyle
+class FlowLinkStyle
 {
-    public $name;   // name of style
-    public $stroke; // stroke color
-    public $arrow;  // arrow type
-    public $weight; // weight or thickness of the link
+    private $name;   // name of style
+
+    private $stroke; // stroke color
+    private $arrow;  // arrow type
+    private $weight; // weight or thickness of the link
 
     public function __construct(string $name, string $stroke, string $arrow, string $weight)
     {
@@ -38,4 +39,5 @@ class FlowChartLinkStyle
     {
         return $this->weight;
     }
+
 }

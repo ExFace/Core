@@ -3,7 +3,7 @@
 namespace Exface\Core\Interfaces\Diagrams;
 
 //
-interface FlowChartInterface
+interface FlowInterface
 {
     public function getLinks(): array;
 

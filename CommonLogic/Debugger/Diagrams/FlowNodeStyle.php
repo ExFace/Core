@@ -3,15 +3,17 @@
 namespace Exface\Core\CommonLogic\Debugger\Diagrams;
 
 // holds style properties how a node should be visually represented
-class FlowChartNodeStyle
+class FlowNodeStyle
 {
+    const SHAPE_SQUARE = 'square';
+    const SHAPE_ROUND = 'round';
+
     public $name;   // name of style
 
-    // TODO what exactly defines rect round etc.?
-    public $shape;  // shape of node (e.g., rect, round)
+    public $shape;  // shape of node (e.g. square, round)
     public $color;  // color of node
 
-    public function __construct(string $name, string $shape, string $color)
+    public function __construct(string $name, string $shape = null, string $color = null)
     {
         $this->name = $name;
         $this->shape = $shape;
@@ -24,12 +26,12 @@ class FlowChartNodeStyle
         return $this->name;
     }
 
-    public function getShape(): string
+    public function getShape(): ?string
     {
         return $this->shape;
     }
 
-    public function getColor(): string
+    public function getColor(): ?string
     {
         return $this->color;
     }
