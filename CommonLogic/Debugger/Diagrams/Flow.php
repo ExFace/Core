@@ -21,7 +21,7 @@ abstract class Flow implements FlowInterface
     {
         $node = $this->addNode($nodeOrTitle, $stringOrStyle);
         $this->setNodeLast($node);
-        return $node; // ultimately returns a newly created 'Node' object
+        return $node;
     }
 
     /**
@@ -29,7 +29,7 @@ abstract class Flow implements FlowInterface
      * @param string|FlowNode $nodeOrTitle
      * @param string|object $linkTitleOrObject
      * @throws \exface\Core\Exceptions\InvalidArgumentException
-     * @return \Exface\Core\CommonLogic\Debugger\Diagrams\FlowChart
+     * @return \Exface\Core\CommonLogic\Debugger\Diagrams\Flow
      */
     public function continue($nodeOrTitle, $linkTitleOrObject, $stringOrStyle = null): self
     {
@@ -41,6 +41,24 @@ abstract class Flow implements FlowInterface
         $this->setNodeLast($toNode);
         return $this;
     }
+    
+    /**
+     * Summary of addNodeEnd
+     * @param mixed $nodeOrTitle
+     * @param mixed $linkTitleOrObject
+     * @param mixed $stringOrStyle
+     * @return \Exface\Core\CommonLogic\Debugger\Diagrams\Flow
+     */
+    public function addNodeEnd($nodeOrTitle, $linkTitleOrObject, $stringOrStyle = null): self
+    {
+        $toNode = $this->addNode($nodeOrTitle, $stringOrStyle);
+        
+        if (null !== $fromNode = $this->getNodeLast()) {
+            $this->addLink($fromNode, $toNode, FlowLink::getTitleForAnything($linkTitleOrObject));
+    }
+    $this->setNodeLast($toNode);
+    return $this;
+}
 
     protected function getNodeLast() : ?FlowNode
     {
