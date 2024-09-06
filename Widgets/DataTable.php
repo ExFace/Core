@@ -120,7 +120,7 @@ class DataTable extends Data implements
     
     private $multi_select_sync_attribute = null;
 
-    private $multi_select_saved_on_pagination = null;
+    private $multi_select_saved_on_nav = null;
 
     private $auto_row_height = true;
 
@@ -621,9 +621,9 @@ class DataTable extends Data implements
      * 
      * @return bool
      */
-    public function hasMultiSelectSavedOnNagination() : bool
+    public function isMultiSelectSavedOnNavigation() : bool
     {
-        return $this->multi_select_saved_on_pagination ?? false;
+        return $this->multi_select_saved_on_nav ?? false;
     }
 
     /**
@@ -632,16 +632,16 @@ class DataTable extends Data implements
      * This is useful for tables, that are used to collect items for a future common action - 
      * like a shopping cart, so to say. In particular, this feature is always used in the DataLookupDialog.
      * 
-     * @uxon-property multi_select_saved_on_pagination
+     * @uxon-property multi_select_saved_on_navigation
      * @uxon-type boolean
      * @uxon-default false
      * 
      * @param bool $value
      * @return \exface\Core\Widgets\DataTable
      */
-    public function setMultiSelectSavedOnNagination(bool $value) : DataTable
+    public function setMultiSelectSavedOnNavigation(bool $value) : DataTable
     {
-        $this->multi_select_saved_on_pagination = $value;
+        $this->multi_select_saved_on_nav = $value;
         return $this;
     }
     
