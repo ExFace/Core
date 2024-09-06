@@ -2,7 +2,6 @@
 
 namespace Exface\Core\CommonLogic\Debugger\Diagrams;
 
-// display a node in the flowchart
 class FlowNode
 {
     const STYLE_SQUARE = 'square';
@@ -39,6 +38,11 @@ class FlowNode
         return $this->style;
     }
 
+    /**
+     * Summary of getStyleFromPreset
+     * @param string $preset
+     * @return FlowNodeStyle
+     */
     protected function getStyleFromPreset(string $preset): ?FlowNodeStyle
     {
         switch ($preset) {

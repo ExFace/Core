@@ -4,10 +4,19 @@ namespace Exface\Core\CommonLogic\Debugger\Diagrams;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Diagrams\FlowInterface;
-use JBZoo\MermaidPHP\Node;
+
+// below you find an example of the syntax and the writing style when applying the methods that you find in this Flow.php. The example is a flowchart that can be generated in PowerUI
+// $diagram->addNodeStart('Task input');
+// $diagram->continue('Collect task data', 'suedlink.Trasse.Baufelduebergabe',  FlowNode::STYLE_DATA)
+//         ->continue('Refresh all data', 'suedlink.Trasse.Baufelduebergabe', FlowNode::STYLE_DATA)
+//         ->addNodeEnd('Prefill data', 'suedlink.Trasse.Baufelduebergabe');
+// 
+// $diagram->addNodeStart('Task prefill');
+// $diagram->continue('Collect task data', 'No data', FlowNode::STYLE_DATA);
 
 //core structure and functionality for any type of flowchart
 //abstract -> common functionality that can be reused by any specific type of flowchart AND allows subclasses to implement their own specific rendering logic while still reusing the core flowchart
+
 abstract class Flow implements FlowInterface
 {
     // holds all the nodes in the flowchart
@@ -17,6 +26,12 @@ abstract class Flow implements FlowInterface
     // reference to the last node added
     protected $lastNode = null;
     
+    /**
+     * Summary of addNodeStart
+     * @param mixed $nodeOrTitle
+     * @param mixed $stringOrStyle
+     * @return \Exface\Core\CommonLogic\Debugger\Diagrams\FlowNode
+     */
     public function addNodeStart($nodeOrTitle, $stringOrStyle = null): FlowNode
     {
         $node = $this->addNode($nodeOrTitle, $stringOrStyle);
@@ -87,10 +102,11 @@ abstract class Flow implements FlowInterface
             case is_string($from):
                 $fromNode = $this->findNode($from);
                 if ($fromNode === null) {
-                    throw new UnexpectedValueException('TODO');
+                    $valueDescription = ($from === '') ? '"blank"' : $from;
+                    throw new UnexpectedValueException('The filled in value of ' . $valueDescription . ' is invalid. Please use one of the already assigned titles for nodes');
                 }
                 break;
-            default: throw new InvalidArgumentException('TODO');
+            default: throw new InvalidArgumentException('Cannot continue flowchart: expecting string or node instance, received ' . gettype($from));
         }
 
         switch (true) {
@@ -99,17 +115,25 @@ abstract class Flow implements FlowInterface
                 break;
             case is_string($to):
                 $toNode = $this->findNode($to);
-                if ($toNode === null) {
-                    throw new UnexpectedValueException('TODO');
+                if ($fromNode === null) {
+                    $valueDescription = ($to === '') ? '"blank"' : $to;
+                    throw new UnexpectedValueException('The filled in value of ' . $valueDescription . ' is invalid. Please use one of the already assigned titles for nodes');
                 }
                 break;
-            default: throw new InvalidArgumentException('TODO');
+            default: throw new InvalidArgumentException('Cannot continue flowchart: expecting string or node instance, received ' . gettype($to));
         }
         $link = new FlowLink($fromNode, $toNode, FlowLink::getTitleForAnything($titleOrObject));
         $this->links[] = $link;
         return $this;
     }
 
+    /**
+     * Summary of addNode
+     * @param mixed $nodeOrTitle
+     * @param mixed $stringOrStyle
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @return \Exface\Core\CommonLogic\Debugger\Diagrams\FlowNode
+     */
     public function addNode($nodeOrTitle, $stringOrStyle = null) : FlowNode
     {
         switch (true) {
@@ -141,7 +165,6 @@ abstract class Flow implements FlowInterface
         return null;
     }
 
-    // rendering of the complete diagram is done by other subclasses such as MermaidFlowChartCustom
     abstract public function render() : string;
 
     /**

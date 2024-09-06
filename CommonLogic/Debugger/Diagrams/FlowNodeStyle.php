@@ -9,7 +9,6 @@ class FlowNodeStyle
     const SHAPE_ROUND = 'round';
 
     public $name;   // name of style
-
     public $shape;  // shape of node (e.g. square, round)
     public $color;  // color of node
 

@@ -9,7 +9,12 @@ use JBZoo\MermaidPHP\Node;
 // renders the flowchart in Mermaid.js syntax
 class MermaidFlow
 {
-    // takes the FlowChartInterface object and converts nodes and links into Mermaid.js
+    /**
+     * Summary of render
+     * @param \exface\Core\Interfaces\Diagrams\FlowInterface $flowChart
+     * @return string
+     */
+    // takes the FlowInterface object and converts nodes and links into Mermaid.js
     public function render(FlowInterface $flowChart) : string
     {
         $graph = new Graph(['direction' => Graph::LEFT_RIGHT]);
@@ -23,6 +28,12 @@ class MermaidFlow
         return $graph->render();
     }
 
+    /**
+     * Summary of addNode
+     * @param \exface\Core\CommonLogic\Debugger\Diagrams\FlowNode $node
+     * @param \JBZoo\MermaidPHP\Graph $graph
+     * @return \JBZoo\MermaidPHP\Node
+     */
     protected function addNode(FlowNode $node, Graph $graph) : Node
     {
         $graphNode = new Node($this->getNodeId($node), $node->getTitle(), $this->getNodeForm($node->getStyle()));
@@ -33,6 +44,11 @@ class MermaidFlow
         return $graphNode; 
     }
 
+    /**
+     * Summary of getNodeStyle
+     * @param \exface\Core\CommonLogic\Debugger\Diagrams\FlowNodeStyle|null $nodeStyle
+     * @return string
+     */
     protected function getNodeStyle(FlowNodeStyle $nodeStyle = null) : string
     {
         if ($nodeStyle === null) {
@@ -45,6 +61,11 @@ class MermaidFlow
         return '';
     }
 
+    /**
+     * Summary of getNodeForm
+     * @param \exface\Core\CommonLogic\Debugger\Diagrams\FlowNodeStyle|null $style
+     * @return string
+     */
     protected function getNodeForm(FlowNodeStyle $style = null) : string
     {
         if ($style === null) {
