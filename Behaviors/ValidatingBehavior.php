@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -154,7 +155,12 @@ class ValidatingBehavior extends AbstractBehavior
 
     const VAR_ON_ANY = "on_any";
 
+    const VAR_BAD_DATA = "badData";
+
+    const VAR_LINES = "lines";
+
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
+    // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
     private array $eventConfig = array(
         self::VAR_ON_UPDATE => null,
         self::VAR_ON_CREATE => null,
@@ -281,8 +287,9 @@ class ValidatingBehavior extends AbstractBehavior
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
+        $violations = [];
         foreach ($uxons as $propertyName => $invalidIfUxon) {
-            $validatedUxon = $this->resolvePlaceholders($invalidIfUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
+            $validatedUxon = $this->validatePlaceholders($invalidIfUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
             $validatedJson = $validatedUxon->toJson();
 
             foreach ($changedDataSheet->getRows() as $index => $row) {
@@ -292,13 +299,44 @@ class ValidatingBehavior extends AbstractBehavior
                     $placeHolderRenderer->addPlaceholder(new DataRowPlaceholders($previousDataSheet, $index, self::PLACEHOLDER_OLD));
                 }
 
+                // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
                 $renderedUxon = UxonObject::fromJson($placeHolderRenderer->render($validatedJson), CASE_LOWER);
-                foreach ($this->generateDataChecks($renderedUxon) as $check) {
+                foreach ($this->generateDataChecks($renderedUxon) as $checkNumber => $check) {
                     if ($check->isApplicable($changedDataSheet)) {
-                        $check->check($changedDataSheet);
+                        try {
+                            $check->check($changedDataSheet);
+                        } catch (DataCheckFailedError $exception) {
+                            $violations[$check->getErrorText()][self::VAR_LINES][] = $index + 1;
+                            $violations[$check->getErrorText()][self::VAR_BAD_DATA] = $exception->getBadData();
+                        }
                     }
                 }
             }
+        }
+
+        if(count($violations) > 0) {
+            $badData = null;
+            $message = "";
+            foreach ($violations as $error => $violation) {
+                if($badData !== null) {
+                    $badData->merge($violation[self::VAR_BAD_DATA]);
+                } else {
+                    $badData = $violation[self::VAR_BAD_DATA];
+                }
+
+                $message .= "Lines (";
+                $lastKey = array_key_last($violation[self::VAR_LINES]);
+                foreach ($violation[self::VAR_LINES] as $key => $line) {
+                    if($key != $lastKey) {
+                        $message .= $line.', ';
+                    } else {
+                        $message .= $line.'): ';
+                    }
+                }
+
+                $message .= $error.PHP_EOL;
+            }
+            throw (new DataCheckFailedError($changedDataSheet, $message, null, null, null, $badData))->setUseExceptionMessageAsTitle(true);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
@@ -342,7 +380,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Resolves any placeholders present in the provided UXON and throws an exception
+     * Validates any placeholders present in the provided UXON and throws an exception
      * if it contains any placeholders on the prohibited list.
      *
      * @param UxonObject $uxon
@@ -350,7 +388,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param string $propertyName
      * @return UxonObject|null
      */
-    private function resolvePlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
+    private function validatePlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
     {
         $uxonAsArray = $uxon->toArray(CASE_LOWER);
 
@@ -358,12 +396,9 @@ class ValidatingBehavior extends AbstractBehavior
             return new UxonObject();
         }
 
-        $result = [];
-
         foreach ($uxonAsArray as $key => $value) {
             if(is_array($value)) {
-                $renderedUxon = $this->resolvePlaceholders(new UxonObject($value), $prohibited, $propertyName);
-                $result[$key] = $renderedUxon->toArray();
+                $this->validatePlaceholders(new UxonObject($value), $prohibited, $propertyName);
             } else {
                  if(is_string($value)) {
                     foreach ($prohibited as $filterPhrase) {
@@ -376,12 +411,10 @@ class ValidatingBehavior extends AbstractBehavior
                         }
                     }
                  }
-
-                 $result[$key] = $value;
             }
         }
 
-        return new UxonObject($result);
+        return $uxon;
     }
 
     /**
