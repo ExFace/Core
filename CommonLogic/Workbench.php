@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
@@ -79,7 +80,7 @@ class Workbench implements WorkbenchInterface
 
     public function __construct(array $config = null)
     {   
-        $this->startTime = microtime(true);
+        $this->startTime = Debugger::getTimeMsNow();
         
         $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
         $this->installation_path = Filemanager::pathNormalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
@@ -159,7 +160,7 @@ class Workbench implements WorkbenchInterface
         $this->model()->setModelLoader($model_loader);
         
         // Load the context
-        $this->context = new ContextManager($this, $config);
+        $this->context = new ContextManager($this);
         
         $this->security = new SecurityManager($this);
         
@@ -325,7 +326,7 @@ class Workbench implements WorkbenchInterface
     /**
      * Returns the core app
      *
-     * @return CoreApp
+     * @return AppInterface
      */
     public function getCoreApp()
     {
@@ -399,10 +400,11 @@ class Workbench implements WorkbenchInterface
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\DebuggerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getDebugger()
      */
-    public function getDebugger()
+    public function getDebugger() : DebuggerInterface
     {
         return $this->debugger;
     }
@@ -418,7 +420,7 @@ class Workbench implements WorkbenchInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WorkbenchInterface::getLogger()
      */
-    public function getLogger()
+    public function getLogger() : LoggerInterface
     {
         if (is_null($this->logger)) {
             $this->logger = LoggerFactory::createDefaultLogger($this);

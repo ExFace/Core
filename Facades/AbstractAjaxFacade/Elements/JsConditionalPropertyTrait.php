@@ -24,7 +24,7 @@ use exface\Core\Widgets\Parts\ConditionalPropertyConditionGroup;
  * 
  * You will need to pass the JS code to execute if the condition is TRUE or FALSE to each of these methods.
  * 
- * @method WidgetInterface getWidget()
+ * @method \exface\Core\Interfaces\WidgetInterface getWidget()
  * 
  * @author Andrej Kabachnik
  *
