@@ -386,25 +386,57 @@ class UxonSchema implements UxonSchemaInterface
         return $schema->getValidValuesForType($firstType, $search, $object);
     }
     
+    /**
+     * Returns the first property type in the given path in the UXON
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param string[] $path
+     * @param string $rootPrototypeClass
+     * @return string|null
+     */
     public function getUxonType(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : ?string
     {
         $prop = mb_strtolower(end($path));
         if (true === is_numeric($prop)) {
             // If we are in an array, use the data from the parent property (= the array)
             // for every item within the array.
-            $prop = mb_strtolower($path[(count($path)-2)]);
-            $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
-            $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
+            $propertyTypes = $this->getPropertyTypesOfParent($uxon, $path, $rootPrototypeClass);
             $firstType = trim($propertyTypes[0]);
             $firstType = rtrim($firstType, "[]");
         } else {
             // In all other cases, try to find something for the top-most property in the path
             $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
             $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
-            $firstType = trim($propertyTypes[0]);
+            $firstType = trim($propertyTypes[0] ?? '');
+            // If no type can be determined, see if the parent node has an array type and use that.
+            // This will happen in objects, where all properties have the same type - e.g. attribute
+            // mappings like `override_file_attributes` in the `FileAttachmentBehavior`.
+            if (empty($propertyTypes) || ($firstType === '' && count($propertyTypes) === 1)) {
+                $propertyTypes = $this->getPropertyTypesOfParent($uxon, $path, $rootPrototypeClass);
+                $firstType = trim($propertyTypes[0]);
+                if (mb_substr($firstType, -2) === '[]') {
+                    $firstType = rtrim($firstType, "[]");
+                }
+            }
         }
         
         return $firstType;
+    }
+
+    /**
+     * Returns an array of types for the parent property in a given UXON
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $uxon
+     * @param string[] $path
+     * @param string $rootPrototypeClass
+     * @return string[]
+     */
+    protected function getPropertyTypesOfParent(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
+    {
+        $prop = mb_strtolower($path[(count($path)-2)]);
+        $prototypeClass = $this->getPrototypeClass($uxon, $path, $rootPrototypeClass);
+        $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
+        return $propertyTypes;
     }
     
     protected function getValidValuesForType(string $type, string $search = null, MetaObjectInterface $object = null) : array
