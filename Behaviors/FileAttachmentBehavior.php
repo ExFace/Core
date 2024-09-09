@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -21,9 +20,6 @@ use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 
 /**
  * Marks an object as attachment - a link between a document and a file
@@ -242,7 +238,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      * @param string $value
      * @return FileBehavior
      */
-    protected function setFilenameAttribute(string $value) : FileBehavior
+    protected function setFilenameAttribute(string $value) : FileBehaviorInterface
     {
         $this->filenameAttributeAlias = $value;
         return $this;
@@ -275,9 +271,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      * Alias of the attribute, that represents the mime type of the file
      *
      * @param string $value
-     * @return FileBehavior
+     * @return FileBehaviorInterface
      */
-    protected function setMimeTypeAttribute(string $value) : FileBehavior
+    protected function setMimeTypeAttribute(string $value) : FileBehaviorInterface
     {
         $this->mimeTypeAttributeAlias = $value;
         return $this;
@@ -301,9 +297,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      * Alias of the attribute, that contains the size of the file in bytes (optional)
      *
      * @param string $value
-     * @return FileBehavior
+     * @return FileBehaviorInterface
      */
-    protected function setFileSizeAttribute(string $value) : FileBehavior
+    protected function setFileSizeAttribute(string $value) : FileBehaviorInterface
     {
         $this->fileSizeAttributeAlias = $value;
         return $this;
@@ -327,9 +323,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      * Alias of the attribute, that contains the creation time of the file (optional)
      *
      * @param string $value
-     * @return FileBehavior
+     * @return FileBehaviorInterface
      */
-    protected function setTimeCreatedAttribute(string $value) : FileBehavior
+    protected function setTimeCreatedAttribute(string $value) : FileBehaviorInterface
     {
         $this->timeCreatedAttributeAlias = $value;
         return $this;
@@ -353,9 +349,9 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
      * Alias of the attribute, that contains the modification time of the file (optional)
      *
      * @param string $value
-     * @return FileBehavior
+     * @return FileBehaviorInterface
      */
-    protected function setTimeModifiedAttribute(string $value) : FileBehavior
+    protected function setTimeModifiedAttribute(string $value) : FileBehaviorInterface
     {
         $this->timeModifiedAttributeAlias = $value;
         return $this;
@@ -363,7 +359,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     
     /**
      * 
-     * @return MetaAttributeInterface|NULL
+     * @return MetaAttributeInterface|null
      */
     public function getCommentsAttribute() : ?MetaAttributeInterface
     {
@@ -407,7 +403,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
     
     /**
-     * Uploadable file types/extensions
+     * Uploadable file extensions
      *
      * @uxon-property allowed_file_extensions
      * @uxon-type array
@@ -443,7 +439,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
     }
     
     /**
-     * Uploadable file types/extensions
+     * Uploadable file types (mime types)
      *
      * @uxon-property allowed_mime_types
      * @uxon-type array
@@ -731,7 +727,7 @@ class FileAttachmentBehavior extends AbstractBehavior implements FileBehaviorInt
         $fileSheet->getFilters()->addConditionFromValueArray(
             $this->getFileRelation()->getRightKeyAttribute()->getAliasWithRelationPath(),
             $leftKeyCol->getValues(),
-            ComparatorDataType::IN
+            true
         );
         
         $this->inProgress = false;
