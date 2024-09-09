@@ -13,7 +13,6 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\Exceptions\OverflowException;
 use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
@@ -277,15 +276,15 @@ class DataSourceFileInfo implements FileInfoInterface
         if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
             $val = $this->getFileDataColumn($attr)->getValue(0);
             $dataType = $attr->getDataType();
-            if ($dataType instanceof BinaryDataType) {
-                switch (true) {
-                    case $dataType->getEncoding() === BinaryDataType::ENCODING_BASE64:
-                        $val = BinaryDataType::convertBase64ToBinary($val);
-                        break;
-                    case $dataType->getEncoding() === BinaryDataType::ENCODING_HEX:
-                        $val = BinaryDataType::convertHexToBinary($val);
-                        break;
-                }
+            switch (true) {
+                case ($dataType instanceof BinaryDataType) && $dataType->getEncoding() === BinaryDataType::ENCODING_BASE64:
+                    $val = BinaryDataType::convertBase64ToBinary($val);
+                    break;
+                case ($dataType instanceof BinaryDataType) && $dataType->getEncoding() === BinaryDataType::ENCODING_HEX:
+                    $val = BinaryDataType::convertHexToBinary($val);
+                    break;
+                default:
+                    // Leave $val as-is
             }
             return $val;
         }
@@ -578,5 +577,18 @@ class DataSourceFileInfo implements FileInfoInterface
     {
         // TODO re-read data here?
         return $this->getFileDataSheet()->countRows() === 1;
+    }
+
+    /**
+     * Deletes the file
+     * @return void
+     */
+    public function delete()
+    {
+        $fileDs = $this->getFileDataSheet();
+        $fileDs->dataDelete();
+        // Make sure the FileInfo itself knows, that the file does not exist anymore
+        $fileDs->removeRows();
+        return;
     }
 }
