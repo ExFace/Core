@@ -201,7 +201,7 @@ class ExportXLSX extends ExportJSON
     protected function writeFileResult(DataSheetInterface $dataSheet)
     {
         $this->writeInfoExcelSheet($dataSheet);
-        $this->getWriter()->writeToFile($this->getFilePathAbsolute());
+        $this->getWriter()->writeToFile($this->getFilePath());
     }
 
     /**

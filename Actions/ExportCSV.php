@@ -124,7 +124,7 @@ class ExportCSV extends ExportJSON
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = Writer::createFromPath($this->getFilePathAbsolute(), 'x+');
+            $this->writer = Writer::createFromPath($this->getFilePath(), 'x+');
             $this->writer->setDelimiter($this->delimiterChar);
             $this->writer->setEnclosure($this->enclosureChar);
             $this->writer->setEscape($this->escapeChar);
