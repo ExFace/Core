@@ -1,10 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic\Filesystem;
 
+use exface\Core\Exceptions\FileNotWritableError;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 
 /**
  * 
@@ -12,7 +14,7 @@ use exface\Core\Exceptions\FileNotReadableError;
  * @author Andrej Kabachnik
  * 
  */
-class LocalFile implements FileInterface
+class LocalFile implements FileInterface, FileStreamInterface
 {
     private $fileInfo = null;
     
@@ -43,13 +45,14 @@ class LocalFile implements FileInterface
     
     /**
      * 
-     * @return mixed|NULL
+     * @return mixed|null
      */
     public function read() : string
     {
-        $result = file_get_contents($this->getFileInfo()->getPathAbsolute());
+        $path = $this->getFileInfo()->getPathAbsolute();
+        $result = file_get_contents($path);
         if ($result === false) {
-            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!', null, null, $this->getFileInfo());
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!', null, null, $this->getFileInfo());
         }
         return $result;
     }
@@ -61,9 +64,10 @@ class LocalFile implements FileInterface
      */
     public function readStream()
     {
-        $result = fopen($this->fileInfo->getPath(true), $this->mode);
+        $path = $this->fileInfo->getPathAbsolute();
+        $result = fopen($path, $this->mode);
         if ($result === false) {
-            throw new FileNotReadableError('Cannot read file "' . $this->getPathAbsolute() . '"!', null, null, $this->getFileInfo());
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!', null, null, $this->getFileInfo());
         }
         return $result;
     }
@@ -75,6 +79,7 @@ class LocalFile implements FileInterface
      */
     public function writeStream($resource): FileInterface
     {
+        // TODO really write stream here instead of treating it as a string
         return $this->write($resource);
     }
 
@@ -85,7 +90,15 @@ class LocalFile implements FileInterface
      */
     public function write($stringOrBinary): FileInterface
     {
-        Filemanager::dumpFile($this->fileInfo->getPath(true), $stringOrBinary);
+        $path = $this->fileInfo->getPathAbsolute();
+        $dir = $this->fileInfo->getFolderPath();
+        if (!is_dir($dir)) {
+            Filemanager::pathConstruct($dir);
+        }
+        $result = file_put_contents($path, $stringOrBinary);
+        if ($result === false) {
+            throw new FileNotWritableError('Cannot write "' . $path . '"', null, null, $this->fileInfo);
+        }
         return $this;
     }
 
@@ -126,5 +139,15 @@ class LocalFile implements FileInterface
             $this->splFileObject = new \SplFileObject($this->fileInfo->getPathAbsolute(), $this->mode);
         }
         return $this->splFileObject;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileStreamInterface::getStreamUrl()
+     */
+    public function getStreamUrl() : string
+    {
+        return $this->fileInfo->getPathAbsolute();
     }
 }
