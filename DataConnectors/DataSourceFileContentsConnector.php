@@ -8,7 +8,7 @@ use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\CommonLogic\DataQueries\DataSourceFileInfo;
 
 /**
- * Allows to access files in any data source as if it was a file system if the meta objects have the FileBehavior
+ * DEPRECATED! Allows to access files in any data source as if it was a file system if the meta objects have the FileBehavior
  * 
  * This allows to access files stored in data bases using file-oriented query builders like
  * `FileContentsBuilder`, `ExcelBuilder`, etc.
@@ -18,6 +18,8 @@ use exface\Core\CommonLogic\DataQueries\DataSourceFileInfo;
  * query builders to work with the data as if it was a file.
  * 
  * **REQUIRES** the addressed objects to have the `FileBehavior`.
+ * 
+ * @deprecated use DataSourceFileConnector instead!
  * 
  * @see DataSourceFileInfo
  * 
