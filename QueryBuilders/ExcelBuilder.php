@@ -1,10 +1,15 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
+use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
+use exface\Core\DataConnectors\FileContentsConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
+use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -54,6 +59,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * left to right.
  * - single cell coordinates (e.g. `B3`) will add the value of the cell to each row - handy for reading header data for
  * a table.
+ * - Any file attributes as described in `FileBuilder`
  * 
  * ## Known issues and TODOs
  * 
@@ -63,7 +69,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ExcelBuilder extends FileContentsBuilder
+class ExcelBuilder extends FileBuilder
 {    
     /**
      * Set to FALSE to keep the value of a merged cell in the first (top left) cell only.
@@ -112,18 +118,20 @@ class ExcelBuilder extends FileContentsBuilder
     /**
      * 
      * @param MetaObjectInterface $object
-     * @return string|NULL
+     * @return string|null
      */
     protected function getSheetForObject(MetaObjectInterface $object) : ?string
     {
         $addr = trim($object->getDataAddress());
         return trim(str_replace($this->getPathForObject($object, false), '', $addr), "[]");
     }
+
+    private $tempFiles = [];
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\FileContentsBuilder::getPathForObject()
+     * @see \exface\Core\QueryBuilders\FileBuilder::getPathForObject()
      */
     protected function getPathForObject(MetaObjectInterface $object, bool $replacePlaceholders = true) : string
     {
@@ -143,22 +151,31 @@ class ExcelBuilder extends FileContentsBuilder
             $path = $this->replacePlaceholdersByFilterValues($path);
         }
         
-        return $path ?? '';
+        return $path;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\FileContentsBuilder::read()
+     * @see \exface\Core\QueryBuilders\FileBuilder::read()
      */
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $result_rows = [];
-        $mainObj = $this->getMainObject();
-        
-        $query = $this->buildQuery();
+        $this->prepareFilters();
+        $this->prepareSorters();
+        // Keep compatibilty to legacy objects from the times, when there was no filesystem abstraction
+        if (! ($data_connection instanceof FileContentsConnector)) {
+            return parent::read($data_connection);
+        } else {
+            return $this->readFromLegacyFileContentsConnector($data_connection);
+        }
+    }
+
+    private function readFromLegacyFileContentsConnector(FileContentsConnector $data_connection) : DataQueryResultDataInterface
+    {
+        $query = new FileContentsDataQuery();
+        $query->setPath($this->getPathForObject($this->getMainObject()));
         $query = $data_connection->query($query);
-        
         $deleteAfterRead = false;
         if (null !== ($fileInfo = $query->getFileInfo()) && $fileInfo instanceof DataSourceFileInfo) {
             $contents = $fileInfo->getContents();
@@ -175,7 +192,36 @@ class ExcelBuilder extends FileContentsBuilder
         } else {
             $excelPath = $query->getPathAbsolute();
         }
+        $fileInfo = new LocalFileInfo($excelPath);
+        $result_rows = $this->buildResultRows($fileInfo);
         
+        $resultTotalRows = count($result_rows);
+        
+        $result_rows = $this->applyFilters($result_rows);
+        $result_rows = $this->applySorting($result_rows);
+        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
+        $result_rows = $this->applyPagination($result_rows);
+        
+        $cnt = count($result_rows);
+        
+        if ($deleteAfterRead === true) {
+            @unlink($excelPath);
+        }
+        
+        return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileBuilder::buildResultRows()
+     */
+    protected function buildResultRows(FileInfoInterface $fileInfo) : array
+    {
+        $result_rows = [];
+        $mainObj = $this->getMainObject();
+        $excelPath = $this->getStreamablePath($fileInfo);
+
         $dapReadDataOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_DATA_ONLY)) ?? false;
         $dapReadEmptyCells = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_EMPTY_CELLS)) ?? true;
         $dapErrorIfNoSheet = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND)) ?? true;
@@ -195,14 +241,11 @@ class ExcelBuilder extends FileContentsBuilder
         
         if (! $sheet) {
             if ($dapErrorIfNoSheet) {
-                throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $query->getPathAbsolute() . '"!');
+                throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $fileInfo->getPathAbsolute() . '"!');
             } else {
-                return new DataQueryResultData([], 0, false, 0);
+                return [];
             }
         }
-        
-        $this->prepareFilters($query);
-        $this->prepareSorters($query);
         
         $lastRow = $sheet->getHighestDataRow();
         $static_values = [];
@@ -217,8 +260,8 @@ class ExcelBuilder extends FileContentsBuilder
                 default: $formatValues = false;
             }
             switch (true) {
-                case $this->isFileProperty($address):
-                    $static_values[$colKey] = $this->getFileProperty($query, $address);
+                case $this->isFileDataAddress($address):
+                    $static_values[$colKey] = $this->buildResultValueFromFile($fileInfo, $address);
                     continue 2;
                 case $this->isAddressRange($address):
                     $resultRowNo = 0;
@@ -252,32 +295,47 @@ class ExcelBuilder extends FileContentsBuilder
         unset($sheet);
         unset($spreadsheet);
         unset($reader);
-        
-        $resultTotalRows = count($result_rows);
-        
-        $result_rows = $this->applyFilters($result_rows);
-        $result_rows = $this->applySorting($result_rows);
-        $result_rows = $this->applyAggregations($result_rows, $this->getAggregations());
-        $result_rows = $this->applyPagination($result_rows);
-        
-        $cnt = count($result_rows);
-        
-        if ($deleteAfterRead === true) {
-            @unlink($excelPath);
+
+        return $result_rows;
+    }
+
+    /**
+     * Returns a file path compatible with file_get_contents() and other PHP built-in functions
+     * 
+     * @param \exface\Core\Interfaces\Filesystem\FileInfoInterface $fileInfo
+     * @throws \exface\Core\Exceptions\QueryBuilderException
+     * @return string
+     */
+    protected function getStreamablePath(FileInfoInterface $fileInfo) : string
+    {
+        if ($fileInfo instanceof FileStreamInterface) {
+            return $fileInfo->getStreamUrl();
         }
-        
-        return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
+
+        $contents = $fileInfo->openFile()->read();
+        if ($contents === null) {
+            throw new QueryBuilderException('Cannot read spreadsheet from "' . $fileInfo->getFilename() . '": fetching contents failed!');
+        }
+        $tmpFolder = $this->getWorkbench()->filemanager()->getPathToTempFolder() . DIRECTORY_SEPARATOR . 'ExcelBuilderCache' . DIRECTORY_SEPARATOR;
+        if (! file_exists($tmpFolder)) {
+            mkdir($tmpFolder);
+        }
+        $excelPath = $tmpFolder . $fileInfo->getFilename();
+        file_put_contents($excelPath, $contents);
+        $this->tempFiles[] = $excelPath;
+
+        return $excelPath;
     }
     
     /**
      * Parses an Excel-value into the internal format for the given metamodel data type
      * 
-     * @param mixed|NULL $value
+     * @param mixed|null $value
      * @param DataTypeInterface $dataType
      * @param bool $nullOnError
      * @throws \Throwable
      * 
-     * @return mixed|NULL
+     * @return mixed|null
      */
     protected function parseExcelValue($value, DataTypeInterface $dataType, bool $nullOnError = true)
     {
@@ -333,7 +391,7 @@ class ExcelBuilder extends FileContentsBuilder
      * @param Worksheet $sheet
      * @param string $coordinate
      * @param bool $formatValues
-     * @return string|mixed|number|string|boolean|NULL|\PhpOffice\PhpSpreadsheet\RichText\RichText
+     * @return mixed|null|\PhpOffice\PhpSpreadsheet\RichText\RichText
      */
     protected function getValueOfCoordinate(Worksheet $sheet, string $coordinate, bool $formatValues = false)
     {
@@ -474,18 +532,14 @@ class ExcelBuilder extends FileContentsBuilder
     
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\FileContentsBuilder::prepareFilters()
+     * @throws \exface\Core\Exceptions\QueryBuilderException
+     * @return void
      */
-    protected function prepareFilters(FileContentsDataQuery $query) : bool
+    protected function prepareFilters()
     {
         foreach ($this->getFilters()->getFilters() as $qpart) {
             switch (true) {
-                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FOLDER) === 0:
-                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_CONTENTS) === 0:
-                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_EXTENSION) === 0:
-                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FILENAME_WITHOUT_EXTENSION) === 0:
-                case strcasecmp($qpart->getDataAddress(), self::ATTR_ADDRESS_FILENAME) === 0:
+                case $this->isFileProperty($qpart):
                     if (! $this->getAttribute($qpart->getAlias())) {
                         // FIXME What to do with filters over missing file values??? Error? Ignore? Auto-add to read?
                         throw new QueryBuilderException('Cannot filter "' . $this->getMainObject() . '" over "' . $qpart->getAlias(). '" - no correspoinding column is being read!');
@@ -495,20 +549,36 @@ class ExcelBuilder extends FileContentsBuilder
             }
         }
         
-        return true;
+        return;
     }
     
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\FileContentsBuilder::prepareSorters()
+     * @return void
      */
-    protected function prepareSorters(FileContentsDataQuery $query) : bool
+    protected function prepareSorters()
     {
         foreach ($this->getSorters() as $qpart) {
             $qpart->setApplyAfterReading(true);
         }
         
+        return;
+    }
+
+    public function __destruct()
+    {
+        foreach ($this->tempFiles as $path) {
+            @unlink($path);
+        }
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileBuilder::isFullReadRequired()
+     */
+    protected function isFullReadRequired(FileReadDataQuery $query) : bool
+    {
         return true;
     }
 }
