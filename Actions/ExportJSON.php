@@ -4,6 +4,9 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Exceptions\FormulaError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -15,6 +18,9 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\AggregatePlaceholder;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
@@ -43,11 +49,11 @@ class ExportJSON extends ReadData implements iExportData
     private $downloadable = true;
     
     private $filename = null;
+
+    private ?string $filePath = null;
     
-    private $mimeType = null;
-    
-    private $pathname = null;
-    
+    protected $mimeType = null;
+
     private $writer = null;
     
     private $useAttributeAliasAsHeader = false;
@@ -199,10 +205,13 @@ class ExportJSON extends ReadData implements iExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        // DataSheet vorbereiten
+        // Prepare DataSheet.
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
-         
+
+        // Configure FilePath.
+        $this->setFilePath($dataSheetMaster);
+
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         
@@ -223,7 +232,7 @@ class ExportJSON extends ReadData implements iExportData
         if ($lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
-        
+
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
@@ -269,7 +278,7 @@ class ExportJSON extends ReadData implements iExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
+        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePath(), $this->isDownloadable());
         
         if ($errorMessage !== null) {
             $result->setMessage($errorMessage);
@@ -492,27 +501,48 @@ class ExportJSON extends ReadData implements iExportData
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = fopen($this->getFilePathAbsolute(), 'x+');
+            $this->writer = fopen($this->getFilePath(), 'x+');
             fwrite($this->writer, '[');
         }
         return $this->writer;
     }
-    
+
+    protected function setFilePath(DataSheetInterface $dataSheet): void
+    {
+        $tplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+        $tplRenderer->addPlaceholder(new AggregatePlaceholder($dataSheet));
+        $tplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
+
+        try {
+            $fileName = $tplRenderer->render($this->getFilename());
+        } catch (\Throwable $e) {
+            if($e->getPrevious() instanceof FormulaError) {
+                throw new InvalidArgumentException('Use of data driven formulas is not supported for placeholders in "file_name"!');
+            } else {
+                throw $e;
+            }
+        }
+        $fileName = str_replace(['.','<','>',':','"','/','\\','|','?','*'], '', $fileName);
+        $fileName = substr($fileName, 0, 26);
+        $fileManager = $this->getWorkbench()->filemanager();
+        $this->filePath = Filemanager::pathJoin([
+            $fileManager->getPathToCacheFolder(),
+            $fileName . '.' . $this->getFileExtension()
+        ]);
+    }
+
     /**
      * Returns the absolute path to the file.
      *
      * @return string
      */
-    protected function getFilePathAbsolute() : string
+    protected function getFilePath () : string
     {
-        if (is_null($this->pathname)) {
-            $filemanager = $this->getWorkbench()->filemanager();
-            $this->pathname = Filemanager::pathJoin([
-                $filemanager->getPathToCacheFolder(),
-                $this->getFilename() . '.' . $this->getFileExtension()
-            ]);
+        if($this->filePath === null) {
+            throw new ActionRuntimeError($this, "FilePath not set! Make sure to call setFilePath(DataSheetInterface) before calling getFilePath().");
         }
-        return $this->pathname;
+
+        return $this->filePath;
     }
     
     /**
