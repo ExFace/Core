@@ -456,7 +456,6 @@
 			 * @return {bool}			 *
 			 */
 			compareDates: function (sDate1, sDate2, sComparator, sGranularity) {
-				console.log('Compare: ', sDate1, sDate2, sComparator, sGranularity);
 				var supportedComparators = ['==', '<=', '<', '>=', '>'];
 				var supportedGranularity = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'];
 				var oParsedDate1, oParsedDate2, oMomentDate1, oMomentDate2;
@@ -667,8 +666,32 @@
 		 * 
 		 */
 		data: {
-			compareRows: function(row1, row2) {
+			/**
+			 * Returns TRUE if row1 is the same as row2. Compares only the UID values if a UID column is specified
+			 * 
+			 * @param {object} row1 
+			 * @param {object} row2 
+			 * @param {string} sUidCol 
+			 * @returns {boolean}
+			 */
+			compareRows: function(row1, row2, sUidCol) {
+				if (sUidCol !== undefined && row1[sUidCol] !== undefined && row2[sUidCol] !== undefined) {
+					return row1[sUidCol] === row2[sUidCol];
+				}
 				return _dataRowsCompare(row1, row2);
+			},
+			/**
+			 * Returns the index of a given row in an array of rows. Compares only UID values if UID column is specified.
+			 * 
+			 * @param {array} aRows 
+			 * @param {object} oRowToFind 
+			 * @param {string} sUidCol 
+			 * @returns {int}
+			 */
+			indexOfRow: function(aRows, oRowToFind, sUidCol) {
+				return aRows.findIndex(function(oRow){
+					return exfTools.data.compareRows(oRow, oRowToFind, sUidCol);
+				});
 			},
 			compareValues: function(mLeft, mRight, sComparator, sMultiValDelim) {
 				var bResult;
