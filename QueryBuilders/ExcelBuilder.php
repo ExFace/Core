@@ -33,8 +33,8 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * 
  * ## Data source configuration
  * 
- * To access Excel files create a data source with this query builder and a connection with the `FileContentsConnector`
- * or the `DataSourceFileContentsConnector`.
+ * To access Excel files create a data source with this query builder and a file connection - e.g. one with the 
+ * `LocalFileConnector` or `DataSourceFileConnector`.
  * 
  * ## Object data addresses
  * 
