@@ -117,6 +117,10 @@ class DataTable extends Data implements
     private $multi_select = false;
 
     private $multi_select_all_selected = false;
+    
+    private $multi_select_sync_attribute = null;
+
+    private $multi_select_saved_on_nav = null;
 
     private $auto_row_height = true;
 
@@ -131,8 +135,6 @@ class DataTable extends Data implements
     private $header_sort_multiple = false;
 
     private $context_menu = null;
-    
-    private $multi_select_sync_attribute = null;
     
     private $freeze_columns = 0;
     
@@ -613,6 +615,34 @@ class DataTable extends Data implements
     public function getMultiSelectSyncAttributeAlias()
     {
         return $this->multi_select_sync_attribute;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isMultiSelectSavedOnNavigation() : bool
+    {
+        return $this->multi_select_saved_on_nav ?? false;
+    }
+
+    /**
+     * Set to TRUE to make the table collect selected items even if they become inivsible due to pagination or filtering
+     * 
+     * This is useful for tables, that are used to collect items for a future common action - 
+     * like a shopping cart, so to say. In particular, this feature is always used in the DataLookupDialog.
+     * 
+     * @uxon-property multi_select_saved_on_navigation
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setMultiSelectSavedOnNavigation(bool $value) : DataTable
+    {
+        $this->multi_select_saved_on_nav = $value;
+        return $this;
     }
     
     /**

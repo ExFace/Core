@@ -2626,6 +2626,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
+            
             // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
                 $qpart->setUsedInPlaceholders(true);
@@ -2646,11 +2647,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $this->addQueryPart($qpart);
                 }
             }
+
+            // Generate a SELECT clause for the placeholder
             if ($ph_has_relation) {
-                $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, null, null, false), $data_address);
+                $ph_select = $this->buildSqlSelect($qpart, null, null, false);
             } else {
-                $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
+                $ph_select = $this->buildSqlSelect($qpart, $select_from, null, false);
             }
+
+            // Make binary columns string-compatible by convirting them to HEX strings. This allows
+            // to use UUIDs in most custom SQL SELECTs very easily. On the other hand, it will probably
+            // break SQLs where the value is supposed to be raw binary. Not sure, if this is
+            // always a good idea, but it certainly helps in most cases!
+            if(strcasecmp($qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE) ?? '', 'binary' === 0)) {
+                $ph_select = $this->buildSqlSelectBinaryAsHEX($ph_select);
+            }
+
+            // Replace the placeholder with the generated SQL statement
+            $data_address = str_replace('[#' . $ph . '#]', $ph_select, $data_address);
         }
         return $data_address;
     }

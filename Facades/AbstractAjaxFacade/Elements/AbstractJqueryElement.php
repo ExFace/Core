@@ -1034,6 +1034,19 @@ JS;
         }
         return $escaped;
     }
+
+    /**
+     * Returns the strings `true` or `false` for a given boolean value
+     * 
+     * This is helpful in JS snippets, where you can do "var bJsBool = {$this->escapeBool($phpVar)};".
+     * 
+     * @param bool $trueOrFalse
+     * @return string
+     */
+    public function escapeBool(bool $trueOrFalse) : string
+    {
+        return $trueOrFalse === true ? 'true' : 'false';
+    }
     
     /**
      * 
