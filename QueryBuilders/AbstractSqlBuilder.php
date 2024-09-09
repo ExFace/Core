@@ -2627,7 +2627,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $ph_has_relation = $baseObj->hasAttribute($ph) && ! $baseObj->getAttribute($ph)->getRelationPath()->isEmpty() ? true : false;                
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             
-            / If the placeholder is not part of the query already, create a new query part.
+            // If the placeholder is not part of the query already, create a new query part.
             if (null !== $qpart = $this->getAttribute($ph_attribute_alias)) {
                 $qpart->setUsedInPlaceholders(true);
             } else {
