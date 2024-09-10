@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -20,6 +21,8 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\AggregatePlaceholder;
+use exface\Core\Templates\Placeholders\ArrayPlaceholders;
+use exface\Core\Templates\Placeholders\DataAggregationPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
@@ -131,7 +134,7 @@ class ExportJSON extends ReadData implements iExportData
     public function getFilename() : string
     {
         if ($this->filename === null){
-            return 'export_' . date('Y-m-d_his', time());
+            return 'Export_[#~object_name#]_' . date('Y-m-d_his', time());
         }
         return $this->filename;
     }
@@ -510,8 +513,12 @@ class ExportJSON extends ReadData implements iExportData
     protected function setFilePath(DataSheetInterface $dataSheet): void
     {
         $tplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-        $tplRenderer->addPlaceholder(new AggregatePlaceholder($dataSheet));
+        $tplRenderer->addPlaceholder(new DataAggregationPlaceholders($dataSheet, '~data:'));
         $tplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
+        $tplRenderer->addPlaceholder(new ArrayPlaceholders([
+            '~object_name' => $dataSheet->getMetaObject()->getName(),
+            '~object_alias' => $dataSheet->getMetaObject()->getAlias(),
+        ]));
 
         try {
             $fileName = $tplRenderer->render($this->getFilename());
@@ -522,8 +529,8 @@ class ExportJSON extends ReadData implements iExportData
                 throw $e;
             }
         }
-        $fileName = str_replace(['.','<','>',':','"','/','\\','|','?','*'], '', $fileName);
-        $fileName = substr($fileName, 0, 26);
+        $fileName = FilePathDataType::sanitizeFilename($fileName);
+        $fileName = mb_substr($fileName, 0, 26);
         $fileManager = $this->getWorkbench()->filemanager();
         $this->filePath = Filemanager::pathJoin([
             $fileManager->getPathToCacheFolder(),
