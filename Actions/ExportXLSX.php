@@ -117,7 +117,6 @@ class ExportXLSX extends ExportJSON
      */
     protected function init()
     {
-        $a = 0;
         parent::init();
         $this->setIcon(Icons::FILE_EXCEL_O);
     }

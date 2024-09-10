@@ -76,7 +76,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  *   - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
  *   - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
  *
- * 
+ *
  * @author Andrej Kabachnik
  *
  */
@@ -244,7 +244,7 @@ class ExportJSON extends ReadData implements iExportData
         // Prepare DataSheet.
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
-        // Configure FilePath.
+        // Initialize FilePath.
         $this->initializeFilePathAbsolute($dataSheetMaster);
 
         $lazyExport = $this->isLazyExport($dataSheetMaster);
