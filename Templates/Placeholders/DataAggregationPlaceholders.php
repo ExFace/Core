@@ -51,7 +51,6 @@ class DataAggregationPlaceholders implements PlaceholderResolverInterface
      */
     public function resolve(array $placeholders) : array
     {
-        $result = [];
         $aggrPlaceholders = $this->filterPlaceholders($placeholders, $this->prefix);
 
         if (empty($aggrPlaceholders)) {
@@ -72,18 +71,19 @@ class DataAggregationPlaceholders implements PlaceholderResolverInterface
                 throw new DataSheetRuntimeError($aggrSheet, 'Cannot use placeholder "' . $ph . '" in template: only aggregated expressions like "ATTRIBUTE:MAX" allowed!');
             }
         }
-        $aggrSheet->dataRead();
 
-        switch ($aggrSheet->countRows() > 1) {
-            case 0: return $phValsEmpty;
-            case 1: 
+        $aggrSheet->dataRead();
+        switch ($aggrSheet->countRows()) {
+            case 0:
+                return $phValsEmpty;
+            case 1:
                 $result = [];
                 foreach ($phCols as $ph => $col) {
                     $result[$ph] = $col->getValue(0);
                 }
                 break;
             default:
-                throw new DataSheetRuntimeError($aggrSheet, 'TODO Cannot aggregate placeholders!');
+                throw new DataSheetRuntimeError($aggrSheet, 'Could not aggregate placeholders!');
         }
 
         return $result;
