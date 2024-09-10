@@ -154,10 +154,9 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     }
     
     /**
-     * Returns an array of the form [file_path => rendered_template].
      * 
-     * @param DataSheetInterface $inputData
-     * @return string[]
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRenderTemplate::renderTemplate()
      */
     public function renderTemplate(DataSheetInterface $inputData) : array
     {
@@ -220,6 +219,16 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
             }
         }
         return $contents;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRenderTemplate::renderPreviewHTML()
+     */
+    public function renderPreviewHTML(DataSheetInterface $inputData) : array
+    {
+        return $this->renderTemplate($inputData);
     }
 
     /**
