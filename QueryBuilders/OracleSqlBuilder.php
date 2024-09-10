@@ -153,7 +153,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
                     // they should be done after pagination as they are potentially very time consuming
-                    if ($this->checkForSqlStatement($this->buildSqlDataAddress($qpartAttr)) && (! $group_by || ! $qpart->getAggregator())) {
+                    if ($this->isSqlStatement($this->buildSqlDataAddress($qpartAttr)) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
                     } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
@@ -538,7 +538,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $qpartAddress = $this->buildSqlDataAddress($qpart);
-            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->checkForSqlStatement($qpartAddress))) {
+            if (! $qpart->getDataAddressProperty(static::DAP_SQL_INSERT) && (! $qpartAddress || $this->isSqlStatement($qpartAddress))) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID

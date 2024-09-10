@@ -291,7 +291,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         } else {
             // If the object has no UID, sort over the first column in the query, which is simple to sort (i.g. is neither an SQL statement itself nor a compound)
             foreach ($this->getAttributes() as $qpart) {
-                if (! $this->checkForSqlStatement($this->buildSqlDataAddress($qpart)) && $qpart->getAttribute()->isSortable() && ! $qpart->isCompound()) {
+                if (! $this->isSqlStatement($this->buildSqlDataAddress($qpart)) && $qpart->getAttribute()->isSortable() && ! $qpart->isCompound()) {
                     $order_by = $qpart->getColumnKey() . ' DESC';
                     break;
                 }

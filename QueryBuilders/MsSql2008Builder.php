@@ -128,7 +128,7 @@ SQL;
     {
         // SQL Server 2008 cannot sort over an alias from the SELECT - need to place the entire data address 
         // in the ORDER BY in case the attribute is a custom SQL statement.
-        if ($this->checkForSqlStatement($qpart->getDataAddress()) 
+        if ($this->isSqlStatement($qpart->getDataAddress()) 
             && ! $qpart->getDataAddressProperty(static::DAP_SQL_ORDER_BY) 
             && $select_from === $this->getShortAlias($this->getMainObject()->getAlias())
         ) {
