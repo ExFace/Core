@@ -659,11 +659,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // First of all find out, if the object's data address is empty or a view. If so, we generally can't write to it!
         if (! $addr) {
             throw new QueryBuilderException('The data address of the object "' . $this->getMainObject()->getAlias() . '" is empty. Cannot perform writing operations!');
-            $result = false;
         }
-        if ($this->checkForSqlStatement($addr)) {
+        if ($this->isSqlStatement($addr)) {
             throw new QueryBuilderException('The data address of the object "' . $this->getMainObject()->getAlias() . '" seems to be a view. Cannot write to SQL views!');
-            $result = false;
         }
         
         return $result;
@@ -689,7 +687,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $columns = array();
         $before_each_insert_sqls = [];
         $after_each_insert_sqls = [];
-        $uid_qpart = null;
+        $uidQpart = null;
         
         // add values
         $rowPlaceholders = [];
@@ -702,7 +700,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $attr = $qpart->getAttribute();
             if ($attr->getRelationPath()->toString()) {
                 throw new QueryBuilderException('Cannot create attribute "' . $attr->getAliasWithRelationPath() . '" of object "' . $mainObj->getAliasWithNamespace() . '". Attributes of related objects cannot be created within the same SQL query!');
-                continue;
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
             $attrAddress = $this->buildSqlDataAddress($attr);
@@ -711,12 +708,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $before_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
             $after_each_insert_sql = $qpart->getDataAddressProperty(self::DAP_SQL_INSERT_AFTER);
             $column = $attrAddress ? $attrAddress : $attrInsertAddress;
-            if ((! $column || $this->checkForSqlStatement($column)) && ! $custom_insert_sql) {
+            if ((! $column || $this->isSqlStatement($column)) && ! $custom_insert_sql) {
                 continue;
             }
             // Save the query part for later processing if it is the object's UID
             if ($attr->isUidForObject()) {
-                $uid_qpart = $qpart;
+                $uidQpart = $qpart;
             }
             
             // Prepare arrays with column aliases and values to implode them later when building the query
@@ -763,7 +760,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $uidCustomSqlInsert = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT);
             // Add before and after queries of the UID attribute if they were not added for
             // the respective query part above already
-            if (! $uid_qpart) {
+            if (! $uidQpart) {
                 $uidBeforeEach = $uidAttr->getDataAddressProperty(self::DAP_SQL_INSERT_BEFORE);
                 if ($uidBeforeEach) {
                     $uidBeforeEach = StringDataType::replacePlaceholders($uidBeforeEach, [
@@ -786,13 +783,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $uidIsOptimizedUUID = false;
             $uidCustomSqlInsert = null;
         }
-        if ($uid_qpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
-            $uid_qpart = $this->addValue($uidAttr->getAlias(), null);
-            $uidAddress = $this->buildSqlDataAddress($uid_qpart);
+        if ($uidQpart === null && ($uidIsOptimizedUUID == true || $uidCustomSqlInsert)) {
+            $uidQpart = $this->addValue($uidAttr->getAlias(), null);
+            $uidAddress = $this->buildSqlDataAddress($uidQpart);
             $columns[$uidAddress] = $uidAddress;
         }
-        if ($uid_qpart) {
-            $uidAddress = $this->buildSqlDataAddress($uid_qpart);
+        if ($uidQpart) {
+            $uidAddress = $this->buildSqlDataAddress($uidQpart);
         }
         
         
@@ -802,10 +799,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
-        if ($uid_qpart && $uid_qpart->hasValues() === false && $uidCustomSqlInsert) {
+        $uidValuesProvided = $uidQpart->hasValues();
+        if ($uidQpart && $uidValuesProvided === false && $uidCustomSqlInsert) {
             $uidCustomSqlInsert = StringDataType::replacePlaceholders($uidCustomSqlInsert, [
                 '~alias' => $mainObj->getAlias(),
-                '~value' => $this->prepareInputValue('', $uid_qpart->getDataType(), $uid_qpart->getDataAddressProperties())
+                '~value' => $this->prepareInputValue('', $uidQpart->getDataType(), $uidQpart->getDataAddressProperties())
             ]);
             
             $columns[$uidAddress] = $uidAddress;
@@ -815,15 +813,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         $insertedIds = [];
-        $uidAlias = $uid_qpart ? $uid_qpart->getColumnKey() : null;
         $insertedCounter = 0;
         
         foreach ($values as $nr => $row) {
+            // See if a UID (primary key) is provided
             $customUid = null;
-            // if optimized uids should be used, build them here and add them to the row
-            if ($uid_qpart && $uid_qpart->hasValues() === false && $uidIsOptimizedUUID === true) {
-                $customUid = UUIDDataType::generateSqlOptimizedUuid();
-                $row[$uidAddress] = $customUid;
+            if ($uidQpart !== null) {
+                switch (true) {
+                    // If optimized uids should be used, build them here and add them to the row.
+                    // Remember the value to ensure it is returned as the created UID later.
+                    case $uidValuesProvided === false && $uidIsOptimizedUUID === true:
+                        $customUid = UUIDDataType::generateSqlOptimizedUuid();
+                        $row[$uidAddress] = $customUid;
+                        break;
+                    // If there is a non-empty UID value provided AND it is not an SQL statement, use
+                    // that value directly
+                    case $uidValuesProvided === true && $row[$uidAddress] !== null && $row[$uidAddress] !== '' && $this->isSqlStatement($uidAddress) === false:
+                        $customUid = $row[$uidAddress];
+                        break;
+                }
             }
             $sql = 'INSERT INTO ' . $this->buildSqlDataAddress($mainObj, static::OPERATION_WRITE) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             
@@ -831,7 +839,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $afterSql = $after_each_insert_sqls[$nr] . ($uidAfterEach ?? '');
             if ($beforeSql || $afterSql) {
                 $query = $data_connection->runSql($beforeSql . $sql . '; ' . $afterSql, true);
-                if ($uidAddress && ! $customUid && $rRow = $query->getResultArray()[0]) {
+                if ($uidAddress && $customUid === null && $rRow = $query->getResultArray()[0]) {
                     if ($rRow[$uidAddress] !== null) {
                         $customUid = $query->getResultArray()[0][$uidAddress];
                     }
@@ -840,20 +848,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $query = $data_connection->runSql($sql);
             }
             
-            // Now get the primary key of the last insert.
-            if ($customUid) {
-                $last_id = $customUid;
+            // Now get the primary key of the last insert. If it was not provided by PHP, assume it to be 
+            // an auto-increment by means of the database.
+            if ($customUid !== null) {
+                $insertedId = $customUid;
             } else {
-                // If the primary key was autogenerated, fetch it via built-in function
-                $last_id = $query->getLastInsertId();
+                // If the primary key was autogenerated by the database, fetch it via built-in function
+                $insertedId = $query->getLastInsertId();
             }
             
             
-            // TODO How to get multiple inserted ids???
+            // Remember inserted ids for this row if it really was inserted
             if ($cnt = $query->countAffectedRows()) {
                 $insertedCounter += $cnt;
-                if ($uidAlias !== null || ($uidAttr && $uidAttr->getDataAddress())) {
-                    $insertedIds[] = [$uidAlias ?? $this->getMainObject()->getUidAttribute()->getAlias() => $last_id];
+                $uidColKey = $uidQpart ? $uidQpart->getColumnKey() : null;
+                if ($uidColKey === null && $this->getMainObject()->hasUidAttribute()) {
+                    $uidColKey = DataColumn::sanitizeColumnName($this->getMainObject()->getUidAttribute()->getAlias());
+                }
+                if ($uidColKey !== null) {
+                    $insertedIds[] = [$uidColKey => $insertedId];
                 }
             }
             
@@ -942,7 +955,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             $attrAddress = $this->buildSqlDataAddress($attr);
             // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
-            if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->checkForSqlStatement($attrAddress)) {
+            if (! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE) && ! $qpart->getDataAddressProperty(self::DAP_SQL_UPDATE_DATA_ADDRESS) && $this->isSqlStatement($attrAddress)) {
                 continue;
             }
             
@@ -1304,7 +1317,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($select_column) {
                 // if the column to select is explicitly defined, just select it
                 $output = $select_from . $this->getAliasDelim() . $select_column;
-            } elseif ($this->checkForSqlStatement($address)) {
+            } elseif ($this->isSqlStatement($address)) {
                 // see if the attribute is a statement. If so, just replace placeholders
                 $output = $this->replacePlaceholdersInSqlAddress($address, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
             } elseif ($custom_select = $qpart->getDataAddressProperty(self::DAP_SQL_SELECT)){
@@ -1756,7 +1769,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlJoinSide($data_address, $table_alias)
     {
         $join_side = $data_address;
-        if ($this->checkForSqlStatement($join_side)) {
+        if ($this->isSqlStatement($join_side)) {
             $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
             if (! empty(StringDataType::findPlaceholders($join_side))) {
                 throw new QueryBuilderException('Cannot use placeholders in SQL JOIN keys: "' . $join_side . '"');
@@ -1847,7 +1860,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $output = $this->replacePlaceholdersInSqlAddress($customWhereClause, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
         } else {
             // Determine, what we are going to compare to the value: a subquery or a column
-            if ($this->checkForSqlStatement($this->buildSqlDataAddress($attr))) {
+            if ($this->isSqlStatement($this->buildSqlDataAddress($attr))) {
                 $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
             } else {
                 $subj = $select;
@@ -2004,7 +2017,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $this->replacePlaceholdersInSqlAddress($customWhereAddress, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
             } else {
                 // Determine, what we are going to compare to the value: a subquery or a column
-                if ($this->checkForSqlStatement($this->buildSqlDataAddress($attr))) {
+                if ($this->isSqlStatement($this->buildSqlDataAddress($attr))) {
                     $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
                 } else {
                     $subj = $table_alias . $this->getAliasDelim() . $select;
@@ -2329,7 +2342,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     } else {
                         $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
                         $junctionDataAddress = $this->buildSqlDataAddress($start_rel->getLeftKeyAttribute());
-                        if ($this->checkForSqlStatement($junctionDataAddress) === true) {
+                        if ($this->isSqlStatement($junctionDataAddress) === true) {
                             $junction = $this->replacePlaceholdersInSqlAddress($junctionDataAddress, null, null, $junctionTableAlias);
                         } else {
                             $junction = $junctionTableAlias . $this->getAliasDelim() . $junctionDataAddress;
@@ -2412,7 +2425,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * the column ALIAS of the table ATTRIBUTE). The result does not contain the words "GROUP BY", thus
      * the results of multiple calls to this method with different attributes can be concatennated into
      * a comple GROUP BY clause.
-     *
+     * 
      * @param QueryPartSorter $qpart
      * @param string $select_from
      * @return string
@@ -2420,7 +2433,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlGroupBy(QueryPart $qpart, $select_from = null)
     {
         $output = '';
-        if ($this->checkForSubselect($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
+        if ($this->isSqlSelectStatement($this->buildSqlDataAddress($qpart->getAttribute())) === true) {
             // Seems like SQL statements are not supported in the GROUP BY clause in general
             throw new QueryBuilderException('Cannot use the attribute "' . $qpart->getAttribute()->getAliasWithRelationPath() . '" for aggregation in an SQL data source, because it\'s data address is defined via custom SQL statement');
         } else {
@@ -2495,16 +2508,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * It is important to know this, because you cannot write to statements etc.
      *
-     * @param string $string
+     * @param string|null $string
      * @return boolean
      */
-    protected function checkForSqlStatement($string)
+    protected function isSqlStatement($string) : bool
     {
-        return strpos($string, '(') !== false && strpos($string, ')') !== false;
+        if ($string === null || $string === '') {
+            return false;
+        }
+        return mb_strpos($string, '(') !== false && mb_strpos($string, ')') !== false;
     }
     
     /**
-     * Returns TRUE if the given SQL contains a SELECT statement and FALSE otherwise.
+     * Returns TRUE if the give string is a SELECT statement and FALSE otherwise.
      *
      * This does NOT check, if it's a valid select - but merely looks for the SELECT
      * keyword.
@@ -2512,7 +2528,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $string
      * @return bool
      */
-    protected function checkForSubselect(string $string) : bool
+    protected function isSqlSelectStatement(string $string) : bool
     {
         return stripos($string, 'SELECT ') !== false;
     }
