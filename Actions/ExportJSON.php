@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -43,6 +44,38 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * 
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
+ *
+ *
+ *
+ *   ## Filename Placeholders
+ *
+ *
+ *
+ *   You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
+ *   For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
+ *   the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
+ *
+ *   ### Supported placeholders:
+ *
+ *   - `[#=Formula()#]` Allows the use of formulas.
+ *   - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
+ *  a list of supported aggregators.
+ *
+ *
+ *
+ *   ### Supported aggregators:
+ *
+ *   - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ *   - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ *   - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *   non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ *   - `MAX` Gets the highest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *    non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ *   - `COUNT` Counts the total number of rows in the column.
+ *   - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
+ *   - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ *   - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ *
  * 
  * @author Andrej Kabachnik
  *
@@ -53,7 +86,7 @@ class ExportJSON extends ReadData implements iExportData
     
     private $filename = null;
 
-    private ?string $filePath = null;
+    private ?string $filePathAbsolute = null;
     
     protected $mimeType = null;
 
@@ -211,9 +244,8 @@ class ExportJSON extends ReadData implements iExportData
         // Prepare DataSheet.
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
-
         // Configure FilePath.
-        $this->setFilePath($dataSheetMaster);
+        $this->initializeFilePathAbsolute($dataSheetMaster);
 
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
@@ -281,7 +313,7 @@ class ExportJSON extends ReadData implements iExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePath(), $this->isDownloadable());
+        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
         
         if ($errorMessage !== null) {
             $result->setMessage($errorMessage);
@@ -504,14 +536,28 @@ class ExportJSON extends ReadData implements iExportData
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = fopen($this->getFilePath(), 'x+');
+            $this->writer = fopen($this->getFilePathAbsolute(), 'x+');
             fwrite($this->writer, '[');
         }
         return $this->writer;
     }
 
-    protected function setFilePath(DataSheetInterface $dataSheet): void
+    /**
+     * Initializes the absolute filepath for this action. Repeated calls to this function have no effect.
+     *
+     * TODO geb 2024-09-10: Instead of a local getter with unclear timings, a writer or filepath should passed along the logic chain.
+     *
+     * @param DataSheetInterface $dataSheet
+     * @return void
+     * @throws \Throwable
+     */
+    protected function initializeFilePathAbsolute(DataSheetInterface $dataSheet): void
     {
+        // Repeated calls should have no effect.
+        if($this->getFilePathAbsolute() !== null) {
+            return;
+        }
+
         $tplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $tplRenderer->addPlaceholder(new DataAggregationPlaceholders($dataSheet, '~data:'));
         $tplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
@@ -529,27 +575,30 @@ class ExportJSON extends ReadData implements iExportData
                 throw $e;
             }
         }
+
         $fileName = FilePathDataType::sanitizeFilename($fileName);
-        $fileName = mb_substr($fileName, 0, 26);
+        $fileName = str_replace(' ', '_', $fileName);
+        $fileName = StringDataType::convertCaseUnderscoreToPascal($fileName);
+        $fileName = mb_substr($fileName, 0, 26); // TODO geb 2024-09-10: HOTFIX When downloading the file, filenames longer than 26 characters get truncated and scrambled.
         $fileManager = $this->getWorkbench()->filemanager();
-        $this->filePath = Filemanager::pathJoin([
+        $this->filePathAbsolute = Filemanager::pathJoin([
             $fileManager->getPathToCacheFolder(),
             $fileName . '.' . $this->getFileExtension()
         ]);
     }
 
     /**
-     * Returns the absolute path to the file.
+     * Returns the absolute path to the file. You must initialize the path with `initializeFilePathAbsolute(DataSheetInterface)` first.
      *
      * @return string
      */
-    protected function getFilePath () : string
+    protected function getFilePathAbsolute () : string
     {
-        if($this->filePath === null) {
-            throw new ActionRuntimeError($this, "FilePath not set! Make sure to call setFilePath(DataSheetInterface) before calling getFilePath().");
+        if($this->filePathAbsolute === null) {
+            throw new ActionRuntimeError($this, "FilePath not initialized! Make sure to call initializeFilePathAbsolute(DataSheetInterface) at any point before calling getFilePathAbsolute().");
         }
 
-        return $this->filePath;
+        return $this->filePathAbsolute;
     }
     
     /**
