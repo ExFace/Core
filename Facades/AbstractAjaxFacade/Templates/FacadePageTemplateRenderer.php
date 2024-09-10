@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Templates;
 
+use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
@@ -56,6 +57,25 @@ class FacadePageTemplateRenderer extends BracketHashFileTemplateRenderer
         $this->facade = $facade;
         $this->widget = $widget;
         $this->initPlaceholders();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see BracketHashFileTemplateRenderer::render()
+     */
+    public function render($tplPath = null)
+    {
+        // Do not throw detailed errors containing the tempaltes. They produce template tabs in a lot of errors, that
+        // have nothing to do with template renderers.
+        try {
+            return parent::render($tplPath);
+        } catch (TemplateRendererRuntimeError $e) {
+            if (null !== $prev = $e->getPrevious()) {
+                throw $prev;
+            } else {
+                throw $e;
+            }
+        }
     }
     
     /**
