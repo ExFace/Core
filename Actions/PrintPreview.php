@@ -92,7 +92,7 @@ class PrintPreview extends GoToUrl
             $result = ResultFactory::createHTMLResult($task, $preview);
         } else {
             if ($this->getCallActionInsteadOfPreview() === false) {
-                $prints = $printAction->renderTemplate($previewSheet);
+                $prints = $printAction->renderPreviewHTML($previewSheet);
                 $preview = reset($prints);
 
                 try {
