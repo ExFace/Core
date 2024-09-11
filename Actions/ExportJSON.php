@@ -554,7 +554,7 @@ class ExportJSON extends ReadData implements iExportData
     protected function initializeFilePathAbsolute(DataSheetInterface $dataSheet): void
     {
         // Repeated calls should have no effect.
-        if($this->getFilePathAbsolute() !== null) {
+        if($this->filePathAbsolute !== null) {
             return;
         }
 
