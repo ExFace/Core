@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+
 use exface\Core\CommonLogic\AI\AiPrompt;
 use exface\Core\CommonLogic\AI\Agents\SqlFilteringAgent;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
@@ -63,12 +64,32 @@ class AiChatFacade extends AbstractHttpFacade
                 $response = $agent->handle($prompt);
                 $body = json_encode($response->toArray(), JSON_UNESCAPED_UNICODE);
                 break;
+            case $pathInFacade === 'dmbl':
+                $responseCode = 200;
+                $headers['content-type'] = 'text/plain';
+                $agent = $this->findAgent($agentSelector);
+                $prompt = $request->getAttribute(self::REQUEST_ATTR_TASK);
+                $body = $agent->getDbmlModel($prompt)->toDBML();
+                break;          
+            case $pathInFacade === 'LMStudio':
+                $responseCode = 200;
+                $headers['content-type'] = 'application/json';
+                $agent = $this->findAgent($agentSelector);
+                $prompt = $request->getAttribute(self::REQUEST_ATTR_TASK);
+                $LMStudio = new LMStudio();
+                $llmResponse = $LMStudio->getResponse();
+                $body = json_encode($llmResponse, JSON_UNESCAPED_UNICODE);
+                break;
             default:
                 throw new FacadeRoutingError('Route "' . $pathInFacade . '" not found!');
         }
         
         return new Response(($responseCode ?? 404), $headers, stream_for($body ?? ''));
     }
+
+
+    
+
 
     /**
      * 
