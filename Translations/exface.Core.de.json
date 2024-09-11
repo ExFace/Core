@@ -39,6 +39,8 @@
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "Es wurde die maximale Anzahl von %number% Einträgen in die Datei geschrieben. ",
 	"ACTION.EXPORTJSON.NAME": "JSON exportieren",
+	"ACTION.EXPORTJPEG.NAME": "JPG exportieren",
+	"ACTION.EXPORTPNG.NAME": "PNG exportieren",
 	"ACTION.EXPORTXLSX.NAME": "Excel exportieren",
 	"ACTION.EXPORTXLSX.USERNAME": "Benutzername",
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Zeitpunkt des Exports",
@@ -138,6 +140,7 @@
 	"BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR": "%object% auf Zeile %row% darf nicht gelöscht werden!",
 	
 	"BEHAVIOR.PREVENTDUPLICATEBEHAVIOR.CREATE_DUPLICATES_FORBIDDEN_ERROR": "Daten in Zeile(n) %row% von Objekt %object% sind Duplikate!",
+
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Datei mit Übersetzungen",
@@ -147,7 +150,9 @@
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS": "Status",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "Neu!",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Vererbt",	
-    
+    	
+	"BEHAVIOR.VALIDATINGBEHAVIOR.LINE": "Zeile",
+	
     "CONTEXT.ACTIONTEST.NAME": "ActionTest",
 	
     "CONTEXT.API.RESULT": "'%operation_name%' erfolgreich!",
