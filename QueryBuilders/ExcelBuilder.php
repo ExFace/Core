@@ -123,7 +123,11 @@ class ExcelBuilder extends FileBuilder
     protected function getSheetForObject(MetaObjectInterface $object) : ?string
     {
         $addr = trim($object->getDataAddress());
-        return trim(str_replace($this->getPathForObject($object, false), '', $addr), "[]");
+        $sheetInDataAddress = trim(str_replace($this->getPathForObject($object, false), '', $addr), "[]");
+        if ($sheetInDataAddress !== '') {
+            return $sheetInDataAddress;
+        }
+        return null;
     }
 
     private $tempFiles = [];
@@ -233,11 +237,13 @@ class ExcelBuilder extends FileBuilder
         $reader->setReadDataOnly($dapReadDataOnly);
         $reader->setReadEmptyCells($dapReadEmptyCells);
         // Make sure, only our target sheet is read as this will save memory on files with many large sheets
-        $reader->setLoadSheetsOnly($sheetName);
+        if ($sheetName !== null) {
+            $reader->setLoadSheetsOnly($sheetName);
+        }
         // Do read
         $spreadsheet = $reader->load($excelPath);
         // Get the sheet
-        $sheet = $sheetName !== null && $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
+        $sheet = $sheetName !== null ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
         if (! $sheet) {
             if ($dapErrorIfNoSheet) {
