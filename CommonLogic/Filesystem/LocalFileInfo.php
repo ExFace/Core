@@ -365,4 +365,13 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
     {
         return $this->getPathAbsolute();
     }
+
+    /**
+     * 
+     * @return \SplFileInfo
+     */
+    public function toSplFileInfo() : \SplFileInfo
+    {
+        return $this->splFileInfo;
+    }
 }
