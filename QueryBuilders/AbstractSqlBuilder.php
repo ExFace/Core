@@ -2535,7 +2535,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     protected function addBinaryColumn($full_alias)
     {
-        $this->binary_columns[] = $full_alias;
+        if (! in_array($full_alias, $this->binary_columns, true)) {
+            $this->binary_columns[] = $full_alias;
+        }
         return $this;
     }
     
