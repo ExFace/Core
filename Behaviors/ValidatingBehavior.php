@@ -324,7 +324,7 @@ class ValidatingBehavior extends AbstractBehavior
                     $badData = $violation[self::VAR_BAD_DATA];
                 }
 
-                $message .= "Lines (";
+                $message .= $this->getWorkbench()->getCoreApp()->getTranslator()->translate('BEHAVIOR.VALIDATINGBEHAVIOR.LINE') . " (";
                 $lastKey = array_key_last($violation[self::VAR_LINES]);
                 foreach ($violation[self::VAR_LINES] as $key => $line) {
                     if($key != $lastKey) {
