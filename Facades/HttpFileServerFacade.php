@@ -157,7 +157,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
                         $uid = BinaryDataType::convertBase64ToText(substr($uid, 7));
                         break;
                 }
-                $fileInfo = DataSourceFileInfo::fromObjectUID($this->getWorkbench(), $objSel, $uid);
+                $fileInfo = DataSourceFileInfo::fromObjectSelectorAndUID($this->getWorkbench(), $objSel, $uid);
                 break;
             default:
                 $fileInfo = new LocalFileInfo($pathParts[0]);
