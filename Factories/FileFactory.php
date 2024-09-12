@@ -17,14 +17,14 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-abstract class FileInfoFactory extends AbstractStaticFactory
+abstract class FileFactory extends AbstractStaticFactory
 {
     /**
      *
      * @param MetaObjectSelectorInterface $selector
      * @return MetaObjectInterface
      */
-    public static function createFromPath(WorkbenchInterface $workbench, string $absolutePath) : FileInfoInterface
+    public static function createFileInfoFromPath(WorkbenchInterface $workbench, string $absolutePath) : FileInfoInterface
     {
         switch (true) { 
             case StringDataType::startsWith($absolutePath, DataSourceFileInfo::SCHEME):
@@ -39,7 +39,13 @@ abstract class FileInfoFactory extends AbstractStaticFactory
         return $fileInfo;
     }
 
-    public static function createFromObjectAndUid(MetaObjectInterface $object, string $uid) : FileInfoInterface
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @param string $uid
+     * @return \exface\Core\Interfaces\Filesystem\FileInfoInterface
+     */
+    public static function createFileInfoFromObjectAndUid(MetaObjectInterface $object, string $uid) : FileInfoInterface
     {
         return DataSourceFileInfo::fromObjectAndUID($object, $uid);
     }
