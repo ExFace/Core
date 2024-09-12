@@ -12,6 +12,7 @@ use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
@@ -138,13 +139,24 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
         return $obj;
     }
 
+    /**
+     * Adds a virtual attribute (not stored in the meta model) to the given object.
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
+     * @param string $name
+     * @param string $alias
+     * @param string $dataAddress
+     * @param mixed $dataTypeOrSelector
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     */
     public static function addAttributeTemporary(
         MetaObjectInterface $obj, 
         string $name, 
         string $alias, 
         string $dataAddress,
         $dataTypeOrSelector = null
-    ) : MetaObjectInterface
+    ) : MetaAttributeInterface
     {
         $attr = new Attribute($obj);
         $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
@@ -169,6 +181,6 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
         }
         $attr->setDataType($type);
         $obj->getAttributes()->add($attr);
-        return $obj;
+        return $attr;
     }
 }
