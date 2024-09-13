@@ -6,7 +6,7 @@
 	- Files and Folders
 	- [Web services](https://github.com/exface/UrlDataConnector/blob/master/Docs/index.md)
 	- Source code
-- [Expression syntax](Expressions_and_formulas.md) to reference data, widgets and other model entities. 
+- [Expression syntax](../UXON/Expressions_and_formulas.md) to reference data, widgets and other model entities. 
 - Modelling logic
 	- Actions
 	- Behaviors

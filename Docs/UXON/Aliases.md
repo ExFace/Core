@@ -1,4 +1,4 @@
-# Alias expressions in UXON
+# Aliases of meta objects, attributes and other model entities
 
 To make a widget show data, references to the metamodel need to be placed in the corresponding widget properties (like `object_alias` or `attribute_alias`). These references use aliases of objects and attributes and can vary from a simple object or attribute alias to a complex expression including relations, subset filters, etc.
 
