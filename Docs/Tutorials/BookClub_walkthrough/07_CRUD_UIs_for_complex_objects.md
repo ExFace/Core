@@ -26,7 +26,7 @@ Since the book is a fairly complex object with many attributes, simply auto-gene
 
 Note how the autosuggest in the UXON editor suggests attributes and relations (with the double underscore at the end) at the same time: select a relation an press `space` to list attributes and relations of the related object, and so on. 
 
-Attribute aliases with relations (like `owner__LABEL` or `owner__user__USERNAME`) are called relation paths. Relation paths can be followed in both directions! The workbench will automatically determine where the foreign keys of the relations are located. This means, you can also use `book__title` as an attribute_alias of the object `member`, which would resolve to "titles of all books of the member". Read more about relation paths [here](../../Creating_UIs/UXON/aliases.md). We will come back to this in later chapters too!
+Attribute aliases with relations (like `owner__LABEL` or `owner__user__USERNAME`) are called relation paths. Relation paths can be followed in both directions! The workbench will automatically determine where the foreign keys of the relations are located. This means, you can also use `book__title` as an attribute_alias of the object `member`, which would resolve to "titles of all books of the member". [Read more about relation paths here](../../UXON/Aliases.md). We will come back to this in later chapters too!
 
 Now `Save` the page, select it and press the button `Open page` to see it in action. 
 

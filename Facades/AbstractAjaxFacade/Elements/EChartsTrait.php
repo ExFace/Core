@@ -196,6 +196,10 @@ trait EChartsTrait
         return $includes;
     }
     
+    /**
+     * Configurates the specific chart buttons and adds them to the toolbar parts
+     * 
+     */
     protected function addChartButtons() : void
     {
         $buttonTemplate = new UxonObject([
@@ -240,7 +244,47 @@ trait EChartsTrait
             //$chartTypeBtnGroup->addButton($button,1);
             $menu->addButton($button);
         }
+        
+        $exportPNGUxon = $buttonTemplate->copy();        
+        $exportPNGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTPNG.NAME')}");
+        $exportPNGUxon->setProperty('icon', 'file-image-o');
+        $exportPNGUxon->setProperty('hide_caption', false);
+        $exportPNGUxon->setProperty('visibility', 'optional');
+        $exportPNGBtn = WidgetFactory::createFromUxon($widget->getPage(), $exportPNGUxon, $menu);
+        $exportPNGBtn->getAction()->setScript($this->buildJsExport('png'));
+        $tb->getButtonGroupForGlobalActions()->addButton($exportPNGBtn);
+        
+        $exportJPGUxon = $exportPNGUxon->copy();
+        $exportJPGUxon->setProperty('caption', "{$this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTJPEG.NAME')}");
+        $exportJPGBtn = WidgetFactory::createFromUxon($widget->getPage(), $exportJPGUxon, $menu);
+        $exportJPGBtn->getAction()->setScript($this->buildJsExport('jpeg'));
+        $tb->getButtonGroupForGlobalActions()->addButton($exportJPGBtn);
+        
         return;
+    }
+    
+    /**
+     * Returns the javascript to export the Chart in the specified filetype, supported right now are ´jpeg´ and ´png´
+     * 
+     * @param string $filetype
+     * @return string
+     */
+    protected function buildJsExport(string $filetype) {      
+        return <<<JS
+(function() {
+    var downloadImgSrc = {$this->buildJsEChartsVar()}.getDataURL({
+        type: "{$filetype}",
+        pixelRatio: 4,
+        backgroundColor: '#fff'
+    });
+    const link = document.createElement("a");
+    link.href = downloadImgSrc;
+    link.download = "{$this->getWidget()->getCaption()}.{$filetype}";
+    link.click();
+}())
+
+JS;
+        
     }
     
     /**
