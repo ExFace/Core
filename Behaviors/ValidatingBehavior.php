@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -30,27 +29,32 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * you are trying to catch.
  *
  * ### Properties:
+ * 
  * - `invalid_if_on_create` executes whenever data is being **created**, but **before** these changes are applied to the database.
  * - `invalid_if_on_update` executes whenever data is being **updated**, but **before** these changes are applied to the database.
  * - `invalid_if_on_any` executes whenever data is being **created or updated**, but **before** those changes are applied to the database.
- *
+ * 
  * This behavior can react both to when the data is first created and to whenever it is changed from then on.
  * You can use any of the three `ìnvalid_if` properties to control the timing of your checks.
- *
+ * 
  * ### Placeholders:
+ * 
  *   - `[#~old:alias#]`: Loads the value of the specified `alias` that is currently stored in the database.
  *   - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
  *
  * This behavior supports the use of placeholders to give you more fine-grained control over where your dynamic values are being loaded from.
  * You can apply these placeholders to any input field inside a `invalid_if` context. However, since `[#~old:alias#]` loads data currently
  * stored in the database, it does not work while data is being created (because the data doesn't exist yet).
+ * 
  * This means `[#~old:alias#]` only works for `invalid_if_on_update`.
  *
  * ### Example: Comparing old and new values
+ * 
  * This check ensures that updated values must be greater than previous values. This might for instance be useful when tracking construction progress.
  * Since we want to compare changes, we have to use `invalid_if_on_update` to enable the `[#~old:alias#]` placeholder.
  *
  * NOTE: The property `value` can usually not read data, but because we are using a placeholder, we can bypass this restriction.
+ * 
  * ```
  * {
  *      "invalid_if_on_update": [
@@ -69,6 +73,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ```
  *
  * ### Example: Using multiple `invalid_if` properties
+ * 
  * In this example we have extended the previous code with a new `invalid_if_on_any`, which triggers both on creating
  * and updating our data. It checks, whether the new value lies within a range of 0 to 100. When data is being created in this example,
  * only the checks in `invalid_if_on_any` will be performed. When data is being updated, however, both `invalid_if_on_any` and
@@ -107,7 +112,8 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  * ```
  *
- *  ### Example: Flexible syntax
+ * ### Example: Flexible syntax
+ * 
  * Finally, let's touch on some fun things you can do with our flexible tools. In this example we have used placeholders to
  * dynamically assemble a more insightful error message, as well as having used a formula to do some basic arithmetic.
  * You can get fairly creative with these features, but bear in mind that things might eventually break.
@@ -143,17 +149,13 @@ class ValidatingBehavior extends AbstractBehavior
         self::PLACEHOLDER_OLD,
     );
 
-    const PLACEHOLDER_ERROR_ALIASES = array(
-        self::PLACEHOLDER_OLD => "7X9TCJ3",
-    );
-
     const VAR_EVENT_HANDLER = "handleOnChange";
 
     const VAR_ON_CREATE = "on_create";
 
     const VAR_ON_UPDATE = "on_update";
 
-    const VAR_ON_ANY = "on_any";
+    const VAR_ON_ANY = "always";
 
     const VAR_BAD_DATA = "badData";
 
@@ -197,6 +199,7 @@ class ValidatingBehavior extends AbstractBehavior
      * Prevent changing a data item if any of these conditions match. Reacts only to OnCreate events.
      *
      *  ### Placeholders:
+     * 
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
      * @uxon-property invalid_if_on_create
@@ -216,6 +219,7 @@ class ValidatingBehavior extends AbstractBehavior
      * Prevent changing a data item if any of these conditions match. Reacts only to OnUpdate events.
      *
      * ### Placeholders:
+     * 
      *  - `[#~old:alias#]`: Loads the value for the specified alias that is currently stored in the database.
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
@@ -236,16 +240,17 @@ class ValidatingBehavior extends AbstractBehavior
      * Prevent changing a data item if any of these conditions match. Reacts to both OnCreate and OnUpdate events.
      *
      * ### Placeholders:
+     * 
      * - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
-     * @uxon-property invalid_if_on_any
+     * @uxon-property invalid_if_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
      * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      *
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
-    public function setInvalidIfOnAny(UxonObject $uxon) : ValidatingBehavior
+    public function setInvalidIfAlways(UxonObject $uxon) : ValidatingBehavior
     {
         $this->eventConfig[self::VAR_ON_ANY] = $uxon;
         return $this;
@@ -406,7 +411,7 @@ class ValidatingBehavior extends AbstractBehavior
                         foreach ($placeHolders as $placeholder) {
                             if(str_contains($placeholder, $filterPhrase)) {
                                 $message = 'Placeholder [#'.$placeholder.'#] not supported for '.$propertyName.'!';
-                                throw new BehaviorRuntimeError($this, $message, self::PLACEHOLDER_ERROR_ALIASES[$filterPhrase]);
+                                throw new BehaviorRuntimeError($this, $message, '7X9TCJ3');
                             }
                         }
                     }
