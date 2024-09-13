@@ -8,8 +8,18 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\LogicException;
 
+/**
+ * This trait includes everything needed for a enum data type with values defined in code
+ * 
+ * Enum values are defined as constants of the data type class. The constant name is the
+ * key and the value of the constant ist he value. When casting values, that differ in
+ * case, the case is automatically normalized to the version in the constant. Thus
+ * `::cast()` always returns the exact notation of the constant value.
+ * 
+ * @see SortingDirectionsDataType for an example
+ * 
+ */
 trait EnumStaticDataTypeTrait {
     
     /**
@@ -54,7 +64,26 @@ trait EnumStaticDataTypeTrait {
      */
     public static function findKey($value)
     {
-        return array_search($value, static::getValuesStatic());
+        $found = array_search($value, static::getValuesStatic());
+        if ($found === false) {
+            return static::findKeyCaseInsensitive($value);
+        }
+        return $found;
+    }
+
+    /**
+     * 
+     * @param mixed $value
+     * @return mixed|false
+     */
+    protected static function findKeyCaseInsensitive($value)
+    {
+        foreach (static::getValuesStatic() as $key => $val) {
+            if (strcasecmp($value, $val) === 0) {
+                return $key;
+            }
+        }
+        return false;
     }
     
     /**
@@ -66,7 +95,11 @@ trait EnumStaticDataTypeTrait {
      */
     public static function isValidStaticValue($value)
     {
-        return in_array($value, static::getValuesStatic());
+        $found = in_array($value, static::getValuesStatic());
+        if ($found === false) {
+            return static::findKeyCaseInsensitive($value) !== false;
+        }
+        return $found;
     }
     
     /**
@@ -106,21 +139,21 @@ trait EnumStaticDataTypeTrait {
         }
         
         // Check if the casted value is part of the enum
-        $valueInEnum = static::isValidStaticValue($value);
+        $key = static::findKey($value);
         
         // Convert all sorts of empty values to NULL except if they are explicitly
         // part of the enumeration: e.g. an empty string should become null if the
         // enumeration does not include the empty string explicitly.
         // TODO #null-or-NULL does the NULL constant need to pass casting?
-        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $valueInEnum === false) {
+        if ((static::isValueEmpty($value) === true || static::isValueLogicalNull($value)) && $key === false) {
             return null;
         }
         
-        if ($valueInEnum === false){
+        if ($key === false){
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
-        return $value;
+        return static::getValuesStatic()[$key];
     }    
     
     /**
