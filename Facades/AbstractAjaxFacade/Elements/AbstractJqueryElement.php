@@ -1083,4 +1083,43 @@ JS;
     {
         return "($('#{$this->getId()}').length !== 0)";
     }
+
+    /**
+     * Returns an inline JS snippet (without ending `;`) that shows a warning if there are unsaved changes or returns FALSE otherwise.
+     *
+     * This can be easily used in if-statements. To check if there are unsaved changes do:
+     *
+     * ```
+     *
+     *  if ({$element->buildJsHasUnsavedChanges()} === true) {
+     *      // Show error or return.
+     *  } else {
+     *      // Everything is fine.
+     *  }
+     *
+     * ```
+     *
+     * Or to show a user warning, where the user can pick from "discard and continue" or "cancel"
+     *
+     * ```
+     *
+     *  var fnAction = function() {
+     *      // Display warning.
+     *  };
+     *
+     *  if ({$element->buildJsHasUnsavedChanges(false, 'fnAction')} === true) {
+     *      fnAction();
+     *  }
+     *
+     * ```
+     *
+     * @param bool $showWarning
+     * @param string $fnOnDiscardJs
+     * @return string
+     */
+    public function buildJsCheckForUnsavedChanges(bool $showWarning = true, string $fnOnDiscardJs = '') : string
+    {
+        // Return false by default, so that it does not cause unexpected side effects if not overridden.
+        return 'false';
+    }
 }

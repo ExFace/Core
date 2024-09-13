@@ -438,27 +438,79 @@ JS;
         }
         return false;
     }
-    
+
     /**
-     *  
-     * @param ActionInterface|NULL $action
+     * Check if a confirmation of the specified type is required.
+     *
+     * @param string $confirmationType
+     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type
+     * @param bool $default
+     * The value returned, if `$this->getAction()` fails.
      * @return bool
      */
-    protected function isCheckForUnsavedChangesRequired(ActionInterface $action = null) : bool
+    protected function isConfirmationRequired(string $confirmationType, bool $default = true) : bool
     {
-        $action = $action ?? $this->getAction();
-        switch (true) {
-            case $action instanceof SendToWidget:
-            case $action instanceof ShowLookupDialog:
-            case $action instanceof iCallWidgetFunction:
-            case $action instanceof iRunFacadeScript:
-                $checkChanges = false;
-                break;
-            default:
-                $checkChanges = true;
-                break;
+        if(!$action = $this->getAction()) {
+            return $default;
         }
-        return $checkChanges;
+
+        return $action->isConfirmationRequired($confirmationType);
+    }
+
+    /**
+     * Wraps the pending action in a variable to suspend its execution until
+     * all required confirmations have been successful.
+     *
+     * Built-In confirmations are gathered automatically, but you may add custom
+     * confirmations via `$customConfirmationsJs`.
+     *
+     * ```
+     *
+     *  // Wrap pending action in callable to delay execution.
+     *  var fnAction = function() {
+     *      {$pendingActionJs}
+     *  };
+     *
+     *  // Built-In confirmations.
+     *  {$builtInConfirmationsJs}
+     *  // Custom confirmations. These should return, if interruption is desired.
+     *  {$customConfirmationsJs}
+     *
+     *  // Execute pending action, if all confirmations agreed.
+     *  fnAction();
+     *
+     * ```
+     *
+     *
+     * @param string $pendingActionJs
+     * @param string $customConfirmationsJs
+     * @return string
+     */
+    protected function buildJsConfirmationsWrapper(string $pendingActionJs, string $customConfirmationsJs = '') : string
+    {
+        $checkChangesJs = '';
+        if ($this->isConfirmationRequired(ActionInterface::CONFIRMATION_UNSAVED_CHANGES)) {
+            $checkChangesJs = <<<JS
+if(true === {$this->getInputElement()->buildJsCheckForUnsavedChanges(true, 'fnAction')}) {
+    return;
+}
+JS;
+        }
+
+        return <<< JS
+// Wrap pending action in callable to delay execution.
+var fnAction = function() {
+    {$pendingActionJs}
+};
+
+// Built-In confirmations.
+{$checkChangesJs}
+// Custom confirmations. These should return, if interruption is desired.
+{$customConfirmationsJs}
+
+// Execute pending action, if all confirmations agreed.
+fnAction();
+JS;
     }
     
     /**
