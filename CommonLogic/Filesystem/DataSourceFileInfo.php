@@ -2,6 +2,9 @@
 namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\Behaviors\FileBehavior;
+use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -43,7 +46,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetReadError;
  * IDEA added wildcard support for filenames - to select one of multiple files inside a folder in
  * case the `folder_attribute` is not a UID. See `getFilenameMask()` for details
  */
-class DataSourceFileInfo implements FileInfoInterface
+class DataSourceFileInfo implements FileInfoInterface, FileStreamInterface
 {
     const SCHEME = 'metamodel://';
     
@@ -70,6 +73,8 @@ class DataSourceFileInfo implements FileInfoInterface
     private $fileClass = null;
     
     private $infoClass = null;
+
+    private $tempFiles = [];
     
     /**
      * 
@@ -109,16 +114,13 @@ class DataSourceFileInfo implements FileInfoInterface
     /**
      *
      * @param WorkbenchInterface $workbench
-     * @param string|MetaObjectSelectorInterface|MetaObjectInterface $objectSelectorString
+     * @param string|MetaObjectSelectorInterface $objectSelectorString
      * @param string $uid
      * @return DataSourceFileInfo
      */
-    public static function fromObjectUID(WorkbenchInterface $workbench, $objectSelectorString, string $uid) : self
+    public static function fromObjectSelectorAndUID(WorkbenchInterface $workbench, $objectSelectorString, string $uid) : self
     {
         switch (true) {
-            case $objectSelectorString instanceof MetaObjectInterface:
-                $objectString = $objectSelectorString->getAliasWithNamespace();
-                break;
             case $objectSelectorString instanceof MetaObjectSelectorInterface:
                 $objectString = $objectSelectorString->toString();
                 break;
@@ -130,6 +132,20 @@ class DataSourceFileInfo implements FileInfoInterface
         }
         $path = self::SCHEME . $objectString . self::SLASH . $uid;
         return new self($path, $workbench);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @param string $uid
+     * @return \exface\Core\CommonLogic\Filesystem\DataSourceFileInfo
+     */
+    public static function fromObjectAndUID(MetaObjectInterface $object, string $uid) : self
+    {
+        if ($object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->isEmpty()) {
+            throw new FileNotFoundError('Cannot use object ' . $object->__toString() . ' as a file! Only objects with FileBehavior allowed!');
+        }
+        return self::fromObjectSelectorAndUID($object->getWorkbench(), $object->getAliasWithNamespace(), $uid);
     }
     
     /**
@@ -590,5 +606,40 @@ class DataSourceFileInfo implements FileInfoInterface
         // Make sure the FileInfo itself knows, that the file does not exist anymore
         $fileDs->removeRows();
         return;
+    }
+
+    /**
+     * 
+     * @throws \exface\Core\Exceptions\FileNotReadableError
+     * @return string
+     */
+    public function getStreamUrl() : string
+    {
+        $contents = $this->openFile()->read();
+        if ($contents === null) {
+            throw new FileNotReadableError('Cannot read spreadsheet from "' . $this->getFilename() . '": fetching contents failed!', null, null, $this);
+        }
+        $fm = $this->getMetaObject()->getWorkbench()->filemanager();
+        $tmpFolder = $fm->getPathToTempFolder() . DIRECTORY_SEPARATOR . 'DataSourceFileInfoTemp' . DIRECTORY_SEPARATOR;
+        if (! file_exists($tmpFolder)) {
+            mkdir($tmpFolder);
+        }
+        $tmpPath = $tmpFolder . $this->getFilename();
+        file_put_contents($tmpPath, $contents);
+        $this->tempFiles[] = $tmpPath;
+
+        return $tmpPath;
+    }
+
+    /**
+     * Called when this file is not needed and clears the caches
+     * 
+     * @return void
+     */
+    public function __destruct()
+    {
+        foreach ($this->tempFiles as $path) {
+            @unlink($path);
+        }
     }
 }

@@ -50,7 +50,33 @@ abstract class AbstractTemplateRenderer implements TemplateRendererInterface
         $this->resolvers[] = $resolver;
         return $this;
     }
-    
+
+    /**
+     * A convenience method that adds an array of placeholders, ignoring any items that are not an instance of `PlaceholderResolverInterface`.
+     *
+     * @param array $resolverArray
+     * @return TemplateRendererInterface
+     */
+    public function addPlaceholdersViaArray(array $resolverArray) : TemplateRendererInterface {
+        foreach ($resolverArray as $resolver) {
+            if($resolver instanceof PlaceholderResolverInterface) {
+                $this->resolvers[] = $resolver;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Returns a new array with all registered resolvers.
+     *
+     * @return array
+     */
+    public function getResolvers() : array
+    {
+        return $this->resolvers;
+    }
+
     /**
      * 
      * @return PlaceholderResolverInterface[]

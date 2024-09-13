@@ -26,30 +26,13 @@ class SqlFilteringAgent implements AiAgentInterface
 
     public function handle(AiPromptInterface $prompt) : AiResponseInterface
     {
-        // Only export objects, that have an SQL data source
-        // Create a filter function that will take care of filtering meta objects
-        if ($prompt->hasMetaObject()) {
-            $obj = $prompt->getMetaObject();
-            $targetConnectionAlias = $obj->getDataConnection()->getAliasWithNamespace();
-        } else {
-            throw new RuntimeException('Cannot generate AI filter: no base object specified in prompt');
-        }
-        $objFilter = function(MetaObjectInterface $obj) use ($targetConnectionAlias) {
-            $isSql = $obj->getDataConnection() instanceof SqlDataConnectorInterface;
-            $isInTargetConnection = $obj->getDataConnection()->isExactly($targetConnectionAlias);
-            $isTable = stripos($obj->getDataAddress(), '(') === false; // Otherwise it is a SQL statement like (SELECT ...)
-            // TODO also only those, that are in the same database as the object we are filtering
-            return $isSql && $isTable && $isInTargetConnection;
-        };
-        $dbmlModel = new DbmlModel($prompt->getWorkbench(), $objFilter);
+        $dbmlModel = $this->getDbmlModel($prompt);
 
         $userPromt = $prompt->getUserMessages()[0];
         $systemPrompt = <<<TEXT
             
         You have the following DBML model: 
         {$dbmlModel->toDBML()}
-
-        
 
 TEXT;
         /* TODO
@@ -90,5 +73,27 @@ TEXT;
     {
         // TODO find out what app we are interested in
         return 'exface.Core.METAMODEL_DB';
+    }
+
+    public function getDbmlModel(AiPromptInterface $prompt) : DbmlModel
+    {
+        // Only export objects, that have an SQL data source
+        // Create a filter function that will take care of filtering meta objects
+        if ($prompt->hasMetaObject()) {
+            $obj = $prompt->getMetaObject();
+            $targetConnectionAlias = $obj->getDataConnection()->getAliasWithNamespace();
+        } else {
+            throw new RuntimeException('Cannot generate AI filter: no base object specified in prompt');
+        }
+        $objFilter = function(MetaObjectInterface $obj) use ($targetConnectionAlias) {
+            $isSql = $obj->getDataConnection() instanceof SqlDataConnectorInterface;
+            $isInTargetConnection = $obj->getDataConnection()->isExactly($targetConnectionAlias);
+            $isTable = stripos($obj->getDataAddress(), '(') === false; // Otherwise it is a SQL statement like (SELECT ...)
+            // TODO also only those, that are in the same database as the object we are filtering
+            return $isSql && $isTable && $isInTargetConnection;
+        };
+        $dbmlModel = new DbmlModel($prompt->getWorkbench(), $objFilter);
+        return $dbmlModel;
+
     }
 }

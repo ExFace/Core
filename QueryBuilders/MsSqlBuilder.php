@@ -253,6 +253,9 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($useEnrichment) {
             $query = $this->buildSqlQuerySelectWithEnrichment($select, $enrichment_select, $select_comment, $from, $join, $enrichment_join, $where, $group_by, $having, $order_by, $limit, $distinct);
         } else {
+            if ($this->isAggregatedToSingleRowViaListOnly() === true) {
+                $distinct = 'DISTINCT ';
+            }
             $query = $this->buildSqlQuerySelectWithoutEnrichment($select, $select_comment, $from, $join, $where, $group_by, $having, $order_by, $limit, $distinct);
         }
         
@@ -773,5 +776,44 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $string = str_replace("'", "''", $string );
         
         return $string;
+    }
+
+    /**
+     * Returns TRUE if this query is to be aggregated to a single row AND only uses LIST or LIST_DISTINCT as aggregators
+     * 
+     * This is important for MS SQL because the `FOR XML PATH` concatenation still produces multiple rows
+     * (all with the same values). This does not happen if at least one other group function is used. If it
+     * is only listing though, adding a DISTINCT helps too.
+     * 
+     * For example, the following query will yield two rows:
+     * 
+     * `SELECT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
+     * 
+     * While the same query with a DISTINCT or a "regular" group function will produce a single row only:
+     * 
+     * `SELECT DISTINCT STUFF((SELECT [text()] = ', ' + tbl.name FOR XML PATH(''),TYPE),1,2,'') FROM tbl WHERE id IN (100,101)`
+     * 
+     * @see buildSqlGroupByExpression()
+     * @see buildSqlSelectGrouped()
+     * 
+     * @return bool
+     */
+    protected function isAggregatedToSingleRowViaListOnly() : bool
+    {
+        if ($this->isAggregatedToSingleRow() === false) {
+            return false;
+        }
+
+        foreach ($this->getAttributes() as $qpart) {
+            $aggr = $qpart->hasAggregator() ? $qpart->getAggregator() : null;
+            if ($aggr === null) {
+                return false;
+            }
+            if ($aggr->__toString() !== AggregatorFunctionsDataType::LIST_ALL && $aggr->__toString() !== AggregatorFunctionsDataType::LIST_DISTINCT) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
