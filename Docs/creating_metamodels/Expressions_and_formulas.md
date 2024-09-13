@@ -9,7 +9,7 @@ There are different types of expressons, that can be used within various parts o
 | Scalar values   | `1`, `'Text'`, `true` | Simple strings and numbers |
 | Model aliases   | `exface.Core.DATA_TYPE`, `APP` | Reference model entities like objects and attributes. Almost everything in the meta model has an alias. |
 | Placeholders    | `[#title#]`, `[#~data:APP#]` | Allow to use variables inside textual templates |
-| Formulas        | `=Now()`, `=SUM(ATTRIBUTE1, ATTRIBUTE2)` | Used to calculate values similarly to Excel.            |
+| [Formulas](Formula_syntax.md)         | `=Now()`, `=SUM(ATTRIBUTE1, ATTRIBUTE2)` | Used to calculate values similarly to Excel. See [syntax overview](Formula_syntax.md) for details.            |
 | Widget links    | `my_datatable_id`, `[my.app.page1]my_table_id` | Reference a widget by its id - even across pages |
 | Live references | `=my_datatable_id!ATTRIBUTE1` | Reference the current "live" value in a widget |
 
@@ -52,16 +52,7 @@ There are some exceptions, documented at the respective model property: e.g. the
 
 ## Formulas
 
-Formulas are similar to those in Microsoft Excel. Many properties of widgets, behaviors and actions support formulas. A formula MUST start with `=` and may contain other formulas, model aliases and scalar values. 
-
-Each formula has its own set of arguments. Some of them are mandatory, others are optional or may have default values.
-
-Formulas are resolved by the workbench at certain points of time
-
-- static formulas can be resolved at any time - e.g. when a widget is rendered, etc. 
-- data-driven formulas are resolved by the workbench when data is read - i.e. when reading input data for actions or mappers, on widget prefill, etc.
-
-Some formulas also support placeholders in their string arguments. Additionally there is the `=ReplacePlaceholders()` formula, that allows to use placeholders virtually anywhere! Note, that using placeholders will most likely make any formula non-static.
+Formulas are similar to those in Microsoft Excel. Many properties of widgets, behaviors and actions support formulas. A formula MUST start with `=` and may contain other formulas, model aliases, scalar values and mathematical/logical operators. See [detailed formula syntax guide](Formula_syntax.md) 
 
 ### Examples: 
 
