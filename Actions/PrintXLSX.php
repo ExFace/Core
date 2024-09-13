@@ -1,39 +1,22 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\CommonLogic\Filemanager;
-use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\ResultFactory;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Filesystem\FileInfoInterface;
-use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\AbstractAction;
-use exface\Core\Templates\BracketHashExcelTemplateRenderer;
+use exface\Core\Templates\BracketHashXlsxTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataColumnArrayPlaceholders;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Templates\Placeholders\PlaceholderGroup;
-use exface\Core\Templates\Placeholders\DataSheetPlaceholder;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\TranslationPlaceholders;
-use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
-use exface\Core\Interfaces\Actions\iRenderTemplate;
-use exface\Core\Interfaces\Actions\iUseTemplate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\IReader;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\IWriter;
 
 /**
- * This action prints data using a text-based template (e.g. HTML)
+ * This action prints data using a XLSX template with any number of sub-sheets.
  * 
  * The template can either be set inside the action property `template` or read from
  * a file specified by the `template_path` (absolute or relative to the vendor folder).
@@ -103,13 +86,11 @@ use PhpOffice\PhpSpreadsheet\Writer\IWriter;
  * 
  * ```
  * 
- * @author Andrej Kabachnik
+ * @author Andrej Kabachnik, Georg Bieger
  *
  */
 class PrintXLSX extends PrintTemplate
 {
-    private $dataPlaceholders = null;
-
     private $template = null;
     
     
@@ -119,7 +100,7 @@ class PrintXLSX extends PrintTemplate
      * @param DataSheetInterface $inputData
      * @return string[]
      */
-    public function renderTemplate(DataSheetInterface $inputData) : array
+    public function renderTemplate(DataSheetInterface $inputData, bool $preview = false) : array
     {
         $contents = [];
         $tplPath = $this->getTemplate();
@@ -130,16 +111,27 @@ class PrintXLSX extends PrintTemplate
         
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
         
-        $baseRenderer = new BracketHashExcelTemplateRenderer($this->getWorkbench());
+        $baseRenderer = new BracketHashXlsxTemplateRenderer($this->getWorkbench());
         $baseRenderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench(), '~config:'));
         $baseRenderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench(), '~translate:'));
-        
+
+        $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $tplPath;
+
+        try {
+            $readerXlsx = IOFactory::createReaderForFile($path);
+        } catch (\Exception $e) {
+            throw new ActionRuntimeError($this, 'Unable to open file: ' . $path, null, $e);
+        }
+
         foreach (array_keys($inputData->getRows()) as $rowNo) {
             // Extend base renderer with placeholders for the current input data row
             $currentRowRenderer = $baseRenderer->copy();
             $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($inputData, $rowNo, '~input:'));
             $currentRowRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench(), $inputData, $rowNo));
-            
+            // Create string renderer for file path.
+            $filePathRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+            $filePathRenderer->addPlaceholdersViaArray($currentRowRenderer->getResolvers());
+
             if ($dataPhsUxon !== null) {
                 // Prepare a renderer for the data_placeholders config
                 $dataTplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
@@ -163,34 +155,70 @@ class PrintXLSX extends PrintTemplate
                 }
                 $currentRowRenderer->setDefaultPlaceholderResolver($dataPhsResolverGroup);
             }
-            // placeholders for the resulting file
-            $filePath = $this->getFilePathAbsolute($currentRowRenderer);
+
+            // Ensure unique file paths.
+            $basePath = explode('.', $filePath = $this->getFilePathAbsolute($filePathRenderer));
+            for($i = 1; array_key_exists($filePath, $contents); $i++) {
+                $filePath = $basePath[0].'_'.$i.'.'.$basePath[1];
+            }
+
+            // Add resolvers for file path.
             $currentRowRenderer->addPlaceholder(new ArrayPlaceholders([
                 'name' => FilePathDataType::findFileName($filePath, true),
                 'name_without_ext' => FilePathDataType::findFileName($filePath, false)
             ], '~file:'));
             
-            // Render the template for the current input row
-            $mainTplRendered = $currentRowRenderer->render($tplPath);
-            if (array_key_exists($filePath, $contents)) {
-                $contents[$filePath] .= $mainTplRendered;
-            } else {
-                $contents[$filePath] = $mainTplRendered;
+            // Render the template for the current input row.
+            try {
+                // Load template sheet.
+                $tplSpreadsheet = $readerXlsx->load($path);
+
+                // Render the template for the current input row. Spreadsheets are always passed by reference.
+                $currentRowRenderer->render($tplSpreadsheet);
+
+                // Save file.
+                $writerType = $preview ? IOFactory::WRITER_HTML : IOFactory::WRITER_XLSX;
+                $writer = IOFactory::createWriter($tplSpreadsheet, $writerType);
+                if($preview) {
+                    $writer->writeAllSheets();
+                    $filePath = explode('.', $filePath)[0].$this->getFileExtensionPreview();
+                }
+                $writer->save($filePath);
+
+                // Unset spreadsheet to avoid memory leaks.
+                $tplSpreadsheet->disconnectWorksheets();
+                unset($tplSpreadsheet);
+
+                // Retrieve binary data.
+                $contents[$filePath] = file_get_contents($filePath);
+            } catch (\Exception $e) {
+                throw new ActionRuntimeError($this, 'Unable to render template: '.$e->getMessage(), null, $e);
             }
         }
+
         return $contents;
     }
 
-    
+
     /**
-     * 
+     *
      * @return string
      */
     protected function getFileExtensionDefault() : string
     {
         return '.xlsx';
     }
-    
+
+    /**
+     * Returns the file extension for preview renders.
+     *
+     * @return string
+     */
+    protected function getFileExtensionPreview() : string
+    {
+        return '.html';
+    }
+
     /**
      * 
      * @return string|null
@@ -208,20 +236,6 @@ class PrintXLSX extends PrintTemplate
     {
         return $this->template;
     }
-
-    protected function getTemplateReader() : Spreadsheet
-    {
-        $path = $this->getTemplateFileInfo()->getPathAbsolute();
-        $reader = IOFactory::createReaderForFile($path);
-        $spreadsheet = $reader->load($path);
-        return $spreadsheet;
-    }
-
-    protected function getTemplateFileInfo() : FileInfoInterface
-    {
-        $pathAbs = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $this->getTemplate();
-        return new LocalFileInfo(new \SplFileInfo($pathAbs));
-    }
     
     /**
      * Path to the Excel template file
@@ -238,9 +252,12 @@ class PrintXLSX extends PrintTemplate
         return $this;
     }
 
-    protected function getExcelWriter(Spreadsheet $spreadsheet) : IWriter
+    /**
+     * @param DataSheetInterface $inputData
+     * @return string[]
+     */
+    public function renderPreviewHTML(DataSheetInterface $inputData) : array
     {
-        $writer = IOFactory::createWriter($spreadsheet, 'TODO');
-        return $writer;
+        return $this->renderTemplate($inputData, true);
     }
 }

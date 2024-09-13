@@ -379,7 +379,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 
                 // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
                 // instantiate all attributes first - otherwise we may not be able to find left keys of reverse relations!
-                if ($row['related_object_oid']) {
+                if (null !== $row['related_object_oid'] ?? null) {
                     $relation_attrs[] = [
                         'attr' => $attr,
                         'row' => $row
@@ -543,7 +543,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        if ($row['attribute_type'] === self::ATTRIBUTE_TYPE_COMPOUND) {
+        if (self::ATTRIBUTE_TYPE_COMPOUND === $row['attribute_type'] ?? null) {
             $attr = new CompoundAttribute($object);
         } else {
             $attr = new Attribute($object);
@@ -551,57 +551,83 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
         $attr->setName($row['attribute_name']);
-        $attr->setDataAddress($row['data']);
-        $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
-        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
+        if (null !== $val = $row['data'] ?? null){
+            $attr->setDataAddress($val);
+        }
+        $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties'] ?? null));
+        $attr->setRelationFlag(null !== ($row['related_object_oid'] ?? null) ? true : false);
         $attr->setDataType($row['data_type_oid']);
         
-        if ($calcExpr = $row['attribute_formatter']) {
-            $attr->setCalculation($calcExpr);
+        if ($val = $row['attribute_formatter'] ?? null) {
+            $attr->setCalculation($val);
         }
         
-        $default_editor = $row['default_editor_uxon'];
-        if ($default_editor && $default_editor !== '{}'){
-            $attr->setDefaultEditorUxon($default_editor);
+        $val = $row['default_editor_uxon'] ?? null;
+        if ($val && $val !== '{}'){
+            $attr->setDefaultEditorUxon($val);
         }
-        $default_display = $row['default_display_uxon'];
-        if ($default_display && $default_display !== '{}'){
-            $attr->setDefaultDisplayUxon($default_display);
+        $val = $row['default_display_uxon'] ?? null;
+        if ($val && $val !== '{}'){
+            $attr->setDefaultDisplayUxon($val);
         }
-        $custom_type = $row['custom_data_type_uxon'];
-        if ($custom_type && $custom_type !== '{}') {
-            $attr->setCustomDataTypeUxon($custom_type);
+        $val = $row['custom_data_type_uxon'] ?? null;
+        if ($val && $val !== '{}') {
+            $attr->setCustomDataTypeUxon($val);
         }
         
         // Control flags
-        if (! is_null($row['attribute_readable_flag'])){
-            $attr->setReadable($row['attribute_readable_flag']);
+        if (null !== $val = $row['attribute_readable_flag'] ?? null){
+            $attr->setReadable($val);
         }
-        if (! is_null($row['attribute_writable_flag'])){
-            $attr->setWritable($row['attribute_writable_flag']);
+        if (null !== $val = $row['attribute_writable_flag'] ?? null){
+            $attr->setWritable($val);
         }
-        $attr->setRequired($row['attribute_required_flag']);
-        $attr->setEditable($row['attribute_editable_flag']);
-        $attr->setCopyable($row['attribute_copyable_flag'] ?? $row['attribute_editable_flag']);
-        $attr->setHidden($row['attribute_hidden_flag']);
-        $attr->setSortable($row['attribute_sortable_flag']);
-        $attr->setFilterable($row['attribute_filterable_flag']);
-        $attr->setAggregatable($row['attribute_aggregatable_flag']);
+        if (null !== $val = $row['attribute_required_flag'] ?? null){
+            $attr->setRequired($val);
+        }
+        if (null !== $val = $row['attribute_editable_flag'] ?? null){
+            $attr->setEditable($val);
+        }
+        if (null !== $val = $row['attribute_copyable_flag'] ?? ($row['attribute_editable_flag'] ?? null)){
+            $attr->setCopyable($val);
+        }
+        if (null !== $val = $row['attribute_hidden_flag'] ?? null){
+            $attr->setHidden($val);
+        }
+        if (null !== $val = $row['attribute_sortable_flag'] ?? null){
+            $attr->setSortable($val);
+        }
+        if (null !== $val = $row['attribute_filterable_flag'] ?? null){
+            $attr->setFilterable($val);
+        }
+        if (null !== $val = $row['attribute_aggregatable_flag'] ?? null){
+            $attr->setAggregatable($val);
+        }
         
         // Defaults
-        $attr->setDefaultDisplayOrder($row['default_display_order']);
-        if ($row['default_value'] !== null && $row['default_value'] !== '') {
-            $attr->setDefaultValue($row['default_value']);
+        $attr->setDefaultDisplayOrder($row['default_display_order'] ?? null);
+
+        $val = $row['default_value'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setDefaultValue($val);
         }
-        if ($row['fixed_value'] !== null && $row['fixed_value'] !== '') {
-            $attr->setFixedValue($row['fixed_value']);
+        $val = $row['fixed_value'] ?? null;
+        if ($val !== null && $val !== '') {
+            $attr->setFixedValue($val);
         }
-        $attr->setFormula($row['attribute_formula']);
-        if ($row['default_sorter_dir']){
-            $attr->setDefaultSorterDir($row['default_sorter_dir']);
+        if (null !== $val = $row['attribute_formula'] ?? null){
+            $attr->setFormula($val);
         }
-        $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
-        $attr->setValueListDelimiter($row['value_list_delimiter']);
+        $val = $row['default_sorter_dir'] ?? null;
+        if ($val !== null && $val !== ''){
+            $attr->setDefaultSorterDir($val);
+        }
+        if (null !== $val = $row['default_aggregate_function'] ?? null){
+            $attr->setDefaultAggregateFunction($val);
+        }
+        if (null !== $val = $row['value_list_delimiter'] ?? null){
+            $attr->setValueListDelimiter($val);
+        }
         
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);

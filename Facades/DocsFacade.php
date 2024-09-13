@@ -9,7 +9,6 @@ use kabachello\FileRoute\Templates\PlaceholderFileTemplate;
 use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Filemanager;
-use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Facades\DocsFacade\MarkdownDocsReader;
 use exface\Core\Facades\DocsFacade\Middleware\AppUrlRewriterMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
@@ -20,12 +19,24 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 
 /**
- *
+ * Renders the markdown docs from the /Docs folder as a simple website
+ * 
+ * Usage:
+ * 
+ * - api/docs - render a list of links to all available app docs
+ * - api/docs/exface/Core/index.md - render the index page for the Core app docs
+ * - api/docs/exface/Core/index.md?render=print - render a printable version of the core docs with all subpages
+ * 
  * @author Andrej Kabachnik
  *
  */
 class DocsFacade extends AbstractHttpFacade
 {
+    const URL_PARAM_RENDER = 'render';
+
+    const URL_PARAM_RENDER_PRINT = 'print';
+
+    const URL_PARAM_RENDER_CHAPTER = 'chapter';
     
     private $processedLinks = [];
     private $processedLinksKey = 0;
@@ -68,78 +79,32 @@ class DocsFacade extends AbstractHttpFacade
         $reader = new MarkdownDocsReader($this->getWorkbench());
         
         switch (true) {
-            case ($request->getQueryParams()['render'] === 'pdf'):
+            // If a printout is requested, include all child pages as chapters
+            // TODO move the whole printing logic to a middleware
+            case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_PRINT):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
-                $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
-                
+                $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));       
                 $response = $handler->handle($request);
-                $htmlString = $response->getBody()->__toString();
-                // Find all links in first document page
-                $linksArray = $this->findLinksInHtml($htmlString);
-                // Create temp file for saving entire html content for PDF
-                $tempFilePath = tempnam(sys_get_temp_dir(), 'combined_content_');
-                
-                $this->processLinks($tempFilePath, $linksArray);
-                $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
-                $htmlString = $this->replaceHref($htmlString);
-                
-                // Attach print function to end of html to show print window when accessing the HTML
-                // Also add an arrow as a header element to jump back to the first page in the PDF
-                $printString =
-                '<style>
-                    @media print {
-                        body {
-                            margin: 2cm; /* Margin for the body content */
-                        }
-                    
-                        /* Custom Header */
-                        header {
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            height: 2cm;
-                            text-align: right;
-                            font-size: 24px;
-                            font-weight: normal;
-                            line-height: 2cm;
-                            margin-right: 20px
-                        }
-                    }
-                </style>
-                    
-                <header>' . '<a href="#' . $requestUri . '">↑</a>' . '</header>
-                    
-                <script type="text/javascript">
-                    window.onload = function() {
-                        window.print();
-                    };
-                </script>';
 
-                file_put_contents($tempFilePath, $printString, FILE_APPEND | LOCK_EX);
-                
-                $combinedBodyContent = file_get_contents($tempFilePath);
-                // Clean up the temporary file
-                unlink($tempFilePath);
-                
-                // Parse the body content of all links at the end of the body html tag of the first html document page
-                $bodyCloseTagPosition = stripos($htmlString, '</body>');
-                $htmlString = substr_replace($htmlString, $combinedBodyContent, $bodyCloseTagPosition, 0);
+                $htmlString = $response->getBody()->__toString();
+                $htmlString = $this->printCombinedPages($htmlString, $requestUri->__toString());
 
                 $response = new Response(200, [], $htmlString);
                 $response = $response->withHeader('Content-Type', 'text/html');
                 break;
                 
-            // This case is for all links that are given to the processLinks function
-            case ($request->getQueryParams()['markdown'] === 'true'):
+            // If the page ist to be rendered as a chapter, used a different template
+            // TODO move the whole printing logic to a middleware
+            case ($request->getQueryParams()[self::URL_PARAM_RENDER] === self::URL_PARAM_RENDER_CHAPTER):
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/templatePDF.html']);
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
                 $template->setBreadcrumbsRootName('Documentation');
                 $handler->add(new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template));
                 $response = $handler->handle($request);
                 break;
-                
+            
+            // By defualt, render the regular interactiv template
             default:
                 $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Facades/DocsFacade/template.html']);
                 $template = new PlaceholderFileTemplate($templatePath, $baseUrl . '/' . $this->buildUrlToFacade(true));
@@ -176,13 +141,69 @@ class DocsFacade extends AbstractHttpFacade
     {
         return 'api/docs';
     }
+
+    protected function printCombinedPages(string $htmlString, string $requestUri) : string
+    {
+        // Find all links in first document page
+        $linksArray = $this->findLinksInHtml($htmlString);
+        // Create temp file for saving entire html content for PDF
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'combined_content_');
+        
+        $this->printLinkedPages($tempFilePath, $linksArray);
+        $htmlString = $this->addIdToFirstHeading($requestUri, $htmlString);
+        $htmlString = $this->replaceHref($htmlString);
+        
+        // Attach print function to end of html to show print window when accessing the HTML
+        // Also add an arrow as a header element to jump back to the first page in the PDF
+        $printString =
+        '<style>
+            @media print {
+                body {
+                    margin: 2cm; /* Margin for the body content */
+                }
+            
+                /* Custom Header */
+                header {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 2cm;
+                    text-align: right;
+                    font-size: 24px;
+                    font-weight: normal;
+                    line-height: 2cm;
+                    margin-right: 20px
+                }
+            }
+        </style>
+            
+        <header>' . '<a href="#' . $requestUri . '">↑</a>' . '</header>
+            
+        <script type="text/javascript">
+            window.onload = function() {
+                window.print();
+            };
+        </script>';
+
+        file_put_contents($tempFilePath, $printString, FILE_APPEND | LOCK_EX);
+        
+        $combinedBodyContent = file_get_contents($tempFilePath);
+        // Clean up the temporary file
+        unlink($tempFilePath);
+        
+        // Parse the body content of all links at the end of the body html tag of the first html document page
+        $bodyCloseTagPosition = stripos($htmlString, '</body>');
+        $htmlString = substr_replace($htmlString, $combinedBodyContent, $bodyCloseTagPosition, 0);
+        return $htmlString;
+    }
     
     /**
      * Recursivlely add the entire html of all document links to a tempFile
      * @param string $tempFilePath
      * @param array $linksArray
      */
-    protected function processLinks(string $tempFilePath, array $linksArray) 
+    protected function printLinkedPages(string $tempFilePath, array $linksArray) 
     {
         foreach ($linksArray as $link) {
             // Only process links that are markdown files and have not been processed before
@@ -192,7 +213,7 @@ class DocsFacade extends AbstractHttpFacade
 
                 $linkRequest = new ServerRequest('GET', $link);
                 // Adds queryParam to jump to the right switch case inside of the createResponse function
-                $linkRequest = $linkRequest->withQueryParams(['markdown' => 'true']);
+                $linkRequest = $linkRequest->withQueryParams([self::URL_PARAM_RENDER => self::URL_PARAM_RENDER_CHAPTER]);
                 $linkResponse = $this->createResponse($linkRequest);
                 // Adds a page break before start of each markdown file
                 $pageBreak = '<div style="page-break-before: always;">';
@@ -206,7 +227,7 @@ class DocsFacade extends AbstractHttpFacade
                 file_put_contents($tempFilePath, $htmlString, FILE_APPEND | LOCK_EX);
                 
                 if (!empty($linksArrayRecursive)) {
-                    $this->processLinks($tempFilePath, $linksArrayRecursive);
+                    $this->printLinkedPages($tempFilePath, $linksArrayRecursive);
                 }
             }
         }
@@ -236,12 +257,29 @@ class DocsFacade extends AbstractHttpFacade
     protected function replaceHref(string $htmlString): string 
     {
         // Define the pattern to capture the entire URL (including the domain and path) inside the href attribute
-        $pattern = '/<a href="([^"]*\/[^\/]+\.md)(?:\?render=pdf)?">(.*?)<\/a>/';
+        $pattern = '/<a href="([^"]*\/[^\/]+\.md)(?:\?' . self::URL_PARAM_RENDER . '=' . self::URL_PARAM_RENDER_PRINT . ')?">(.*?)<\/a>/';
         
+        $matches = [];
+        preg_match_all($pattern, $htmlString, $matches);
+
+        if (empty($matches)) {
+            return $htmlString;
+        }
+
         // Define the replacement pattern e.g. <a href="#http://.../Section1.md">Section 1</a>
-        $replacement = '<a href="#$1">$2</a>';
+        $from = [];
+        $to = [];
+        foreach ($matches[1] as $i => $url) {
+            $from[] = '<a href="' . $url . '"';
+            $to[] = '<a href="#' . $this->getAnchor($url) . '"';
+        }
         
-        return preg_replace($pattern, $replacement, $htmlString);
+        return str_replace($from, $to, $htmlString);
+    }
+
+    protected function getAnchor(string $url) : string
+    {
+        return md5($url);
     }
     
     /**
@@ -265,7 +303,7 @@ class DocsFacade extends AbstractHttpFacade
         if ($headers->length > 0) {
             $firstHeader = $headers->item(0);
             // Add the id attribute to the first heading element
-            $firstHeader->setAttribute('id', $link);
+            $firstHeader->setAttribute('id', $this->getAnchor($link));
         }
         return $doc->saveHTML();
     }
