@@ -20,3 +20,30 @@ A relation is allways to be read from left to right: e.g. `ORDER__PAYEE` would b
 to all ORDERS, where this `COMPANY` is the target of the `PAYEE` relation. The left object of that relation is `COMPANY` and the right one - `ORDER`. Although both relations describe the same key set of the underlying relational data model, they are two distinct relations of different type in the metamodel: a "regular" and a "reverse" one. 
 
 Under the hood, a relation actually connects two attributes and not merely two objects. In the above example, the `ORDER` object will probably have other relations to `COMPANY`, like `CONTRACTOR`, `AGENT`, etc. So the `ORDER` object will have multiple attributes, that hold foreign keys of `COMPANY` entities. Additionally, relations are not always based on an explict foreig key. In particular relations between object from differen data sources, may be based on some string identifiers like invoice numbers, id-codes, etc.
+
+## Aggregators
+
+Aggregators are used as an extension for attribute aliases and relations paths to 
+aggregate (total up) values values. For example, the following attribute aliases
+can be used in a table for an `ORDER` object:
+
+- `POSITION__ID:COUNT` - display the number of order positions
+- `POSITION__QTY:SUM` - sum up all quantities
+- `POSITION__MODIFIED_ON:MAX` - last modification daten
+- `POSITION__STATUS:MAX_OF(MODIFIED_ON)` - the status of the last modified position
+
+### Available aggregators:
+
+- `ATTRIUTE:SUM`
+- `ATTRIUTE:AVG`
+- `ATTRIUTE:MIN`
+- `ATTRIUTE:MAX`
+- `ATTRIUTE:MIN_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the minimum of `OTHER_ATTRIBUTE`
+- `ATTRIUTE:MAX_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the maximum of `OTHER_ATTRIBUTE`
+- `ATTRIUTE:LIST`
+- `ATTRIUTE:LIST(,)` - a list with an explicitly defined separator - `,` in this case
+- `ATTRIUTE:LIST_DISTINCT`
+- `ATTRIUTE:LIST_DISTINCT(,)` - a distinct list with an explicitly defined separator
+- `ATTRIUTE:COUNT`
+- `ATTRIUTE:COUNT_DISTINCT`
+- `ATTRIUTE:COUNT_IF(OTHER_ATTRIBUTE > 0)` - currently only supports simple conditions with an attribute alias on the left and a scalar on the right. There MUST be spaces around the comparator!
