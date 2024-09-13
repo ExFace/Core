@@ -272,4 +272,16 @@ class ShowLookupDialog extends ShowDialog
     {
         return $this->multi_select;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isConfirmationRequiredByDefault(string $confirmationType): bool
+    {
+        if($confirmationType === self::CONFIRMATION_UNSAVED_CHANGES) {
+            return false;
+        } else {
+            return parent::isConfirmationRequiredByDefault($confirmationType);
+        }
+    }
 }
