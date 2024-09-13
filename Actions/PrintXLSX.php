@@ -18,12 +18,19 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 /**
  * This action prints data using a XLSX template with any number of sub-sheets.
  * 
- * The template can either be set inside the action property `template` or read from
- * a file specified by the `template_path` (absolute or relative to the vendor folder).
- * 
+ * The template itself is an XLSX file that you have to write with an external editor.
+ * Place it within the file structure of the app you wish to use it in, for example:
+ *
+ * `vendor/[project]/[app]/Dokumente/Export-Templates/[template]`
+ *
+ * Then add a new action definition under `Administration -> Metamodel -> Printing Templates`, with
+ * `PrintXLSX` as its ActionPrototype. You can find an example on how to write the UXON file further below.
+ *
+ *
  * ## Template placeholders
- * 
- * The template can contain the following placehodlers:
+ *
+ *
+ * The template can contain the following placeholders:
  * 
  * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
  * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key` 
@@ -33,6 +40,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * - `[#=Formula()#]` - will evaluate the formula (e.g. `=Now()`) in the context each row of the input data
  * - `[#~file:name#]` and `[#~file:name_without_ext#]` - well be replaced by the name of the rendered file
  * with our without extension.
+ * - `[#~data:column_name:AGGREGATOR#]` - aggregates the specified column.
  * - additional custom placeholders can be defined in `data_placeholders` - see below.
  * 
  * ## Data placeholders
@@ -45,28 +53,25 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * 
  * - `data_sheet` to load the data 
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#dataPlaceholderNamesome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
+ * `[#dataPlaceholderNameSome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
  * 
- * Concider the following example for a simple order print template in HTML. Assume, that the `ORDER` 
- * object has its order number in the `ORDERNO` attribute and multiple related `ORDER_POSITION`
- * objects, that are to be printed as an HTML `<table>`. The below configuration creates a data
- * placeholder for the positions and defines a data sheet to load them. the `[#positions#]` placeholder
- * in the main `template` will be replaced by a concatennation of rendered `row_template`s. The
- * `data_sheet` used in the configuration of the data placeholder contains placeholders itself: in this
- * case, the `[#~input:ORDERNO#]`, with will be replace by the order number from the input data before
- * the sheet is read. The `row_template` now may contain global placeholders and those from it's
- * data placeholder rows - prefixed with the respective placeholder name.
+ * Consider the following example for a simple table export to XLSX. The property `template` tells the action where to find the template
+ * you have written, while `filename` will be the name of the file created by this action. You may apply placeholders to the filename.
+ *
+ * Next up we define any number of `data_placeholders`. These are essentially lookups that help the action understand what data you wish to
+ * fill in. It then pre-loads all the necessary data, making it available for further processing. This feature is very powerful, as it allows you
+ * to pull data from other tables and apply filters and sorters to it. You can insert this data into your template by using type name you specified as
+ * a placeholder. In this example we called it `data_placeholder_example`. To reference that in our template we would use `[#data_placeholder_example:column_name#]`.
  * 
  * ```
  * {
- *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
- *      "filename": "Order [#~input:ORDERNO#].html",
+ *      "template": "vendor/[project]/[app]/Dokumente/Export-Templates/[template]",
+ *      "filename": "Order [#~input:ORDERNO#].xlsx",
  *      "data_placeholders": {
- *          "positions": {
- *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
+ *          "data_placeholder_example": {
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "columns": [
