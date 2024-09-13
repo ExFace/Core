@@ -143,13 +143,17 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
         
         foreach ($contents as $filePath => $fileContents) {
             file_put_contents($filePath, $fileContents);
+            if ($filePath) {
+                $result = ResultFactory::createFileResultFromPath($task, $filePath, $this->isDownloadable());
+            } else {
+                $result = ResultFactory::createEmptyResult($task);
+            }
         }
-        if ($filePath) {
-            $result = ResultFactory::createFileResultFromPath($task, $filePath, $this->isDownloadable());
-        } else {
+
+        if(!isset($result)) {
             $result = ResultFactory::createEmptyResult($task);
         }
-        
+
         return $result;
     }
     
@@ -256,6 +260,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
         if ($this->filename === null){
             return 'print_' . date('Y_m_d_his', time()) . $this->getFileExtensionDefault();
         }
+        $tplRenderer->render($this->filename);
         return FilePathDataType::sanitizeFilename($tplRenderer->render($this->filename));
     }
     
