@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -246,6 +247,12 @@ class DataInstaller extends AbstractAppInstaller
         /*foreach ($obj->getBehaviors()->getByPrototypeClass(PreventDuplicatesBehavior::class) as $behavior) {
             $behavior->disable();
         }*/
+
+        // ValidatingBehavior - if older model do not pass validation rules, they still need to be installd
+        // to be fixed!!!
+        foreach ($obj->getBehaviors()->getByPrototypeClass(ValidatingBehavior::class) as $behavior) {
+            $behavior->disable();
+        }
         
         // Disable model validation because it would instantiate all objects when the object sheet is being saved,
         // which will attempt to load an inconsistent model (e.g. because the attributes were not yet updated
