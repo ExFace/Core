@@ -56,8 +56,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * `[#dataPlaceholderNameSome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
- * ## Example 
+ * ## Writing the UXON
  * 
+ * While the formatting and layout are defined by the template file, the data you wish to print is specified and formatted within the UXON definition.
+ * Consequently, you should write your UXON as though you wanted to create a `DataTable`. Think carefully about what data you need and how you
+ * wish to format it, as the print action simply parses whatever it receives into the template.
+ *
  * Consider the following example for a simple table export to XLSX. The property `template` tells the action where to find the template
  * you have written, while `filename` will be the name of the file created by this action. You may apply placeholders to the filename.
  *
