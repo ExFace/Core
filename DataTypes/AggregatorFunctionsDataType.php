@@ -19,19 +19,19 @@ use exface\Core\Exceptions\LogicException;
  * 
  * ## Available aggregators:
  * 
- * - `ATTRIUTE:SUM`
- * - `ATTRIUTE:AVG`
- * - `ATTRIUTE:MIN`
- * - `ATTRIUTE:MAX`
- * - `ATTRIUTE:MIN_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the minimum of `OTHER_ATTRIBUTE`
- * - `ATTRIUTE:MAX_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the maximum of `OTHER_ATTRIBUTE`
- * - `ATTRIUTE:LIST`
- * - `ATTRIUTE:LIST(,)` - a list with an explicitly defined separator - `,` in this case
- * - `ATTRIUTE:LIST_DISTINCT`
- * - `ATTRIUTE:LIST_DISTINCT(,)` - a distinct list with an explicitly defined separator
- * - `ATTRIUTE:COUNT`
- * - `ATTRIUTE:COUNT_DISTINCT`
- * - `ATTRIUTE:COUNT_IF(OTHER_ATTRIBUTE > 0)` - currently only supports simple conditions with an attribute alias on the left and a scalar on the right. There MUST be spaces around the comparator!
+ * - `ATTRIBUTE:SUM`
+ * - `ATTRIBUTE:AVG`
+ * - `ATTRIBUTE:MIN`
+ * - `ATTRIBUTE:MAX`
+ * - `ATTRIBUTE:MIN_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the minimum of `OTHER_ATTRIBUTE`
+ * - `ATTRIBUTE:MAX_OF(OTHER_ATTRIBUTE)` - value of `ATTRIBUTE` from the row with the maximum of `OTHER_ATTRIBUTE`
+ * - `ATTRIBUTE:LIST`
+ * - `ATTRIBUTE:LIST(,)` - a list with an explicitly defined separator - `,` in this case
+ * - `ATTRIBUTE:LIST_DISTINCT`
+ * - `ATTRIBUTE:LIST_DISTINCT(,)` - a distinct list with an explicitly defined separator
+ * - `ATTRIBUTE:COUNT`
+ * - `ATTRIBUTE:COUNT_DISTINCT`
+ * - `ATTRIBUTE:COUNT_IF(OTHER_ATTRIBUTE > 0)` - currently only supports simple conditions with an attribute alias on the left and a scalar on the right. There MUST be spaces around the comparator!
  * 
  * @method AggregatorFunctionsDataType SUM(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType AVG(\exface\Core\CommonLogic\workbench $workbench)
