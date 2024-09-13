@@ -44,7 +44,7 @@ Our new connection should now appear at the top of the list.
 
 The `MySqlConnector` prototype, that we use here works for MySQL databases as the name suggests. It's configuration (host, dbase, etc.) is also specific to MySQL and may look very different for another data source or even another database engine. You can find the documentation for all available connectors in the main menu at `Administratyion > Documentation > Data Connectors`.
 
-The idea of prototypes with their specific hierarchical configuration is a central concept. There are prototypes for a lot of things: widgets, actions, data types, etc. The configuration is done via our modeling language called [UXON](../../Creating_UIs/UXON/index.md) (User eXperience Object Notation) in special [editors](../../Creating_UIs/UXON/Introduction_to_the_UXON_editor.md), that provide autosuggest, presets (the magic wand above), quick refference, etc. The editor knows, what configurable properties each prototype has and can even suggest possible values in many cases.
+The idea of prototypes with their specific hierarchical configuration is a central concept. There are prototypes for a lot of things: widgets, actions, data types, etc. The configuration is done via our modeling language called [UXON](../../UXON/index.md) (User eXperience Object Notation) in special [editors](../../UXON/Introduction_to_the_UXON_editor.md), that provide autosuggest, presets (the magic wand above), quick refference, etc. The editor knows, what configurable properties each prototype has and can even suggest possible values in many cases.
 
 ## 2. Create a data source
 
