@@ -57,6 +57,17 @@ interface ActionInterface extends
     iCanGenerateDebugWidgets,
     iHaveIcon
 {
+    public const CONFIRMATION_UNSAVED_CHANGES = 'unsavedChanges';
+
+    public const CONFIRMATION_FOR_ACTION = 'forAction';
+
+
+    // Default rules for each confirmation type.
+    // Should you define a new confirmation type, remember to add its default rules to this array.
+    const IS_CONFIRMATION_REQUIRED_BY_DEFAULT = [
+        self::CONFIRMATION_FOR_ACTION => false,
+        self::CONFIRMATION_UNSAVED_CHANGES => true
+    ];
     
     /**
      * 
@@ -533,4 +544,58 @@ interface ActionInterface extends
      * @return ActionInterface
      */
     public function setOfflineStrategy(string $value) : ActionInterface;
+
+    /**
+     * Returns the current value for the requested confirmation type.
+     *
+     * @param string $confirmationType
+     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type.
+     * @return WidgetInterface|null
+     */
+    public function getConfirmation(string $confirmationType) : ?WidgetInterface;
+
+    /**
+     * Returns `true` if this action requires a confirmation of the requested type.
+     *
+     * @param string $confirmationType
+     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type.
+     * @return bool
+     */
+    public function isConfirmationRequired(string $confirmationType) : bool;
+
+    /**
+     * Returns true if a confirmation widget of the specified type is available.
+     *
+     * NOTE: This does not accurately represent, whether a confirmation of the specified
+     * type is required. Use `isConfirmationRequired(string)` for that!
+     * @param string $confirmationType
+     * @return bool
+     */
+    public function hasConfirmationWidget (string $confirmationType) : bool;
+
+    /**
+     * Returns true if a confirmation of the specified type is required, even if no UXON was provided for it.
+     *
+     * To see defaults, check out `ActionInterface::IS_CONFIRMATION_REQUIRED_BY_DEFAULT`.
+     * You can override the defaults for individual confirmation types as follows:
+     *
+     * ```
+     *
+     *  protected function isConfirmationRequiredByDefault(string $confirmationType) : bool
+     *  {
+     *      if($confirmationType === self::TYPE_YOU_WISH_TO_OVERRIDE) {
+     *          // Return a custom value for the confirmation type we wish to override.
+     *          return false;
+     *      } else {
+     *          return parent::isConfirmationRequiredByDefault($confirmationType);
+     *      }
+     *  }
+     *
+     * ```
+     *
+     * @param string $confirmationType
+     *  Use `ActionInterface::CONFIRMATION_` constants to specify the desired type.
+     * @return bool
+     */
+    function isConfirmationRequiredByDefault(string $confirmationType) : bool;
 }
