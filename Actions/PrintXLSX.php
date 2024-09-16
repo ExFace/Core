@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Templates\BracketHashXlsxTemplateRenderer;
@@ -93,6 +94,11 @@ class PrintXLSX extends PrintTemplate
 {
     private $template = null;
     
+    protected function init()
+    {
+        parent::init();
+        $this->setIcon(Icons::FILE_EXCEL_O);
+    }
     
     /**
      * Returns an array of the form [file_path => rendered_template].
