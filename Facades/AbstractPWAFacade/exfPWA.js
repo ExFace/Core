@@ -766,12 +766,10 @@ self.addEventListener('sync', function(event) {
 				}
 				
 				return _networkStatTable.toArray()
-					.then(function(stats) {
-						console.log("Network stats retrieved successfully");
+					.then(function(stats) { 
 						return Promise.resolve(stats);
 					})
-					.catch(function(error) {
-						console.error("Error retrieving network stats:", error);
+					.catch(function(error) { 
 						return Promise.reject(error);
 					});
 			},
@@ -794,12 +792,10 @@ self.addEventListener('sync', function(event) {
 				};
 				
 				return _networkStatTable.put(stat)
-					.then(function() {
-						console.log("Network stat saved successfully");
+					.then(function() { 
 						return Promise.resolve();
 					})
-					.catch(function(error) {
-						console.error("Error saving network stat:", error);
+					.catch(function(error) { 
 						return Promise.reject(error);
 					});
 			},
@@ -817,12 +813,10 @@ self.addEventListener('sync', function(event) {
 					.where('time')
 					.below(timestamp)
 					.delete()
-					.then(function(deleteCount) {
-						console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
+					.then(function(deleteCount) { 
 						return Promise.resolve(deleteCount);
 					})
-					.catch(function(error) {
-						console.error("Error deleting old network stats:", error);
+					.catch(function(error) { 
 						return Promise.reject(error);
 					});
 			},
