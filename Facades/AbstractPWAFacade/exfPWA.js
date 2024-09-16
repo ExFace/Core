@@ -33,7 +33,8 @@ self.addEventListener('sync', function(event) {
             'offlineData': 'uid, object_alias',
             'offlineModel': 'url',
             'actionQueue': '&id, object, action',
-            'deviceId': 'id'
+            'deviceId': 'id',
+			'networkStat': 'time, speed, mime_type, size'
 		});
 		dexie.open().catch(function (e) {
 			_error = e;
@@ -50,6 +51,7 @@ self.addEventListener('sync', function(event) {
 		var _modelTable = _db.table('offlineModel');
 		var _actionsTable = _db.table('actionQueue');
 		var _deviceIdTable = _db.table('deviceId');
+		var _networkStatTable = _db.table('networkStat');
 	}
 	
 	(function() {
@@ -753,6 +755,78 @@ self.addEventListener('sync', function(event) {
 		}, // EOF model
 		
 		data: {
+			/**
+			 * Retrieves all network stats from the IndexedDB.
+			 * @return {promise}
+			 */
+			getAllNetworkStats: function() {
+				// Check if there is an IndexedDB error
+				if (_error) {
+					return Promise.reject("IndexedDB error");
+				}
+				
+				return _networkStatTable.toArray()
+					.then(function(stats) {
+						console.log("Network stats retrieved successfully");
+						return Promise.resolve(stats);
+					})
+					.catch(function(error) {
+						console.error("Error retrieving network stats:", error);
+						return Promise.reject(error);
+					});
+			},
+			
+			/**
+			 * Saves a new network stat to the IndexedDB.
+			 * @param {time, speed, mime_type, size}
+			 * @return {promise}
+			 */
+			saveNetworkStat : function(time, speed, mime_type, size) {
+				if (_error) {
+					return Promise.reject("IndexedDB error");
+				}
+				
+				var stat = {
+					time: time,
+					speed: speed, 
+					mime_type: mime_type,
+					size: size
+				};
+				
+				return _networkStatTable.put(stat)
+					.then(function() {
+						console.log("Network stat saved successfully");
+						return Promise.resolve();
+					})
+					.catch(function(error) {
+						console.error("Error saving network stat:", error);
+						return Promise.reject(error);
+					});
+			},
+
+			/**
+			 * Deletes all network stats in the IndexedDB that were recorded before the specified timestamp.
+			 * @return {promise}
+			 */
+			deleteNetworkStatsBefore: function(timestamp) {
+				if (_error) {
+					return Promise.reject("IndexedDB error");
+				}
+	
+				return _networkStatTable
+					.where('time')
+					.below(timestamp)
+					.delete()
+					.then(function(deleteCount) {
+						console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
+						return Promise.resolve(deleteCount);
+					})
+					.catch(function(error) {
+						console.error("Error deleting old network stats:", error);
+						return Promise.reject(error);
+					});
+			},
+
 			/**
 			 * @return {promise}
 			 */
