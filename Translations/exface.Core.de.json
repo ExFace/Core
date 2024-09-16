@@ -99,7 +99,10 @@
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
 	"CONTEXT.OBJECTBASKET.BUTTON_WITHOUT_UID_DISABLED_REASON": "Nicht verfügbar, wenn keine einzelnen Objekte selektiert werden können",
 
-    "ACTION.READDATA.NAME": "Suchen",
+    "ACTION.PRINTTEMPLATE.NAME": "Drucken",
+    "ACTION.PRINTXLSX.NAME": "Excel",
+    
+	"ACTION.READDATA.NAME": "Suchen",
     "ACTION.READDATA.SEARCH": "Suchen",
     "ACTION.READDATA.RESULT": "%number% Einträge gelesen",
     "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
