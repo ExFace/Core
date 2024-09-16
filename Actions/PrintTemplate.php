@@ -119,7 +119,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     protected function init()
     {
         parent::init();
-        $this->setIcon(Icons::DOWNLOAD);
+        $this->setIcon(Icons::PRINT_);
         $this->setInputRowsMin(1);
     }
 
@@ -258,10 +258,19 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     public function getFilename(TemplateRendererInterface $tplRenderer) : string
     {
         if ($this->filename === null){
-            return 'print_' . date('Y_m_d_his', time()) . $this->getFileExtensionDefault();
+            if ($this->getMetaObject()->hasLabelAttribute()) {
+                $tpl = '[#~input:' . $this->getMetaObject()->getLabelAttributeAlias() . '#]';
+            } else {
+                $tpl = $this->getMetaObject()->getName();
+            }
+            $tpl .= '_' . date('Y_m_d_His', time());
+        } else {
+            $tpl = $this->filename;
         }
-        $tplRenderer->render($this->filename);
-        return FilePathDataType::sanitizeFilename($tplRenderer->render($this->filename));
+        $filename = $tplRenderer->render($tpl);
+        $filename = FilePathDataType::sanitizeFilename($filename);
+        $filename = str_replace(' ', '_', $filename);
+        return $filename; 
     }
     
     /**
