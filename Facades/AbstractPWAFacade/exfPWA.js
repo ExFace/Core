@@ -778,7 +778,7 @@ self.addEventListener('sync', function(event) {
 			
 			/**
 			 * Saves a new network stat to the IndexedDB.
-			 * @param {time, speed, mime_type, size}
+			 * @param {time, speed, mime_type, size } 
 			 * @return {promise}
 			 */
 			saveNetworkStat : function(time, speed, mime_type, size) {
