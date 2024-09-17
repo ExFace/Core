@@ -125,7 +125,7 @@ class GenericAssistant implements AiAgentInterface
      * 
      * @return array
      */
-    protected function getSystemConcepts() : array
+    protected function getSystemConcepts(AiPromptInterface $promt) : array
     {
         return $this->concepts;
     }
@@ -151,14 +151,14 @@ class GenericAssistant implements AiAgentInterface
      * @param \exface\Core\Interfaces\AI\AiPromptInterface $promt
      * @return string
      */
-    protected function getSystemPrompt(AiPromptInterface $promt) : string
+    protected function getSystemPrompt(AiPromptInterface $prompt) : string
     {
         if ($this->systemPromptRendered === null) {
             $renderer = new BracketHashStringTemplateRenderer($this->workbench);
             $renderer->addPlaceholder(new FormulaPlaceholders($this->workbench, null, null, '='));
             $renderer->addPlaceholder(new ConfigPlaceholders($this->workbench, '~config:'));
             
-            foreach ($this->getSystemConcepts() as $concept) {
+            foreach ($this->getSystemConcepts($prompt) as $concept) {
                 $renderer->addPlaceholder($concept);
             }
             
