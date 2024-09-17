@@ -10,6 +10,8 @@ use exface\Core\Interfaces\AI\AiAgentInterface;
 use exface\Core\Interfaces\AI\AiConceptInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Selectors\AiAgentSelectorInterface;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -20,6 +22,15 @@ use exface\Core\Interfaces\WorkbenchInterface;
  */
 abstract class AiFactory extends AbstractSelectableComponentFactory
 {
+    public static function createFromSelector(SelectorInterface $selector, array $constructorArguments = null)
+    {
+        switch (true) { 
+            case ($selector instanceof AiAgentSelectorInterface) && $selector->isAlias():
+                return static::createAgentFromString($selector->getWorkbench(), $selector->toString());
+    
+        }
+        return parent::createFromSelector($selector, $constructorArguments);
+    }
     /**
      *
      * @param string $aliasOrPathOrClassname            
@@ -48,9 +59,7 @@ abstract class AiFactory extends AbstractSelectableComponentFactory
         $uxon = UxonObject::fromAnything($row['CONFIG_UXON']);
         $uxon->setProperty('data_connection_alias', $row['DATA_CONNECTION']);
         $uxon->setProperty('name', $row['NAME']);
-        // $uxon->setProperty('description', $row['DESCRIPTION']);
         $uxon->setProperty('alias', $row['ALIAS']);
-        //$uxon->setProperty('app_uid', $row['APP']);
 
         $selector = new AiAgentSelector($workbench, $aliasOrPathOrClass);
         $prototypeSelector = new AiAgentSelector($workbench, $row['PROTOTYPE_CLASS']);
