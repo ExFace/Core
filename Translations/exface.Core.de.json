@@ -483,7 +483,7 @@
 	
 	"WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Abbrechen",
 
-	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "Die Datei \"%path%\" ist beschädigt! Bitte prüfen Sie di Datei auf Fehler und versuchen Sie es erneut.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "Die Datei \"%path%\" ist beschädigt! Bitte prüfen Sie die Datei auf Fehler und versuchen Sie es erneut.",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Die Datei \"%path%\" hat einen unbekannten Inhaltstypen (\"%mimetypes%\").",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Der Upload ist aufgrund folgender Fehler fehlgeschlagen:",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Unter \"%path%\" wurde ein Backup der beschädigten Datei gespeichert.",
