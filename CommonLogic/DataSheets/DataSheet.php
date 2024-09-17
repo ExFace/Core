@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -112,6 +114,8 @@ class DataSheet implements DataSheetInterface
     private $meta_object;
     
     private $dataSourceHasMoreRows = true;
+
+    private const DEBUG_STRING_MAX_LENGTH = 10000;
 
     public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
@@ -3114,6 +3118,22 @@ class DataSheet implements DataSheetInterface
         // Add a tab with the data sheet UXON
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
+        $debugSheet = $this->getCensoredDataSheet();
+        $meta = $debugSheet->getMetaObject();
+        if (! $debugSheet->isEmpty()) {
+            foreach ($debugSheet->getColumns() as $col) {
+                $dataType = $col->getDataType();
+                if ($dataType instanceof BinaryDataType) {
+                    $col->setValueOnAllRows(null);
+                } else if ($dataType instanceof StringDataType) {
+                    foreach ($col->getValues() as $rowNo => $value) {
+                        if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
+                            $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
+                        }
+                    }
+                }
+            }
+        }
         $uxon_widget = WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
             'widget_type' => 'InputUxon',
             'caption' => PhpClassDataType::findClassNameWithoutNamespace(get_class($this)),
@@ -3123,7 +3143,7 @@ class DataSheet implements DataSheetInterface
             'disabled' => true,
             'root_prototype' => '\\' . DataSheet::class,
             'root_object' => $this->getMetaObject()->getAliasWithNamespace(),
-            'value' => $this->getCensoredDataSheet()->exportUxonObject()->toJson(true)
+            'value' => $debugSheet->exportUxonObject()->toJson(true)
         ]));
         $uxon_tab->addWidget($uxon_widget);
         $debug_widget->addTab($uxon_tab);
