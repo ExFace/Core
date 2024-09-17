@@ -3,8 +3,6 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
-use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -26,7 +24,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\RegularExpressionDataType;
-use Intervention\Image\ImageManager;
 
 /**
  * Lists files and folders from a number of file paths.
