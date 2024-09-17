@@ -332,7 +332,8 @@ class MetamodelDbmlConcept extends AbstractConcept
      */ 
     public function resolve(array $placeholders) : array
     {
-        $placeholders[$this->getPlaceholder()] = $this->buildDBML();
-        return $placeholders;
+        $phVals = [];
+        $phVals[$this->getPlaceholder()] = $this->buildDBML();
+        return $phVals;
     }
 }

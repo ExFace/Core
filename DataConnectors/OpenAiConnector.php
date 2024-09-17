@@ -3,14 +3,17 @@ namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
 use exface\Core\CommonLogic\DataQueries\OpenAiApiDataQuery;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Client;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 
 /**
  *
@@ -19,9 +22,15 @@ use Psr\Http\Message\ResponseInterface;
  */
 class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
 {
+    private $client = null;
+
     private $modelName = null;
 
     private $temperature = null;
+
+    private $url = null;
+
+    private $headers = [];
 
     /**
      * 
@@ -33,32 +42,17 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
         if (! $query instanceof OpenAiApiDataQuery) {
             throw new DataQueryFailedError($query, 'Invalid query type for connection ' . $this->getAliasWithNamespace() . ': expecting instance of OpenAiApiDataQuery');
         }
-        $response = $this->sendRequest($this->buildJsonChatCompletionCreate($query));
+        $json = $this->buildJsonChatCompletionCreate($query);
+        $response = $this->sendRequest($json);
         return $query->withResponse($response);
     }
 
     protected function sendRequest(array $json) : ResponseInterface
     {
-        $testJson = [
-            "body" => [
-                "id" => "cmpl-7QmVI15qgYVllxK0FtxVGG6ywfzaq",
-                "created" => 1686617332,
-                "choices" => [
-                    [
-                        "text" => 'Here will be the response from the real LLM',
-                        "index" => 0,
-                        "finish_reason" => "stop",
-                        "logprobs" => null
-                    ]
-                ],
-                "usage" => [
-                    "completion_tokens" => 20,
-                    "prompt_tokens" => 6,
-                    "total_tokens" => 26
-                ]
-            ]
-        ];
-        return new Response(200, [], json_encode($testJson));
+        $client = $this->getClient();
+        $request = new Request('POST', $this->getUrl(), [], json_encode($json));
+        $response = $client->send($request);
+        return $response;
     }
 
     protected function buildJsonChatCompletionCreate(OpenAiApiDataQuery $query) : array
@@ -169,11 +163,91 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
 
     protected function performConnect()
     {
-        return;
+        $defaults = array();
+        $defaults['verify'] = false;
+        
+        // headers
+        if (! empty($this->getHeaders())) {
+            $defaults['headers'] = $this->getHeaders();
+        }
+        
+        try {
+            $this->setClient(new Client($defaults));
+        } catch (\Throwable $e) {
+            throw new DataConnectionFailedError($this, "Failed to instantiate HTTP client: " . $e->getMessage(), '6T4RAVX', $e);
+        }
+    }
+    
+    /**
+     * Returns the initialized Guzzle client
+     * 
+     * @return Client
+     */
+    protected function getClient() : Client
+    {
+        if ($this->client === null) {
+            $this->connect();
+        }
+        return $this->client;
+    }
+    
+    /**
+     * 
+     * @param Client $client
+     * @return OpenAiConnector
+     */
+    protected function setClient(Client $client) : OpenAiConnector
+    {
+        $this->client = $client;
+        return $this;
     }
     
     protected function performDisconnect() 
     {
         return;
+    }
+
+    protected function setUrl(string $url) : OpenAiConnector
+    {
+        $this->url = $url; 
+        return $this;
+    }
+
+    /**
+     * URL of the external LLM API
+     * 
+     * @uxon-property url
+     * @uxon-type string
+     * 
+     * @return string
+     */
+    protected function getUrl() : string
+    {
+        return $this->url;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    protected function getHeaders() : array
+    {
+        return $this->headers;
+    }
+    
+    /**
+     * Headers to send with every request
+     * 
+     * @uxon-property headers
+     * @uxon-type object
+     * @uxon-template {"api-key": ""}
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject|array $value
+     * @return OpenAiConnector
+     */
+    protected function setHeaders($value) : OpenAiConnector
+    {
+        $this->headers = ($value instanceof UxonObject ? $value->toArray() : $value);
+        return $this;
     }
 }
