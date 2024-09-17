@@ -3,6 +3,8 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -24,6 +26,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\RegularExpressionDataType;
+use Intervention\Image\ImageManager;
 
 /**
  * Lists files and folders from a number of file paths.
@@ -660,10 +663,22 @@ class FileBuilder extends AbstractQueryBuilder
             default:
                 foreach ($array as $i => $val) {
                     if (StringDataType::startsWith($val, 'data:', false) && stripos($val, 'base64,') !== false) {
-                        $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
+                        $decoded = base64_decode(StringDataType::substringAfter($val, 'base64,'));
+                        $finfo = finfo_open(FILEINFO_MIME);
+                        $type = finfo_buffer($finfo, $decoded);
+                        if (!$img = imagecreatefromstring($decoded)) {
+                            $img = null;
+                            unset($img);
+                            throw new FileCorruptedError('File number ('.($i + 1).') is corrupted! Please check the original file and try again.',null, null);
+                        }
+                        $img = null;
+                        unset($img);
+                        $array[$i] = $decoded;
                     }
                 }
+                break;
         }
+
         return $array;
     }
     
