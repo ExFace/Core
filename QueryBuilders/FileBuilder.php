@@ -663,17 +663,7 @@ class FileBuilder extends AbstractQueryBuilder
             default:
                 foreach ($array as $i => $val) {
                     if (StringDataType::startsWith($val, 'data:', false) && stripos($val, 'base64,') !== false) {
-                        $decoded = base64_decode(StringDataType::substringAfter($val, 'base64,'));
-                        $finfo = finfo_open(FILEINFO_MIME);
-                        $type = finfo_buffer($finfo, $decoded);
-                        if (!$img = imagecreatefromstring($decoded)) {
-                            $img = null;
-                            unset($img);
-                            throw new FileCorruptedError('File number ('.($i + 1).') is corrupted! Please check the original file and try again.',null, null);
-                        }
-                        $img = null;
-                        unset($img);
-                        $array[$i] = $decoded;
+                        $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
                     }
                 }
                 break;
