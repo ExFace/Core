@@ -2,6 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
+use exface\Core\DataConnectors\Traits\iCanValidateFileIntegrityTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
 /**
@@ -15,6 +16,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
  */
 class TransparentConnector extends AbstractDataConnectorWithoutTransactions
 {
+    use iCanValidateFileIntegrityTrait;
 
     /**
      *
