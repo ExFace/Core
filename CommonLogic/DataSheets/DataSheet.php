@@ -115,6 +115,11 @@ class DataSheet implements DataSheetInterface
     
     private $dataSourceHasMoreRows = true;
 
+    /**
+     * The maximum number of characters of string data to be represented in debug data.
+     * Truncate any string data to this length before displaying it for debug purposes
+     * to avoid memory overflow.
+     */
     private const DEBUG_STRING_MAX_LENGTH = 10000;
 
     public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
@@ -3119,18 +3124,24 @@ class DataSheet implements DataSheetInterface
         $uxon_tab = $debug_widget->createTab();
         $uxon_tab->setCaption($tabCaption);
         $debugSheet = $this->getCensoredDataSheet();
-        $meta = $debugSheet->getMetaObject();
         if (! $debugSheet->isEmpty()) {
             foreach ($debugSheet->getColumns() as $col) {
                 $dataType = $col->getDataType();
-                if ($dataType instanceof BinaryDataType) {
-                    $col->setValueOnAllRows(null);
-                } else if ($dataType instanceof StringDataType) {
-                    foreach ($col->getValues() as $rowNo => $value) {
-                        if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
-                            $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
+
+                // Reduce displayed data to prevent memory overflow.
+                switch (true) {
+                    case $dataType instanceof BinaryDataType:
+                        // Binary data is not human-readable and can be discarded.
+                        $col->setValueOnAllRows(null);
+                        break;
+                    case $dataType instanceof StringDataType:
+                        // Truncate strings that go beyond human-readable lengths.
+                        foreach ($col->getValues() as $rowNo => $value) {
+                            if($value !== null && mb_strlen($value) > self::DEBUG_STRING_MAX_LENGTH) {
+                                $col->setValue($rowNo, mb_substr($value, 0, self::DEBUG_STRING_MAX_LENGTH) . '... (truncated value of ' . ByteSizeDataType::formatWithScale(mb_strlen($value)) . ')');
+                            }
                         }
-                    }
+                        break;
                 }
             }
         }
