@@ -98,7 +98,10 @@
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% removed.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: All objects of type %object_name% removed.",
     
-    "ACTION.READDATA.NAME": "Search",
+    "ACTION.PRINTTEMPLATE.NAME": "Print",
+    "ACTION.PRINTXLSX.NAME": "Excel",
+    
+	"ACTION.READDATA.NAME": "Search",
     "ACTION.READDATA.SEARCH": "Search",
     "ACTION.READDATA.RESULT": "%number% entries read",
     "ACTION.REFRESHWIDGET.NAME": "Refresh",
