@@ -482,7 +482,13 @@
 	"WIDGET.NAVTILES.EMPTY": "Dieses Menü is leer oder Sie haben keine Berechtigungen für die Menüpunkte",
 	
 	"WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Abbrechen",
-	
+
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "Die Datei \"%path%\" ist beschädigt! Bitte prüfen Sie di Datei auf Fehler und versuchen Sie es erneut.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Die Datei \"%path%\" hat einen unbekannten Inhaltstypen (\"%mimetypes%\").",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Der Upload ist aufgrund folgender Fehler fehlgeschlagen:",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Unter \"%path%\" wurde ein Backup der beschädigten Datei gespeichert.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER": "Es wurden keine Daten im System gespeichert!",
+
 	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Nur Dateitypen %extensions% erlaubt!",
 	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Nur Inhaltstypen %mimetypes%  erlaubt!",
 	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "Datei zu groß: max. %mb% MB erlaubt!",
