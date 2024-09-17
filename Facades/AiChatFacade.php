@@ -1,13 +1,12 @@
 <?php
 namespace exface\Core\Facades;
 
-
 use exface\Core\CommonLogic\AI\AiPrompt;
-use exface\Core\CommonLogic\AI\Agents\SqlFilteringAgent;
 use exface\Core\Exceptions\Facades\FacadeRoutingError;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\JsonBodyParser;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Factories\AiFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -87,10 +86,6 @@ class AiChatFacade extends AbstractHttpFacade
         return new Response(($responseCode ?? 404), $headers, stream_for($body ?? ''));
     }
 
-
-    
-
-
     /**
      * 
      * {@inheritDoc}
@@ -135,7 +130,7 @@ class AiChatFacade extends AbstractHttpFacade
     protected function findAgent(string $selector)
     {
         // TODO find agent by selector once an agent list is implemented
-        $agent = new SqlFilteringAgent($this->getWorkbench());
+        $agent = AiFactory::createAgentFromString($this->getWorkbench(), $selector);
         return $agent;
     }
 }

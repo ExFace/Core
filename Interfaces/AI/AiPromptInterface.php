@@ -12,21 +12,15 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 interface AiPromptInterface extends TaskInterface
 {
     /**
-     * Returns all messages provided as input - system and user messages
      * 
-     * @return string[]
+     * @return string
      */
-    public function getMessages() : array;
+    public function getUserPrompt() : string;
+
 
     /**
      * 
-     * @return string[]
+     * @return string|null
      */
-    public function getSystemMessages() : array;
-
-    /**
-     * 
-     * @return string[]
-     */
-    public function getUserMessages() : array;
+    public function getConversationUid() : ?string;
 }
