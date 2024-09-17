@@ -7,6 +7,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
@@ -66,10 +67,14 @@ class DataAggregationPlaceholders implements PlaceholderResolverInterface
             $phValsEmpty[$ph] = '';
             $exprString = $this->stripPrefix($ph, $this->prefix);
             $col = $aggrSheet->getColumns()->addFromExpression($exprString);
-            $phCols[$ph] = $col;
+            $expr = $col->getExpressionObj();
+            if (! $expr->isMetaAttribute() && ! $expr->isFormula()) {
+                throw new DataSheetRuntimeError($aggrSheet, 'Cannot use placeholder "' . $ph . '" in template: only aggregated attributes and formulas allowed!');
+            }
             if ($col->isAttribute() && $col->hasAggregator() === false) {
                 throw new DataSheetRuntimeError($aggrSheet, 'Cannot use placeholder "' . $ph . '" in template: only aggregated expressions like "ATTRIBUTE:MAX" allowed!');
             }
+            $phCols[$ph] = $col;
         }
 
         $aggrSheet->dataRead();

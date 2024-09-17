@@ -15,11 +15,16 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  * ```
  * {
  *  "require": {
- *      "npm-asset/subtotal" : "1.11.0-alpha.0"
+ *      "npm-asset/pivottable" : "^2.23"
  *  }
  * }
  * 
  * ```
+ * 
+ * This trait also uses the pivottable-plugin Subtotal.js, but in an unstable version (1.11.0-alpha.0),
+ * so the code is included in the AbstractAjaxFacade instead of being loaded via Composer.
+ * The unstable alpha dependency would otherwise prevent stable core versions from being
+ * installed on environments, with `prefer-stable:true` in their composer.json.
  * 
  * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
  * to the facade config file. Make sure, each config option points to an existing
@@ -29,8 +34,8 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  *  "LIBS.PIVOTTABLE.CORE.JS": "npm-asset/pivottable/dist/pivot.min.js",
  * 	"LIBS.PIVOTTABLE.CORE.CSS": "npm-asset/pivottable/dist/pivot.min.css",
  * 	"LIBS.PIVOTTABLE.LANG.JS": "npm-asset/pivottable/dist/pivot.[#lang#].js",
- * 	"LIBS.PIVOTTABLE.SUBTOTAL.JS": "npm-asset/subtotal/dist/subtotal.min.js",
- * 	"LIBS.PIVOTTABLE.SUBTOTAL.CSS": "npm-asset/subtotal/dist/subtotal.min.css",
+ * 	"LIBS.PIVOTTABLE.SUBTOTAL.JS": "exface/core/Facades/AbstractAjaxFacade/js/subtotal/dist/subtotal.min.js",
+ * 	"LIBS.PIVOTTABLE.SUBTOTAL.CSS": "exface/core/Facades/AbstractAjaxFacade/js/subtotal/dist/subtotal.min.css",
  * 	"LIBS.PIVOTTABLE.UI.JS": "npm-asset/jquery-ui/dist/jquery-ui.min.js",
  * 	"LIBS.PIVOTTABLE.UI.CSS": "npm-asset/jquery-ui/dist/themes/base/jquery-ui.min.css",
  * 	"LIBS.PIVOTTABLE.UI.THEME": "npm-asset/jquery-ui/dist/themes/base/theme.css",
