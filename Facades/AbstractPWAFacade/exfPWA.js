@@ -768,11 +768,7 @@ self.addEventListener('sync', function(event) {
 			* 
 			* @return {Promise} - Returns a Promise that resolves if the status is saved successfully, 
 			*                     or does nothing if the status is the same as the last saved status.
-			* 
-			* Usage example:
-			* saveConnectionStatus('online')
-			*   .then(() => console.log('Connection status updated'))
-			*   .catch((error) => console.error('Error:', error));
+			*  
 			*/
 			saveConnectionStatus: function (status) {
 				if (_error) {
