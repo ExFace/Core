@@ -59,6 +59,7 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
+use Symfony\Component\Console\Exception\InvalidOptionException;
 use Throwable;
 
 /**
@@ -3221,5 +3222,22 @@ class DataSheet implements DataSheetInterface
             }
         }
         return $removeRows;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
+    public function getSingleRow() : mixed
+    {
+        if ($this->total_row_count === 0) {
+            throw new InvalidOptionException("The input sequence is empty.");
+        }
+        if ($this->total_row_count > 1) {
+            throw new InvalidOptionException("The input sequence contains more than one element.");
+        }
+
+        return $this->rows[0];
     }
 }
