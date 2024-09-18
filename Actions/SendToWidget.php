@@ -58,16 +58,4 @@ class SendToWidget extends AbstractAction
         $this->target_widget_id = $value;
         return $this;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function isConfirmationRequiredByDefault(string $confirmationType): bool
-    {
-        if($confirmationType === self::CONFIRMATION_UNSAVED_CHANGES) {
-            return false;
-        } else {
-            return parent::isConfirmationRequiredByDefault($confirmationType);
-        }
-    }
 }
