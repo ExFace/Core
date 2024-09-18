@@ -204,4 +204,20 @@ class ArrayDataType extends AbstractDataType
         foreach ($array as $ignored) return true;
         return false;
     }
+
+    /**
+     * Returns value for the specified key in an array if key exists, otherwise returns null.
+     *
+     * @param array $array
+     * @param $key
+     * @return mixed|null
+     */
+    public static function getValueIfKeyExists(array $array, $key) : mixed
+    {
+        if (array_key_exists($key, $array)) {
+            return $array[$key];
+        }
+
+        return null;
+    }
 }

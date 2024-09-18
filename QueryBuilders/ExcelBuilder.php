@@ -4,6 +4,8 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\DataQueries\FileReadDataQuery;
 use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\DataConnectors\FileContentsConnector;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
@@ -11,6 +13,7 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\NamedRange;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\DateDataType;
@@ -196,6 +199,7 @@ class ExcelBuilder extends FileBuilder
         } else {
             $excelPath = $query->getPathAbsolute();
         }
+
         $fileInfo = new LocalFileInfo($excelPath);
         $result_rows = $this->buildResultRows($fileInfo);
         
@@ -243,9 +247,9 @@ class ExcelBuilder extends FileBuilder
         // Do read
         $spreadsheet = $reader->load($excelPath);
         // Get the sheet
-        $sheet = $sheetName !== null ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
+        $worksheet = $sheetName !== null ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
         
-        if (! $sheet) {
+        if (! $worksheet) {
             if ($dapErrorIfNoSheet) {
                 throw new QueryBuilderException('Worksheet "' . $sheetName . '" not found in spreadsheet "' . $fileInfo->getPathAbsolute() . '"!');
             } else {
@@ -253,7 +257,7 @@ class ExcelBuilder extends FileBuilder
             }
         }
         
-        $lastRow = $sheet->getHighestDataRow();
+        $lastRow = $worksheet->getHighestDataRow();
         $static_values = [];
         foreach ($this->getAttributes() as $qpart) {
             $colKey = $qpart->getColumnKey();
@@ -271,7 +275,7 @@ class ExcelBuilder extends FileBuilder
                     continue 2;
                 case $this->isAddressRange($address):
                     $resultRowNo = 0;
-                    foreach ($this->getValuesOfRange($sheet, $address, $formatValues) as $sheetRowNo => $colVals) {
+                    foreach ($this->getValuesOfRange($worksheet, $address, $formatValues) as $sheetRowNo => $colVals) {
                         if ($sheetRowNo > $lastRow) {
                             break;
                         }
@@ -282,8 +286,35 @@ class ExcelBuilder extends FileBuilder
                     }
                     break;
                 case $this->isAddressCoordinate($address):
-                    $val = $this->getValueOfCoordinate($sheet, $address, $formatValues);
+                    $val = $this->getValueOfCoordinate($worksheet, $address, $formatValues);
                     $static_values[$colKey] = $this->parseExcelValue($val, $attrType);
+                    break;
+                case $this->isColumnName($address):
+                    if (empty($spreadsheet->getNamedRanges()) === true) {
+                        // Read the first row as header data to get the column names
+                        $headerRow = 1;
+                        $highestRow = $worksheet->getHighestRow();
+                        $highestColumn = $worksheet->getHighestColumn();
+                        $headerData = $worksheet->rangeToArray("A{$headerRow}:{$highestColumn}{$headerRow}", null, true, true, true)[1];
+
+                        // specif range
+                        foreach ($headerData as $columnLetter => $columnName) {
+                            // Define the range from the second row to the last row
+                            $range = "{$columnLetter}2:{$columnLetter}{$highestRow}";
+
+                            // Create a named range for each column name
+                            $spreadsheet->addNamedRange(new NamedRange($columnName, $worksheet, $range));
+                        }
+                    }
+
+                    // read column of given column name
+                    $row_nr = 0;
+                    foreach ($worksheet->namedRangeToArray($address, null, true, $formatValues, true) as $sheetRowNo => $colVals) {
+                        foreach ($colVals as $val) {
+                            $result_rows[$row_nr][$colKey] = $this->parseExcelValue($val, $attrType);
+                        }
+                        $row_nr++;
+                    }
                     break;
                 default:
                     throw new QueryBuilderException('Invalid data address "' . $address . '" for Excel query builder!');
@@ -298,7 +329,7 @@ class ExcelBuilder extends FileBuilder
         }
         
         // Free up memory as PHPSreadsheet is known to consume a lot of it
-        unset($sheet);
+        unset($worksheet);
         unset($spreadsheet);
         unset($reader);
 
@@ -390,6 +421,17 @@ class ExcelBuilder extends FileBuilder
     protected function isAddressCoordinate(string $dataAddress) : bool
     {
         return preg_match('/^[a-z]+\d+$/i', $dataAddress) === 1;
+    }
+    /**
+     *
+     * @param string $dataAddress
+     * @return bool
+     */
+    protected function isColumnName(string &$dataAddress) : bool
+    {
+        $isColumn = preg_match('/\[[a-zA-Z_]+\]/i', $dataAddress) === 1;
+        $dataAddress = trim($dataAddress, '[]');
+        return $isColumn;
     }
     
     /**
