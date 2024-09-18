@@ -35,7 +35,7 @@ self.addEventListener('sync', function(event) {
 			'actionQueue': '&id, object, action',
 			'deviceId': 'id',
 			'networkStat': 'time, speed, mime_type, size',
-			'connection': '++id, time, status'
+			'connection': 'time, status'
 		});
 		dexie.open().catch(function (e) {
 			_error = e;
@@ -158,6 +158,18 @@ self.addEventListener('sync', function(event) {
 			}
 			return d.getFullYear() + "-" + fnPad((d.getMonth() + 1), 2) + "-" + fnPad(d.getDate(), 2) + " " + fnPad(d.getHours(), 2) + ":" + fnPad(d.getMinutes(), 2);
 		}
+	};
+
+	function checkIndexedDB() {
+		return new Promise((resolve, reject) => {
+			const request = indexedDB.open("test");
+			request.onerror = () => reject(false);
+			request.onsuccess = () => {
+				request.result.close();
+				indexedDB.deleteDatabase("test");
+				resolve(true);
+			};
+		});
 	};
 
 	var _pwa = {
@@ -757,66 +769,91 @@ self.addEventListener('sync', function(event) {
 		}, // EOF model
 
 		data: {
+
 			/**
- 			* saveConnectionStatus - Saves the current connection status in IndexedDB if it's different from the last saved status.
+			* saveConnectionStatus - Saves the current connection status in IndexedDB if it's different from the last saved status.
 			* 
 			* If the new status is the same as the previously saved status, no new record is created.
-			* If the status is different, it saves the new status with the current time.
+			* If the status is different, it saves the new status with the current timestamp.
 			* 
 			* @param {string} status - The connection status to be saved. Typically, this will be a string 
-			*                          such as "online" or "offline".
+			*                          such as "online", "offline", 'semi_offline', 'forced_offline'.
 			* 
 			* @return {Promise} - Returns a Promise that resolves if the status is saved successfully, 
 			*                     or does nothing if the status is the same as the last saved status.
-			*  
 			*/
 			saveConnectionStatus: function (status) {
-				if (_error) {
-					return Promise.reject("IndexedDB error");
-				}
-
-				var currentTime = new Date();
-
-				// Fetch the last saved connection status
-				return _connectionTable.orderBy('time').last()
-					.then(function (lastRecord) {
-						if (lastRecord && lastRecord.status === status) {
-							// If the status is the same, do nothing 
-							return Promise.resolve();
-						} else {
-							// If the status is different, save the new status
-							var connectionData = {
-								status: status,
-								time: currentTime
-							};
-							return _connectionTable.put(connectionData)
-								.then(function () { 
-									return Promise.resolve();
-								});
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
 						}
+
+						// Check for any IndexedDB errors
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						var currentTime = new Date();
+
+						// Fetch the last saved connection status
+						return _connectionTable.orderBy('time').last()
+							.then(function (lastRecord) {
+								// If the last status is the same, do nothing
+								if (lastRecord && lastRecord.status === status) {
+									return Promise.resolve();
+								} else {
+									// If the status is different, save the new status
+									var connectionData = {
+										status: status,
+										time: currentTime
+									};
+									return _connectionTable.put(connectionData)
+										.then(function () {
+											return Promise.resolve();
+										});
+								}
+							})
+							.catch(function (error) {
+								//console.error("Error saving connection status:", error);
+								return Promise.reject(error);
+							});
 					})
-					.catch(function (error) {
-						console.error("Error saving connection status:", error);
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
 						return Promise.reject(error);
 					});
 			},
 
-			/**
+						/**
 			 * Retrieves all network stats from the IndexedDB.
 			 * @return {promise}
 			 */
 			getAllNetworkStats: function () {
-				// Check if there is an IndexedDB error
-				if (_error) {
-					return Promise.reject("IndexedDB error");
-				}
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
 
-				return _networkStatTable.toArray()
-					.then(function (stats) {
-						return Promise.resolve(stats);
+						// Check if there is an IndexedDB error
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						return _networkStatTable.toArray()
+							.then(function (stats) {
+								return Promise.resolve(stats);
+							})
+							.catch(function (error) {
+								//console.error("Error retrieving network stats:", error);
+								return Promise.reject(error);
+							});
 					})
-					.catch(function (error) {
-						console.error("Error retrieving network stats:", error);
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
 						return Promise.reject(error);
 					});
 			},
@@ -827,46 +864,71 @@ self.addEventListener('sync', function(event) {
 			 * @return {promise}
 			 */
 			saveNetworkStat: function (time, speed, mime_type, size) {
-				if (_error) {
-					return Promise.reject("IndexedDB error");
-				}
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
 
-				var stat = {
-					time: time,
-					speed: speed,
-					mime_type: mime_type,
-					size: size
-				};
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
 
-				return _networkStatTable.put(stat)
-					.then(function () {
-						return Promise.resolve();
+						var stat = {
+							time: time,
+							speed: speed,
+							mime_type: mime_type,
+							size: size
+						};
+
+						return _networkStatTable.put(stat)
+							.then(function () {
+								return Promise.resolve();
+							})
+							.catch(function (error) {
+								//console.error("Error saving network stat:", error);
+								return Promise.reject(error);
+							});
 					})
-					.catch(function (error) {
-						console.error("Error saving network stat:", error);
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
 						return Promise.reject(error);
 					});
 			},
 
 			/**
 			 * Deletes all network stats in the IndexedDB that were recorded before the specified timestamp.
+			 * @param {number} timestamp - The timestamp to check against.
 			 * @return {promise}
 			 */
 			deleteNetworkStatsBefore: function (timestamp) {
-				if (_error) {
-					return Promise.reject("IndexedDB error");
-				}
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
 
-				return _networkStatTable
-					.where('time')
-					.below(timestamp)
-					.delete()
-					.then(function (deleteCount) {
-						console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
-						return Promise.resolve(deleteCount);
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						return _networkStatTable
+							.where('time')
+							.below(timestamp)
+							.delete()
+							.then(function (deleteCount) {
+								//console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
+								return Promise.resolve(deleteCount);
+							})
+							.catch(function (error) {
+								//console.error("Error deleting old network stats:", error);
+								return Promise.reject(error);
+							});
 					})
-					.catch(function (error) {
-						console.error("Error deleting old network stats:", error);
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
 						return Promise.reject(error);
 					});
 			},
