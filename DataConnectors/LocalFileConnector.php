@@ -1,9 +1,11 @@
 <?php
 namespace exface\Core\DataConnectors;
 
+use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Exceptions\Filesystem\FileCorruptedError;
+use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
+use exface\Core\DataConnectors\Traits\ICanValidateFileIntegrityTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -17,8 +19,11 @@ use Symfony\Component\Finder\Finder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\ArrayDataType;
 
-class LocalFileConnector extends TransparentConnector
+class LocalFileConnector extends AbstractDataConnector
 {
+    use IDoNotSupportTransactionsTrait;
+
+    use ICanValidateFileIntegrityTrait;
 
     private $base_path = null;
     
@@ -31,10 +36,19 @@ class LocalFileConnector extends TransparentConnector
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performConnect()
      */
     protected function performConnect()
+    {
+        return;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::performDisconnect()
+     */
+    protected function performDisconnect()
     {
         return;
     }
@@ -359,4 +373,3 @@ class LocalFileConnector extends TransparentConnector
         return $this;
     }
 }
-?>

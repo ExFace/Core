@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
+use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\OpenAiApiDataQuery;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Security\AuthenticationTokenInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -13,7 +14,6 @@ use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Client;
@@ -24,8 +24,10 @@ use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
  * @author Andrej Kabachnik
  *        
  */
-class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
+class OpenAiConnector extends AbstractDataConnector
 {
+    use IDoNotSupportTransactionsTrait;
+
     private $client = null;
 
     private $modelName = null;
