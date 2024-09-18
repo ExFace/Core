@@ -3,6 +3,7 @@ namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -199,15 +200,20 @@ class LocalFileConnector extends TransparentConnector
     {
         $resultFiles = [];
         $fm = $this->getWorkbench()->filemanager();
-        
+        $filesToSave = $query->getFilesToSave(true);
+
+        $errors = $this->validateFileIntegrityArray($filesToSave);
+
+        $this->tryBeginWriting($errors);
         // Save files
-        foreach ($query->getFilesToSave(true) as $path => $content) {
+        foreach ($filesToSave as $path => $content) {
             if ($path === null) {
                 throw new DataQueryFailedError($query, 'Cannot write file with an empty path!');
             }
             $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
+        $this->tryFinishWriting($errors);
         
         // Delete files
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
