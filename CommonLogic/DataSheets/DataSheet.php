@@ -59,8 +59,6 @@ use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
-use Symfony\Component\Console\Exception\InvalidOptionException;
-use Throwable;
 
 /**
  * Default implementation of DataSheetInterface
@@ -181,7 +179,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::joinLeft()
      */
-    public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
+    public function joinLeft(DataSheetInterface $other_sheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relation_path = '') : DataSheetInterface
     {
         // First copy the columns of the right data sheet ot the left one
         $right_cols = array();
@@ -279,7 +277,7 @@ class DataSheet implements DataSheetInterface
                 $columns_with_formulas[] = $this_col->getName();
                 continue;
             }
-            if ($other_col = $other_sheet->getColumn($this_col->getName())) {
+            if ($other_col = $other_sheet->getColumns()->get($this_col->getName())) {
                 // TODO probably need to copy values to rows with matching UIDs instead of relying on identical sorting here
                 if (count($this_col->getValues(false)) > 0 && count($this_col->getValues(false)) !== count($other_col->getValues(false))) {
                     throw new DataSheetImportRowError($this, 'Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
@@ -3229,15 +3227,15 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
      */
-    public function getSingleRow() : mixed
+    public function getSingleRow() : array
     {
-        if ($this->total_row_count === 0) {
-            throw new InvalidOptionException("The input sequence is empty.");
+        $cnt = $this->countRows();
+        if ($cnt === 0) {
+            throw new DataSheetStructureError($this, "Data is empty while exactly one row is expected");
         }
-        if ($this->total_row_count > 1) {
-            throw new InvalidOptionException("The input sequence contains more than one element.");
+        if ($cnt > 1) {
+            throw new DataSheetStructureError($this, "Multiple data rows found while exactly one is expected");
         }
-
         return $this->rows[0];
     }
 }

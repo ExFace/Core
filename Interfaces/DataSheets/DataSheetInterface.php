@@ -777,11 +777,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getCensoredDataSheet() : DataSheetInterface;
 
     /**
-     * Expects the datasheet to have exactly one row and returns it.
-     * (e.g. [col1 => val1, col2 => val2, ...])
+     * Returns the only row from the data sheet or throws an error if it has no rows or more than one.
+     * 
+     * Returns the row as an array: `[col1 => val1, col2 => val2, ...]`.
+     * 
+     * This method a convenient replacement for row number checks.
      *
-     * @return multitype:
+     * @return array
      * @throws InvalidOptionException if more then one row is within the datasheet
      */
-    public function getSingleRow() : mixed;
+    public function getSingleRow() : array;
 }
