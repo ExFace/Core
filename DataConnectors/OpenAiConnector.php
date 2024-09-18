@@ -10,7 +10,11 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Psr\Http\Client\RequestExceptionInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Client;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
@@ -32,6 +36,8 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
 
     private $headers = [];
 
+    private $dryrun = false;
+
     /**
      * 
      * {@inheritDoc}
@@ -42,15 +48,76 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
         if (! $query instanceof OpenAiApiDataQuery) {
             throw new DataQueryFailedError($query, 'Invalid query type for connection ' . $this->getAliasWithNamespace() . ': expecting instance of OpenAiApiDataQuery');
         }
+
         $json = $this->buildJsonChatCompletionCreate($query);
-        $response = $this->sendRequest($json);
+        if ($this->isDryrun()) {
+                $response = $this->getDryrunResponse();
+        } else {
+            try {
+                $request = new Request('POST', $this->getUrl(), [], json_encode($json));
+                $query = $query->withRequest($request);
+                
+                $response = $this->sendRequest($request);
+            } catch (RequestException $re) {
+                if (null !== $response = $re->getResponse()) {
+                    $query = $query->withResponse($response);
+                }
+                throw new DataQueryFailedError($query, 'Error in LLM request. ' . $re->getMessage(), null, $re);
+            }
+        }
         return $query->withResponse($response);
     }
+    
+    /**
+     * 
+     * @param Psr7DataQuery $query
+     * @param ResponseInterface $response
+     * @param \Throwable $exceptionThrown
+     * @return \exface\UrlDataConnector\Exceptions\HttpConnectorRequestError
+     */
+    protected function createResponseException(Psr7DataQuery $query, ResponseInterface $response = null, \Throwable $exceptionThrown = null)
+    {
+        if ($response !== null) {
+            $message = $this->getResponseErrorText($response, $exceptionThrown);
+            $code = $this->getResponseErrorCode($response, $exceptionThrown);
+            $level = $this->getResponseErrorLevel($response);
+            $ex = new HttpConnectorRequestError($query, $response->getStatusCode(), $response->getReasonPhrase(), $message, $code, $exceptionThrown);
+            $useAsTitle = false;
+            if ($this->getErrorTextUseAsMessageTitle() === true) {
+                $useAsTitle = true;
+            } elseif ($this->getErrorTextUseAsMessageTitle() === null) {
+                if ($exceptionThrown !== null && $exceptionThrown->getMessage() !== $message) {
+                    $useAsTitle = true;
+                }
+            }
+            if ($useAsTitle === true) {
+                $ex->setUseRemoteMessageAsTitle(true);
+            }
+            
+            // Wrap the error in an authentication-exception if login failed.
+            // This will give facades the option to show a login-screen.
+            if ($this->hasAuthentication()) {
+                $authFailed = $this->getAuthProvider()->isResponseUnauthenticated($response);
+            } else {
+                $authFailed = $response->getStatusCode() == 401;
+            }
+            if ($authFailed && ! ($exceptionThrown instanceof AuthenticationFailedError)) {
+                $ex = $this->createAuthenticationException($ex, $message);
+            } else {
+                if ($level !== null) {
+                    $ex->setLogLevel($level);
+                }
+            }
+        } else {
+            $ex = new HttpConnectorRequestError($query, 0, 'No Response from Server', $exceptionThrown->getMessage(), null, $exceptionThrown);
+        }
+        
+        return $ex;
+    }
 
-    protected function sendRequest(array $json) : ResponseInterface
+    protected function sendRequest(RequestInterface $request) : ResponseInterface
     {
         $client = $this->getClient();
-        $request = new Request('POST', $this->getUrl(), [], json_encode($json));
         $response = $client->send($request);
         return $response;
     }
@@ -232,7 +299,19 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
      */
     protected function getHeaders() : array
     {
-        return $this->headers;
+        // Overwrite defaults with configured headers and remove empty values afterwards
+        return array_filter(array_merge($this->getHeadersDefaults(), $this->headers));
+    }
+
+    /**
+     * 
+     * @return array
+     */
+    protected function getHeadersDefaults() : array
+    {
+        return [
+            'Content-Type' => 'application/json'
+        ];
     }
     
     /**
@@ -249,5 +328,102 @@ class OpenAiConnector extends AbstractDataConnectorWithoutTransactions
     {
         $this->headers = ($value instanceof UxonObject ? $value->toArray() : $value);
         return $this;
+    }
+
+    /**
+     * Set to TRUE to return a pregenerated instead of really querying the LLM
+     * 
+     * @uxon-property dryrun
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return \exface\Core\DataConnectors\OpenAiConnector
+     */
+    protected function setDryrun(bool $value) : OpenAiConnector
+    {
+        $this->dryrun = $value;
+        return $this;
+    }
+
+    protected function isDryrun() : bool
+    {
+        return $this->dryrun;
+    }
+
+    protected function getDryrunResponse() : ResponseInterface
+    {
+        $json = <<<JSON
+      {
+    "choices": [
+        {
+            "content_filter_results": {
+                "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                }
+            },
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+                "content": "This is an pregenerated demo response because the AI connector has `dryrun:true`. This was not really generated by an LLM!",
+                "role": "assistant"
+            }
+        }
+    ],
+    "created": 1726608704,
+    "id": "chatcmpl-A8a5Q1jUobKy5hhtxR9r1acmuNTi9",
+    "model": "gpt-35-turbo",
+    "object": "chat.completion",
+    "prompt_filter_results": [
+        {
+            "prompt_index": 0,
+            "content_filter_results": {
+                "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "jailbreak": {
+                    "filtered": false,
+                    "detected": false
+                },
+                "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                },
+                "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                }
+            }
+        }
+    ],
+    "system_fingerprint": null,
+    "usage": {
+        "completion_tokens": 30,
+        "prompt_tokens": 3004,
+        "total_tokens": 3034
+    }
+}  
+JSON;
+
+        return new Response(200, [], $json);
     }
 }
