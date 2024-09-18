@@ -2,8 +2,6 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Actions\iCallWidgetFunction;
-use exface\Core\Interfaces\Actions\iRunFacadeScript;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
