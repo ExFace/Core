@@ -47,6 +47,8 @@ trait ExceptionTrait {
     
     private $useExceptionMessageAsTitle = false;
 
+    private $statusCode = null;
+
     public function __construct($message, $alias = null, $previous = null)
     {
         parent::__construct($message, 0, $previous);
@@ -296,15 +298,24 @@ trait ExceptionTrait {
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 500) : int
     {
-        if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $code = $this->getPrevious()->getStatusCode()){
+        if ($this->statusCode !== null) {
+            return $this->statusCode;
+        }
+        $prev = $this->getPrevious();
+        if ($prev !== null && $prev instanceof ExceptionInterface && 0 !== $code = $prev->getStatusCode(0)){
             return $code;
         } 
-        return 500;
+        return $default;
+    }
+
+    public function setStatusCode(int $httpResponseCode) : ExceptionInterface
+    {
+        $this->statusCode = $httpResponseCode;
+        return $this;
     }
 
     /**

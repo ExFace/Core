@@ -14,8 +14,8 @@ class DataNotFoundError extends DataSheetRuntimeError
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 404) : int
     {
-        return 404;
+        return parent::getStatusCode($default);
     }
 }
