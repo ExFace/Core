@@ -155,7 +155,7 @@ abstract class AbstractAction implements ActionInterface
     
     private $offlineStrategy = null;
 
-    private array $requiredConfirmations = [];
+    private array $confirmationWidgets = [];
 
     /**
      *
@@ -1872,7 +1872,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Make the action ask for confirmation when its button is pressed
+     * Make the action ask for confirmation when its button is pressed.
      * 
      * @uxon-property confirmation_for_action
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage
@@ -1885,7 +1885,8 @@ abstract class AbstractAction implements ActionInterface
     {
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
-            $this->requiredConfirmations[self::CONFIRMATION_FOR_ACTION] = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $this->confirmationWidgets[self::CONFIRMATION_FOR_ACTION] = $widget;
         } else {
             // TODO what here?
         }
@@ -1893,7 +1894,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Make the action warn the user if it is to be performed when unsaved changes are still visible
+     * Make the action warn the user if it is to be performed when unsaved changes are still visible.
      * 
      * @uxon-property confirmation_for_unsaved_data
      * @uxon-type \exface\Core\Widgets\ConfirmationMessage
@@ -1906,7 +1907,8 @@ abstract class AbstractAction implements ActionInterface
     {
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
-            $this->requiredConfirmations[self::CONFIRMATION_UNSAVED_CHANGES] = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $this->confirmationWidgets[self::CONFIRMATION_UNSAVED_CHANGES] = $widget;
         } else {
             // TODO what here?
         }
@@ -1917,18 +1919,9 @@ abstract class AbstractAction implements ActionInterface
     /**
      * @inheritDoc
      */
-    public function getConfirmation(string $confirmationType) : ?WidgetInterface
+    public function getConfirmationWidget(string $confirmationType) : ?WidgetInterface
     {
-        return $this->requiredConfirmations[$confirmationType];
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function isConfirmationRequired(string $confirmationType) : bool
-    {
-        return $this->hasConfirmationWidget($confirmationType) ||
-               $this->isConfirmationRequiredByDefault($confirmationType);
+        return $this->confirmationWidgets[$confirmationType];
     }
 
     /**
@@ -1936,28 +1929,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function hasConfirmationWidget (string $confirmationType) : bool
     {
-        return $this->requiredConfirmations[$confirmationType] !== null &&
-               $this->requiredConfirmations[$confirmationType]->isDisabled() === false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function isConfirmationRequiredByDefault(string $confirmationType) : bool
-    {
-        // Abstract classes should not be aware of their implementations.
-        // These implicit rules are an exception to ensure backwards compatibility.
-        // Do not expand.
-        if( $this instanceof iCallWidgetFunction ||
-            $this instanceof iRunFacadeScript ) {
-            return false;
-        }
-
-        // If the selected type is unknown or does not have a default set, return false.
-        if(!key_exists($confirmationType, self::IS_CONFIRMATION_REQUIRED_BY_DEFAULT)) {
-            return false;
-        }
-
-        return self::IS_CONFIRMATION_REQUIRED_BY_DEFAULT[$confirmationType];
+        return $this->confirmationWidgets[$confirmationType] !== null &&
+               $this->confirmationWidgets[$confirmationType]->isDisabled() !== false;
     }
 }

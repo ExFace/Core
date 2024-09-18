@@ -560,15 +560,6 @@ interface ActionInterface extends
     public function getConfirmationWidget(string $confirmationType) : ?WidgetInterface;
 
     /**
-     * Returns `true` if this action requires a confirmation of the requested type.
-     *
-     * @param string $confirmationType
-     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type.
-     * @return bool
-     */
-    public function isConfirmationRequired(string $confirmationType) : bool;
-
-    /**
      * Returns true if a confirmation widget of the specified type is available.
      *
      * NOTE: This does not accurately represent, whether a confirmation of the specified
