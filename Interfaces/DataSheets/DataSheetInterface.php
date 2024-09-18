@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use Symfony\Component\Console\Exception\InvalidOptionException;
 
 /**
  * Internal data respresentation - a row-based table with filters, sorters, aggregators, etc.
@@ -391,7 +392,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
      *
-     * @param number $row_number            
+     * @param number $row_number
      * @return multitype:
      */
     public function getRow($row_number = 0);
@@ -774,4 +775,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function getCensoredDataSheet() : DataSheetInterface;
+
+    /**
+     * Expects the datasheet to have exactly one row and returns it.
+     * (e.g. [col1 => val1, col2 => val2, ...])
+     *
+     * @return multitype:
+     * @throws InvalidOptionException if more then one row is within the datasheet
+     */
+    public function getSingleRow() : mixed;
 }
