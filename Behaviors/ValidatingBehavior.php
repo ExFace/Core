@@ -30,9 +30,9 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  * ### Properties:
  * 
- * - `invalid_if_on_create` executes whenever data is being **created**, but **before** these changes are applied to the database.
- * - `invalid_if_on_update` executes whenever data is being **updated**, but **before** these changes are applied to the database.
- * - `invalid_if_on_any` executes whenever data is being **created or updated**, but **before** those changes are applied to the database.
+ * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to the database.
+ * - `invalid_if_on_update` executes only when data is being **updated**, but **before** these changes are applied to the database.
+ * - `invalid_if_on_always` executes both when data is being **created and updated**, but **before** those changes are applied to the database.
  * 
  * This behavior can react both to when the data is first created and to whenever it is changed from then on.
  * You can use any of the three `ìnvalid_if` properties to control the timing of your checks.
@@ -81,7 +81,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  *  ```
  *  {
- *      "invalid_if_on_any": [
+ *      "invalid_if_on_always": [
  *         {
  *            "error_text": "The entered value must lie between 0 and 100!",
  *            "operator": "AND",
@@ -196,7 +196,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts only to OnCreate events.
+     * Triggers only when data is being CREATED. Prevent changing a data item if any of these conditions match.
      *
      *  ### Placeholders:
      * 
@@ -216,7 +216,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts only to OnUpdate events.
+     * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
      *
      * ### Placeholders:
      * 
@@ -237,7 +237,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts to both OnCreate and OnUpdate events.
+     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions match.
      *
      * ### Placeholders:
      * 
