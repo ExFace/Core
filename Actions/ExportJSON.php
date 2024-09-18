@@ -578,8 +578,6 @@ class ExportJSON extends ReadData implements iExportData
 
         $fileName = FilePathDataType::sanitizeFilename($fileName);
         $fileName = str_replace(' ', '_', $fileName);
-        $fileName = StringDataType::convertCaseUnderscoreToPascal($fileName);
-        $fileName = mb_substr($fileName, 0, 26); // TODO geb 2024-09-10: HOTFIX When downloading the file, filenames longer than 26 characters get truncated and scrambled.
         $fileManager = $this->getWorkbench()->filemanager();
         $this->filePathAbsolute = Filemanager::pathJoin([
             $fileManager->getPathToCacheFolder(),

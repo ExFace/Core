@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Templates\BracketHashXlsxTemplateRenderer;
@@ -56,8 +57,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * `[#dataPlaceholderNameSome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
- * ## Example 
+ * ## Writing the UXON
  * 
+ * While the formatting and layout are defined by the template file, the data you wish to print is specified and formatted within the UXON definition.
+ * Consequently, you should write your UXON as though you wanted to create a `DataTable`. Think carefully about what data you need and how you
+ * wish to format it, as the print action simply parses whatever it receives into the template.
+ *
  * Consider the following example for a simple table export to XLSX. The property `template` tells the action where to find the template
  * you have written, while `filename` will be the name of the file created by this action. You may apply placeholders to the filename.
  *
@@ -98,6 +103,11 @@ class PrintXLSX extends PrintTemplate
 {
     private $template = null;
     
+    protected function init()
+    {
+        parent::init();
+        $this->setIcon(Icons::FILE_EXCEL_O);
+    }
     
     /**
      * Returns an array of the form [file_path => rendered_template].
