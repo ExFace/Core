@@ -24,17 +24,19 @@ class JsonSchemaValidationError extends UnexpectedValueException
 {
     private $errors = [];
     private $json;
+    private $statusCode;
     
     /**
      *
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface::__construct()
      */
-    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $json = null)
+    public function __construct(array $validationErrors, $message, $alias = null, $previous = null, $json = null, $statusCode = 400)
     {
         parent::__construct($message, $alias, $previous);
         $this->json = $json;
         $this->errors = $validationErrors;
+        $this->statusCode = $statusCode;
     }
     
     public function addError(string $message) : JsonSchemaValidationError
@@ -57,7 +59,12 @@ class JsonSchemaValidationError extends UnexpectedValueException
         
         return $messages;
     }
-    
+
+    public function getStatusCode()
+    {
+        return $this->statusCode;
+    }
+
     public function getJson() : ?string
     {
     	return JsonDataType::prettify($this->json);
