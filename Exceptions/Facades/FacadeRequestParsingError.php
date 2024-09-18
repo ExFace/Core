@@ -16,8 +16,8 @@ class FacadeRequestParsingError extends RuntimeException
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 400) : int
     {
-        return 400;
+        return parent::getStatusCode($default);
     }
 }

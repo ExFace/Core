@@ -16,8 +16,8 @@ class UnavailableError extends RuntimeException
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 503) : int
     {
-        return 503;
+        return parent::getStatusCode($default);
     }
 }

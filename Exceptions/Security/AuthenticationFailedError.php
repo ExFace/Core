@@ -47,9 +47,9 @@ class AuthenticationFailedError extends RuntimeException implements Authenticati
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 401) : int
     {
-        return 401;
+        return parent::getStatusCode($default);
     }
     
     /**
