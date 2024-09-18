@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
-use exface\Core\DataConnectors\Traits\iCanValidateFileIntegrityTrait;
+use exface\Core\CommonLogic\AbstractDataConnector;
+use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
 /**
@@ -14,9 +14,9 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
  * @author Andrej Kabachnik
  *        
  */
-class TransparentConnector extends AbstractDataConnectorWithoutTransactions
+class TransparentConnector extends AbstractDataConnector
 {
-    use iCanValidateFileIntegrityTrait;
+    use IDoNotSupportTransactionsTrait;
 
     /**
      *

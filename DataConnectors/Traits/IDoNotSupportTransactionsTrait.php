@@ -1,9 +1,9 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\DataConnectors\Traits;
 
 use exface\Core\CommonLogic\Workbench;
 
-abstract class AbstractDataConnectorWithoutTransactions extends AbstractDataConnector
+trait IDoNotSupportTransactionsTrait
 {
 
     /**

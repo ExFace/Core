@@ -34,7 +34,7 @@ use exface\Core\Interfaces\TranslationInterface;
  * ```
  *
  */
-trait iCanValidateFileIntegrityTrait
+trait ICanValidateFileIntegrityTrait
 {
     protected bool $validateFileIntegrity = false;
 
