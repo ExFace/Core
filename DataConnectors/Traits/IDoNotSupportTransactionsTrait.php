@@ -1,8 +1,11 @@
 <?php
 namespace exface\Core\DataConnectors\Traits;
 
-use exface\Core\CommonLogic\Workbench;
-
+/**
+ * This trait adds stub methods to handle transaction commands to a connector, that does not support transactions
+ * 
+ * @author Andrej Kabachnik
+ */
 trait IDoNotSupportTransactionsTrait
 {
 
