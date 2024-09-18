@@ -4,7 +4,6 @@ namespace exface\Core\DataConnectors\Traits;
 
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\TranslationInterface;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * This trait enables validating file integrity.
