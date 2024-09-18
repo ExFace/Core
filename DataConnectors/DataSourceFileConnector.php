@@ -117,13 +117,17 @@ class DataSourceFileConnector extends TransparentConnector
     {
         $resultFiles = [];
         $fm = $this->getWorkbench()->filemanager();
-        
+        $filesToSave = $query->getFilesToSave(true);
+        $errors = $this->validateFileIntegrityArray($filesToSave);
+
+        $this->tryBeginWriting($errors);
         // Save files
-        foreach ($query->getFilesToSave(true) as $path => $content) {
+        foreach ($filesToSave as $path => $content) {
             $fileInfo = new DataSourceFileInfo($path, $this->getWorkbench());
             $fileInfo->openFile()->write($content);
             $resultFiles[] = $fileInfo;
         }
+        $this->tryFinishWriting($errors);
         
         // Delete files
         foreach ($query->getFilesToDelete(true) as $pathOrInfo) {
@@ -138,7 +142,16 @@ class DataSourceFileConnector extends TransparentConnector
         
         return $query->withResult($resultFiles);
     }
-    
+
+    /**
+     * @inheritDoc
+     */
+    protected function guessMimeType(string $path, string $data): string
+    {
+        return (new DataSourceFileInfo($path, $this->getWorkbench()))->getMimetype();
+    }
+
+
     /**
      * 
      * @return bool
