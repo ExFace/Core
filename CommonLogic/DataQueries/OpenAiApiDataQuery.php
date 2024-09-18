@@ -1,10 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\DataQueries;
 
+use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Widgets\DebugMessage;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -29,6 +34,8 @@ class OpenAiApiDataQuery extends AbstractDataQuery
     private $conversationUid = null;
     
     private $conversationData = null;
+
+    private $request = null;
 
     private $response = null;
 
@@ -155,6 +162,28 @@ class OpenAiApiDataQuery extends AbstractDataQuery
         return $this;
     }
 
+
+    /**
+     * 
+     * @param \Psr\Http\Message\RequestInterface $request
+     * @return \exface\Core\CommonLogic\DataQueries\OpenAiApiDataQuery
+     */
+    public function withRequest(RequestInterface $request) : OpenAiApiDataQuery
+    {
+        $clone = clone $this;
+        $clone->request = $request;
+        return $clone;
+    }
+
+    /**
+     * 
+     * @return RequestInterface
+     */
+    public function getRequest() : ?RequestInterface
+    {
+        return $this->request;
+    }
+
     /**
      * 
      * @param \Psr\Http\Message\ResponseInterface $response
@@ -164,7 +193,6 @@ class OpenAiApiDataQuery extends AbstractDataQuery
     {
         $clone = clone $this;
         $clone->response = $response;
-        $clone->responseData = json_decode($response->getBody()->__toString(), true);
         return $clone;
     }
 
@@ -174,6 +202,14 @@ class OpenAiApiDataQuery extends AbstractDataQuery
      */
     public function getResponseData() : array
     {
+        if ($this->responseData === null) {
+            try {
+                $json = JsonDataType::decodeJson($this->getResponse()->getBody()->__toString(), true);
+                $this->responseData = $json;
+            } catch (\Throwable $e) {
+                throw new DataQueryFailedError($this, 'Cannot parse LLM response. ' . $e->getMessage(), null, $e);
+            }
+        }
         return $this->responseData;
     }
 
@@ -184,6 +220,14 @@ class OpenAiApiDataQuery extends AbstractDataQuery
     public function hasResponse() : bool
     {
         return $this->response !== null;
+    }
+
+    public function getResponse() : ResponseInterface
+    {
+        if ($this->response === null) {
+            throw new DataQueryFailedError($this, 'Cannot access LLM response before the query was sent!');
+        }
+        return $this->response;
     }
 
     /**
@@ -202,5 +246,20 @@ class OpenAiApiDataQuery extends AbstractDataQuery
     public function getResponseUsageStats() : array
     {
         return $this->responseData['usage'];
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataQueries\AbstractDataQuery::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        if (null !== $request = $this->getRequest()) {
+            $renderer = new HttpMessageDebugWidgetRenderer($request, ($this->hasResponse() ? $this->getResponse() : null), 'Data request', 'Data response');
+            $debug_widget = $renderer->createDebugWidget($debug_widget);
+        }
+        
+        return $debug_widget;
     }
 }
