@@ -494,7 +494,13 @@
 	"WIDGET.NAVTILES.EMPTY": "This menu is empty or you don't have permissions for its items.",
 	
 	"WIDGET.POPUP.CLOSE_BUTTON_CAPTION": "Cancel",
-	
+
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "File \"%path%\" is corrupted! Please check the original file and try again.",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Unknown mime-type \"%mimetypes%\" in file \"%path%\".",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Upload failed, because of the following errors:",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Backup of broken file stored at \"%path%\".",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER": "No data has been saved to the system!",
+
 	"WIDGET.UPLOADER.ERROR_EXTENSION_NOT_ALLOWED": "Only the following file types allowed: %extensions%!",
 	"WIDGET.UPLOADER.ERROR_MIMETYPE_NOT_ALLOWED": "Only the following content types allowed: %mimetypes%!",
 	"WIDGET.UPLOADER.ERROR_FILE_TOO_BIG": "File too large: max. %mb% MB allowed!",

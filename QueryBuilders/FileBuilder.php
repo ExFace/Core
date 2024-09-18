@@ -663,7 +663,9 @@ class FileBuilder extends AbstractQueryBuilder
                         $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
                     }
                 }
+                break;
         }
+
         return $array;
     }
     
