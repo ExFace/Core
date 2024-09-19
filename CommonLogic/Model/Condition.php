@@ -559,7 +559,7 @@ class Condition implements ConditionInterface
                 throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
         }
         try {
-            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr);
+            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr, true);
             $this->setExpression($expression);
             if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
