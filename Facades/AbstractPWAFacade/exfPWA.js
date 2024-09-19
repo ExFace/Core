@@ -12,65 +12,69 @@ importScripts('vendor/exface/Core/Facades/AbstractPWAFacade/exfPWA.js');
 
 // Handle OfflineActionSync Event
 self.addEventListener('sync', function(event) {
-    ...
+	...
 });
 -----------------------------------------------------------
  * 
  * @author Ralf Mulansky
  *
  */
- ;(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(global.Dexie, global.$) :
-    typeof define === 'function' && define.amd ? define(factory(global.Dexie, global.$)) :
-    global.exfPWA = factory(global.Dexie, global.$)
+; (function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(global.Dexie, global.$) :
+		typeof define === 'function' && define.amd ? define(factory(global.Dexie, global.$)) :
+			global.exfPWA = factory(global.Dexie, global.$)
 }(this, (function (Dexie, $) {
-	
+
 	var _error = null;
-		
-	var _db = function() {
+
+	var _db = function () {
 		var dexie = new Dexie('exf-offline');
 		dexie.version(1).stores({
-            'offlineData': 'uid, object_alias',
-            'offlineModel': 'url',
-            'actionQueue': '&id, object, action',
-            'deviceId': 'id'
+			'offlineData': 'uid, object_alias',
+			'offlineModel': 'url',
+			'actionQueue': '&id, object, action',
+			'deviceId': 'id',
+			'networkStat': 'time, speed, mime_type, size',
+			'connection': 'time, status'
 		});
 		dexie.open().catch(function (e) {
 			_error = e;
-		    console.error("PWA error: " + e.stack);
+			console.error("PWA error: " + e.stack);
 		});
 		return dexie;
 	}();
-	
+
 	var _deviceId;
 	var _queueTopics = ['offlineTask'];
-	
+
 	if (_error === null) {
 		var _dataTable = _db.table('offlineData');
 		var _modelTable = _db.table('offlineModel');
 		var _actionsTable = _db.table('actionQueue');
 		var _deviceIdTable = _db.table('deviceId');
+		var _networkStatTable = _db.table('networkStat');
+		var _connectionTable = _db.table('connection');
 	}
-	
-	(function() {
+
+	(function () {
 		_deviceIdTable.toArray()
-		.then(function(data) {
-			if (data.length !== 0) {
-				_deviceId = data[0].id;
-			} else {
-				_deviceId = _pwa.createUniqueId();
-				_deviceIdTable.put({
-					id: _deviceId
-				});
-			}
-		})
+			.then(function (data) {
+				if (data.length !== 0) {
+					_deviceId = data[0].id;
+				} else {
+					_deviceId = _pwa.createUniqueId();
+					_deviceIdTable.put({
+						id: _deviceId
+					});
+				}
+			})
 	})();
-	
+
 	var _merge = function mergeObjects(target, ...sources) {
 		// The last argument may be an array containing excludes
 		// Restore it if it is not an array!
 		var aIgnoredProps = sources.pop();
-		if (! Array.isArray(aIgnoredProps)) {
+		if (!Array.isArray(aIgnoredProps)) {
 			sources.push(aIgnoredProps);
 			aIgnoredProps = [];
 		}
@@ -88,7 +92,7 @@ self.addEventListener('sync', function(event) {
 		// The last argument may be an array containing excludes
 		// Restore it if it is not an array!
 		var aIgnoredProps = sources.pop();
-		if (! Array.isArray(aIgnoredProps)) {
+		if (!Array.isArray(aIgnoredProps)) {
 			sources.push(aIgnoredProps);
 			aIgnoredProps = [];
 		}
@@ -132,159 +136,171 @@ self.addEventListener('sync', function(event) {
 	};
 
 	var getIdentifier = function (identifiers, sourceObject) {
-		for (let i = 0; i < identifiers.length; i++){
-			if (Object.keys(sourceObject).includes(identifiers[i])){
+		for (let i = 0; i < identifiers.length; i++) {
+			if (Object.keys(sourceObject).includes(identifiers[i])) {
 				return identifiers[i];
 			}
 		}
 	};
-	
+
 	var _date = {
-		now : function() {
+		now: function () {
 			return _date.normalize(new Date());
 		},
-		timestamp: function() {
+		timestamp: function () {
 			return Date.now();
 		},
-		normalize : function(d) {
+		normalize: function (d) {
 			var fnPad = function (n, width, z) {
 				z = z || '0';
 				n = n + '';
 				return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 			}
-			return d.getFullYear()  + "-" + fnPad((d.getMonth()+1), 2) + "-" + fnPad(d.getDate(), 2) + " " + fnPad(d.getHours(), 2) + ":" + fnPad(d.getMinutes(), 2);
+			return d.getFullYear() + "-" + fnPad((d.getMonth() + 1), 2) + "-" + fnPad(d.getDate(), 2) + " " + fnPad(d.getHours(), 2) + ":" + fnPad(d.getMinutes(), 2);
 		}
 	};
-	
+
+	function checkIndexedDB() {
+		return new Promise((resolve, reject) => {
+			const request = indexedDB.open("test");
+			request.onerror = () => reject(false);
+			request.onsuccess = () => {
+				request.result.close();
+				indexedDB.deleteDatabase("test");
+				resolve(true);
+			};
+		});
+	};
+
 	var _pwa = {
-		
+
 		/**
 		 * @return {bool}
 		 */
-		isAvailable : function() {
+		isAvailable: function () {
 			return _error === null;
 		},
-		
+
 		/**
 		 * @return {string}
 		 */
-		getDeviceId : function() {
+		getDeviceId: function () {
 			return _deviceId;
 		},
-		
+
 		/**
 		 * @return {string}
 		 */
-		createUniqueId : function (a = "", b = false) {
-		    const c = _date.timestamp()/1000;
-		    let d = c.toString(16).split(".").join("");
-		    while(d.length < 14) d += "0";
-		    let e = "";
-		    if(b){
-		        e = ".";
-		        e += Math.round(Math.random()*100000000);
-		    }
-		    return a + d + e;
+		createUniqueId: function (a = "", b = false) {
+			const c = _date.timestamp() / 1000;
+			let d = c.toString(16).split(".").join("");
+			while (d.length < 14) d += "0";
+			let e = "";
+			if (b) {
+				e = ".";
+				e += Math.round(Math.random() * 100000000);
+			}
+			return a + d + e;
 		},
-		
+
 		/**
 		 * @return void
 		 */
-		download : function (data, filename, type) {
-		    var file = new Blob([data], {type: type});
-		    if (window.navigator.msSaveOrOpenBlob) // IE10+
-		        window.navigator.msSaveOrOpenBlob(file, filename);
-		    else { // Others
-		        var a = document.createElement("a"),
-		                url = URL.createObjectURL(file);
-		        a.href = url;
-		        a.download = filename;
-		        document.body.appendChild(a);
-		        a.click();
-		        setTimeout(function() {
-		            document.body.removeChild(a);
-		            window.URL.revokeObjectURL(url);  
-		        }, 0); 
-		    }
-		    return;
+		download: function (data, filename, type) {
+			var file = new Blob([data], { type: type });
+			if (window.navigator.msSaveOrOpenBlob) // IE10+
+				window.navigator.msSaveOrOpenBlob(file, filename);
+			else { // Others
+				var a = document.createElement("a"),
+					url = URL.createObjectURL(file);
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				setTimeout(function () {
+					document.body.removeChild(a);
+					window.URL.revokeObjectURL(url);
+				}, 0);
+			}
+			return;
 		},
-		
+
 		/**
 		 * @return {promise}
 		 */
-		syncAll : async function({fnCallback = () => {}, doReSync = false} = {}) {
+		syncAll: async function ({ fnCallback = () => { }, doReSync = false } = {}) {
 			var deferreds = [];
-			var data = await _dataTable.toArray();		
-			data.forEach(function(oDataSet){
+			var data = await _dataTable.toArray();
+			data.forEach(function (oDataSet) {
 				deferreds.push(
-			    	_pwa
-			    	.data.sync(oDataSet.uid, doReSync)
-			    );
+					_pwa
+						.data.sync(oDataSet.uid, doReSync)
+				);
 			});
 			// Can't pass a literal array, so use apply.
 			//return $.when.apply($, deferreds)
 			return Promise
-			.all(deferreds)
-			.then(function() {
-				if (_error) {
-					return Promise.resolve();
-				}
-				//delete all actions with status "synced" from actionQueue
-				return _pwa
-				.actionQueue
-				.get('synced')
-				.then(function(data) {
-					data.forEach(function(item) {
-						_actionsTable.delete(item.id);
-					})
+				.all(deferreds)
+				.then(function () {
+					if (_error) {
+						return Promise.resolve();
+					}
+					//delete all actions with status "synced" from actionQueue
+					return _pwa
+						.actionQueue
+						.get('synced')
+						.then(function (data) {
+							data.forEach(function (item) {
+								_actionsTable.delete(item.id);
+							})
+						})
 				})
-			})
-			.then(function(){
-				if (fnCallback !== undefined) {
-					fnCallback();
-				}
-			});
+				.then(function () {
+					if (fnCallback !== undefined) {
+						fnCallback();
+					}
+				});
 		},
-		
+
 		/**
 		 * @return {promise}
 		 */
-		reset : function() {
+		reset: function () {
 			if (_error) {
 				return Promise.resolve(null);
 			}
 			return _dataTable
-			.clear()
-			.then(function(){
-				var aPromises = [];
-				return _modelTable
-				.toArray()
-				.then(function(aRows) {
-					aRows.forEach(function(oPWA){
-						aPromises.push(_pwa.model.sync(oPWA.url));
-					});
-					return Promise.all(aPromises);
-				});
-			})
+				.clear()
+				.then(function () {
+					var aPromises = [];
+					return _modelTable
+						.toArray()
+						.then(function (aRows) {
+							aRows.forEach(function (oPWA) {
+								aPromises.push(_pwa.model.sync(oPWA.url));
+							});
+							return Promise.all(aPromises);
+						});
+				})
 		},
-		
+
 		actionQueue: {
-		
+
 			/**
 			 * @return void
 			 */
-			setTopics : function(aTopics) {
+			setTopics: function (aTopics) {
 				_queueTopics = aTopics;
 				return;
 			},
-		
+
 			/**
 			 * @return {string[]}
 			 */
-			getTopics : function() {
+			getTopics: function () {
 				return _queueTopics;
 			},
-			
+
 			/**
 			 * Adds an action to the offline action queue
 			 * 
@@ -303,7 +319,7 @@ self.addEventListener('sync', function(event) {
 			 * 		  }>} 		[aEffects]
 			 * @return Promise
 			 */
-			add : function(offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect, bSyncNow = true) {
+			add: function (offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect, bSyncNow = true) {
 				if (_error) {
 					return Promise.resolve(null);
 				}
@@ -328,19 +344,19 @@ self.addEventListener('sync', function(event) {
 					oQueueItem.headers = offlineAction.headers
 				}
 				return _actionsTable.put(oQueueItem)
-				.then(function(){
-					if (navigator.serviceWorker && bSyncNow) {
-						navigator.serviceWorker.ready
-						.then(registration => registration.sync.register('OfflineActionSync'))
-						//.then(() => console.log("Registered background sync"))
-						.catch(err => console.error("Error registering background sync", err))
-					}
-				})
-				.then(function(){
-					return _pwa.data.applyAction(oQueueItem, sOfflineDataEffect);
-				})
+					.then(function () {
+						if (navigator.serviceWorker && bSyncNow) {
+							navigator.serviceWorker.ready
+								.then(registration => registration.sync.register('OfflineActionSync'))
+								//.then(() => console.log("Registered background sync"))
+								.catch(err => console.error("Error registering background sync", err))
+						}
+					})
+					.then(function () {
+						return _pwa.data.applyAction(oQueueItem, sOfflineDataEffect);
+					})
 			},
-		
+
 			/**
 			 * Returns a promise that resolves to an array of offline action queue items optionally 
 			 * filtered by status, action object alias and a filter callback for the action's input 
@@ -351,46 +367,46 @@ self.addEventListener('sync', function(event) {
 			 * @param {function} [sObjectAlias]
 			 * @return {promise}
 			 */
-			get : function(sStatus, sObjectAlias, fnRowFilter) {
+			get: function (sStatus, sObjectAlias, fnRowFilter) {
 				if (_error) {
 					return Promise.resolve([]);
 				}
 				return _actionsTable.toArray()
-				.then(function(dbContent) {
-					var data = [];
-					dbContent.forEach(function(element) {
-						//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
-						element = _pwa.actionQueue.updateState(element);
-						
-						if (sStatus && element.status != sStatus) {
-							return;
-						}
-						if (sObjectAlias && element.object != sObjectAlias) {
-							return;
-						}	
-						if (fnRowFilter) {
-							if (element.request === undefined 
-								|| element.request.data === undefined 
-								|| element.request.data.data === undefined 
-								|| element.request.data.data.rows === undefined
-							) {
+					.then(function (dbContent) {
+						var data = [];
+						dbContent.forEach(function (element) {
+							//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+							element = _pwa.actionQueue.updateState(element);
+
+							if (sStatus && element.status != sStatus) {
 								return;
 							}
-							
-							if (element.request.data.data.rows.filter(fnRowFilter).length === 0) {
+							if (sObjectAlias && element.object != sObjectAlias) {
 								return;
 							}
-						}
-						data.push(element);
-					});
-					return Promise.resolve(data);
-				})
-				.catch(function(error) {
-					console.warn(error);
-					return Promise.resolve([]);
-				})
+							if (fnRowFilter) {
+								if (element.request === undefined
+									|| element.request.data === undefined
+									|| element.request.data.data === undefined
+									|| element.request.data.data.rows === undefined
+								) {
+									return;
+								}
+
+								if (element.request.data.data.rows.filter(fnRowFilter).length === 0) {
+									return;
+								}
+							}
+							data.push(element);
+						});
+						return Promise.resolve(data);
+					})
+					.catch(function (error) {
+						console.warn(error);
+						return Promise.resolve([]);
+					})
 			},
-		
+
 			/**
 			 * Returns the effects of different actions on the given object alias.
 			 * 
@@ -408,14 +424,14 @@ self.addEventListener('sync', function(event) {
 			 * 			offline_queue_item: Object
 			 * 		  }>}
 			 */
-			getEffects : async function(sEffectedObjectAlias) {
+			getEffects: async function (sEffectedObjectAlias) {
 				if (_error) {
 					return [];
 				}
 				var dbContent = await _actionsTable.toArray();
 				var aEffects = [];
-				dbContent.forEach(function(oQueueItem) {
-					if (oQueueItem.status !== 'offline' ) {
+				dbContent.forEach(function (oQueueItem) {
+					if (oQueueItem.status !== 'offline') {
 						return;
 					}
 					if (oQueueItem.request === undefined || oQueueItem.request.data === undefined) {
@@ -424,8 +440,8 @@ self.addEventListener('sync', function(event) {
 					if (oQueueItem.effects === undefined) {
 						return;
 					}
-					oQueueItem.effects.forEach(function(oEffect){
-						if(oEffect.effected_object_alias === sEffectedObjectAlias) {
+					oQueueItem.effects.forEach(function (oEffect) {
+						if (oEffect.effected_object_alias === sEffectedObjectAlias) {
 							oEffect.offline_queue_item = oQueueItem;
 							aEffects.push(oEffect);
 						}
@@ -433,70 +449,70 @@ self.addEventListener('sync', function(event) {
 				})
 				return aEffects;
 			},
-			
+
 			/**
 			 * Returns the array of data rows from a give action queue item
 			 * 
 			 */
 			getRequestDataRows(oQueueItem) {
-				if (! (oQueueItem.request && oQueueItem.request.data && oQueueItem.request.data.data && oQueueItem.request.data.data.rows)) {
+				if (!(oQueueItem.request && oQueueItem.request.data && oQueueItem.request.data.data && oQueueItem.request.data.data.rows)) {
 					return [];
 				}
 				return oQueueItem.request.data.data.rows;
 			},
-		
+
 			/**
 			 * @return {promise}
 			 */
-			getIds : function(filter) {
+			getIds: function (filter) {
 				if (_error) {
 					return Promise.resolve([]);
 				}
 				return _actionsTable.toArray()
-				.then(function(dbContent) {
-					var ids = [];
-					dbContent.forEach(function(element) {
-						//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
-						element = _pwa.actionQueue.updateState(element);
-						
-						if (element.status != filter) {
+					.then(function (dbContent) {
+						var ids = [];
+						dbContent.forEach(function (element) {
+							//if an element got stuck in the proccessing state, check here if that sync attempt was already more than 5 minutes ago, if so, change the state of that element to offline again
+							element = _pwa.actionQueue.updateState(element);
+
+							if (element.status != filter) {
+								return;
+							}
+							ids.push(element.id);
 							return;
-						}
-						ids.push(element.id);
-						return;
+						})
+						return ids;
 					})
-					return ids;
-				})
-				.catch(function(error) {
-					return Promise.resolve([]);
-				})
+					.catch(function (error) {
+						return Promise.resolve([]);
+					})
 			},
-		
+
 			/**
 			 * If element is in proccessing state and last sync attempt was more than 5 minutes ago, change it's state to 'offline'
 			 *
 			 * @param {object} element
 			 * @return {object}
 			 */
-			updateState : function(element) {
+			updateState: function (element) {
 				if (element.status === 'proccessing' && element.lastSyncAttempt !== undefined && element.lastSyncAttempt + 3000 < _date.timestamp()) {
-					element.status = 'offline';		
+					element.status = 'offline';
 					_actionsTable.update(element.id, element);
 				}
 				return element;
 			},
-		
+
 			/**
 			 * Synchronizes queue ites with provided ids
 			 * 
 			 * @param {array}
 			 * @return {promise}
 			 */
-			syncIds : async function(selectedIds) {
+			syncIds: async function (selectedIds) {
 				var result = true;
 				var id = null;
 				for (var i = 0; i < selectedIds.length; i++) {
-					var id = selectedIds[i];		
+					var id = selectedIds[i];
 					var result = await _pwa.actionQueue.sync(id);
 					if (result === false) {
 						break;
@@ -508,31 +524,31 @@ self.addEventListener('sync', function(event) {
 				}
 				return Promise.resolve('Success');
 			},
-			
+
 			/**
 			 * Synchronize actions performed offline since the last sync (those still in stats "offline")
 			 *
 			 * @return {promise}
 			 */
-			syncOffline : function() {
+			syncOffline: function () {
 				return _pwa
-				.actionQueue
-				.getIds('offline')
-				.then(function(ids){
-					return _pwa.actionQueue.syncIds(ids)
-				})
-				// TODO do not sync all every time - instead improve action effects to sync only
-				// data sets, that might have bee effected. E.g. need to sync subsheet objects
-				// if action had subsheets
-				.then(function(){
-					return _pwa.data.syncAll();
-				})
+					.actionQueue
+					.getIds('offline')
+					.then(function (ids) {
+						return _pwa.actionQueue.syncIds(ids)
+					})
+					// TODO do not sync all every time - instead improve action effects to sync only
+					// data sets, that might have bee effected. E.g. need to sync subsheet objects
+					// if action had subsheets
+					.then(function () {
+						return _pwa.data.syncAll();
+					})
 			},
-		
+
 			/**
 			 * @return {promise}
 			 */
-			sync : async function(id) {
+			sync: async function (id) {
 				var oQItem = await _actionsTable.get(id);
 				if (oQItem === undefined) {
 					return false
@@ -545,15 +561,15 @@ self.addEventListener('sync', function(event) {
 				if (oQItem.status === 'proccessing' && oQItem.lastSync !== undefined && oQItem.lastSyncAttempt + 3000 > _date.timestamp()) {
 					return true
 				}
-				
+
 				// update Element so it has the processing state, therefor no other sync Attempt tries to sync it aswell.
 				var oQItemUpdate = {
-						lastSyncAttempt: _date.timestamp(),
-						status: 'proccessing',
-						tries: oQItem.tries + 1
-				};		
+					lastSyncAttempt: _date.timestamp(),
+					status: 'proccessing',
+					tries: oQItem.tries + 1
+				};
 				await _actionsTable.update(oQItem.id, oQItemUpdate);
-				
+
 				try {
 					var response = await fetch(oQItem.request.url, {
 						method: oQItem.request.type,
@@ -571,12 +587,12 @@ self.addEventListener('sync', function(event) {
 					await _actionsTable.update(oQItem.id, oQItemUpdate);
 					return false;
 				}
-				
+
 				if (response.statusText === 'timeout' || response.status === 0) {
 					oQItemUpdate.response = response.statusText;
 					oQItemUpdate.status = 'offline';
 				}
-				
+
 				try {
 					var data = await response.json();
 				} catch (e) {
@@ -586,96 +602,96 @@ self.addEventListener('sync', function(event) {
 					oQItemUpdate.status = 'synced';
 					oQItemUpdate.response = data;
 					oQItemUpdate.synced = _date.now();
-				} 				
-				
+				}
+
 				if (response.status >= 400) {
 					oQItemUpdate.response = data || (await response.text());
 					oQItemUpdate.status = 'error';
 				}
-				
+
 				await _actionsTable.update(oQItem.id, oQItemUpdate);
-				
+
 				if (oQItemUpdate.status === 'synced') {
 					return true;
-				} 
-				
-				console.log('Server responded with an error syncing action with id: '+ oQItem.id);
-				return false;	
+				}
+
+				console.log('Server responded with an error syncing action with id: ' + oQItem.id);
+				return false;
 			},
-		
+
 			/**
 			 * @return {promise}
 			 */
-			deleteAll : function(selectedIds) {
+			deleteAll: function (selectedIds) {
 				var promises = [];
-				selectedIds.forEach(function(id){
+				selectedIds.forEach(function (id) {
 					promises.push(_pwa.actionQueue.delete(id));
 				});
 				return Promise.all(promises);
 			},
-		
+
 			/**
 			 * @return {promise}
 			 */
-			delete : function(id) {
+			delete: function (id) {
 				return _actionsTable.delete(id)
 			},
-		
+
 			/**
 			 * @return {Dexie.Table}
 			 */
-			getTable : function() {
+			getTable: function () {
 				return _actionsTable;
 			},
-			
+
 			/**
 			 * Returns items of the offline queue filtered by the given message ids.
 			 * 
 			 * @param {string[]} aIds
 			 * @return {object[]} 
 			 */
-			getByIds : function(aMessageIds) {
+			getByIds: function (aMessageIds) {
 				return _pwa.actionQueue.get('offline')
-				.then(function(actionsData) {
-					var selectedActions = [];
-					actionsData.forEach(function(action) {
-						if (aMessageIds.includes(action.id)) {
-							selectedActions.push(action);
-						}
+					.then(function (actionsData) {
+						var selectedActions = [];
+						actionsData.forEach(function (action) {
+							if (aMessageIds.includes(action.id)) {
+								selectedActions.push(action);
+							}
+						})
+						return Promise.resolve(selectedActions);
 					})
-					return Promise.resolve(selectedActions);
-				})
 			},
 		}, // EOF actionQueue
-		
+
 		model: {
-			addPWA : function(sUrl) {
+			addPWA: function (sUrl) {
 				console.log('add PWA to sync ', sUrl);
 				if (_error) {
 					return Promise.resolve(null);
 				}
 				return _modelTable
-				.get(sUrl)
-				.then(oPWA => {
-					if (oPWA === undefined) {
-						oPWA = {
-							url: sUrl
-						};
-						return _modelTable
-						.put(oPWA)
-						.then(function(){
+					.get(sUrl)
+					.then(oPWA => {
+						if (oPWA === undefined) {
+							oPWA = {
+								url: sUrl
+							};
+							return _modelTable
+								.put(oPWA)
+								.then(function () {
+									return Promise.resolve(oPWA);
+								})
+						} else {
+							// TODO sync only in certain intervals?
 							return Promise.resolve(oPWA);
-						})
-					} else {
-						// TODO sync only in certain intervals?
-						return Promise.resolve(oPWA);
-					}
-				})
-				.then(function(oPWA){
-					return _pwa.model.sync(oPWA.url);
-				});
+						}
+					})
+					.then(function (oPWA) {
+						return _pwa.model.sync(oPWA.url);
+					});
 			},
-			
+
 			/**
 			 * Sync the PWA model and its offline data sets (optional) with the facade
 			 * 
@@ -683,80 +699,244 @@ self.addEventListener('sync', function(event) {
 			 * @param {boolean} [bSyncOfflineData]
 			 * @return {Promise}
 			 */
-			sync : function(sPwaUrl, bSyncOfflineData) {
+			sync: function (sPwaUrl, bSyncOfflineData) {
 				var oPWA;
 				bSyncOfflineData = bSyncOfflineData === undefined ? true : bSyncOfflineData;
 				return _modelTable
-				.get(sPwaUrl)
-				.then(function(oRow) {
-					oPWA = oRow;
-					return fetch('api/pwa/' + sPwaUrl + '/model')
-				})
-				.then(function(oResponse) {
-					if (oResponse.status == 404) {
-						return _pwa.model.remove(sPwaUrl);
-					}
-					if (! oResponse.ok) {
-						throw 'Failed to update offline data for PWA ' + sPwaUrl;
-					} 
-					return oResponse
-					.json()
-					.then(function(oModel){
-						var aPromises = [];
-						oPWA.sync_last = (+ new Date());
-						_merge(oPWA, oModel);
-						aPromises.push(_modelTable.update(sPwaUrl, oPWA));
-						oPWA.data_sets.forEach(function(oDataSet){
-							oDataSet.pwa_uid = oPWA.uid;
-							aPromises.push(
-								_dataTable
-								.get(oDataSet.uid)
-								.then(function(oRow){
-									if (oRow === undefined) {
-										return _dataTable.put(oDataSet);
-									} else {
-										oDataSet = _merge({}, oRow, oDataSet);
-										return _dataTable.update(oDataSet.uid, oDataSet);
-									}
-								})
-							)
-						})
-						return Promise
-						.all(aPromises)
-						.then(function(){
-							if (bSyncOfflineData) {
-								return _pwa.data.syncAll(oPWA.uid);
-							} else {
-								return Promise.resolve();
-							}
-						});
+					.get(sPwaUrl)
+					.then(function (oRow) {
+						oPWA = oRow;
+						return fetch('api/pwa/' + sPwaUrl + '/model')
 					})
-				})
+					.then(function (oResponse) {
+						if (oResponse.status == 404) {
+							return _pwa.model.remove(sPwaUrl);
+						}
+						if (!oResponse.ok) {
+							throw 'Failed to update offline data for PWA ' + sPwaUrl;
+						}
+						return oResponse
+							.json()
+							.then(function (oModel) {
+								var aPromises = [];
+								oPWA.sync_last = (+ new Date());
+								_merge(oPWA, oModel);
+								aPromises.push(_modelTable.update(sPwaUrl, oPWA));
+								oPWA.data_sets.forEach(function (oDataSet) {
+									oDataSet.pwa_uid = oPWA.uid;
+									aPromises.push(
+										_dataTable
+											.get(oDataSet.uid)
+											.then(function (oRow) {
+												if (oRow === undefined) {
+													return _dataTable.put(oDataSet);
+												} else {
+													oDataSet = _merge({}, oRow, oDataSet);
+													return _dataTable.update(oDataSet.uid, oDataSet);
+												}
+											})
+									)
+								})
+								return Promise
+									.all(aPromises)
+									.then(function () {
+										if (bSyncOfflineData) {
+											return _pwa.data.syncAll(oPWA.uid);
+										} else {
+											return Promise.resolve();
+										}
+									});
+							})
+					})
 			},
-			
+
 			/**
 			 * Deletes the PWA from the client completely.
 			 * Returns a promise resolving to the number of affected data sets (0 or 1)
 			 * @param {string} sDataSetUid
 			 * @return Promise
 			 */
-			remove : function(sPwaUrl) {
+			remove: function (sPwaUrl) {
 				return _modelTable.delete(sPwaUrl);
 			},
-		
+
 			/**
 			 * @return {Dexie.Table}
 			 */
-			getTable : function() {
+			getTable: function () {
 				return _modelTable;
 			}
 		}, // EOF model
-		
+
 		data: {
+
+			/**
+			* saveConnectionStatus - Saves the current connection status in IndexedDB if it's different from the last saved status.
+			* 
+			* If the new status is the same as the previously saved status, no new record is created.
+			* If the status is different, it saves the new status with the current timestamp.
+			* 
+			* @param {string} status - The connection status to be saved. Typically, this will be a string 
+			*                          such as "online", "offline", 'semi_offline', 'forced_offline'.
+			* 
+			* @return {Promise} - Returns a Promise that resolves if the status is saved successfully, 
+			*                     or does nothing if the status is the same as the last saved status.
+			*/
+			saveConnectionStatus: function (status) {
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						// Check for any IndexedDB errors
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						var currentTime = new Date();
+
+						// Fetch the last saved connection status
+						return _connectionTable.orderBy('time').last()
+							.then(function (lastRecord) {
+								// If the last status is the same, do nothing
+								if (lastRecord && lastRecord.status === status) {
+									return Promise.resolve();
+								} else {
+									// If the status is different, save the new status
+									var connectionData = {
+										status: status,
+										time: currentTime
+									};
+									return _connectionTable.put(connectionData)
+										.then(function () {
+											return Promise.resolve();
+										});
+								}
+							})
+							.catch(function (error) {
+								//console.error("Error saving connection status:", error);
+								return Promise.reject(error);
+							});
+					})
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
+						return Promise.reject(error);
+					});
+			},
+
+						/**
+			 * Retrieves all network stats from the IndexedDB.
+			 * @return {promise}
+			 */
+			getAllNetworkStats: function () {
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						// Check if there is an IndexedDB error
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						return _networkStatTable.toArray()
+							.then(function (stats) {
+								return Promise.resolve(stats);
+							})
+							.catch(function (error) {
+								//console.error("Error retrieving network stats:", error);
+								return Promise.reject(error);
+							});
+					})
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
+						return Promise.reject(error);
+					});
+			},
+
+			/**
+			 * Saves a new network stat to the IndexedDB.
+			 * @param {time, speed, mime_type, size}
+			 * @return {promise}
+			 */
+			saveNetworkStat: function (time, speed, mime_type, size) {
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						var stat = {
+							time: time,
+							speed: speed,
+							mime_type: mime_type,
+							size: size
+						};
+
+						return _networkStatTable.put(stat)
+							.then(function () {
+								return Promise.resolve();
+							})
+							.catch(function (error) {
+								//console.error("Error saving network stat:", error);
+								return Promise.reject(error);
+							});
+					})
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
+						return Promise.reject(error);
+					});
+			},
+
+			/**
+			 * Deletes all network stats in the IndexedDB that were recorded before the specified timestamp.
+			 * @param {number} timestamp - The timestamp to check against.
+			 * @return {promise}
+			 */
+			deleteNetworkStatsBefore: function (timestamp) {
+				return checkIndexedDB()
+					.then((exists) => {
+						// Check if IndexedDB exists
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						return _networkStatTable
+							.where('time')
+							.below(timestamp)
+							.delete()
+							.then(function (deleteCount) {
+								//console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
+								return Promise.resolve(deleteCount);
+							})
+							.catch(function (error) {
+								//console.error("Error deleting old network stats:", error);
+								return Promise.reject(error);
+							});
+					})
+					.catch((error) => {
+						//console.error("Error checking IndexedDB:", error);
+						return Promise.reject(error);
+					});
+			},
+
 			/**
 			 * @return {promise}
 			 */
-			get : function(oQuery) {
+			get: function (oQuery) {
 				if (_error === false) {
 					return Promise.resolve();
 				}
@@ -765,24 +945,24 @@ self.addEventListener('sync', function(event) {
 						case oQuery.widget_id && oQuery.page_alias:
 							// TODO
 							break;
-						
+
 					}
 				} else {
 					if (oQuery.startsWith('0x')) {
 						return _dataTable.get(sDataSetUid);
 					} else {
-						return _dataTable.filter(function(oDataSet){
+						return _dataTable.filter(function (oDataSet) {
 							return oDataSet.object_alias === oQuery;
 						}).first();
 					}
 				}
 			},
-			
-			getRowsAddedOffline : function(oDataSet) {
+
+			getRowsAddedOffline: function (oDataSet) {
 				return oDataSet.rows_added_offline || [];
 			},
-			
-			cleanupRowsAddedOffline : function (oDataSet) {
+
+			cleanupRowsAddedOffline: function (oDataSet) {
 				var aQIds = [];
 				var aRows = oDataSet.rows_added_offline;
 				var aRowsNew = [];
@@ -790,119 +970,119 @@ self.addEventListener('sync', function(event) {
 				if (aRows === undefined || aRows.length === 0) {
 					return Promise.resolve();
 				}
-				aRows.forEach(function(oRow){
+				aRows.forEach(function (oRow) {
 					aQIds = aQIds.concat(oRow._actionQueueIds);
 				});
 				return _pwa.actionQueue
-				.getByIds(aQIds)
-				.then(function(aQItems) {
-					aQIds.forEach(function(sQId, i){
-						if (aQItems.filter(function(oQItem){ return oQItem.id === sQId; }).length !== 0) {
-							aRowsNew.push(aRows[i]);
+					.getByIds(aQIds)
+					.then(function (aQItems) {
+						aQIds.forEach(function (sQId, i) {
+							if (aQItems.filter(function (oQItem) { return oQItem.id === sQId; }).length !== 0) {
+								aRowsNew.push(aRows[i]);
+							}
+						});
+						if (aRowsNew.length !== aRows.length) {
+							oDataSet.rows_added_offline = aRowsNew;
+							return _dataTable
+								.update(oDataSet.uid, oDataSet)
+								.then(function () {
+									return Promise.resolve(oDataSet);
+								})
 						}
-					});
-					if (aRowsNew.length !== aRows.length) {
-						oDataSet.rows_added_offline = aRowsNew;
-						return _dataTable
-						.update(oDataSet.uid, oDataSet)
-						.then(function(){
-							return Promise.resolve(oDataSet);
-						})
-					}
-					return Promise.resolve(oDataSet);
-				})
-			},
-		
-			syncAll : function({sPwaUid = null, doReSync = false} = {}) {
-				if (sPwaUid !== null) {
-					_dataTable
-					.filter(function(oDataSet){
-						return oDataSet.pwa_uid === sPwaUid;
+						return Promise.resolve(oDataSet);
 					})
-					.toArray(function(aSets){
-						aPromises = [];
-						aSets.forEach(function(oDataSet) {
-							aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
-						});
-						
-						return Promise.all(aPromises);
-					});
-				} else {
-					_dataTable
-					.toArray(function(aSets){
-						aPromises = [];
-						aSets.forEach(function(oDataSet) {
-							aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
-						});
-						
-						return Promise.all(aPromises);
-					});
-				} 
 			},
 
-            sync : function (sDataSetUid, doReSync) {
-				if(doReSync === undefined){
+			syncAll: function ({ sPwaUid = null, doReSync = false } = {}) {
+				if (sPwaUid !== null) {
+					_dataTable
+						.filter(function (oDataSet) {
+							return oDataSet.pwa_uid === sPwaUid;
+						})
+						.toArray(function (aSets) {
+							aPromises = [];
+							aSets.forEach(function (oDataSet) {
+								aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
+							});
+
+							return Promise.all(aPromises);
+						});
+				} else {
+					_dataTable
+						.toArray(function (aSets) {
+							aPromises = [];
+							aSets.forEach(function (oDataSet) {
+								aPromises.push(_pwa.data.sync(oDataSet.uid, doReSync));
+							});
+
+							return Promise.all(aPromises);
+						});
+				}
+			},
+
+			sync: function (sDataSetUid, doReSync) {
+				if (doReSync === undefined) {
 					doReSync = false;
 				}
 
 				var oDataSet;
 				return _dataTable
-				.get(sDataSetUid)
-				.then(function(oRow){
-					oDataSet = oRow;
-					if (oDataSet === undefined) {
-						Promise.reject('Faild syncing data set ' + sDataSetUid + ': data set not found in browser!');
-					}
-					var url = oDataSet.url;
-					if (doReSync === false && oDataSet.incremental === true) {
-						url = oDataSet.incrementalUrl;
-					}
-					return fetch(url);
-				})
-				.then(function(oResponse) {
-					if (oResponse.status === 404) {
-						return _pwa.data.remove(oDataSet.uid);
-					}
-					if (! oResponse.ok) {
-						throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
-					}
-
-					return oResponse
-					.json()
-					.then(function(oDataUpdate) {
-						if (doReSync === false && oDataUpdate.incremental === true) {
-							// merges containing arrays
-							_deepMerge(oDataSet, oDataUpdate);
+					.get(sDataSetUid)
+					.then(function (oRow) {
+						oDataSet = oRow;
+						if (oDataSet === undefined) {
+							Promise.reject('Faild syncing data set ' + sDataSetUid + ': data set not found in browser!');
 						}
-						else {
-							// overrides properties
-							_merge(oDataSet, oDataUpdate);
+						var url = oDataSet.url;
+						if (doReSync === false && oDataSet.incremental === true) {
+							url = oDataSet.incrementalUrl;
 						}
-						return _dataTable
-						.update(oDataSet.uid, oDataSet)
-						.then(function(){
-							return Promise.resolve(oDataSet);
-						})
-						.then(function(oDataSet){
-							return oDataSet !== undefined ? _pwa.data.cleanupRowsAddedOffline(oDataSet) : Promise.resolve(oDataSet);
-						})
+						return fetch(url);
 					})
-				})					
-				.catch(function(e) {
-					console.error(e);
-				})
+					.then(function (oResponse) {
+						if (oResponse.status === 404) {
+							return _pwa.data.remove(oDataSet.uid);
+						}
+						if (!oResponse.ok) {
+							throw 'Failed to update offline data ' + sDataSetUid + ' (' + oDataSet.object_alias + ')';
+						}
+
+						return oResponse
+							.json()
+							.then(function (oDataUpdate) {
+								if (doReSync === false && oDataUpdate.incremental === true) {
+									// merges containing arrays
+									_deepMerge(oDataSet, oDataUpdate);
+								}
+								else {
+									// overrides properties
+									_merge(oDataSet, oDataUpdate);
+								}
+								return _dataTable
+									.update(oDataSet.uid, oDataSet)
+									.then(function () {
+										return Promise.resolve(oDataSet);
+									})
+									.then(function (oDataSet) {
+										return oDataSet !== undefined ? _pwa.data.cleanupRowsAddedOffline(oDataSet) : Promise.resolve(oDataSet);
+									})
+							})
+					})
+					.catch(function (e) {
+						console.error(e);
+					})
 			},
-			
+
 			/**
 			 * Deletes a data set from the client memory completely.
 			 * Returns a promise resolving to the number of affected data sets (0 or 1)
 			 * @param {string} sDataSetUid
 			 * @return Promise
 			 */
-			remove : function (sDataSetUid) {
+			remove: function (sDataSetUid) {
 				return _dataTable.delete(sDataSetUid);
 			},
-			
+
 			/**
 			 * Attempts to update offline data to include changes made by an offline action
 			 * 
@@ -920,87 +1100,87 @@ self.addEventListener('sync', function(event) {
 					effects: Array
 				}} oQItem
 			 */
-			applyAction : function(oQItem, sOfflineDataEffect) {
+			applyAction: function (oQItem, sOfflineDataEffect) {
 				var aRows = _pwa.actionQueue.getRequestDataRows(oQItem);
 				if (aRows.length === 0) {
 					return Promise.resolve();
 				}
-				
+
 				switch (sOfflineDataEffect) {
 					case 'none':
 					case null:
 					case undefined:
 						return Promise.resolve();
 					case 'copy':
-					case 'create': 
+					case 'create':
 						return _pwa.data
-						.get(oQItem.object)
-						.then(function(oDataSet){
-							if (oDataSet === undefined) {
-								return Promise.resolve();
-							}
-							if (oDataSet.rows_added_offline === undefined) {
-								oDataSet.rows_added_offline = [];
-							}
-							aRows.forEach(function(oRow) {
-								oRow = _merge({}, oRow);
-								if (oDataSet.uid_column_name) {
-									oRow[oDataSet.uid_column_name] = (oDataSet.rows_added_offline.length + 1) * (-1);
+							.get(oQItem.object)
+							.then(function (oDataSet) {
+								if (oDataSet === undefined) {
+									return Promise.resolve();
 								}
-								if (oRow._actionQueueIds === undefined) {
-									oRow._actionQueueIds = [oQItem.id];
-								} else {
-									oRow._actionQueueIds.push(oQItem.id);
+								if (oDataSet.rows_added_offline === undefined) {
+									oDataSet.rows_added_offline = [];
 								}
-								oDataSet.rows_added_offline.push(oRow);
-							});
-							return _dataTable.update(oDataSet.uid, oDataSet);
-						})
+								aRows.forEach(function (oRow) {
+									oRow = _merge({}, oRow);
+									if (oDataSet.uid_column_name) {
+										oRow[oDataSet.uid_column_name] = (oDataSet.rows_added_offline.length + 1) * (-1);
+									}
+									if (oRow._actionQueueIds === undefined) {
+										oRow._actionQueueIds = [oQItem.id];
+									} else {
+										oRow._actionQueueIds.push(oQItem.id);
+									}
+									oDataSet.rows_added_offline.push(oRow);
+								});
+								return _dataTable.update(oDataSet.uid, oDataSet);
+							})
 					case 'update':
 						return _pwa.data
-						.get(oQItem.object)
-						.then(function(oDataSet){
-							var aActionRows = _pwa.actionQueue.getRequestDataRows(oQItem);
-							var iChanges = 0;
-							if (oDataSet === undefined || aActionRows.length === 0) {
-								return Promise.resolve();
-							}
-							if (! oDataSet.uid_column_name) {
-								return Promise.resolve();
-							}
-							aActionRows.forEach(function(oActRow) {
-								var aSyncedMatches = (oDataSet.rows || [])
-								.filter(function(oRow){
-									return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
-								})
-								var aUnsyncedMatches = (oDataSet.rows_added_offline || [])
-								.filter(function(oRow){
-									return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
+							.get(oQItem.object)
+							.then(function (oDataSet) {
+								var aActionRows = _pwa.actionQueue.getRequestDataRows(oQItem);
+								var iChanges = 0;
+								if (oDataSet === undefined || aActionRows.length === 0) {
+									return Promise.resolve();
+								}
+								if (!oDataSet.uid_column_name) {
+									return Promise.resolve();
+								}
+								aActionRows.forEach(function (oActRow) {
+									var aSyncedMatches = (oDataSet.rows || [])
+										.filter(function (oRow) {
+											return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
+										})
+									var aUnsyncedMatches = (oDataSet.rows_added_offline || [])
+										.filter(function (oRow) {
+											return oRow[oDataSet.uid_column_name] == oActRow[oDataSet.uid_column_name];
+										});
+
+									aSyncedMatches.concat(aUnsyncedMatches)
+										.forEach(function (oOfflineRow, i) {
+											for (var k in oActRow) {
+												if (!k.includes('__')) {
+													oOfflineRow[k] = oActRow[k];
+												}
+											}
+											iChanges++;
+											console.log('Updated row ', oActRow);
+										});
 								});
-								
-								aSyncedMatches.concat(aUnsyncedMatches)
-								.forEach(function(oOfflineRow, i){
-									for (var k in oActRow) {
-										if (! k.includes('__')) {
-											oOfflineRow[k] = oActRow[k];
-										}
-									}
-									iChanges++;
-									console.log('Updated row ', oActRow);
-								});
-							});
-							if (iChanges > 0) {
-								return _dataTable.update(oDataSet.uid, oDataSet);
-							}
-							return Promise.resolve();
-						})
+								if (iChanges > 0) {
+									return _dataTable.update(oDataSet.uid, oDataSet);
+								}
+								return Promise.resolve();
+							})
 				}
 			},
-		
+
 			/**
 			 * @return {object[]}
 			 */
-			mergeRows : function (aOldRows, aNewRows, sUidAlias) {
+			mergeRows: function (aOldRows, aNewRows, sUidAlias) {
 				for (var i = 0; i < aNewRows.length; i++) {
 					var rowUpdated = false;
 					for (var j = 0; j < aOldRows.length; j++) {
@@ -1017,11 +1197,11 @@ self.addEventListener('sync', function(event) {
 				}
 				return aOldRows;
 			},
-		
+
 			/**
 			 * @return {promise|null}
 			 */
-			syncImages : function (aUrls, sCacheName = 'image-cache') {
+			syncImages: function (aUrls, sCacheName = 'image-cache') {
 				if (typeof window !== 'undefined') {
 					var cachesApi = window.caches;
 				} else {
@@ -1032,128 +1212,128 @@ self.addEventListener('sync', function(event) {
 					console.error('Cannot offline images: Cache API not supported by browser!');
 					return;
 				}
-				
+
 				return cachesApi
-				.open(sCacheName)
-				.then(cache => {
-					// Remove duplicates
-					aUrls = aUrls.filter((value, index, self) => { 
-					    return self.indexOf(value) === index;
+					.open(sCacheName)
+					.then(cache => {
+						// Remove duplicates
+						aUrls = aUrls.filter((value, index, self) => {
+							return self.indexOf(value) === index;
+						});
+						// Fetch and cache images
+						var requests = [];
+						for (var i in aUrls) {
+							if (!aUrls[i]) continue;
+							var request = new Request(aUrls[i]);
+							requests.push(
+								fetch(request.clone())
+									.then(response => {
+										// Check if we received a valid response
+										if (!response || response.status !== 200 || response.type !== 'basic') {
+											return response;
+										}
+
+										// IMPORTANT: Clone the response. A response is a stream
+										// and because we want the browser to consume the response
+										// as well as the cache consuming the response, we need
+										// to clone it so we have two streams.
+										var responseToCache = response.clone();
+
+										return cache.put(request, responseToCache);
+									})
+							);
+						}
+						return Promise.all(requests);
 					});
-					// Fetch and cache images
-					var requests = [];
-					for (var i in aUrls) {
-						if (! aUrls[i]) continue;
-						var request = new Request(aUrls[i]);
-						requests.push(
-							fetch(request.clone())
-							.then(response => {
-								// Check if we received a valid response
-								if(! response || response.status !== 200 || response.type !== 'basic') {
-								  return response;
-								}
-								
-								// IMPORTANT: Clone the response. A response is a stream
-								// and because we want the browser to consume the response
-								// as well as the cache consuming the response, we need
-								// to clone it so we have two streams.
-								var responseToCache = response.clone();
-								
-								return cache.put(request, responseToCache);
-							})
-						);
-					}
-					return Promise.all(requests);
-				});
 			},
-			
+
 			/**
 			 * @return {Dexie.Table}
 			 */
-			getTable : function() {
+			getTable: function () {
 				return _dataTable;
 			},
-			
+
 			/**
 			 * @return {promise}
 			 */
-			syncAffectedByActions : async function() {
+			syncAffectedByActions: async function () {
 				var aDataSets = await _dataTable.toArray();
 				var aPromises = [];
-				aDataSets.forEach(async function(oDataSet) {
+				aDataSets.forEach(async function (oDataSet) {
 					var aActionsSynced = await _pwa.actionQueue.get('synced', oDataSet.object_alias);
 					var sUidCol = oDataSet.uid_column_name;
 					var aUids = [];
 					if (aActionsSynced.length === 0) {
 						return;
 					}
-					if (! sUidCol) {
+					if (!sUidCol) {
 						return;
 					}
-					aActionsSynced.forEach(function(oAction) {
+					aActionsSynced.forEach(function (oAction) {
 						if (!(oAction.request && oAction.request.data && oAction.request.data.data && oAction.request.data.data.rows)) {
 							return;
 						}
-						oAction.request.data.data.rows.forEach(function(row) {
+						oAction.request.data.data.rows.forEach(function (row) {
 							aUids.push(row[sUidCol]);
-						})								
-					});		
+						})
+					});
 					aPromises.push(
 						_pwa.data.sync(oDataSet.uid)
-						.catch (function(error){
-							console.error(error);
-						})
-						.then(function(){
-							aActionsSynced.forEach(function(oAction){
-								oAction.effects.forEach(function(oEffect){
-									if (oEffect.event_params && oEffect.event_params.length > 0) {
-										try {
-											$(document).trigger("actionperformed", oEffect.event_params);
-										} catch (e) {
-											console.log('Skipping offline action sync effects: ', e);
+							.catch(function (error) {
+								console.error(error);
+							})
+							.then(function () {
+								aActionsSynced.forEach(function (oAction) {
+									oAction.effects.forEach(function (oEffect) {
+										if (oEffect.event_params && oEffect.event_params.length > 0) {
+											try {
+												$(document).trigger("actionperformed", oEffect.event_params);
+											} catch (e) {
+												console.log('Skipping offline action sync effects: ', e);
+											}
 										}
-									}
+									});
 								});
-							});
-							return Promise.resolve();
-						})
-					)		
+								return Promise.resolve();
+							})
+					)
 				});
-				
+
 				// after preloads are updated, delete all actions with status 'synced' from the IndexedDB
 				var syncedIds = await _pwa.actionQueue.getIds('synced');
-				syncedIds.forEach(function(id){
+				syncedIds.forEach(function (id) {
 					aPromises.push(_pwa.actionQueue.delete(id));
 				});
-				
-				return Promise.all(aPromises);		
+
+				return Promise.all(aPromises);
 			},
-		
+
 		}, // EOF data
-		
-		errors : {
+
+		errors: {
 			/**
 			 * @return {object}
 			 */
-			sync : function() {
+			sync: function () {
 				if (_error) {
 					return Promise.resolve({});
 				}
-				
+
 				return fetch('api/pwa/errors?deviceId=' + _pwa.getDeviceId(), {
 					method: 'GET'
 				})
-				.then(function(response){
-					if (response.ok) {
-						return response.json();
-					} else {
+					.then(function (response) {
+						if (response.ok) {
+							return response.json();
+						} else {
+							return {};
+						}
+					})
+					.catch(function (error) {
+						console.error('Cannot read sync errors from server:', error);
 						return {};
-					}
-				})
-				.catch(function(error){
-					console.error('Cannot read sync errors from server:', error);
-					return {};
-				})
+					})
 			}
 		} // EOF errors
 	} // EOF _pwa
