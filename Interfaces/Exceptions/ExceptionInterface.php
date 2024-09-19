@@ -58,8 +58,9 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     public function getDefaultAlias();
 
     /**
-     * Returns the HTTP status code appropriate for this exception
-     *
+     * Returns the HTTP status code appropriate for this exception.
+     * 
+     * @param int $default
      * @return int
      */
     public function getStatusCode(int $default = 500) : int;
