@@ -454,7 +454,7 @@ JS;
             if ($col->getCellWidget() instanceof Image) {
                 continue;
             }
-            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $visibility = strtolower(WidgetVisibilityDataType::findConstant($col->getVisibility()));
             $hint = $this->escapeString($col->getHint() ?? '', true, false);
             $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
@@ -627,7 +627,7 @@ JS;
             if ($col->getCellWidget() instanceof Image) {
                 continue;
             }
-            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $visibility = strtolower(WidgetVisibilityDataType::findConstant($col->getVisibility()));
             $hint = $this->escapeString($col->getHint() ?? '', true, false);
             $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
@@ -876,7 +876,7 @@ JS;
             if ($col->getCellWidget() instanceof Image) {
                 continue;
             }
-            $visibility = strtolower(WidgetVisibilityDataType::findKey($col->getVisibility()));
+            $visibility = strtolower(WidgetVisibilityDataType::findConstant($col->getVisibility()));
             $hint = $this->escapeString($col->getHint() ?? '', true, false);
             $caption = $this->escapeString($col->getCaption() ?? '', true, false);
             $formatter = $this->getFacade()->getDataTypeFormatter($col->getDataType());
