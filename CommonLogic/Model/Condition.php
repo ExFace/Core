@@ -12,8 +12,6 @@ use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -481,7 +479,9 @@ class Condition implements ConditionInterface
     /**
      * Imports data from UXON objects in one of the supported formats. 
      * 
-     * Supported formats:
+     * ## Supported formats
+     * 
+     * Most commonly used "one-sided" conditions comparing an expression to astatic value:
      * 
      * ```
      *  { 
@@ -507,8 +507,8 @@ class Condition implements ConditionInterface
      *  
      * ```
      * 
-     * Also the legacy format with `attribute_alias` instead of `expression` is 
-     * still supported.
+     * Also the legacy format for one-sided expressions with `attribute_alias` instead of 
+     * `expression` is still supported:
      * 
      * ```
      *  { 
@@ -532,16 +532,19 @@ class Condition implements ConditionInterface
         }
         $obj = MetaObjectFactory::createFromString($this->getWorkbench(), $objAlias);
         $expression = null;
+        $expressionStr = null;
+        $expressionUnknownAsString = true;
         switch (true) {
             case $uxon->hasProperty('expression') === true:
                 $expressionStr = $uxon->getProperty('expression');
+                $expressionUnknownAsString = false;
                 break;
             case $uxon->hasProperty('attribute_alias') === true:
                 $expressionStr = $uxon->getProperty('attribute_alias');
                 break;
             case $uxon->hasProperty('value_left') === true:
                 $val = $uxon->getProperty('value_left');
-                $expression = ExpressionFactory::createForObject($obj, $val);
+                $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
                 if ($expression->isMetaAttribute() === true) {
                     $value = $uxon->getProperty('value_right');
                     break;
@@ -549,7 +552,7 @@ class Condition implements ConditionInterface
                 // Otherwise continue with the next case
             case $uxon->hasProperty('value_right') === true:
                 $val = $uxon->getProperty('value_right');
-                $expression = ExpressionFactory::createForObject($obj, $val);
+                $expression = ExpressionFactory::createForObject($obj, $val, $expressionUnknownAsString);
                 if ($expression->isMetaAttribute() === true) {
                     $value = $uxon->getProperty('value_left');
                     break;
@@ -559,7 +562,7 @@ class Condition implements ConditionInterface
                 throw new UxonParserError($uxon, 'Cannot parse condition UXON: no expression found!');
         }
         try {
-            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr, true);
+            $expression = $expression ?? ExpressionFactory::createForObject($obj, $expressionStr, $expressionUnknownAsString);
             $this->setExpression($expression);
             if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
