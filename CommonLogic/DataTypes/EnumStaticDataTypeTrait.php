@@ -30,7 +30,7 @@ trait EnumStaticDataTypeTrait {
     protected static $cache = array();
     
     /**
-     * Returns all possible values as an array
+     * Returns all possible value-label pairs as an array
      *
      * @return array Constant name in key, constant value in value
      */
@@ -46,7 +46,7 @@ trait EnumStaticDataTypeTrait {
     }
     
     /**
-     * Returns the keys of the static values (the names of the constants) as an array.
+     * Returns the keys of the static values (the names of the constants) as a numeric array.
      * 
      * @return array
      */
@@ -73,13 +73,16 @@ trait EnumStaticDataTypeTrait {
 
     /**
      * 
-     * @param mixed $value
+     * @param mixed $label
      * @return mixed|false
      */
-    protected static function findKeyCaseInsensitive($value)
+    protected static function findKeyCaseInsensitive($label)
     {
-        foreach (static::getValuesStatic() as $key => $val) {
-            if (strcasecmp($value, $val) === 0) {
+        if ($label === null) {
+            return static::getValuesStatic()[null] ?? null;
+        }
+        foreach (static::getValuesStatic() as $key => $name) {
+            if (strcasecmp($label, $name) === 0) {
                 return $key;
             }
         }
