@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2024-03-17 16:01:36",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-09-20 11:42:53",
+    "modified_on": "2024-09-20 11:47:23",
     "contents": {
         "object_alias": "exface.Core.OBJECT_ACTION",
         "widget_type": "SplitHorizontal",
@@ -68,6 +68,10 @@
                             {
                                 "attribute_alias": "ACTION_PROTOTYPE",
                                 "hidden": true
+                            },
+                            {
+                                "attribute_alias": "OBJECT",
+                                "hidden": true
                             }
                         ],
                         "sorters": [
@@ -120,11 +124,12 @@
                             {
                                 "widget_type": "InputUxon",
                                 "attribute_alias": "CONFIG_UXON",
+                                "hide_caption": true,
                                 "value": "=table_actions!CONFIG_UXON",
                                 "root_prototype": "=table_actions!ACTION_PROTOTYPE",
+                                "root_object": "=table_actions!OBJECT",
                                 "height": "max",
-                                "width": "100%",
-                                "hide_caption": true
+                                "width": "100%"
                             },
                             {
                                 "caption": "Label or UID to use in preview",
