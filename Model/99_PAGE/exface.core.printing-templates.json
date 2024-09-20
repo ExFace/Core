@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2024-03-17 16:01:36",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-03-25 16:51:28",
+    "modified_on": "2024-09-20 11:42:53",
     "contents": {
         "object_alias": "exface.Core.OBJECT_ACTION",
         "widget_type": "SplitHorizontal",
@@ -64,6 +64,10 @@
                             {
                                 "attribute_alias": "CONFIG_UXON",
                                 "hidden": true
+                            },
+                            {
+                                "attribute_alias": "ACTION_PROTOTYPE",
+                                "hidden": true
                             }
                         ],
                         "sorters": [
@@ -114,8 +118,10 @@
                                 "widget_type": "InputHidden"
                             },
                             {
+                                "widget_type": "InputUxon",
                                 "attribute_alias": "CONFIG_UXON",
                                 "value": "=table_actions!CONFIG_UXON",
+                                "root_prototype": "=table_actions!ACTION_PROTOTYPE",
                                 "height": "max",
                                 "width": "100%",
                                 "hide_caption": true
