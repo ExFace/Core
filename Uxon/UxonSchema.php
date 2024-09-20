@@ -451,7 +451,7 @@ class UxonSchema implements UxonSchemaInterface
                 $options = ['true', 'false'];
                 break;
             case strcasecmp($type, 'timezone') === 0:
-                $options = TimeZoneDataType::getKeysStatic();
+                $options = TimeZoneDataType::getValuesStatic();
                 break;
             case strcasecmp($type, 'metamodel:data_source') === 0:
                 $options = $this->getMetamodelDataSourceAliases($search);
@@ -516,7 +516,7 @@ class UxonSchema implements UxonSchemaInterface
                 }
                 break;
             case strcasecmp($type, 'metamodel:aggregator') === 0:
-                $options = AggregatorFunctionsDataType::getKeysStatic();
+                $options = AggregatorFunctionsDataType::getConstantNames();
                 break;
             case strcasecmp($type, 'metamodel:datatype') === 0:
                 $options = $this->getMetamodelDatatypeAliases();

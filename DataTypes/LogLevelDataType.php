@@ -60,9 +60,9 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
         if ($this->isUsingNumericLevels()) {
             return $this->getValuesOfMonologLevels();
         } else {
-            return array_combine($this->getKeysStatic(), array_map(function($word) {
+            return array_combine($this->getConstantNames(), array_map(function($word) {
                 return strtoupper($word);
-            }, $this->getKeysStatic()));
+            }, $this->getConstantNames()));
         }
     }
     

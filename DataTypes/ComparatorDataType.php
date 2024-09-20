@@ -191,6 +191,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const LIST_ANY_GREATER_THAN = ']>';
     
     const LIST_ANY_GREATER_THAN_OR_EQUALS = ']>=';
+
+    private $labels = [];
     
     
     /**
@@ -204,7 +206,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
             foreach (static::getValuesStatic() as $val) {
-                $this->labels[$val] = $translator->translate('GLOBAL.COMPARATOR.' . static::findKey($val));
+                $this->labels[$val] = $translator->translate('GLOBAL.COMPARATOR.' . static::findConstant($val));
             }
         }
         
