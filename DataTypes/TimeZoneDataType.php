@@ -38,7 +38,7 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      */
     public function getLabels()
     {
-        return array_keys($this::getValuesStatic());
+        return $this::getValuesStatic();
     }
     
     /**
