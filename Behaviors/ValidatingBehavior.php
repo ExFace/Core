@@ -324,7 +324,11 @@ class ValidatingBehavior extends AbstractBehavior
             $message = "";
             foreach ($violations as $error => $violation) {
                 if($badData !== null) {
-                    $badData->merge($violation[self::VAR_BAD_DATA]);
+                    if ($badData->hasUidColumn()) {
+                        $badData->merge($violation[self::VAR_BAD_DATA]);
+                    } else {
+                        $badData->addRows($violation[self::VAR_BAD_DATA]->getRows());
+                    }
                 } else {
                     $badData = $violation[self::VAR_BAD_DATA];
                 }
