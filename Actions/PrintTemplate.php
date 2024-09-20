@@ -51,9 +51,12 @@ use exface\Core\Interfaces\Actions\iUseTemplate;
  * Each entry in `data_placeholders` consists of a custom placeholder name (to be used in the main `template`) 
  * and a configuration for its contents:
  * 
- * - `data_sheet` to load the data 
+ * - `data_sheet` to load the data - you can use the regular placeholders above here to define filters
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
- * `[#dataPlaceholderNamesome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
+ * `[#dataPlaceholderName:some_attribute#]`, `[#dataPlaceholderName:=Formula()#]`.
+ * - `row_template_if_empty` - a text to print when there is no data
+ * - `outer_template` and `outer_template_if_empty` to wrap rows in a HTML table, border or
+ * similar also for the two cases of having some data and not.
  * - nested `data_placeholders` to use inside each data placeholder
  * 
  * ## Example 
@@ -69,12 +72,14 @@ use exface\Core\Interfaces\Actions\iUseTemplate;
  * data placeholder rows - prefixed with the respective placeholder name.
  * 
  * ```
- * {
- *      "template": "Order number: [#~input:ORDERNO#] <br><br> <table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
- *      "filename": "Order [#~input:ORDERNO#].html",
+ *  {
+ *      "filename": "Order [#~input:ORDERNO#].pdf",
+ *      "template": "Order number: [#~input:ORDERNO#] <br><br>",
  *      "data_placeholders": {
  *          "positions": {
- *              "row_template": "<tr><td>[#positions:product#]</td><td>[#positions:price#]</td></tr>",
+ *              "outer_template": "<table><tr><th>Product</th><th>Price</th></tr>[#positions#]</table>",
+ *              "outer_template_if_empty": "<p>This order is empty</p>",
+ *              "row_template": "<tr><td>[#~data:product#]</td><td>[#~data:price#]</td></tr>",
  *              "data_sheet": {
  *                  "object_alias": "my.App.ORDER_POSITION",
  *                  "columns": [
@@ -90,7 +95,7 @@ use exface\Core\Interfaces\Actions\iUseTemplate;
  *              }
  *          }
  *      }
- * }
+ *  }
  * 
  * ```
  * 
