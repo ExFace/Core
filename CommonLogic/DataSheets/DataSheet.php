@@ -2911,6 +2911,7 @@ class DataSheet implements DataSheetInterface
         $condGrp = $conditionOrGroup->toConditionGroup();
         
         if ($readMissingData === true) {
+            // TODO #DataCollector needs to be used here instead of all the following logic
             foreach ($condGrp->getConditionsRecursive() as $cond) {
                 foreach ($cond->getExpression()->getRequiredAttributes() as $attrAlias) {
                     if (! $this->getColumns()->getByExpression($attrAlias)) {
