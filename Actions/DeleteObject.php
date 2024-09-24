@@ -1,6 +1,11 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForDelete;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -78,5 +83,42 @@ class DeleteObject extends AbstractAction implements iDeleteData
         
         return $result;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function setConfirmationForAction(UxonObject $uxon): ActionInterface
+    {
+        $widget = null;
+        if ($this->isDefinedInWidget()) {
+            $parent = $this->getWidgetDefinedIn();
+            $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
+            $this->confirmationForAction = new ConfirmationForDelete($widget);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getConfirmationForAction(): ?ConfirmationForAction
+    {
+        if(!isset($this->confirmationForAction)) {
+            $this->confirmationForAction = new ConfirmationForDelete(null);
+        }
+
+        return $this->confirmationForAction;
+    }
+
+
+    /**
+     * @inheritDoc
+     */
+    public function requiresConfirmationForAction(): bool
+    {
+        return true;
+    }
+
+
 }
-?>
