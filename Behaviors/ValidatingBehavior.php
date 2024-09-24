@@ -32,7 +32,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * 
  * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to the database.
  * - `invalid_if_on_update` executes only when data is being **updated**, but **before** these changes are applied to the database.
- * - `invalid_if_on_always` executes both when data is being **created and updated**, but **before** those changes are applied to the database.
+ * - `invalid_if_always` executes both when data is being **created and updated**, but **before** those changes are applied to the database.
  * 
  * This behavior can react both to when the data is first created and to whenever it is changed from then on.
  * You can use any of the three `ìnvalid_if` properties to control the timing of your checks.
@@ -47,6 +47,9 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * stored in the database, it does not work while data is being created (because the data doesn't exist yet).
  * 
  * This means `[#~old:alias#]` only works for `invalid_if_on_update`.
+ * 
+ * **NOTE:** Placeholder values are NOT formatted in order to be comparable in the conditions. If you use
+ * placeholders in the error messages, format them explicitly: e.g. `[#~old:=Format(MYATTR)#]`
  *
  * ### Example: Comparing old and new values
  * 
@@ -81,7 +84,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  *  ```
  *  {
- *      "invalid_if_on_always": [
+ *      "invalid_if_always": [
  *         {
  *            "error_text": "The entered value must lie between 0 and 100!",
  *            "operator": "AND",
@@ -299,9 +302,17 @@ class ValidatingBehavior extends AbstractBehavior
 
             foreach ($changedDataSheet->getRows() as $index => $row) {
                 $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-                $placeHolderRenderer->addPlaceholder(new DataRowPlaceholders($changedDataSheet, $index, self::PLACEHOLDER_NEW));
+                $resolver = new DataRowPlaceholders($changedDataSheet, $index, self::PLACEHOLDER_NEW);
+                // TODO format dates and number? Good for messages, but bad vor comparison
+                // $resolver->setFormatValues(false);
+                $resolver->setSanitizeAsUxon(true);
+                $placeHolderRenderer->addPlaceholder($resolver);
                 if($onUpdate) {
-                    $placeHolderRenderer->addPlaceholder(new DataRowPlaceholders($previousDataSheet, $index, self::PLACEHOLDER_OLD));
+                    $resolver = new DataRowPlaceholders($previousDataSheet, $index, self::PLACEHOLDER_OLD);
+                    // TODO format dates and number? Good for messages, but bad vor comparison
+                    // $resolver->setFormatValues(false);
+                    $resolver->setSanitizeAsUxon(true);
+                    $placeHolderRenderer->addPlaceholder($resolver);
                 }
 
                 // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
@@ -324,7 +335,11 @@ class ValidatingBehavior extends AbstractBehavior
             $message = "";
             foreach ($violations as $error => $violation) {
                 if($badData !== null) {
-                    $badData->merge($violation[self::VAR_BAD_DATA]);
+                    if ($badData->hasUidColumn()) {
+                        $badData->merge($violation[self::VAR_BAD_DATA]);
+                    } else {
+                        $badData->addRows($violation[self::VAR_BAD_DATA]->getRows());
+                    }
                 } else {
                     $badData = $violation[self::VAR_BAD_DATA];
                 }

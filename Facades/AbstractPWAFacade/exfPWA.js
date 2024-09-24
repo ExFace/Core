@@ -33,8 +33,14 @@ self.addEventListener('sync', function(event) {
 			'offlineData': 'uid, object_alias',
 			'offlineModel': 'url',
 			'actionQueue': '&id, object, action',
+			'deviceId': 'id'
+		});
+		dexie.version(2).stores({
+			'offlineData': 'uid, object_alias',
+			'offlineModel': 'url',
+			'actionQueue': '&id, object, action',
 			'deviceId': 'id',
-			'networkStat': 'time, speed, mime_type, size',
+			'networkStat': 'time',
 			'connection': 'time, status'
 		});
 		dexie.open().catch(function (e) {
@@ -162,13 +168,7 @@ self.addEventListener('sync', function(event) {
 
 	function checkIndexedDB() {
 		return new Promise((resolve, reject) => {
-			const request = indexedDB.open("test");
-			request.onerror = () => reject(false);
-			request.onsuccess = () => {
-				request.result.close();
-				indexedDB.deleteDatabase("test");
-				resolve(true);
-			};
+			resolve(true);
 		});
 	};
 

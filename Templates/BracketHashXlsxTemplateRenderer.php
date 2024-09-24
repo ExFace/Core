@@ -84,7 +84,7 @@ class BracketHashXlsxTemplateRenderer extends AbstractTemplateRenderer
                         // PhpSpreadsheet works with 2D-Arrays in the form of [row][column], so we have to "rotate" our array to match that.
                         $pendingColumns[$y][$x] = array_chunk($rendered, 1);
                     } else {
-                        $tplWorksheet->setCellValue([$x, $y], $rendered[0]);
+                        $tplWorksheet->setCellValue([$x, $y], empty($rendered) ? '' : $rendered[0]);
                     }
                 }
 
@@ -98,7 +98,7 @@ class BracketHashXlsxTemplateRenderer extends AbstractTemplateRenderer
 
                     // Fill in rendered values.
                     foreach ($pendingColumns[$y] as $x => $column) {
-                        $tplWorksheet->fromArray($column, null, Validations::validateCellAddress([$x, $yOffset]));
+                        $tplWorksheet->fromArray($column, null, Validations::validateCellAddress([$x, $yOffset]), true);
                     }
 
                     // Update offset.
