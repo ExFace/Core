@@ -2,7 +2,9 @@
 
 namespace exface\Core\DataConnectors\Traits;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\TranslationInterface;
 
 /**
@@ -10,9 +12,8 @@ use exface\Core\Interfaces\TranslationInterface;
  *
  * When using this trait, adhere to the following best practices:
  * - Overwrite `guessMimeType()` with your local mime-type logic, if possible.
- * - Validate file integrity before you perform any writes.
  * - Use `validateFileIntegrityArray()`, if possible.
- * - Bookend the code where you perform your write actions with `tryBeginWriting()` and `tryFinishWriting()` respectively.
+ * - Bookend the code where you perform your write actions with `validateBeforeWriting()` and `validateAfterWriting()` respectively.
  *
  * ### Sample Code
  *
@@ -21,28 +22,50 @@ use exface\Core\Interfaces\TranslationInterface;
  *  //...
  *
  *  $filesToSave = // Gather save data in the form of [string $path => string $binaryData]
- *  $errors = $this->validateFileIntegrityArray($filesToSave);
  *
- *  $this->tryBeginWriting($errors);
+ *  $this->validateBeforeWriting($filesToSave);
  *  foreach($filesToSave as $path => $data) {
  *      // Perform write actions.
  *  }
- *  $this->tryFinishWriting($errors);
+ *  $this->validateAfterWriting($filesToSave);
  *
  *  //...
  *
  * ```
  *
  */
+// TODO geb 204-09-23: We should probably turn this trait into a class at some point.
 trait ICanValidateFileIntegrityTrait
 {
-    protected bool $validateFileIntegrity = false;
+    protected bool $backupCorruptedFiles = false;
 
-    protected bool $validateChecksums = false;
-
-    protected bool $keepCorruptedFiles = false;
+    protected bool $validationSettingDefault = true;
 
     private ?TranslationInterface $translator = null;
+
+    private array $configPreWrite = [];
+
+    private array $configPostWrite = [];
+
+    // TODO geb 24-09-24: This should be a constant, but traits don't allow constants.
+    private array $allConfigOptions = [
+        'validate_checksums',
+        'parse_images',
+        'parse_pdf'
+    ];
+
+    private array $errors = [];
+
+    private array $checkSumsMd5 = [];
+
+    /**
+     * @param bool $beforeWriting
+     * @return array
+     */
+    public function getValidationSettings(bool $beforeWriting) : array
+    {
+        return $beforeWriting ? $this->configPreWrite : $this->configPostWrite;
+    }
 
     /**
      * @return TranslationInterface
@@ -57,57 +80,71 @@ trait ICanValidateFileIntegrityTrait
     }
 
     /**
-     * Toggle whether this connector should validate file integrity.
+     * Set the value that validation settings should default to, if they are not set.
      *
-     * Default value is FALSE.
+     * Default value is TRUE.
      *
-     * @uxon-poperty validate_file_integrity
+     * @uxon-poperty validation_setting_default
      * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-default true
      *
-     * @param $value
+     * @param bool $value
      * @return $this
      */
-    public function setValidateFileIntegrity($value): static
+    public function setValidationSettingDefault(bool $value) : static
     {
-        if(!isset($value)) {
-            $this->validateFileIntegrity = false;
-        } else {
-            $this->validateFileIntegrity = (bool)$value;
-        }
-
+        $this->validationSettingDefault = $value;
         return $this;
     }
 
     /**
-     * Toggle whether this connector should validate checksums.
+     * Get the value that validation settings should default to, if they are not set.
      *
-     * A checksum is calculated both when the file is first uploaded to the server
-     * and right after it has been stored in the filesystem. Comparing both values
-     * verifies, whether parts of the file went missing.
+     * @return bool
+     */
+    public function getValidationSettingDefault() : bool
+    {
+        return $this->validationSettingDefault;
+    }
+
+    /**
+     * Configure the settings that this connector should use when validating BEFORE writing.
      *
-     * Default value is FALSE.
+     * All options are TRUE by default.
      *
-     * @uxon-poperty validate_checksums
-     * @uxon-type boolean
-     * @uxon-default false
+     * @uxon-poperty validations_before_writing
+     * @uxon-type object
+     * @uxon-default validations_before_writing: {'parse_images': true, 'parse_pdf': true, 'validate_checksums': false,}
      *
-     * @param $value
+     * @param UxonObject $value
      * @return $this
      */
-    public function setValidateChecksums($value): static
+    public function setValidationsBeforeWriting(UxonObject $value): static
     {
-        if(!isset($value)) {
-            $this->validateChecksums = false;
-        } else {
-            $this->validateChecksums = (bool)$value;
-        }
-
+        $this->configPreWrite = $value->toArray();
         return $this;
     }
 
     /**
-     * Toggle whether this connector should keep corrupted files.
+     * Configure the settings that this connector should use when validating BEFORE writing.
+     *
+     * All options are TRUE by default.
+     *
+     * @uxon-poperty validations_after_writing
+     * @uxon-type object
+     * @uxon-default validations_after_writing: {'parse_images': false, 'parse_pdf': false, 'validate_checksums': true,}
+     *
+     * @param UxonObject $value
+     * @return $this
+     */
+    public function setValidationsAfterWriting(UxonObject $value): static
+    {
+        $this->configPostWrite = $value->toArray();
+        return $this;
+    }
+
+    /**
+     * Toggle whether this connector should back up corrupted files.
      *
      * If either checksum or file validation fails, the upload will be rejected
      * by the system to prevent faulty evidence from entering the database. If this
@@ -117,19 +154,19 @@ trait ICanValidateFileIntegrityTrait
      *
      * Default value is FALSE.
      *
-     * @uxon-poperty keep_corrupted_files
+     * @uxon-poperty backup_corrupted_files
      * @uxon-type boolean
      * @uxon-default false
      *
      * @param $value
      * @return $this
      */
-    public function setKeepCorruptedFiles($value): static
+    public function setBackupCorruptedFiles($value): static
     {
         if(!isset($value)) {
-            $this->keepCorruptedFiles = false;
+            $this->backupCorruptedFiles = false;
         } else {
-            $this->keepCorruptedFiles = (bool)$value;
+            $this->backupCorruptedFiles = (bool)$value;
         }
 
         return $this;
@@ -157,96 +194,54 @@ trait ICanValidateFileIntegrityTrait
     }
 
     /**
-     * Verify validation results and throw an error if appropriate.
+     * Validate files before writing and throw an error if appropriate.
      *
      * Call this method BEFORE any files have been written to the filesystem.
-     * This is a convenience method.
      *
-     * @param array $errors
+     * @param array $filesToValidate
+     * Array items should have the following structure: `[string $path => mixed $data]`. The data portion may either be
+     * a string of binary data or an instance of FileInfoInterface.
+     * @param array|null $checkSumsMd5
+     * Optional array of MD5 hashes for each file. During this step, checksum validation is only possible if you provide
+     * MD5 hashes for each file you wish to validate this way. Array items should have the following structure:
+     * `[string $path => string $md5]`
      * @return void
      */
-    protected function tryBeginWriting(array $errors) : void
+    protected function validateBeforeWriting(array $filesToValidate, array $checkSumsMd5 = null) : void
     {
+        $this->errors = $this->validateArray($filesToValidate, $checkSumsMd5, $this->configPreWrite);
+
         // If corrupted files have been detected and storing them has been disabled, we can throw an early error.
-        if(!empty($errors) && !$this->keepCorruptedFiles) {
-            throw new FileCorruptedError($this->buildErrorMessage($errors));
+        if(!empty($this->errors) && !$this->backupCorruptedFiles) {
+            throw $this->renderAllErrors($this->errors);
         }
+
+        // Calculate and cache new checksums for validation after writing.
+        if($this->isValidationRequired($this->configPostWrite, ['validate_checksums'])) {
+            $this->checkSumsMd5 = $this->calculateCheckSumsMd5($filesToValidate);
+        }
+
     }
 
     /**
-     * Verify validation results and throw an error if appropriate.
+     * Validate files after writing and throw an error if appropriate.
      *
      * Call this method AFTER all files have been written to the filesystem.
-     * This is a convenience method.
      *
-     * @param array $errors
+     * @param array $filesToValidate
+     *  Array items should have the following structure: `[string $path => mixed $data]`. The data portion may either be
+     *  a string of binary data or an instance of FileInfoInterface.
      * @return void
      */
-    protected function tryFinishWriting(array $errors) : void
+    protected function validateAfterWriting(array $filesToValidate) : void
     {
+        $this->errors = array_merge($this->errors, $this->validateArray($filesToValidate, $this->checkSumsMd5, $this->configPostWrite));
+        $this->checkSumsMd5 = [];
+
         // If corrupted files have been detected, throw an error.
         // Note that the files have been written to the filesystem by now.
-        if(!empty($errors)) {
-            throw new FileCorruptedError($this->buildErrorMessage($errors));
-        }
-    }
-
-    /**
-     * Builds one coherent error message out of all the errors passed.
-     *
-     * @param array $errors
-     * Array items should have the following structure: `[string $path => FileCorruptedError $error]`
-     * @return string
-     */
-    protected function buildErrorMessage(array $errors) : string
-    {
-        $number = 1;
-        $message = PHP_EOL.PHP_EOL.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER');
-        foreach ($errors as $path => $error) {
-            $message .= PHP_EOL.($number == 1 || $this->keepCorruptedFiles ? PHP_EOL : '');
-            $message .= $number.'.: '.$error->getMessage();
-            if($this->keepCorruptedFiles) {
-                $backupPath = $error->getFileInfo() ? $error->getFileInfo()->getPathAbsolute() : $path;
-                $message.= PHP_EOL.'--- '.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION', ["%path%" => $backupPath]);
-            }
-            $number++;
-        }
-
-        if(!$this->keepCorruptedFiles) {
-            $message .= PHP_EOL.PHP_EOL.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER');
-        }
-        return $message;
-    }
-
-    /**
-     * Validates the integrity of the provided data.
-     *
-     * NOTE: If no validation for a given mime-type exists, the validation
-     * will be considered to be successful.
-     *
-     * @param string $path
-     * @param string $binaryData
-     * @param string|null $mimeType
-     * @return void
-     */
-    protected function validateFileIntegrity(string $path, string $binaryData, string $mimeType = null) : void
-    {
-        if(!$this->validateFileIntegrity) {
-            return;
-        }
-
-        if($mimeType === null) {
-            $mimeType = $this->guessMimeType($path, $binaryData);
-        }
-
-        [$superType,] = explode('/', $mimeType);
-        switch ($superType) {
-            case 'image':
-                $this->internalValidateMimeImage($path, $binaryData);
-                return;
-            case null :
-                $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE', ["%mimetypes%" => $superType, "%path%" => $path]);
-                throw new FileCorruptedError($msg);
+        if(!empty($this->errors)) {
+            throw $this->renderAllErrors($this->errors);
         }
     }
 
@@ -254,19 +249,22 @@ trait ICanValidateFileIntegrityTrait
      * Validates all files in the given array and returns an array with all errors encountered.
      *
      * @param array $filesToValidate
-     * Array items should have the following structure: `[string $path => string $binaryData]`
+     * Array items should have the following structure: `[string $path => mixed $data]`. The data portion may either be
+     * a string of binary data or an instance of FileInfoInterface.
+     * @param array|null $checkSumsMd5
+     * Optional array of MD5 hashes for each file. During this step, checksum validation is only possible if you provide
+     * MD5 hashes for each file you wish to validate this way. Array items should have the following structure:
+     * `[string $path => string $md5]`
+     * @param array|null $config
      * @return array
      */
-    protected function validateFileIntegrityArray(array $filesToValidate) : array
+    protected function validateArray(array $filesToValidate, ?array $checkSumsMd5, array $config = null) : array
     {
-        if(!$this->validateFileIntegrity) {
-            return [];
-        }
-
         $errors = [];
         foreach ($filesToValidate as $path => $data) {
+            $path = $data instanceof FileInfoInterface ? $data->getPath() : $path;
             try {
-                $this->validateFileIntegrity($path, $data);
+                $this->validateFile($path, $data, $checkSumsMd5[$path], $config);
             } catch (FileCorruptedError $e) {
                 $errors[$path] = $e;
             }
@@ -276,28 +274,203 @@ trait ICanValidateFileIntegrityTrait
     }
 
     /**
+     * Validates the integrity of the provided data.
+     *
+     * NOTE: If no validation for a given mime-type exists, the validation
+     * will be considered to be successful.
+     *
+     * @param string $path
+     * @param FileInfoInterface|string $data
+     * @param string|null $checkSumMd5
+     * @param array|null $config
+     * @return void
+     */
+    protected function validateFile(string $path, FileInfoInterface|string $data, ?string $checkSumMd5, array $config = null) : void
+    {
+        if(!$this->isValidationRequired($config)) {
+            return;
+        }
+
+        if($data instanceof FileInfoInterface) {
+            $mimeType = $data->getMimetype();
+            $binaryData = $data->openFile("r")->read();
+        } else {
+            $mimeType = $this->guessMimeType($path, $data);
+            $binaryData = $data;
+        }
+
+        // Validate checksums.
+        $this->internalValidateChecksumMd5($path, $binaryData, $checkSumMd5, $config);
+
+        [$superType,] = explode('/', $mimeType);
+        switch ($superType) {
+            case 'image':
+                $this->internalValidateMimeImage($path, $binaryData, $config);
+                return;
+            case null :
+                $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE', ["%mimetypes%" => $superType, "%path%" => $path]);
+                throw new FileCorruptedError($msg);
+        }
+    }
+
+    /**
+     * Hashes each file with PHP md5() and returns the result.
+     *
+     * @param array $files
+     * Array items should have the following structure: `[string $path => mixed $data]`. The data portion may either be
+     * a string of binary data or an instance of FileInfoInterface.
+     * @return array
+     */
+    protected function calculateCheckSumsMd5(array $files) : array
+    {
+        $checkSums = [];
+        foreach ($files as $path => $file) {
+            if($file instanceof FileInfoInterface) {
+                $checkSums[$file->getPath()] = md5($file->openFile("r"));
+            } else {
+                $checkSums[$path] = md5($file);
+            }
+        }
+
+        return $checkSums;
+    }
+
+    /**
+     * Builds one coherent error message out of all the errors passed.
+     *
+     * @param array $errors
+     * Array items should have the following structure: `[string $path => FileCorruptedError $error]`
+     * @return FileCorruptedError
+     */
+    protected function renderAllErrors(array $errors) : FileCorruptedError
+    {
+        $number = 1;
+        $fileList = '';
+        $debugMessage = PHP_EOL.PHP_EOL.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER');
+        foreach ($errors as $path => $error) {
+            $debugMessage .= PHP_EOL.($number == 1 || $this->backupCorruptedFiles ? PHP_EOL : '');
+            $debugMessage .= $number.'.: '.$error->getMessage();
+            if($this->backupCorruptedFiles) {
+                $backupPath = $error->getFileInfo() ? $error->getFileInfo()->getPathAbsolute() : $path;
+                $debugMessage.= PHP_EOL.'--- '.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION', ["%path%" => $backupPath]);
+            }
+
+            $path = explode('/', $path);
+            $fileList .= ($number == 1 ? '' : ', ').(end($path));
+            $number++;
+        }
+
+        if(!$this->backupCorruptedFiles) {
+            $debugMessage .= PHP_EOL.PHP_EOL.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER');
+        }
+
+        $userMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE', ['%number%' => count($errors), '%files%' => $fileList]);
+        $error = new FileCorruptedError($userMessage, null, new FileCorruptedError($debugMessage));
+        $error->setAlias('Upload failed!');
+        return $error;
+    }
+
+    /**
+     * Renders a single file corrupted error.
+     *
+     * @param string $path
+     * @return FileCorruptedError
+     */
+    private function renderSingleError(string $path) : FileCorruptedError
+    {
+        $pathComponents = explode('/', $path);
+        $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED', ["%path%" => end($pathComponents)]);
+        return new FileCorruptedError($msg,null, null);
+    }
+
+    /**
+     * Check whether validation is required for a specified list of properties. Unknown properties resolve to `getValidationSettingDefault()`.
+     *
+     * @param array $config
+     * @param array|null $properties
+     * The list of properties you wish to check. If the array is empty all known properties will be checked.
+     * @param bool $any
+     * If this setting is enabled, the function returns true if ANY of the properties are enabled.
+     * Otherwise, it only returns true if ALL properties are enabled.
+     * @return bool
+     */
+    private function isValidationRequired(array $config, array $properties = null, bool $any = true) : bool
+    {
+        if(empty($config)) {
+            return $this->validationSettingDefault;
+        }
+
+        if(empty($properties)) {
+            $properties = $this->allConfigOptions;
+        }
+
+        foreach ($properties as $key) {
+            $isRequired = ($config[$key] ?? $this->validationSettingDefault);
+
+            if($any && $isRequired) {
+                return true;
+            }
+
+            if(!$any && !$isRequired){
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Internal function to validate image files.
      *
      * DO NOT CALL DIRECTLY.
      *
      * @param string $path
      * @param string $binaryData
+     * @param array|null $config
      * @return void
      */
-    private function internalValidateMimeImage(string $path, string $binaryData) : void
+    private function internalValidateMimeImage(string $path, string $binaryData, ?array $config) : void
     {
+        if(!$this->isValidationRequired($config, ['parse_images'])) {
+            return;
+        }
+
         if (!$img = imagecreatefromstring($binaryData)) {
             // Free memory.
             $img = null;
             unset($img);
 
-            $pathComponents = explode('/', $path);
-            $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED', ["%path%" => end($pathComponents)]);
-            throw new FileCorruptedError($msg,null, null);
+            throw $this->renderSingleError($path);
         } else {
             // Free memory.
             $img = null;
             unset($img);
+        }
+    }
+
+    /**
+     * Internal function to validate md5 checksums.
+     *
+     * DO NOT CALL DIRECTLY.
+     *
+     * @param string $path
+     * @param string $binaryData
+     * @param string|null $checkSumMd5
+     * @param array|null $config
+     * @return void
+     */
+    private function internalValidateChecksumMd5(string $path, string $binaryData, ?string $checkSumMd5, ?array $config) : void
+    {
+        if(!isset($checkSumMd5)) {
+            return;
+        }
+
+        if(!$this->isValidationRequired($config, ['validate_checksums'])) {
+            return;
+        }
+
+        if(md5($binaryData) !== $checkSumMd5) {
+            throw $this->renderSingleError($path);
         }
     }
 }
