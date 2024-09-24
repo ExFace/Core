@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForUnsavedChanges;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Actions\GoBack;
 use exface\Core\Widgets\Button;
@@ -317,57 +319,77 @@ JS;
     public function buildJsClickFunction(ActionInterface $action = null, string $jsRequestData = null)
     {
         $action = $action ?? $this->getWidget()->getAction();
-        
+
+        $jsRequestDataCollector = '';
         if ($jsRequestData === null && $action !== null) {
             $jsRequestData = 'requestData';
             $jsRequestDataCollector = "var {$jsRequestData}; \n" . $this->buildJsRequestDataCollector($action, $this->getInputElement(), $jsRequestData);
         }
         
         switch (true) {
+            // NO DATA COLLECTOR
             // Buttons without an action don't do anything
             case ! $action:
-                $js = $this->buildJsClickNoAction(); break;
-            // CallAction needs som extra logic because its action is different depending on the input data
-            case $action instanceof CallAction:
-                $js = $jsRequestDataCollector . $this->buildJsClickDynamicAction($action, $jsRequestData); break;
-            // Action chains and other action proxies
-            case $action instanceof iCallOtherActions:
-                $js = $jsRequestDataCollector . $this->buildJsClickActionChain($action, $jsRequestData); break;
+                $js = $this->buildJsClickNoAction();
+                $jsRequestDataCollector = '';
+                break;
             // Refresh input or other widget - don't need input data here
             case $action instanceof RefreshWidget:
-                $js = $this->buildJsClickRefreshWidget($action); break;
+                $js = $this->buildJsClickRefreshWidget($action);
+                $jsRequestDataCollector = '';
+                break;
             // Run custom JS - don't need input data here
             case $action instanceof iRunFacadeScript:
-                $js = $this->buildJsClickRunFacadeScript($action); break;
-            // Show Dialog
-            case $action instanceof iShowDialog:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowDialog($action, $jsRequestData); break;
-            // Navigate to URL
-            case $action instanceof iShowUrl:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowUrl($action, $jsRequestData); break;
-            // Other show-widget actions (not simple navigating)
-            case $action instanceof iShowWidget:
-                $js = $jsRequestDataCollector . $this->buildJsClickShowWidget($action, $jsRequestData); break;
+                $js = $this->buildJsClickRunFacadeScript($action);
+                $jsRequestDataCollector = '';
+                break;
             // Back-button - don't need input data here
             case $action instanceof GoBack:
-                $js = $this->buildJsClickGoBack($action); break;
-            // Send data to widget
-            case $action instanceof SendToWidget:
-                $js = $jsRequestDataCollector . $this->buildJsClickSendToWidget($action, $jsRequestData); break;
+                $js = $this->buildJsClickGoBack($action);
+                $jsRequestDataCollector = '';
+                break;
             // Reset input or other widget - don't need input data here
             case $action instanceof ResetWidget:
-                $js = $this->buildJsClickResetWidget($action); break;
+                $js = $this->buildJsClickResetWidget($action);
+                $jsRequestDataCollector = '';
+                break;
             // Call a widget function - e.g. click another button
             case $action instanceof iCallWidgetFunction:
-                $js = $this->buildJsClickCallWidgetFunction($action); break;
-            // Send all other acitons to the server
+                $js = $this->buildJsClickCallWidgetFunction($action);
+                $jsRequestDataCollector = '';
+                break;
+
+            // DATA COLLECTOR REQUIRED
+            // Send data to widget
+            case $action instanceof SendToWidget:
+                $js = $this->buildJsClickSendToWidget($action, $jsRequestData); break;
+            // Show Dialog
+            case $action instanceof iShowDialog:
+                $js = $this->buildJsClickShowDialog($action, $jsRequestData); break;
+            // Navigate to URL
+            case $action instanceof iShowUrl:
+                $js = $this->buildJsClickShowUrl($action, $jsRequestData); break;
+            // Other show-widget actions (not simple navigating)
+            case $action instanceof iShowWidget:
+                $js = $this->buildJsClickShowWidget($action, $jsRequestData); break;
+            // CallAction needs som extra logic because its action is different depending on the input data
+            case $action instanceof CallAction:
+                $js = $this->buildJsClickDynamicAction($action, $jsRequestData); break;
+            // Action chains and other action proxies
+            case $action instanceof iCallOtherActions:
+                $js = $this->buildJsClickActionChain($action, $jsRequestData); break;
+            // Send all other actions to the server
             default: 
-                $js = $jsRequestDataCollector . $this->buildJsClickCallServerAction($action, $jsRequestData); break;
+                $js = $this->buildJsClickCallServerAction($action, $jsRequestData); break;
         }
 
         // Build confirmations wrapper.
-        $js = $this->buildJsConfirmationsWrapper($js);
+        $js = <<<JS
 
+{$jsRequestDataCollector}
+
+{$this->buildJsConfirmationsWrapper($js)}
+JS;
         // In any case, wrap some offline-logic around the action
         if ($action !== null) {
             $js = $this->buildJsClickOfflineWrapper($action, $js);
@@ -441,20 +463,30 @@ JS;
         return false;
     }
 
+
     /**
-     * Check if a confirmation of the specified type is required.
+     * Get all confirmations required before a button press can be resolved.
      *
-     * @param string $confirmationType
-     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type
-     * @return bool
+     * @return array[]
      */
-    protected function isConfirmationRequired(string $confirmationType) : bool
+    // TODO geb 24-09-24: Idea - If we used types as identifiers, we could reduce code duplications.
+    protected function getRequiredConfirmations() : array
     {
         if(!$action = $this->getAction()) {
-            return ActionInterface::IS_CONFIRMATION_REQUIRED_BY_DEFAULT[$confirmationType] ?? false;
+            return ConfirmationForUnsavedChanges::isRequiredWithoutActionReference() ?
+                [ConfirmationForUnsavedChanges::class => new ConfirmationForUnsavedChanges(null)] : [];
         }
 
-        return $action->hasConfirmationWidget($confirmationType);
+        $result = [];
+        if($confirmation = $action->getConfirmationForAction()) {
+            $result[ConfirmationForAction::class] = $confirmation;
+        }
+
+        if($confirmation = $action->getConfirmationForUnsavedChanges()){
+            $result[ConfirmationForUnsavedChanges::class] = $confirmation;
+        }
+
+        return $result;
     }
 
     /**
@@ -490,20 +522,28 @@ JS;
     {
         $checkChangesJs = '';
 
+        $requiredConfirmations = $this->getRequiredConfirmations();
+
         // Confirmation for action.
-        if ($this->isConfirmationRequired(ActionInterface::CONFIRMATION_FOR_ACTION)) {
+        if ($confirmation = $requiredConfirmations[ConfirmationForAction::class]) {
+            $tokens = $confirmation->getTranslationTokens();
+
             $checkChangesJs .= <<<JS
-if(true === {$this->buildJsAskForConfirmationDialog(ActionInterface::CONFIRMATION_FOR_ACTION, 'fnAction')}) {
+
+if(true === {$this->buildJsAskForConfirmationDialog($tokens, 'fnAction')}) {
     return;
 }
 JS;
         }
 
         // Unsaved changes.
-        if ($this->isConfirmationRequired(ActionInterface::CONFIRMATION_UNSAVED_CHANGES)) {
+        if ($confirmation = $requiredConfirmations[ConfirmationForUnsavedChanges::class]) {
+            $tokens = $confirmation->getTranslationTokens();
+
             $checkChangesJs .= <<<JS
+
 if(true === {$this->getInputElement()->buildJsCheckForUnsavedChanges()} &&
-   true === {$this->buildJsAskForConfirmationDialog(ActionInterface::CONFIRMATION_UNSAVED_CHANGES, 'fnAction')}) {
+   true === {$this->buildJsAskForConfirmationDialog($tokens, 'fnAction')}) {
     return;
 }
 JS;
@@ -521,7 +561,6 @@ var {$oThis} = this;
 
 // Wrap pending action in callable to delay execution.
 var fnAction = function() {
-    console.log(this);
     {$pendingActionJs}
 };
 

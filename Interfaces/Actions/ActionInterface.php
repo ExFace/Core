@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForUnsavedChanges;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -57,23 +59,6 @@ interface ActionInterface extends
     iCanGenerateDebugWidgets,
     iHaveIcon
 {
-    public const CONFIRMATION_UNSAVED_CHANGES = 'unsavedChanges';
-
-    public const CONFIRMATION_FOR_ACTION = 'forAction';
-
-
-    /**
-     * Default rules for each confirmation type.
-     *
-     * This is useful to decide whether you should ask for confirmation if no ActionInterface
-     * reference is available. Use `AbstractAction::CONFIRMATION_` constants as keys.
-     **/
-    // Should you define a new confirmation type, remember to add its default rules to this array.
-    const IS_CONFIRMATION_REQUIRED_BY_DEFAULT = [
-        self::CONFIRMATION_FOR_ACTION => false,
-        self::CONFIRMATION_UNSAVED_CHANGES => true
-    ];
-    
     /**
      * 
      * @param TaskInterface $task
@@ -551,21 +536,30 @@ interface ActionInterface extends
     public function setOfflineStrategy(string $value) : ActionInterface;
 
     /**
-     * Returns the current value for the requested confirmation type.
+     * Returns the user confirmation for this action, if any.
      *
-     * @param string $confirmationType
-     * Use `ActionInterface::CONFIRMATION_` constants to specify the desired type.
      * @return WidgetInterface|null
      */
-    public function getConfirmationWidget(string $confirmationType) : ?WidgetInterface;
+    public function getConfirmationForAction() : ?ConfirmationForAction;
 
     /**
-     * Returns true if a confirmation widget of the specified type is available.
+     * Returns the user confirmation for unsaved changes, if any.
      *
-     * NOTE: This does not accurately represent, whether a confirmation of the specified
-     * type is required. Use `isConfirmationRequired(string)` for that!
-     * @param string $confirmationType
+     * @return WidgetInterface|null
+     */
+    public function getConfirmationForUnsavedChanges() : ?ConfirmationForUnsavedChanges;
+
+    /**
+     * Check whether this action requires a confirmation.
+     *
      * @return bool
      */
-    public function hasConfirmationWidget (string $confirmationType) : bool;
+    public function requiresConfirmationForAction() : bool;
+
+    /**
+     * Check whether a confirmation for unsaved changes is required.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForUnsavedChanges() : bool;
 }

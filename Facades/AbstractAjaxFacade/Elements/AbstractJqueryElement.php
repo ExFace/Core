@@ -1122,13 +1122,20 @@ JS;
      *
      *  ```
      *
-     * @param string $confirmationType
-     *  The type of confirmation the dialog should be based off. Use `ActionInterface::CONFIRMATION_` constants.
+     * @param array $translationTokens
+     * An array containing the translation tokens for this message.
+     *  [
+     *      `title` => Message title,
+     *      `content` => Message content,
+     *      `confirm` => Confirmation button label,
+     *      `cancel` => Cancel button label
+     *  ]
+     *
      * @param string $fnConfirm
      * The name of the function that should be executed upon confirmation.
      * @return string
      */
-    public function buildJsAskForConfirmationDialog(string $confirmationType, string $fnConfirm = 'fnAction') : string
+    public function buildJsAskForConfirmationDialog(array $translationTokens, string $fnConfirm = 'fnAction') : string
     {
         // Return false by default, so that it does not cause unexpected side effects if not overridden.
         return 'false';

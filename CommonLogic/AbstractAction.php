@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Communication\UserConfirmations\ConfirmationForAction;
+use exface\Core\Communication\UserConfirmations\ConfirmationForUnsavedChanges;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -153,7 +155,9 @@ abstract class AbstractAction implements ActionInterface
     
     private $offlineStrategy = null;
 
-    private array $confirmationWidgets = [];
+    protected ConfirmationForUnsavedChanges|null $confirmationForUnsavedChanges = null;
+
+    protected ConfirmationForAction|null $confirmationForAction = null;
 
     /**
      *
@@ -1884,7 +1888,7 @@ abstract class AbstractAction implements ActionInterface
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
             $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-            $this->confirmationWidgets[self::CONFIRMATION_FOR_ACTION] = $widget;
+            $this->confirmationForAction = new ConfirmationForAction($widget);
         } else {
             // TODO what here?
         }
@@ -1901,12 +1905,12 @@ abstract class AbstractAction implements ActionInterface
      * @param UxonObject $uxon
      * @return ActionInterface
      */
-    public function setConfirmationForUnsavedData(UxonObject $uxon) : ActionInterface
+    public function setConfirmationForUnsavedChanges(UxonObject $uxon) : ActionInterface
     {
         if ($this->isDefinedInWidget()) {
             $parent = $this->getWidgetDefinedIn();
             $widget = WidgetFactory::createFromUxonInParent($parent, $uxon, 'ConfirmationMessage');
-            $this->confirmationWidgets[self::CONFIRMATION_UNSAVED_CHANGES] = $widget;
+            $this->confirmationForUnsavedChanges = new ConfirmationForUnsavedChanges($widget);
         } else {
             // TODO what here?
         }
@@ -1915,19 +1919,44 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * @inheritDoc
+     * Returns the user confirmation for this action, if any.
+     *
+     * @return WidgetInterface|null
      */
-    public function getConfirmationWidget(string $confirmationType) : ?WidgetInterface
+    public function getConfirmationForAction() : ?ConfirmationForAction
     {
-        return $this->confirmationWidgets[$confirmationType];
+        return $this->confirmationForAction;
     }
 
     /**
-     * @inheritDoc
+     * Returns the user confirmation for unsaved changes, if any.
+     *
+     * @return WidgetInterface|null
      */
-    public function hasConfirmationWidget (string $confirmationType) : bool
+    public function getConfirmationForUnsavedChanges() : ?ConfirmationForUnsavedChanges
     {
-        return $this->confirmationWidgets[$confirmationType] !== null &&
-               $this->confirmationWidgets[$confirmationType]->isDisabled() !== false;
+        return $this->confirmationForUnsavedChanges;
+    }
+
+    /**
+     * Check whether this action requires a confirmation.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForAction() : bool
+    {
+        return $this->confirmationForAction &&
+               !$this->confirmationForAction->disabled();
+    }
+
+    /**
+     * Check whether a confirmation for unsaved changes is required.
+     *
+     * @return bool
+     */
+    public function requiresConfirmationForUnsavedChanges() : bool
+    {
+        return $this->confirmationForUnsavedChanges &&
+               !$this->confirmationForUnsavedChanges->disabled();
     }
 }
