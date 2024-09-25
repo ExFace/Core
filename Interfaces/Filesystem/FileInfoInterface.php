@@ -186,4 +186,6 @@ interface FileInfoInterface extends \Stringable
      * @return string|NULL
      */
     public function getMimetype() : ?string;
+
+    public function getMd5() : ?string;
 }
