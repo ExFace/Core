@@ -291,6 +291,7 @@ trait ICanValidateFileIntegrityTrait
             return;
         }
 
+        // TODO geb 24-09-25: Mime-type identification may fail on files with incomplete headers.
         if($data instanceof FileInfoInterface) {
             $mimeType = $data->getMimetype();
             $binaryData = $data->openFile("r")->read();
@@ -346,7 +347,7 @@ trait ICanValidateFileIntegrityTrait
     {
         $number = 1;
         $fileList = '';
-        $debugMessage = PHP_EOL.PHP_EOL.$this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER');
+        $debugMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER');
         foreach ($errors as $path => $error) {
             $debugMessage .= PHP_EOL.($number == 1 || $this->backupCorruptedFiles ? PHP_EOL : '');
             $debugMessage .= $number.'.: '.$error->getMessage();
@@ -367,6 +368,7 @@ trait ICanValidateFileIntegrityTrait
         $userMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE', ['%number%' => count($errors), '%files%' => $fileList]);
         $error = new FileCorruptedError($userMessage, null, new FileCorruptedError($debugMessage));
         $error->setAlias('Upload failed!');
+        $error->setUseExceptionMessageAsTitle(true);
         return $error;
     }
 
@@ -429,6 +431,7 @@ trait ICanValidateFileIntegrityTrait
      * @param array|null $config
      * @return void
      */
+    // TODO geb 24-09-25: Image validation is unreliable at the moment. All known real world cases have been caught, but manually manipulated files were not.
     private function internalValidateMimeImage(string $path, string $binaryData, ?array $config) : void
     {
         if(!$this->isValidationRequired($config, ['parse_images'])) {
