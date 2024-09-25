@@ -11,4 +11,8 @@ use exface\Core\Exceptions\RuntimeException;
  */
 class FacadeRoutingError extends RuntimeException
 {
+    public function getStatusCode(int $default = 404) : int
+    {
+        return parent::getStatusCode($default);
+    }
 }

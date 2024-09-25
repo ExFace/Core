@@ -1192,6 +1192,9 @@ class DataSheet implements DataSheetInterface
         
         // Handle subsheets with columns with relations
         foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            if ($relatedSheet->getMetaObject()->isWritable() === false) {
+                continue;
+            }
             $relatedSheet = $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataUpdate($create_if_uid_not_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
@@ -1653,6 +1656,9 @@ class DataSheet implements DataSheetInterface
         
         // Handle subsheets with columns with relations
         foreach ($relatedSheets as $relPathStr => $relatedSheet) {
+            if ($relatedSheet->getMetaObject()->isWritable() === false) {
+                continue;
+            }
             $this->dataSavePrepareRelatedSheet($relPathStr, $relatedSheet);
             $relatedSheet->dataCreate($update_if_uid_found, $transaction);
             // TODO update data in the main sheet with values from the related sheet - only for those columns with
