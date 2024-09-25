@@ -326,7 +326,7 @@ trait ICanValidateFileIntegrityTrait
         $checkSums = [];
         foreach ($files as $path => $file) {
             if($file instanceof FileInfoInterface) {
-                $checkSums[$file->getPath()] = md5($file->openFile("r"));
+                $checkSums[$file->getPath()] = $file->getMd5();
             } else {
                 $checkSums[$path] = md5($file);
             }
