@@ -486,7 +486,7 @@
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "Die Datei \"%path%\" ist beschädigt! Bitte prüfen Sie die Datei auf Fehler und versuchen Sie es erneut.",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Die Datei \"%path%\" hat einen unbekannten Inhaltstypen (\"%mimetypes%\").",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Der Upload ist aufgrund folgender Fehler fehlgeschlagen:",
-	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE": "- Der Upload ist fehlgeschlagen, weil bei den folgenden %number% Dateien Fehler aufgetreten sind: %files%",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE": "Der Upload ist fehlgeschlagen, weil bei den folgenden %number% Dateien Fehler aufgetreten sind: %files%",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Unter \"%path%\" wurde ein Backup der beschädigten Datei gespeichert.",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER": "Es wurden keine Daten im System gespeichert!",
 
