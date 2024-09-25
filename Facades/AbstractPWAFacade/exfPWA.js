@@ -35,7 +35,8 @@ self.addEventListener('sync', function(event) {
 			'actionQueue': '&id, object, action',
 			'deviceId': 'id',
 			'networkStat': 'time, speed, mime_type, size',
-			'connection': 'time, status'
+			'connection': 'time, status',
+			'autoOfflineToggle': '&id, status'
 		});
 		dexie.open().catch(function (e) {
 			_error = e;
@@ -54,6 +55,7 @@ self.addEventListener('sync', function(event) {
 		var _deviceIdTable = _db.table('deviceId');
 		var _networkStatTable = _db.table('networkStat');
 		var _connectionTable = _db.table('connection');
+		var _autoOfflineToggle = _db.table('autoOfflineToggle');
 	}
 
 	(function () {
@@ -771,6 +773,85 @@ self.addEventListener('sync', function(event) {
 		data: {
 
 			/**
+		 * Retrieves the auto offline toggle status from the IndexedDB.
+		 * @return {Promise<boolean>} A promise that resolves to the auto offline toggle status.
+		 */
+			getAutoOfflineToggleStatus: function () {
+				return checkIndexedDB()
+					.then((exists) => {
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						return _autoOfflineToggle
+							.get('autoOfflineStatus')
+							.then(function (record) {
+								return Promise.resolve(record ? record.status : false);
+							})
+							.catch(function (error) {
+								console.error("Error retrieving auto offline toggle status:", error);
+								return Promise.reject(error);
+							});
+					})
+					.catch((error) => {
+						console.error("Error checking IndexedDB:", error);
+						return Promise.reject(error);
+					});
+			},
+
+			/**
+			 * saveAutoOfflineToggleStatus - Saves or updates the auto offline toggle status in IndexedDB.
+			 * If the table is empty, it initializes with a default value of true.
+			 *
+			 * @param {boolean} [status] - The auto offline toggle status to be saved. If not provided, it will check for existing data.
+			 *
+			 * @return {Promise} - Returns a Promise that resolves if the status is saved successfully.
+			 */
+			saveAutoOfflineToggleStatus: function (status) {
+				return checkIndexedDB()
+					.then((exists) => {
+						if (!exists) {
+							return Promise.reject("IndexedDB does not exist");
+						}
+
+						if (_error) {
+							return Promise.reject("IndexedDB error");
+						}
+
+						// First, check if there's existing data
+						return _autoOfflineToggle.get('autoOfflineStatus')
+							.then(existingData => {
+								if (!existingData) {
+									// If no existing data, use the provided status or default to true
+									status = typeof status !== 'undefined' ? status : true;
+								} else if (typeof status === 'undefined') {
+									// If status is not provided but we have existing data, keep the existing status
+									status = existingData.status;
+								}
+
+								var autoOfflineData = {
+									id: 'autoOfflineStatus',
+									status: status
+								};
+
+								return _autoOfflineToggle.put(autoOfflineData);
+							});
+					})
+					.then(() => {
+						console.log(`Auto offline toggle status saved: ${status}`);
+						return Promise.resolve(status);
+					})
+					.catch((error) => {
+						console.error("Error saving auto offline toggle status:", error);
+						return Promise.reject(error);
+					});
+			},
+ 
+			/**
 			* saveConnectionStatus - Saves the current connection status in IndexedDB if it's different from the last saved status.
 			* 
 			* If the new status is the same as the previously saved status, no new record is created.
@@ -826,10 +907,10 @@ self.addEventListener('sync', function(event) {
 					});
 			},
 
-						/**
-			 * Retrieves all network stats from the IndexedDB.
-			 * @return {promise}
-			 */
+			/**
+ * Retrieves all network stats from the IndexedDB.
+ * @return {promise}
+ */
 			getAllNetworkStats: function () {
 				return checkIndexedDB()
 					.then((exists) => {
