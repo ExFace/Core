@@ -49,6 +49,24 @@ use exface\Core\DataTypes\NumberDataType;
  * 
  * ```
  * 
+ * ### Color scale based on a calculation
+ * 
+ * You can calculate the value used in a `color_scale` by using a formula in the `color` attribute:
+ * 
+ * ```
+ * {
+ *  "widget_type": "ColorIndicator",
+ *  "calculation": "=Concatenate(TASKS_DONE, ' of ', TASKS_TOTAL)",
+ *  "color": "=Percentage(TASKS_DONE, TASKS_TOTAL, 0)",
+ *  "color_scale": {
+ *      "0": "red",
+ *      "50": "yellow",
+ *      "100": "green"
+ *  }
+ * }
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -148,7 +166,14 @@ class ColorIndicator extends Display implements iHaveColor
     }
     
     /**
-     * Use this fixed color
+     * A fixed color value or a formula to calculate the color/scale value
+     * 
+     * Examples:
+     * 
+     * - `red` - the indicator will always be red
+     * - `=Calc(ERROR_FLAG ? 'red', 'green')` - the color will be red if the attribute `ERROR_FLAG` is set and green otherwise
+     * - `=Calc(...)` + `color_scale` - if used in combination with the `color_scale` property, the result of the calculation
+     * will be concidered to be a value from the color scale.
      * 
      * @uxon-property color
      * @uxon-type color
