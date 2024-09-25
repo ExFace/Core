@@ -799,7 +799,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
-        $uidValuesProvided = $uidQpart->hasValues();
+        $uidValuesProvided = $uidQpart !== null && $uidQpart->hasValues();
         if ($uidQpart && $uidValuesProvided === false && $uidCustomSqlInsert) {
             $uidCustomSqlInsert = StringDataType::replacePlaceholders($uidCustomSqlInsert, [
                 '~alias' => $mainObj->getAlias(),

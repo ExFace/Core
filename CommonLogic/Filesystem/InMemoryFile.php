@@ -374,4 +374,22 @@ class InMemoryFile implements FileInterface, FileInfoInterface
     {
         return true;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMd5()
+     */
+    public function getMd5() : ?string
+    {
+        if ($this->isDir()) {
+            return null;
+        }
+        $binary = $this->read();
+        if ($binary === null) {
+            return null;
+        }
+        $hash = md5($binary);
+        return $hash === false ? null : $hash;
+    }
 }
