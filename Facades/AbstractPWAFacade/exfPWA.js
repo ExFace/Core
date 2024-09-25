@@ -33,11 +33,26 @@ self.addEventListener('sync', function(event) {
 			'offlineData': 'uid, object_alias',
 			'offlineModel': 'url',
 			'actionQueue': '&id, object, action',
+			'deviceId': 'id'
+		});
+		dexie.version(2).stores({
+			'offlineData': 'uid, object_alias',
+			'offlineModel': 'url',
+			'actionQueue': '&id, object, action',
+			'deviceId': 'id',
+			'networkStat': 'time, speed, mime_type, size',
+			'connection': 'time, status'
+		});
+		dexie.version(3).stores({
+			'offlineData': 'uid, object_alias',
+			'offlineModel': 'url',
+			'actionQueue': '&id, object, action',
 			'deviceId': 'id',
 			'networkStat': 'time, speed, mime_type, size',
 			'connection': 'time, status',
-			'autoOfflineToggle': '&id, status'
+			'autoOfflineToggle': '&id, status' 
 		});
+
 		dexie.open().catch(function (e) {
 			_error = e;
 			console.error("PWA error: " + e.stack);
