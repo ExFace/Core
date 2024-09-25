@@ -11,11 +11,15 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 
 /**
- * A ColorIndicator will change it's color depending the value of it's attribute.
+ * A ColorIndicator will change it's color depending the value of it's attributes.
  * 
- * Colors can be defined as a simple `color_scale` (like in many other display widgets). The `color_scale`
+ * Colors can be defined as via
+ * 
+ * - `color_attribute_alias` if the color value is stored in the data source
+ * - a formula to calculate the color in the `color` property 
+ * - a `color_scale` (like in many other display widgets). The `color_scale`
  * is applied either to the value of the widget (e.g. defined by `attribute_alias`) or values of `color_attribute_alias`
- * if it is explicitly defined.
+ * or `color` if any of those are defined.
  * 
  * ## Examples
  * 
