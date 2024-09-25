@@ -320,7 +320,8 @@ class ValidatingBehavior extends AbstractBehavior
                 foreach ($this->generateDataChecks($renderedUxon) as $checkNumber => $check) {
                     if ($check->isApplicable($changedDataSheet)) {
                         try {
-                            $check->check($changedDataSheet);
+                            $checkSheet = $changedDataSheet->copy();
+                            $check->check($checkSheet->removeRows()->addRow($row));
                         } catch (DataCheckFailedError $exception) {
                             $violations[$check->getErrorText()][self::VAR_LINES][] = $index + 1;
                             $violations[$check->getErrorText()][self::VAR_BAD_DATA] = $exception->getBadData();
