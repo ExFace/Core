@@ -309,13 +309,14 @@ class ValidatingBehavior extends AbstractBehavior
                 if(!$error) {
                     $error = $exception;
                 } else {
-                    $error->merge($exception);
+                    $error->merge($exception, false);
                 }
             }
         }
 
         if($error) {
             $error->setUseExceptionMessageAsTitle(true);
+            $error->regenerateMessage();
             throw $error;
         }
 
