@@ -56,6 +56,8 @@ class NavTiles extends WidgetGrid
     private $emptyText = null;
     
     private $hiddenIfEmpty = false;
+
+    private $showNavbar = null;
     
     /**
      * Specifies the alias of the root page of the menu (i.e. tiles for it's children will be generated).
@@ -314,5 +316,22 @@ class NavTiles extends WidgetGrid
     {
         $this->hiddenIfEmpty = $value;
         return $this;
+    }
+
+    /**
+     * Set to TRUE to display a navigation bar on top of the tile groups and FALSE to hide it
+     * 
+     * 
+     * @return \exface\Core\Widgets\NavTiles
+     */
+    public function setShowNavbar() : NavTiles
+    {
+        $this->showNavbar = true;
+        return $this;
+    }
+
+    public function hasNavBar(bool $default = true) : bool
+    {
+        return $this->showNavbar ?? $default;
     }
 }

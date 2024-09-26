@@ -374,4 +374,18 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
     {
         return $this->splFileInfo;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMd5()
+     */
+    public function getMd5() : ?string
+    {
+        if ($this->isDir() || ! $this->exists()) {
+            return null;
+        }
+        $hash = md5_file($this->getPathAbsolute());
+        return $hash === false ? null : $hash;
+    }
 }
