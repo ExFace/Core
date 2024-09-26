@@ -287,7 +287,7 @@ class ValidatingBehavior extends AbstractBehavior
             $changedDataSheet = $event->getDataSheet();
         }
 
-        if(!$rulesUxons = $this->getRelevantUxons($onUpdate)) {
+        if(!$uxon = $this->getRelevantUxons($onUpdate)) {
             return;
         }
 
@@ -301,10 +301,10 @@ class ValidatingBehavior extends AbstractBehavior
 
         // Perform data checks for each validation rule.
         $error = null;
-        foreach ($rulesUxons as $propertyName => $validationRules) {
-            $validationRules = $this->checkPlaceholders($validationRules, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
+        foreach ($uxon as $propertyName => $dataCheckUxon) {
+            $dataCheckUxon = $this->checkPlaceholders($dataCheckUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
             try {
-                $this->performDataValidation($validationRules, $previousDataSheet, $changedDataSheet, $onUpdate);
+                $this->performDataChecks($dataCheckUxon, $previousDataSheet, $changedDataSheet, $onUpdate);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 if(!$error) {
                     $error = $exception;
@@ -346,22 +346,22 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Performs data validation by applying the specified rules to the provided data sheets.
+     * Performs data validation by applying the specified checks to the provided data sheets.
      *
-     * @param UxonObject $rulesUxon
+     * @param UxonObject $dataChecksUxon
      * @param DataSheetInterface|null $previousDataSheet
      * @param DataSheetInterface $changedDataSheet
      * @param bool $onUpdate
      * @return void
      */
-    protected function performDataValidation(UxonObject $rulesUxon, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate) : void
+    protected function performDataChecks(UxonObject $dataChecksUxon, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate) : void
     {
         $error = null;
 
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
         foreach ($changedDataSheet->getRows() as $index => $row) {
             // Render placeholders.
-            $renderedUxon = $this->renderUxon($rulesUxon, $previousDataSheet, $changedDataSheet, $onUpdate, $index);
+            $renderedUxon = $this->renderUxon($dataChecksUxon, $previousDataSheet, $changedDataSheet, $onUpdate, $index);
             // Reduce datasheet to the relevant row.
             $checkSheet = $changedDataSheet->copy();
             $checkSheet->removeRows()->addRow($row);
