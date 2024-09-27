@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -29,7 +30,14 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     private $filter_tab = null;
     
     private $sorter_tab = null;
-    
+
+    protected function init() : void
+    {
+        parent::init();
+        $this->getWorkbench()->eventManager()->dispatch(new OnDataConfiguratorInitialized($this));
+    }
+
+
     /**
      * Returns an array with all filter widgets.
      *

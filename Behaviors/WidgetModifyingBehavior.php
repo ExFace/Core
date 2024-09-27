@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
+use exface\Core\Events\Widget\OnDataConfiguratorInitialized;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\Widget\OnUiPageInitializedEvent;
@@ -13,6 +14,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Widgets\DataConfigurator;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -54,6 +56,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
     protected function registerEventListeners() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener(OnUiPageInitializedEvent::getEventName(), [$this, 'handleUiPageInitialized'], $this->getPriority());
+        $this->getWorkbench()->eventManager()->addListener(OnDataConfiguratorInitialized::getEventName(), [$this, 'handleDataConfiguratorInitialized'], $this->getPriority());
         return $this;
     }
     
@@ -111,22 +114,26 @@ class WidgetModifyingBehavior extends AbstractBehavior
             $page->is($this->pageSelectorString);
     }
 
-    protected function getRelevantWidgets(UiPageInterface $page) : array
+    public function handleDataConfiguratorInitialized(OnDataConfiguratorInitialized $event) : void
     {
-        if(!$root = $page->getWidgetRoot()){
-            return [];
+        if ($this->isDisabled()) {
+            return;
         }
 
-        $widgets = [];
-        $alias = $this->getObject()->getAliasWithNamespace();
-        $allChildren = $root->getChildrenRecursive();
-        /*foreach ($allChildren as $widget) {
-            if($widget->getMetaObject()->getAliasWithNamespace() === $alias){
-                $widgets[] = $widget;
-            }
-        }*/
+        if(!$this->isRelevantPage($event->getWidget()->getPage())) {
+            return;
+        }
 
-        return array_unique($widgets, SORT_REGULAR);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+
+        $widget = $event->getWidget();
+        if($widget instanceof DataConfigurator) {
+            $this->addColumnsToWidget($widget->getWidgetConfigured(), $this->columnsToAddUxon);
+        } else {
+            $this->addColumnsToWidget($widget, $this->columnsToAddUxon);
+        }
+
+        $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
 
     public function handleUiPageInitialized(OnUiPageInitializedEvent $event) : void
@@ -142,13 +149,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        $relevantWidgets = $this->getRelevantWidgets($page);
         $widget = $this->getTargetWidget($this->widgetId, $page);
-
         $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
-        /*foreach ($relevantWidgets as $relevantWidget) {
-            $this->addColumnsToWidget($relevantWidget, $this->columnsToAddUxon);
-        }*/
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
     }
