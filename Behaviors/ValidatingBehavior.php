@@ -4,7 +4,9 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -266,6 +268,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param OnBeforeDeleteDataEvent $event
      * @throws RuntimeException
      * @throws DataSheetDeleteForbiddenError
+     * @throws \Exception
      */
     public function handleOnChange(DataSheetEventInterface $event) : void
     {
@@ -273,6 +276,7 @@ class ValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        // Get datasheets.
         if ($event instanceof OnBeforeUpdateDataEvent) {
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
@@ -283,7 +287,7 @@ class ValidatingBehavior extends AbstractBehavior
             $changedDataSheet = $event->getDataSheet();
         }
 
-        if(! $uxons = $this->tryGetRelevantUxons($onUpdate)) {
+        if(!$uxon = $this->getRelevantUxons($onUpdate)) {
             return;
         }
 
@@ -295,70 +299,25 @@ class ValidatingBehavior extends AbstractBehavior
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        $violations = [];
-        $checkSheet = $changedDataSheet->copy();
-        foreach ($uxons as $propertyName => $invalidIfUxon) {
-            $validatedUxon = $this->validatePlaceholders($invalidIfUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
-            $validatedJson = $validatedUxon->toJson();
-
-            foreach ($changedDataSheet->getRows() as $index => $row) {
-                $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-                $resolver = new DataRowPlaceholders($changedDataSheet, $index, self::PLACEHOLDER_NEW);
-                // TODO format dates and number? Good for messages, but bad vor comparison
-                // $resolver->setFormatValues(false);
-                $resolver->setSanitizeAsUxon(true);
-                $placeHolderRenderer->addPlaceholder($resolver);
-                if($onUpdate) {
-                    $resolver = new DataRowPlaceholders($previousDataSheet, $index, self::PLACEHOLDER_OLD);
-                    // TODO format dates and number? Good for messages, but bad vor comparison
-                    // $resolver->setFormatValues(false);
-                    $resolver->setSanitizeAsUxon(true);
-                    $placeHolderRenderer->addPlaceholder($resolver);
-                }
-
-                // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
-                $renderedUxon = UxonObject::fromJson($placeHolderRenderer->render($validatedJson), CASE_LOWER);
-                $checkSheet = $checkSheet->removeRows()->addRow($row);
-                foreach ($this->generateDataChecks($renderedUxon) as $checkNumber => $check) {
-                    if ($check->isApplicable($changedDataSheet)) {
-                        try {
-                            $check->check($checkSheet);
-                        } catch (DataCheckFailedError $exception) {
-                            $violations[$check->getErrorText()][self::VAR_LINES][] = $index + 1;
-                            $violations[$check->getErrorText()][self::VAR_BAD_DATA] = $exception->getBadData();
-                        }
-                    }
+        // Perform data checks for each validation rule.
+        $error = null;
+        foreach ($uxon as $propertyName => $dataCheckUxon) {
+            $dataCheckUxon = $this->checkPlaceholders($dataCheckUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
+            try {
+                $this->performDataChecks($dataCheckUxon, $previousDataSheet, $changedDataSheet, $onUpdate);
+            } catch (DataCheckFailedErrorMultiple $exception) {
+                if(!$error) {
+                    $error = $exception;
+                } else {
+                    $error->merge($exception, false);
                 }
             }
         }
 
-        if(count($violations) > 0) {
-            $badData = null;
-            $message = "";
-            foreach ($violations as $error => $violation) {
-                if($badData !== null) {
-                    if ($badData->hasUidColumn()) {
-                        $badData->merge($violation[self::VAR_BAD_DATA]);
-                    } else {
-                        $badData->addRows($violation[self::VAR_BAD_DATA]->getRows());
-                    }
-                } else {
-                    $badData = $violation[self::VAR_BAD_DATA];
-                }
-
-                $message .= $this->getWorkbench()->getCoreApp()->getTranslator()->translate('BEHAVIOR.VALIDATINGBEHAVIOR.LINE') . " (";
-                $lastKey = array_key_last($violation[self::VAR_LINES]);
-                foreach ($violation[self::VAR_LINES] as $key => $line) {
-                    if($key != $lastKey) {
-                        $message .= $line.', ';
-                    } else {
-                        $message .= $line.'): ';
-                    }
-                }
-
-                $message .= $error.PHP_EOL;
-            }
-            throw (new DataCheckFailedError($changedDataSheet, $message, null, null, null, $badData))->setUseExceptionMessageAsTitle(true);
+        if($error) {
+            $error->setUseExceptionMessageAsTitle(true);
+            $error->regenerateMessage();
+            throw $error;
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
@@ -368,7 +327,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param bool $onUpdate
      * @return array|bool
      */
-    protected function tryGetRelevantUxons(bool $onUpdate) : array | bool
+    protected function getRelevantUxons(bool $onUpdate) : array | bool
     {
         $result = array();
 
@@ -385,6 +344,76 @@ class ValidatingBehavior extends AbstractBehavior
         }
 
         return array_count_values($result) > 0 ? $result : false;
+    }
+
+    /**
+     * Performs data validation by applying the specified checks to the provided data sheets.
+     *
+     * @param UxonObject $dataChecksUxon
+     * @param DataSheetInterface|null $previousDataSheet
+     * @param DataSheetInterface $changedDataSheet
+     * @param bool $onUpdate
+     * @return void
+     */
+    protected function performDataChecks(UxonObject $dataChecksUxon, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate) : void
+    {
+        $error = null;
+
+        // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
+        foreach ($changedDataSheet->getRows() as $index => $row) {
+            // Render placeholders.
+            $renderedUxon = $this->renderUxon($dataChecksUxon, $previousDataSheet, $changedDataSheet, $onUpdate, $index);
+            // Reduce datasheet to the relevant row.
+            $checkSheet = $changedDataSheet->copy();
+            $checkSheet->removeRows()->addRow($row);
+            // Perform data checks.
+            foreach ($this->generateDataChecks($renderedUxon) as $check) {
+                if (!$check->isApplicable($changedDataSheet)) {
+                    continue;
+                }
+
+                try {
+                    $check->check($checkSheet);
+                } catch (DataCheckFailedError $exception) {
+                    $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
+                    $error->appendError($exception, $index + 1, false);
+                }
+            }
+        }
+
+        if($error) {
+            throw $error;
+        }
+    }
+
+    /**
+     * Renders all placeholders present in the provided UXON.
+     *
+     * @param UxonObject $uxonToRender
+     * @param DataSheetInterface|null $previousDataSheet
+     * @param DataSheetInterface $changedDataSheet
+     * @param bool $onUpdate
+     * @param int $rowIndex
+     * @return UxonObject
+     */
+    private function renderUxon(UxonObject $uxonToRender, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate, int $rowIndex) : UxonObject
+    {
+        $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+
+        if($onUpdate) {
+            $resolver = new DataRowPlaceholders($previousDataSheet, $rowIndex, self::PLACEHOLDER_OLD);
+            // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
+            $resolver->setSanitizeAsUxon(true);
+            $placeHolderRenderer->addPlaceholder($resolver);
+        }
+
+        $resolver = new DataRowPlaceholders($changedDataSheet, $rowIndex, self::PLACEHOLDER_NEW);
+        // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
+        $resolver->setSanitizeAsUxon(true);
+        $placeHolderRenderer->addPlaceholder($resolver);
+
+        // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
+        return UxonObject::fromJson($placeHolderRenderer->render($uxonToRender->toJson()), CASE_LOWER);
     }
 
     /**
@@ -410,7 +439,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param string $propertyName
      * @return UxonObject|null
      */
-    private function validatePlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
+    private function checkPlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
     {
         $uxonAsArray = $uxon->toArray(CASE_LOWER);
 
@@ -418,9 +447,9 @@ class ValidatingBehavior extends AbstractBehavior
             return new UxonObject();
         }
 
-        foreach ($uxonAsArray as $key => $value) {
+        foreach ($uxonAsArray as $value) {
             if(is_array($value)) {
-                $this->validatePlaceholders(new UxonObject($value), $prohibited, $propertyName);
+                $this->checkPlaceholders(new UxonObject($value), $prohibited, $propertyName);
             } else {
                  if(is_string($value)) {
                     foreach ($prohibited as $filterPhrase) {

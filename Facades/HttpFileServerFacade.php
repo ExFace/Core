@@ -144,8 +144,10 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         switch (true) {
             case $mode === self::URL_PATH_TEMP:
-                $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $pathParts[0]);
+                $filename = urldecode($pathParts[0]);
+                $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
                 $noCache = true;
+                // Delete the temp file once it was downloaded
                 $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $event) use ($fileInfo) {
                     @unlink($fileInfo->getPathAbsolute());
                 });
@@ -267,7 +269,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response->withHeader('Content-Disposition', 'attachment; filename=' . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', "attachment; filename=" . $fileInfo->getFilename());
         return $response;
     }
     
@@ -279,7 +281,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function createResponseForEmbedding(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
         return $response;
     }
     
@@ -297,7 +299,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $facadeHeaders,      
             [
                 'Expires' => 0,
-                'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
                 'Pragma' => 'public'
             ]
         );
@@ -392,7 +394,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
 
         if (StringDataType::startsWith($relativePath, 'cache/')) {
             $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
-            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . StringDataType::substringAfter($relativePath, 'cache/');
+            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . urlencode(StringDataType::substringAfter($relativePath, 'cache/'));
         } else {
             $urlPath = $relativePath;
         }

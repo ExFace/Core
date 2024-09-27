@@ -152,7 +152,7 @@
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_NEW": "New!",
 	"BEHAVIOR.TRANSLATABLE.KEY_STATUS_INHERITED": "Inherit",
 	
-	"BEHAVIOR.VALIDATINGBEHAVIOR.LINE": "Line",
+	"BEHAVIOR.VALIDATINGBEHAVIOR.LINE": "Lines",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
     
@@ -498,6 +498,7 @@
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED": "File \"%path%\" is corrupted! Please check the original file and try again.",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE": "Unknown mime-type \"%mimetypes%\" in file \"%path%\".",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_HEADER": "Upload failed, because of the following errors:",
+	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE": "Upload failed, because these %number% files had some issues: %files%",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_DESTINATION": "Backup of broken file stored at \"%path%\".",
 	"WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_FOOTER": "No data has been saved to the system!",
 

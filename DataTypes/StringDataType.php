@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\RuntimeException;
+use Transliterator;
 
 /**
  * Basic data type for textual values.
@@ -629,5 +630,39 @@ class StringDataType extends AbstractDataType
         }
         
         return $text . $puct;
+    }
+
+    /**
+     * Transliterate a given string using ICU standard rules
+     * 
+     * See https://unicode-org.github.io/icu/userguide/transforms/general/ for available rules
+     * 
+     * Examples:
+     * 
+     * - `transliterate('Änderung')` -> Anderung
+     * - `transliterate('Änderung', ':: Any-Latin; :: Latin-ASCII; :: Lower()')` -> anderung
+     * - `transliterate('Aufgaben im Überblick', ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;)` -> aufgaben im uberblick
+     * 
+     * @link https://unicode-org.github.io/icu/userguide/transforms/general/
+     * 
+     * @param string $string
+     * @param string $translitRules
+     * @param int $direction
+     * @throws \exface\Core\Exceptions\RuntimeException
+     * @return string
+     */
+    public static function transliterate(string $string, string $translitRules = ':: Any-Latin; :: Latin-ASCII;', int $direction = Transliterator::FORWARD) : string
+    {
+        if ($string === '') {
+            return $string;
+        }
+        $transliterator = \Transliterator::createFromRules($translitRules);
+        $result = $transliterator->transliterate($string);
+        // Alternative with slightly different syntax. Need testing to find out, which is better
+        // $result = transliterator_transliterate($translitRules, 'Any-Latin; Latin-ASCII;');
+        if ($result === false) {
+            throw new RuntimeException('Cannot transliterate "' . static::truncate($string, 100, false, true, true, true) . '": ' . $transliterator->getErrorMessage());
+        }
+        return $result;
     }
 }

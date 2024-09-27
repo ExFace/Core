@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
-use exface\Core\DataConnectors\Traits\ICanValidateFileIntegrityTrait;
+use exface\Core\DataConnectors\Traits\IValidateFileIntegrityTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -19,11 +19,24 @@ use Symfony\Component\Finder\Finder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\ArrayDataType;
 
+/**
+ * Connector for local file system
+ * 
+ * ## Detecting corrupted files
+ * 
+ * Files sometimes may break in the process of writing them - e.g. through concurrent writes,
+ * file system glitches, etc. This connector allows to add some extra validations to detect
+ * this via 
+ * 
+ * - `validations_before_writing` - e.g. try to open the image in memory
+ * - `validations_before_writing` - e.g. double-check MD5 hash or try to open the saved image
+ * 
+ */
 class LocalFileConnector extends AbstractDataConnector
 {
     use IDoNotSupportTransactionsTrait;
 
-    use ICanValidateFileIntegrityTrait;
+    use IValidateFileIntegrityTrait;
 
     private $base_path = null;
     
@@ -216,9 +229,7 @@ class LocalFileConnector extends AbstractDataConnector
         $fm = $this->getWorkbench()->filemanager();
         $filesToSave = $query->getFilesToSave(true);
 
-        $errors = $this->validateFileIntegrityArray($filesToSave);
-
-        $this->tryBeginWriting($errors);
+        $this->validateBeforeWriting($filesToSave);
         // Save files
         foreach ($filesToSave as $path => $content) {
             if ($path === null) {
@@ -227,7 +238,7 @@ class LocalFileConnector extends AbstractDataConnector
             $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
-        $this->tryFinishWriting($errors);
+        $this->validateAfterWriting($resultFiles);
         
         // Delete files
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
