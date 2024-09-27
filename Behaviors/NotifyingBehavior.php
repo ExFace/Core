@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -510,12 +511,16 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
+        $thisObj = $this->getObject();
+        if (! $event->getDataSheet()->getMetaObject()->isExactly($thisObj)) {
             return;
         }
         
         $ignore = true;
         foreach ($this->getNotifyIfAttributesChange() as $attrAlias) {
+            if (! $thisObj->hasAttribute($attrAlias)) {
+                throw new BehaviorConfigurationError($this, 'Cannot use "' . $attrAlias . '" in `notify_if_attributes_change` of NotifyingBehavior: only aliases of attributes of the behavior object or related objects allowed!');
+            }
             if ($event->willChangeColumn(DataColumn::sanitizeColumnName($attrAlias))) {
                 $ignore = false;
                 break;
