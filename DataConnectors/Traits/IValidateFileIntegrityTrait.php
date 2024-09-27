@@ -41,8 +41,6 @@ trait IValidateFileIntegrityTrait
 {
     protected bool $backupCorruptedFiles = false;
 
-    protected bool $validationSettingDefault = true;
-
     private ?TranslationInterface $translator = null;
 
     private array $configPreWrite = [];
@@ -79,34 +77,6 @@ trait IValidateFileIntegrityTrait
         }
 
         return $this->translator;
-    }
-
-    /**
-     * Set the value that validation settings should default to, if they are not set.
-     *
-     * Default value is TRUE.
-     * 
-     * @uxon-property validation_setting_default
-     * @uxon-type boolean
-     * @uxon-default true
-     * 
-     * @param bool $value
-     * @return $this
-     */
-    public function setValidationSettingDefault(bool $value) : static
-    {
-        $this->validationSettingDefault = $value;
-        return $this;
-    }
-
-    /**
-     * Get the value that validation settings should default to, if they are not set.
-     *
-     * @return bool
-     */
-    public function getValidationSettingDefault() : bool
-    {
-        return $this->validationSettingDefault;
     }
 
     /**
@@ -279,9 +249,9 @@ trait IValidateFileIntegrityTrait
         foreach ($filesToValidate as $path => $data) {
             $fileInfo = $data instanceof FileInfoInterface ? $data : new InMemoryFile($data, $path, $this->guessMimeType($path, $data));
             try {
-                $this->validateFile($fileInfo, $checkSumsMd5[$path], $config);
+                $this->validateFile($fileInfo, $checkSumsMd5[$fileInfo->getPath()], $config);
             } catch (FileCorruptedError $e) {
-                $errors[$path] = $e;
+                $errors[$fileInfo->getPath()] = $e;
             }
         }
 
@@ -310,7 +280,7 @@ trait IValidateFileIntegrityTrait
 
         // Validate checksums.
         if ($checkSumMd5 !== null && $this->isValidationRequired($config, 'validate_checksums')) {
-            $this->internalValidateChecksumMd5($fileInfo, $checkSumMd5, $config);
+            $this->validateChecksumMd5($fileInfo, $checkSumMd5);
         }
 
         $mimeType = $fileInfo->getMimetype();
@@ -378,10 +348,10 @@ trait IValidateFileIntegrityTrait
         }
 
         $userMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE', ['%number%' => count($errors), '%files%' => $fileList]);
-        $error = new FileCorruptedError($userMessage, null, new FileCorruptedError($debugMessage));
-        $error->setAlias('Upload failed!');
-        $error->setUseExceptionMessageAsTitle(true);
-        return $error;
+        $renderedError = new FileCorruptedError($userMessage, null, null);
+        $renderedError->setAlias('Upload failed!');
+        $renderedError->setUseExceptionMessageAsTitle(true);
+        return new FileCorruptedError($debugMessage, null, $renderedError);
     }
 
     /**
@@ -407,6 +377,7 @@ trait IValidateFileIntegrityTrait
     private function isValidationRequired(array $config, string $validation = null) : bool
     {
         $config = array_merge($this->configDefaults, $config);
+
         // If checking a specific validation, get the corresponding config key.
         // If there is no corresponding config key, do not check (since we do not have a suitable logic!)
         // If no validation is passed, the question is if we need ANY validation at all? In
@@ -452,7 +423,6 @@ trait IValidateFileIntegrityTrait
      *
      * @param FileInfoInterface $fileInfo
      * @param string $checkSumMd5
-     * @param array|null $config
      * @return void
      */
     private function validateChecksumMd5(FileInfoInterface $fileInfo, string $checkSumMd5) : void
