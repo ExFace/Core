@@ -20,10 +20,22 @@ class DataSheetDataType extends AbstractDataType
      *
      * @param mixed $val
      * @throws DataTypeCastingError
-     * @return array
+     * @return DataSheetInterface|UxonObject|null
      */
     public static function cast($val)
     {
+        if (self::isValueEmpty($val)) {
+            return $val;
+        }
+
+        if (is_string($val)) {
+            return UxonObject::fromJson($val);
+        }
+
+        if ($val instanceof UxonObject) {
+            return $val;
+        }
+        
         if ($val instanceof DataSheetInterface) {
             return $val;
         }
