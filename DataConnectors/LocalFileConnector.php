@@ -216,9 +216,7 @@ class LocalFileConnector extends AbstractDataConnector
         $fm = $this->getWorkbench()->filemanager();
         $filesToSave = $query->getFilesToSave(true);
 
-        $errors = $this->validateFileIntegrityArray($filesToSave);
-
-        $this->tryBeginWriting($errors);
+        $this->validateBeforeWriting($filesToSave);
         // Save files
         foreach ($filesToSave as $path => $content) {
             if ($path === null) {
@@ -227,7 +225,7 @@ class LocalFileConnector extends AbstractDataConnector
             $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
-        $this->tryFinishWriting($errors);
+        $this->validateAfterWriting($resultFiles);
         
         // Delete files
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
