@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
-use exface\Core\DataConnectors\Traits\ICanValidateFileIntegrityTrait;
+use exface\Core\DataConnectors\Traits\IValidateFileIntegrityTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -36,7 +36,7 @@ class LocalFileConnector extends AbstractDataConnector
 {
     use IDoNotSupportTransactionsTrait;
 
-    use ICanValidateFileIntegrityTrait;
+    use IValidateFileIntegrityTrait;
 
     private $base_path = null;
     
