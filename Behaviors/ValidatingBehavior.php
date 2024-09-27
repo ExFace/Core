@@ -296,6 +296,7 @@ class ValidatingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
         $violations = [];
+        $checkSheet = $changedDataSheet->copy();
         foreach ($uxons as $propertyName => $invalidIfUxon) {
             $validatedUxon = $this->validatePlaceholders($invalidIfUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
             $validatedJson = $validatedUxon->toJson();
@@ -317,10 +318,11 @@ class ValidatingBehavior extends AbstractBehavior
 
                 // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
                 $renderedUxon = UxonObject::fromJson($placeHolderRenderer->render($validatedJson), CASE_LOWER);
+                $checkSheet = $checkSheet->removeRows()->addRow($row);
                 foreach ($this->generateDataChecks($renderedUxon) as $checkNumber => $check) {
                     if ($check->isApplicable($changedDataSheet)) {
                         try {
-                            $check->check($changedDataSheet);
+                            $check->check($checkSheet);
                         } catch (DataCheckFailedError $exception) {
                             $violations[$check->getErrorText()][self::VAR_LINES][] = $index + 1;
                             $violations[$check->getErrorText()][self::VAR_BAD_DATA] = $exception->getBadData();
