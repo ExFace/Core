@@ -19,6 +19,19 @@ use Symfony\Component\Finder\Finder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\ArrayDataType;
 
+/**
+ * Connector for local file system
+ * 
+ * ## Detecting corrupted files
+ * 
+ * Files sometimes may break in the process of writing them - e.g. through concurrent writes,
+ * file system glitches, etc. This connector allows to add some extra validations to detect
+ * this via 
+ * 
+ * - `validations_before_writing` - e.g. try to open the image in memory
+ * - `validations_before_writing` - e.g. double-check MD5 hash or try to open the saved image
+ * 
+ */
 class LocalFileConnector extends AbstractDataConnector
 {
     use IDoNotSupportTransactionsTrait;

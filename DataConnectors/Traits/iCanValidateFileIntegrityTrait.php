@@ -2,7 +2,9 @@
 
 namespace exface\Core\DataConnectors\Traits;
 
+use exface\Core\CommonLogic\Filesystem\InMemoryFile;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\TranslationInterface;
@@ -48,10 +50,10 @@ trait ICanValidateFileIntegrityTrait
     private array $configPostWrite = [];
 
     // TODO geb 24-09-24: This should be a constant, but traits don't allow constants.
-    private array $allConfigOptions = [
-        'validate_checksums',
-        'parse_images',
-        'parse_pdf'
+    private array $configDefaults = [
+        'validate_checksums' => true,
+        'parse_images' => false
+        // Add more validators here if needed - e.g. parse_pdf
     ];
 
     private array $errors = [];
@@ -83,11 +85,11 @@ trait ICanValidateFileIntegrityTrait
      * Set the value that validation settings should default to, if they are not set.
      *
      * Default value is TRUE.
-     *
-     * @uxon-poperty validation_setting_default
+     * 
+     * @uxon-property validation_setting_default
      * @uxon-type boolean
      * @uxon-default true
-     *
+     * 
      * @param bool $value
      * @return $this
      */
@@ -108,14 +110,22 @@ trait ICanValidateFileIntegrityTrait
     }
 
     /**
-     * Configure the settings that this connector should use when validating BEFORE writing.
+     * What file validations to performe before writing to the file system
      *
-     * All options are TRUE by default.
-     *
-     * @uxon-poperty validations_before_writing
+     * By default, no explicit checks are performed. The system assumes, that
+     * the files are OK in memory.
+     * 
+     * Optionally, the following checks can be performed:
+     * 
+     * - `parse_images` - attempt to parse an image in-memory and cancel the entire
+     * operation if this fails. However, this will validate the files before writing,
+     * so depending on the file system, they might still break afterwards.
+     * 
+     * @uxon-property validations_before_writing
      * @uxon-type object
-     * @uxon-default validations_before_writing: {'parse_images': true, 'parse_pdf': true, 'validate_checksums': false,}
-     *
+     * @uxon-template {"parse_images": false}
+     * @uxon-default {"parse_images": false}
+     * 
      * @param UxonObject $value
      * @return $this
      */
@@ -126,14 +136,21 @@ trait ICanValidateFileIntegrityTrait
     }
 
     /**
-     * Configure the settings that this connector should use when validating BEFORE writing.
+     * What file validations to perform after writing to the file system
      *
-     * All options are TRUE by default.
-     *
-     * @uxon-poperty validations_after_writing
+     * By default, the connector will double-check if the written file still has the
+     * same MD5 checksum. You can disabled it by setting `validate_checksums` to `false`.
+     * 
+     * Additionally, the following checks can be performed:
+     * 
+     * - `parse_images` - attempt to parse an image in-memory and cancel the entire
+     * operation if this fails.
+     * 
+     * @uxon-property validations_after_writing
      * @uxon-type object
-     * @uxon-default validations_after_writing: {'parse_images': false, 'parse_pdf': false, 'validate_checksums': true,}
-     *
+     * @uxon-template {"validate_checksums": true, "parse_images": false}
+     * @uxon-default {"validate_checksums": true, "parse_images": false}
+     * 
      * @param UxonObject $value
      * @return $this
      */
@@ -153,11 +170,11 @@ trait ICanValidateFileIntegrityTrait
      * if needed or to use it to track down points of failure.
      *
      * Default value is FALSE.
-     *
-     * @uxon-poperty backup_corrupted_files
+     * 
+     * @uxon-property backup_corrupted_files
      * @uxon-type boolean
      * @uxon-default false
-     *
+     * 
      * @param $value
      * @return $this
      */
@@ -217,7 +234,7 @@ trait ICanValidateFileIntegrityTrait
         }
 
         // Calculate and cache new checksums for validation after writing.
-        if($this->isValidationRequired($this->configPostWrite, ['validate_checksums'])) {
+        if($this->isValidationRequired($this->configPostWrite, 'validate_checksums')) {
             $this->checkSumsMd5 = $this->calculateCheckSumsMd5($filesToValidate);
         }
 
@@ -248,23 +265,21 @@ trait ICanValidateFileIntegrityTrait
     /**
      * Validates all files in the given array and returns an array with all errors encountered.
      *
-     * @param array $filesToValidate
+     * @param string[] $filesToValidate
      * Array items should have the following structure: `[string $path => mixed $data]`. The data portion may either be
      * a string of binary data or an instance of FileInfoInterface.
-     * @param array|null $checkSumsMd5
-     * Optional array of MD5 hashes for each file. During this step, checksum validation is only possible if you provide
-     * MD5 hashes for each file you wish to validate this way. Array items should have the following structure:
-     * `[string $path => string $md5]`
-     * @param array|null $config
+     * @param string[]|null $checkSumsMd5
+     * Check MD5 hashes of each file if you have them: `[$path => $md5]`. 
+     * @param bool[]|null $config
      * @return array
      */
     protected function validateArray(array $filesToValidate, ?array $checkSumsMd5, array $config = null) : array
     {
         $errors = [];
         foreach ($filesToValidate as $path => $data) {
-            $path = $data instanceof FileInfoInterface ? $data->getPath() : $path;
+            $fileInfo = $data instanceof FileInfoInterface ? $data : new InMemoryFile($data, $path, $this->guessMimeType($path, $data));
             try {
-                $this->validateFile($path, $data, $checkSumsMd5[$path], $config);
+                $this->validateFile($fileInfo, $checkSumsMd5[$path], $config);
             } catch (FileCorruptedError $e) {
                 $errors[$path] = $e;
             }
@@ -279,34 +294,31 @@ trait ICanValidateFileIntegrityTrait
      * NOTE: If no validation for a given mime-type exists, the validation
      * will be considered to be successful.
      *
-     * @param string $path
-     * @param FileInfoInterface|string $data
+     * @param FileInfoInterface $fileInfo
      * @param string|null $checkSumMd5
      * @param array|null $config
      * @return void
      */
-    protected function validateFile(string $path, FileInfoInterface|string $data, ?string $checkSumMd5, array $config = null) : void
+    protected function validateFile(FileInfoInterface $fileInfo, ?string $checkSumMd5, array $config = null) : void
     {
-        if(!$this->isValidationRequired($config)) {
+        $config = $config ?? [];
+        if(! $this->isValidationRequired($config)) {
             return;
         }
 
         // TODO geb 24-09-25: Mime-type identification may fail on files with incomplete headers.
-        if($data instanceof FileInfoInterface) {
-            $mimeType = $data->getMimetype();
-            $binaryData = $data->openFile("r")->read();
-        } else {
-            $mimeType = $this->guessMimeType($path, $data);
-            $binaryData = $data;
-        }
 
         // Validate checksums.
-        $this->internalValidateChecksumMd5($path, $binaryData, $checkSumMd5, $config);
+        if ($checkSumMd5 !== null && $this->isValidationRequired($config, 'validate_checksums')) {
+            $this->internalValidateChecksumMd5($fileInfo, $checkSumMd5, $config);
+        }
 
-        [$superType,] = explode('/', $mimeType);
+        $mimeType = $fileInfo->getMimetype();
+        [$superType,] = explode('/', $mimeType, 2);
+        $superType = mb_strtolower($superType);
         switch ($superType) {
-            case 'image':
-                $this->internalValidateMimeImage($path, $binaryData, $config);
+            case 'image' && $this->isValidationRequired($config, 'parse_images'):
+                $this->validateMimeImage($fileInfo);
                 return;
             case null :
                 $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE', ["%mimetypes%" => $superType, "%path%" => $path]);
@@ -388,62 +400,46 @@ trait ICanValidateFileIntegrityTrait
     /**
      * Check whether validation is required for a specified list of properties. Unknown properties resolve to `getValidationSettingDefault()`.
      *
-     * @param array $config
-     * @param array|null $properties
-     * The list of properties you wish to check. If the array is empty all known properties will be checked.
-     * @param bool $any
-     * If this setting is enabled, the function returns true if ANY of the properties are enabled.
-     * Otherwise, it only returns true if ALL properties are enabled.
+     * @param bool[] $config
+     * @param string|null $validation the config key name
      * @return bool
      */
-    private function isValidationRequired(array $config, array $properties = null, bool $any = true) : bool
+    private function isValidationRequired(array $config, string $validation = null) : bool
     {
-        if(empty($config)) {
-            return $this->validationSettingDefault;
-        }
-
-        if(empty($properties)) {
-            $properties = $this->allConfigOptions;
-        }
-
-        foreach ($properties as $key) {
-            $isRequired = ($config[$key] ?? $this->validationSettingDefault);
-
-            if($any && $isRequired) {
-                return true;
+        $config = array_merge($this->configDefaults, $config);
+        // If checking a specific validation, get the corresponding config key.
+        // If there is no corresponding config key, do not check (since we do not have a suitable logic!)
+        // If no validation is passed, the question is if we need ANY validation at all? In
+        // this case, check if at least one config key hast TRUE as value.
+        if ($validation !== null) {
+            $isRequired = $config[$validation] ?? null;
+            if ($isRequired === null) {
+                throw new DataQueryFailedError($this, 'Invalid file validation check required: "' . $validation . '"!');
             }
-
-            if(!$any && !$isRequired){
-                return false;
-            }
+        } else {
+            $isRequired = in_array(true, $config, true);
         }
-
-        return false;
+        return $isRequired;
     }
 
     /**
      * Internal function to validate image files.
      *
-     * DO NOT CALL DIRECTLY.
-     *
-     * @param string $path
-     * @param string $binaryData
-     * @param array|null $config
+     * @param FileInfoInterface $fileInfo
+     * @throws FileCorruptedError
+     * 
      * @return void
      */
     // TODO geb 24-09-25: Image validation is unreliable at the moment. All known real world cases have been caught, but manually manipulated files were not.
-    private function internalValidateMimeImage(string $path, string $binaryData, ?array $config) : void
+    private function validateMimeImage(FileInfoInterface $fileInfo) : void
     {
-        if(!$this->isValidationRequired($config, ['parse_images'])) {
-            return;
-        }
-
-        if (!$img = imagecreatefromstring($binaryData)) {
+        $img = imagecreatefromstring($fileInfo->openFile()->read());
+        if ($img === false) {
             // Free memory.
             $img = null;
             unset($img);
-
-            throw $this->renderSingleError($path);
+            
+            throw $this->renderSingleError($fileInfo->getPath());
         } else {
             // Free memory.
             $img = null;
@@ -454,26 +450,15 @@ trait ICanValidateFileIntegrityTrait
     /**
      * Internal function to validate md5 checksums.
      *
-     * DO NOT CALL DIRECTLY.
-     *
-     * @param string $path
-     * @param string $binaryData
-     * @param string|null $checkSumMd5
+     * @param FileInfoInterface $fileInfo
+     * @param string $checkSumMd5
      * @param array|null $config
      * @return void
      */
-    private function internalValidateChecksumMd5(string $path, string $binaryData, ?string $checkSumMd5, ?array $config) : void
+    private function validateChecksumMd5(FileInfoInterface $fileInfo, string $checkSumMd5) : void
     {
-        if(!isset($checkSumMd5)) {
-            return;
-        }
-
-        if(!$this->isValidationRequired($config, ['validate_checksums'])) {
-            return;
-        }
-
-        if(md5($binaryData) !== $checkSumMd5) {
-            throw $this->renderSingleError($path);
+        if($fileInfo->getMd5() !== $checkSumMd5) {
+            throw $this->renderSingleError($fileInfo->getPath());
         }
     }
 }
