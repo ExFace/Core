@@ -287,8 +287,10 @@ trait IValidateFileIntegrityTrait
         [$superType,] = explode('/', $mimeType, 2);
         $superType = mb_strtolower($superType);
         switch ($superType) {
-            case 'image' && $this->isValidationRequired($config, 'parse_images'):
-                $this->validateMimeImage($fileInfo);
+            case 'image':
+                if($this->isValidationRequired($config, 'parse_images')) {
+                    $this->validateMimeImage($fileInfo);
+                }
                 return;
             case null :
                 $msg = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_MIMETYPE', ["%mimetypes%" => $superType, "%path%" => $path]);
@@ -349,7 +351,6 @@ trait IValidateFileIntegrityTrait
 
         $userMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE', ['%number%' => count($errors), '%files%' => $fileList]);
         $renderedError = new FileCorruptedError($userMessage, null, null);
-        $renderedError->setAlias('Upload failed!');
         $renderedError->setUseExceptionMessageAsTitle(true);
         return new FileCorruptedError($debugMessage, null, $renderedError);
     }
