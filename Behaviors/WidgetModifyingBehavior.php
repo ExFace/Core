@@ -13,8 +13,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
-use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\Widgets\DataConfigurator;
+use exface\Core\Widgets\DataColumnDeferred;
+use exface\Core\Widgets\DataTableConfigurator;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -88,19 +88,15 @@ class WidgetModifyingBehavior extends AbstractBehavior
         }
     }
 
-    protected function addColumnsToWidget(WidgetInterface $widget, ?UxonObject $columnsUxon) : void
+    protected function addColumnsToConfigurator(DataTableConfigurator $configurator, ?UxonObject $columnsUxon) : void
     {
-        if(!isset($columnsUxon) || !$widget instanceof iHaveColumns) {
-            return;
-        }
-
         foreach($columnsUxon as $columnUxon){
-            $column = $widget->createColumnFromUxon($columnUxon);
+            $column = $configurator->createColumnFromUxon($columnUxon);
             if(!$columnUxon->getProperty('visibility')){
                 $column->setVisibility($this->columnsDefaultVisibility);
             }
 
-            $widget->addColumn($column);
+            $configurator->addColumn($column);
         }
     }
 
@@ -126,11 +122,9 @@ class WidgetModifyingBehavior extends AbstractBehavior
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        $widget = $event->getWidget();
-        if($widget instanceof DataConfigurator) {
-            $this->addColumnsToWidget($widget->getWidgetConfigured(), $this->columnsToAddUxon);
-        } else {
-            $this->addColumnsToWidget($widget, $this->columnsToAddUxon);
+        $configurator = $event->getWidget();
+        if($configurator instanceof DataTableConfigurator) {
+            $this->addColumnsToConfigurator($configurator, $this->columnsToAddUxon);
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
