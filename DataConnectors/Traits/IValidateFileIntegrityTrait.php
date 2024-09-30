@@ -351,7 +351,6 @@ trait IValidateFileIntegrityTrait
 
         $userMessage = $this->getTranslator()->translate('WIDGET.UPLOADER.ERROR_FILE_CORRUPTED_SIMPLE', ['%number%' => count($errors), '%files%' => $fileList]);
         $renderedError = new FileCorruptedError($userMessage, null, null);
-        $renderedError->setAlias('Upload failed!');
         $renderedError->setUseExceptionMessageAsTitle(true);
         return new FileCorruptedError($debugMessage, null, $renderedError);
     }
