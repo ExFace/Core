@@ -127,15 +127,14 @@ class OrderingBehavior extends AbstractBehavior
             $logbook->addLine('Cannot order objects with no Uid attribute.');
             return;
         }
-
         $logbook->addLine('Received ' . $sheet->countRows() . ' rows of ' . $sheet->getMetaObject()->__toString());
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));     
-        
-        // handle created objects differently if missing indexAttribute value
-        $this->setIndexIfNewlyCreatedWithMissingIndex($sheet, $logbook);        
-        
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
+        $this->working = true;
+
+        // Fill missing index values.
+        $this->fillMissingIndices($sheet, $logbook);
+
         // start working with potential update data that trigger this handler again
-        $this->working = true;        
         $updateSheets = $this->orderDataByIndexingAttribute($sheet, $logbook);
         
         if (count($updateSheets) === 0) {
@@ -145,7 +144,6 @@ class OrderingBehavior extends AbstractBehavior
         }
         
         $this->working = false;
-        
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
     }
     
@@ -154,7 +152,7 @@ class OrderingBehavior extends AbstractBehavior
 	 * @param LogBookInterface $logbook
 	 * @return void
 	 */
-	 private function setIndexIfNewlyCreatedWithMissingIndex(
+	 private function fillMissingIndices(
 		DataSheetInterface $sheet,
 		LogBookInterface $logbook) : void
 	 {
@@ -170,14 +168,11 @@ class OrderingBehavior extends AbstractBehavior
             }
 
             $newIndex = null;
-            switch ($insertOntop) {
-                case true:
-                    $newIndex = $this->getStartIndex();
-                    break;
-                case false:
-                    $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
-                    $newIndex = max($indexSheet->getColumnValues($indexAttributeAlias))+1;
-                    break;
+            if($insertOntop) {
+                $newIndex = $this->getStartIndex();
+            } else {
+                $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
+                $newIndex = max($indexSheet->getColumnValues($indexAttributeAlias))+1;
             }
 
             $sheet->setCellValue($indexAttributeAlias, $rowIndex, $newIndex);
@@ -204,32 +199,31 @@ class OrderingBehavior extends AbstractBehavior
     	LogBookInterface $logbook): array
     {
         $updateSheets = [];
-        $rowIndex = 0;
+        $indexAttributeAlias = $this->getIndexAttributeAlias();
         foreach ($sheet->getRows() as $rowIndex => $row) {
-            $indexAttributeAlias = $this->getIndexAttributeAlias();
             $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
-            $eventValue = $row[$indexAttributeAlias];
+            $currentIndex = $row[$indexAttributeAlias];
             switch (true) {
-                case $eventValue === null:
+                case $currentIndex === null:
                     //$initValue = max($indexSheet->getColumns()->getByExpression($indexAttributeAlias)->getValues()) + 1;
                     //$sheet->setCellValue($indexAttributeAlias, $rowIndex, $initValue);
                     break;
-            	case is_numeric($eventValue):
+            	case is_numeric($currentIndex):
             		$updateSheet = $this->findNecessaryChangesInSequence($row, $indexAttributeAlias, $indexSheet, $logbook);
             		
             		// if closeGap changed the current event value we need to update the sheet that will be saved
-            		if ($row[$indexAttributeAlias] != $eventValue){            			
+            		if ($row[$indexAttributeAlias] != $currentIndex){
             		    $sheet->setCellValue($indexAttributeAlias, $rowIndex, $row[$indexAttributeAlias]);
             		}
             		
             		if (count($updateSheet->getRows()) > 0) {            			
-	                    array_push($updateSheets, $updateSheet);
+	                    $updateSheets[] = $updateSheet;
             		}
                     break;
                 default:
                     throw new BehaviorConfigurationError(
                     	$this, 
-                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid valur "' . $eventValue . "' encountered!", 
+                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid value "' . $currentIndex . "' encountered!",
                     	$logbook);
                     break;
             }
@@ -257,7 +251,7 @@ class OrderingBehavior extends AbstractBehavior
     {
     	
         $globalIndexSheets = $this->indexSheets;
-        if (array_key_exists($rowIndex, $globalIndexSheets) && $globalIndexSheets[$rowIndex] === null) {
+        if (array_key_exists($rowIndex, $globalIndexSheets) && $globalIndexSheets[$rowIndex] === null) { // TODO !== null?
             return $globalIndexSheets[$rowIndex];
         }
 
@@ -328,7 +322,7 @@ class OrderingBehavior extends AbstractBehavior
             		$updateNeeded = true;
             		$currentIndex = $lastIndex+2;
             		break;
-                // choose startindex if first entry is null
+                // choose start index if first entry is null
                 case ($currentIndex === null):
                     $updateNeeded = true;
                     $currentIndex = $lastIndex === null ? $lastIndex : $lastIndex + 1;
@@ -343,9 +337,8 @@ class OrderingBehavior extends AbstractBehavior
             }
 
             if ($updateNeeded) {
-                $rowWithUpdatedValue = $currentRow;
-                $rowWithUpdatedValue[$indexAttributeAlias] = $currentIndex;
-                $updateSheet->addRow($rowWithUpdatedValue);
+                $currentRow[$indexAttributeAlias] = $currentIndex;
+                $updateSheet->addRow($currentRow);
             }
 
             $lastIndex = $currentIndex;
@@ -365,6 +358,7 @@ class OrderingBehavior extends AbstractBehavior
      * @param string $indexAttributeAlias
      * @return DataSheetInterface
      */
+    // TODO Do we really need a dataSheet instance to store this information? (Maybe use array of rows instead).
     private function createEmptyCopyWithIndexAttribute(
     	DataSheetInterface $sheet, 
     	string $indexAttributeAlias): DataSheetInterface
