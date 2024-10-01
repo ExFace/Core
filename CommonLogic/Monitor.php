@@ -44,20 +44,20 @@ class Monitor extends Profiler
     /**
      * 
      * @param Workbench $workbench
-     * @param int $startOffsetMs
+     * @param float $startOffsetMs
      */
-    public function __construct(Workbench $workbench, int $startMicrotime = null)
+    public function __construct(Workbench $workbench, float $startTimeMs = null)
     {
-        parent::__construct($workbench, $startMicrotime);
+        parent::__construct($workbench, $startTimeMs);
     }
     
     /**
      * 
      * @param WorkbenchInterface $workbench
      */
-    public static function register(WorkbenchInterface $workbench) 
+    public static function register(WorkbenchInterface $workbench, float $startTimeMs = null) 
     {
-        $self = new self($workbench);        
+        $self = new self($workbench, $startTimeMs);        
         $config = $workbench->getConfig();
         $self->actionsEnabled = $config->getOption('MONITOR.ACTIONS.ENABLED');
         $self->errorsEnabled = $config->getOption('MONITOR.ERRORS.ENABLED');

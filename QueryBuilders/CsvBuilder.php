@@ -14,8 +14,7 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
  * 
  * ## Data source configuration
  * 
- * To access CSV files create a data source with this query builder and a connection with the `FileContentsConnector`
- * or the `DataSourceFileContentsConnector`..
+ * To access CSV files create a data source with this query builder and a connection with the `FileContentsConnector`.
  * 
  * ## Object data addresses
  * 

@@ -101,6 +101,40 @@
             "DESCRIPTION": "",
             "DISABLED_FLAG": 0,
             "PRIORITY": null
+        },
+        {
+            "CREATED_ON": "2024-09-12 10:27:31",
+            "MODIFIED_ON": "2024-09-12 10:30:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11ef93e0dc0ae97e93e0025041000001",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/ValidatingBehavior.php",
+            "CONFIG_UXON": {
+                "invalid_if_on_update": [
+                    {
+                        "error_text": "Non-readable attributes cannot be aggregatable, filterable or sortable",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "READABLEFLAG",
+                                "comparator": "==",
+                                "value": 0
+                            },
+                            {
+                                "expression": "FILTERABLEFLAG",
+                                "comparator": "==",
+                                "value": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            "OBJECT": "0x32350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Validate flags combinations",
+            "DESCRIPTION": "",
+            "DISABLED_FLAG": 0,
+            "PRIORITY": null
         }
     ],
     "totals_rows": [],

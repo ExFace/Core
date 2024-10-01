@@ -19,8 +19,7 @@ use exface\Core\DataTypes\FilePathDataType;
  * 
  * ## Data source configuration
  * 
- * To access file contents create a data source with this query builder and a connection with the `FileContentsConnector`
- * or the `DataSourceFileContentsConnector`..
+ * To access file contents create a data source with this query builder and a connection with the `FileContentsConnector`.
  * 
  * ## Object data addresses
  * 

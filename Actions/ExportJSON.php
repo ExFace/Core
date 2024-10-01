@@ -4,6 +4,11 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Exceptions\FormulaError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -15,6 +20,11 @@ use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\AggregatePlaceholder;
+use exface\Core\Templates\Placeholders\ArrayPlaceholders;
+use exface\Core\Templates\Placeholders\DataAggregationPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
@@ -34,7 +44,39 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * 
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
- * 
+ *
+ *
+ *
+ *   ## Filename Placeholders
+ *
+ *
+ *
+ *   You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
+ *   For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
+ *   the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
+ *
+ *   ### Supported placeholders:
+ *
+ *   - `[#=Formula()#]` Allows the use of formulas.
+ *   - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
+ *  a list of supported aggregators.
+ *
+ *
+ *
+ *   ### Supported aggregators:
+ *
+ *   - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ *   - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
+ *   - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *   non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ *   - `MAX` Gets the highest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
+ *    non-numeric values will be read as numerics or as 0, if they cannot be converted.
+ *   - `COUNT` Counts the total number of rows in the column.
+ *   - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
+ *   - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ *   - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
+ *
+ *
  * @author Andrej Kabachnik
  *
  */
@@ -43,11 +85,11 @@ class ExportJSON extends ReadData implements iExportData
     private $downloadable = true;
     
     private $filename = null;
+
+    private ?string $filePathAbsolute = null;
     
-    private $mimeType = null;
-    
-    private $pathname = null;
-    
+    protected $mimeType = null;
+
     private $writer = null;
     
     private $useAttributeAliasAsHeader = false;
@@ -125,7 +167,7 @@ class ExportJSON extends ReadData implements iExportData
     public function getFilename() : string
     {
         if ($this->filename === null){
-            return 'export_' . date('Y-m-d_his', time());
+            return 'Export_[#~object_name#]_' . date('Y-m-d_his', time());
         }
         return $this->filename;
     }
@@ -199,10 +241,12 @@ class ExportJSON extends ReadData implements iExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        // DataSheet vorbereiten
+        // Prepare DataSheet.
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
-         
+        // Initialize FilePath.
+        $this->initializeFilePathAbsolute($dataSheetMaster);
+
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         
@@ -223,7 +267,7 @@ class ExportJSON extends ReadData implements iExportData
         if ($lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
-        
+
         $rowOffset = 0;
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
@@ -497,22 +541,62 @@ class ExportJSON extends ReadData implements iExportData
         }
         return $this->writer;
     }
-    
+
     /**
-     * Returns the absolute path to the file.
+     * Initializes the absolute filepath for this action. Repeated calls to this function have no effect.
+     *
+     * TODO geb 2024-09-10: Instead of a local getter with unclear timings, a writer or filepath should passed along the logic chain.
+     *
+     * @param DataSheetInterface $dataSheet
+     * @return void
+     * @throws \Throwable
+     */
+    protected function initializeFilePathAbsolute(DataSheetInterface $dataSheet): void
+    {
+        // Repeated calls should have no effect.
+        if($this->filePathAbsolute !== null) {
+            return;
+        }
+
+        $tplRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+        $tplRenderer->addPlaceholder(new DataAggregationPlaceholders($dataSheet, '~data:'));
+        $tplRenderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
+        $tplRenderer->addPlaceholder(new ArrayPlaceholders([
+            '~object_name' => $dataSheet->getMetaObject()->getName(),
+            '~object_alias' => $dataSheet->getMetaObject()->getAlias(),
+        ]));
+
+        try {
+            $fileName = $tplRenderer->render($this->getFilename());
+        } catch (\Throwable $e) {
+            if($e->getPrevious() instanceof FormulaError) {
+                throw new InvalidArgumentException('Use of data driven formulas is not supported for placeholders in "file_name"!');
+            } else {
+                throw $e;
+            }
+        }
+
+        $fileName = FilePathDataType::sanitizeFilename($fileName);
+        $fileName = str_replace(' ', '_', $fileName);
+        $fileManager = $this->getWorkbench()->filemanager();
+        $this->filePathAbsolute = Filemanager::pathJoin([
+            $fileManager->getPathToCacheFolder(),
+            $fileName . '.' . $this->getFileExtension()
+        ]);
+    }
+
+    /**
+     * Returns the absolute path to the file. You must initialize the path with `initializeFilePathAbsolute(DataSheetInterface)` first.
      *
      * @return string
      */
-    protected function getFilePathAbsolute() : string
+    protected function getFilePathAbsolute () : string
     {
-        if (is_null($this->pathname)) {
-            $filemanager = $this->getWorkbench()->filemanager();
-            $this->pathname = Filemanager::pathJoin([
-                $filemanager->getPathToCacheFolder(),
-                $this->getFilename() . '.' . $this->getFileExtension()
-            ]);
+        if($this->filePathAbsolute === null) {
+            throw new ActionRuntimeError($this, "FilePath not initialized! Make sure to call initializeFilePathAbsolute(DataSheetInterface) at any point before calling getFilePathAbsolute().");
         }
-        return $this->pathname;
+
+        return $this->filePathAbsolute;
     }
     
     /**

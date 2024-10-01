@@ -170,7 +170,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      */
     protected function getAttribute($alias)
     {
-        return $this->attributes[$alias];
+        return $this->attributes[$alias] ?? null;
     }
     
     /**

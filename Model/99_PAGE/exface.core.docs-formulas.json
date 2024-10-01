@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2017-07-11 13:03:42",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2023-06-28 21:44:57",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2024-09-13 11:45:00",
     "contents": {
         "object_alias": "exface.Core.AUTHENTICATOR_CLASS",
         "widget_type": "SplitHorizontal",
@@ -33,7 +33,7 @@
                         "widget_type": "Browser",
                         "object_alias": "exface.Core.Docs",
                         "base_url": "[#api#]\/docs\/",
-                        "url": "exface\/Core\/Docs\/creating_metamodels\/Expressions_and_formulas.md"
+                        "url": "exface\/Core\/Docs\/UXON\/Expressions_and_formulas.md"
                     }
                 ]
             }

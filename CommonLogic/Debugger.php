@@ -14,7 +14,6 @@ use exface\Core\CommonLogic\Debugger\CommunicationInterceptor;
 
 class Debugger implements DebuggerInterface
 {
-
     private $prettify_errors = false;
     
     private $error_reporting = null;
@@ -25,17 +24,20 @@ class Debugger implements DebuggerInterface
     
     private $communicationInterceptor = null;
 
+    private $workbenchStartTimeMs = null;
+
     /**
      * 
      * @param LoggerInterface $logger
      * @param ConfigurationInterface $config
-     * @param float $workbenchStartTime
+     * @param float $workbenchStartTimeMs
      * @throws RuntimeException
      * @throws \Throwable
      */
-    public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTime = null)
+    public function __construct(LoggerInterface $logger, ConfigurationInterface $config, float $workbenchStartTimeMs = null)
     {
         $this->logger = $logger;
+        $this->workbenchStartTimeMs = $workbenchStartTimeMs ?? self::getTimeMsNow();
         try {
             $opt = $config->getOption('DEBUG.PHP_ERROR_REPORTING');
             if (preg_match('/[^a-z0-9.\s~&_^]+/i', $opt) !== 0) {
@@ -51,7 +53,7 @@ class Debugger implements DebuggerInterface
         
         $this->setPrettifyErrors($config->getOption('DEBUG.PRETTIFY_ERRORS'));
         if ($config->getOption('DEBUG.TRACE') === true) {
-            $this->tracer = new Tracer($config->getWorkbench(), $workbenchStartTime);
+            $this->tracer = new Tracer($config->getWorkbench(), $this->workbenchStartTimeMs);
         }
         if ($config->getOption('DEBUG.INTERCEPT_COMMUNICATION') === true) {
             $this->communicationInterceptor = new CommunicationInterceptor($config->getWorkbench());
@@ -94,7 +96,6 @@ class Debugger implements DebuggerInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DebuggerInterface::printVariable()
      */
     public function printVariable($anything, $use_html = true, $expand_depth = 1)
@@ -107,5 +108,34 @@ class Debugger implements DebuggerInterface
             $dumper = new CliDumper();
             return $dumper->dump($cloner->cloneVar($anything), true);
         }
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DebuggerInterface::getTimeMsOfWorkebnchStart()
+     */
+    public function getTimeMsOfWorkebnchStart() : float
+    {
+        return $this->workbenchStartTimeMs;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DebuggerInterface::getTimeMsNow()
+     */
+    public static function getTimeMsNow() : float
+    {
+        return microtime(true) * 1000;
+    }
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DebuggerInterface::getTimeMsFromStart()
+     */
+    public function getTimeMsFromStart() : float
+    {
+        return self::getTimeMsNow() - $this->getTimeMsOfWorkebnchStart();
     }
 }

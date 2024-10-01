@@ -28,7 +28,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     const LAP_CATEGORY = 'category';
     const LAP_SUBJECT = 'subject';
     
-    private $startMicrotime = 0;
+    private $startMs = 0;
     
     private $workbench = null;
     
@@ -41,24 +41,24 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     /**
      * 
      * @param Workbench $workbench
-     * @param int $startMicrotime
+     * @param float $startMs
      */
-    public function __construct(Workbench $workbench, int $startMicrotime = null, int $msDecimals = 1)
+    public function __construct(Workbench $workbench, float $startMs = null, int $msDecimals = 1)
     {
         $this->workbench = $workbench;
         $this->msDecimals = $msDecimals;
-        $this->reset($startMicrotime);
+        $this->reset($startMs);
     }
 
     /**
      * Resets the internal stopwatch
      * 
-     * @param int $startMicrotime
+     * @param int $startMs
      * @return Profiler
      */
-    public function reset(int $startMicrotime = null) : Profiler
+    public function reset(float $startMs = null) : Profiler
     {
-        $this->startMicrotime = $startMicrotime > 0 ? $startMicrotime : microtime(true);
+        $this->startMs = $startMs > 0 ? $startMs : $this->nowMs();
         return $this;
     }
     
@@ -74,7 +74,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         $this->lapData[$lapId][] = [
             self::LAP_NAME => $name,
             self::LAP_CATEGORY => $category,
-            self::LAP_START => microtime(true),
+            self::LAP_START => $this->nowMs(),
             self::LAP_SUBJECT => $subject
         ];
         return $lapId;
@@ -84,15 +84,15 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * Stops the time for the given object and returns it's duration
      * 
      * @param mixed $subject
-     * @return float|NULL
+     * @return float|null
      */
     public function stop($subject) : ?float
     {
         $lapId = $this->getLapId($subject);
         if (null !== $data = $this->lapData[$lapId]) {
             $lastIdx = count($data)-1;
-            $this->lapData[$lapId][$lastIdx][self::LAP_STOP] = $now = microtime(true);
-            return $this->toMs($now - $data[$lastIdx][self::LAP_START]);
+            $this->lapData[$lapId][$lastIdx][self::LAP_STOP] = $now = $this->nowMs();
+            return $this->roundMs($now - $data[$lastIdx][self::LAP_START]);
         }
         return null;
     }
@@ -101,7 +101,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      * Returns the duration of a given object in milliseconds or NULL if no lap was started for it.
      * 
      * @param mixed $subject
-     * @return float|NULL
+     * @return float|null
      */
     public function getDuration($subject = null) : ?float
     {
@@ -114,7 +114,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
         $data = $this->getLapData($subject);
         $stop = $data[self::LAP_STOP] ?? null;
         $start = $data[self::LAP_START] ?? null;
-        return $start === null || $stop === null ? null : $this->toMs($stop - $start);
+        return $start === null || $stop === null ? null : $this->roundMs($stop - $start);
     }
     
     /**
@@ -124,24 +124,24 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     public function getDurationTotal() : float
     {
-        return $this->toMs(microtime(true) - $this->startMicrotime);
+        return $this->roundMs($this->nowMs() - $this->startMs);
     }
     
     /**
      * 
      * @param mixed $subject
-     * @return float|NULL
+     * @return float|null
      */
     public function getStartTime($subject = null) : ?float
     {
         if ($subject === null) {
-            return $this->toMs($this->startMicrotime);
+            return $this->roundMs($this->startMs);
         }
         if (! $this->hasLapData($subject)) {
             return null;
         }
         if (null !== $data = $this->getLapData($subject)) {
-            return $this->toMs($data[self::LAP_START]);
+            return $this->roundMs($data[self::LAP_START]);
         }
         return null;
     }
@@ -149,18 +149,18 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
     /**
      * 
      * @param mixed $subject
-     * @return float|NULL
+     * @return float|null
      */
     public function getEndTime($subject = null) : ?float
     {
         if ($subject === null) {
-            return $this->toMs(microtime(true));
+            return $this->roundMs($this->nowMs());
         }
         if (! $this->hasLapData($subject)) {
             return null;
         }
         if (null !== $data = $this->getLapData($subject)) {
-            return $this->toMs($data['end']);
+            return $this->roundMs($data['end']);
         }
         return null;
     }
@@ -172,13 +172,13 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
      */
     protected function hasLapData($subject) : bool
     {
-        in_array($subject, $this->lapIds);
+        return in_array($subject, $this->lapIds);
     }
     
     /**
      * 
      * @param mixed $subject
-     * @return array|NULL
+     * @return array|null
      */
     protected function getLapData($subject) : ?array
     {
@@ -270,8 +270,8 @@ HTML;
         });
         
         foreach ($laps as $lap) {
-            $eventStart = $lap[self::LAP_START] !== null ? $this->toMs($lap[self::LAP_START]) : null;
-            $eventEnd = $lap[self::LAP_STOP] !== null ? $this->toMs($lap[self::LAP_STOP]) : null;
+            $eventStart = $lap[self::LAP_START] !== null ? $this->roundMs($lap[self::LAP_START]) : null;
+            $eventEnd = $lap[self::LAP_STOP] !== null ? $this->roundMs($lap[self::LAP_STOP]) : null;
             $eventOffset = round(($eventStart - $startTime) / $totalDur * 100) . '%';
             if ($eventEnd !== null) {
                 $eventDur = round($eventEnd - $eventStart, $this->msDecimals);
@@ -326,11 +326,16 @@ HTML;
     
     /**
      * 
-     * @param float $microtime
+     * @param float $milliseconds
      * @return float
      */
-    protected function toMs(float $microtime) : float
+    protected function roundMs(float $milliseconds) : float
     {
-        return round(($microtime * 1000), $this->msDecimals);
+        return round($milliseconds, $this->msDecimals);
+    }
+
+    protected function nowMs() : float
+    {
+        return microtime(true) * 1000;
     }
 }

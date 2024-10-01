@@ -214,7 +214,23 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
         
         return null;
     }
-    
+
+    /**
+     * Try to find the mime-type of a given string of binary data.
+     *
+     * @param string $binaryData
+     * @return string|bool
+     * Returns the mime-type on success and FALSE if an error occurred.
+     */
+    public static function findMimeTypeOfString(string $binaryData) : string|bool
+    {
+        $finfo = finfo_open(FILEINFO_MIME);
+        $mime = finfo_buffer($finfo, $binaryData);
+        finfo_close($finfo);
+
+        return $mime;
+    }
+
     /**
      * Returns TRUE if the provided string is a valid mime type and FALSE otherwise
      * 

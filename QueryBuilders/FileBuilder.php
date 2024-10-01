@@ -221,7 +221,7 @@ class FileBuilder extends AbstractQueryBuilder
         // Now add each path
         foreach ($pathPatterns as $path) {
             if ($path === null || $path === '') {
-                $path = $this->getMainObject()->getDataAddress();
+                $path = $this->getPathForObject($this->getMainObject()) ?? '';
             }
             
             // The end of the path might contain a filename or mask too: e.g. the data
@@ -449,7 +449,7 @@ class FileBuilder extends AbstractQueryBuilder
     {
         // See if the data address has placeholders
         $oper = $qpart->getOperator();
-        $addr = $this->getMainObject()->getDataAddress();
+        $addr = $this->getPathForObject($this->getMainObject()) ?? '';
         $addrPhs = StringDataType::findPlaceholders($addr);
         $pathPatterns = [];
         $uidPatterns = [];
@@ -663,7 +663,9 @@ class FileBuilder extends AbstractQueryBuilder
                         $array[$i] = base64_decode(StringDataType::substringAfter($val, 'base64,'));
                     }
                 }
+                break;
         }
+
         return $array;
     }
     
@@ -715,7 +717,7 @@ class FileBuilder extends AbstractQueryBuilder
             case $filenameQpart !== null:
                 $paths = [];
                 $sep = $this->getDirectorySeparator();
-                $addr = FilePathDataType::normalize($this->getMainObject()->getDataAddress(), $sep);
+                $addr = FilePathDataType::normalize($this->getPathForObject($this->getMainObject()) ?? '', $sep);
                 $addr = StringDataType::substringBefore($addr, $sep, $addr, false, true);
                 $addrPhs = StringDataType::findPlaceholders($addr);
                 
@@ -742,11 +744,11 @@ class FileBuilder extends AbstractQueryBuilder
      */
     public function read(DataConnectionInterface $dataConnection) : DataQueryResultDataInterface
     {
-        $result_rows = array();
+        $result_rows = [];
         $pagination_applied = false;
         // Check if force filtering is enabled
         if ($this->getMainObject()->getDataAddressProperty(FileBuilder::DAP_FORCE_FILTERING) && count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
-            return false;
+            return new DataQueryResultData([], 0);
         }
         
         $query = $this->buildQueryToRead();
@@ -768,7 +770,7 @@ class FileBuilder extends AbstractQueryBuilder
         $fullRead = $this->isFullReadRequired($query);
         $limit = $this->getLimit();
         $offset = $this->getOffset() ?? 0;
-        foreach ($performedQuery->getFiles() as $file) {
+        foreach ($performedQuery->getFiles() as $fileInfo) {
             $rowsTotal++;
             $limitReached = $limit > 0 && $rowsTotal > ($offset + $limit);
             // Skip rows, that are positioned below the offset if we neither need a count nor post-processing
@@ -784,7 +786,7 @@ class FileBuilder extends AbstractQueryBuilder
                     break;
                 }
             } else {
-                $result_rows[] = $this->buildResultRow($file);
+                $result_rows = array_merge($result_rows, $this->buildResultRows($fileInfo));
             }
         }
         $paginationApplied = $fullRead === false;
@@ -928,7 +930,7 @@ class FileBuilder extends AbstractQueryBuilder
      * @throws QueryBuilderException
      * @return string[]|mixed[]
      */
-    protected function buildResultRow(FileInfoInterface $file) : array
+    protected function buildResultRows(FileInfoInterface $file) : array
     {
         $row = [];
         foreach ($this->getAttributes() as $qpart) {
@@ -936,7 +938,7 @@ class FileBuilder extends AbstractQueryBuilder
                 $row[$qpart->getColumnKey()] = $this->buildResultValueFromFile($file, $field);
             }
         }
-        return $row;
+        return [$row];
     }
     
     /**
@@ -946,7 +948,7 @@ class FileBuilder extends AbstractQueryBuilder
      * 
      * @throws QueryBuilderException
      * 
-     * @return NULL
+     * @return mixed
      */
     protected function buildResultValueFromFile(FileInfoInterface $file, string $dataAddress)
     {
@@ -1189,6 +1191,48 @@ class FileBuilder extends AbstractQueryBuilder
         }
         if (! empty($this->getAggregations())) {
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the path or pattern stored in the data address of the given meta object.
+     * 
+     * Override this method to support data addresses with additions - e.g. the ExcelBuilder
+     * supports Worksheet names in its data addresses.
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $object
+     * @return string|null
+     */
+    protected function getPathForObject(MetaObjectInterface $object) : ?string
+    {
+        return $this->getMainObject()->getDataAddress();
+    }
+
+    /**
+     * Returns TRUE if the given address is a file property and can be handled by this query builder
+     * 
+     * Use this method in extending classes to find out, if an address is a basic file property -
+     * see ExcelBuilder for an example.
+     * 
+     * @param string $address
+     * @return bool
+     */
+    protected function isFileDataAddress(string $address) : bool
+    {
+        $address = mb_strtolower($address);
+        switch (true) {
+            case strpos($address, '~file:') === 0:
+            case strpos($address, '~folder:') === 0:
+            // Still supported legacy data addresses
+            case $address === '~folder':
+            case $address === '~extension':
+            case $address === '~filename_without_extension':
+            case $address === '~filename':
+            case $address === '~contents':
+            case $address === '~filepath_relative':
+            case $address === '~filepath':
+                return true;
         }
         return false;
     }

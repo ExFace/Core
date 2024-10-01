@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades;
 
+use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade;
@@ -12,17 +13,13 @@ use Intervention\Image\ImageManager;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
 use GuzzleHttp\Psr7\Response;
-use function GuzzleHttp\Psr7\stream_for;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\FacadeFactory;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\OneTimeLinkMiddleware;
 use Psr\SimpleCache\CacheInterface;
 use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
-use exface\Core\Interfaces\Model\Behaviors\FileBehaviorInterface;
 use exface\Core\CommonLogic\Filemanager;
-use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\CommonLogic\Filesystem\DataSourceFileInfo;
 use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
@@ -88,6 +85,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     const URL_PATH_OTL = 'otl';
     const URL_PATH_THUMB = 'thumb';
     const URL_PATH_PICKUP = 'pickup';
+    const URL_PATH_TEMP = 'temp';
     
     const CACHE_POOL_OTL = '_onetimelink';
     
@@ -120,7 +118,9 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         $pathStart = mb_strtolower($pathParts[0]);
         $options = null;
+        $noCache = false;
         switch ($pathStart) {
+            case self::URL_PATH_TEMP:
             case self::URL_PATH_DOWNLOAD:
             case self::URL_PATH_VIEW:
                 $mode = array_shift($pathParts);
@@ -143,6 +143,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         switch (true) {
+            case $mode === self::URL_PATH_TEMP:
+                $filename = urldecode($pathParts[0]);
+                $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
+                $noCache = true;
+                // Delete the temp file once it was downloaded
+                $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $event) use ($fileInfo) {
+                    @unlink($fileInfo->getPathAbsolute());
+                });
+                break;
             case count($pathParts) === 2:
                 $objSel = urldecode($pathParts[0]);
                 $uid = urldecode($pathParts[1]);
@@ -157,37 +166,38 @@ class HttpFileServerFacade extends AbstractHttpFacade
                         $uid = BinaryDataType::convertBase64ToText(substr($uid, 7));
                         break;
                 }
-                $fileInfo = DataSourceFileInfo::fromObjectUID($this->getWorkbench(), $objSel, $uid);
+                $fileInfo = DataSourceFileInfo::fromObjectSelectorAndUID($this->getWorkbench(), $objSel, $uid);
                 break;
             default:
                 $fileInfo = new LocalFileInfo($pathParts[0]);
                 break;
         }
         
-        if (null !== $cacheInfo = $this->getCache($fileInfo, $options)) {
+        if ($noCache === false && null !== $cacheInfo = $this->getCache($fileInfo, $options)) {
             $fileInfo = $cacheInfo;
         }
         
-        switch ($mode) {
-            case self::URL_PATH_PICKUP:
-            case self::URL_PATH_DOWNLOAD:
+        switch (true) {
+            case $mode === self::URL_PATH_TEMP:
+            case $mode === self::URL_PATH_PICKUP:
+            case $mode === self::URL_PATH_DOWNLOAD:
                 $response = $this->createResponseForDonwload($fileInfo);
                 break;
-            case self::URL_PATH_THUMB && $cacheInfo === null:
+            case $mode === self::URL_PATH_THUMB && ($cacheInfo === null || $noCache === true):
                 list($width, $height) = explode('x', $options);
                 $width = $width === '' ? null : intval($width);
                 $height = $height === '' ? null : intval($height);
                 $fileInfo = $this->createThumbnail($fileInfo, $width, $height);
                 $response = $this->createResponseForEmbedding($fileInfo);
                 break;
-            case self::URL_PATH_THUMB:
-            case self::URL_PATH_VIEW:
+            case $mode === self::URL_PATH_THUMB:
+            case $mode === self::URL_PATH_VIEW:
                 $response = $this->createResponseForEmbedding($fileInfo);
                 break;
         }
         
         // IDEA Only use cache for non-local files? What is the point of caching local files?
-        if ($cacheInfo === null) {
+        if ($noCache === false && $cacheInfo === null) {
             $this->setCache($fileInfo, $options);
         }
         
@@ -259,7 +269,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response->withHeader('Content-Disposition', 'attachment; filename=' . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', "attachment; filename=" . $fileInfo->getFilename());
         return $response;
     }
     
@@ -271,7 +281,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function createResponseForEmbedding(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', 'inline; filename=' . $fileInfo->getFilename());
         return $response;
     }
     
@@ -289,7 +299,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $facadeHeaders,      
             [
                 'Expires' => 0,
-                'Cache-Control', 'must-revalidate, post-check=0, pre-check=0',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
                 'Pragma' => 'public'
             ]
         );
@@ -381,10 +391,18 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
         $relativePath = ltrim($relativePath, "/");
-        if ($relativeToSiteRoot) {
-            return $relativePath;
+
+        if (StringDataType::startsWith($relativePath, 'cache/')) {
+            $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
+            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . urlencode(StringDataType::substringAfter($relativePath, 'cache/'));
         } else {
-            return $workbench->getUrl() . $relativePath;
+            $urlPath = $relativePath;
+        }
+
+        if ($relativeToSiteRoot) {
+            return $urlPath;
+        } else {
+            return $workbench->getUrl() . $urlPath;
         }
     }    
     
@@ -475,76 +493,6 @@ class HttpFileServerFacade extends AbstractHttpFacade
         $response = $this->createResponse($request);
         $cache->delete($ident);        
         return $response;
-    }
-    
-    /**
-     * 
-     * @param MetaObjectInterface $object
-     * @return MetaAttributeInterface|NULL
-     */
-    protected function findAttributeForContents(MetaObjectInterface $object) : ?MetaAttributeInterface
-    {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            return $fileBehavior->getContentsAttribute();
-        }
-        
-        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
-            return ($attr->getDataType() instanceof BinaryDataType);
-        });
-        
-        return $attrs->count() === 1 ? $attrs->getFirst() : null;
-    }
-    
-    /**
-     *
-     * @param MetaObjectInterface $object
-     * @return MetaAttributeInterface|NULL
-     */
-    protected function findAttributeForFilename(MetaObjectInterface $object) : ?MetaAttributeInterface
-    {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            return $fileBehavior->getFilenameAttribute();
-        }
-            
-        return null;
-    }
-    
-    /**
-     *
-     * @param MetaObjectInterface $object
-     * @return MetaAttributeInterface|NULL
-     */
-    protected function findAttributeForMTime(MetaObjectInterface $object) : ?MetaAttributeInterface
-    {
-        $attr = null;
-        if ($behavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            $attr = $behavior->getTimeModifiedAttribute();
-            if ($attr !== null) {
-                return $attr;
-            }
-        }
-        if ($behavior = $object->getBehaviors()->getByPrototypeClass(TimeStampingBehavior::class)->getFirst()) {
-            $attr = $behavior->getUpdatedOnAttribute();
-        }  
-        return $attr;
-    }
-    
-    /**
-     * 
-     * @param MetaObjectInterface $object
-     * @return MetaAttributeInterface|NULL
-     */
-    protected function findAttributeForMimeType(MetaObjectInterface $object) : ?MetaAttributeInterface
-    {
-        if ($fileBehavior = $object->getBehaviors()->getByPrototypeClass(FileBehaviorInterface::class)->getFirst()) {
-            return $fileBehavior->getMimeTypeAttribute();
-        }
-        
-        $attrs = $object->getAttributes()->filter(function(MetaAttributeInterface $attr){
-            return ($attr->getDataType() instanceof MimeTypeDataType);
-        });
-            
-        return $attrs->count() === 1 ? $attrs->getFirst() : null;
     }
     
     /**

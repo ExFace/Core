@@ -1,7 +1,21 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\DataSource;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\MetaObject;
+use exface\Core\CommonLogic\Selectors\DataSourceSelector;
+use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\UUIDDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
@@ -67,5 +81,106 @@ abstract class MetaObjectFactory extends AbstractStaticFactory
     public static function createFromUid(WorkbenchInterface $workbench, string $uid) : MetaObjectInterface
     {
         return $workbench->model()->getObjectById($uid);
+    }
+
+    /**
+     * Instantiates a virtual object (not stored in the meta model)
+     * 
+     * @param \exface\Core\Interfaces\WorkbenchInterface $workbench
+     * @param string $name
+     * @param string $dataAddress
+     * @param string $queryBuilderSelector
+     * @param DataConnectionInterface|string|\exface\Core\CommonLogic\Selectors\DataConnectionSelector $dataConnectionOrAlias
+     * @param bool $readable
+     * @param bool $writable
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     */
+    public static function createTemporary(
+        WorkbenchInterface $workbench, 
+        string $name, 
+        string $dataAddress, 
+        string $queryBuilderSelector, 
+        $dataConnectionOrAlias,
+        bool $readable = true,
+        bool $writable = false
+    ) : MetaObjectInterface
+    {
+        // Create a data source
+        $tmpAlias = 'tmp_' . uniqid("", true);
+        $qbSelector = new QueryBuilderSelector($workbench, $queryBuilderSelector);
+        switch (true) {
+            case $qbSelector->isAlias():
+                $qbName = StringDataType::substringAfter($qbSelector->__toString(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $qbSelector->__toString());
+                break;
+            default:
+                $qbName = FilePathDataType::findFileName($qbSelector->__toString(), false);
+                break;
+        }
+        $dsSelector = new DataSourceSelector($workbench, 'exface.Core.' . $tmpAlias);
+        $ds = DataSourceFactory::createEmpty($dsSelector);
+        $ds->setName('Temp. ' . $qbName);
+        $ds->setQueryBuilderAlias($queryBuilderSelector);
+        if ($dataConnectionOrAlias instanceof DataConnectionInterface) {
+            $ds->setConnection($dataConnectionOrAlias);
+        } else {
+            $ds->setConnection(DataConnectionFactory::createFromModel($workbench, $dataConnectionOrAlias));
+        }
+
+        $obj = new MetaObject($workbench->model());
+        $obj->setAlias($tmpAlias);
+        $obj->setName($name);
+        $obj->setAppId('0x31000000000000000000000000000000'); // exface.Core
+        $obj->setId(UUIDDataType::generateSqlOptimizedUuid());
+        $obj->setDataSource($ds);
+        $obj->setDataAddress($dataAddress);
+        $obj->setReadable($readable);
+        $obj->setWritable($writable);
+
+        return $obj;
+    }
+
+    /**
+     * Adds a virtual attribute (not stored in the meta model) to the given object.
+     * 
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj
+     * @param string $name
+     * @param string $alias
+     * @param string $dataAddress
+     * @param mixed $dataTypeOrSelector
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     */
+    public static function addAttributeTemporary(
+        MetaObjectInterface $obj, 
+        string $name, 
+        string $alias, 
+        string $dataAddress,
+        $dataTypeOrSelector = null
+    ) : MetaAttributeInterface
+    {
+        $attr = new Attribute($obj);
+        $attr->setId(UUIDDataType::generateSqlOptimizedUuid());
+        $attr->setAlias($alias);
+        $attr->setName($name);
+        $attr->setDataAddress($dataAddress);
+        switch (true) {
+            case $dataTypeOrSelector instanceof DataTypeInterface:
+                $type = $dataTypeOrSelector;
+                break;
+            case $dataTypeOrSelector instanceof DataTypeSelectorInterface:
+                $type = DataTypeFactory::createFromSelector($dataTypeOrSelector);
+                break;
+            case is_string($dataTypeOrSelector):
+                $type = DataTypeFactory::createFromString($obj->getWorkbench(), $dataTypeOrSelector);
+                break;
+            case $dataTypeOrSelector === null:
+                $type = DataTypeFactory::createBaseDataType($obj->getWorkbench());
+                break;
+            default:
+                throw new InvalidArgumentException('Invalid data type supplied for temporary attribute: expecting data type instance or selector, received ' . get_class($dataTypeOrSelector));
+        }
+        $attr->setDataType($type);
+        $obj->getAttributes()->add($attr);
+        return $attr;
     }
 }

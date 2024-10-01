@@ -1,9 +1,12 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\DataConnectors\Traits;
 
-use exface\Core\CommonLogic\Workbench;
-
-abstract class AbstractDataConnectorWithoutTransactions extends AbstractDataConnector
+/**
+ * This trait adds stub methods to handle transaction commands to a connector, that does not support transactions
+ * 
+ * @author Andrej Kabachnik
+ */
+trait IDoNotSupportTransactionsTrait
 {
 
     /**

@@ -349,6 +349,9 @@ class InMemoryFile implements FileInterface, FileInfoInterface
      */
     public function getMimetype(): ?string
     {
+        if ($this->mimeType === null && null !== $binary = $this->read()) {
+            $this->mimeType = MimeTypeDataType::findMimeTypeOfString($binary);
+        }
         if ($this->mimeType === null) {
             $this->mimeType = MimeTypeDataType::guessMimeTypeOfExtension($this->getExtension(), 'text/plain');
         }
@@ -373,5 +376,23 @@ class InMemoryFile implements FileInterface, FileInfoInterface
     public function exists(): bool
     {
         return true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMd5()
+     */
+    public function getMd5() : ?string
+    {
+        if ($this->isDir()) {
+            return null;
+        }
+        $binary = $this->read();
+        if ($binary === null) {
+            return null;
+        }
+        $hash = md5($binary);
+        return $hash === false ? null : $hash;
     }
 }

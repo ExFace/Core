@@ -197,9 +197,9 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function prepareDataSheetToRead(DataSheetInterface $dataSheet)
     {
-        if ($this->isBoundToAttribute() === true) {
-            $valuePrefillExpr = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $this->getAttributeAlias());
-            if ($valuePrefillExpr !== null) {
+        if ($this->isBoundToDataColumn() === true || $this->isBoundToDataColumn() === true) {
+            $valuePrefillExpr = $this->getPrefillExpression($dataSheet);
+            if ($valuePrefillExpr !== null && ! $dataSheet->getColumns()->getByExpression($valuePrefillExpr)) {
                 $dataSheet->getColumns()->addFromExpression($valuePrefillExpr);
             }
         }
@@ -225,7 +225,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     {
         if ($this->isBoundToAttribute() === true) {
             // TODO
-            if (null !== $expr = $this->getPrefillExpression($dataSheet, $this->getMetaObject(), $this->getAttributeAlias())) {
+            if (null !== $expr = $this->getPrefillExpression($dataSheet)) {
                 $this->doPrefillForExpression(
                     $dataSheet,
                     $expr,
@@ -502,31 +502,41 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     /**
      * 
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $prefillData
-     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $widget_object
-     * @param string $attributeAlias
-     * @param string $dataColumnName
      * @return string|null
      */
-    protected function getPrefillExpression(DataSheetInterface $prefillData, MetaObjectInterface $widget_object, string $attributeAlias = null, string $dataColumnName = null) : ?string
+    protected function getPrefillExpression(DataSheetInterface $prefillData) : ?string
     {
-        $expression = $attributeAlias ?? $dataColumnName;
+        
+        $prefillObj = $prefillData->getMetaObject();
+        $widgetObj = $this->getMetaObject();
+
+        switch ($this->getBindingType()) {
+            case self::BINDING_TYPE_ATTRIBUTE:
+                $expression = $this->getAttributeAlias();
+                break;
+            case self::BINDING_TYPE_CALCULATION:
+                $expression = $this->getValueExpression()->__toString();
+                break;
+            case self::BINDING_TYPE_COLUMN && $prefillObj->is($widgetObj):
+                return $this->getDataColumnName();
+            default:
+                $expression = null;
+        }
         
         if ($expression === null || $expression === '') {
             return null;
         }
-        
-        $prefill_object = $prefillData->getMetaObject();
         
         // See if we are prefilling with the same object as the widget is based
         // on (or a derivative). E.g. if we are prefilling a widget based on FILE,
         // we can use FILE and PDF_FILE objects as both are "files", while a
         // widget based on PDF_FILE cannot be prefilled with simply FILE.
         // If it's a different object, than try to find some relation wetween them.
-        if ($prefill_object->is($widget_object)) {
+        if ($prefillObj->is($widgetObj)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
             return $expression;
-        } elseif ($attributeAlias !== null && $widget_object->hasAttribute($attributeAlias)) {
-            $attribute = $this->getMetaObject()->getAttribute($attributeAlias);
+        } elseif ($expression !== null && $widgetObj->hasAttribute($expression)) {
+            $attribute = $this->getMetaObject()->getAttribute($expression);
             // If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
             // if the widgets shows an attribute, because then we have a chance to find a relation between the widget's object
             // and the prefill object
@@ -538,11 +548,11 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
             if ($rel_path = $attribute->getRelationPath()->toString()) {
                 $rel_parts = RelationPath::relationPathParse($rel_path);
                 if (is_array($rel_parts)) {
-                    $related_obj = $widget_object;
+                    $related_obj = $widgetObj;
                     foreach ($rel_parts as $rel_nr => $rel_part) {
                         $related_obj = $related_obj->getRelatedObject($rel_part);
                         unset($rel_parts[$rel_nr]);
-                        if ($related_obj->isExactly($prefill_object)) {
+                        if ($related_obj->isExactly($prefillObj)) {
                             $attr_path = implode(RelationPath::getRelationSeparator(), $rel_parts);
                             // TODO add aggregator here
                             return RelationPath::relationPathAdd($attr_path, $attribute->getAlias());
@@ -552,7 +562,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 // If the prefill object is not in the widget's relation path, try to find a relation from this widget's
                 // object to the data sheet object and vice versa
                 
-            } elseif ($attribute->isRelation() && $prefill_object->is($attribute->getRelation()->getRightObject())) {
+            } elseif ($attribute->isRelation() && $prefillObj->is($attribute->getRelation()->getRightObject())) {
                 // If this widget represents the relation from the sheet object to the prefill object, the prefill value would be the
                 // right key of the relation (e.g. trying to prefill the order positions attribute "ORDER" relative to the object
                 // "ORDER" should result in the attribute UID of ORDER because it is the right key and must have a value matching the
@@ -570,7 +580,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 // Iterate over all forward relations
                 $inherited_rel = null;
                 $direct_rel = null;
-                foreach ($prefill_object->findRelations($widget_object->getId(), RelationTypeDataType::REGULAR) as $rel) {
+                foreach ($prefillObj->findRelations($widgetObj->getId(), RelationTypeDataType::REGULAR) as $rel) {
                     if ($rel->isInherited() && ! $inherited_rel) {
                         // Remember the first inherited relation in case there will be no direct relations
                         $inherited_rel = $rel;
@@ -586,8 +596,8 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 // If we found a relation to use, add the attribute prefixed with it's relation path to the data sheet
                 if ($direct_rel) {
                     $rel_path = RelationPath::relationPathAdd($rel->getAliasWithModifier(), $attribute->getAlias());
-                    if ($prefill_object->hasAttribute($rel_path)) {
-                        return $prefill_object->getAttribute($rel_path)->getAliasWithRelationPath();
+                    if ($prefillObj->hasAttribute($rel_path)) {
+                        return $prefillObj->getAttribute($rel_path)->getAliasWithRelationPath();
                     }
                 }
             }     

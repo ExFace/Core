@@ -1,10 +1,12 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
+use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -29,27 +31,35 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * you are trying to catch.
  *
  * ### Properties:
- * - `invalid_if_on_create` executes whenever data is being **created**, but **before** these changes are applied to the database.
- * - `invalid_if_on_update` executes whenever data is being **updated**, but **before** these changes are applied to the database.
- * - `invalid_if_on_any` executes whenever data is being **created or updated**, but **before** those changes are applied to the database.
- *
+ * 
+ * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to the database.
+ * - `invalid_if_on_update` executes only when data is being **updated**, but **before** these changes are applied to the database.
+ * - `invalid_if_always` executes both when data is being **created and updated**, but **before** those changes are applied to the database.
+ * 
  * This behavior can react both to when the data is first created and to whenever it is changed from then on.
  * You can use any of the three `ìnvalid_if` properties to control the timing of your checks.
- *
+ * 
  * ### Placeholders:
+ * 
  *   - `[#~old:alias#]`: Loads the value of the specified `alias` that is currently stored in the database.
  *   - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
  *
  * This behavior supports the use of placeholders to give you more fine-grained control over where your dynamic values are being loaded from.
  * You can apply these placeholders to any input field inside a `invalid_if` context. However, since `[#~old:alias#]` loads data currently
  * stored in the database, it does not work while data is being created (because the data doesn't exist yet).
+ * 
  * This means `[#~old:alias#]` only works for `invalid_if_on_update`.
+ * 
+ * **NOTE:** Placeholder values are NOT formatted in order to be comparable in the conditions. If you use
+ * placeholders in the error messages, format them explicitly: e.g. `[#~old:=Format(MYATTR)#]`
  *
  * ### Example: Comparing old and new values
+ * 
  * This check ensures that updated values must be greater than previous values. This might for instance be useful when tracking construction progress.
  * Since we want to compare changes, we have to use `invalid_if_on_update` to enable the `[#~old:alias#]` placeholder.
  *
  * NOTE: The property `value` can usually not read data, but because we are using a placeholder, we can bypass this restriction.
+ * 
  * ```
  * {
  *      "invalid_if_on_update": [
@@ -68,6 +78,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ```
  *
  * ### Example: Using multiple `invalid_if` properties
+ * 
  * In this example we have extended the previous code with a new `invalid_if_on_any`, which triggers both on creating
  * and updating our data. It checks, whether the new value lies within a range of 0 to 100. When data is being created in this example,
  * only the checks in `invalid_if_on_any` will be performed. When data is being updated, however, both `invalid_if_on_any` and
@@ -75,7 +86,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  *  ```
  *  {
- *      "invalid_if_on_any": [
+ *      "invalid_if_always": [
  *         {
  *            "error_text": "The entered value must lie between 0 and 100!",
  *            "operator": "AND",
@@ -106,7 +117,8 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *
  * ```
  *
- *  ### Example: Flexible syntax
+ * ### Example: Flexible syntax
+ * 
  * Finally, let's touch on some fun things you can do with our flexible tools. In this example we have used placeholders to
  * dynamically assemble a more insightful error message, as well as having used a formula to do some basic arithmetic.
  * You can get fairly creative with these features, but bear in mind that things might eventually break.
@@ -142,19 +154,20 @@ class ValidatingBehavior extends AbstractBehavior
         self::PLACEHOLDER_OLD,
     );
 
-    const PLACEHOLDER_ERROR_ALIASES = array(
-        self::PLACEHOLDER_OLD => "7X9TCJ3",
-    );
-
     const VAR_EVENT_HANDLER = "handleOnChange";
 
     const VAR_ON_CREATE = "on_create";
 
     const VAR_ON_UPDATE = "on_update";
 
-    const VAR_ON_ANY = "on_any";
+    const VAR_ON_ANY = "always";
+
+    const VAR_BAD_DATA = "badData";
+
+    const VAR_LINES = "lines";
 
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
+    // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
     private array $eventConfig = array(
         self::VAR_ON_UPDATE => null,
         self::VAR_ON_CREATE => null,
@@ -188,9 +201,10 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts only to OnCreate events.
+     * Triggers only when data is being CREATED. Prevent changing a data item if any of these conditions match.
      *
      *  ### Placeholders:
+     * 
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
      * @uxon-property invalid_if_on_create
@@ -207,9 +221,10 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts only to OnUpdate events.
+     * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
      *
      * ### Placeholders:
+     * 
      *  - `[#~old:alias#]`: Loads the value for the specified alias that is currently stored in the database.
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
@@ -227,19 +242,20 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Prevent changing a data item if any of these conditions match. Reacts to both OnCreate and OnUpdate events.
+     * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions match.
      *
      * ### Placeholders:
+     * 
      * - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this validation succeeds.
      *
-     * @uxon-property invalid_if_on_any
+     * @uxon-property invalid_if_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
      * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "", "value": ""}]}]
      *
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
-    public function setInvalidIfOnAny(UxonObject $uxon) : ValidatingBehavior
+    public function setInvalidIfAlways(UxonObject $uxon) : ValidatingBehavior
     {
         $this->eventConfig[self::VAR_ON_ANY] = $uxon;
         return $this;
@@ -252,6 +268,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param OnBeforeDeleteDataEvent $event
      * @throws RuntimeException
      * @throws DataSheetDeleteForbiddenError
+     * @throws \Exception
      */
     public function handleOnChange(DataSheetEventInterface $event) : void
     {
@@ -259,6 +276,7 @@ class ValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        // Get datasheets.
         if ($event instanceof OnBeforeUpdateDataEvent) {
             $onUpdate = true;
             $previousDataSheet = $event->getDataSheetWithOldData();
@@ -269,7 +287,7 @@ class ValidatingBehavior extends AbstractBehavior
             $changedDataSheet = $event->getDataSheet();
         }
 
-        if(! $uxons = $this->tryGetRelevantUxons($onUpdate)) {
+        if(!$uxon = $this->getRelevantUxons($onUpdate)) {
             return;
         }
 
@@ -281,24 +299,25 @@ class ValidatingBehavior extends AbstractBehavior
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
 
-        foreach ($uxons as $propertyName => $invalidIfUxon) {
-            $validatedUxon = $this->resolvePlaceholders($invalidIfUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
-            $validatedJson = $validatedUxon->toJson();
-
-            foreach ($changedDataSheet->getRows() as $index => $row) {
-                $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-                $placeHolderRenderer->addPlaceholder(new DataRowPlaceholders($changedDataSheet, $index, self::PLACEHOLDER_NEW));
-                if($onUpdate) {
-                    $placeHolderRenderer->addPlaceholder(new DataRowPlaceholders($previousDataSheet, $index, self::PLACEHOLDER_OLD));
-                }
-
-                $renderedUxon = UxonObject::fromJson($placeHolderRenderer->render($validatedJson), CASE_LOWER);
-                foreach ($this->generateDataChecks($renderedUxon) as $check) {
-                    if ($check->isApplicable($changedDataSheet)) {
-                        $check->check($changedDataSheet);
-                    }
+        // Perform data checks for each validation rule.
+        $error = null;
+        foreach ($uxon as $propertyName => $dataCheckUxon) {
+            $dataCheckUxon = $this->checkPlaceholders($dataCheckUxon, $onUpdate ? array() : self::PLACEHOLDERS_PREV_REQUIRED, $propertyName);
+            try {
+                $this->performDataChecks($dataCheckUxon, $previousDataSheet, $changedDataSheet, $onUpdate);
+            } catch (DataCheckFailedErrorMultiple $exception) {
+                if(!$error) {
+                    $error = $exception;
+                } else {
+                    $error->merge($exception, false);
                 }
             }
+        }
+
+        if($error) {
+            $error->setUseExceptionMessageAsTitle(true);
+            $error->regenerateMessage();
+            throw $error;
         }
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
@@ -308,7 +327,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param bool $onUpdate
      * @return array|bool
      */
-    protected function tryGetRelevantUxons(bool $onUpdate) : array | bool
+    protected function getRelevantUxons(bool $onUpdate) : array | bool
     {
         $result = array();
 
@@ -328,6 +347,76 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
+     * Performs data validation by applying the specified checks to the provided data sheets.
+     *
+     * @param UxonObject $dataChecksUxon
+     * @param DataSheetInterface|null $previousDataSheet
+     * @param DataSheetInterface $changedDataSheet
+     * @param bool $onUpdate
+     * @return void
+     */
+    protected function performDataChecks(UxonObject $dataChecksUxon, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate) : void
+    {
+        $error = null;
+
+        // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
+        foreach ($changedDataSheet->getRows() as $index => $row) {
+            // Render placeholders.
+            $renderedUxon = $this->renderUxon($dataChecksUxon, $previousDataSheet, $changedDataSheet, $onUpdate, $index);
+            // Reduce datasheet to the relevant row.
+            $checkSheet = $changedDataSheet->copy();
+            $checkSheet->removeRows()->addRow($row);
+            // Perform data checks.
+            foreach ($this->generateDataChecks($renderedUxon) as $check) {
+                if (!$check->isApplicable($changedDataSheet)) {
+                    continue;
+                }
+
+                try {
+                    $check->check($checkSheet);
+                } catch (DataCheckFailedError $exception) {
+                    $error = $error ?? new DataCheckFailedErrorMultiple('', null, null, $this->getWorkbench()->getCoreApp()->getTranslator());
+                    $error->appendError($exception, $index + 1, false);
+                }
+            }
+        }
+
+        if($error) {
+            throw $error;
+        }
+    }
+
+    /**
+     * Renders all placeholders present in the provided UXON.
+     *
+     * @param UxonObject $uxonToRender
+     * @param DataSheetInterface|null $previousDataSheet
+     * @param DataSheetInterface $changedDataSheet
+     * @param bool $onUpdate
+     * @param int $rowIndex
+     * @return UxonObject
+     */
+    private function renderUxon(UxonObject $uxonToRender, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet, bool $onUpdate, int $rowIndex) : UxonObject
+    {
+        $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+
+        if($onUpdate) {
+            $resolver = new DataRowPlaceholders($previousDataSheet, $rowIndex, self::PLACEHOLDER_OLD);
+            // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
+            $resolver->setSanitizeAsUxon(true);
+            $placeHolderRenderer->addPlaceholder($resolver);
+        }
+
+        $resolver = new DataRowPlaceholders($changedDataSheet, $rowIndex, self::PLACEHOLDER_NEW);
+        // $resolver->setFormatValues(false); TODO format dates and number? Good for messages, but bad for comparison
+        $resolver->setSanitizeAsUxon(true);
+        $placeHolderRenderer->addPlaceholder($resolver);
+
+        // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
+        return UxonObject::fromJson($placeHolderRenderer->render($uxonToRender->toJson()), CASE_LOWER);
+    }
+
+    /**
      * @param UxonObject $uxonObject
      * @return DataCheckListInterface
      */
@@ -342,7 +431,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     * Resolves any placeholders present in the provided UXON and throws an exception
+     * Validates any placeholders present in the provided UXON and throws an exception
      * if it contains any placeholders on the prohibited list.
      *
      * @param UxonObject $uxon
@@ -350,7 +439,7 @@ class ValidatingBehavior extends AbstractBehavior
      * @param string $propertyName
      * @return UxonObject|null
      */
-    private function resolvePlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
+    private function checkPlaceholders(UxonObject $uxon, array $prohibited, string $propertyName) : ?UxonObject
     {
         $uxonAsArray = $uxon->toArray(CASE_LOWER);
 
@@ -358,12 +447,9 @@ class ValidatingBehavior extends AbstractBehavior
             return new UxonObject();
         }
 
-        $result = [];
-
-        foreach ($uxonAsArray as $key => $value) {
+        foreach ($uxonAsArray as $value) {
             if(is_array($value)) {
-                $renderedUxon = $this->resolvePlaceholders(new UxonObject($value), $prohibited, $propertyName);
-                $result[$key] = $renderedUxon->toArray();
+                $this->checkPlaceholders(new UxonObject($value), $prohibited, $propertyName);
             } else {
                  if(is_string($value)) {
                     foreach ($prohibited as $filterPhrase) {
@@ -371,17 +457,15 @@ class ValidatingBehavior extends AbstractBehavior
                         foreach ($placeHolders as $placeholder) {
                             if(str_contains($placeholder, $filterPhrase)) {
                                 $message = 'Placeholder [#'.$placeholder.'#] not supported for '.$propertyName.'!';
-                                throw new BehaviorRuntimeError($this, $message, self::PLACEHOLDER_ERROR_ALIASES[$filterPhrase]);
+                                throw new BehaviorRuntimeError($this, $message, '7X9TCJ3');
                             }
                         }
                     }
                  }
-
-                 $result[$key] = $value;
             }
         }
 
-        return new UxonObject($result);
+        return $uxon;
     }
 
     /**

@@ -11,11 +11,15 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 
 /**
- * A ColorIndicator will change it's color depending the value of it's attribute.
+ * A ColorIndicator will change it's color depending the value of it's attributes.
  * 
- * Colors can be defined as a simple `color_scale` (like in many other display widgets). The `color_scale`
+ * Colors can be defined as via
+ * 
+ * - `color_attribute_alias` if the color value is stored in the data source
+ * - a formula to calculate the color in the `color` property 
+ * - a `color_scale` (like in many other display widgets). The `color_scale`
  * is applied either to the value of the widget (e.g. defined by `attribute_alias`) or values of `color_attribute_alias`
- * if it is explicitly defined.
+ * or `color` if any of those are defined.
  * 
  * ## Examples
  * 
@@ -40,6 +44,24 @@ use exface\Core\DataTypes\NumberDataType;
  *  "widget_type": "ColorIndicator",
  *  "attribute_alias": "name",
  *  "color_attribute_alias": "percentage",
+ *  "color_scale": {
+ *      "0": "red",
+ *      "50": "yellow",
+ *      "100": "green"
+ *  }
+ * }
+ * 
+ * ```
+ * 
+ * ### Color scale based on a calculation
+ * 
+ * You can calculate the value used in a `color_scale` by using a formula in the `color` attribute:
+ * 
+ * ```
+ * {
+ *  "widget_type": "ColorIndicator",
+ *  "calculation": "=Concatenate(TASKS_DONE, ' of ', TASKS_TOTAL)",
+ *  "color": "=Percentage(TASKS_DONE, TASKS_TOTAL, 0)",
  *  "color_scale": {
  *      "0": "red",
  *      "50": "yellow",
@@ -148,7 +170,14 @@ class ColorIndicator extends Display implements iHaveColor
     }
     
     /**
-     * Use this fixed color
+     * A fixed color value or a formula to calculate the color/scale value
+     * 
+     * Examples:
+     * 
+     * - `red` - the indicator will always be red
+     * - `=Calc(ERROR_FLAG ? 'red', 'green')` - the color will be red if the attribute `ERROR_FLAG` is set and green otherwise
+     * - `=Calc(...)` + `color_scale` - if used in combination with the `color_scale` property, the result of the calculation
+     * will be concidered to be a value from the color scale.
      * 
      * @uxon-property color
      * @uxon-type color

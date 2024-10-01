@@ -6,13 +6,14 @@ use \DateTimeInterface;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
+use exface\Core\Interfaces\Filesystem\FileStreamInterface;
 
 /**
  * Contains information about a single local file - similar to PHPs splFileInfo.
  * 
  * @author Andrej Kabachnik
  */
-class LocalFileInfo implements FileInfoInterface
+class LocalFileInfo implements FileInfoInterface, FileStreamInterface
 {
     private $splFileInfo = null;
     
@@ -342,7 +343,7 @@ class LocalFileInfo implements FileInfoInterface
      */
     public function getType(): string
     {
-        $this->splFileInfo->getType();
+        return $this->splFileInfo->getType();
     }
     
     /**
@@ -353,5 +354,38 @@ class LocalFileInfo implements FileInfoInterface
     public function exists(): bool
     {
         return file_exists($this->getPathAbsolute());
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileStreamInterface::getStreamUrl()
+     */
+    public function getStreamUrl() : string
+    {
+        return $this->getPathAbsolute();
+    }
+
+    /**
+     * 
+     * @return \SplFileInfo
+     */
+    public function toSplFileInfo() : \SplFileInfo
+    {
+        return $this->splFileInfo;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Filesystem\FileInfoInterface::getMd5()
+     */
+    public function getMd5() : ?string
+    {
+        if ($this->isDir() || ! $this->exists()) {
+            return null;
+        }
+        $hash = md5_file($this->getPathAbsolute());
+        return $hash === false ? null : $hash;
     }
 }
