@@ -84,6 +84,8 @@ class MetaObject implements MetaObjectInterface
 
     private $data_source_id;
 
+    private $data_source = null;
+
     private $data_connection_alias = null;
 
     private $parent_objects = [];
@@ -784,6 +786,18 @@ class MetaObject implements MetaObjectInterface
     public function setDataSourceId($value) : MetaObjectInterface
     {
         $this->data_source_id = $value;
+        $this->data_source = null;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataSource()
+     */
+    public function setDataSource(DataSourceInterface $dataSource) : MetaObjectInterface
+    {
+        $this->data_source = $dataSource;
         return $this;
     }
     
@@ -794,7 +808,7 @@ class MetaObject implements MetaObjectInterface
      */
     public function hasDataSource() : bool
     {
-        return is_null($this->data_source_id) ? false : true;
+        return $this->data_source_id !== null || $this->data_source !== null;
     }
 
     /**
@@ -807,7 +821,7 @@ class MetaObject implements MetaObjectInterface
         if (! $this->hasDataSource()) {
             throw new MetaObjectHasNoDataSourceError($this, 'No data source is specified for object "' . $this->__toString() . '!');
         }
-        return $this->getWorkbench()->data()->getDataSource($this->data_source_id, $this->data_connection_alias);
+        return $this->data_source ?? $this->getWorkbench()->data()->getDataSource($this->data_source_id, $this->data_connection_alias);
     }
 
     /**
@@ -831,6 +845,7 @@ class MetaObject implements MetaObjectInterface
     public function setDataConnectionAlias($alias) : MetaObjectInterface
     {
         $this->data_connection_alias = $alias;
+        $this->data_source = null;
         return $this;
     }
 

@@ -1,7 +1,11 @@
 <?php
 namespace exface\Core\DataConnectors;
 
+use exface\Core\CommonLogic\AbstractDataConnector;
+use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
+use exface\Core\DataConnectors\Traits\IValidateFileIntegrityTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
@@ -15,19 +19,36 @@ use Symfony\Component\Finder\Finder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\ArrayDataType;
 
-class LocalFileConnector extends TransparentConnector
+/**
+ * Connector for local file system
+ * 
+ * ## Detecting corrupted files
+ * 
+ * Files sometimes may break in the process of writing them - e.g. through concurrent writes,
+ * file system glitches, etc. This connector allows to add some extra validations to detect
+ * this via 
+ * 
+ * - `validations_before_writing` - e.g. try to open the image in memory
+ * - `validations_before_writing` - e.g. double-check MD5 hash or try to open the saved image
+ * 
+ */
+class LocalFileConnector extends AbstractDataConnector
 {
+    use IDoNotSupportTransactionsTrait;
+
+    use IValidateFileIntegrityTrait;
 
     private $base_path = null;
     
     private $base_path_absolute = null;
 
     private $use_vendor_folder_as_base = false;
+    
+    private $error_if_file_not_found = false;
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performConnect()
      */
     protected function performConnect()
@@ -38,15 +59,45 @@ class LocalFileConnector extends TransparentConnector
     /**
      *
      * {@inheritdoc}
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::performDisconnect()
+     */
+    protected function performDisconnect()
+    {
+        return;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
      * @see \exface\Core\CommonLogic\AbstractDataConnector::performQuery()
      *
-     * @param FileDataQueryInterface
-     * @return FileDataQueryInterface
+     * @param FileDataQueryInterface|FileContentsDataQuery
+     * @return FileDataQueryInterface|FileContentsDataQuery
      */
     protected function performQuery(DataQueryInterface $query)
     {
-        if (! ($query instanceof FileDataQueryInterface)) {
-            throw new DataConnectionQueryTypeError($this, 'DataConnector "' . $this->getAliasWithNamespace() . '" expects an instance of FileDataQueryInterface as query, "' . get_class($query) . '" given instead!', '6T5W75J');
+        switch (true) {
+            case $query instanceof FileDataQueryInterface:
+                break;
+            // Transform legacy FileContentsDataQuery for backwards compatibility
+            case $query instanceof FileContentsDataQuery:
+                $fileContentsQuery = $query;
+                $query = new FileReadDataQuery();
+                if (null !== $val = $fileContentsQuery->getBasePath()) {
+                    $query->setBasePath($val);
+                }
+                if (null !== $val = $fileContentsQuery->getTimeZone()) {
+                    $query->setTimeZone($val);
+                }
+                if (null !== $val = $fileContentsQuery->getPathRelative()) {
+                    $query->addFilePath($val);
+                }
+                if (null !== $val = $fileContentsQuery->getPathAbsolute()) {
+                    $query->addFilePath($val);
+                }
+                break;
+            default:
+                throw new DataConnectionQueryTypeError($this, 'DataConnector "' . $this->getAliasWithNamespace() . '" expects an instance of FileDataQueryInterface as query, "' . get_class($query) . '" given instead!', '6T5W75J');
         }
         
         // If the query does not have a base path, use the base path of the connection
@@ -68,10 +119,24 @@ class LocalFileConnector extends TransparentConnector
         }
         
         if ($query instanceof FileWriteDataQuery) {
-            return $this->performWrite($query);
+            $queryPerformed = $this->performWrite($query);
         } else {
-            return $this->performRead($query);
+            $queryPerformed = $this->performRead($query);
         }
+
+        // If the original query was a legacy FileContentsDataQuery, fill it with information and return it
+        if ($fileContentsQuery !== null) {
+            foreach ($queryPerformed->getFiles() as $fileInfo) {
+                $fileContentsQuery->setFileContents($fileInfo->openFile()->read());
+                $fileContentsQuery->setFileExists($fileInfo->exists());
+                if ($fileInfo instanceof LocalFileInfo) {
+                    $fileContentsQuery->setFileInfo($fileInfo->toSplFileInfo());
+                }
+                return $fileContentsQuery;
+            }
+        }
+
+        return $queryPerformed;
     }
     
     /**
@@ -162,15 +227,18 @@ class LocalFileConnector extends TransparentConnector
     {
         $resultFiles = [];
         $fm = $this->getWorkbench()->filemanager();
-        
+        $filesToSave = $query->getFilesToSave(true);
+
+        $this->validateBeforeWriting($filesToSave);
         // Save files
-        foreach ($query->getFilesToSave(true) as $path => $content) {
+        foreach ($filesToSave as $path => $content) {
             if ($path === null) {
                 throw new DataQueryFailedError($query, 'Cannot write file with an empty path!');
             }
             $fm->dumpFile($path, $content ?? '');
             $resultFiles[] = new LocalFileInfo($path);
         }
+        $this->validateAfterWriting($resultFiles);
         
         // Delete files
         $deleteEmptyFolders = $query->getDeleteEmptyFolders();
@@ -290,5 +358,29 @@ class LocalFileConnector extends TransparentConnector
         $this->use_vendor_folder_as_base = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isErrorIfFileNotFound() : bool
+    {
+        return $this->error_if_file_not_found;
+    }
+    
+    /**
+     * Set to TRUE to throw an error if the file was not found instead of returning empty data.
+     * 
+     * @uxon-property error_if_file_not_found
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return LocalFileConnector
+     */
+    public function setErrorIfFileNotFound(bool $value) : LocalFileConnector
+    {
+        $this->error_if_file_not_found = $value;
+        return $this;
+    }
 }
-?>

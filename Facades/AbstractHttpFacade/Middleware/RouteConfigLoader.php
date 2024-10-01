@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use axenox\ETL\Common\AbstractOpenApiPrototype;
+use exface\Core\Exceptions\Facades\HttpBadRequestError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -75,8 +76,12 @@ class RouteConfigLoader implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $path = $request->getUri()->getPath();
-        $routeComponents = $this->extractUrlComponents($path, $this->basePath);
-        $routeData = $this->getRouteData($path, $routeComponents);
+        try {
+            $routeComponents = $this->extractUrlComponents($path, $this->basePath);
+            $routeData = $this->getRouteData($path, $routeComponents);
+        } catch (FacadeRoutingError $e) {
+            throw new HttpBadRequestError($request, $e->getMessage(), null, $e);
+        }
         
         if (null !== $json = $routeData[$this->routeConfigAttributeAlias]) {
             $this->facade->importUxonObject(UxonObject::fromJson($json));
@@ -130,6 +135,7 @@ class RouteConfigLoader implements MiddlewareInterface
      *
      * @param $url
      * @param $basePath
+     * @throws \exface\Core\Exceptions\Facades\FacadeRoutingError
      * @return array{webservice: string, version: string, route: string}
      */
     public static function extractUrlComponents($url, $basePath): array
@@ -139,7 +145,7 @@ class RouteConfigLoader implements MiddlewareInterface
 
         // Ensure we have at least webservice and version within the url
         if (count($components) < 2) {
-            throw new InvalidArgumentException('Requested URL ´' . $url . '´ is invalid.');
+            throw new FacadeRoutingError('Requested URL ´' . $url . '´ is invalid.');
         }
 
         $webservice = $components[0];

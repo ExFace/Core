@@ -85,9 +85,9 @@ abstract class ExpressionFactory
      * @param string $expression
      * @return ExpressionInterface
      */
-    public static function createForObject(MetaObjectInterface $object, string $expression) : ExpressionInterface
+    public static function createForObject(MetaObjectInterface $object, string $expression, bool $treatUnknownAsString = false) : ExpressionInterface
     {
-        return static::createFromString($object->getWorkbench(), $expression, $object);
+        return static::createFromString($object->getWorkbench(), $expression, $object, $treatUnknownAsString);
     }
 }
 ?>

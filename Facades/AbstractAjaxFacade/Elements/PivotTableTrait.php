@@ -15,11 +15,16 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  * ```
  * {
  *  "require": {
- *      "npm-asset/subtotal" : "1.11.0-alpha.0"
+ *      "npm-asset/pivottable" : "^2.23"
  *  }
  * }
  * 
  * ```
+ * 
+ * This trait also uses the pivottable-plugin Subtotal.js, but in an unstable version (1.11.0-alpha.0),
+ * so the code is included in the AbstractAjaxFacade instead of being loaded via Composer.
+ * The unstable alpha dependency would otherwise prevent stable core versions from being
+ * installed on environments, with `prefer-stable:true` in their composer.json.
  * 
  * If your facade is based on the `AbstractAjaxFacade`, add these configuration options
  * to the facade config file. Make sure, each config option points to an existing
@@ -29,8 +34,8 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  *  "LIBS.PIVOTTABLE.CORE.JS": "npm-asset/pivottable/dist/pivot.min.js",
  * 	"LIBS.PIVOTTABLE.CORE.CSS": "npm-asset/pivottable/dist/pivot.min.css",
  * 	"LIBS.PIVOTTABLE.LANG.JS": "npm-asset/pivottable/dist/pivot.[#lang#].js",
- * 	"LIBS.PIVOTTABLE.SUBTOTAL.JS": "npm-asset/subtotal/dist/subtotal.min.js",
- * 	"LIBS.PIVOTTABLE.SUBTOTAL.CSS": "npm-asset/subtotal/dist/subtotal.min.css",
+ * 	"LIBS.PIVOTTABLE.SUBTOTAL.JS": "exface/core/Facades/AbstractAjaxFacade/js/subtotal/dist/subtotal.min.js",
+ * 	"LIBS.PIVOTTABLE.SUBTOTAL.CSS": "exface/core/Facades/AbstractAjaxFacade/js/subtotal/dist/subtotal.min.css",
  * 	"LIBS.PIVOTTABLE.UI.JS": "npm-asset/jquery-ui/dist/jquery-ui.min.js",
  * 	"LIBS.PIVOTTABLE.UI.CSS": "npm-asset/jquery-ui/dist/themes/base/jquery-ui.min.css",
  * 	"LIBS.PIVOTTABLE.UI.THEME": "npm-asset/jquery-ui/dist/themes/base/theme.css",
@@ -260,17 +265,60 @@ JS;
     protected function buildJsAggregator(PivotValue $value) : string
     {
         $key = $value->getDataColumn()->getCaption();
-        switch ($value->getAggregator()) {
-            case AggregatorFunctionsDataType::SUM:
-                $type = $value->getDataType();
-                if (! ($type instanceof NumberDataType)) {
-                    throw new WidgetConfigurationError($this->getWidget(), 'Cannot use SUM aggregator on data type "' . $type->getAliasWithNamespace() . '"!');
-                }
-                $precision = $type->getPrecisionMin();
-                $aggregator = "$.pivotUtilities.aggregatorTemplates.sum($.pivotUtilities.numberFormat({digitsAfterDecimal: $precision}))";
+        $type = $value->getDataType();
+        switch (true) {
+            case $type instanceof NumberDataType && $type->getBase() === 10:
+                $formatterObj = [
+                    "digitsAfterDecimal" => $type->getPrecisionMin() ?? 1, 
+                    // "scaler": 1, // What is this?
+                    "thousandsSep" => $type->getGroupSeparator() ?? '', 
+                    "decimalSep" => $type->getDecimalSeparator(),
+                    "prefix" => $type->getPrefix() ?? '', 
+                    "suffix" => $type->getSuffix() ?? ''
+                ];
+                $formatterJs = "$.pivotUtilities.numberFormat(" . json_encode($formatterObj) . ")";
                 break;
+            default:
+                $formatterJs = '';
         }
-        return "aggregator: $aggregator(['{$key}'])";
+        // See https://github.com/nicolaskruchten/pivottable/blob/master/src/pivot.coffee
+        $aggr = $value->getAggregator();
+        switch ($aggr) {
+            case AggregatorFunctionsDataType::SUM:
+                if (! ($type instanceof NumberDataType)) {
+                    throw new WidgetConfigurationError($this->getWidget(), 'Cannot use ' . $aggr . ' aggregator on data type "' . $type->getAliasWithNamespace() . '"!');
+                }
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.sum({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::COUNT:
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.count({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                // TODO countUnique produces an infinite loop in JS for some reason... For now
+                // replaced by a simple count.
+                // $aggregator = "$.pivotUtilities.aggregatorTemplates.countUnique({$formatterJs})";
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.count({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::MAX:
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.max({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::MIN:
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.min({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::AVG:
+                if (! ($type instanceof NumberDataType)) {
+                    throw new WidgetConfigurationError($this->getWidget(), 'Cannot use ' . $aggr . ' aggregator on data type "' . $type->getAliasWithNamespace() . '"!');
+                }
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.average({$formatterJs})";
+                break;
+            case AggregatorFunctionsDataType::LIST_ALL:
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                $aggregator = "$.pivotUtilities.aggregatorTemplates.listUnique(',')";
+                break;
+            default:
+                throw new WidgetConfigurationError($this->getWidget(), 'Aggregator "' . $value->getAggregator() . '" not (yet) supported in disabled PivotTable widgets.');
+        }
+        return "aggregator: {$aggregator}(['{$key}'])";
     }
     
     /**

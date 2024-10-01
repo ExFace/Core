@@ -112,8 +112,8 @@ class AccessPermissionDeniedError extends AccessDeniedError implements Authoriza
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getStatusCode()
      */
-    public function getStatusCode()
+    public function getStatusCode(int $default = 403) : int
     {
-        return $this->getSubject()->isAnonymous() ? 401 : 403;
+        return parent::getStatusCode($this->getSubject()->isAnonymous() ? 401 : $default);
     }
 }

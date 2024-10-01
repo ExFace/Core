@@ -13,9 +13,9 @@ trait PrefixedPlaceholderTrait
 {
     /**
      * 
-     * @param array $placeholders
+     * @param string[] $placeholders
      * @param string $prefix
-     * @return array
+     * @return string[]
      */
     protected function filterPlaceholders(array $placeholders, string $prefix) : array
     {

@@ -37,6 +37,8 @@
 	"ACTION.EXPORTDATA.NAME": "Export",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
 	"ACTION.EXPORTJSON.NAME": "Export JSON",
+	"ACTION.EXPORTJPEG.NAME": "Export JPG",
+	"ACTION.EXPORTPNG.NAME": "Export PNG",
 	"ACTION.EXPORTXLSX.NAME": "Export Excel",
 	"ACTION.EXPORTXLSX.USERNAME": "Username",
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Date and time of export",
@@ -139,6 +141,8 @@
 	
 	"BEHAVIOR.TRANSLATABLE.TRANSLATE_BUTTON_CAPTION": "Übersetzen",
 	"BEHAVIOR.TRANSLATABLE.TRANSLATION_FILE": "Translation file",
+	
+	"BEHAVIOR.VALIDATINGBEHAVIOR.LINE": "Lines",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
     

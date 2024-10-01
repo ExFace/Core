@@ -60,6 +60,7 @@ class DataLookupDialog extends Dialog
             $data_table = WidgetFactory::create($this->getPage(), 'DataTableResponsive', $this);
             $data_table->setMetaObject($this->getMetaObject());
             $data_table->setMultiSelect($this->getMultiSelect());
+            $data_table->setMultiSelectSavedOnNavigation(true);
             $data_table->getPaginator()->setCountAllRows(false);
             
             // If the table has no columns, determine them from the model

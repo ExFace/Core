@@ -90,20 +90,22 @@ class SymfonyTokenStream implements FormulaTokenStreamInterface
                     continue;
                 }
                 //if token is preceeded by a ':' it might be an aggregation, so check that, else it's a formula
-                if ($tokens[$i-1]['punctuation'] !== ':' && AggregatorFunctionsDataType::isValidStaticValue($name) === false) {
-                    //if the token is followd by a '.' ist a formula with namespace, therefor buffer the token
-                    if ($tokens[$i+1]['punctuation'] === $delim) {
-                        $buffer .= $name . $delim;
-                        continue;
+                if ($tokens[$i-1]['punctuation'] === ':' && AggregatorFunctionsDataType::isValidStaticValue($name) === true) {
+                    continue;
+                }
+                
+                //if the token is followd by a '.' ist a formula with namespace, therefor buffer the token
+                if ($tokens[$i+1]['punctuation'] === $delim) {
+                    $buffer .= $name . $delim;
+                    continue;
+                }
+                if ($tokens[$i+1]['punctuation'] === '(') {
+                    if ($tokens[$i-1]['punctuation'] === $delim && $buffer) {
+                        $forms[] = $buffer . $name;
+                    } else {
+                        $forms[] = $name;
                     }
-                    if ($tokens[$i+1]['punctuation'] === '(') {
-                        if ($tokens[$i-1]['punctuation'] === $delim && $buffer) {
-                            $forms[] = $buffer . $name;
-                        } else {
-                            $forms[] = $name;
-                        }
-                        $buffer = null;
-                    }
+                    $buffer = null;
                 }
             }            
             $this->formulas = $forms;

@@ -72,12 +72,20 @@ class PrintPreview extends GoToUrl
         }
         $previewSheet = DataSheetFactory::createFromObject($printAction->getMetaObject());
         $previewSheet->getColumns()->addFromUidAttribute();
-        $labelCol = $previewSheet->getColumns()->addFromLabelAttribute();
+
+        if($previewSheet->getMetaObject()->hasLabelAttribute()){
+            $labelCol = $previewSheet->getColumns()->addFromLabelAttribute();
+        }
+
         if ($previewDataLabel === null || $previewDataLabel === '') {
             $previewSheet->getSorters()->addFromString($printAction->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::DESC);
         } else {
             $previewCondGrp = ConditionGroupFactory::createOR($previewSheet->getMetaObject());
-            $previewCondGrp->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+
+            if(isset($labelCol) && $labelCol !== null) {
+                $previewCondGrp->addConditionFromAttribute($labelCol->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
+            }
+
             $previewCondGrp->addConditionFromAttribute($previewSheet->getUidColumn()->getAttribute(), $previewDataLabel, ComparatorDataType::EQUALS);
             $previewSheet->setFilters($previewCondGrp);
         }
@@ -92,7 +100,7 @@ class PrintPreview extends GoToUrl
             $result = ResultFactory::createHTMLResult($task, $preview);
         } else {
             if ($this->getCallActionInsteadOfPreview() === false) {
-                $prints = $printAction->renderTemplate($previewSheet);
+                $prints = $printAction->renderPreviewHTML($previewSheet);
                 $preview = reset($prints);
 
                 try {

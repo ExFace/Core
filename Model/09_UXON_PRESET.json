@@ -5391,6 +5391,35 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface\/core\/Uxon\/Thumbnails\/input\/select_multi.gif"
+        },
+        {
+            "CREATED_ON": "2024-09-13 16:30:06",
+            "MODIFIED_ON": "2024-09-13 16:31:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11efba6bac5d5b38ba6b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Validate value by comparing to old value",
+            "DESCRIPTION": "This behavior will check, if the new value of an attribute is greater, than the old one every time this attribute is updated.",
+            "PROTOTYPE": "exface\/Core\/Behaviors\/ValidatingBehavior.php",
+            "UXON": {
+                "invalid_if_on_update": [
+                    {
+                        "error_text": "\/\/ Error text here - e.g. 'The new value must be always greater than the old one'",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "MY_ATTR \/\/ REPLACE WITH THE ATTRIBUTE TO CHECK",
+                                "comparator": "<",
+                                "value": "[#~old:MY_ATTR#]"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "behavior",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],

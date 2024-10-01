@@ -1,8 +1,10 @@
 <?php
 namespace exface\Core\Events\DataSheet;
 
+use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
@@ -46,9 +48,9 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
      *
      * Use this if the event handler fills the data sheet.
      *
-     * @return OnBeforeUpdateDataEvent
+     * @return EventInterface
      */
-    public function preventUpdate() : OnBeforeUpdateDataEvent
+    public function preventUpdate() : EventInterface
     {
         return $this->preventDefault();
     }
@@ -211,6 +213,8 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
      * In a sence, this method is what you would get by calling $newCol->getValues(), but only for
      * those values, that will change with this update.
      * 
+     * Will return NULL if no comparison is possible (e.g. for aggregated data)
+     * 
      * @param DataColumnInterface $newCol
      * @return array|NULL
      */
@@ -218,7 +222,15 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
     {
         $newData = $this->getDataSheet();
         
+        // Cannot compute changes for aggregated data. Reading old data would probably be
+        // possible, but we would not be able to compare rows reliably without UIDs
         if ($newData->hasAggregations()) {
+            return null;
+        }
+
+        // Cannot compute changes for subsheets. At least, it is not quite clear, how to
+        // compare subsheets. Not sure, if we can reliably read subsheets too...
+        if ($newCol->getDataType() instanceof DataSheetDataType) {
             return null;
         }
         

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
@@ -21,11 +22,25 @@ use exface\Core\DataTypes\StringDataType;
  * Important onfiguration options:
  * 
  * - `data_sheet` to load the data 
+ * - `outer_template` to wrap all the rendered `row_templates` adding a common title or similar
+ * - `outer_template_if_empty` - replaces `outer_template` if there are no data rows
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
  * `[#thisPlacehlderName:some_attribute#]`, `[#thisPlacehlderName:=Formula()#]`.
  * - `row_delimiter` to define a custom separator between row templates - e.g. a comma
- * - `outer_template` to wrap all the rendered `row_templates` adding a common title or similar
+ * - `row_template_if_empty` - replaces the row template if there are no data rows, but you
+ * wish to still render the `outer_template` (e.g. table headers or so).
  * - `data_placeholders` to add nested structures of the same type
+ * 
+ * ### Handling empty data
+ * 
+ * There are different ways to handle empty data:
+ * 
+ * - by default all placeholders will be empty, so the entire `outer_template`
+ * will disappear if there is no data.
+ * - `outer_template_if_empty` will replace the entire outer template
+ * - `row_template_if_empty` will use the regular `outer_template`, but
+ * will place a "fake" row generated from this template inside of it
+ * instead of regular rows. 
  * 
  * ## Examples 
  * 
@@ -116,6 +131,8 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     
     private $rowTpl = '';
     
+    private $rowTplIfEmpty = null;
+    
     private $rowRenderer = null;
     
     private $workbench = null;
@@ -123,6 +140,8 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     private $prefix = null;
     
     private $outerTemplate = null;
+
+    private $outerTemplateIfEmpty = null;
     
     private $rowDelimiter = '';
     
@@ -155,6 +174,7 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     {     
         $phValsSheet = $this->getDataSheet();
         $phValsSheet->dataRead();
+        $noData = $phValsSheet->isEmpty(false);
         $dataPhsUxon = $this->getDataPlaceholdersUxon();
         $phRowTpl = $this->getRowTemplate();
         
@@ -164,6 +184,7 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
         $legacyPrefix = '~data:';
         $legacyPrefixFound = stripos($phRowTpl, '[#' . $legacyPrefix) !== false;
         
+        // Render row placeholders (only happens if data was found!)
         $rowsRendered = [];
         foreach (array_keys($phValsSheet->getRows()) as $rowNo) {
             $currentRowRenderer = $this->rowRenderer->copy();
@@ -203,10 +224,32 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
             
             $rowsRendered[] = $currentRowRenderer->render($phRowTpl);
         }
-        $phRendered = implode($this->getRowDelimiter(), $rowsRendered);
-        
-        if (! $phValsSheet->isEmpty(false) && null !== $outerTpl = $this->getOuterTemplate()) {
-            $phRendered = StringDataType::replacePlaceholder($outerTpl, '~rows', $phRendered); 
+
+        $outerTpl = $this->getOuterTemplate();
+        if ($noData) {
+            $outerTplIfEmpty = $this->getOuterTemplateIfEmpty();
+            $rowTplIfEmpty = $this->getRowTemplateIfEmpty();
+            switch (true) {
+                case $outerTplIfEmpty !== null && $rowTplIfEmpty !== null:
+                    throw new UnexpectedValueException('Cannot use `row_template_if_empty` and `outer_template_if_empty` at the same time in template placeholder "' . $this->placeholder . '"');
+                case $outerTplIfEmpty !== null:
+                    $phRendered = $outerTplIfEmpty;
+                    break;
+                case $rowTplIfEmpty !== null:
+                    if (null !== $outerTpl) {
+                        $phRendered = StringDataType::replacePlaceholder($outerTpl, '~rows', $rowTplIfEmpty); 
+                    } else {
+                        $phRendered = $rowTplIfEmpty;
+                    }
+                    break;
+                default:
+                    $phRendered = '';
+            }
+        } else {
+            $phRendered = implode($this->getRowDelimiter(), $rowsRendered);
+            if (null !== $outerTpl) {
+                $phRendered = StringDataType::replacePlaceholder($outerTpl, '~rows', $phRendered); 
+            }
         }
         
         return [$this->placeholder => $phRendered];
@@ -268,6 +311,46 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
         $this->rowTpl = $value;
         return $this;
     }
+
+    /**
+     * 
+     * @return string
+     */
+    protected function getRowTemplateIfEmpty() : ?string
+    {
+        return $this->rowTplIfEmpty;
+    }
+
+    /**
+     * The template string to generate an empty row if there is no data.
+     * 
+     * NOTE: if this template is defined, the `outer_template` will still
+     * be used with empty data! Make sure, that this row template fits into
+     * the outer template - e.g. if using and HTML table with 3 columns in the 
+     * outer template, the `row_template_if_empty` should still be a row and
+     * span the right number of columns: e.g. `<tr><td colspan="3">No data</td></tr>`.
+     * 
+     * There are different ways to handle empty data:
+     * 
+     * - by default all placeholders will be empty, so the entire `outer_template`
+     * will disappear if there is no data.
+     * - `outer_template_if_empty` will replace the entire outer template
+     * - `row_template_if_empty` will use the regular `outer_template`, but
+     * will place a "fake" row generated from this template inside of it
+     * instead of regular rows. 
+     * 
+     * @uxon-property row_template_if_empty
+     * @uxon-type string
+     * @uxon-template <tr><td colspan="">No data</td></tr>
+     * 
+     * @param string $value
+     * @return \exface\Core\Templates\Placeholders\DataSheetPlaceholder
+     */
+    protected function setRowTemplateIfEmpty(string $value) : DataSheetPlaceholder
+    {
+        $this->rowTplIfEmpty = $value;
+        return $this;
+    }
     
     protected function getDataPlaceholdersUxon() : ?UxonObject
     {
@@ -315,6 +398,40 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     protected function setOuterTemplate(string $value) : DataSheetPlaceholder
     {
         $this->outerTemplate = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    protected function getOuterTemplateIfEmpty() : ?string
+    {
+        return $this->outerTemplateIfEmpty;
+    }
+    
+    /**
+     * A replacement for `outer_template` in case there is no data
+     * 
+     * There are different ways to handle empty data:
+     * 
+     * - by default all placeholders will be empty, so the entire `outer_template`
+     * will disappear if there is no data.
+     * - `outer_template_if_empty` will replace the entire outer template
+     * - `row_template_if_empty` will use the regular `outer_template`, but
+     * will place a "fake" row generated from this template inside of it
+     * instead of regular rows. 
+     * 
+     * @uxon-property outer_template_if_empty
+     * @uxon-type string
+     * @uxon-template No data
+     * 
+     * @param string $value
+     * @return DataSheetPlaceholder
+     */
+    protected function setOuterTemplateIfEmpty(string $value) : DataSheetPlaceholder
+    {
+        $this->outerTemplateIfEmpty = $value;
         return $this;
     }
     

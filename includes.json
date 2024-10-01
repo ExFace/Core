@@ -9,6 +9,18 @@
         	"https://github.com/alnorris/SVG-Sanitizer/blob/master/LICENSE"
         ],
         "description": "Whitelist-based PHP SVG sanitizer",
-        "homepage": "https://github.com/alnorris/SVG-Sanitizer/tree/master"
+        "homepage": "https://github.com/alnorris/SVG-Sanitizer"
+    }, 
+    {
+        "name": "mk-j/php_xlsxwriter",
+        "version": "0.37",
+        "license": [
+	        "MIT"
+	    ],
+        "license_link": [
+        	"https://github.com/mk-j/PHP_XLSXWriter/blob/master/LICENSE"
+        ],
+        "description": "Lightweight XLSX Excel Spreadsheet Writer in PHP",
+        "homepage": "https://github.com/mk-j/PHP_XLSXWriter"
     }
 ]

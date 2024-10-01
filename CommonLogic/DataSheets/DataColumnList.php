@@ -76,7 +76,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             return $this;            
         }
         
-        return $result;
+        return $this;
     }
 
     /**

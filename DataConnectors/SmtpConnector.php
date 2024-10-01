@@ -1,7 +1,8 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
+use exface\Core\CommonLogic\AbstractDataConnector;
+use exface\Core\DataConnectors\Traits\IDoNotSupportTransactionsTrait;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
@@ -75,8 +76,10 @@ use Symfony\Component\Mailer\SentMessage;
  * @author Andrej Kabachnik
  *
  */
-class SmtpConnector extends AbstractDataConnectorWithoutTransactions implements CommunicationConnectionInterface
+class SmtpConnector extends AbstractDataConnector implements CommunicationConnectionInterface
 {
+    use IDoNotSupportTransactionsTrait;
+
     private $dsn = null;
     
     private $scheme = null;
