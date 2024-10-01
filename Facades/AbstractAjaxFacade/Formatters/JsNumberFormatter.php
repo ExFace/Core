@@ -65,7 +65,7 @@ JS;
                 return sEmpty;
             }
 			fNum = {$this->buildJsFormatParser('mNumber')};
-            if (isNaN(fNum)) {
+            if (isNaN(fNum) || fNum === null) {
                 return mNumber;
             }
             sNum = fNum.toLocaleString(
