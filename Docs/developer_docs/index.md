@@ -8,8 +8,9 @@
  - [Installing an app](App_installers/index.md) - initializing app dependencies like SQL schemas, facade routes, etc.
 3. [The workbench in detail](workbench.md)
 4. [Using metamodel components in the code via selectors](Using_metamodel_components_in_the_code_via_selectors.md)
-5. [Moving model components between apps](Moving_objects_to_another_app.md)
-6. [Working offline](Offline/index.md)
+5. [Logging](Logging/index.md)
+6. [Moving model components between apps](Moving_objects_to_another_app.md)
+7. [Working offline](Offline/index.md)
 
 ## Technical overview
 
