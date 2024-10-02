@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iUseData;
@@ -65,7 +67,7 @@ class MapConfigurator extends DataConfigurator
     *
     * @return Filter[]
     */
-    public function getFilters()
+    public function getFilters() : array
     {
         $array = [];
         foreach ($this->getMap()->getLayers() as $layer) {
@@ -84,7 +86,7 @@ class MapConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::setFilters()
      */
-    public function setFilters(UxonObject $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
         throw new WidgetConfigurationError($this, 'Cannot add filters to a map directly - only to data layers!');
     }
@@ -94,7 +96,7 @@ class MapConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget)
+    public function addFilter(WidgetInterface $filter_widget) : iHaveFilters
     {
         throw new WidgetConfigurationError($this, 'Cannot add filters to a map directly - only to data layers!');
     }
