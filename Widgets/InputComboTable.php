@@ -256,7 +256,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // Add a quick-search filter over the text-attribute to make sure quick search works correctly
         // even if the table object has no alias!
         $table->addFilter(
-            $table->getConfiguratorWidget()->createFilterWidget($this->getTextAttributeAlias())
+            $table->getConfiguratorWidget()->createFilterForAttributeAlias($this->getTextAttributeAlias())
             ->setHidden(true)
             ->setIncludeInQuickSearch(true)
         );
@@ -272,7 +272,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             // which is not a valid value. This probably needs to be fixed by implementing
             // live refs in Filter widgets with a custom condition_group.
             if (false === $filterProp->hasWidgetLinks()) {
-                $additionalFilter = $table->getConfiguratorWidget()->createFilterWidget(null, new UxonObject([
+                $additionalFilter = $table->getConfiguratorWidget()->createFilter(null, new UxonObject([
                     'hidden' => true,
                     'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
                 ]));
@@ -382,7 +382,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // If not, the quick search would only get performed on the object label, which is not neccessarily 
         // the text attribute of the widget. And object without a label would not work at all
         if (! $tableObj->hasLabelAttribute() || $this->getTextAttribute() !== $tableObj->getLabelAttribute()) {
-            $quickSearchFilter = $table->getConfiguratorWidget()->createFilterWidget($this->getTextAttributeAlias(), new UxonObject([
+            $quickSearchFilter = $table->getConfiguratorWidget()->createFilterForAttributeAlias($this->getTextAttributeAlias(), new UxonObject([
                 'hidden' => true
             ]));
             $table->addFilter($quickSearchFilter, true);

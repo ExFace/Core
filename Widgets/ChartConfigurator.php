@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveFilters;
 
 /**
  * A configurator widget for charts with filters, sorters and chart-specific options.
@@ -62,7 +64,7 @@ class ChartConfigurator extends DataConfigurator
     *
     * @return Filter[]
     */
-    public function getFilters()
+    public function getFilters() : array
     {
         return $this->getDataConfigurator()->getFilters();
     }
@@ -72,7 +74,7 @@ class ChartConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::setFilters()
      */
-    public function setFilters(UxonObject $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects) : iHaveFilters
     {
         $this->getDataConfigurator()->setFilters($uxon_objects);
         return $this;
@@ -83,7 +85,7 @@ class ChartConfigurator extends DataConfigurator
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataConfigurator::addFilter()
      */
-    public function addFilter(AbstractWidget $filter_widget)
+    public function addFilter(WidgetInterface $filter_widget) : iHaveFilters
     {
         $this->getDataConfigurator()->addFilter($filter_widget);
         return $this;
