@@ -185,6 +185,55 @@ self.addEventListener('sync', function(event) {
 
 	var _pwa = {
 
+		isVirtuallyOffline: false,
+
+		setVirtuallyOffline: function (status) {
+			this.isVirtuallyOffline = status;
+			if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+				navigator.serviceWorker.controller.postMessage({
+					action: status ? 'virtuallyOfflineEnabled' : 'virtuallyOfflineDisabled'
+				});
+			}
+		},
+
+		isSemiOffline: async function () {
+			const status = await this.data.getLatestConnectionStatus();
+			return status === NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+		},
+
+		getLatestConnectionStatus: function () {
+            return checkIndexedDB()
+                .then((exists) => {
+                    if (!exists) {
+                        return Promise.reject("IndexedDB does not exist");
+                    }
+
+                    if (_error) {
+                        return Promise.reject("IndexedDB error");
+                    }
+
+                    return _connectionTable
+                        .orderBy('time')
+                        .last()
+                        .then(function (lastRecord) {
+                            if (lastRecord) {
+                                return Promise.resolve(lastRecord.status);
+                            } else {
+                                return Promise.resolve('online'); // Default to online if no records exist
+                            }
+                        })
+                        .catch(function (error) {
+                            console.error("Error retrieving latest connection status:", error);
+                            return Promise.reject(error);
+                        });
+                })
+                .catch((error) => {
+                    console.error("Error checking IndexedDB:", error);
+                    return Promise.reject(error);
+                });
+        },
+
+		
 		/**
 		 * @return {bool}
 		 */
