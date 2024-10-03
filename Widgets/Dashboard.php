@@ -181,7 +181,7 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
      * Map filters of the dashboard to filters of child widgets, so that they automatically get the value of the dashboard filter
      * 
      * @uxon-property filters_apply_to
-     * @uxon-type object
+     * @uxon-type \exface\Core\Widgets\Parts\DataFilterMapping[]
      * @uxon-template {"// dashboard filter attribute alias": [{"object_alias": "", "filter": {"attribute_alias": ""}}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $uxon
