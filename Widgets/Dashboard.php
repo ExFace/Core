@@ -316,6 +316,8 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
                         $uxonTpl->setProperty('value', $filterLinkValue);
                         if ($this->getFiltersAppliedHidden()) {
                             $uxonTpl->setProperty('hidden', true);
+                        } else {
+                            $uxonTpl->setProperty('input_widget', new UxonObject(['widget_type' => 'Input']));
                         }
                         $child->addFilter($child->createFilter($uxonTpl));
                     }
