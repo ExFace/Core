@@ -208,9 +208,9 @@ self.addEventListener('sync', function(event) {
                         return Promise.reject("IndexedDB does not exist");
                     }
 
-                    if (_error) {
-                        return Promise.reject("IndexedDB error");
-                    }
+                    // if (_error) {
+                    //     return Promise.reject("IndexedDB error");
+                    // }
 
                     return _connectionTable
                         .orderBy('time')
@@ -897,37 +897,33 @@ self.addEventListener('sync', function(event) {
 			*                     or does nothing if the status is the same as the last saved status.
 			*/
 			saveConnectionStatus: function (status) {
-						// Check for any IndexedDB errors
-						if (exfPWA.isAvailable() === false) {
-							return Promise.resolve(status);
-						}
-
+				if (exfPWA.isAvailable() === false) {
+					return Promise.resolve(status);
+				}
+			
+				// If the last saved status is the same, don't create a new record
+				if (this._lastSavedConnectionStatus === status) {
+					return Promise.resolve();
+				}
+			
 				var currentTime = new Date();
-
-				// Fetch the last saved connection status
-				return _connectionTable.orderBy('time').last()
-				.then(function (lastRecord) {
-					// If the last status is the same, do nothing
-					if (lastRecord && lastRecord.status === status) {
-						return Promise.resolve();
-					} else {
-						// If the status is different, save the new status
-						var connectionData = {
-							status: status,
-							time: currentTime
-						};
-						return _connectionTable.put(connectionData)
-							.then(function () {
-								return Promise.resolve();
-							});
-					}
-				})
-				.catch(function (error) {
-					//console.error("Error saving connection status:", error);
-					return Promise.reject(error);
-				});
+				var connectionData = {
+					status: status,
+					time: currentTime
+				};
+			
+				return _connectionTable.put(connectionData)
+					.then(() => {
+						this._lastSavedConnectionStatus = status;
+						console.log('Connection status saved:', status);
+					})
+					.catch((error) => {
+						console.error("Error saving connection status:", error);
+						return Promise.reject(error);
+					});
 			},
 
+			_lastSavedConnectionStatus: null,
 			/**
 			 * Retrieves all network stats from the IndexedDB.
 			 * @return {promise}
@@ -987,7 +983,7 @@ self.addEventListener('sync', function(event) {
 						return Promise.reject(error);
 					});
 			},
-
+ 
 			/**
 			 * Deletes all network stats in the IndexedDB that were recorded before the specified timestamp.
 			 * @param {number} timestamp - The timestamp to check against.
