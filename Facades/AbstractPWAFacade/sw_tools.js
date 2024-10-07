@@ -220,7 +220,7 @@ const swTools = {
 			
 			return {
 				handle: async ({ event, request, ...params }) => {
-					var isSemiOffline = await swTools.checkNetworkStatus() === NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+					var isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
 					if (isSemiOffline || self.isVirtuallyOffline) {
 						console.log('Using offline strategy for:', request.url);
 						return offlineStrategy.handle({ event, request, ...params });
