@@ -25,7 +25,13 @@ trait JqueryFilterTrait {
         if ($widget->getAttributeAlias() === '' || $widget->getAttributeAlias() === null) {
             throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
         }
-        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+        return '{'.
+            'expression: "' . $widget->getAttributeAlias() . '", '.
+            'comparator: ' . $this->buildJsComparatorGetter() . ', '.
+            'value: ' . $value . ', '.
+            'object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '", '.
+            'apply_to_aggregates: "' . $widget->appliesToAggregatedValues() . '"'.
+        '}';
     }
     
     public function buildJsCustomConditionGroup($valueJs = null) : string
@@ -34,7 +40,7 @@ trait JqueryFilterTrait {
         if ($widget->hasCustomConditionGroup() === false) {
             return '';
         }
-        
+
         $jsonWithValuePlaceholder = $widget->getCustomConditionGroup()->exportUxonObject()->toJson(false);
         return str_replace('"[#value#]"', $valueJs ?? $this->buildJsValueGetter(), $jsonWithValuePlaceholder);
     }

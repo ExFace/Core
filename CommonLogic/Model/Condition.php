@@ -72,6 +72,8 @@ class Condition implements ConditionInterface
     
     private $ignoreEmptyValues = null;
 
+    private bool $applyToAggregates = true;
+
     /**
      * @deprecated use ConditionFactory instead!
      * 
@@ -473,6 +475,8 @@ class Condition implements ConditionInterface
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
         }
+        $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+
         return $uxon;
     }
 
@@ -567,9 +571,15 @@ class Condition implements ConditionInterface
             if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
             }
+
             if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-                $this->setIgnoreEmptyValues($ignoreEmpty);
+                $this->setIgnoreEmptyValues(filter_var($ignoreEmpty, FILTER_VALIDATE_BOOLEAN));
             }
+
+            if(null !== $applyToAggregates = $uxon->getProperty('apply_to_aggregates')) {
+                $this->setApplyToAggregates(filter_var($applyToAggregates, FILTER_VALIDATE_BOOLEAN));
+            }
+
             if ($uxon->hasProperty('value') || $value !== null){
                 $value = $value ?? $uxon->getProperty('value');
                 // Apply th evalue only if it is not empty or ignore_empty_values is off
@@ -794,5 +804,34 @@ class Condition implements ConditionInterface
     public function willIgnoreEmptyValues() : bool
     {
         return $this->ignoreEmptyValues;
+    }
+
+    /**
+     * If set to FALSE this condition will not be applied to aggregated values.
+     *
+     * This can be used to fine-tune filters for instance.
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->applyToAggregates = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->applyToAggregates;
     }
 }

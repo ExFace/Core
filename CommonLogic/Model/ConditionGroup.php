@@ -436,7 +436,7 @@ class ConditionGroup implements ConditionGroupInterface
         try {
             $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
             if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-                $this->setIgnoreEmptyValues($ignoreEmpty);
+                $this->setIgnoreEmptyValues(filter_var($ignoreEmpty, FILTER_VALIDATE_BOOLEAN));
             }
             if ($uxon->hasProperty('base_object_alias')) {
                 $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));
