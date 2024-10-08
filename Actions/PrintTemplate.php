@@ -269,6 +269,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
                 $tpl = $this->getMetaObject()->getName();
             }
             $tpl .= '_' . date('Y_m_d_His', time());
+            $tpl .= $this->getFileExtensionDefault();
         } else {
             $tpl = $this->filename;
         }

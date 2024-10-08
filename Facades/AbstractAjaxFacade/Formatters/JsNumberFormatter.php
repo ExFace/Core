@@ -64,8 +64,8 @@ JS;
             if ((mNumber === null || mNumber === undefined || mNumber === '') && sEmpty !== '') {
                 return sEmpty;
             }
-			fNum = parseFloat({$this->buildJsFormatParser('mNumber')});
-            if (isNaN(fNum)) {
+			fNum = {$this->buildJsFormatParser('mNumber')};
+            if (isNaN(fNum) || fNum === null) {
                 return mNumber;
             }
             sNum = fNum.toLocaleString(
@@ -126,7 +126,10 @@ JS;
             }
             if (mNumber === '' || mNumber === $emptyFormatJs) return null;
             mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
-            return mNumber;
+            // Return as number because otherwise comparisons between 100 and 100.00 will fail! The comparator logic cannot
+            // know, whether the value was inteded to be a number, so it is important to parse a numeric string to a real
+            // JS number!
+            return mNumber === '' ? null : parseFloat(mNumber);
         }({$jsInput})
 JS;
     }

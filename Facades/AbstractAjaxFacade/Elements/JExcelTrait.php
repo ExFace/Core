@@ -583,7 +583,9 @@ JS;
             if (mInitVal === undefined || mInitVal === null) {
                 mInitVal = '';
             } else {
-                //mInitVal = oCol.formatter ? oCol.formatter(mInitVal) : mInitVal;
+                // Make sure to parse the initial value too! For example, a decimal would be `100.00`
+                // as raw (initial) data and `100` once edited in the spreadsheet.
+                mInitVal = oCol.parser ? oCol.parser(mInitVal) : mInitVal;
             }
 
             // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
@@ -616,7 +618,7 @@ JS;
         },
         validateValue: function(iCol, iRow, mValue) {
             var oColModel = this.getColumnModel(iCol);
-            var fnValidator = oColModel.validator;console.log('validate', oColModel);
+            var fnValidator = oColModel.validator;
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
             }            
@@ -1912,7 +1914,6 @@ JS;
         return bRequired ? false : true;
     }
     jqExcel[0].exfWidget.validateAll();
-    console.log(jqExcel.find('.exf-spreadsheet-invalid'));
 })({$this->buildJsJqueryElement()})
 
 JS;
