@@ -272,7 +272,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
             // which is not a valid value. This probably needs to be fixed by implementing
             // live refs in Filter widgets with a custom condition_group.
             if (false === $filterProp->hasWidgetLinks()) {
-                $additionalFilter = $table->getConfiguratorWidget()->createFilter(null, new UxonObject([
+                $additionalFilter = $table->getConfiguratorWidget()->createFilter(new UxonObject([
                     'hidden' => true,
                     'condition_group' => $filterProp->getConditionGroup()->exportUxonObject()->toArray()
                 ]));
