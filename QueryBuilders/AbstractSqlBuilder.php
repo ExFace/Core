@@ -2227,7 +2227,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * This is mainly used to handle filters over reversed relations, but also
      * for filters on joined columns in UPDATE queries, where the main query
      * does not support joining. The optional parameter $rely_on_joins controls
-     * whether the method can rely on the main query have all neccessary joins.
+     * whether the method can rely on the main query to have all necessary joins.
      *
      * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
@@ -2277,20 +2277,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
                 // subquery should GROUP BY these kees.
                 if ($qpart->getAggregator()) {
-                    // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a litte in certain cases:
+                    // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a little in certain cases:
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter
-                    // without any aggregation and it should yield the same results
+                    // without any aggregation, and it should yield the same results
                     $rel_filter_alias .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                     $relq->addAggregation($start_rel->getRightKeyAttribute()->getAlias());
                     
                     // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
                     // over the aggregated value. However, there might be other filters, that affect this aggregated
                     // value: e.g. as SUM over transactions for a product will be different depending on the store
-                    // filter set for the query. So we need all applicale non-aggregating filters in our subquery.
+                    // filter set for the query. So we need all applicable non-aggregating filters in our subquery.
                     // This is achieved by rebasing all filters with the following filter callback, that excludes
                     // certain conditions.
                     $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
-                        // If the condition is not an attribute, keep it - other partsof the code will deal with it
+                        // If the condition is not an attribute, keep it - other parts of the code will deal with it
                         if (! $condition->getExpression()->isMetaAttribute()) {
                             return true;
                         }
@@ -2299,7 +2299,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         if ($condition->getExpression()->toString() === $qpart->getExpression()->toString()){
                             return false;
                         }
-                        // If a conditon  has an aggregator itself - skip it as it will get it's own subquery.
+                        // If a condition  has an aggregator itself - skip it as it will get its own subquery.
                         if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condition->getExpression()->toString())) {
                             return false;
                         }
