@@ -25,7 +25,7 @@ self.addEventListener('sync', function(event) {
 			global.exfPWA = factory(global.Dexie, global.$)
 }(this, (function (Dexie, $) {
 
-	var _error = null;
+	var _indexedDbInitError = null;
 
 	var _db = function () {
 		var dexie = new Dexie('exf-offline');
@@ -48,13 +48,13 @@ self.addEventListener('sync', function(event) {
 			'offlineModel': 'url',
 			'actionQueue': '&id, object, action',
 			'deviceId': 'id',
-			'networkStat': 'time, speed, mime_type, size',
+			'networkStat': 'time',
 			'connection': 'time, status',
 			'autoOfflineToggle': '&id, status' 
 		});
 
 		dexie.open().catch(function (e) {
-			_error = e;
+			_indexedDbInitError = e;
 			console.error("PWA error: " + e.stack);
 		});
 		return dexie;
@@ -63,7 +63,7 @@ self.addEventListener('sync', function(event) {
 	var _deviceId;
 	var _queueTopics = ['offlineTask'];
 
-	if (_error === null) {
+	if (_indexedDbInitError === null) {
 		var _dataTable = _db.table('offlineData');
 		var _modelTable = _db.table('offlineModel');
 		var _actionsTable = _db.table('actionQueue');
@@ -185,11 +185,60 @@ self.addEventListener('sync', function(event) {
 
 	var _pwa = {
 
+		isVirtuallyOffline: false,
+
+		setVirtuallyOffline: function (status) {
+			this.isVirtuallyOffline = status;
+			if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+				navigator.serviceWorker.controller.postMessage({
+					action: status ? 'virtuallyOfflineEnabled' : 'virtuallyOfflineDisabled'
+				});
+			}
+		},
+
+		isSemiOffline: async function () {
+			const status = await this.data.getLatestConnectionStatus();
+			return status === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+		},
+
+		getLatestConnectionStatus: function () {
+            return checkIndexedDB()
+                .then((exists) => {
+                    if (!exists) {
+                        return Promise.reject("IndexedDB does not exist");
+                    }
+
+                    // if (_error) {
+                    //     return Promise.reject("IndexedDB error");
+                    // }
+
+                    return _connectionTable
+                        .orderBy('time')
+                        .last()
+                        .then(function (lastRecord) {
+                            if (lastRecord) {
+                                return Promise.resolve(lastRecord.status);
+                            } else {
+                                return Promise.resolve('online'); // Default to online if no records exist
+                            }
+                        })
+                        .catch(function (error) {
+                            console.error("Error retrieving latest connection status:", error);
+                            return Promise.reject(error);
+                        });
+                })
+                .catch((error) => {
+                    console.error("Error checking IndexedDB:", error);
+                    return Promise.reject(error);
+                });
+        },
+
+		
 		/**
 		 * @return {bool}
 		 */
 		isAvailable: function () {
-			return _error === null;
+			return _indexedDbInitError === null;
 		},
 
 		/**
@@ -253,7 +302,7 @@ self.addEventListener('sync', function(event) {
 			return Promise
 				.all(deferreds)
 				.then(function () {
-					if (_error) {
+					if (exfPWA.isAvailable() === false) {
 						return Promise.resolve();
 					}
 					//delete all actions with status "synced" from actionQueue
@@ -277,7 +326,7 @@ self.addEventListener('sync', function(event) {
 		 * @return {promise}
 		 */
 		reset: function () {
-			if (_error) {
+			if (exfPWA.isAvailable() === false) {
 				return Promise.resolve(null);
 			}
 			return _dataTable
@@ -331,7 +380,7 @@ self.addEventListener('sync', function(event) {
 			 * @return Promise
 			 */
 			add: function (offlineAction, objectAlias, sActionName, sObjectName, aEffects, sOfflineDataEffect, bSyncNow = true) {
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve(null);
 				}
 				var topics = _pwa.actionQueue.getTopics();
@@ -379,7 +428,7 @@ self.addEventListener('sync', function(event) {
 			 * @return {promise}
 			 */
 			get: function (sStatus, sObjectAlias, fnRowFilter) {
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve([]);
 				}
 				return _actionsTable.toArray()
@@ -436,7 +485,7 @@ self.addEventListener('sync', function(event) {
 			 * 		  }>}
 			 */
 			getEffects: async function (sEffectedObjectAlias) {
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return [];
 				}
 				var dbContent = await _actionsTable.toArray();
@@ -476,7 +525,7 @@ self.addEventListener('sync', function(event) {
 			 * @return {promise}
 			 */
 			getIds: function (filter) {
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve([]);
 				}
 				return _actionsTable.toArray()
@@ -678,7 +727,7 @@ self.addEventListener('sync', function(event) {
 		model: {
 			addPWA: function (sUrl) {
 				console.log('add PWA to sync ', sUrl);
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve(null);
 				}
 				return _modelTable
@@ -782,34 +831,23 @@ self.addEventListener('sync', function(event) {
 		data: {
 
 			/**
-		 * Retrieves the auto offline toggle status from the IndexedDB.
-		 * @return {Promise<boolean>} A promise that resolves to the auto offline toggle status.
-		 */
+			 * Retrieves the auto offline toggle status from the IndexedDB.
+			 * @return {Promise<boolean>} A promise that resolves to the auto offline toggle status.
+			 */
 			getAutoOfflineToggleStatus: function () {
-				return checkIndexedDB()
-					.then((exists) => {
-						if (!exists) {
-							return Promise.reject("IndexedDB does not exist");
-						}
+				if (exfPWA.isAvailable() === false) {
+					return Promise.resolve(false);
+				}
 
-						if (_error) {
-							return Promise.reject("IndexedDB error");
-						}
-
-						return _autoOfflineToggle
-							.get('autoOfflineStatus')
-							.then(function (record) {
-								return Promise.resolve(record ? record.status : false);
-							})
-							.catch(function (error) {
-								console.error("Error retrieving auto offline toggle status:", error);
-								return Promise.reject(error);
-							});
-					})
-					.catch((error) => {
-						console.error("Error checking IndexedDB:", error);
-						return Promise.reject(error);
-					});
+				return _autoOfflineToggle
+				.get('autoOfflineStatus')
+				.then(function (record) {
+					return Promise.resolve(record ? record.status : false);
+				})
+				.catch(function (error) {
+					console.error("Error retrieving auto offline toggle status:", error);
+					return Promise.reject(error);
+				});
 			},
 
 			/**
@@ -821,43 +859,29 @@ self.addEventListener('sync', function(event) {
 			 * @return {Promise} - Returns a Promise that resolves if the status is saved successfully.
 			 */
 			saveAutoOfflineToggleStatus: function (status) {
-				return checkIndexedDB()
-					.then((exists) => {
-						if (!exists) {
-							return Promise.reject("IndexedDB does not exist");
-						}
 
-						if (_error) {
-							return Promise.reject("IndexedDB error");
-						}
+				if (exfPWA.isAvailable() === false) {
+					return Promise.resolve(status);
+				}
 
-						// First, check if there's existing data
-						return _autoOfflineToggle.get('autoOfflineStatus')
-							.then(existingData => {
-								if (!existingData) {
-									// If no existing data, use the provided status or default to true
-									status = typeof status !== 'undefined' ? status : true;
-								} else if (typeof status === 'undefined') {
-									// If status is not provided but we have existing data, keep the existing status
-									status = existingData.status;
-								}
+				// First, check if there's existing data
+				return _autoOfflineToggle.get('autoOfflineStatus')
+				.then(existingData => {
+					if (!existingData) {
+						// If no existing data, use the provided status or default to true
+						status = typeof status !== 'undefined' ? status : true;
+					} else if (typeof status === 'undefined') {
+						// If status is not provided but we have existing data, keep the existing status
+						status = existingData.status;
+					}
 
-								var autoOfflineData = {
-									id: 'autoOfflineStatus',
-									status: status
-								};
+					var autoOfflineData = {
+						id: 'autoOfflineStatus',
+						status: status
+					};
 
-								return _autoOfflineToggle.put(autoOfflineData);
-							});
-					})
-					.then(() => {
-						console.log(`Auto offline toggle status saved: ${status}`);
-						return Promise.resolve(status);
-					})
-					.catch((error) => {
-						console.error("Error saving auto offline toggle status:", error);
-						return Promise.reject(error);
-					});
+					return _autoOfflineToggle.put(autoOfflineData);
+				});
 			},
  
 			/**
@@ -873,79 +897,52 @@ self.addEventListener('sync', function(event) {
 			*                     or does nothing if the status is the same as the last saved status.
 			*/
 			saveConnectionStatus: function (status) {
-				return checkIndexedDB()
-					.then((exists) => {
-						// Check if IndexedDB exists
-						if (!exists) {
-							return Promise.reject("IndexedDB does not exist");
-						}
-
-						// Check for any IndexedDB errors
-						if (_error) {
-							return Promise.reject("IndexedDB error");
-						}
-
-						var currentTime = new Date();
-
-						// Fetch the last saved connection status
-						return _connectionTable.orderBy('time').last()
-							.then(function (lastRecord) {
-								// If the last status is the same, do nothing
-								if (lastRecord && lastRecord.status === status) {
-									return Promise.resolve();
-								} else {
-									// If the status is different, save the new status
-									var connectionData = {
-										status: status,
-										time: currentTime
-									};
-									return _connectionTable.put(connectionData)
-										.then(function () {
-											return Promise.resolve();
-										});
-								}
-							})
-							.catch(function (error) {
-								//console.error("Error saving connection status:", error);
-								return Promise.reject(error);
-							});
+				if (exfPWA.isAvailable() === false) {
+					return Promise.resolve(status);
+				}
+			
+				// If the last saved status is the same, don't create a new record
+				if (this._lastSavedConnectionStatus === status) {
+					return Promise.resolve();
+				}
+			
+				var currentTime = new Date();
+				var connectionData = {
+					status: status,
+					time: currentTime
+				};
+			
+				return _connectionTable.put(connectionData)
+					.then(() => {
+						this._lastSavedConnectionStatus = status;
+						console.log('Connection status saved:', status);
 					})
 					.catch((error) => {
-						//console.error("Error checking IndexedDB:", error);
+						console.error("Error saving connection status:", error);
 						return Promise.reject(error);
 					});
 			},
 
+			_lastSavedConnectionStatus: null,
 			/**
- * Retrieves all network stats from the IndexedDB.
- * @return {promise}
- */
+			 * Retrieves all network stats from the IndexedDB.
+			 * @return {promise}
+			 */
 			getAllNetworkStats: function () {
-				return checkIndexedDB()
-					.then((exists) => {
-						// Check if IndexedDB exists
-						if (!exists) {
-							return Promise.reject("IndexedDB does not exist");
-						}
 
-						// Check if there is an IndexedDB error
-						if (_error) {
-							return Promise.reject("IndexedDB error");
-						}
+				// Check if there is an IndexedDB error
+				if (exfPWA.isAvailable() === false) {
+					return Promise.resolve([]);
+				}
 
-						return _networkStatTable.toArray()
-							.then(function (stats) {
-								return Promise.resolve(stats);
-							})
-							.catch(function (error) {
-								//console.error("Error retrieving network stats:", error);
-								return Promise.reject(error);
-							});
-					})
-					.catch((error) => {
-						//console.error("Error checking IndexedDB:", error);
-						return Promise.reject(error);
-					});
+				return _networkStatTable.toArray()
+				.then(function (stats) {
+					return Promise.resolve(stats);
+				})
+				.catch(function (error) {
+					//console.error("Error retrieving network stats:", error);
+					return Promise.reject(error);
+				});
 			},
 
 			/**
@@ -961,8 +958,8 @@ self.addEventListener('sync', function(event) {
 							return Promise.reject("IndexedDB does not exist");
 						}
 
-						if (_error) {
-							return Promise.reject("IndexedDB error");
+						if (exfPWA.isAvailable() === false) {
+							return Promise.resolve([]);
 						}
 
 						var stat = {
@@ -986,7 +983,7 @@ self.addEventListener('sync', function(event) {
 						return Promise.reject(error);
 					});
 			},
-
+ 
 			/**
 			 * Deletes all network stats in the IndexedDB that were recorded before the specified timestamp.
 			 * @param {number} timestamp - The timestamp to check against.
@@ -1000,8 +997,8 @@ self.addEventListener('sync', function(event) {
 							return Promise.reject("IndexedDB does not exist");
 						}
 
-						if (_error) {
-							return Promise.reject("IndexedDB error");
+						if (exfPWA.isAvailable() === false) {
+							return Promise.resolve();
 						}
 
 						return _networkStatTable
@@ -1027,7 +1024,7 @@ self.addEventListener('sync', function(event) {
 			 * @return {promise}
 			 */
 			get: function (oQuery) {
-				if (_error === false) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve();
 				}
 				if (typeof oQuery === 'object') {
@@ -1406,7 +1403,7 @@ self.addEventListener('sync', function(event) {
 			 * @return {object}
 			 */
 			sync: function () {
-				if (_error) {
+				if (exfPWA.isAvailable() === false) {
 					return Promise.resolve({});
 				}
 

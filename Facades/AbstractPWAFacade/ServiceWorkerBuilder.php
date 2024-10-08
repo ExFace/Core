@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractPWAFacade;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Generates the JS for a ServiceWorker based on the workbox toolkit.
@@ -74,6 +75,21 @@ JS;
 {$this->buildJsRoutesToCache()}
 JS;
     }
+
+    public function addRouteScript(
+        string $id, 
+        string $matcher, 
+        string $script,
+        string $description = null
+    )
+    {
+        $this->routesToCache[$id] = [
+            'description' => $description,
+            'matcher' => $matcher,
+            'script' => $script
+        ];
+        return $this;
+    }
     
     public function addRouteToCache(
         string $id, 
@@ -105,16 +121,29 @@ JS;
      */
     public function addRouteFromUxon(string $routeId, UxonObject $uxon) : ServiceWorkerBuilder
     {
-        $this->addRouteToCache(
-            $routeId,
-            $uxon->getProperty('matcher'),
-            $uxon->getProperty('strategy'),
-            $uxon->getProperty('method'),
-            $uxon->getProperty('description'),
-            $uxon->getProperty('cacheName'),
-            $uxon->getProperty('maxEntries'),
-            $uxon->getProperty('maxAgeSeconds')
-        );
+        if ($uxon->hasProperty('script')) {
+            $script = $uxon->getProperty('script');
+            if ($script instanceof UxonObject) {
+                $script = implode(PHP_EOL, $script->toArray());
+            }
+            $this->addRouteScript(
+                $routeId,
+                $uxon->getProperty('matcher'),
+                $script,
+                $uxon->getProperty('description')
+            );
+        } else {
+            $this->addRouteToCache(
+                $routeId,
+                $uxon->getProperty('matcher'),
+                $uxon->getProperty('strategy'),
+                $uxon->getProperty('method'),
+                $uxon->getProperty('description'),
+                $uxon->getProperty('cacheName'),
+                $uxon->getProperty('maxEntries'),
+                $uxon->getProperty('maxAgeSeconds')
+            );
+        }
         return $this;
     }
     
@@ -142,7 +171,9 @@ JS;
             
             $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
             
-            if (substr($route['strategy'], 0, strlen('workbox.strategies.')) === 'workbox.strategies.') {
+            if (array_key_exists('script', $route)) {
+                $handler = StringDataType::indent($route['script'], '    ');
+            } elseif (substr($route['strategy'], 0, strlen('workbox.strategies.')) === 'workbox.strategies.') {
                 $handler = <<<JS
                 
     new {$route['strategy']}({

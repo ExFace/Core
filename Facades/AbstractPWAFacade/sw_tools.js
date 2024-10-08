@@ -169,6 +169,17 @@ const swTools = {
         });
         return db;
 	}(),
+
+	checkNetworkStatus: async function() {
+		try {
+			// Call the getLatestConnectionStatus function from exfPWA
+			const status = await exfPWA.getLatestConnectionStatus();
+			return status;
+		} catch (error) {
+			console.error('Error checking network status:', error);
+			return 'offline'; // Default to offline in case of an error
+		}
+	},
 	
 	// POST
 	strategies: {
@@ -191,6 +202,34 @@ const swTools = {
 					})
 				);
 			}
-		}
+		},
+		semiOffline: (options) => {
+			if (!options) {
+				options = {};
+			}           
+			var offlineStrategy = options.semiOffline || new workbox.strategies.CacheFirst({
+				cacheName: 'offline-cache',
+				plugins: [
+					new workbox.expiration.ExpirationPlugin({
+						maxEntries: 50,
+						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
+					}),
+				],
+			});
+			var onlineStrategy = options.normal || new workbox.strategies.NetworkFirst();
+			
+			return {
+				handle: async ({ event, request, ...params }) => {
+					var isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+					if (isSemiOffline || self.isVirtuallyOffline) {
+						console.log('Using offline strategy for:', request.url);
+						return offlineStrategy.handle({ event, request, ...params });
+					} else {
+						console.log('Using online strategy for:', request.url);
+						return onlineStrategy.handle({ event, request, ...params });
+					}
+				}
+			};
+		} 
 	}
 }

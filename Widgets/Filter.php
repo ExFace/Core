@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -157,7 +158,7 @@ use exface\Core\DataTypes\TextDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
+class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSingleAttribute, iCanBeRequired, iCanPreloadData
 {
 
     private $inputWidget = null;
@@ -980,8 +981,8 @@ class Filter extends AbstractWidget implements iTakeInput, iShowSingleAttribute,
     }
     
     /**
-     * 
-     * @return bool
+     * {@inheritDoc}
+     * @see exface\Core\Interfaces\Widgets\iFilterData::getApplyOnChange()
      */
     public function getApplyOnChange() : bool
     {

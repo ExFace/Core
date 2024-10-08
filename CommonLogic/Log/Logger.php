@@ -19,21 +19,19 @@ class Logger implements LoggerInterface
 {
     /** @var LogHandlerInterface[] $handlers */
     private $handlers = array();
-    
-    private $isLogging = false;
-    
+
     private $queue = [];
 
     /**
      * System is unusable.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function emergency($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function emergency($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::EMERGENCY, $message, $context, $sender);
     }
@@ -44,13 +42,13 @@ class Logger implements LoggerInterface
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function alert($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function alert($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::ALERT, $message, $context, $sender);
     }
@@ -60,13 +58,13 @@ class Logger implements LoggerInterface
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function critical($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function critical($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::CRITICAL, $message, $context, $sender);
     }
@@ -75,13 +73,13 @@ class Logger implements LoggerInterface
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function error($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function error($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::ERROR, $message, $context, $sender);
     }
@@ -92,13 +90,13 @@ class Logger implements LoggerInterface
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function warning($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function warning($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::WARNING, $message, $context, $sender);
     }
@@ -106,13 +104,13 @@ class Logger implements LoggerInterface
     /**
      * Normal but significant events.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function notice($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function notice($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::NOTICE, $message, $context, $sender);
     }
@@ -122,13 +120,13 @@ class Logger implements LoggerInterface
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function info($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function info($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::INFO, $message, $context, $sender);
     }
@@ -136,13 +134,13 @@ class Logger implements LoggerInterface
     /**
      * Detailed debug information.
      *
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function debug($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function debug($message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
         $this->log(LoggerInterface::DEBUG, $message, $context, $sender);
     }
@@ -150,60 +148,29 @@ class Logger implements LoggerInterface
     /**
      * Logs with an arbitrary level.
      *
-     * @param mixed $level            
-     * @param string $message            
-     * @param array $context            
-     * @param iCanGenerateDebugWidgets $sender            
+     * @param mixed $level
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
      *
      * @return void
      */
-    public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
-        // If the current log message occurred while another was was logged, don't process it immediately
-        // as this might cause recursion. Instead, skip it if it is not an error or enqueue if it is one
+        // If the current log message occurred while another was being logged, don't process it immediately
+        // as this might cause recursion. We will enqueue errors and skip any other interruption.
         if ($this->isLogging()) {
-            if (LogLevelDataType::compareLogLevels($level, self::ERROR) < 0) {
-                return;
-            }
-            
-            // Make sure not to enqueue duplicates in case of recursion
-            if ($sender instanceof \Throwable) {
-                // If the logged item is an exception, a duplicate would be the same
-                // level, message, file and line number.
-                foreach ($this->queue as $queued) {
-                    // If the already queued item is NOT an excepation, it cannot be a duplicate
-                    if (! ($queued['sender'] instanceof \Throwable)) {
-                        continue;
-                    }
-                    // Same goes for the case when it does not have the same level or message
-                    if (! ($queued['level'] === $level && $queued['message' === $message])) {
-                        continue;
-                    }
-                    // For excpetions with equal levels and message, compare the file an line
-                    $queuedEx = $queued['sender'];
-                    if ($queuedEx->getFile() === $sender->getFile() && $queuedEx->getLine() === $sender->getLine()) {
-                        return;
-                    }
-                }
-            } else {
-                // For all other senders simply compare the sender: e.g. is it the same data sheet
-                foreach ($this->queue as $queued) {
-                    if ($queued['level'] === $level && $queued['message' === $message] && $queued['sender'] === $sender) {
-                        return;
-                    }
-                }
-            }
-            $this->queue[] = [
-                'level' => $level,
-                'message' => $message,
-                'context' => $context,
-                'sender' => $sender
-            ];
+            $this->enqueueError($level, $message, $context, $sender);
             return;
         }
 
-        // mark as "logging" now to enque any intermediate errors in the above queue
-        $this->setLogging(true);
+        // Mark as "logging" now. Any errors occurring here on, will be deferred to the queue above.
+        $this->setLogging([
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+            'sender' => $sender
+        ]);
 
         try {
             if (is_null($sender) && ($context['exception'] ?? null) instanceof iCanGenerateDebugWidgets) {
@@ -247,29 +214,84 @@ class Logger implements LoggerInterface
             $this->setLogging(false);
         }
         
-        // See if logging the current recored produced any errors in the queue and try to
+        // See if logging the current error produced any errors in the queue and try to
         // process this queue now
-        
-        // TODO For recursive errors (same message) do not add them all to the queue. Leave only one!
-        if (! empty($this->queue)) {
+        if (!empty($this->queue)) {
             if (count($this->queue) > 30) {
                 $this->queue = [];
-                $this->alert('Logger queue for errors while logging overfilled! Recurrence in error processing suspected: dumping error queue to avoid inifinite loop!');
+                $this->alert('Logger queue for errors while logging overfilled! Recurrence in error processing suspected: dumping error queue to avoid infinite loop!');
             } else {
                 foreach ($this->queue as $i => $queued) {
-                    unset($this->queue[$i]);
+                    if(empty($queued)) {
+                        continue;
+                    }
+
+                    $this->queue[$i] = [];
                     $this->log($queued['level'], $queued['message'], $queued['context'], $queued['sender']);
                 }
             }
         }
+
+        // Empty the queue.
+        unset($this->queue);
     }
-    
+
     /**
-     * 
-     * @param \Throwable $e
      * @param string $level
+     * @param string $message
+     * @param array $context
+     * @param iCanGenerateDebugWidgets|null $sender
+     * @return void
      */
-    public function logException(\Throwable $e, $level = null)
+    protected function enqueueError(string $level, string $message, array $context, ?iCanGenerateDebugWidgets $sender) : void
+    {
+        if (LogLevelDataType::compareLogLevels($level, self::ERROR) < 0) {
+            return;
+        }
+
+        // Make sure not to enqueue duplicates in case of recursion
+        if ($sender instanceof \Throwable) {
+            // If the logged item is an exception, a duplicate would be the same
+            // level, message, file and line number.
+            foreach ($this->queue as $queued) {
+                // If the already queued item is NOT an exception, it cannot be a duplicate
+                if (! ($queued['sender'] instanceof \Throwable)) {
+                    continue;
+                }
+                // Same goes for the case when it does not have the same level or message
+                if ($queued['level'] !== $level && $queued['message'] !== $message) {
+                    continue;
+                }
+                // For exceptions with equal levels and message, compare the file and line
+                $queuedEx = $queued['sender'];
+                if ($queuedEx->getFile() === $sender->getFile() && $queuedEx->getLine() === $sender->getLine()) {
+                    return;
+                }
+            }
+        } else {
+            // For all other senders simply compare the sender: e.g. is it the same data sheet
+            foreach ($this->queue as $queued) {
+                if ($queued['level'] === $level && $queued['message'] === $message && $queued['sender'] === $sender) {
+                    return;
+                }
+            }
+        }
+
+        $this->queue[] = [
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+            'sender' => $sender
+        ];
+    }
+
+    /**
+     *
+     * @param \Throwable $e
+     * @param null $level
+     * @return LoggerInterface|Logger
+     */
+    public function logException(\Throwable $e, $level = null): LoggerInterface|static
     {
         if ($e instanceof ExceptionInterface){
             $this->log($level ?? $e->getLogLevel(), $e->getMessage(), [], $e);
@@ -284,7 +306,7 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::appendHandler()
      */
-    public function appendHandler(LogHandlerInterface $handler)
+    public function appendHandler(LogHandlerInterface $handler): LoggerInterface|static
     {
         $this->handlers[] = $handler;
         
@@ -296,7 +318,7 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::removeHandler()
      */
-    public function removeHandler(LogHandlerInterface $handler)
+    public function removeHandler(LogHandlerInterface $handler): LoggerInterface|static
     {
         foreach ($this->handlers as $i => $h){
             if ($h === $handler){
@@ -311,20 +333,38 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::getHandlers()
      */
-    public function getHandlers()
+    public function getHandlers(): array
     {
         return $this->handlers;
     }
 
     /**
-     * 
-     * @param bool $isLogging
+     * Set the error currently being processed. To signal that you are done with logging
+     * simply set `beingLogged` to be false or empty.
+     *
+     *
+     * @param array|false $beingLogged
      * @return LoggerInterface
      */
-    protected function setLogging(bool $isLogging) : LoggerInterface
+    protected function setLogging(array|false $beingLogged) : LoggerInterface
     {
-        $this->isLogging = $isLogging;
+        if(empty($beingLogged)) {
+            unset($this->queue['logging']);
+        } else {
+            $this->queue['logging'] = $beingLogged;
+        }
+
         return $this;
+    }
+
+    /**
+     * Get the error currently being processed, if any.
+     *
+     * @return array
+     */
+    protected function getLogging() : array
+    {
+        return $this->queue['logging'] ?? [];
     }
 
     /**
@@ -333,14 +373,14 @@ class Logger implements LoggerInterface
      */
     protected function isLogging() : bool
     {
-        return $this->isLogging;
+        return !empty($this->queue['logging']);
     }
     
     /**
      * 
      * @return string
      */
-    public static function generateLogId()
+    public static function generateLogId(): string
     {
         return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     }
