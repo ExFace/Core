@@ -222,13 +222,11 @@ self.addEventListener('sync', function(event) {
                                 return Promise.resolve('online'); // Default to online if no records exist
                             }
                         })
-                        .catch(function (error) {
-                            console.error("Error retrieving latest connection status:", error);
+                        .catch(function (error) { 
                             return Promise.reject(error);
                         });
                 })
-                .catch((error) => {
-                    console.error("Error checking IndexedDB:", error);
+                .catch((error) => { 
                     return Promise.reject(error);
                 });
         },
@@ -844,8 +842,7 @@ self.addEventListener('sync', function(event) {
 				.then(function (record) {
 					return Promise.resolve(record ? record.status : false);
 				})
-				.catch(function (error) {
-					console.error("Error retrieving auto offline toggle status:", error);
+				.catch(function (error) { 
 					return Promise.reject(error);
 				});
 			},
@@ -914,11 +911,9 @@ self.addEventListener('sync', function(event) {
 			
 				return _connectionTable.put(connectionData)
 					.then(() => {
-						this._lastSavedConnectionStatus = status;
-						console.log('Connection status saved:', status);
+						this._lastSavedConnectionStatus = status; 
 					})
-					.catch((error) => {
-						console.error("Error saving connection status:", error);
+					.catch((error) => { 
 						return Promise.reject(error);
 					});
 			},
@@ -939,8 +934,7 @@ self.addEventListener('sync', function(event) {
 				.then(function (stats) {
 					return Promise.resolve(stats);
 				})
-				.catch(function (error) {
-					//console.error("Error retrieving network stats:", error);
+				.catch(function (error) { 
 					return Promise.reject(error);
 				});
 			},
@@ -973,13 +967,11 @@ self.addEventListener('sync', function(event) {
 							.then(function () {
 								return Promise.resolve();
 							})
-							.catch(function (error) {
-								//console.error("Error saving network stat:", error);
+							.catch(function (error) { 
 								return Promise.reject(error);
 							});
 					})
-					.catch((error) => {
-						//console.error("Error checking IndexedDB:", error);
+					.catch((error) => { 
 						return Promise.reject(error);
 					});
 			},
@@ -1009,13 +1001,11 @@ self.addEventListener('sync', function(event) {
 								//console.log(`Deleted ${deleteCount} network stats older than ${timestamp}`);
 								return Promise.resolve(deleteCount);
 							})
-							.catch(function (error) {
-								//console.error("Error deleting old network stats:", error);
+							.catch(function (error) { 
 								return Promise.reject(error);
 							});
 					})
-					.catch((error) => {
-						//console.error("Error checking IndexedDB:", error);
+					.catch((error) => { 
 						return Promise.reject(error);
 					});
 			},
@@ -1417,8 +1407,7 @@ self.addEventListener('sync', function(event) {
 							return {};
 						}
 					})
-					.catch(function (error) {
-						console.error('Cannot read sync errors from server:', error);
+					.catch(function (error) { 
 						return {};
 					})
 			}

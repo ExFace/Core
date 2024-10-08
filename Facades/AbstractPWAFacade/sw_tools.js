@@ -175,8 +175,7 @@ const swTools = {
 			// Call the getLatestConnectionStatus function from exfPWA
 			const status = await exfPWA.getLatestConnectionStatus();
 			return status;
-		} catch (error) {
-			console.error('Error checking network status:', error);
+		} catch (error) { 
 			return 'offline'; // Default to offline in case of an error
 		}
 	},
