@@ -198,7 +198,7 @@ self.addEventListener('sync', function(event) {
 
 		isSemiOffline: async function () {
 			const status = await this.data.getLatestConnectionStatus();
-			return status === NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+			return status === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
 		},
 
 		getLatestConnectionStatus: function () {
