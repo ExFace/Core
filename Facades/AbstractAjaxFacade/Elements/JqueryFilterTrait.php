@@ -27,13 +27,15 @@ trait JqueryFilterTrait {
         }
 
         $appliesToAggregates = $widget->appliesToAggregatedValues() ? 'true' : 'false';
-        return '{'.
-            'expression: "' . $widget->getAttributeAlias() . '", '.
-            'comparator: ' . $this->buildJsComparatorGetter() . ', '.
-            'value: ' . $value . ', '.
-            'object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '", '.
-            'apply_to_aggregates: "' . $appliesToAggregates . '"'.
-        '}';
+        return <<<JSON
+{
+  "expression" : "{$widget->getAttributeAlias()}",
+  "comparator" : {$this->buildJsComparatorGetter()},
+  "value" : $value,
+  "object_alias" : "{$widget->getMetaObject()->getAliasWithNamespace()}",
+  "apply_to_aggregates" : "{$appliesToAggregates}"
+}
+JSON;
     }
     
     public function buildJsCustomConditionGroup($valueJs = null) : string
