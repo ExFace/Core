@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
@@ -435,8 +436,8 @@ class ConditionGroup implements ConditionGroupInterface
     {
         try {
             $this->setOperator($uxon->getProperty('operator') ?? EXF_LOGICAL_AND);
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-                $this->setIgnoreEmptyValues(filter_var($ignoreEmpty, FILTER_VALIDATE_BOOLEAN));
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
+                $this->setIgnoreEmptyValues($ignoreEmpty);
             }
             if ($uxon->hasProperty('base_object_alias')) {
                 $this->setBaseObjectAlias($uxon->getProperty('base_object_alias'));

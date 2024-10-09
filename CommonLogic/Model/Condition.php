@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -572,12 +573,12 @@ class Condition implements ConditionInterface
                 $this->setComparator($comp);
             }
 
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
-                $this->setIgnoreEmptyValues(filter_var($ignoreEmpty, FILTER_VALIDATE_BOOLEAN));
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
+                $this->setIgnoreEmptyValues($ignoreEmpty);
             }
 
-            if(null !== $applyToAggregates = $uxon->getProperty('apply_to_aggregates')) {
-                $this->setApplyToAggregates(filter_var($applyToAggregates, FILTER_VALIDATE_BOOLEAN));
+            if(null !== $applyToAggregates = BooleanDataType::cast($uxon->getProperty('apply_to_aggregates'))) {
+                $this->setApplyToAggregates($applyToAggregates);
             }
 
             if ($uxon->hasProperty('value') || $value !== null){
