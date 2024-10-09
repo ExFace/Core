@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
@@ -132,11 +133,12 @@ class OrderingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         $this->working = true;
 
+        // Create cache.
+        $cache = new LazyHierarchicalDataCache();
         // Fill missing index values.
-        //$this->fillMissingIndices($sheet, $logbook);
-
+        //$this->fillMissingIndices($sheet, $logbook); TODO update index fill
         // start working with potential update data that trigger this handler again
-        $updateSheets = $this->orderDataByIndexingAttribute($sheet, $logbook);
+        $updateSheets = $this->orderDataByIndexingAttribute($sheet, $cache, $logbook);
         
         if (count($updateSheets) === 0) {
         	$logbook->addLine('No changes to order necessary.');
@@ -196,31 +198,29 @@ class OrderingBehavior extends AbstractBehavior
      * @return array
      */
     private function orderDataByIndexingAttribute(
-    	DataSheetInterface $sheet, 
+    	DataSheetInterface $sheet,
+        LazyHierarchicalDataCache $cache,
     	LogBookInterface $logbook): array
     {
-        $cache = new LazyHierarchicalDataCache();
         $updateSheets = [];
         $indexAttributeAlias = $this->getIndexAttributeAlias();
         foreach ($sheet->getRows() as $rowIndex => $row) {
             $uid = $row[$sheet->getUidColumnName()];
-            if(!($indexSheet = $cache->getData($uid))) {
-                $indexSheet = $this->loadNeighboringElementsNew($sheet, $row, $indexAttributeAlias, $cache, $logbook);
+            if(!($siblingSheet = $cache->getData($uid))) {
+                $siblingSheet = $this->getSiblings($sheet, $row, $indexAttributeAlias, $cache, $logbook);
             }
-            /*if(!($indexSheet = $this->indexSheets[$uid])) {
-                $indexSheet = $this->loadNeighboringElements($sheet, $row, $indexAttributeAlias, $logbook);
-            }*/
 
             $currentIndex = $row[$indexAttributeAlias];
             switch (true) {
                 case $currentIndex === null:
+                    throw new InvalidArgumentException("INVALID INDEX: This should have been prevented with index back fill!");
                     //$initValue = max($indexSheet->getColumns()->getByExpression($indexAttributeAlias)->getValues()) + 1;
                     //$sheet->setCellValue($indexAttributeAlias, $rowIndex, $initValue);
                     break;
             	case is_numeric($currentIndex):
-            		$updateSheet = $this->findNecessaryChangesInSequence($row, $indexAttributeAlias, $indexSheet, $logbook);
+            		$updateSheet = $this->findNecessaryChangesInSequence($row, $indexAttributeAlias, $siblingSheet, $logbook); //TODO should be deferred
             		
-            		// if closeGap changed the current event value we need to update the sheet that will be saved
+            		// if closeGap changed the current event value we need to update the sheet that will be saved TODO might be bad logic
             		if ($row[$indexAttributeAlias] != $currentIndex){
             		    $sheet->setCellValue($indexAttributeAlias, $rowIndex, $row[$indexAttributeAlias]);
             		}
@@ -232,7 +232,7 @@ class OrderingBehavior extends AbstractBehavior
                 default:
                     throw new BehaviorConfigurationError(
                     	$this, 
-                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid value "' . $currentIndex . "' encountered!",
+                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid value "' . $currentIndex . "' encountered! Ordering indices must be numeric.",
                     	$logbook);
                     break;
             }
@@ -241,7 +241,7 @@ class OrderingBehavior extends AbstractBehavior
         return $updateSheets;
     }
 
-    private function loadNeighboringElementsNew(
+    private function getSiblings(
         DataSheetInterface $sheet,
         array $row,
         string $indexAttributeAlias,
@@ -278,58 +278,7 @@ class OrderingBehavior extends AbstractBehavior
         return $indexSheet;
     }
 
-    /**
-     * Finds neighboring elements with configured boundary attributes and loads their indices into the resulting sheet.
-     * The result is sorted ASC.
-     *
-     * @param DataSheetInterface $sheet
-     * @param array $row
-     * @param string $indexAttributeAlias
-     * @param LogBookInterface $logbook
-     * @return DataSheetInterface
-     */
-    private function loadNeighboringElements(
-    	DataSheetInterface $sheet, 
-    	array $row,
-    	string $indexAttributeAlias,
-    	LogBookInterface $logbook): DataSheetInterface
-    {
-        $uidAlias = $sheet->getUidColumnName();
-        $indexSheet = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
-        $hasMissingBoundary = false;
-        foreach ($this->getBoundaryAttributesAliases() as $boundaryAttributeAlias) {
-        	if (empty($row[$boundaryAttributeAlias])){
-        		$hasMissingBoundary = true;
-        	}
-        	
-            $indexSheet->getColumns()->addFromExpression($boundaryAttributeAlias);                       
-            $indexSheet->getFilters()->addConditionFromString(
-            	$boundaryAttributeAlias,
-            	$row[$boundaryAttributeAlias],
-            	ComparatorDataType::EQUALS);
-        }
 
-        // return no neighbors if row is missing at least one boundary attribute
-        if ($hasMissingBoundary) {
-        	return $indexSheet;
-        }
-        
-        //exclude current row - it will be safed with the set index
-        $indexSheet->getFilters()->addConditionFromString(
-        	$uidAlias,
-        	$row[$uidAlias],
-        	ComparatorDataType::NOT_IN);
-        $indexSheet->getSorters()->addFromString($indexAttributeAlias, SortingDirectionsDataType::ASC);
-        $indexSheet->dataRead(); 
-        
-
-        $this->indexSheets[$row[$uidAlias]] = $indexSheet;
-        $logbook->addLine(
-        	'Found ' 
-        	. $indexSheet->countRows()
-        	. ' neighboring elements for the ' . $row[$uidAlias] . ' event data object.');
-        return $indexSheet;
-    }
 
     /**
      * Iterates through all sorted neighboring elements to find unset or false indizes that need to be changed.
@@ -342,10 +291,9 @@ class OrderingBehavior extends AbstractBehavior
      * @return DataSheetInterface
      */
     private function findNecessaryChangesInSequence(
-    	array &$row,
-    	string $indexAttributeAlias, 
-    	DataSheetInterface $indexSheet, 
-    	LogBookInterface $logbook): DataSheetInterface
+        array              &$row,
+        string             $indexAttributeAlias,
+        DataSheetInterface $indexSheet): DataSheetInterface
     {
         $updateSheet = $this->createEmptyCopyWithIndexAttribute($indexSheet, $indexAttributeAlias);
         $closeGaps = $this->getCloseGaps();
@@ -382,7 +330,7 @@ class OrderingBehavior extends AbstractBehavior
 
             $lastIndex = $currentIndex;
         }
-        
+
         // correct current value
         if ($lastIndex < $row[$indexAttributeAlias] && $closeGaps){
         	$row[$indexAttributeAlias] = $lastIndex + 1;
