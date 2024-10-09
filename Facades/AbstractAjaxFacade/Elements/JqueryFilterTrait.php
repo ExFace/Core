@@ -25,12 +25,14 @@ trait JqueryFilterTrait {
         if ($widget->getAttributeAlias() === '' || $widget->getAttributeAlias() === null) {
             throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
         }
+
+        $appliesToAggregates = $widget->appliesToAggregatedValues() ? 'true' : 'false';
         return '{'.
             'expression: "' . $widget->getAttributeAlias() . '", '.
             'comparator: ' . $this->buildJsComparatorGetter() . ', '.
             'value: ' . $value . ', '.
             'object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '", '.
-            'apply_to_aggregates: "' . $widget->appliesToAggregatedValues() . '"'.
+            'apply_to_aggregates: "' . $appliesToAggregates . '"'.
         '}';
     }
     
