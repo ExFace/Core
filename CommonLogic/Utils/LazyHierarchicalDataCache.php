@@ -32,29 +32,29 @@ class LazyHierarchicalDataCache
     public function getData($elementId) : mixed
     {
         $nodeKey = $this->toKey($elementId);
-        $dataKey = $this->toKey($this->getParents($nodeKey));
 
-        if(!key_exists($dataKey, $this->dataCaches)) {
+        if(null === ($parents = $this->getParents($nodeKey))) {
             return null;
         }
+        $dataKey = $this->toKey($parents);
 
         return $this->dataCaches[$dataKey];
     }
 
-    protected function getParents(string $key) : array
+    protected function getParents(string $key) : ?array
     {
         $node = $this->getNode($key);
         if($node === null || $node < 0) {
-            throw new InvalidArgumentException('Cannot get parents of node '.$key.' because it has not been added to the hierarchy yet!');
+            return null;
         }
 
-        return $this->hierarchy->getParents($this->getNode($key));
+        return $this->hierarchy->getParents($node);
     }
 
     public function setData($elementId, $data) : void
     {
         $nodeKey = $this->toKey($elementId);
-        $node = $this->nodes[$nodeKey];
+        $node = $this->getNode($nodeKey);
         if($node === null || $node < 0){
             throw new InvalidArgumentException('Cannot set data for element '.$elementId.' because it has not been added to the hierarchy yet!');
         }
@@ -83,7 +83,7 @@ class LazyHierarchicalDataCache
                 $parent = $this->createNode($parentKey);
             }
 
-            $this->hierarchy->addParent($node, $parent);
+            $this->hierarchy->addParent($node, abs($parent));
         }
     }
 
@@ -93,7 +93,7 @@ class LazyHierarchicalDataCache
             return null;
         }
 
-        return abs($this->nodes[$key]);
+        return $this->nodes[$key];
     }
 
     protected function createNode(string $key) : int

@@ -2,6 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
@@ -132,7 +133,7 @@ class OrderingBehavior extends AbstractBehavior
         $this->working = true;
 
         // Fill missing index values.
-        $this->fillMissingIndices($sheet, $logbook);
+        //$this->fillMissingIndices($sheet, $logbook);
 
         // start working with potential update data that trigger this handler again
         $updateSheets = $this->orderDataByIndexingAttribute($sheet, $logbook);
@@ -198,10 +199,18 @@ class OrderingBehavior extends AbstractBehavior
     	DataSheetInterface $sheet, 
     	LogBookInterface $logbook): array
     {
+        $cache = new LazyHierarchicalDataCache();
         $updateSheets = [];
         $indexAttributeAlias = $this->getIndexAttributeAlias();
         foreach ($sheet->getRows() as $rowIndex => $row) {
-            $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
+            $uid = $row[$sheet->getUidColumnName()];
+            if(!($indexSheet = $cache->getData($uid))) {
+                $indexSheet = $this->loadNeighboringElementsNew($sheet, $row, $indexAttributeAlias, $cache, $logbook);
+            }
+            /*if(!($indexSheet = $this->indexSheets[$uid])) {
+                $indexSheet = $this->loadNeighboringElements($sheet, $row, $indexAttributeAlias, $logbook);
+            }*/
+
             $currentIndex = $row[$indexAttributeAlias];
             switch (true) {
                 case $currentIndex === null:
@@ -232,6 +241,43 @@ class OrderingBehavior extends AbstractBehavior
         return $updateSheets;
     }
 
+    private function loadNeighboringElementsNew(
+        DataSheetInterface $sheet,
+        array $row,
+        string $indexAttributeAlias,
+        LazyHierarchicalDataCache $cache,
+        LogBookInterface $logbook): DataSheetInterface
+    {
+        $uidAlias = $sheet->getUidColumnName();
+        $indexSheet = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
+        $parents = [];
+
+        foreach ($this->getBoundaryAttributesAliases() as $boundaryAttributeAlias) {
+            $parents[] = $row[$boundaryAttributeAlias];
+            $indexSheet->getColumns()->addFromExpression($boundaryAttributeAlias);
+            $indexSheet->getFilters()->addConditionFromString(
+                $boundaryAttributeAlias,
+                $row[$boundaryAttributeAlias],
+                ComparatorDataType::EQUALS);
+        }
+
+        // Finalize sheet and load data.
+        $indexSheet->getSorters()->addFromString($indexAttributeAlias, SortingDirectionsDataType::ASC);
+        $indexSheet->dataRead();
+
+        // Store data in cache.
+        foreach ($indexSheet->getRows() as $indexedRow) {
+            $cache->addElement($indexedRow[$uidAlias], $parents);
+        }
+        $cache->setData($row[$uidAlias], $indexSheet);
+
+        $logbook->addLine(
+            'Found '
+            . $indexSheet->countRows()
+            . ' neighboring elements for the ' . $row[$uidAlias] . ' event data object.');
+        return $indexSheet;
+    }
+
     /**
      * Finds neighboring elements with configured boundary attributes and loads their indices into the resulting sheet.
      * The result is sorted ASC.
@@ -244,34 +290,27 @@ class OrderingBehavior extends AbstractBehavior
      */
     private function loadNeighboringElements(
     	DataSheetInterface $sheet, 
-    	array $row, 
-    	int $rowIndex, 
-    	string $indexAttributeAlias, 
+    	array $row,
+    	string $indexAttributeAlias,
     	LogBookInterface $logbook): DataSheetInterface
     {
-    	
-        $globalIndexSheets = $this->indexSheets;
-        if (array_key_exists($rowIndex, $globalIndexSheets) && $globalIndexSheets[$rowIndex] === null) { // TODO !== null?
-            return $globalIndexSheets[$rowIndex];
-        }
-
         $uidAlias = $sheet->getUidColumnName();
         $indexSheet = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
-        $hasMissingBoundary = true;
+        $hasMissingBoundary = false;
         foreach ($this->getBoundaryAttributesAliases() as $boundaryAttributeAlias) {
         	if (empty($row[$boundaryAttributeAlias])){
-        		$hasMissingBoundary = false;
+        		$hasMissingBoundary = true;
         	}
         	
             $indexSheet->getColumns()->addFromExpression($boundaryAttributeAlias);                       
             $indexSheet->getFilters()->addConditionFromString(
             	$boundaryAttributeAlias,
             	$row[$boundaryAttributeAlias],
-            	ComparatorDataType::IN);
+            	ComparatorDataType::EQUALS);
         }
-        
+
         // return no neighbors if row is missing at least one boundary attribute
-        if (!$hasMissingBoundary) {
+        if ($hasMissingBoundary) {
         	return $indexSheet;
         }
         
@@ -284,11 +323,11 @@ class OrderingBehavior extends AbstractBehavior
         $indexSheet->dataRead(); 
         
 
-        $this->indexSheets[$rowIndex] = $indexSheet;
+        $this->indexSheets[$row[$uidAlias]] = $indexSheet;
         $logbook->addLine(
         	'Found ' 
         	. $indexSheet->countRows()
-        	. ' neighboring elements for the ' . $rowIndex . ' event data object.');
+        	. ' neighboring elements for the ' . $row[$uidAlias] . ' event data object.');
         return $indexSheet;
     }
 
