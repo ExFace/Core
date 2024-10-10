@@ -904,23 +904,16 @@ class DataSheet implements DataSheetInterface
         }
         
         // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
-        $update_ds = $this->copy();
-        if ($this->hasUidColumn(false)) {
-            $update_ds->removeRowsByUid('');
-        }
-        if ($update_ds->isEmpty() === false) {
-            $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($update_ds, $transaction, $create_if_uid_not_found));
-            if ($eventBefore->isPreventUpdate() === true) {
-                if ($commit && ! $transaction->isRolledBack()) {
-                    $transaction->commit();
-                }
-                return $this->countRows();
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
             }
+            return $this->countRows();
         }
         
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
-        // IDEA: filter all the rows without UID and do an update on the remaining rows. Then do a create on the rows without UID
         if ($create_if_uid_not_found === true) {
             if ($uidCol = $this->getUidColumn()) {
                 // Find rows, that do not have a UID value
