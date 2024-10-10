@@ -98,6 +98,10 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
+        if($this->getDataType()->getBase() != 10) {
+            return $jsInput;
+        }
+
         $decimalRegex = preg_quote($this->getDecimalSeparator());
         $thousandsRegex = preg_quote($this->getThousandsSeparator());
         
@@ -126,6 +130,7 @@ JS;
             }
             if (mNumber === '' || mNumber === $emptyFormatJs) return null;
             mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+
             // Return as number because otherwise comparisons between 100 and 100.00 will fail! The comparator logic cannot
             // know, whether the value was inteded to be a number, so it is important to parse a numeric string to a real
             // JS number!
