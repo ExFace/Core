@@ -98,6 +98,10 @@ JS;
      */
     public function buildJsFormatParser($jsInput)
     {
+        if($this->getDataType()->getBase() != 10) {
+            return $jsInput;
+        }
+
         $decimalRegex = preg_quote($this->getDecimalSeparator());
         $thousandsRegex = preg_quote($this->getThousandsSeparator());
         
@@ -126,15 +130,9 @@ JS;
             }
             if (mNumber === '' || mNumber === $emptyFormatJs) return null;
             mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
-            
-            // Check if number is hexadecimal and return it as hex, if that's the case.
-            // TODO geb 2024-10-09: This check feels unreliable. Is there a better way, like differentiating earlier?
-            if (mNumber.startsWith("0x")) {
-                return mNumber;
-            }
 
             // Return as number because otherwise comparisons between 100 and 100.00 will fail! The comparator logic cannot
-            // know whether the value was intended to be a number, so it is important to parse a numeric string to a real
+            // know, whether the value was inteded to be a number, so it is important to parse a numeric string to a real
             // JS number!
             return mNumber === '' ? null : parseFloat(mNumber);
         }({$jsInput})
