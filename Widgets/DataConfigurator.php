@@ -190,6 +190,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                     $uxon_object->setProperty('apply_on_change', $inputUxon->getProperty('apply_on_change'));
                     $inputUxon->unsetProperty('apply_on_change');
                 }
+                if ($inputUxon->hasProperty('apply_to_aggregates')) {
+                    $uxon_object->setProperty('apply_to_aggregates', $inputUxon->getProperty('apply_to_aggregates'));
+                    $inputUxon->unsetProperty('apply_to_aggregates');
+                }
                 if ($inputUxon->hasProperty('condition_group')) {
                     $uxon_object->setProperty('condition_group', $inputUxon->getProperty('condition_group'));
                     $inputUxon->unsetProperty('condition_group');
