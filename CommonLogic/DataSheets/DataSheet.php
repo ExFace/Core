@@ -903,14 +903,6 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
-        if ($eventBefore->isPreventUpdate() === true) {
-            if ($commit && ! $transaction->isRolledBack()) {
-                $transaction->commit();
-            }
-            return $this->countRows();
-        }
         
         // Check if the data source already contains rows with matching UIDs
         // TODO do not update rows, that were created here. Currently they are created and immediately updated afterwards.
@@ -984,6 +976,16 @@ class DataSheet implements DataSheetInterface
             } else {
                 throw new DataSheetWriteError($this, 'Creating rows from an update statement without a UID-column not supported yet!', '6T5VBHF');
             }
+        }
+        
+        // Fire OnBeforeUpdateDataEvent to allow additional checks, manipulations or custom update logic
+        // Fire it after the create to be sure every row has UIDs now and are actually updates
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction, $create_if_uid_not_found));
+        if ($eventBefore->isPreventUpdate() === true) {
+            if ($commit && ! $transaction->isRolledBack()) {
+                $transaction->commit();
+            }
+            return $this->countRows();
         }
         
         // After all preparation is done, check to see if there are any rows to update left
