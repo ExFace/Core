@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -71,6 +72,8 @@ class Condition implements ConditionInterface
     private $data_type = null;
     
     private $ignoreEmptyValues = null;
+
+    private bool $applyToAggregates = true;
 
     /**
      * @deprecated use ConditionFactory instead!
@@ -473,6 +476,8 @@ class Condition implements ConditionInterface
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
         }
+        $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+
         return $uxon;
     }
 
@@ -567,9 +572,15 @@ class Condition implements ConditionInterface
             if ($uxon->hasProperty('comparator') && ($comp = $uxon->getProperty('comparator'))) {
                 $this->setComparator($comp);
             }
-            if (null !== $ignoreEmpty = $uxon->getProperty('ignore_empty_values')) {
+
+            if (null !== $ignoreEmpty = BooleanDataType::cast($uxon->getProperty('ignore_empty_values'))) {
                 $this->setIgnoreEmptyValues($ignoreEmpty);
             }
+
+            if(null !== $applyToAggregates = BooleanDataType::cast($uxon->getProperty('apply_to_aggregates'))) {
+                $this->setApplyToAggregates($applyToAggregates);
+            }
+
             if ($uxon->hasProperty('value') || $value !== null){
                 $value = $value ?? $uxon->getProperty('value');
                 // Apply th evalue only if it is not empty or ignore_empty_values is off
@@ -794,5 +805,34 @@ class Condition implements ConditionInterface
     public function willIgnoreEmptyValues() : bool
     {
         return $this->ignoreEmptyValues;
+    }
+
+    /**
+     * If set to FALSE this condition will not be applied to aggregated values.
+     *
+     * This can be used to fine-tune filters for instance.
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->applyToAggregates = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->applyToAggregates;
     }
 }

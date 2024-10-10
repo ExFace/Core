@@ -194,6 +194,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     private $preloader = null;
     
     private $useHiddenInput = false;
+
+    private bool $appliesToAggregatedValues = true;
     
     /**
      * Returns TRUE if the input widget was already instantiated.
@@ -1005,6 +1007,34 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     {
         $this->apply_on_change = BooleanDataType::cast($true_or_false);
         return $this;
+    }
+
+    /**
+     * If set to FALSE this filter will not be applied to aggregated values.
+     *
+     * The default value is TRUE.
+     *
+     * @uxon-property apply_to_aggregates
+     * @uxon-type boolean
+     * @uxon-default true
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setApplyToAggregates(bool $value) : static
+    {
+        $this->appliesToAggregatedValues = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if this filter applies to aggregated values.
+     *
+     * @return bool
+     */
+    public function appliesToAggregatedValues() : bool
+    {
+        return $this->appliesToAggregatedValues;
     }
 
     /**
