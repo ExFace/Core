@@ -250,15 +250,21 @@ class OrderingBehavior extends AbstractBehavior
     {
         $uidAlias = $sheet->getUidColumnName();
         $indexSheet = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
-        $parents = [];
 
+        $parents = [];
         foreach ($this->getBoundaryAttributesAliases() as $boundaryAttributeAlias) {
-            $parents[] = $row[$boundaryAttributeAlias];
+            $parent = $row[$boundaryAttributeAlias];
+            if(!in_array($parent, $parents)){
+                $parents[] = $parent;
+            }
+
             $indexSheet->getColumns()->addFromExpression($boundaryAttributeAlias);
+
             $indexSheet->getFilters()->addConditionFromString(
                 $boundaryAttributeAlias,
-                $row[$boundaryAttributeAlias],
-                ComparatorDataType::EQUALS);
+                $parent,
+                ComparatorDataType::EQUALS,
+                false);
         }
 
         // Finalize sheet and load data.
