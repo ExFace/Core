@@ -192,9 +192,9 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
         foreach ($uxon as $filterAttributeAlias => $mappings) {
             foreach ($mappings as $mapUxon) {
                 $part = new DataFilterMapping($this, $filterAttributeAlias, $mapUxon);
+                $this->filtersApplyTo[$filterAttributeAlias][] = $part;
             }
-        }
-        $this->filtersApplyTo[$filterAttributeAlias][] = $part;
+        }        
         return $this;
     }
 
@@ -293,34 +293,32 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
 
                 // If no existing filter was found, create one
                 if (! $filterApplied) {
-                    foreach ($filterableChildren as $child) {
-                        $uxonTpl = null;
-                        $mapper = $this->getFilterForForeignObject($filter->getAttributeAlias(), $child->getMetaObject());
-                        if ($mapper !== null) {
-                            $uxonTpl = $mapper->getTargetFilterUxon();
-                        } else {
-                            if ($this->getFiltersApplyToUxonAttributesWithMatchingAliases() && $child->getMetaObject()->hasAttribute($filter->getAttributeAlias())) {
-                                $uxonTpl = new UxonObject([
-                                    'attribute_alias' => $filter->getAttributeAlias()
-                                ]);
-                                if ($filter->isRequired()) {
-                                    $uxonTpl->setProperty('required', true);
-                                }
+                    $uxonTpl = null;
+                    $mapper = $this->getFilterForForeignObject($filter->getAttributeAlias(), $child->getMetaObject());
+                    if ($mapper !== null) {
+                        $uxonTpl = $mapper->getTargetFilterUxon();
+                    } else {
+                        if ($this->getFiltersApplyToUxonAttributesWithMatchingAliases() && $child->getMetaObject()->hasAttribute($filter->getAttributeAlias())) {
+                            $uxonTpl = new UxonObject([
+                                'attribute_alias' => $filter->getAttributeAlias()
+                            ]);
+                            if ($filter->isRequired()) {
+                                $uxonTpl->setProperty('required', true);
                             }
                         }
-
-                        if ($uxonTpl === null) {
-                            continue;
-                        }
-                        
-                        $uxonTpl->setProperty('value', $filterLinkValue);
-                        if ($this->getFiltersAppliedHidden()) {
-                            $uxonTpl->setProperty('hidden', true);
-                        } else {
-                            $uxonTpl->setProperty('input_widget', new UxonObject(['widget_type' => 'Input']));
-                        }
-                        $child->addFilter($child->createFilter($uxonTpl));
                     }
+                    
+                    if ($uxonTpl === null) {
+                        continue;
+                    }
+                    
+                    $uxonTpl->setProperty('value', $filterLinkValue);
+                    if ($this->getFiltersAppliedHidden()) {
+                        $uxonTpl->setProperty('hidden', true);
+                    } else {
+                        $uxonTpl->setProperty('input_widget', new UxonObject(['widget_type' => 'Input']));
+                    }
+                    $child->addFilter($child->createFilter($uxonTpl));
                 }
             }
         }

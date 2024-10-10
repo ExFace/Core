@@ -1405,7 +1405,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
-        
+
         // Some aggregators require customized subselects - handle them here
         if (($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator()) {
             $aggr = $qpart->getAggregator()->getFunction()->__toString();
@@ -1434,7 +1434,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // slow with large data sets.
         // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
         // path we rebase to matches the beginning of the condition's relation path.
-        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) {
+        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
+            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->appliesToAggregatedValues()) {
+                return false;
+            }
+
             if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
                 return false;
             } else {
@@ -2228,7 +2232,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * This is mainly used to handle filters over reversed relations, but also
      * for filters on joined columns in UPDATE queries, where the main query
      * does not support joining. The optional parameter $rely_on_joins controls
-     * whether the method can rely on the main query have all neccessary joins.
+     * whether the method can rely on the main query to have all necessary joins.
      *
      * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
@@ -2278,33 +2282,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
                 // subquery should GROUP BY these kees.
                 if ($qpart->getAggregator()) {
-                    // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a litte in certain cases:
+                    // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a little in certain cases:
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter
-                    // without any aggregation and it should yield the same results
+                    // without any aggregation, and it should yield the same results
                     $rel_filter_alias .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                     $relq->addAggregation($start_rel->getRightKeyAttribute()->getAlias());
                     
                     // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
                     // over the aggregated value. However, there might be other filters, that affect this aggregated
                     // value: e.g. as SUM over transactions for a product will be different depending on the store
-                    // filter set for the query. So we need all applicale non-aggregating filters in our subquery.
+                    // filter set for the query. So we need all applicable non-aggregating filters in our subquery.
                     // This is achieved by rebasing all filters with the following filter callback, that excludes
                     // certain conditions.
                     $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
-                        // If the condition is not an attribute, keep it - other partsof the code will deal with it
+                        // If the condition is not an attribute, keep it - other parts of the code will deal with it
                         if (! $condition->getExpression()->isMetaAttribute()) {
                             return true;
                         }
                         // If a condition matches the query part we are processing right now, skip it - we will
                         // add it later explicitly.
-                        if ($condition->getExpression()->toString() === $qpart->getExpression()->toString()){
+                        if ($condition->getExpression()->toString() === $qpart->getExpression()->__toString()){
                             return false;
                         }
-                        // If a conditon  has an aggregator itself - skip it as it will get it's own subquery.
+                        // If a condition  has an aggregator itself - skip it as it will get its own subquery.
                         if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condition->getExpression()->toString())) {
                             return false;
                         }
-                        // If a condition is not applicable (is applied to something else, then the tables in our
+                        // If a condition is not applicable (is applied to something else than the tables in our
                         // subquery) - skip it.
                         if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
                             return false;
@@ -2324,42 +2328,42 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     && ! $relqKeyPart->getDataAddressProperty(self::DAP_SQL_SELECT_DATA_ADDRESS)
                     && $relqKeyPart->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
                         $relqKeyPart->setDataAddressProperty(self::DAP_SQL_SELECT, '*');
-                    }
+                }
                     
-                    // Add the filter relative to the first reverse relation with the same $value and $comparator
-                    if ($qpart->isValueDataAddress()) {
-                        // If the data address is a custom sql, make sure it still remains a custom sql no matter what
-                        $relq->addFilterWithCustomSql($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                // Add the filter relative to the first reverse relation with the same $value and $comparator
+                if ($qpart->isValueDataAddress()) {
+                    // If the data address is a custom sql, make sure it still remains a custom sql no matter what
+                    $relq->addFilterWithCustomSql($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                } else {
+                    // Otherwise just add a regular filter
+                    $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                }
+
+                if (! $prefix_rel_path->isEmpty()) {
+                    // FIXME add support for related_object_special_key_alias
+                    $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
+                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
+                    $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
+                } else {
+                    $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
+                    $junctionDataAddress = $this->buildSqlDataAddress($start_rel->getLeftKeyAttribute());
+                    if ($this->isSqlStatement($junctionDataAddress) === true) {
+                        $junction = $this->replacePlaceholdersInSqlAddress($junctionDataAddress, null, null, $junctionTableAlias);
                     } else {
-                        // Otherwise just add a regular filter
-                        $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
+                        $junction = $junctionTableAlias . $this->getAliasDelim() . $junctionDataAddress;
                     }
-                    
-                    if (! $prefix_rel_path->isEmpty()) {
-                        // FIXME add support for related_object_special_key_alias
-                        $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
-                        $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, null, DataColumn::sanitizeColumnName($prefix_rel_str));
-                        $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
-                    } else {
-                        $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
-                        $junctionDataAddress = $this->buildSqlDataAddress($start_rel->getLeftKeyAttribute());
-                        if ($this->isSqlStatement($junctionDataAddress) === true) {
-                            $junction = $this->replacePlaceholdersInSqlAddress($junctionDataAddress, null, null, $junctionTableAlias);
-                        } else {
-                            $junction = $junctionTableAlias . $this->getAliasDelim() . $junctionDataAddress;
-                        }
-                    }
-                    
-                    // Handle SQL_JOIN_ON if it is defined for the right attribute (i.e. if we would join our left table to our right table,
-                    // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
-                    // the subselect.
-                    if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
-                        $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $this->getMainTableAlias()]);
-                        $joinFilterQpart = $relq->addFilterFromString($start_rel->getRightKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
-                        $joinFilterQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
-                        $sql = ' EXISTS (' . $relq->buildSqlQuerySelect() . ')';
-                        return $sql;
-                    }
+                }
+
+                // Handle SQL_JOIN_ON if it is defined for the right attribute (i.e. if we would join our left table to our right table,
+                // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
+                // the subselect.
+                if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
+                    $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $this->getMainTableAlias()]);
+                    $joinFilterQpart = $relq->addFilterFromString($start_rel->getRightKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
+                    $joinFilterQpart->setDataAddressProperty(self::DAP_SQL_WHERE, $customJoinOn);
+                    $sql = ' EXISTS (' . $relq->buildSqlQuerySelect() . ')';
+                    return $sql;
+                }
                     
             } else {
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
