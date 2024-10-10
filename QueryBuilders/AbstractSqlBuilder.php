@@ -1976,6 +1976,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $customWhereAddress = $qpart->getDataAddressProperty(self::DAP_SQL_WHERE_DATA_ADDRESS);
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
+        $ignoreEmptyValues = !$qpart->getCondition() || $qpart->getCondition()->willIgnoreEmptyValues();
         
         // If the attribute has no data address AND is a static calculation, generate a 
         // static WHERE clause that compares the result of the static expression evaluation 
@@ -1988,7 +1989,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         // Doublecheck that the filter actually can be used
-        if (! ($select || $customWhereClause) || $val === '') {
+        if (! ($select || $customWhereClause) || ($ignoreEmptyValues && $val === '')) {
             if ($val === '') {
                 $hint = ' (the value is empty)';
             } else {
