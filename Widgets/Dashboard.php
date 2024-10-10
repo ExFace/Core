@@ -192,9 +192,9 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
         foreach ($uxon as $filterAttributeAlias => $mappings) {
             foreach ($mappings as $mapUxon) {
                 $part = new DataFilterMapping($this, $filterAttributeAlias, $mapUxon);
+                $this->filtersApplyTo[$filterAttributeAlias][] = $part;
             }
-        }
-        $this->filtersApplyTo[$filterAttributeAlias][] = $part;
+        }        
         return $this;
     }
 
