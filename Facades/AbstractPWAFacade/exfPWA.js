@@ -19,6 +19,7 @@ self.addEventListener('sync', function(event) {
  * @author Ralf Mulansky
  *
  */
+ 
 ; (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(global.Dexie, global.$) :
 		typeof define === 'function' && define.amd ? define(factory(global.Dexie, global.$)) :
@@ -197,8 +198,12 @@ self.addEventListener('sync', function(event) {
 		},
 
 		isSemiOffline: async function () {
-			const status = await this.data.getLatestConnectionStatus();
-			return status === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
+			try {
+				const status = await this.data.getLatestConnectionStatus();
+				return status === 'offline_bad_connection';
+			} catch (error) { 
+				return false; // Return error if it has error
+			}
 		},
 
 		getLatestConnectionStatus: function () {
@@ -1408,6 +1413,7 @@ self.addEventListener('sync', function(event) {
 						}
 					})
 					.catch(function (error) { 
+						console.error('Cannot read sync errors from server:', error); 
 						return {};
 					})
 			}
