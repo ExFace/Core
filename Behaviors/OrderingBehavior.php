@@ -3,22 +3,20 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\CommonLogic\Utils\LazyHierarchicalDataCache;
-use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\Debug\LogBookInterface;
-use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
-use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 
 /**
  * This behavior orders given indizes within a boundary
@@ -61,43 +59,38 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
  */
 class OrderingBehavior extends AbstractBehavior
 {
-
     // internal variables
-    private $working = false;
-
-    private $indexSheets = [];
+    private bool $working = false;
 
     // configurable variables
-    private $startIndex = 1;
-    private $closeGaps = true;
-    private $insertNewOntop = false;
-    private $indexAttributeAlias = null;
-    private $boundaryAttributeAliases = [];
+    private int $startIndex = 1;
+    private bool $closeGaps = true;
+    private bool $insertNewOnTop = false;
+    private mixed $indexAlias = null;
+    private mixed $parentAliases = [];
 
     /**
      *
-     * {@inheritdoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
+     * @see AbstractBehavior::registerEventListeners()
      */
     protected function registerEventListeners(): BehaviorInterface
     {
-        $handler = array($this, 'handleBeforeEvent');
-        $prio = $this->getPriority();
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $handler, $prio);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $handler, $prio);
-        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), $handler, $prio);
+        $handler = array($this, 'handleEvent');
+        $priority = $this->getPriority();
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeCreateDataEvent::getEventName(), $handler, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), $handler, $priority);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeDeleteDataEvent::getEventName(), $handler, $priority);
 
         return $this;
     }
 
     /**
      *
-     * {@inheritdoc}
-     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::unregisterEventListeners()
+     * @see AbstractBehavior::unregisterEventListeners()
      */
     protected function unregisterEventListeners(): BehaviorInterface
     {
-    	$handler = array($this, 'handleBeforeEvent');
+    	$handler = array($this, 'handleEvent');
     	
     	$this->getWorkbench()->eventManager()->removeListener(OnBeforeCreateDataEvent::getEventName(), $handler);
     	$this->getWorkbench()->eventManager()->removeListener(OnBeforeUpdateDataEvent::getEventName(), $handler);
@@ -110,280 +103,267 @@ class OrderingBehavior extends AbstractBehavior
      *
      * @param DataSheetEventInterface $event
      */
-    public function handleBeforeEvent(DataSheetEventInterface $event)
+    public function handleEvent(DataSheetEventInterface $event) : void
     {
+        // Ignore MetaObjects we are not associated with.
     	if (!$event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
     		return;
     	}
 
+        // Create logbook.
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         $logbook->setIndentActive(1);
-        
+
+        // Prevent recursion.
         if ($this->working === true) {
         	$logbook->addLine('Ordering not necessary. Element is already in the process of being ordered.');
         	return;
         }
-        
-        $sheet = $event->getDataSheet();        
-        if ($sheet->hasUidColumn() === false) {
+
+        // Get datasheet and make sure it has a UID column.
+        $eventSheet = $event->getDataSheet();
+        if ($eventSheet->hasUidColumn() === false) {
             $logbook->addLine('Cannot order objects with no Uid attribute.');
             return;
         }
-        $logbook->addLine('Received ' . $sheet->countRows() . ' rows of ' . $sheet->getMetaObject()->__toString());
+
+        // Begin work.
+        $logbook->addLine('Received ' . $eventSheet->countRows() . ' rows of ' . $eventSheet->getMetaObject()->__toString());
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         $this->working = true;
 
-        // Create cache.
-        $cache = new LazyHierarchicalDataCache();
-        // Fill missing index values.
-        //$this->fillMissingIndices($sheet, $logbook); TODO update index fill
-        // start working with potential update data that trigger this handler again
-        $updateSheets = $this->orderDataByIndexingAttribute($sheet, $cache, $logbook);
-        
-        if (count($updateSheets) === 0) {
+        // Order data.
+        $pendingChanges = $this->groupDataByParent($eventSheet, $logbook);
+
+        // Apply changes, if any.
+        if (count($pendingChanges) === 0) {
         	$logbook->addLine('No changes to order necessary.');
         } else {
-        	$this->updateNecessaryChanges($event, $updateSheets, $logbook);
+            $this->applyChanges($eventSheet, $pendingChanges);
         }
-        
+
+        // Finish work.
         $this->working = false;
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
     }
-    
-	/**
-	 * @param sheet
-	 * @param LogBookInterface $logbook
-	 * @return void
-	 */
-	 private function fillMissingIndices(
-		DataSheetInterface $sheet,
-		LogBookInterface $logbook) : void
-	 {
-	 	$insertOntop = $this->getNeedsInsertNewOntop();
-        $uidAlias = $sheet->getUidColumnName();
-        $indexAttributeAlias = $this->getIndexAttributeAlias();
-        $rowIndex = 0;
-        $changedRows = 0;
-        foreach ($sheet->getRows() as $row) {
-            // skip entries that already have an uid or a indexAttribute.
-        	if (!empty($row[$uidAlias]) || !empty($row[$indexAttributeAlias]) ) {
+
+    /**
+     * Groups all rows in the event sheet by their parents and
+     * applies an ascending order within the groups according to their index alias.
+     *
+     * @param DataSheetInterface $eventSheet
+     * @param LogBookInterface $logbook
+     * @return array
+     * An array containing all changes necessary to achieve the desired ordering.
+     */
+    private function groupDataByParent(
+    	DataSheetInterface $eventSheet,
+    	LogBookInterface  $logbook): array
+    {
+        // Prepare variables.
+        $cache = new LazyHierarchicalDataCache();
+        $pendingChanges = [];
+        $indexAlias = $this->getIndexAlias();
+        $uidAlias = $eventSheet->getUidColumnName();
+
+        // Iterate over changed rows and update the ordering.
+        foreach ($eventSheet->getRows() as $changedRow) {
+            // Find, load and cache the row and its siblings.
+            $siblingSheet = $this->getSiblings($eventSheet, $changedRow, $indexAlias, $cache, $logbook);
+
+            // If we already ordered the group this row belongs to, continue.
+            if($siblingSheet === "PROCESSED") {
                 continue;
             }
 
-            $newIndex = null;
-            if($insertOntop) {
-                $newIndex = $this->getStartIndex();
-            } else {
-                $indexSheet = $this->loadNeighboringElements($sheet, $row, $rowIndex, $indexAttributeAlias, $logbook);
-                $newIndex = max($indexSheet->getColumnValues($indexAttributeAlias))+1;
+            // Find and record changes.
+            try {
+                $pendingChanges = array_merge($pendingChanges, $this->findPendingChanges($siblingSheet));
+            } catch (BehaviorConfigurationError $e) {
+                throw new BehaviorConfigurationError($this, $e->getMessage(), $logbook, $e);
             }
 
-            $sheet->setCellValue($indexAttributeAlias, $rowIndex, $newIndex);
-            $changedRows++;
-            $rowIndex ++;
-        }
-        
-        if ($changedRows > 0){
-	        $logbook->addLine('Ordered ' . $changedRows . $insertOntop ? 'on top ' : 'at the end ' . 'of their boundary.');        	
-        }
-	}
-
-    /**
-     * Iterates each data rows of the event sheet and loads a new sheet with its neighbors as well.
-     * This sheet will be sorted asc and ordered, all necessary changes will be held in an updateSheet.
-     * Returns an array of updateSheets for each row of the given data sheet.
-     *
-     * @param DataSheetInterface $sheet
-     * @param LogBookInterface $logbook
-     * @return array
-     */
-    private function orderDataByIndexingAttribute(
-    	DataSheetInterface $sheet,
-        LazyHierarchicalDataCache $cache,
-    	LogBookInterface $logbook): array
-    {
-        $updateSheets = [];
-        $indexAttributeAlias = $this->getIndexAttributeAlias();
-        foreach ($sheet->getRows() as $rowIndex => $row) {
-            $uid = $row[$sheet->getUidColumnName()];
-            if(!($siblingSheet = $cache->getData($uid))) {
-                $siblingSheet = $this->getSiblings($sheet, $row, $indexAttributeAlias, $cache, $logbook);
-            }
-
-            $currentIndex = $row[$indexAttributeAlias];
-            switch (true) {
-                case $currentIndex === null:
-                    throw new InvalidArgumentException("INVALID INDEX: This should have been prevented with index back fill!");
-                    //$initValue = max($indexSheet->getColumns()->getByExpression($indexAttributeAlias)->getValues()) + 1;
-                    //$sheet->setCellValue($indexAttributeAlias, $rowIndex, $initValue);
-                    break;
-            	case is_numeric($currentIndex):
-            		$updateSheet = $this->findNecessaryChangesInSequence($row, $indexAttributeAlias, $siblingSheet, $logbook); //TODO should be deferred
-            		
-            		// if closeGap changed the current event value we need to update the sheet that will be saved TODO might be bad logic
-            		if ($row[$indexAttributeAlias] != $currentIndex){
-            		    $sheet->setCellValue($indexAttributeAlias, $rowIndex, $row[$indexAttributeAlias]);
-            		}
-            		
-            		if (count($updateSheet->getRows()) > 0) {            			
-	                    $updateSheets[] = $updateSheet;
-            		}
-                    break;
-                default:
-                    throw new BehaviorConfigurationError(
-                    	$this, 
-                    	'Cannot order values of attribute "' . $indexAttributeAlias . '": invalid value "' . $currentIndex . "' encountered! Ordering indices must be numeric.",
-                    	$logbook);
-                    break;
-            }
+            // Mark all siblings as DONE, to avoid ordering the same group multiple times.
+            $cache->setData($changedRow[$uidAlias], "PROCESSED");
         }
 
-        return $updateSheets;
+        unset($cache);
+        return $pendingChanges;
     }
 
+    /**
+     * Finds all siblings of a given row. A sibling is any row that has the EXACT same parentage, including EMPTY values.
+     *
+     * Loads, processes and caches all relevant data for this row and its siblings.
+     *
+     * Multiple calls to this function with either the same row or one of its siblings will return the cached data without
+     * performing any additional work.
+     *
+     * @param DataSheetInterface $eventSheet
+     * @param array $row
+     * @param string $indexingAlias
+     * @param LazyHierarchicalDataCache $cache
+     * @param LogBookInterface $logbook
+     * @return DataSheetInterface|string
+     */
     private function getSiblings(
-        DataSheetInterface $sheet,
-        array $row,
-        string $indexAttributeAlias,
+        DataSheetInterface        $eventSheet,
+        array                     $row,
+        string                    $indexingAlias,
         LazyHierarchicalDataCache $cache,
-        LogBookInterface $logbook): DataSheetInterface
+        LogBookInterface          $logbook): DataSheetInterface | string
     {
-        $uidAlias = $sheet->getUidColumnName();
-        $indexSheet = $this->createEmptyCopyWithIndexAttribute($sheet, $indexAttributeAlias);
+        // Check if we already loaded the siblings for this UID before.
+        $uidAlias = $eventSheet->getUidColumnName();
+        if($indexSheet = $cache->getData($row[$uidAlias])) {
+            return $indexSheet;
+        }
 
+        // Prepare variables.
         $parents = [];
-        foreach ($this->getBoundaryAttributesAliases() as $boundaryAttributeAlias) {
-            $parent = $row[$boundaryAttributeAlias];
+        $parentAliases = $this->getParentAliases();
+        $indexSheet = $this->createEmptyCopy($eventSheet);
+
+        // Add filters for all parent aliases.
+        foreach ($parentAliases as $parentAlias) {
+            // Get parent information.
+            $parent = $row[$parentAlias];
+            // If this information is new, add it to the collection.
             if(!in_array($parent, $parents)){
                 $parents[] = $parent;
             }
-
-            $indexSheet->getColumns()->addFromExpression($boundaryAttributeAlias);
-
-            $indexSheet->getFilters()->addConditionFromString(
-                $boundaryAttributeAlias,
-                $parent,
-                ComparatorDataType::EQUALS,
-                false);
+            // Add column with parent alias.
+            $indexSheet->getColumns()->addFromExpression($parentAlias);
+            // Add filter.
+            if($parent === null) {
+                // If the parent information is null, we need to add a special filter.
+                $indexSheet->getFilters()->addConditionForAttributeIsNull($parentAlias);
+            } else {
+                // Otherwise we add a regular filter.
+                $indexSheet->getFilters()->addConditionFromString(
+                    $parentAlias,
+                    $parent,
+                    ComparatorDataType::EQUALS,
+                    false);
+            }
         }
 
-        // Finalize sheet and load data.
-        $indexSheet->getSorters()->addFromString($indexAttributeAlias, SortingDirectionsDataType::ASC);
+        // Load old data.
         $indexSheet->dataRead();
+        // Extract new data and merge it with the old.
+        $newData = $eventSheet->extract($indexSheet->getFilters());
+        $indexSheet->addRows($newData->getRows(), true);
 
-        // Store data in cache.
-        foreach ($indexSheet->getRows() as $indexedRow) {
+        // Calculate insertion index.
+        $insertionIndex = $this->getInsertNewOnTop() ?
+            $this->getStartIndex() :
+            max($indexSheet->getColumnValues($indexingAlias));
+
+        // Post-Process rows.
+        foreach ($indexSheet->getRows() as $rowNumber => $indexedRow) {
+            // Update index with value from event, if the event has a corresponding row.
+            $correspondingRow = $eventSheet->getRowByColumnValue($uidAlias, $indexedRow[$uidAlias]);
+            $index = $correspondingRow ? $correspondingRow[$indexingAlias] : $indexedRow[$indexingAlias];
+            $index = $index !== null && $index !== "" ? $index : $insertionIndex;
+            $indexSheet->setCellValue($indexingAlias, $rowNumber, $index);
+
+            // Add row to cache.
             $cache->addElement($indexedRow[$uidAlias], $parents);
         }
+
+        // Save data to cache.
+        $indexSheet->getSorters()->addFromString($indexingAlias, SortingDirectionsDataType::ASC);
+        $indexSheet->sort(null, false);
         $cache->setData($row[$uidAlias], $indexSheet);
 
         $logbook->addLine(
             'Found '
             . $indexSheet->countRows()
             . ' neighboring elements for the ' . $row[$uidAlias] . ' event data object.');
+
         return $indexSheet;
     }
 
-
-
     /**
-     * Iterates through all sorted neighboring elements to find unset or false indizes that need to be changed.
-     * Returns all changes in one datasheet.
+     * Finds all indices that need to be changed to successfully update the ordering.
      *
-     * @param array $row
-     * @param string $indexAttributeAlias
      * @param DataSheetInterface $indexSheet
-     * @param LogBookInterface $logbook
-     * @return DataSheetInterface
+     * The data sheet to be updated. Indices must be in ASCENDING order!
      */
-    private function findNecessaryChangesInSequence(
-        array              &$row,
-        string             $indexAttributeAlias,
-        DataSheetInterface $indexSheet): DataSheetInterface
+    private function findPendingChanges(DataSheetInterface $indexSheet): array
     {
-        $updateSheet = $this->createEmptyCopyWithIndexAttribute($indexSheet, $indexAttributeAlias);
+        // Prepare variables.
+        $nextIndex = $this->getStartIndex();
+        $indexAlias = $this->getIndexAlias();
         $closeGaps = $this->getCloseGaps();
+        $pendingChanges = [];
 
-        // so currentIndex becomes startIndex if smaller or equal
-        $lastIndex = $this->getStartIndex() - 1;
-        foreach ($indexSheet->getRows() as $currentRow) {
-            $currentIndex = $currentRow[$indexAttributeAlias];
-            $updateNeeded = false;
-            switch (true) {
-            	// if same as new value, skip index to make room for new object
-            	case ($currentIndex == $row[$indexAttributeAlias]):
-            		$updateNeeded = true;
-            		$currentIndex = $lastIndex+2;
-            		break;
-                // choose start index if first entry is null
-                case ($currentIndex === null):
-                    $updateNeeded = true;
-                    $currentIndex = $lastIndex === null ? $lastIndex : $lastIndex + 1;
-                    break;
-                // correct duplicates and smaller values
-                case ($currentIndex <= $lastIndex):
-                // close gaps if requested
-                case ($currentIndex > $lastIndex + 1 && $closeGaps):
-                    $updateNeeded = true;
-                    $currentIndex = $lastIndex + 1;
-                    break;
+        // Iterate over all rows of the provided data sheet to find and record all the changes we have
+        // to make to satisfy our ordering conditions.
+        foreach ($indexSheet->getRows() as $row) {
+            // Get current index of row.
+            $index = $row[$indexAlias];
+            if(!is_numeric($index)) {
+                throw new BehaviorConfigurationError($this, 'Cannot order values of attribute "' . $indexAlias . '": invalid value "' . $index . "' encountered! Ordering indices must be numeric.");
             }
 
-            if ($updateNeeded) {
-                $currentRow[$indexAttributeAlias] = $currentIndex;
-                $updateSheet->addRow($currentRow);
+            // Next index always points to the next open slot. If index is smaller or equal to that, we have to update.
+            // Otherwise, we only have to update if gap closing was enabled.
+            if($index <= $nextIndex || $closeGaps) {
+                if($index != $nextIndex) {
+                    // Mark row as pending.
+                    $row[$indexAlias] = $index = $nextIndex;
+                    $pendingChanges[] = $row;
+                }
             }
 
-            $lastIndex = $currentIndex;
+            // Update next index.
+            $nextIndex = $index + 1;
         }
 
-        // correct current value
-        if ($lastIndex < $row[$indexAttributeAlias] && $closeGaps){
-        	$row[$indexAttributeAlias] = $lastIndex + 1;
-        }
-
-        return $updateSheet;
+        return $pendingChanges;
     }
 
     /**
      *
      * @param DataSheetInterface $sheet
-     * @param string $indexAttributeAlias
      * @return DataSheetInterface
      */
-    // TODO Do we really need a dataSheet instance to store this information? (Maybe use array of rows instead).
-    private function createEmptyCopyWithIndexAttribute(
-    	DataSheetInterface $sheet, 
-    	string $indexAttributeAlias): DataSheetInterface
+    private function createEmptyCopy(DataSheetInterface $sheet): DataSheetInterface
     {
-        $newSheet = DataSheetFactory::createFromObject($sheet->getMetaObject());
-        $newSheet->getColumns()->addFromSystemAttributes();
-        $newSheet->getColumns()->addFromExpression($indexAttributeAlias);
-        return $newSheet;
+        $emptyCopy = $sheet->copy();
+        $emptyCopy->removeRows();
+
+        return $emptyCopy;
     }
 
     /**
      *
-     * @param DataSheetEventInterface $event
-     * @param array $updateSheets
-     * @param LogBookInterface $logbook
+     * @param DataSheetInterface $eventSheet
+     * @param array $pendingChanges
      * @return void
      */
-    private function updateNecessaryChanges(
-    	DataSheetEventInterface $event, 
-    	array $updateSheets, 
-    	LogBookInterface $logbook): void
+    private function applyChanges(
+    	DataSheetInterface      $eventSheet,
+    	array                   $pendingChanges): void
     {
-        $logbook->addLine('Updating ' . count($updateSheets) . ' elements.');
-        foreach ($updateSheets as $updateSheet) {
-            $updateSheet->dataUpdate(false, $event->getTransaction());
+        $uidAlias = $eventSheet->getUidColumnName();
+        $indexAlias = $this->getIndexAlias();
+
+        foreach ($pendingChanges as $pending) {
+            if($rowToChange = $eventSheet->getUidColumn()->findRowByValue($pending[$uidAlias])) {
+                $eventSheet->setCellValue($indexAlias, $rowToChange, $pending[$indexAlias]);
+            } else {
+                $eventSheet->addRow($pending);
+            }
         }
     }
 
     /**
-     * Set the default starting index.
-     * This comes into effect if no element has an index yet
-     * and when new_element_ontop is set to true.
+     * Define from where the behavior starts counting.
+     *
+     * A starting index of `1` for example represents an intuitive count from
+     * `1` to `infinity`.
      *
      * @uxon-property starting_index
      * @uxon-type integer
@@ -408,7 +388,10 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * Set to FALSE to disable reindexing when a new item is inserted
+     * Toggle, whether the behavior should close gaps between indices.
+     *
+     * If TRUE an order of `1 => "A", 2 => "B", 4 => "C", 6 => "D"` would be rearranged to
+     * `1 => "A", 2 => "B", 3 => "C", 4 => "D"`.
      *
      * @uxon-property close_gaps
      * @uxon-type boolean
@@ -433,18 +416,18 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * Set to FALSE if new elements without index should be inserted at the end
+     * Toggle whether elements without indices should be inserted at the top or bottom of the order.
      *
-     * @uxon-property new_element_ontop
+     * @uxon-property new_element_on_top
      * @uxon-type boolean
      * @uxon-default true
      *
      * @param bool $trueOrFalse
      * @return OrderingBehavior
      */
-    protected function setNewElementOntop(bool $trueOrFalse): OrderingBehavior
+    protected function setNewElementOnTop(bool $trueOrFalse): OrderingBehavior
     {
-        $this->insertNewOntop = $trueOrFalse;
+        $this->insertNewOnTop = $trueOrFalse;
         return $this;
     }
 
@@ -452,34 +435,33 @@ class OrderingBehavior extends AbstractBehavior
      *
      * @return bool
      */
-    protected function getNeedsInsertNewOntop(): bool
+    protected function getInsertNewOnTop(): bool
     {
-        return $this->insertNewOntop;
+        return $this->insertNewOnTop;
     }
 
     /**
      *
      * @return array
      */
-    protected function getBoundaryAttributesAliases(): array
+    protected function getParentAliases(): array
     {
-        return $this->boundaryAttributeAliases;
+        return $this->parentAliases;
     }
 
     /**
-     * Aliases of attributes that define an index - e.g.
-     * a folder to be indexed
+     * Define from which columns the behavior should determine the parents of a row.
      *
-     * @uxon-property indexing_boundary_attributes
+     * @uxon-property parent_aliases
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
      *
      * @param UxonObject $value
      * @return OrderingBehavior
      */
-    protected function setIndexingBoundaryAttributes(UxonObject $value): OrderingBehavior
+    protected function setParentAliases(UxonObject $value): OrderingBehavior
     {
-        $this->boundaryAttributeAliases = $value->toArray();
+        $this->parentAliases = $value->toArray();
         return $this;
     }
 
@@ -487,24 +469,24 @@ class OrderingBehavior extends AbstractBehavior
      *
      * @return string
      */
-    protected function getIndexAttributeAlias(): string
+    protected function getIndexAlias(): string
     {
-        return $this->indexAttributeAlias;
+        return $this->indexAlias;
     }
 
     /**
-     * Alias of index attribute to order
+     * Define which attribute will store the calculated indices. Must be compatible with integers.
      *
-     * @uxon-property order_index_attribute
+     * @uxon-property index_alias
      * @uxon-type metamodel:attribute
      * @uxon-required true
      *
      * @param string $value
      * @return OrderingBehavior
      */
-    protected function setOrderIndexAttribute(string $value): OrderingBehavior
+    protected function setIndexAlias(string $value): OrderingBehavior
     {
-        $this->indexAttributeAlias = $value;
+        $this->indexAlias = $value;
         return $this;
     }
 }
