@@ -21,41 +21,38 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
- * This behavior orders given indizes within a boundary
- *
+ * This behavior orders given indices within the hierarchy.
+ * 
  * The event is triggered before every create, update or delete operation.
- * It works by searching data in the data source for matches in every element of `indexing_boundary_attributes`
- * - multiple for complex tree structures - to find all neighboring elements.
- * These then will be ordered by the `order_index_attribute` - depending on the properties `close_gaps`
- * the indices will be incremented evenly, correcting all missing values. Duplicate values will always be corrected.
- *
- * By default close_gaps will occure.
- *
- * In addition you can change the `starting_index`, deciding which index should be the first to start
- * with and depending on `new_element_ontop` this will be relevant with every new entry.
- *
- * By default `new_element_ontop` will be set to false, preventing reordering all related elements within the same
- * boundary. CAUTION: Only elements with UIDs can make use of this configuration!
- *
+ * It establishes a hierarchy based on the `parent_aliases` you provide and then orders
+ * all elements among their siblings. Siblings are elements that share exactly the same parents.
+ * 
+ * - `index_alias` (REQUIRED): The resulting indices will be written to this column. 
+ * - `close_gaps`: If TRUE (default), gaps between indices will be closed.
+ * - `starting_index`: Ordering will start with this index.
+ * - `new_element_on_top`: If TRUE (default), any elements that have no ordering index specified, will be
+ * ordered first among their siblings.
+ * 
  * ## Examples
- *
- * ### Order pages by it's position within their menu parent. Closing gaps and inserting new elements otop.
- *
- * Example config to order the menu postions of `exface.Core.PAGE`.
- *
+ * 
+ * ### Order pages by their position within their menu parent. Closing gaps and inserting new elements on top.
+ * 
+ * Example config to order the menu positions of `exface.Core.PAGE`.
+ * 
  * ```
+ * 
  *  {
- *      "indexing_boundary_attributes": [
+ *      "parent_aliases": [
  *          "MENU_PARENT"
  *      ],
  *      "close_gaps": true,
- *      "order_index_attribute": "MENU_POSITION",
- *      "new_element_ontop": false,
+ *      "index_alias": "MENU_POSITION",
+ *      "new_element_on_top": true,
  *      "starting_index": 1
  *  }
- *
+ * 
  * ```
- *
+ * 
  * @author Miriam Seitz, Georg Bieger
  *
  */
