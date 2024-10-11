@@ -1,10 +1,8 @@
 <?php
 
 namespace exface\Core\CommonLogic\Utils;
-require ('C:\EDF\wamp\www\exface\exface\vendor\exface\core\CommonLogic\Utils\DisjointedNodeTree.php');
 
 use exface\Core\Exceptions\InvalidArgumentException;
-
 
 /**
  * Extends the disjointed node tree with explicit hierarchy features. Notably, the hierarchy supports multiple parents for each element.
