@@ -1,19 +1,25 @@
 <?php
 namespace exface\Core\CommonLogic\Model\Behaviors;
 
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
+use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\DataTypes\PhpClassDataType;
+use Wingu\OctopusCore\Reflection\ReflectionClass;
 
 /**
  *
@@ -266,7 +272,8 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
     
     /**
-     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the same event.
+     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the
+     * same event.
      *
      * @param int $value
      * @return BehaviorInterface
@@ -298,5 +305,103 @@ abstract class AbstractBehavior implements BehaviorInterface
     {
         $this->name = $name;
         return $this;
+    }
+
+    /**
+     * Checks a given UXON for invalid placeholders within the specified event context.
+     * Throws an error if any invalid UXONs are detected.
+     *
+     * @param UxonObject     $uxon
+     * @param EventInterface $event
+     * @param array          $config
+     * @return string
+     * @throws \ReflectionException
+     */
+    protected function checkUxonForInvalidPlaceholders(UxonObject $uxon, EventInterface $event, array $config) : string
+    {
+       $json = $uxon->toJson();
+       $errors = [];
+       
+       foreach (StringDataType::findPlaceholders($json) as $placeholder) {
+            $prefix = StringDataType::substringBefore($placeholder, ':', '').':';
+            if(!key_exists($prefix, $config)) {
+                $errors[] ='[#'.$placeholder.'#]';
+            }
+        }
+        
+        if(count($errors) === 0) {
+            return $json;
+        }
+
+        $eventName =  (new ReflectionClass($event))->getShortName();
+        $message = "The following placeholders are not supported for ".$eventName.':'.PHP_EOL;
+        $message .= implode(', ', $errors);
+        
+        throw new BehaviorRuntimeError($this, $message, '7X9TCJ3');
+    }
+
+    /**
+     * Checks whether a resolver is valid for a given event context.
+     * 
+     * @param PlaceholderResolverInterface $resolver
+     * @param string                       $placeholder
+     * @param EventInterface               $event
+     * @return bool
+     */
+    protected function isValidResolver(PlaceholderResolverInterface $resolver, string $placeholder, EventInterface $event) : bool
+    {
+        foreach ($this->GetPlaceholdersForEvent($event) as $placeholderToCheck => $resolverType) {
+            if($placeholder === $placeholderToCheck && 
+                get_class($resolver) === $resolverType) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get an array that defines what placeholders will be resolved for a given
+     * event context. It serves as a whitelist, meaning that only explicitly defined placeholders
+     * are going to work.
+     *
+     * Override this method to adapt it to the needs of your behavior. Adhere to the following structure:
+     *
+     * ```
+     *
+     * protected array $placeholderConfig = [
+     *      SomeEventClass::class => [
+     *          'placeholderA' => SomeResolverClass::class,
+     *          'placeholderB' => SomeResolverClass::class,
+     *          ...
+     *      ]
+     * ];
+     *
+     * ```
+     *
+     * @return array
+     */
+    protected function getPlaceholderConfig() : array
+    {
+        return [];
+    }
+
+    /**
+     * Returns a list of legal placeholders for a given event. Override 
+     * `getPlaceholderConfig()` to define what placeholders will be used for
+     * different event types.
+     * 
+     * @param EventInterface $event
+     * @return array
+     */
+    protected function GetPlaceholdersForEvent(EventInterface $event) : array
+    {
+        $config = $this->getPlaceholderConfig();
+        $key = get_class($event);
+        if(!key_exists($key, $config)) {
+            return [];
+        }
+        
+        return $config[$key];
     }
 }
