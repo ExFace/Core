@@ -2,13 +2,13 @@
 namespace exface\Core\Templates\Placeholders;
 
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Templates\AbstractPlaceholderResolver;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\DataTypes\StringDataType;
 
@@ -121,7 +121,9 @@ use exface\Core\DataTypes\StringDataType;
  *
  * @author Andrej Kabachnik
  */
-class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConvertedToUxon
+class DataSheetPlaceholder
+    extends AbstractPlaceholderResolver
+    implements iCanBeConvertedToUxon
 {    
     use ImportUxonObjectTrait;
     
@@ -136,8 +138,6 @@ class DataSheetPlaceholder implements PlaceholderResolverInterface, iCanBeConver
     private $rowRenderer = null;
     
     private $workbench = null;
-    
-    private $prefix = null;
     
     private $outerTemplate = null;
 
