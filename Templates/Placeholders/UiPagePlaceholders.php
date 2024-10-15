@@ -1,12 +1,11 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
+use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Resolves placeholders to properties of the current UI page: `~page:property`.
@@ -22,12 +21,8 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  *
  * @author Andrej Kabachnik
  */
-class UiPagePlaceholders implements PlaceholderResolverInterface
+class UiPagePlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $page = null;
     
     private $facade = null;
@@ -40,7 +35,7 @@ class UiPagePlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(UiPageInterface $page, HtmlPageFacadeInterface $facade, string $prefix = '~page:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->page = $page;
         $this->facade = $facade;
     }

@@ -1,24 +1,19 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
+use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Resolves placeholders to config values: `~config:app_alias:key`.
  * 
  * @author Andrej Kabachnik
  */
-class ConfigPlaceholders implements PlaceholderResolverInterface
+class ConfigPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
     use SanitizedPlaceholderTrait;
-    
-    private $prefix = null;
     
     private $workbench = null;
     
@@ -29,7 +24,7 @@ class ConfigPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(WorkbenchInterface $workbench, string $prefix = '~config:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->workbench = $workbench;
     }
 
