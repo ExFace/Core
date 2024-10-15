@@ -3,12 +3,9 @@
 namespace exface\Core\Behaviors\PlaceholderConfigs;
 
 use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
+use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\Interfaces\TemplateRenderers\PrefixedPlaceholderResolverInterface;
 
-/**
- * Placeholder configs allow for the fast and simple extension of behaviors with new
- * placeholders. They take care of validation and proper instantiation of resolvers.
- */
 abstract class AbstractPlaceholderConfig
 {
     /**
@@ -24,8 +21,8 @@ abstract class AbstractPlaceholderConfig
      * {
      *      return [
      *        SomeEventClass::class => [
-     *              'placeholderA' => SomeResolverClass::class,
-     *              'placeholderB' => SomeResolverClass::class,
+     *              'prefixA' => SomeResolverClass::class,
+     *              'prefixB' => SomeResolverClass::class,
      *              ...
      *          ]
      *      ];
@@ -34,24 +31,31 @@ abstract class AbstractPlaceholderConfig
      * ```
      *
      * @return array
-     */  
-    protected static array $config;
+     */
+    public abstract function getConfig() : array;
     
+    public abstract function apply(PlaceholderResolverInterface $resolver) : bool;
+
+
     /**
      * Checks whether a resolver is valid for a given event context.
      *
-     * @param string         $resolverType
-     * @param string         $placeholder
-     * @param EventInterface $event
+     * @param PlaceholderResolverInterface $resolver
+     * @param EventInterface               $event
      * @return bool
      */
     protected static function isValidResolver(
-        string $resolverType, 
-        string $placeholder, 
+        PlaceholderResolverInterface $resolver,
         EventInterface $event) : bool
     {
-        foreach (static::getConfigForEvent($event) as $placeholderToCheck => $resolverTypeToCheck) {
-            if($placeholder === $placeholderToCheck &&
+        $resolverType = get_class($resolver);
+        $prefix = '';
+        if($resolver instanceof  PrefixedPlaceholderResolverInterface) {
+            $prefix = $resolver->GetPrefix();
+        }
+
+        foreach (static::getConfigForEvent($event) as $prefixToCheck => $resolverTypeToCheck) {
+            if($prefix === $prefixToCheck &&
                 $resolverType === $resolverTypeToCheck) {
                 return true;
             }
@@ -61,19 +65,8 @@ abstract class AbstractPlaceholderConfig
     }
 
     /**
-     * Adds all relevant placeholders from this config to the specified renderer.
-     * 
-     * @param TemplateRendererInterface $renderer
-     * @param EventInterface            $event
-     * @return void
-     */
-    public static abstract function apply(
-        TemplateRendererInterface &$renderer, 
-        EventInterface $event) : void;
-
-    /**
      * Merge another config with the rules of this one.
-     * 
+     *
      * @param array $config
      * @return array
      */
