@@ -20,15 +20,6 @@ abstract class AbstractPlaceholderResolver
     }
 
     /**
-     * @param string $prefix
-     * @return void
-     */
-    public function SetPrefix(string $prefix) : void
-    {
-        $this->prefix = $prefix;
-    }
-
-    /**
      *
      * @param string[] $placeholders
      * @param string $prefix
