@@ -109,14 +109,14 @@ Let's convert our language object into a base object. We will regenerate a new m
 	
 5. Press <kbd>Save</kbd>
 6. Switch to the <kbd>General</kbd> tab of the object editor
-	- Change the name of the object to `BookClub base object`
-	- Change the alias of the object to `base_object`
+	- Change the name of the object to `BookClub base object <kuerzel>`
+	- Change the alias of the object to `base_object_<kuerzel>`
 	- Empty the data address because the base object itself does not exist in the data source
 	- Uncheck `Readable` and `Writable` for the same reason	
 7. Now `Save` the object
 8. Navigate back to `Administration > Metamodel > Data Sources`
-9. Open the `BookClub DB`
-10. Select the `BookClub base object` as "Base Object"
+9. Open the `BookClub DB <kuerzel>`
+10. Select the `BookClub base object <kuerzel>` as "Base Object"
 11. Save the data source
 
 Now all meta objects of this data source will automatically inherit everything from the base object: attributes, behaviors, actions, etc. In particular, they will inherit the `id` attribute, so that every object will automatically have a UID.
