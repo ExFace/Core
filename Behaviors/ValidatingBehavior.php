@@ -432,7 +432,7 @@ class ValidatingBehavior extends AbstractBehavior
         $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         
         $this->config->applyResolversForContext($placeHolderRenderer, $context, [
-            new DataRowPlaceholders($previousDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
+            new DataRowPlaceholders($previousDataSheet ?? $changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
             new DataRowPlaceholders($changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
         ]);
         

@@ -7,7 +7,7 @@ use exface\Core\Interfaces\TemplateRenderers\PrefixedPlaceholderResolverInterfac
 
 /**
  * A template renderer config extension can be used to add a set of predefined placeholders and their
- * associated rules and expectations to a @see TemplateRendererConfig
+ * associated rules and expectations to a `TemplateRendererConfig`.
  */
 abstract class AbstractTplConfigExtension extends AbstractPhConfig
 {

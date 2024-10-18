@@ -624,7 +624,7 @@ class NotifyingBehavior extends AbstractBehavior
     protected function buildNotifyIfDataMatchesConditions(
         EventInterface $event, 
         DataSheetInterface $dataSheet,
-        DataSheetInterface $oldSheet) : ?ConditionGroupInterface
+        ?DataSheetInterface $oldSheet) : ?ConditionGroupInterface
     {
         if ($this->notifyIfDataMatchesConditionGroupUxon === null) {
             return null;
@@ -642,8 +642,8 @@ class NotifyingBehavior extends AbstractBehavior
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
             $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
-                new DataRowPlaceholders($dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW),
-                new DataRowPlaceholders($oldSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
+                new DataRowPlaceholders($oldSheet ?? $dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
+                new DataRowPlaceholders($dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
             ]);
             $renderedUxon = UxonObject::fromJson($renderer->render($json));
             $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, $renderedUxon, $metaObject));
