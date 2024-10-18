@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Excludes placeholders with a certain prefix from rendering (they remain untouched in the rendered template)
