@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Resolves placeholders to properties of the current UI page: `~page:property`.

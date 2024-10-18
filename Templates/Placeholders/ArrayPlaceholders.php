@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Templates\AbstractPlaceholderResolver;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 
 /**
  * Replaces placeholders with values provided as a placeholder=>value array.
