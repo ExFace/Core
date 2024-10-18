@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 
 /**
  * Excludes placeholders with a certain prefix from rendering (they remain untouched in the rendered template)
@@ -13,12 +12,8 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  *
  * @author Andrej Kabachnik
  */
-class ExcludedPlaceholders implements PlaceholderResolverInterface
+class ExcludedPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $before = '';
     
     private $after = '';
@@ -30,7 +25,7 @@ class ExcludedPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(string $prefix = '~exclude:', string $delimiterBefore = '[#', string $delimiterAfter = '#]')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->before = $delimiterBefore;
         $this->after = $delimiterAfter;
     }
