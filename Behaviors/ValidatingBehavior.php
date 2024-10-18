@@ -1,10 +1,13 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\Behaviors\PlaceholderConfigs\PlaceholderConfigOldNew;
+use exface\Core\Behaviors\PlaceholderConfigs\TplConfigExtensionOldData;
+use exface\Core\Behaviors\PlaceholderConfigs\TemplateRendererConfig;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -155,11 +158,6 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  */
 class ValidatingBehavior extends AbstractBehavior
 {
-
-    const PLACEHOLDER_OLD = "~old:";
-
-    const PLACEHOLDER_NEW = "~new:";
-
     const VAR_EVENT_HANDLER = "handleOnChange";
 
     const VAR_ON_CREATE = "on_create";
@@ -170,11 +168,13 @@ class ValidatingBehavior extends AbstractBehavior
     
     // TODO 2024-08-29 geb: Config could support additional behaviors: throw, default
     // TODO 2024-09-05 geb: Might need more fine grained control, since the behaviour may be triggered in unexpected contexts (e.g. created for one dialogue, triggered by another)
-    private array $eventConfig = array(
+    private array $uxonsPerEventContext = array(
         self::VAR_ON_UPDATE => null,
         self::VAR_ON_CREATE => null,
         self::VAR_ON_ANY => null
     );
+    
+    private TemplateRendererConfig $config;
     
     /**
      *
@@ -220,7 +220,7 @@ class ValidatingBehavior extends AbstractBehavior
      */
     public function setInvalidIfOnCreate(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_CREATE] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_CREATE] = $uxon;
         return $this;
     }
 
@@ -243,7 +243,7 @@ class ValidatingBehavior extends AbstractBehavior
      */
     public function setInvalidIfOnUpdate(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_UPDATE] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_UPDATE] = $uxon;
         return $this;
     }
 
@@ -266,7 +266,7 @@ class ValidatingBehavior extends AbstractBehavior
      */
     public function setInvalidIfAlways(UxonObject $uxon) : ValidatingBehavior
     {
-        $this->eventConfig[self::VAR_ON_ANY] = $uxon;
+        $this->uxonsPerEventContext[self::VAR_ON_ANY] = $uxon;
         return $this;
     }
 
@@ -306,15 +306,27 @@ class ValidatingBehavior extends AbstractBehavior
             return;
         }
 
+        if(empty($this->config)) {
+            $this->config = new TemplateRendererConfig();
+            $this->config->addExtension(new TplConfigExtensionOldData());
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
-
+        
         // Perform data checks for each validation rule.
         $error = null;
+        $context = get_class($event);
         foreach ($uxon as $dataCheckUxon) {
-            $config = PlaceholderConfigOldNew::getConfigForEvent($event);
-            $json = $this->checkUxonForInvalidPlaceholders($dataCheckUxon, $event, $config);
+            // Check UXON for invalid placeholders.
             try {
-                $this->performDataChecks($json, $event, $previousDataSheet, $changedDataSheet);
+                $json = $this->config->checkUxonForInvalidPlaceholders($context, $dataCheckUxon);
+            } catch (InvalidArgumentException $e) {
+                throw new BehaviorRuntimeError($this, $e->getMessage(), '7X9TCJ3');
+            }
+            
+            // Perform data checks.
+            try {
+                $this->performDataChecks($json, $context, $previousDataSheet, $changedDataSheet);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 if(!$error) {
                     $error = $exception;
@@ -341,16 +353,16 @@ class ValidatingBehavior extends AbstractBehavior
     {
         $result = array();
 
-        if($this->eventConfig[self::VAR_ON_ANY] !== null) {
-            $result['invalid_if_'.self::VAR_ON_ANY] = $this->eventConfig[self::VAR_ON_ANY];
+        if($this->uxonsPerEventContext[self::VAR_ON_ANY] !== null) {
+            $result['invalid_if_'.self::VAR_ON_ANY] = $this->uxonsPerEventContext[self::VAR_ON_ANY];
         }
 
-        if($this->eventConfig[self::VAR_ON_UPDATE] !== null && $onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_UPDATE] = $this->eventConfig[self::VAR_ON_UPDATE];
+        if($this->uxonsPerEventContext[self::VAR_ON_UPDATE] !== null && $onUpdate) {
+            $result['invalid_if_'.self::VAR_ON_UPDATE] = $this->uxonsPerEventContext[self::VAR_ON_UPDATE];
         }
 
-        if($this->eventConfig[self::VAR_ON_CREATE] !== null && !$onUpdate) {
-            $result['invalid_if_'.self::VAR_ON_CREATE] = $this->eventConfig[self::VAR_ON_CREATE];
+        if($this->uxonsPerEventContext[self::VAR_ON_CREATE] !== null && !$onUpdate) {
+            $result['invalid_if_'.self::VAR_ON_CREATE] = $this->uxonsPerEventContext[self::VAR_ON_CREATE];
         }
 
         return array_count_values($result) > 0 ? $result : false;
@@ -360,19 +372,23 @@ class ValidatingBehavior extends AbstractBehavior
      * Performs data validation by applying the specified checks to the provided data sheets.
      *
      * @param string                  $json
-     * @param EventInterface          $event
+     * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
      * @param DataSheetInterface      $changedDataSheet
      * @return void
      */
-    protected function performDataChecks(string $json, EventInterface $event, ?DataSheetInterface $previousDataSheet, DataSheetInterface $changedDataSheet) : void
+    protected function performDataChecks(
+        string                 $json, 
+        string                 $context, 
+        ?DataSheetInterface    $previousDataSheet, 
+        DataSheetInterface     $changedDataSheet) : void
     {
         $error = null;
 
         // Validate data row by row. This is a little inefficient, but allows us to display proper row indices for any errors that might occur.
         foreach ($changedDataSheet->getRows() as $index => $row) {
             // Render placeholders.
-            $renderedUxon = $this->renderUxon($json, $event, $previousDataSheet, $changedDataSheet, $index);
+            $renderedUxon = $this->renderUxon($json, $context, $previousDataSheet, $changedDataSheet, $index);
             // Reduce datasheet to the relevant row.
             $checkSheet = $changedDataSheet->copy();
             $checkSheet->removeRows()->addRow($row);
@@ -400,27 +416,25 @@ class ValidatingBehavior extends AbstractBehavior
      * Renders all placeholders present in the provided UXON.
      *
      * @param string                  $json
-     * @param EventInterface          $event
+     * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
      * @param DataSheetInterface      $changedDataSheet
      * @param int                     $rowIndex
      * @return UxonObject
      */
     private function renderUxon(
-        string $json, 
-        EventInterface $event,
+        string              $json, 
+        string              $context,
         ?DataSheetInterface $previousDataSheet, 
-        DataSheetInterface $changedDataSheet, 
-        int $rowIndex) : UxonObject
+        DataSheetInterface  $changedDataSheet, 
+        int                 $rowIndex) : UxonObject
     {
         $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-        PlaceholderConfigOldNew::apply(
-            $placeHolderRenderer, 
-            $event,
-            $previousDataSheet,
-            $changedDataSheet,
-            $rowIndex
-        );
+        
+        $this->config->applyResolversForContext($placeHolderRenderer, $context, [
+            new DataRowPlaceholders($previousDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
+            new DataRowPlaceholders($changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
+        ]);
         
         // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
         return UxonObject::fromJson($placeHolderRenderer->render($json), CASE_LOWER);
@@ -438,27 +452,6 @@ class ValidatingBehavior extends AbstractBehavior
         }
 
         return $dataCheckList;
-    }
-
-    /**
-     * @inerhitDoc 
-     */
-    protected function getPlaceholderConfig() : array
-    {
-        return [
-            OnBeforeCreateDataEvent::class => [
-                '~new:' => DataRowPlaceholders::class
-            ],
-
-            OnBeforeUpdateDataEvent::class => [
-                '~old:' => DataRowPlaceholders::class,
-                '~new:' => DataRowPlaceholders::class
-            ],
-
-            OnBeforeDeleteDataEvent::class => [
-                '~new:' => DataRowPlaceholders::class
-            ],
-        ];
     }
 
     /**
