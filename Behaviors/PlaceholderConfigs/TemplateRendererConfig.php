@@ -10,7 +10,7 @@ use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 
 /**
  * A template renderer config essentially validates resolvers and uxons to make sure they are compliant
- * with all @see AbstractTplConfigExtension instances added to it. 
+ * with all `AbstractTplConfigExtension` instances added to it. 
  * 
  * Usage Example:
  * 
@@ -36,8 +36,8 @@ use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
  *      // It will automatically perform any necessary configurations and will only apply those resolvers
  *      // that are valid for the current $context.
  *      $this->config->applyResolversForContext($placeHolderRenderer, $context, [
- *          new DataRowPlaceholders($previousDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
- *          new DataRowPlaceholders($changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
+ *          new DataRowPlaceholders($oldData ?? $newData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
+ *          new DataRowPlaceholders($newData, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
  *      ]);
  *      
  *      $renderedStrings[] = $placeHolderRenderer->render($stringToRender);
