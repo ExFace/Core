@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * TODO 

@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Resolves placeholders containing translation keys: `~translate:app_alias:translation_key`.

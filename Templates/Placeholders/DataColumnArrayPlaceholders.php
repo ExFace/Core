@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 
 /**
