@@ -9,7 +9,6 @@ use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\CommonLogic\UxonObject;
@@ -319,7 +318,8 @@ class ValidatingBehavior extends AbstractBehavior
         foreach ($uxon as $dataCheckUxon) {
             // Check UXON for invalid placeholders.
             try {
-                $json = $this->config->checkUxonForInvalidPlaceholders($context, $dataCheckUxon);
+                $json = $dataCheckUxon->toJson();
+                $this->config->checkStringForInvalidPlaceholders($context, $json);
             } catch (InvalidArgumentException $e) {
                 throw new BehaviorRuntimeError($this, $e->getMessage(), '7X9TCJ3');
             }

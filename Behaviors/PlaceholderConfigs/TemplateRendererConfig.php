@@ -8,14 +8,52 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 
+/**
+ * A template renderer config essentially validates resolvers and uxons to make sure they are compliant
+ * with all @see AbstractTplConfigExtension instances added to it. 
+ * 
+ * Usage Example:
+ * 
+ * ```
+ *  
+ *  // Create new config.
+ *  $config = new TemplateRendererConfig();
+ * 
+ *  // Add any extensions you wish to use.
+ *  $config->addExtension(new TplConfigExtensionOldData());
+ * 
+ *  // You can now use the config to check for illegal placeholders.
+ *  // A placeholder is illegal if it is not defined in any of the extensions
+ *  // or if it is not defined for the current $context
+ *  $config->checkStringForInvalidPlaceholders($context, $string)
+ * 
+ *  $renderedStrings = [];
+ *  foreach($dataSheet->getRows() as $rowIndex => $row) {
+ *      // Create a new renderer.
+ *      $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+ *      
+ *      // Now we create the placeholder resolvers we would like to use and let the config work its magic.
+ *      // It will automatically perform any necessary configurations and will only apply those resolvers
+ *      // that are valid for the current $context.
+ *      $this->config->applyResolversForContext($placeHolderRenderer, $context, [
+ *          new DataRowPlaceholders($previousDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
+ *          new DataRowPlaceholders($changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
+ *      ]);
+ *      
+ *      $renderedStrings[] = $placeHolderRenderer->render($stringToRender);
+ *  }
+ * 
+ * ```
+ * 
+ */
 class TemplateRendererConfig extends AbstractPhConfig
 {
-    private array $config;
+    private array $config = [];
 
     /**
      * @var AbstractTplConfigExtension[]
      */
-    private array $extensions;
+    private array $extensions = [];
 
     /**
      * Extends this config with a specified placeholder config. 
@@ -105,6 +143,9 @@ class TemplateRendererConfig extends AbstractPhConfig
     /**
      * Automagically configures the resolver template and applies the resulting
      * resolver instances to the specified template renderer.
+     * 
+     * Resolvers that are not valid for the given context will simply be discarded
+     * without side effects.
      *
      * @param TemplateRendererInterface      $renderer
      * @param PlaceholderResolverInterface[] $resolvers
@@ -116,31 +157,30 @@ class TemplateRendererConfig extends AbstractPhConfig
         string $context,
         array $resolvers) : void
     {
-        $resolvers = [];
+        $result = [];
         foreach ($this->extensions as $extension) {
-            $resolvers[] = $extension->configureResolversForContext($context, $resolvers, $this);
+            $result = array_merge($result, $extension->configureResolversForContext($context, $resolvers, $this));
         }
         
-        foreach ($resolvers as $resolver) {
+        foreach ($result as $resolver) {
             $renderer->addPlaceholder($resolver);
         }
     }
 
     /**
-     * Checks a given UXON for invalid placeholders within the specified event context.
-     * Throws an error if any invalid UXONs are detected.
+     * Checks a given string for invalid placeholders within the specified event context.
+     * Throws an error if any invalid placeholders are detected.
      *
-     * @param UxonObject $uxon
-     * @param string     $context
-     * @return string
+     * @param string $context
+     * @param string $string
+     * @return void
      */
-    public function checkUxonForInvalidPlaceholders(string $context, UxonObject $uxon) : string
+    public function checkStringForInvalidPlaceholders(string $context, string $string) : void
     {
         $errors = [];
-        $json = $uxon->toJson();
         $contextSettings = $this->extractContextSettings($context);
         
-        foreach (StringDataType::findPlaceholders($json) as $placeholder) {
+        foreach (StringDataType::findPlaceholders($string) as $placeholder) {
             $prefix = StringDataType::substringBefore($placeholder, ':', '').':';
             if(!key_exists($prefix, $contextSettings)) {
                 $errors[] ='[#'.$placeholder.'#]';
@@ -148,7 +188,7 @@ class TemplateRendererConfig extends AbstractPhConfig
         }
 
         if(count($errors) === 0) {
-            return $json;
+            return;
         }
         
         $message = "The following placeholders are not supported for ".$context.':'.PHP_EOL;

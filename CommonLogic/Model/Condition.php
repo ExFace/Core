@@ -542,7 +542,6 @@ class Condition implements ConditionInterface
         switch (true) {
             case $uxon->hasProperty('expression') === true:
                 $expressionStr = $uxon->getProperty('expression');
-                $expressionUnknownAsString = false;
                 break;
             case $uxon->hasProperty('attribute_alias') === true:
                 $expressionStr = $uxon->getProperty('attribute_alias');

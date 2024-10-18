@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\Behaviors\PlaceholderConfigs\TemplateRendererConfig;
+use exface\Core\Behaviors\PlaceholderConfigs\TplConfigExtensionOldData;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
@@ -26,6 +28,8 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
  * Sends communication messages (notifications, emails, chat posts, etc.) on certain events and conditions.
@@ -175,17 +179,19 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $isNotificationInProgress = false;
     
+    private TemplateRendererConfig $rendererConfig;
+    
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
-     *
+     * 
      * You can either define a message here explicitly by setting the `channel`, etc., or
      * select a `template` and customize it if needed by overriding certain properties. Note, that
      * when using templates, proper autosuggest is only available if you set the channel explicitly
      * too. 
-     *
+     * 
      * The following placeholders can be used anywhere inside each message configuration: in `text`,
      * `recipients` - anywhere:
-     *
+     * 
      * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
      * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key`
      * from the given app
@@ -225,11 +231,11 @@ class NotifyingBehavior extends AbstractBehavior
      *  }
      * 
      * ```
-     *
+     * 
      * @uxon-property notifications
      * @uxon-type \exface\Core\CommonLogic\Communication\AbstractMessage
      * @uxon-template [{"": ""}]
-     *
+     * 
      * @param UxonObject $arrayOfMessages
      * @return NotifyingBehavior
      */
@@ -306,9 +312,9 @@ class NotifyingBehavior extends AbstractBehavior
     }  
 
     /**
-     *
+     * 
      * {@inheritdoc}
-     *
+     * 
      * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
@@ -344,6 +350,12 @@ class NotifyingBehavior extends AbstractBehavior
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             $this->isNotificationInProgress = false;
             return;
+        }
+        
+        // Create placeholder renderer config.
+        if(empty($this->rendererConfig)) {
+            $this->rendererConfig = new TemplateRendererConfig();
+            $this->rendererConfig->addExtension(new TplConfigExtensionOldData());
         }
         
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
@@ -387,10 +399,17 @@ class NotifyingBehavior extends AbstractBehavior
         $phResolvers = [];
         
         $dataSheet = null;
+        $oldSheet = null;
         switch (true) {
             // For data-events, use their data obviously
             case $event instanceof DataSheetEventInterface:
                 $dataSheet = $event->getDataSheet();
+                
+                if($event instanceof OnBeforeUpdateDataEvent) {
+                    $oldSheet = $event->getDataSheetWithOldData();
+                    $dataSheet = $dataSheet->copy()->sortLike($oldSheet);
+                } 
+                
                 $logbook->addLine('Received data for ' . $dataSheet->getMetaObject()->__toString() . ' from data-event');
                 break;
             // For action-events, use their input data as object-restrictions will be probably expected to apply to input data:
@@ -426,7 +445,9 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Ignore the event if its data does not match restrictions
         if ($dataSheet && $this->hasRestrictionConditions()) {
-            $dataSheet = $dataSheet->extract($this->getNotifyIfDataMatchesConditions(), true);
+            // Render conditions.
+            
+            $dataSheet = $dataSheet->extract($this->buildNotifyIfDataMatchesConditions($event, $dataSheet, $oldSheet), true);
             if ($dataSheet->isEmpty()) {
                 $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
                 return;
@@ -561,11 +582,11 @@ class NotifyingBehavior extends AbstractBehavior
     
     /**
      * Only call the action if any of these attributes change (list of aliases)
-     *
+     * 
      * @uxon-property notify_if_attributes_change
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
-     *
+     * 
      * @param UxonObject $value
      * @return NotifyingBehavior
      */
@@ -592,26 +613,52 @@ class NotifyingBehavior extends AbstractBehavior
     {
         return $this->notifyIfDataMatchesConditionGroupUxon !== null;
     }
-    
+
     /**
-     *
+     * 
+     * @param EventInterface     $event
+     * @param DataSheetInterface $dataSheet
+     * @param DataSheetInterface $oldSheet
      * @return ConditionGroupInterface|NULL
      */
-    protected function getNotifyIfDataMatchesConditions() : ?ConditionGroupInterface
+    protected function buildNotifyIfDataMatchesConditions(
+        EventInterface $event, 
+        DataSheetInterface $dataSheet,
+        DataSheetInterface $oldSheet) : ?ConditionGroupInterface
     {
         if ($this->notifyIfDataMatchesConditionGroupUxon === null) {
             return null;
         }
-        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->notifyIfDataMatchesConditionGroupUxon, $this->getObject());
+
+        // Check for illegal placeholders.
+        $json = $this->notifyIfDataMatchesConditionGroupUxon->toJson(); 
+        $this->rendererConfig->checkStringForInvalidPlaceholders(get_class($event), $json);
+        
+        // Render placeholders.
+        $metaObject = $dataSheet->getMetaObject();
+        $workBench = $this->getWorkbench();
+        $conditionGroup = ConditionGroupFactory::createOR($metaObject);
+        foreach ($dataSheet->getRows() as $rowIndex => $row) {
+            // Render placeholders.
+            $renderer = new BracketHashStringTemplateRenderer($workBench);
+            $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
+                new DataRowPlaceholders($dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW),
+                new DataRowPlaceholders($oldSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
+            ]);
+            $renderedUxon = UxonObject::fromJson($renderer->render($json));
+            $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, $renderedUxon, $metaObject));
+        }
+        
+        return $conditionGroup;
     }
     
     /**
      * Only call the action if it's input data would match these conditions
-     *
+     * 
      * @uxon-property notify_if_data_matches_conditions
      * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
      * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
-     *
+     * 
      * @param UxonObject $uxon
      * @return NotifyingBehavior
      */
@@ -651,10 +698,10 @@ class NotifyingBehavior extends AbstractBehavior
      * There is no need to set `notify_on_event` together with `notify_on_action`, however, you may want
      * to combine the two options to send notification `OnBeforeActionPerformed` or in other very special
      * cases.
-     *
+     * 
      * @uxon-property notify_on_action
      * @uxon-type metamodel:action
-     *
+     * 
      * @param string $value
      * @return NotifyingBehavior
      */
@@ -678,11 +725,11 @@ class NotifyingBehavior extends AbstractBehavior
     
     /**
      * Set to TRUE to use the action input data to check against the data matches conditions
-     *
+     * 
      * @uxon-property use_action_input_data
      * @uxon-type boolean
      * @uxon-default false
-     *
+     * 
      * @param bool $value
      * @return NotifyingBehavior
      */
