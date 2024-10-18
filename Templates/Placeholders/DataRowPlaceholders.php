@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Fills placehodlers with values from each data row - e.g. `~datarow:ATTRIBUTE` or `~datarow:=Formula()`.

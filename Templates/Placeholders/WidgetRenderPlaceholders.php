@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Templates\AbstractPlaceholderResolver;
 
 /**
  * Replaces placeholders with rendered widgets: `~widget:widget_type` or `~widget:widget_type:uxon`.

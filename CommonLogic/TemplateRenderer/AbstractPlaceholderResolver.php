@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\Templates;
+namespace exface\Core\CommonLogic\TemplateRenderer;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
