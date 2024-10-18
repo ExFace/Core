@@ -13,7 +13,7 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
- * Adds support for the placeholders `~old:` and `~new:`.
+ * Adds support for the placeholders `~old:` and `~new:` prefixes.
  */
 class TplConfigExtensionOldData extends AbstractTplConfigExtension
 {
@@ -52,8 +52,8 @@ class TplConfigExtensionOldData extends AbstractTplConfigExtension
     }
     
     public function configureResolversForContext(
-        array $resolvers, 
         string $context,
+        array $resolvers, 
         TemplateRendererConfig $config) : array
     {
         $result = [];
@@ -61,9 +61,10 @@ class TplConfigExtensionOldData extends AbstractTplConfigExtension
         
         foreach ($this->extractContextSettings($context) as $prefix) {
             if($this->appliesToPrefix($prefix, $configSettings)) {
-                $resolver = $this->getResolverWithPrefix($prefix, $resolvers);
-                $this->configureResolverForPrefix($resolver, $prefix);
-                $result[] = $resolver;
+                if($resolver = $this->findResolverWithPrefix($prefix, $resolvers)) {
+                    $this->configureResolverForPrefix($prefix, $resolver);
+                    $result[] = $resolver;
+                }
             }
         }
         

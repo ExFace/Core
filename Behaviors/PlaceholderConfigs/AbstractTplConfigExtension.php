@@ -5,6 +5,10 @@ namespace exface\Core\Behaviors\PlaceholderConfigs;
 use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\TemplateRenderers\PrefixedPlaceholderResolverInterface;
 
+/**
+ * A template renderer config extension can be used to add a set of predefined placeholders and their
+ * associated rules and expectations to a @see TemplateRendererConfig
+ */
 abstract class AbstractTplConfigExtension extends AbstractPhConfig
 {
     /**
@@ -42,7 +46,7 @@ abstract class AbstractTplConfigExtension extends AbstractPhConfig
      * @param string $prefix
      * @return PlaceholderResolverInterface|null
      */
-    protected function getResolverWithPrefix(string $prefix, array $resolvers) : PlaceholderResolverInterface | false
+    protected function findResolverWithPrefix(string $prefix, array $resolvers) : PlaceholderResolverInterface | false
     {
         foreach ($resolvers as $resolver) {
             $resolverPrefix = $resolver instanceof PrefixedPlaceholderResolverInterface ? $resolver->GetPrefix() : '';
