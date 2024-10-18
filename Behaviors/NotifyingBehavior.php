@@ -617,14 +617,14 @@ class NotifyingBehavior extends AbstractBehavior
     /**
      * 
      * @param EventInterface     $event
-     * @param DataSheetInterface $dataSheet
-     * @param DataSheetInterface $oldSheet
+     * @param DataSheetInterface $newData
+     * @param DataSheetInterface $oldData
      * @return ConditionGroupInterface|NULL
      */
     protected function buildNotifyIfDataMatchesConditions(
-        EventInterface $event, 
-        DataSheetInterface $dataSheet,
-        ?DataSheetInterface $oldSheet) : ?ConditionGroupInterface
+        EventInterface      $event, 
+        DataSheetInterface  $newData,
+        ?DataSheetInterface $oldData) : ?ConditionGroupInterface
     {
         if ($this->notifyIfDataMatchesConditionGroupUxon === null) {
             return null;
@@ -635,16 +635,23 @@ class NotifyingBehavior extends AbstractBehavior
         $this->rendererConfig->checkStringForInvalidPlaceholders(get_class($event), $json);
         
         // Render placeholders.
-        $metaObject = $dataSheet->getMetaObject();
+        $metaObject = $newData->getMetaObject();
         $workBench = $this->getWorkbench();
         $conditionGroup = ConditionGroupFactory::createOR($metaObject);
-        foreach ($dataSheet->getRows() as $rowIndex => $row) {
+        foreach ($newData->getRows() as $rowIndex => $row) {
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
+            
+            if(!empty($oldData)) {
+                $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
+                    new DataRowPlaceholders($oldData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
+                ]);
+            }
             $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
-                new DataRowPlaceholders($oldSheet ?? $dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
-                new DataRowPlaceholders($dataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
+                new DataRowPlaceholders($newData, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
             ]);
+            
+            
             $renderedUxon = UxonObject::fromJson($renderer->render($json));
             $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, $renderedUxon, $metaObject));
         }

@@ -417,23 +417,27 @@ class ValidatingBehavior extends AbstractBehavior
      *
      * @param string                  $json
      * @param string                  $context
-     * @param DataSheetInterface|null $previousDataSheet
-     * @param DataSheetInterface      $changedDataSheet
+     * @param DataSheetInterface|null $oldData
+     * @param DataSheetInterface      $newData
      * @param int                     $rowIndex
      * @return UxonObject
      */
     private function renderUxon(
         string              $json, 
         string              $context,
-        ?DataSheetInterface $previousDataSheet, 
-        DataSheetInterface  $changedDataSheet, 
+        ?DataSheetInterface $oldData, 
+        DataSheetInterface  $newData, 
         int                 $rowIndex) : UxonObject
     {
         $placeHolderRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         
+        if(!empty($oldData)) {
+            $this->config->applyResolversForContext($placeHolderRenderer, $context, [
+                new DataRowPlaceholders($oldData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
+            ]);
+        }
         $this->config->applyResolversForContext($placeHolderRenderer, $context, [
-            new DataRowPlaceholders($previousDataSheet ?? $changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
-            new DataRowPlaceholders($changedDataSheet, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
+            new DataRowPlaceholders($newData, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
         ]);
         
         // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)

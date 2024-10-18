@@ -35,8 +35,12 @@ use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
  *      // Now we create the placeholder resolvers we would like to use and let the config work its magic.
  *      // It will automatically perform any necessary configurations and will only apply those resolvers
  *      // that are valid for the current $context.
+ *      if(!empty($oldData)) {
+ *          $this->config->applyResolversForContext($placeHolderRenderer, $context, [
+ *              new DataRowPlaceholders($oldData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
+ *          ]);
+ *      }
  *      $this->config->applyResolversForContext($placeHolderRenderer, $context, [
- *          new DataRowPlaceholders($oldData ?? $newData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD),
  *          new DataRowPlaceholders($newData, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
  *      ]);
  *      
@@ -157,6 +161,8 @@ class TemplateRendererConfig extends AbstractPhConfig
         string $context,
         array $resolvers) : void
     {
+        $resolvers = array_filter($resolvers);
+        
         $result = [];
         foreach ($this->extensions as $extension) {
             $result = array_merge($result, $extension->configureResolversForContext($context, $resolvers, $this));
