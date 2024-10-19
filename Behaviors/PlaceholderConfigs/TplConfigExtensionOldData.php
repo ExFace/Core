@@ -14,6 +14,40 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
  * Adds support for the placeholders `~old:` and `~new:` prefixes.
+ * 
+ * ### Config
+ * 
+ * ```
+ * 
+ *  [
+ *      OnBeforeCreateDataEvent::class => [
+ *          self::PREFIX_NEW,
+ *      ],
+ * 
+ *      OnCreateDataEvent::class => [
+ *          self::PREFIX_NEW,
+ *      ],
+ * 
+ *      OnBeforeUpdateDataEvent::class => [
+ *          self::PREFIX_OLD,
+ *          self::PREFIX_NEW,
+ *      ],
+ *  
+ *      OnUpdateDataEvent::class => [
+ *          self::PREFIX_OLD,
+ *          self::PREFIX_NEW,
+ *      ],
+ *  
+ *      OnBeforeDeleteDataEvent::class => [
+ *          self::PREFIX_NEW,
+ *      ],
+ *  
+ *      OnDeleteDataEvent::class => [
+ *          self::PREFIX_NEW,
+ *      ],
+ *  ]
+ * 
+ * ```
  */
 class TplConfigExtensionOldData extends AbstractTplConfigExtension
 {
