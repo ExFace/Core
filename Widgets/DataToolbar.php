@@ -277,9 +277,14 @@ class DataToolbar extends Toolbar
     protected function removeButtonsWithOverriddenActions(ButtonGroup $buttonGroup, ButtonGroup $overrides) : ButtonGroup
     {
         foreach ($overrides->getButtons() as $override) {
-            $overrideAction = $override->getAction()->getAlias();
+            $overrideAction = strtolower($override->getOverridesActionAlias());
+            if(empty($overrideAction)) {
+                continue;
+            }
+            
             foreach ($buttonGroup->getButtons() as $button) {
-                if($overrideAction === $button->getAction()->getAlias()) {
+                $buttonAction = strtolower($button->getAction()->getAliasWithNamespace());
+                if($overrideAction === $buttonAction) {
                     $buttonGroup->removeButton($button);
                 }
             }

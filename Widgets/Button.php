@@ -42,7 +42,8 @@ use exface\Core\DataTypes\ComparatorDataType;
 /**
  * A Button is the primary widget for triggering actions.
  *
- * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows a widget).
+ * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows
+ * a widget).
  *
  * @author Andrej Kabachnik
  *        
@@ -87,6 +88,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     const FUNCTION_FOCUS = 'focus';
     
     private $action_alias = null;
+    
+    private string $overrides_action_alias = '';
 
     private $action = null;
     
@@ -229,6 +232,31 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
+     * Define an action alias that will be overridden by this button.
+     * 
+     * Any global buttons with this action alias will not be rendered.
+     * 
+     * @uxon-property overrides_action_alias
+     * @uxon-type metamodel:action
+     * 
+     * @param $alias
+     * @return $this
+     */
+    public function setOverridesActionAlias($alias) : static
+    {
+        $this->overrides_action_alias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOverridesActionAlias() : string
+    {
+        return $this->overrides_action_alias;
+    }
+    
+    /**
      * Buttons allow to set action options as an options array or directly as an option of the button itself.
      * In the latter case the option's name must be prefixed by "action_": to set a action's property
      * called "script" simply add "action_script": XXX to the button.
@@ -356,7 +384,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     /**
      * The Button may have a child widget, if the action it triggers shows a widget.
-     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to another resource.
+     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to
+     * another resource.
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
@@ -386,7 +415,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
-     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the button has an action.
+     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the
+     * button has an action.
      *
      * {@inheritdoc}
      *
