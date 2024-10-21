@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 
 /**
  * Resolves placeholders to URLs of UI pages: `~url:page_alias`.
@@ -12,12 +11,8 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  *
  * @author Andrej Kabachnik
  */
-class UrlPlaceholders implements PlaceholderResolverInterface
+class UrlPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $facade = null;
     
     /**
@@ -27,7 +22,7 @@ class UrlPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(FacadeInterface $facade, string $prefix = '~url:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->facade = $facade;
     }
 

@@ -1,11 +1,10 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 
 /**
  * Resolves placeholders to facade propertis: `~facade:property`.
@@ -19,12 +18,8 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  *
  * @author Andrej Kabachnik
  */
-class FacadePlaceholders implements PlaceholderResolverInterface
+class FacadePlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $facade = null;
     
     /**
@@ -34,7 +29,7 @@ class FacadePlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(FacadeInterface $facade, string $prefix = '~facade:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->facade = $facade;
     }
 

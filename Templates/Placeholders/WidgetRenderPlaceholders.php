@@ -1,10 +1,9 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -14,12 +13,8 @@ use exface\Core\Interfaces\Model\UiPageInterface;
  *
  * @author Andrej Kabachnik
  */
-class WidgetRenderPlaceholders implements PlaceholderResolverInterface
+class WidgetRenderPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $facade = null;
     
     private $page = null;
@@ -31,7 +26,7 @@ class WidgetRenderPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(FacadeInterface $facade, UiPageInterface $page, string $prefix = '~widget:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->facade = $facade;
         $this->page = $page;
     }

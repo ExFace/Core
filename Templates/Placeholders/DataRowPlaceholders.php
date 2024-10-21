@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
@@ -26,13 +25,9 @@ use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
  *
  * @author Andrej Kabachnik
  */
-class DataRowPlaceholders implements PlaceholderResolverInterface
+class DataRowPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
     use SanitizedPlaceholderTrait;
-    
-    private $prefix = null;
     
     /**
      * 
@@ -51,7 +46,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(DataSheetInterface $dataSheet, int $rowNumber, string $prefix = '~datarow:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->dataSheet = $dataSheet;
         $this->rowNumber = $rowNumber;
     }

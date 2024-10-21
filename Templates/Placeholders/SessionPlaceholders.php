@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -16,12 +15,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
  *
  * @author Andrej Kabachnik
  */
-class SessionPlaceholders implements PlaceholderResolverInterface
+class SessionPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $workbench = null;
     
     /**
@@ -31,7 +26,7 @@ class SessionPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(WorkbenchInterface $workbench, string $prefix = '~session:')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->workbench = $workbench;
     }
 
