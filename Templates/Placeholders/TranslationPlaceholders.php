@@ -26,7 +26,7 @@ class TranslationPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(WorkbenchInterface $workbench, string $prefix = '~translate:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->workbench = $workbench;
     }
 
@@ -38,8 +38,8 @@ class TranslationPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $phStripped = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $phStripped = $this->stripPrefix($placeholder);
             list($appAlias, $message) = explode(':', $phStripped);
             $val = $this->workbench->getApp($appAlias)->getTranslator()->translate(mb_strtoupper($message));
             $vals[$placeholder] = $this->sanitizeValue($val);

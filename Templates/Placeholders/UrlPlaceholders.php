@@ -22,7 +22,7 @@ class UrlPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(FacadeInterface $facade, string $prefix = '~url:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->facade = $facade;
     }
 
@@ -34,8 +34,8 @@ class UrlPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $pageSelectorString = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $pageSelectorString = $this->stripPrefix($placeholder);
             if ($pageSelectorString === '') {
                 $val = $this->facade->buildUrlToSiteRoot();
             } else {
