@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\MetaObject;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -88,8 +86,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     const FUNCTION_FOCUS = 'focus';
     
     private $action_alias = null;
-    
-    private string $overrides_action_alias = '';
 
     private $action = null;
     
@@ -229,31 +225,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         $this->action_alias = $value === '' ? null : $value;
         return $this;
-    }
-
-    /**
-     * Define an action alias that will be overridden by this button.
-     * 
-     * Any global buttons with this action alias will not be rendered.
-     * 
-     * @uxon-property overrides_action_alias
-     * @uxon-type metamodel:action
-     * 
-     * @param $alias
-     * @return $this
-     */
-    public function setOverridesActionAlias($alias) : static
-    {
-        $this->overrides_action_alias = $alias;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getOverridesActionAlias() : string
-    {
-        return $this->overrides_action_alias;
     }
     
     /**

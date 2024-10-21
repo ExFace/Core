@@ -267,24 +267,27 @@ class DataToolbar extends Toolbar
     }
 
     /**
-     * Removes all buttons from the specified group, whose action alias matches that of any button in
-     * the overrides group.
+     * Removes all buttons from the specified group, whose action match the action of any button in
+     * the overrides group - where "match" means either same action or one extending the same prototype class.
      * 
      * @param ButtonGroup $buttonGroup
-     * @param ButtonGroup    $overrides
+     * @param ButtonGroup $overrides
      * @return ButtonGroup
      */
     protected function removeButtonsWithOverriddenActions(ButtonGroup $buttonGroup, ButtonGroup $overrides) : ButtonGroup
     {
-        foreach ($overrides->getButtons() as $override) {
-            $overrideAction = strtolower($override->getOverridesActionAlias());
-            if(empty($overrideAction)) {
+        foreach ($overrides->getButtons() as $userButton) {
+            $userAction = $userButton->getAction();
+            if ($userAction === null) {
                 continue;
             }
             
             foreach ($buttonGroup->getButtons() as $button) {
-                $buttonAction = strtolower($button->getAction()->getAliasWithNamespace());
-                if($overrideAction === $buttonAction) {
+                $btnAction = $button->getAction();
+                if ($btnAction === null) {
+                    continue;
+                }
+                if ($userAction->is($btnAction)) {
                     $buttonGroup->removeButton($button);
                 }
             }
