@@ -1,17 +1,10 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Exceptions\TemplateRenderer\TemplateRendererRuntimeError;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 
 /**
  * TODO 
@@ -27,13 +20,9 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  * 
  * @author Georg Bieger
  */
-class DataAggregationPlaceholders implements PlaceholderResolverInterface
+class DataAggregationPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-
     private ?DataSheetInterface $dataSheet = null;
-
-    private ?string $prefix = null;
 
     /**
      *
@@ -42,7 +31,7 @@ class DataAggregationPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(DataSheetInterface $dataSheet, string $prefix = "~data:")
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->dataSheet = $dataSheet;
     }
 

@@ -1,8 +1,7 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 
 /**
  * Replaces placeholders with values provided as a placeholder=>value array.
@@ -15,12 +14,8 @@ use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
  *
  * @author Andrej Kabachnik
  */
-class ArrayPlaceholders implements PlaceholderResolverInterface
+class ArrayPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
-    private $prefix = null;
-    
     private $placeholders = [];
     
     /**
@@ -30,7 +25,7 @@ class ArrayPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(array $placeholders, string $prefix = '')
     {
-        $this->prefix = $prefix;
+        $this->prefix = $prefix ?? '';
         $this->placeholders = $placeholders;
     }
 
