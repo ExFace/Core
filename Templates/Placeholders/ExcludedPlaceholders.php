@@ -25,7 +25,7 @@ class ExcludedPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(string $prefix = '~exclude:', string $delimiterBefore = '[#', string $delimiterAfter = '#]')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->before = $delimiterBefore;
         $this->after = $delimiterAfter;
     }
@@ -38,7 +38,7 @@ class ExcludedPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
             $vals[$placeholder] = $this->before . $placeholder . $this->after;
         }
         return $vals;

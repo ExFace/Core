@@ -77,7 +77,7 @@ class DataColumnArrayPlaceholders
     {
         $this->workbench = $configRenderer->getWorkbench();
         $this->rowRenderer = $baseRowRenderer;
-        $this->prefix = $dataRowPlaceholdersPrefix ?? '';
+        $this->setPrefix($dataRowPlaceholdersPrefix ?? '');
         
         $configRenderer->setIgnoreUnknownPlaceholders(true);
         $renderedUxon = UxonObject::fromJson($configRenderer->render($configUxon->toJson()));
@@ -94,10 +94,10 @@ class DataColumnArrayPlaceholders
         $phValsSheet = $this->getDataSheet();
         $phVals = [];
 
-        $colPhs = $this->filterPlaceholders($placeholders, $this->prefix);
+        $colPhs = $this->filterPlaceholders($placeholders);
         $phCols = [];
         foreach ($colPhs as $ph) {
-            $phCols[$ph] = $phValsSheet->getColumns()->addFromExpression($this->stripPrefix($ph, $this->prefix));
+            $phCols[$ph] = $phValsSheet->getColumns()->addFromExpression($this->stripPrefix($ph));
         }
         $phValsSheet->dataRead();
         

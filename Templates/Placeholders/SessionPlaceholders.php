@@ -26,7 +26,7 @@ class SessionPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(WorkbenchInterface $workbench, string $prefix = '~session:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->workbench = $workbench;
     }
 
@@ -38,8 +38,8 @@ class SessionPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $option = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $option = $this->stripPrefix($placeholder);
             switch (mb_strtolower($option)) {
                 case 'language':
                 case 'locale':

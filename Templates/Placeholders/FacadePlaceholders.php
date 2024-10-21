@@ -29,7 +29,7 @@ class FacadePlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(FacadeInterface $facade, string $prefix = '~facade:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->facade = $facade;
     }
 
@@ -41,8 +41,8 @@ class FacadePlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $option = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $option = $this->stripPrefix($placeholder);
             $methodName = 'get' . StringDataType::convertCaseUnderscoreToPascal($option);
             if (method_exists($this->facade, $methodName)) {
                 $val = call_user_func([$this->facade, $methodName]);

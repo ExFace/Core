@@ -31,7 +31,7 @@ class DataAggregationPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(DataSheetInterface $dataSheet, string $prefix = "~data:")
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->dataSheet = $dataSheet;
     }
 
@@ -41,7 +41,7 @@ class DataAggregationPlaceholders extends AbstractPlaceholderResolver
      */
     public function resolve(array $placeholders) : array
     {
-        $aggrPlaceholders = $this->filterPlaceholders($placeholders, $this->prefix);
+        $aggrPlaceholders = $this->filterPlaceholders($placeholders);
 
         if (empty($aggrPlaceholders)) {
             return [];
@@ -54,7 +54,7 @@ class DataAggregationPlaceholders extends AbstractPlaceholderResolver
         $phCols = [];
         foreach ($aggrPlaceholders as $ph) {
             $phValsEmpty[$ph] = '';
-            $exprString = $this->stripPrefix($ph, $this->prefix);
+            $exprString = $this->stripPrefix($ph);
             $col = $aggrSheet->getColumns()->addFromExpression($exprString);
             $expr = $col->getExpressionObj();
             if (! $expr->isMetaAttribute() && ! $expr->isFormula()) {

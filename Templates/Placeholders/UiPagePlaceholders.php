@@ -35,7 +35,7 @@ class UiPagePlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(UiPageInterface $page, HtmlPageFacadeInterface $facade, string $prefix = '~page:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->page = $page;
         $this->facade = $facade;
     }
@@ -48,8 +48,8 @@ class UiPagePlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $property = $this->stripPrefix(mb_strtolower($placeholder), $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $property = $this->stripPrefix(mb_strtolower($placeholder));
             switch (true) {
                 case $property === 'alias':
                     $val = $this->page->getAliasWithNamespace();
