@@ -181,7 +181,10 @@ class NotifyingBehavior extends AbstractBehavior
     private $isNotificationInProgress = false;
     
     private TemplateValidator $tplValidator;
-    
+
+    /**
+     * @return TemplateValidator
+     */
     private function getTemplateValidator() : TemplateValidator
     {
         if(empty($this->tplValidator)) {

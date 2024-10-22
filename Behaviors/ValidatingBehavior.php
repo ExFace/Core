@@ -173,7 +173,10 @@ class ValidatingBehavior extends AbstractBehavior
     );
     
     private TemplateValidator $tplValidator;
-    
+
+    /**
+     * @return TemplateValidator
+     */
     private function getTemplateValidator() : TemplateValidator
     {
         if(empty($this->tplValidator)) {
