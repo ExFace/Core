@@ -290,7 +290,7 @@ class DataToolbar extends Toolbar
                 // Remove the button from the global actions toolbar if there is another button (user-made)
                 // with the same caption and the same action. Just checking for the same action did not work
                 // because generic actions like ShowDialog would get hidden too easily.
-                if ($userButton->getCaption() === $globalButton->getCaption() && $userAction->is($globalAction)) {
+                if ($userAction->is($globalAction) && $userButton->getCaption() === $globalButton->getCaption()) {
                     $buttonGroup->removeButton($globalButton);
                 }
             }
