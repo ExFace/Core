@@ -26,11 +26,11 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
  * Validates any proposed changes made to the monitored data and rejects invalid changes.
- *
+ * 
  * This behavior uses negative logic. If all checks fail, the overall evaluation is successful and the proposed changes
  * will be applied to the database. If at least one check succeeds, an exception will be thrown and the proposed
  * changes will be discarded. When writing data checks think of them as violations, that you are trying to catch.
- *
+ * 
  * ### Properties:
  * 
  * - `invalid_if_on_create` executes only when data is being **created**, but **before** these changes are applied to
@@ -48,7 +48,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *   - `[#~old:alias#]`: Loads the value of the specified `alias` that is currently stored in the database.
  *   - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
  * validation succeeds.
- *
+ * 
  * This behavior supports the use of placeholders to give you more fine-grained control over where your dynamic values
  * are being loaded from. You can apply these placeholders to any input field inside a `invalid_if` context. However,
  * since `[#~old:alias#]` loads data currently stored in the database, it does not work while data is being created
@@ -58,17 +58,18 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * 
  * **NOTE:** Placeholder values are NOT formatted in order to be comparable in the conditions. If you use
  * placeholders in the error messages, format them explicitly: e.g. `[#~old:=Format(MYATTR)#]`
- *
+ * 
  * ### Example: Comparing old and new values
  * 
  * This check ensures that updated values must be greater than previous values. This might for instance be useful when
  * tracking construction progress. Since we want to compare changes, we have to use `invalid_if_on_update` to enable
  * the `[#~old:alias#]` placeholder.
- *
+ * 
  * NOTE: The property `value` can usually not read data, but because we are using a placeholder, we can bypass this
  * restriction.
  * 
  * ```
+ * 
  * {
  *      "invalid_if_on_update": [
  *       {
@@ -82,9 +83,9 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *          }]
  *       }]
  * }
- *
+ * 
  * ```
- *
+ * 
  * ### Example: Using multiple `invalid_if` properties
  * 
  * In this example we have extended the previous code with a new `invalid_if_on_any`, which triggers both on creating
@@ -92,8 +93,9 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * in this example, only the checks in `invalid_if_on_any` will be performed. When data is being updated, however, both
  * `invalid_if_on_any` and
  * `invalid_if_on_update` will run their checks. You can use this feature to control the timing of your checks.
- *
+ * 
  *  ```
+ * 
  *  {
  *      "invalid_if_always": [
  *         {
@@ -123,17 +125,18 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *           }]
  *        }]
  *  }
- *
+ * 
  * ```
- *
+ * 
  * ### Example: Flexible syntax
  * 
  * Finally, let's touch on some fun things you can do with our flexible tools. In this example we have used
  * placeholders to dynamically assemble a more insightful error message, as well as having used a formula to do some
  * basic arithmetic. You can get fairly creative with these features, but bear in mind that things might eventually
  * break.
- *
+ * 
  *  ```
+ * 
  * {
  *       "invalid_if_on_update": [
  *        {
@@ -148,11 +151,11 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  *           }]
  *        }]
  *  }
- *
+ * 
  * ```
  * 
  * @author Andrej Kabachnik, Georg Bieger
- *
+ * 
  */
 class ValidatingBehavior extends AbstractBehavior
 {
@@ -187,7 +190,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
     
     /**
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::registerEventListeners()
      */
@@ -214,17 +217,17 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Triggers only when data is being CREATED. Prevent changing a data item if any of these conditions match.
-     *
+     * 
      *  ### Placeholders:
      * 
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
      * validation succeeds.
-     *
+     * 
      * @uxon-property invalid_if_on_create
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
      * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
      *     "value": ""}]}]
-     *
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
@@ -236,18 +239,18 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Triggers only when data is being UPDATED. Prevent changing a data item if any of these conditions match.
-     *
+     * 
      * ### Placeholders:
      * 
      *  - `[#~old:alias#]`: Loads the value for the specified alias that is currently stored in the database.
      *  - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
      * validation succeeds.
-     *
+     * 
      * @uxon-property invalid_if_on_update
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
      * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
      *     "value": ""}]}]
-     *
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
@@ -260,17 +263,17 @@ class ValidatingBehavior extends AbstractBehavior
     /**
      * Triggers BOTH when data is being CREATED and UPDATED. Prevent changing a data item if any of these conditions
      * match.
-     *
-     * ### Placeholders:
      * 
+     * ### Placeholders:
+     *  
      * - `[#~new:alias#]`: Loads the value of the specified `alias` that would be applied to the database if this
      * validation succeeds.
-     *
+     * 
      * @uxon-property invalid_if_always
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataCheck[]
      * @uxon-template [{"error_text": "", "operator": "AND", "conditions": [{"expression": "", "comparator": "",
      *     "value": ""}]}]
-     *
+     * 
      * @param UxonObject $uxon
      * @return ValidatingBehavior
      */
@@ -283,7 +286,7 @@ class ValidatingBehavior extends AbstractBehavior
     /**
      * Handles any change requests for the associated data and decides whether the proposed are valid or
      * need to be rejected.
-     *
+     * 
      * @param OnBeforeDeleteDataEvent $event
      * @throws RuntimeException
      * @throws DataSheetDeleteForbiddenError
@@ -367,7 +370,7 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Performs data validation by applying the specified checks to the provided data sheets.
-     *
+     * 
      * @param UxonObject              $dataCheckUxon
      * @param string                  $context
      * @param DataSheetInterface|null $previousDataSheet
@@ -412,7 +415,7 @@ class ValidatingBehavior extends AbstractBehavior
 
     /**
      * Renders all placeholders present in the provided UXON.
-     *
+     * 
      * @param string                  $json
      * @param string                  $context
      * @param DataSheetInterface|null $oldData
@@ -459,7 +462,7 @@ class ValidatingBehavior extends AbstractBehavior
     }
 
     /**
-     *
+     * 
      * @param string $messageId
      * @param array|null $placeholderValues
      * @param float|null $pluralNumber
