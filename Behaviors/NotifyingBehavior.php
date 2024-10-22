@@ -1,10 +1,11 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\Behaviors\PlaceholderConfigs\TemplateRendererConfig;
-use exface\Core\Behaviors\PlaceholderConfigs\TplConfigExtensionOldData;
+use exface\Core\Behaviors\PlaceholderValidation\PrefixValidatorOldData;
+use exface\Core\Behaviors\PlaceholderValidation\TemplateValidator;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -179,7 +180,16 @@ class NotifyingBehavior extends AbstractBehavior
     
     private $isNotificationInProgress = false;
     
-    private TemplateRendererConfig $rendererConfig;
+    private TemplateValidator $tplValidator;
+    
+    private function getTemplateValidator() : TemplateValidator
+    {
+        if(empty($this->tplValidator)) {
+            $this->tplValidator = new TemplateValidator([new PrefixValidatorOldData()]);
+        }
+        
+        return $this->tplValidator;
+    }
     
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
@@ -350,12 +360,6 @@ class NotifyingBehavior extends AbstractBehavior
         if (($event instanceof DataSheetEventInterface) && ! $event->getDataSheet()->getMetaObject()->isExactly($this->getObject())) {
             $this->isNotificationInProgress = false;
             return;
-        }
-        
-        // Create placeholder renderer config.
-        if(empty($this->rendererConfig)) {
-            $this->rendererConfig = new TemplateRendererConfig();
-            $this->rendererConfig->addExtension(new TplConfigExtensionOldData());
         }
         
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
@@ -632,7 +636,6 @@ class NotifyingBehavior extends AbstractBehavior
 
         // Check for illegal placeholders.
         $json = $this->notifyIfDataMatchesConditionGroupUxon->toJson(); 
-        $this->rendererConfig->checkStringForInvalidPlaceholders(get_class($event), $json);
         
         // Render placeholders.
         $metaObject = $newData->getMetaObject();
@@ -641,19 +644,19 @@ class NotifyingBehavior extends AbstractBehavior
         foreach ($newData->getRows() as $rowIndex => $row) {
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
-            
+
             if(!empty($oldData)) {
-                $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
-                    new DataRowPlaceholders($oldData, $rowIndex, TplConfigExtensionOldData::PREFIX_OLD)
-                ]);
+                $renderer->addPlaceholder(new DataRowPlaceholders($oldData, $rowIndex, PrefixValidatorOldData::PREFIX_OLD));
             }
-            $this->rendererConfig->applyResolversForContext($renderer, get_class($event), [
-                new DataRowPlaceholders($newData, $rowIndex, TplConfigExtensionOldData::PREFIX_NEW)
-            ]);
+            $renderer->addPlaceholder(new DataRowPlaceholders($newData, $rowIndex, PrefixValidatorOldData::PREFIX_NEW));
+
+            try {
+                $renderedJson = $this->getTemplateValidator()->TryRenderTemplate($renderer, $json, $event);
+            } catch (\Throwable $e) {
+                throw new BehaviorRuntimeError($this, $e->getMessage(), null, $e);
+            }
             
-            
-            $renderedUxon = UxonObject::fromJson($renderer->render($json));
-            $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, $renderedUxon, $metaObject));
+            $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, UxonObject::fromJson($renderedJson), $metaObject));
         }
         
         return $conditionGroup;
@@ -790,7 +793,8 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set to TRUE to not notify immediately, but to wait until all business logic is done and transactions are committed
+     * Set to TRUE to not notify immediately, but to wait until all business logic is done and transactions are
+     * committed
      * 
      * @uxon-property notify_after_all_actions_complete
      * @uxon-type boolean
@@ -806,7 +810,8 @@ class NotifyingBehavior extends AbstractBehavior
     }
     
     /**
-     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the corresponding data
+     * Set to FALSE to send notifications for data events even if the recipient user is not authorized to read the
+     * corresponding data
      * 
      * By default, the behavior will check every data row to see if the user to be notified
      * is authorized to read it and will only send the message if so.
