@@ -1,25 +1,19 @@
 <?php
 namespace exface\Core\CommonLogic\Model\Behaviors;
 
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
-use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\AliasTrait;
-use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Uxon\BehaviorSchema;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\DataTypes\PhpClassDataType;
-use Wingu\OctopusCore\Reflection\ReflectionClass;
 
 /**
  *
@@ -272,8 +266,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     }
     
     /**
-     * Behaviors with higher priority will be executed first if mutiple behaviors of an object are registered for the
-     * same event.
+     * Behaviors with higher priority will be executed first if multiple behaviors of an object are registered for the same event.
      *
      * @param int $value
      * @return BehaviorInterface

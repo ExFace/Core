@@ -78,6 +78,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ### Send an in-app notification to a user role every time a task is created
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
  *      "notifications": [
@@ -97,6 +98,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * and reference it here like this:
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnCreateData",
  *      "notifications": [
@@ -111,6 +113,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ### Send an in-app notification to a user every time an action is performed
  * 
  * ```
+ * 
  *  {
  *      "notify_on_action": "exface.Core.CommunicationChannelMute",
  *      "notifications": [
@@ -128,6 +131,7 @@ use exface\Core\Templates\Placeholders\DataRowPlaceholders;
  * ### Send an email to the ticket author once it reaches a certain status
  * 
  * ```
+ * 
  *  {
  *      "notify_on_event": "exface.Core.DataSheet.OnUpdateData",
  *      "notify_if_attributes_change": [
@@ -452,8 +456,6 @@ class NotifyingBehavior extends AbstractBehavior
         
         // Ignore the event if its data does not match restrictions
         if ($dataSheet && $this->hasRestrictionConditions()) {
-            // Render conditions.
-            
             $dataSheet = $dataSheet->extract($this->buildNotifyIfDataMatchesConditions($event, $dataSheet, $oldSheet), true);
             if ($dataSheet->isEmpty()) {
                 $this->skipEvent('**Skipping** event because of `notify_if_data_matches_conditions`', $event, $logbook);
@@ -637,13 +639,11 @@ class NotifyingBehavior extends AbstractBehavior
             return null;
         }
 
-        // Check for illegal placeholders.
         $json = $this->notifyIfDataMatchesConditionGroupUxon->toJson(); 
-        
-        // Render placeholders.
         $metaObject = $newData->getMetaObject();
         $workBench = $this->getWorkbench();
         $conditionGroup = ConditionGroupFactory::createOR($metaObject);
+        
         foreach ($newData->getRows() as $rowIndex => $row) {
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
