@@ -412,6 +412,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }    
     
     /**
+     * Generates a URL to download a file represented by the given meta object and UID
      * 
      * @param MetaObjectInterface $object
      * @param string $uid
@@ -423,6 +424,24 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, string $urlParams = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
         $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_DOWNLOAD, $urlEncodeUid);
+        if ($urlParams) {
+            $url .= '?'. $urlParams;
+        }
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+
+    /**
+     * Generates a URL to view/embed a file represented by the given meta object and UID
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param bool $urlEncodeUid
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToViewData(MetaObjectInterface $object, string $uid, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
+    {
+        $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_VIEW, $urlEncodeUid);
         if ($urlParams) {
             $url .= '?'. $urlParams;
         }
