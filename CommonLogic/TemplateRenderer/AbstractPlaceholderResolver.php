@@ -14,9 +14,15 @@ abstract class AbstractPlaceholderResolver
     /**
      * @return string
      */
-    public function GetPrefix() : string
+    public function getPrefix() : string
     {
         return $this->prefix;
+    }
+
+    protected function setPrefix(string $prefix) : PlaceholderResolverInterface
+    {
+        $this->prefix = $prefix;
+        return $this;
     }
 
     /**
@@ -25,10 +31,10 @@ abstract class AbstractPlaceholderResolver
      * @param string $prefix
      * @return string[]
      */
-    protected function filterPlaceholders(array $placeholders, string $prefix) : array
+    protected function filterPlaceholders(array $placeholders) : array
     {
-        return array_filter($placeholders, function($ph) use ($prefix) {
-            return StringDataType::startsWith($ph, $prefix);
+        return array_filter($placeholders, function($ph) {
+            return StringDataType::startsWith($ph, $this->getPrefix());
         });
     }
 
@@ -38,8 +44,9 @@ abstract class AbstractPlaceholderResolver
      * @param string $prefix
      * @return string
      */
-    protected function stripPrefix(string $placeholder, string $prefix) : string
+    protected function stripPrefix(string $placeholder) : string
     {
+        $prefix = $this->getPrefix();
         if ($prefix === '') {
             return $placeholder;
         }

@@ -26,7 +26,7 @@ class WidgetRenderPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(FacadeInterface $facade, UiPageInterface $page, string $prefix = '~widget:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->facade = $facade;
         $this->page = $page;
     }
@@ -39,8 +39,8 @@ class WidgetRenderPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $widgetType = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $widgetType = $this->stripPrefix($placeholder);
             $json = StringDataType::substringAfter($widgetType, ':', null);
             if ($json !== null) {
                 $widgetType = StringDataType::substringBefore($widgetType, ':', $widgetType);
