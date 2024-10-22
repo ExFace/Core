@@ -590,7 +590,7 @@ class ImageGallery extends Data implements iCanEditData, iCanUseProxyFacade, iTa
         if ($width !== null && $height !== null) {
             $url = HttpFileServerFacade::buildUrlToThumbnail($this->getMetaObject(), $uid, $width, $height, false, $relativeToSiteRoot);
         } else {
-            $url = HttpFileServerFacade::buildUrlToDownloadData($this->getMetaObject(), $uid, null, false, $relativeToSiteRoot);
+            $url = HttpFileServerFacade::buildUrlToViewData($this->getMetaObject(), $uid, false, $relativeToSiteRoot);
         }
         return $url;
     }
