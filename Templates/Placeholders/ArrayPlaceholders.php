@@ -25,7 +25,7 @@ class ArrayPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(array $placeholders, string $prefix = '')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->placeholders = $placeholders;
     }
 
@@ -37,8 +37,8 @@ class ArrayPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $key = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $key = $this->stripPrefix($placeholder);
             if (array_key_exists($key, $this->placeholders)) {
                 $vals[$placeholder] = $this->placeholders[$key];
             }

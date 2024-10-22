@@ -24,7 +24,7 @@ class ConfigPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(WorkbenchInterface $workbench, string $prefix = '~config:')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->workbench = $workbench;
     }
 
@@ -36,8 +36,8 @@ class ConfigPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
-            $phStripped = $this->stripPrefix($placeholder, $this->prefix);
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
+            $phStripped = $this->stripPrefix($placeholder);
             list($appAlias, $option) = explode(':', $phStripped);
             $val = $this->workbench->getApp($appAlias)->getConfig()->getOption(mb_strtoupper($option));
             $vals[$placeholder] = $this->sanitizeValue($val);

@@ -30,7 +30,7 @@ class FormulaPlaceholders extends AbstractPlaceholderResolver
      */
     public function __construct(WorkbenchInterface $workbench, DataSheetInterface $dataSheet = null, $rowNo = null, string $prefix = '=')
     {
-        $this->prefix = $prefix ?? '';
+        $this->setPrefix($prefix);
         $this->workbench = $workbench;
         $this->dataSheet = $dataSheet;
         $this->rowNumber = $rowNo;
@@ -44,9 +44,9 @@ class FormulaPlaceholders extends AbstractPlaceholderResolver
     public function resolve(array $placeholders) : array
     {     
         $vals = [];
-        foreach ($this->filterPlaceholders($placeholders, $this->prefix) as $placeholder) {
+        foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
             $placeholder = trim($placeholder);
-            $exprString = $this->stripPrefix($placeholder, $this->prefix);
+            $exprString = $this->stripPrefix($placeholder);
             if (mb_substr($exprString, 0, 1) === '=') {
                 continue;
             }

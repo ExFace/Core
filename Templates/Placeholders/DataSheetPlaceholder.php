@@ -188,7 +188,7 @@ class DataSheetPlaceholder
         $rowsRendered = [];
         foreach (array_keys($phValsSheet->getRows()) as $rowNo) {
             $currentRowRenderer = $this->rowRenderer->copy();
-            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->prefix));
+            $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $this->getPrefix()));
             if ($legacyPrefixFound === true) {
                 $currentRowRenderer->addPlaceholder(new DataRowPlaceholders($phValsSheet, $rowNo, $legacyPrefix));
             }
