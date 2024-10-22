@@ -9,6 +9,12 @@ use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 use Throwable;
 use Wingu\OctopusCore\Reflection\ReflectionClass;
 
+/**
+ * Can validate a template for a given context, based on its injected PrefixValidatorInterfaces.
+ * If the validation fails, a detailed error will be thrown.
+ * 
+ * You can inject new prefix validators with `addValidator(PrefixValidatorInterfaces $validator)`.
+ */
 class TemplateValidator implements PrefixValidatorInterface
 {
     /**
@@ -28,6 +34,10 @@ class TemplateValidator implements PrefixValidatorInterface
         }
     }
 
+    /**
+     * @param PrefixValidatorInterface $validator
+     * @return $this
+     */
     public function addValidator(PrefixValidatorInterface $validator) : static
     {
         if(!in_array($validator, $this->validators)) {
@@ -36,7 +46,11 @@ class TemplateValidator implements PrefixValidatorInterface
         
         return $this;
     }
-    
+
+    /**
+     * @param PrefixValidatorInterface $validator
+     * @return $this
+     */
     public function removeValidator(PrefixValidatorInterface $validator) : static
     {
         $index = array_search($validator, $this->validators);
@@ -48,7 +62,16 @@ class TemplateValidator implements PrefixValidatorInterface
     }
 
     /**
+     * Tries to render the template, using the specified renderer. If any errors are thrown,
+     * the validator will analyse the template for illegal placeholders to generate a more
+     * insightful error message.
+     * 
+     * @param TemplateRendererInterface $renderer
+     * @param string                    $template
+     * @param                           $context
+     * @return string
      * @throws Throwable
+     * @throws \ReflectionException
      */
     public function TryRenderTemplate(TemplateRendererInterface $renderer, string $template, $context) : string
     {
@@ -98,6 +121,9 @@ class TemplateValidator implements PrefixValidatorInterface
         return $violations;
     }
 
+    /**
+     * @inerhitDoc 
+     */
     public function isValidPrefixForContext(string $prefix, $context): bool
     {
         foreach ($this->validators as $validator) {
