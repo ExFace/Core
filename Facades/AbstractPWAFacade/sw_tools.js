@@ -175,61 +175,130 @@ const swTools = {
 			// Call the getLatestConnectionStatus function from exfPWA
 			const status = await exfPWA.getLatestConnectionStatus();
 			return status;
-		} catch (error) {
-			console.error('Error checking network status:', error);
+		} catch (error) { 
 			return 'offline'; // Default to offline in case of an error
 		}
 	},
 	
 	// POST
-	strategies: {
+	strategies: { 
 		postNetworkFirst: (options) => {
-			if (! options) {
+			if (!options) {
 				options = {};
 			}
 			
-			return ({url, event, params}) => {
-			    // Try to get the response from the network
-				return Promise.resolve(
-					fetch(event.request.clone())
-					.then(function(response) {
-						// And store it in the cache for later
-						swTools.cache.put(event.request.clone(), response.clone());
-						return response;
-				    })
-					.catch(function() {
-						return swTools.cache.match(event.request.clone());
-					})
-				);
+			return async ({url, event, params}) => {
+				const networkStatus = await swTools.checkNetworkStatus();
+				const isVirtuallyOffline = self.isVirtuallyOffline;
+		
+				console.log('Network status:', networkStatus);
+				console.log('Is virtually offline:', isVirtuallyOffline);
+		
+				if (networkStatus === 'offline_bad_connection' || isVirtuallyOffline) {
+					// Using offline-first strategy for POST request, event.request.url);
+					try {
+						const cachedResponse = await swTools.cache.match(event.request.clone());
+						if (cachedResponse) {
+							//Found cached response
+							return cachedResponse;
+						}
+					} catch (error) {
+						console.error('Error while trying to get cached response:', error);
+					}
+		
+					//No cached response found, trying network
+				}
+		
+				console.log('Using online strategy for POST request:', event.request.url);
+				try {
+					const response = await fetch(event.request.clone());
+					swTools.cache.put(event.request.clone(), response.clone());
+					return response;
+				} catch (error) {
+					//Network request failed
+					const cachedResponse = await swTools.cache.match(event.request.clone());
+					if (cachedResponse) {
+						return cachedResponse;
+					}
+					throw error;  // If we can't get from network or cache, throw the error
+				}
 			}
 		},
 		semiOffline: (options) => {
 			if (!options) {
 				options = {};
-			}           
-			var offlineStrategy = options.semiOffline || new workbox.strategies.CacheFirst({
-				cacheName: 'offline-cache',
-				plugins: [
-					new workbox.expiration.ExpirationPlugin({
+			}
+			
+			const defaultCacheConfigs = {
+				'html-cache': {
+					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'html-cache' }),
+					expiration: {
+						maxEntries: 50,
+						maxAgeSeconds: 24 * 60 * 60, // 1 day
+					}
+				},
+				'data-cache': {
+					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'data-cache' }),
+					expiration: {
 						maxEntries: 50,
 						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
-					}),
-				],
-			});
-			var onlineStrategy = options.normal || new workbox.strategies.NetworkFirst();
-			
-			return {
-				handle: async ({ event, request, ...params }) => {
-					var isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
-					if (isSemiOffline || self.isVirtuallyOffline) {
-						console.log('Using offline strategy for:', request.url);
-						return offlineStrategy.handle({ event, request, ...params });
-					} else {
-						console.log('Using online strategy for:', request.url);
-						return onlineStrategy.handle({ event, request, ...params });
+					}
+				},
+				'asset-cache': {
+					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'asset-cache' }),
+					expiration: {
+						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
+					}
+				},
+				'image-cache': {
+					strategy: () => new workbox.strategies.CacheFirst({ cacheName: 'image-cache' }),
+					expiration: {
+						maxEntries: 250,
+						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
 					}
 				}
 			};
-		} 
-	}
-}
+		
+			const cacheConfigs = options.cacheConfigs || defaultCacheConfigs;
+		
+			return {
+				handle: async ({ event, request, ...params }) => {
+					const isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection';
+					const isVirtuallyOffline = self.isVirtuallyOffline;
+		
+					if (isSemiOffline || isVirtuallyOffline) {
+						console.log('Using offline strategy for:', request.url);
+						
+						// Determine which cache to use based on the request URL
+						let cacheToUse = 'data-cache'; // default
+						if (request.url.match(/^.*\.html/i)) {
+							cacheToUse = 'html-cache';
+						} else if (request.url.match(/vendor\/.*(\.js|\.css|\.woff2?|\.otf|\.ttf|\.eot)/i)) {
+							cacheToUse = 'asset-cache';
+						} else if (request.url.match(/.*\.(?:png|gif|jpg|jpeg|svg|ico)$/i) || request.url.match(/.*\/api\/files\/.*/i)) {
+							cacheToUse = 'image-cache';
+						}
+		
+						const cacheConfig = cacheConfigs[cacheToUse];
+						const offlineStrategy = cacheConfig.strategy();
+						
+						// Add expiration plugin if configured
+						if (cacheConfig.expiration) {
+							if (!offlineStrategy.plugins) {
+								offlineStrategy.plugins = [];
+							}
+							offlineStrategy.plugins.push(
+								new workbox.expiration.ExpirationPlugin(cacheConfig.expiration)
+							);
+						}
+		
+						return offlineStrategy.handle({ event, request, ...params });
+					} else {
+						console.log('Using online strategy for:', request.url);
+						return (options.normal || new workbox.strategies.NetworkFirst()).handle({ event, request, ...params });
+					}
+				}
+			};
+		}
+    }
+};
