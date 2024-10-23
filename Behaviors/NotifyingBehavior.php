@@ -656,7 +656,8 @@ class NotifyingBehavior extends AbstractBehavior
             try {
                 $renderedJson = $this->getTemplateValidator()->TryRenderTemplate($renderer, $json, $event);
             } catch (\Throwable $e) {
-                throw new BehaviorRuntimeError($this, $e->getMessage(), null, $e);
+                $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
+                throw new BehaviorRuntimeError($this, $message, null, $e);
             }
             
             $conditionGroup->addNestedGroup(ConditionGroupFactory::createFromUxon($workBench, UxonObject::fromJson($renderedJson), $metaObject));

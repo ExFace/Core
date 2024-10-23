@@ -440,7 +440,8 @@ class ValidatingBehavior extends AbstractBehavior
         try {
             $renderedJson = $this->getTemplateValidator()->TryRenderTemplate($renderer, $json, $context);
         } catch (\Throwable $e) {
-            throw new BehaviorRuntimeError($this, $e->getMessage(), null, $e);
+            $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
+            throw new BehaviorRuntimeError($this, $message, null, $e);
         }
         
         // TODO 2024-09-05 geb: What happens, when the requested data cannot be found? (Error, Ignore, other?)
