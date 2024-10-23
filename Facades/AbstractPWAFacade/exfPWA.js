@@ -197,12 +197,29 @@ self.addEventListener('sync', function(event) {
 			}
 		},
 
-		isSemiOffline: async function () {
+		/**
+		 * 
+		 * @returns {Promise<boolean}
+		 */
+		isOnline: async function() {
 			try {
 				const status = await this.data.getLatestConnectionStatus();
-				return status === 'offline_bad_connection';
+				return ! status.startsWith('offline');
 			} catch (error) { 
-				return false; // Return error if it has error
+				return navigator.onLine;
+			}
+		},
+
+		/**
+		 * 
+		 * @returns {Promise<boolean}
+		 */
+		isOfflineVirtually: async function() {
+			try {
+				const status = await this.data.getLatestConnectionStatus();
+				return status.startsWith('offline_');
+			} catch (error) { 
+				return false;
 			}
 		},
 
