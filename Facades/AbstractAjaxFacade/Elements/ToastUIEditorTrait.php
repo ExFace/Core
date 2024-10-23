@@ -8,22 +8,6 @@ trait ToastUIEditorTrait
 {
     /**
      *
-     * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildHtmlHeadTags()
-     */
-    public function buildHtmlHeadTags()
-    {
-        $f = $this->getFacade();
-        $includes = parent::buildHtmlHeadTags();
-        $includes[] = '<link rel="stylesheet" href="' . $f->buildUrlToSource('LIBS.TOASTUI.EDITOR_CSS') . '" />';
-        $includes[] = '<script type="text/javascript" src="' . $f->buildUrlToSource("LIBS.TOASTUI.EDITOR_JS") . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $f->buildUrlToSource("LIBS.MERMAID.JS") . '"></script>';
-        //$includes[] = '<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>';
-        return $includes;
-    }
-    
-    /**
-     *
      * @param bool $viewer
      * @return string
      */
@@ -41,66 +25,66 @@ trait ToastUIEditorTrait
                 initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "',";
         
         return <<<JS
-function(){
-            
-            var ed = new toastui.Editor({
-                el: document.querySelector('#{$this->getId()}'),
-                height: '100%',
-                initialValue: ($contentJs || ''),
-                language: 'en',
-                autofocus: false,
-                $editorOptions
-                $viewerOptions
-                events: {
-                    beforePreviewRender: function(sHtml){
-                        setTimeout(function(){
-                            var oEditor = {$this->buildJsMarkdownVar()};
-                            oEditor.refreshMermaid();
-                        }, 0);
+
+            function(){     
+                var ed = new toastui.Editor({
+                    el: document.querySelector('#{$this->getId()}'),
+                    height: '100%',
+                    initialValue: ($contentJs || ''),
+                    language: 'en',
+                    autofocus: false,
+                    $editorOptions
+                    $viewerOptions
+                    events: {
+                        beforePreviewRender: function(sHtml){
+                            setTimeout(function(){
+                                var oEditor = {$this->buildJsMarkdownVar()};
+                                oEditor.refreshMermaid();
+                            }, 0);
+                        }
+                    }
+                });
+                
+                ed.insertToolbarItem(
+                    { 
+                        groupIndex: 0, 
+                        itemIndex: 0 
+                    }, {
+                        name: 'Full screen',
+                        tooltip: 'Full screen',
+                        el: $('<button type="button" style="margin: -7px -5px; background: transparent;" onclick="{$this->buildJsMarkdownVar()}.toggleFullScreen(this)"><i class="fa fa-expand" style="padding: 4px;border: 1px solid black;margin-top: 1px"></i></button>')[0]
+                    }
+                );
+                
+                ed.toggleFullScreen = function(domBtn){
+                    var jqWrapper = $('#{$this->getId()}');
+                    var oEditor = {$this->buildJsMarkdownVar()};
+                    var jqBtn = $(domBtn);
+                    var bExpanding = ! jqWrapper.hasClass('fullscreen');
+                
+                    jqWrapper.toggleClass('fullscreen'); 
+                    jqBtn.find('i')
+                        .removeClass('fa-expand')
+                        .removeClass('fa-compress')
+                        .addClass(bExpanding ? 'fa-compress' : 'fa-expand');
+                    if (bExpanding && jqWrapper.innerWidth() > 800) {
+                        oEditor.changePreviewStyle('vertical');
+                        //oEditor.refreshMermaid();
+                    } else {
+                        oEditor.changePreviewStyle('tab');
                     }
                 }
-            });
-
-            ed.insertToolbarItem(
-                { 
-                    groupIndex: 0, 
-                    itemIndex: 0 
-                }, {
-                    name: 'Full screen',
-                    tooltip: 'Full screen',
-                    el: $('<button type="button" style="margin: -7px -5px; background: transparent;" onclick="{$this->buildJsMarkdownVar()}.toggleFullScreen(this)"><i class="fa fa-expand" style="padding: 4px;border: 1px solid black;margin-top: 1px"></i></button>')[0]
-                }
-            );
-
-            ed.toggleFullScreen = function(domBtn){
-                var jqWrapper = $('#{$this->getId()}');
-                var oEditor = {$this->buildJsMarkdownVar()};
-                var jqBtn = $(domBtn);
-                var bExpanding = ! jqWrapper.hasClass('fullscreen');
-
-                jqWrapper.toggleClass('fullscreen'); 
-                jqBtn.find('i')
-                    .removeClass('fa-expand')
-                    .removeClass('fa-compress')
-                    .addClass(bExpanding ? 'fa-compress' : 'fa-expand');
-                if (bExpanding && jqWrapper.innerWidth() > 800) {
-                    oEditor.changePreviewStyle('vertical');
-                    oEditor.refreshMermaid();
-                } else {
-                    oEditor.changePreviewStyle('tab');
-                }
-            }
-
-            mermaid.initialize({
-                startOnLoad:true,
-                theme: 'default'
-            });
-            ed.refreshMermaid = function() {
-                mermaid.init(undefined, '.toastui-editor-md-preview code[data-language="mermaid"]');
-            }
-
-            return ed;
-}();
+                
+                /*mermaid.initialize({
+                    startOnLoad:true,
+                    theme: 'default'
+                });
+                ed.refreshMermaid = function() {
+                    mermaid.init(undefined, '.toastui-editor-md-preview code[data-language="mermaid"]');
+                }*/
+                
+                return ed;
+            }();
 JS;
     }
 
@@ -140,5 +124,15 @@ JS;
     public function buildJsValueGetter()
     {
         return "{$this->buildJsMarkdownVar()}.getMarkdown()";
+    }
+
+    /**
+     *
+     * @return string
+     */
+    protected function buildHtmlMarkdownEditor() : string
+    {
+        $html = '<div id="'.$this->getId().'" class="markdown-editor"></div>';
+        return $html;
     }
 }
