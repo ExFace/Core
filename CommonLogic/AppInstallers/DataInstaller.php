@@ -727,6 +727,12 @@ class DataInstaller extends AbstractAppInstaller
             if ($ds->getMetaObject()->hasUidAttribute()) {
                 $ds->getSorters()->addFromString($ds->getMetaObject()->getUidAttributeAlias(), SortingDirectionsDataType::ASC);
             }
+
+            // Add a fake column atop of every row that will tell humans looking at the JSON what this
+            // row was originally
+            if ($ds->getMetaObject()->hasLabelAttribute()) {
+                $ds->getColumns()->addFromExpression($ds->getMetaObject()->getLabelAttributeAlias(), '_EXPORTED', true);
+            }
                 
             foreach ($ds->getMetaObject()->getAttributeGroup('~WRITABLE')->getAttributes() as $attr) {
                 if (in_array($attr->getAlias(), $excludeAttributeAliases)){
