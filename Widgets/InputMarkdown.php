@@ -13,16 +13,16 @@ namespace exface\Core\Widgets;
 class InputMarkdown extends InputText
 {
     const MODE_WYSIWYG = 'wysiwyg';
-    const MODE_MARKDOW = 'markdown';
+    const MODE_MARKDOWN = 'markdown';
     
-    private $mode = self::MODE_MARKDOW;
+    private string $mode = self::MODE_MARKDOWN;
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
      * 
-     * WYSIWYG means "what-you-see-is-what-you-get" and will result in the markdown syntax
-     * being hidden and the user seing the document fully rendered with the option of editing
-     * it in a similar way as in Microsoft Word or similar editors.
+     * WYSIWYG means "what-you-see-is-what-you-get" and will result in the Markdown syntax
+     * being hidden and the user seeing the document fully rendered with the option of editing
+     * it in a similar way as in Microsoft Word or like editors.
      * 
      * @uxon-property editor_mode
      * @uxon-type [markdown,wysiwyg]
