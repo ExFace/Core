@@ -18,21 +18,21 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /**
  * This action prints data using a XLSX template with any number of sub-sheets.
- * 
+ *  
  * The template itself is an XLSX file that you have to write with an external editor.
  * Place it within the file structure of the app you wish to use it in, for example:
- *
+ * 
  * `vendor/[project]/[app]/Dokumente/Export-Templates/[template]`
- *
+ * 
  * Then add a new action definition under `Administration -> Metamodel -> Printing Templates`, with
  * `PrintXLSX` as its ActionPrototype. You can find an example on how to write the UXON file further below.
- *
- *
- * ## Template placeholders
- *
- *
- * The template can contain the following placeholders:
  * 
+ * 
+ * ## Template placeholders
+ * 
+ * 
+ * The template can contain the following placeholders:
+ *  
  * - `[#~config:app_alias:config_key#]` - will be replaced by the value of the `config_key` in the given app
  * - `[#~translate:app_alias:translation_key#]` - will be replaced by the translation of the `translation_key` 
  * from the given app
@@ -43,9 +43,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * with our without extension.
  * - `[#~data:column_name:AGGREGATOR#]` - aggregates the specified column.
  * - additional custom placeholders can be defined in `data_placeholders` - see below.
- * 
+ *  
  * ## Data placeholders
- * 
+ *  
  * In addition to the general placeholders above, additional data can be loaded into the table:
  * e.g. positions of an order in addition to the actual order data, which is the input of the action.
  * 
@@ -56,22 +56,27 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * - `row_template` to fill with placeholders from every row of the `data_sheet` - e.g. 
  * `[#dataPlaceholderNameSome_attribute#]`, `[#dataPlaceholderName=Formula()#]`.
  * - nested `data_placeholders` to use inside each data placeholder
- * 
+ *  
  * ## Writing the UXON
+ *  
+ * While the formatting and layout are defined by the template file, the data you wish to print is specified and
+ * formatted within the UXON definition. Consequently, you should write your UXON as though you wanted to create a
+ * `DataTable`. Think carefully about what data you need and how you wish to format it, as the print action simply
+ * parses whatever it receives into the template.
  * 
- * While the formatting and layout are defined by the template file, the data you wish to print is specified and formatted within the UXON definition.
- * Consequently, you should write your UXON as though you wanted to create a `DataTable`. Think carefully about what data you need and how you
- * wish to format it, as the print action simply parses whatever it receives into the template.
- *
- * Consider the following example for a simple table export to XLSX. The property `template` tells the action where to find the template
- * you have written, while `filename` will be the name of the file created by this action. You may apply placeholders to the filename.
- *
- * Next up we define any number of `data_placeholders`. These are essentially lookups that help the action understand what data you wish to
- * fill in. It then pre-loads all the necessary data, making it available for further processing. This feature is very powerful, as it allows you
- * to pull data from other tables and apply filters and sorters to it. You can insert this data into your template by using type name you specified as
- * a placeholder. In this example we called it `data_placeholder_example`. To reference that in our template we would use `[#data_placeholder_example:column_name#]`.
+ * Consider the following example for a simple table export to XLSX. The property `template` tells the action where to
+ * find the template you have written, while `filename` will be the name of the file created by this action. You may
+ * apply placeholders to the filename.
  * 
+ * Next up we define any number of `data_placeholders`. These are essentially lookups that help the action understand
+ * what data you wish to fill in. It then pre-loads all the necessary data, making it available for further processing.
+ * This feature is very powerful, as it allows you to pull data from other tables and apply filters and sorters to it.
+ * You can insert this data into your template by using type name you specified as a placeholder. In this example we
+ * called it `data_placeholder_example`. To reference that in our template we would use
+ * `[#data_placeholder_example:column_name#]`.
+ *  
  * ```
+ * 
  * {
  *      "template": "vendor/[project]/[app]/Dokumente/Export-Templates/[template]",
  *      "filename": "Order [#~input:ORDERNO#].xlsx",
@@ -102,6 +107,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class PrintXLSX extends PrintTemplate
 {
     private $template = null;
+    
+    private string $exportType = 'xlsx';
     
     protected function init()
     {
@@ -192,11 +199,11 @@ class PrintXLSX extends PrintTemplate
                 $currentRowRenderer->render($tplSpreadsheet);
 
                 // Save file.
-                $writerType = $preview ? IOFactory::WRITER_HTML : IOFactory::WRITER_XLSX;
+                $filePath = explode('.', $filePath)[0].$this->getFileExtension($preview);
+                $writerType = $this->getWriterType($preview);
                 $writer = IOFactory::createWriter($tplSpreadsheet, $writerType);
                 if($preview) {
                     $writer->writeAllSheets();
-                    $filePath = explode('.', $filePath)[0].$this->getFileExtensionPreview();
                 }
                 $writer->save($filePath);
 
@@ -214,24 +221,36 @@ class PrintXLSX extends PrintTemplate
         return $contents;
     }
 
-
     /**
-     *
+     * @param bool $preview
      * @return string
      */
-    protected function getFileExtensionDefault() : string
+    protected function getFileExtension(bool $preview = false) : string
     {
-        return '.xlsx';
+        if($preview) {
+            return '.html';
+        } else {
+            return empty($this->exportType) ? '.xlsx' : '.'.$this->exportType;
+        }
     }
 
     /**
-     * Returns the file extension for preview renders.
-     *
+     * @param bool $preview
      * @return string
      */
-    protected function getFileExtensionPreview() : string
+    protected function getWriterType(bool $preview) : string
     {
-        return '.html';
+        if($preview) {
+            return IOFactory::WRITER_HTML;
+        } else {
+            return match ($this->exportType) {
+                'html' => IOFactory::WRITER_HTML,
+                'xls' => IOFactory::WRITER_XLS,
+                'csv' => IOFactory::WRITER_CSV,
+                'ods' => IOFactory::WRITER_ODS,
+                default => IOFactory::WRITER_XLSX,
+            };
+        }
     }
 
     /**
@@ -264,6 +283,21 @@ class PrintXLSX extends PrintTemplate
     public function setTemplate(string $value) : PrintTemplate
     {
         $this->template = $value;
+        return $this;
+    }
+
+    /**
+     * Choose the file type the rendered template should be exported as.
+     * 
+     * @uxon-property export_type
+     * @uxon-type [xlsx,html,xls,csv,ods]
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setExportType(string $value) : static
+    {
+        $this->exportType = $value;
         return $this;
     }
 
