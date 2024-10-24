@@ -3,7 +3,16 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Widgets\InputMarkdown;
+use exface\JEasyUIFacade\Facades\Elements\EuiInputMarkdown;
+use exface\UI5Facade\Facades\Elements\UI5InputMarkdown;
 
+/**
+ * Aides Facade specific implementation of the ToastUI markdown editor.
+ * The editor can be initialized with `buildJsMarkdownInitEditor()`.
+ * 
+ * @see UI5InputMarkdown 
+ * @see EuiInputMarkdown
+ */
 trait ToastUIEditorTrait
 {
     /**
@@ -24,6 +33,8 @@ trait ToastUIEditorTrait
         $editorOptions = "
                 initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "',";
         
+        $markdownVarJs = str_replace("'", '"', $this->buildJsMarkdownVar());
+        
         return <<<JS
 
             function(){     
@@ -38,10 +49,14 @@ trait ToastUIEditorTrait
                     events: {
                         beforePreviewRender: function(sHtml){
                             setTimeout(function(){
-                                var oEditor = {$this->buildJsMarkdownVar()};
-                                oEditor.refreshMermaid();
+                                var oEditor = {$markdownVarJs};
+                                //oEditor.refreshMermaid();
                             }, 0);
-                        }
+                        },
+                        
+                        change: function(){
+                            {$this->getOnChangeScript()} 
+                        }    
                     }
                 });
                 
@@ -52,13 +67,13 @@ trait ToastUIEditorTrait
                     }, {
                         name: 'Full screen',
                         tooltip: 'Full screen',
-                        el: $('<button type="button" style="margin: -7px -5px; background: transparent;" onclick="{$this->buildJsMarkdownVar()}.toggleFullScreen(this)"><i class="fa fa-expand" style="padding: 4px;border: 1px solid black;margin-top: 1px"></i></button>')[0]
+                        el: $('<button type="button" style="margin: -7px -5px; background: transparent;" onclick="{$markdownVarJs}.toggleFullScreen(this)"><i class="fa fa-expand" style="padding: 4px;border: 1px solid black;margin-top: 1px"></i></button>')[0]
                     }
                 );
                 
                 ed.toggleFullScreen = function(domBtn){
                     var jqWrapper = $('#{$this->getId()}');
-                    var oEditor = {$this->buildJsMarkdownVar()};
+                    var oEditor = {$markdownVarJs};
                     var jqBtn = $(domBtn);
                     var bExpanding = ! jqWrapper.hasClass('fullscreen');
                 
