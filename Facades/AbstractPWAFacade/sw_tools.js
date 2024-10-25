@@ -181,7 +181,7 @@ const swTools = {
 		 * @param {Object} options 
 		 * @returns 
 		 */
-		postNetworkFirst: (options) => {
+		POSTNetworkFirst: (options) => {
 			if (! options) {
 				options = {};
 			}
@@ -202,6 +202,19 @@ const swTools = {
 			}
 		},
 
+		POSTCacheOnly: (options) => {
+			if (! options) {
+				options = {};
+			}
+			
+			return ({url, event, params}) => {
+			    // Try to get the response from the network
+				var response = swTools.cache.match(event.request.clone());
+				console.log('POST cache onle, ', response);
+				return Promise.resolve(response);
+			}
+		},
+
 		/**
 		 * This strategy swichtes between two specified strategies depending on whether it
 		 * concideres to be offline or online.
@@ -217,12 +230,12 @@ const swTools = {
 			var onlineStrategy = options.onlineStrategy;
 
 			if (offlineStrategy === undefined) {
-				throw new {
+				throw {
 					message:  'No offline strategy defined for semiOffline switch!'
 				};
 			}
 			if (onlineStrategy === undefined) {
-				throw new {
+				throw {
 					message:  'No online strategy defined for semiOffline switch!'
 				};
 			}
@@ -230,15 +243,22 @@ const swTools = {
 			return {
 				handle: async ({ event, request, ...params }) => {
 					var bSemiOffline = false;
+					var mStrategy;
 					try {
 						bSemiOffline = await exfPWA.isOfflineVirtually();
 					} catch (error) {
 						console.warn('Error checking network status:', error);
 					}
 					if (bSemiOffline) {
-						return offlineStrategy.handle({ event, request, ...params });
+						mStrategy = offlineStrategy;
 					} else {
-						return onlineStrategy.handle({ event, request, ...params });
+						mStrategy = onlineStrategy;
+					}
+					
+					if (mStrategy.handle !== undefined) {
+						return mStrategy.handle({ event, request, ...params });
+					} else {
+						return mStrategy({ event, request, ...params });
 					}
 				}
 			};
