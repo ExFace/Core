@@ -172,7 +172,7 @@ JS;
             $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
             
             if (array_key_exists('script', $route)) {
-                $handler = StringDataType::indent($route['script'], '    ');
+                $handler = ltrim(StringDataType::indent($route['script'], '    '));
             } elseif (substr($route['strategy'], 0, strlen('workbox.strategies.')) === 'workbox.strategies.') {
                 $handler = <<<JS
                 
