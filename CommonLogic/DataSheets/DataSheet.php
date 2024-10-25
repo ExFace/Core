@@ -211,6 +211,7 @@ class DataSheet implements DataSheetInterface
                 }
                 // Find rows in the other sheet, that match the currently processed key
                 $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
                     // to loop through them. The first row is simply joined to the current left row
@@ -235,8 +236,13 @@ class DataSheet implements DataSheetInterface
                         $needRowCopy = true;
                     }                    
                 } else {
-                    foreach ($right_cols as $col) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                    // If the right sheet does not have corresponding rows, treat them as empty.
+                    // BUT only if we are JOINing with a relation. If JOINing the same object,
+                    // do not empty its values just because the right sheet did not has less data!
+                    if ($relation_path !== '') {
+                        foreach ($right_cols as $col) {
+                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                        }
                     }
                 }
             }
