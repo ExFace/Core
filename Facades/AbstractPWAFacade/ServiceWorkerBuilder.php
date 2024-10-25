@@ -80,12 +80,14 @@ JS;
         string $id, 
         string $matcher, 
         string $script,
+        string $method = null,
         string $description = null
     )
     {
         $this->routesToCache[$id] = [
             'description' => $description,
             'matcher' => $matcher,
+            'method' => $method,
             'script' => $script
         ];
         return $this;
@@ -130,6 +132,7 @@ JS;
                 $routeId,
                 $uxon->getProperty('matcher'),
                 $script,
+                $uxon->getProperty('method'),
                 $uxon->getProperty('description')
             );
         } else {
