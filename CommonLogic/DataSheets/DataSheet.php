@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -2470,31 +2471,17 @@ class DataSheet implements DataSheetInterface
         if ($uxon->hasProperty('filters')) {
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters'), $this->getMetaObject()));
         }
-        
-        if ($uxon->hasProperty('rows_limit')) {
-            $val = $uxon->getProperty('rows_limit');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
-        } elseif ($uxon->hasProperty('rows_on_page')) {
-            // Still support old property name rows_on_page
-            $val = $uxon->getProperty('rows_on_page');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
+
+        // Limit. Still support old property name rows_on_page.
+        $val = $uxon->hasProperty('rows_limit') ? $uxon->getProperty('rows_limit') : $uxon->getProperty('rows_on_page');
+        if ($val !== null) {
+            $this->setRowsLimit(IntegerDataType::cast($val));
         }
         
-        if ($uxon->hasProperty('rows_offset')) {
-            $val = $uxon->getProperty('rows_offset');
-            if ($val === '') {
-                $val = 0;
-            }
-            $this->setRowsOffset($val);
-        } elseif ($uxon->hasProperty('row_offset')) {
-            // Still support old property name row_offset
-            $this->setRowsOffset($uxon->getProperty('row_offset'));
+        // Offset. Still support old property name row_offset.
+        $val = $uxon->hasProperty('rows_offset') ? $uxon->getProperty('rows_offset') : $uxon->getProperty('row_offset');
+        if ($val !== null && $val !== '') {
+            $this->setRowsOffset(IntegerDataType::cast($val));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -2678,6 +2665,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsLimit($value) : DataSheetInterface
     {
+        if ($value !== null && $value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid limit "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->rows_on_page = $value;
         return $this;
     }
@@ -2697,6 +2687,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsOffset(int $value) : DataSheetInterface
     {
+        if ($value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid offset "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->row_offset = $value;
         return $this;
     }
