@@ -1388,4 +1388,20 @@ class Data
         }
         return array_unique($colNames);
     }
+
+    /**
+     * Array of message widgets to display in the header (configurator) of the table
+     * 
+     * @uxon-property messages
+     * @uxon-type \exface\Core\Widgets\Message[]
+     * @uxon-template [{"text": "", "type": "warning"}]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfUxon
+     * @return \exface\Core\Widgets\Data
+     */
+    public function setMessages(UxonObject $arrayOfUxon) : Data
+    {
+        $this->getConfiguratorWidget()->getMessageList()->setMessages($arrayOfUxon);
+        return $this;
+    }
 }
