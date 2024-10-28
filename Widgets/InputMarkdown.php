@@ -16,6 +16,7 @@ class InputMarkdown extends InputText
     const MODE_MARKDOWN = 'markdown';
     
     private string $mode = self::MODE_MARKDOWN;
+    private bool $allowImages = false;
     
     /**
      * Set the editor to a "Word-like" WYSIWYG mode or to raw markdown mode.
@@ -45,5 +46,31 @@ class InputMarkdown extends InputText
         
         $this->mode = $value;
         return $this;
+    }
+
+    /**
+     * Toggle whether users are allowed to paste images into the editor.
+     * WARNING: For now this property merely disables the image upload button,
+     * users can still paste images directly into the text.
+     * 
+     * @uxon-property allow_images
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setAllowImages(bool $value) : static
+    {
+        $this->allowImages = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowImages() : bool
+    {
+        return  $this->allowImages;
     }
 }
