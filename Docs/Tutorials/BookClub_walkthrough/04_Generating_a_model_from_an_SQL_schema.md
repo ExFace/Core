@@ -60,7 +60,7 @@ You can also explicitly disable reading or writing operations for the object her
 
 ### The "Attributes" tab
 
-Here we can see, that the model builder generated an attribute for every column of the table. Feel free to look around: you can open an attribute by double clicking it or via the <kbd>Edit</kbd> button.
+Here we can see, that the model builder generated an attribute for every column of the table. Feel free to look around: you can open an attribute by double clicking it or via <kbd>Edit</kbd> button.
 
 ![Attributes of the language object](Images/object_language_attributes.png)
 
