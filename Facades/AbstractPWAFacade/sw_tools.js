@@ -221,7 +221,7 @@ const swTools = {
 		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
 		 * @returns 
 		 */
-		semiOffline: (options) => {
+		SemiOfflineSwitch: (options) => {
 			if (!options) {
 				options = {};
 			}           
