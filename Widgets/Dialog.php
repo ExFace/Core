@@ -11,11 +11,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Widgets\Traits\iHaveToolbarsTrait;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Actions\iShowDialog;
-use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\Widgets\Traits\PopupTrait;
 
 /**

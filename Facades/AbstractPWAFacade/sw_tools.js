@@ -170,9 +170,18 @@ const swTools = {
         return db;
 	}(),
 	
-	// POST
+	/**
+	 * Custom workbox strategies
+	 */
 	strategies: {
-		postNetworkFirst: (options) => {
+
+		/**
+		 * This strategy allows to handle POST requests via NetworkFirst
+		 * 
+		 * @param {Object} options 
+		 * @returns 
+		 */
+		POSTNetworkFirst: (options) => {
 			if (! options) {
 				options = {};
 			}
@@ -191,6 +200,64 @@ const swTools = {
 					})
 				);
 			}
-		}
+		},
+
+		POSTCacheOnly: (options) => {
+			if (! options) {
+				options = {};
+			}
+			
+			return ({url, event, params}) => {
+			    // Try to get the response from the network
+				var response = swTools.cache.match(event.request.clone());
+				return Promise.resolve(response);
+			}
+		},
+
+		/**
+		 * This strategy swichtes between two specified strategies depending on whether it
+		 * concideres to be offline or online.
+		 * 
+		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
+		 * @returns 
+		 */
+		SemiOfflineSwitch: (options) => {
+			if (!options) {
+				options = {};
+			}           
+			var mOfflineStrategy = options.offlineStrategy;
+			var mOnlineStrategy = options.onlineStrategy;
+
+			if (mOfflineStrategy === undefined) {
+				throw {
+					message:  'No offline strategy defined for semiOffline switch!'
+				};
+			}
+			if (mOnlineStrategy === undefined) {
+				throw {
+					message:  'No online strategy defined for semiOffline switch!'
+				};
+			}
+			
+			return async ({ event, request, ...params }) => {
+				var oNetStat;
+				var mStrategy;
+				try {
+					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
+					// might use cached values and may also load asynchronously when startig up.
+					oNetStat = await exfPWA.getConnectionStatus();
+					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+				} catch (error) {
+					mStrategy = mOnlineStrategy;
+					console.warn('Error checking network status:', error);
+				}
+
+				if (mStrategy.handle !== undefined) {
+					return mStrategy.handle({ event, request, ...params });
+				} else {
+					return mStrategy({ event, request, ...params });
+				}
+			};
+		} 
 	}
 }

@@ -23,6 +23,5 @@ interface iConfigureWidgets extends WidgetInterface
      * @param WidgetInterface $widget
      * @return iConfigureWidgets
      */
-    public function setWidgetConfigured(iHaveConfigurator $widget);
-    
+    public function setWidgetConfigured(iHaveConfigurator $widget);    
 }

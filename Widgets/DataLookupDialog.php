@@ -106,7 +106,7 @@ class DataLookupDialog extends Dialog
                         $filterAttrAlias = $col->getAttributeAlias();
                     }
                     if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
-                        $filterWidget = $dataConfigurator->createFilterWidget($filterAttrAlias);
+                        $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
                         if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
                             $filterWidget->getInputWidget()->setMultiSelect(true);
                         }
