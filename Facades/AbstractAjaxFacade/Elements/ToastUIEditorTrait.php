@@ -17,35 +17,39 @@ trait ToastUIEditorTrait
 {
     /**
      *
-     * @param bool $viewer
+     * @param bool $isViewer
      * @return string
      */
-    protected function buildJsMarkdownInitEditor(bool $viewer = false) : string
+    protected function buildJsMarkdownInitEditor(bool $isViewer = false) : string
     {
         $widget = $this->getWidget();
         $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
-
-        $viewerOptions = '';
-        if ($viewer === true) {
-            $viewerOptions .= 'viewer: true,';
-        }
-
+        
         $editorOptions = "
                 initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "',";
         
         $markdownVarJs = str_replace("'", '"', $this->buildJsMarkdownVar());
         
+        if($isViewer) {
+            $isViewerJs = 'true';
+            $editorOnlyInjectionsJs = '';
+        } else {
+            $isViewerJs = 'false';
+            $editorOnlyInjectionsJs = $this->buildFullScreenToggleJs($markdownVarJs);
+        }
+
         return <<<JS
 
-            function(){     
-                var ed = new toastui.Editor({
+            function(){
+                var ed = toastui.Editor.factory({
                     el: document.querySelector('#{$this->getId()}'),
                     height: '100%',
                     initialValue: ($contentJs || ''),
                     language: 'en',
                     autofocus: false,
+                    viewer: {$isViewerJs},
                     $editorOptions
-                    $viewerOptions
+                    {$this->buildJsToolbarItems($widget)}
                     events: {
                         beforePreviewRender: function(sHtml){
                             setTimeout(function(){
@@ -60,6 +64,23 @@ trait ToastUIEditorTrait
                     }
                 });
                 
+                {$editorOnlyInjectionsJs}
+                
+                return ed;
+            }();
+JS;
+    }
+
+    /**
+     * Creates injection code for a ToastUI editor, that creates a fullscreen toggle button.
+     * 
+     * @param string $markdownVarJs
+     * @return string
+     */
+    protected function buildFullScreenToggleJs(string $markdownVarJs) : string
+    {
+        return <<<JS
+
                 ed.insertToolbarItem(
                     { 
                         groupIndex: 0, 
@@ -88,7 +109,7 @@ trait ToastUIEditorTrait
                     } else {
                         oEditor.changePreviewStyle('tab');
                     }
-                }
+                };
                 
                 /*mermaid.initialize({
                     startOnLoad:true,
@@ -97,10 +118,31 @@ trait ToastUIEditorTrait
                 ed.refreshMermaid = function() {
                     mermaid.init(undefined, '.toastui-editor-md-preview code[data-language="mermaid"]');
                 }*/
-                
-                return ed;
-            }();
 JS;
+
+    }
+
+    /**
+     * Assembles the markdown editor toolbar. Extend over override this function to 
+     * customize the toolbar as needed.
+     * 
+     * @param $widget
+     * @return string
+     */
+    protected function buildJsToolbarItems($widget) : string
+    {
+        $image = $widget->getAllowImages() ? "'image', " : "";
+        
+        return <<<JS
+
+        toolbarItems: [
+                  ['heading', 'bold', 'italic', 'strike'],
+                  ['hr', 'quote'],
+                  ['ul', 'ol', 'task', 'indent', 'outdent'],
+                  ['table', {$image} 'link'],
+                  ['code', 'codeblock']],
+JS;
+
     }
 
     /**
