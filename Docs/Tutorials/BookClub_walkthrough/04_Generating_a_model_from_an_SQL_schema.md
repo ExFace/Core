@@ -60,7 +60,7 @@ You can also explicitly disable reading or writing operations for the object her
 
 ### The "Attributes" tab
 
-Here we can see, that the model builder generated an attribute for every column of the table. Feel free to look around: you can open an attribute by double clicking it or via <kbd>Edit</kbd> button.
+Here we can see, that the model builder generated an attribute for every column of the table. Feel free to look around: you can open an attribute by double clicking it or via the <kbd>Edit</kbd> button.
 
 ![Attributes of the language object](Images/object_language_attributes.png)
 
@@ -141,7 +141,7 @@ Even though we've already taken care of user relations and other things for the 
 
 Here are some typical tasks for this phase:
 
-- Give every stand-alone object (= not merely a mapping) a label attribute by marking one of the attributes with the `Is label of object` flag. The label is the human-readable identifier of the object: e.g. the `name` of a language or a category, the `title` of a book, etc. The label will be used in things like select and lookup widgets for the respective meta object.
+- Give every stand-alone object (= not merely a mapping) a label attribute by marking one of the attributes with the `Object label` flag. The label is the human-readable identifier of the object: e.g. the `name` of a language or a category, the `title` of a book, etc. The label will be used in things like select and lookup widgets for the respective meta object.
 - Add relations, that were not generated automatically as we did for `created_by_user_id` and `modified_by_user_id` above.
 - Check `Editable` and `Hidden` properties of every attribute. The model builder cannot know the purpose of the attribute, so if it is meant to be an internal flag set automatically, you probably want to disable editing by users or even mark it as hidden.
 - Describe non-intuitive objects and attributes by filling the respecitve `Description` fields. This information will automatically be used to generate context-sensitive help dialogs. 
