@@ -108,18 +108,17 @@ class PrintXLSX extends PrintTemplate
 {
     private $template = null;
     
-    private string $exportType = 'xlsx';
-    
     protected function init()
     {
         parent::init();
         $this->setIcon(Icons::FILE_EXCEL_O);
     }
-    
+
     /**
      * Returns an array of the form [file_path => rendered_template].
-     * 
+     *
      * @param DataSheetInterface $inputData
+     * @param bool               $preview
      * @return string[]
      */
     public function renderTemplate(DataSheetInterface $inputData, bool $preview = false) : array
@@ -230,7 +229,8 @@ class PrintXLSX extends PrintTemplate
         if($preview) {
             return '.html';
         } else {
-            return empty($this->exportType) ? '.xlsx' : '.'.$this->exportType;
+            $mimeType = $this->getMimeType();
+            return empty($mimeType) ? '.xlsx' : '.'.$mimeType;
         }
     }
 
@@ -243,7 +243,7 @@ class PrintXLSX extends PrintTemplate
         if($preview) {
             return IOFactory::WRITER_HTML;
         } else {
-            return match ($this->exportType) {
+            return match ($this->getMimeType()) {
                 'html' => IOFactory::WRITER_HTML,
                 'xls' => IOFactory::WRITER_XLS,
                 'csv' => IOFactory::WRITER_CSV,
@@ -254,14 +254,28 @@ class PrintXLSX extends PrintTemplate
     }
 
     /**
-     * 
-     * @return string|null
+     * Choose the file type the rendered template should be exported as.
+     *
+     * @uxon-property mime_type
+     * @uxon-type [xlsx,html,xls,csv,ods]
+     *
+     * @param string $mimeType
+     * @return $this
      */
-    public function getMimeType() : ?string
+    public function setMimeType(string $mimeType) : PrintTemplate
     {
-        return parent::getMimeType() ?? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        return parent::setMimeType($mimeType);
     }
-    
+
+    /**
+     * @return string
+     */
+    public function getMimeType(): string
+    {
+        return parent::getMimeType() ?? 'xlsx';
+    }
+
+
     /**
      * 
      * @return string
@@ -283,21 +297,6 @@ class PrintXLSX extends PrintTemplate
     public function setTemplate(string $value) : PrintTemplate
     {
         $this->template = $value;
-        return $this;
-    }
-
-    /**
-     * Choose the file type the rendered template should be exported as.
-     * 
-     * @uxon-property export_type
-     * @uxon-type [xlsx,html,xls,csv,ods]
-     * 
-     * @param string $value
-     * @return $this
-     */
-    public function setExportType(string $value) : static
-    {
-        $this->exportType = $value;
         return $this;
     }
 
