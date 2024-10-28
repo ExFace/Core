@@ -210,7 +210,6 @@ const swTools = {
 			return ({url, event, params}) => {
 			    // Try to get the response from the network
 				var response = swTools.cache.match(event.request.clone());
-				console.log('POST cache onle, ', response);
 				return Promise.resolve(response);
 			}
 		},
