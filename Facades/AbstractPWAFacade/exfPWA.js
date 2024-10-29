@@ -1150,9 +1150,6 @@ self.addEventListener('sync', function(event) {
 					doReSync = false;
 				}
 
-				// TEMP
-				return Promise.resolve({});
-
 				var oDataSet;
 				return _dataTable
 					.get(sDataSetUid)
@@ -1448,7 +1445,7 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve({});
 				}
 
-				if (exfPWA.isOnline === false) {
+				if (exfPWA.isOnline() === false) {
 					return Promise.resolve({});
 				}
 
