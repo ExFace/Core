@@ -231,7 +231,7 @@ self.addEventListener('sync', function(event) {
 
 		/**
 		 * 
-		 * @returns {Promise<boolean}
+		 * @returns {boolean}
 		 */
 		isOfflineVirtually: function() {
 			return _oNetStat.isOfflineVirtually()
@@ -863,6 +863,9 @@ self.addEventListener('sync', function(event) {
 
 			/**
 			 * Retrieves the auto offline toggle status from the IndexedDB.
+			 * 
+			 * TODO move to getNetworkStatus().isForcedOffline()
+			 * 
 			 * @return {Promise<boolean>} A promise that resolves to the auto offline toggle status.
 			 */
 			getAutoOfflineToggleStatus: function () {
@@ -883,6 +886,8 @@ self.addEventListener('sync', function(event) {
 			/**
 			 * saveAutoOfflineToggleStatus - Saves or updates the auto offline toggle status in IndexedDB.
 			 * If the table is empty, it initializes with a default value of true.
+			 * 
+			 * TODO move to saveConnectionStatus() 
 			 *
 			 * @param {boolean} [status] - The auto offline toggle status to be saved. If not provided, it will check for existing data.
 			 *
@@ -1149,9 +1154,6 @@ self.addEventListener('sync', function(event) {
 				if (doReSync === undefined) {
 					doReSync = false;
 				}
-
-				// TEMP
-				return Promise.resolve({});
 
 				var oDataSet;
 				return _dataTable
@@ -1448,7 +1450,7 @@ self.addEventListener('sync', function(event) {
 					return Promise.resolve({});
 				}
 
-				if (exfPWA.isOnline === false) {
+				if (exfPWA.isOnline() === false) {
 					return Promise.resolve({});
 				}
 
