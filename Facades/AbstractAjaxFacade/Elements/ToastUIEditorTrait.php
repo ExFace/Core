@@ -218,7 +218,41 @@ JS;
      */
     public function buildJsValueSetter($value)
     {
-        return "{$this->buildJsMarkdownVar()}.setMarkdown({$value})";
+        return <<<JS
+        
+        {$this->buildJsImageDataSanitizer($value)}
+        {$this->buildJsMarkdownVar()}.setMarkdown({$value});
+JS;
+    }
+
+    /**
+     * Builds an inline JS snippet that removes any raw image data from a string
+     * variable called `$value`.
+     * 
+     * ```
+     * 
+     *  if ({$value} !== undefined) {
+     *      {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
+     *  }
+     * 
+     * ```
+     * 
+     * @param string $value
+     * @return string
+     */
+    protected function buildJsImageDataSanitizer(string $value) : string
+    {
+        if($this->getWidget()->getAllowImages()) {
+            return '';
+        }
+        
+        return <<<JS
+
+        if ({$value} !== undefined) {
+            {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
+        }
+JS;
+
     }
 
     /**
@@ -228,7 +262,14 @@ JS;
      */
     public function buildJsValueGetter()
     {
-        return "{$this->buildJsMarkdownVar()}.getMarkdown()";
+        return <<<JS
+
+        (function () {
+            var value = {$this->buildJsMarkdownVar()}.getMarkdown();
+            {$this->buildJsImageDataSanitizer('value')}
+            return value;
+        })()
+JS;
     }
 
     /**
