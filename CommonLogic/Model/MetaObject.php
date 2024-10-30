@@ -120,7 +120,7 @@ class MetaObject implements MetaObjectInterface
         $this->model = $model;
         $this->attributes = AttributeListFactory::createForObject($this);
         $this->default_sorters = EntityListFactory::createEmpty($exface, $this);
-        $this->behaviors = new MetaObjectBehaviorList($exface, $this);
+        $this->behaviors = new MetaObjectBehaviorList($exface, $this, true);
     }
 
     /**

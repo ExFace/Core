@@ -1,9 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\UxonParserError;
@@ -11,6 +9,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 
@@ -57,13 +56,13 @@ abstract class ActionFactory extends AbstractStaticFactory
 
     /**
      *
-     * @param Workbench $workbench            
+     * @param WorkbenchInterface $workbench            
      * @param UxonObject $uxon            
-     * @param AbstractWidget $trigger_widget            
+     * @param WidgetInterface $trigger_widget            
      * @throws UnexpectedValueException
      * @return ActionInterface
      */
-    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, WidgetInterface $trigger_widget = null) : ActionInterface
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         if (! $action_alias = $uxon->getProperty('alias')) {
             throw new UxonParserError($uxon, 'Cannot instantiate action from UXON: no action alias found!');
@@ -75,12 +74,12 @@ abstract class ActionFactory extends AbstractStaticFactory
 
     /**
      *
-     * @param Workbench $workbench            
+     * @param WorkbenchInterface $workbench            
      * @param string $qualified_action_alias            
-     * @param UxonParserError $trigger_widget            
+     * @param WidgetInterface $trigger_widget            
      * @return ActionInterface
      */
-    public static function createFromString(Workbench $workbench, $qualified_alias_or_class_or_file, AbstractWidget $trigger_widget = null) : ActionInterface
+    public static function createFromString(WorkbenchInterface $workbench, $qualified_alias_or_class_or_file, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         $selector = new ActionSelector($workbench, $qualified_alias_or_class_or_file);
         return static::create($selector, $trigger_widget);
