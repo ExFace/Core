@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
@@ -41,6 +42,12 @@ class AppInstallerContainer extends AbstractAppInstaller implements AppInstaller
             yield from $installer->install($source_absolute_path);
             $eventMgr->dispatch(new OnInstallEvent($installer, $source_absolute_path));
         }
+        
+        // Update model install timestamp to make sure other code can update caches, etc.
+        // This is particularly important for AJAX facades, that will append a cash buster
+        // string to URLs for included files to control browser caching
+        // @see \exface\Core\Facades\AbstractAjaxFacade::getFileVersionHash()
+        $this->getWorkbench()->getContext()->getScopeInstallation()->setVariable('last_metamodel_install', DateTimeDataType::now());
     }
 
     /**

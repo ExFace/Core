@@ -80,12 +80,14 @@ JS;
         string $id, 
         string $matcher, 
         string $script,
+        string $method = null,
         string $description = null
     )
     {
         $this->routesToCache[$id] = [
             'description' => $description,
             'matcher' => $matcher,
+            'method' => $method,
             'script' => $script
         ];
         return $this;
@@ -130,6 +132,7 @@ JS;
                 $routeId,
                 $uxon->getProperty('matcher'),
                 $script,
+                $uxon->getProperty('method'),
                 $uxon->getProperty('description')
             );
         } else {
@@ -172,7 +175,7 @@ JS;
             $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
             
             if (array_key_exists('script', $route)) {
-                $handler = StringDataType::indent($route['script'], '    ');
+                $handler = ltrim(StringDataType::indent($route['script'], '    '));
             } elseif (substr($route['strategy'], 0, strlen('workbox.strategies.')) === 'workbox.strategies.') {
                 $handler = <<<JS
                 
