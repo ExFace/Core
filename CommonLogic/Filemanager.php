@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Interfaces\WorkbenchInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
@@ -48,7 +49,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     
     private $path_to_translations_folder = null;
     
-    public function __construct(Workbench $exface)
+    public function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
     }

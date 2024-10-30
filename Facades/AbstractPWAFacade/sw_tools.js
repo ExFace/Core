@@ -210,7 +210,6 @@ const swTools = {
 			return ({url, event, params}) => {
 			    // Try to get the response from the network
 				var response = swTools.cache.match(event.request.clone());
-				console.log('POST cache onle, ', response);
 				return Promise.resolve(response);
 			}
 		},
@@ -222,44 +221,41 @@ const swTools = {
 		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
 		 * @returns 
 		 */
-		semiOffline: (options) => {
+		SemiOfflineSwitch: (options) => {
 			if (!options) {
 				options = {};
 			}           
-			var offlineStrategy = options.offlineStrategy;
-			var onlineStrategy = options.onlineStrategy;
+			var mOfflineStrategy = options.offlineStrategy;
+			var mOnlineStrategy = options.onlineStrategy;
 
-			if (offlineStrategy === undefined) {
+			if (mOfflineStrategy === undefined) {
 				throw {
 					message:  'No offline strategy defined for semiOffline switch!'
 				};
 			}
-			if (onlineStrategy === undefined) {
+			if (mOnlineStrategy === undefined) {
 				throw {
 					message:  'No online strategy defined for semiOffline switch!'
 				};
 			}
 			
-			return {
-				handle: async ({ event, request, ...params }) => {
-					var bSemiOffline = false;
-					var mStrategy;
-					try {
-						bSemiOffline = await exfPWA.isOfflineVirtually();
-					} catch (error) {
-						console.warn('Error checking network status:', error);
-					}
-					if (bSemiOffline) {
-						mStrategy = offlineStrategy;
-					} else {
-						mStrategy = onlineStrategy;
-					}
-					
-					if (mStrategy.handle !== undefined) {
-						return mStrategy.handle({ event, request, ...params });
-					} else {
-						return mStrategy({ event, request, ...params });
-					}
+			return async ({ event, request, ...params }) => {
+				var oNetStat;
+				var mStrategy;
+				try {
+					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
+					// might use cached values and may also load asynchronously when startig up.
+					oNetStat = await exfPWA.getConnectionStatus();
+					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+				} catch (error) {
+					mStrategy = mOnlineStrategy;
+					console.warn('Error checking network status:', error);
+				}
+
+				if (mStrategy.handle !== undefined) {
+					return mStrategy.handle({ event, request, ...params });
+				} else {
+					return mStrategy({ event, request, ...params });
 				}
 			};
 		} 
