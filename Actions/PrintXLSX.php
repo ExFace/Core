@@ -255,10 +255,10 @@ class PrintXLSX extends PrintTemplate
 
     /**
      * Choose the file type the rendered template should be exported as.
-     *
+     * 
      * @uxon-property mime_type
      * @uxon-type [xlsx,html,xls,csv,ods]
-     *
+     * 
      * @param string $mimeType
      * @return $this
      */
