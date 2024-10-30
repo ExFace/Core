@@ -3,7 +3,6 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\UiPageTree;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\UiPageTreeNode;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageTreeNodeInterface;
@@ -39,11 +38,11 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * App3
      *   App3_ChildPage1 
      *              
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param int $depth
      * @return UiPageTree
      */
-    public static function createFromRoot(Workbench $exface, int $depth = null) : UiPageTree
+    public static function createFromRoot(WorkbenchInterface $exface, int $depth = null) : UiPageTree
     {
         $tree = new UiPageTree($exface);
         $tree->setExpandDepth($depth);
@@ -123,12 +122,12 @@ class UiPageTreeFactory extends AbstractStaticFactory
      * App2
      * App3
      * 
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param UiPageInterface $leafPage
      * @param UiPageInterface $rootPage
      * @return UiPageTree
      */
-    public static function createForLeafNode(Workbench $exface, UiPageInterface $leafPage, UiPageInterface $rootPage = null) : UiPageTree
+    public static function createForLeafNode(WorkbenchInterface $exface, UiPageInterface $leafPage, UiPageInterface $rootPage = null) : UiPageTree
     {
         $tree = new UiPageTree($exface);        
         $tree->setExpandPathToPage($leafPage);

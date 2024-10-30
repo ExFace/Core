@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -10,6 +9,7 @@ use exface\Core\Exceptions\Model\ConditionIncompleteError;
 use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 abstract class ConditionFactory extends AbstractStaticFactory
 {
@@ -17,12 +17,12 @@ abstract class ConditionFactory extends AbstractStaticFactory
     /**
      * Returns an empty condition
      * 
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param bool $ignoreEmptyValues
      * 
      * @return \exface\Core\CommonLogic\Model\Condition
      */
-    public static function createEmpty(Workbench $exface, bool $ignoreEmptyValues = false) : ConditionInterface
+    public static function createEmpty(WorkbenchInterface $exface, bool $ignoreEmptyValues = false) : ConditionInterface
     {
         return new Condition($exface, null, null, null, $ignoreEmptyValues);
     }
@@ -50,14 +50,14 @@ abstract class ConditionFactory extends AbstractStaticFactory
      * Conditions consist of an expression, a value to
      * compare the expression to and a comparator like "=", ">", "<", etc. Comparators are defined by the EXF_COMPARATOR_xxx constants.
      *
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param string|\exface\Core\Interfaces\Model\ExpressionInterface $expression_or_string            
      * @param string $value            
      * @param string $comparator  
      * @param bool $ignoreEmptyValues          
      * @return Condition
      */
-    public static function createFromExpression(Workbench $exface, ExpressionInterface $expression = NULL, $value = NULL, string $comparator = null, bool $ignoreEmptyValues = false) : ConditionInterface
+    public static function createFromExpression(WorkbenchInterface $exface, ExpressionInterface $expression = NULL, $value = NULL, string $comparator = null, bool $ignoreEmptyValues = false) : ConditionInterface
     {
         return new Condition($exface, $expression, $comparator, $value, $ignoreEmptyValues);
     }
@@ -68,13 +68,13 @@ abstract class ConditionFactory extends AbstractStaticFactory
      * The comparator must be separated from the left and the right expressions by spaces. Both 
      * expression may include spaces, but must not include comparator charaters (<, >, =, etc.)
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string $string
      * @param MetaObjectInterface|NULL $object
      * @param bool $ignoreEmptyValues
      * @return \exface\Core\CommonLogic\Model\Condition
      */
-    public static function createFromString(Workbench $workbench, string $string, MetaObjectInterface $object = null, bool $ignoreEmptyValues = false) : ConditionInterface
+    public static function createFromString(WorkbenchInterface $workbench, string $string, MetaObjectInterface $object = null, bool $ignoreEmptyValues = false) : ConditionInterface
     {
         $tokens = explode(' ', $string);
         $left = '';
@@ -133,12 +133,12 @@ abstract class ConditionFactory extends AbstractStaticFactory
     
     /**
      * 
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @param UxonObject $uxon
      * @param bool $ignoreEmptyValues
      * @return ConditionInterface
      */
-    public static function createFromUxon(Workbench $exface, UxonObject $uxon, bool $ignoreEmptyValues = false) : ConditionInterface
+    public static function createFromUxon(WorkbenchInterface $exface, UxonObject $uxon, bool $ignoreEmptyValues = false) : ConditionInterface
     {
         $result = static::createEmpty($exface, $ignoreEmptyValues);
         $result->importUxonObject($uxon);

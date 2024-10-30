@@ -42,7 +42,10 @@ abstract class Formula implements FormulaInterface
     /**
      *
      * @deprecated use FormulaFactory instead!
-     * @param Workbench $workbench            
+     * 
+     * @param \exface\Core\Interfaces\Selectors\FormulaSelectorInterface $selector
+     * @param \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface|null $tokenStream
+     * @param mixed $relationPath
      */
     public function __construct(FormulaSelectorInterface $selector, FormulaTokenStreamInterface $tokenStream = null, $relationPath = null)
     {
