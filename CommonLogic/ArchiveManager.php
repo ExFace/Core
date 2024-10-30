@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 use ZipArchive;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
@@ -15,7 +16,7 @@ class ArchiveManager implements WorkbenchDependantInterface
 
     private $archive = null;
 
-    public function __construct(Workbench $exface, string $absolutePath)
+    public function __construct(WorkbenchInterface $exface, string $absolutePath)
     {
         $this->exface = $exface;
         $this->archive = new \ZipArchive();

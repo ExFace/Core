@@ -7,12 +7,12 @@ use exface\Core\CommonLogic\Log\Processors\RequestIdProcessor;
 use exface\Core\CommonLogic\Log\Processors\UserNameProcessor;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 use FemtoPixel\Monolog\Handler\CsvHandler;
 use Monolog\Formatter\NormalizerFormatter;
 use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
 use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Logger;
-use exface\Core\CommonLogic\Workbench;
 use Monolog\Handler\GroupHandler;
 use exface\Core\CommonLogic\Log\Monolog\DebugMessageMonologHandler;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -57,7 +57,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
 
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string $channelName
      * @param string $csvFilePath
      * @param string $debugMsgDirPath
@@ -65,7 +65,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
      * @param string $persistAllAfterLevel dump all accumulated messages when a message with at least this level is received
      * @param string $passthroughLevel log messages with this level or above regularly (only them, not the accumulated ones)
      */
-    public function __construct(Workbench $workbench, string $channelName, string $csvFilePath, string $debugMsgDirPath = null, string $ignoreBelowLevel = LoggerInterface::DEBUG, string $persistAllAfterLevel = LoggerInterface::ALERT, string $passthroughLevel = LoggerInterface::ERROR)
+    public function __construct(WorkbenchInterface $workbench, string $channelName, string $csvFilePath, string $debugMsgDirPath = null, string $ignoreBelowLevel = LoggerInterface::DEBUG, string $persistAllAfterLevel = LoggerInterface::ALERT, string $passthroughLevel = LoggerInterface::ERROR)
     {
         $this->channelName = $channelName;
         $this->csvFilePath = $csvFilePath;

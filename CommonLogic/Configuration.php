@@ -5,6 +5,7 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\OutOfBoundsException;
 use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class Configuration implements ConfigurationInterface
 {
@@ -18,9 +19,9 @@ class Configuration implements ConfigurationInterface
     /**
      *
      * @deprecated use ConfigurationFactory instead!
-     * @param Workbench $workbench            
+     * @param WorkbenchInterface $workbench            
      */
-    public function __construct(Workbench $workbench)
+    public function __construct(WorkbenchInterface $workbench)
     {
         $this->exface = $workbench;
     }

@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\IntegerDataType;
@@ -11,6 +10,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Default implementation of the AggregatorInterface
@@ -34,11 +34,11 @@ class Aggregator implements AggregatorInterface {
     
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string|AggregatorFunctionsDataType $aggregator_string
      * @param string[] $arguments
      */
-    public function __construct(Workbench $workbench, $aggregator_string, array $arguments = null)
+    public function __construct(WorkbenchInterface $workbench, $aggregator_string, array $arguments = null)
     {
         $this->workbench = $workbench;
         $aggregator_string = (string) $aggregator_string;

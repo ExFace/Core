@@ -2,9 +2,9 @@
 namespace exface\Core\CommonLogic\Log\Monolog;
 
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use Monolog\Handler\StreamHandler;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -30,14 +30,14 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler implements Ha
 
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string $debugGeneratorContextKey
      * @param string $dir
      * @param string $filenameRecordKey
      * @param string $fileSuffix
      * @param int $minLogLevel
      */
-    public function __construct(Workbench $workbench, string $debugGeneratorContextKey, string $dir, string $filenameRecordKey, string $fileSuffix, int $minLogLevel)
+    public function __construct(WorkbenchInterface $workbench, string $debugGeneratorContextKey, string $dir, string $filenameRecordKey, string $fileSuffix, int $minLogLevel)
     {
         parent::__construct($minLogLevel);
         $this->workbench = $workbench;
