@@ -37,6 +37,7 @@ class SplitPanel extends Panel implements iAmResizable, iHaveBorders
     public function setResizable(bool $value) : iAmResizable
     {
         $this->resizable = $value;
+        return $this;
     }
 
     public function getShowBorder() : bool
@@ -56,5 +57,6 @@ class SplitPanel extends Panel implements iAmResizable, iHaveBorders
     public function setShowBorder(bool $value) : iHaveBorders
     {
         $this->show_border = $value;
+        return $this;
     }
 }
