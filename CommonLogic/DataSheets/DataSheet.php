@@ -2695,13 +2695,10 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Merges the current data sheet with another one.
-     * Values of the other sheet will overwrite values of identical columns of the current one!
-     *
-     * @param DataSheet $other_sheet            
-     * @return DataSheet
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::merge()
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true)
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
@@ -2715,6 +2712,15 @@ class DataSheet implements DataSheetInterface
         // Check if the sheets are based on the same object
         if ($this->getMetaObject()->getId() !== $other_sheet->getMetaObject()->getId()) {
             throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->getMetaObject()->getAliasWithNamespace() . '" and "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '"): not implemented!', '6T5E8GM');
+        }
+
+        $removeColNames = [];
+        if ($addColumns === false) {
+            foreach ($other_sheet->getColumns() as $otherCol) {
+                if (! $this->getColumns()->get($otherCol->getName())) {
+                    $removeColNames[] = $otherCol->getName();
+                }
+            }
         }
         
         // Check if both sheets have UID columns if they are not empty
@@ -2740,6 +2746,13 @@ class DataSheet implements DataSheetInterface
             $this->removeRows()->addRows($baseSheet->getRows());
         }
         
+        // Remove any columns, that were not there previously
+        // TODO is it really a good idea to add columns and remove them afterwards? They might be
+        // needed for formulas. But are formulas recalculated here anyway? If not, is that correct?
+        foreach ($removeColNames as $colName) {
+            $this->getColumns()->removeByKey($colName);
+        }
+
         return $this;
     }
 
