@@ -109,6 +109,28 @@ class NotificationContext extends AbstractContext
         
         // Fill with buttons
         $menu = $this->createMessageButtons($menu);
+        $menu->addButton($menu->createButton(new UxonObject([
+            'caption' => 'Show all',
+            'action' => [
+                'alias' => 'exface.Core.ShowDialog',
+                'dialog' => [
+                    'caption' => 'My notifications',
+                    'cacheable' => false,
+                    'widgets' => [
+                        [
+                            'widget_type' => 'DataTable',
+                            'object_alias' => 'exface.Core.NOTIFICATION',
+                            'hide_header' => true,
+                            'columns' => [
+                                ['attribute_alias' => 'ISREAD', 'hide_caption' => true, 'width' => '2rem'],
+                                ['attribute_alias' => 'CREATED_ON'],
+                                ['attribute_alias' => 'TITLE']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ])));
         
         $container->addWidget($menu);
         

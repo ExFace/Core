@@ -169,21 +169,19 @@ const swTools = {
         });
         return db;
 	}(),
-
-	checkNetworkStatus: async function() {
-		try {
-			// Call the getLatestConnectionStatus function from exfPWA
-			const status = await exfPWA.getLatestConnectionStatus();
-			return status;
-		} catch (error) {
-			console.error('Error checking network status:', error);
-			return 'offline'; // Default to offline in case of an error
-		}
-	},
 	
-	// POST
+	/**
+	 * Custom workbox strategies
+	 */
 	strategies: {
-		postNetworkFirst: (options) => {
+
+		/**
+		 * This strategy allows to handle POST requests via NetworkFirst
+		 * 
+		 * @param {Object} options 
+		 * @returns 
+		 */
+		POSTNetworkFirst: (options) => {
 			if (! options) {
 				options = {};
 			}
@@ -203,31 +201,61 @@ const swTools = {
 				);
 			}
 		},
-		semiOffline: (options) => {
+
+		POSTCacheOnly: (options) => {
+			if (! options) {
+				options = {};
+			}
+			
+			return ({url, event, params}) => {
+			    // Try to get the response from the network
+				var response = swTools.cache.match(event.request.clone());
+				return Promise.resolve(response);
+			}
+		},
+
+		/**
+		 * This strategy swichtes between two specified strategies depending on whether it
+		 * concideres to be offline or online.
+		 * 
+		 * @param {{offlineStrategy: object, onlineStrategy: object}} options 
+		 * @returns 
+		 */
+		SemiOfflineSwitch: (options) => {
 			if (!options) {
 				options = {};
 			}           
-			var offlineStrategy = options.semiOffline || new workbox.strategies.CacheFirst({
-				cacheName: 'offline-cache',
-				plugins: [
-					new workbox.expiration.ExpirationPlugin({
-						maxEntries: 50,
-						maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
-					}),
-				],
-			});
-			var onlineStrategy = options.normal || new workbox.strategies.NetworkFirst();
+			var mOfflineStrategy = options.offlineStrategy;
+			var mOnlineStrategy = options.onlineStrategy;
+
+			if (mOfflineStrategy === undefined) {
+				throw {
+					message:  'No offline strategy defined for semiOffline switch!'
+				};
+			}
+			if (mOnlineStrategy === undefined) {
+				throw {
+					message:  'No online strategy defined for semiOffline switch!'
+				};
+			}
 			
-			return {
-				handle: async ({ event, request, ...params }) => {
-					var isSemiOffline = await swTools.checkNetworkStatus() === 'offline_bad_connection'; // NETWORK_STATUS_OFFLINE_BAD_CONNECTION;
-					if (isSemiOffline || self.isVirtuallyOffline) {
-						console.log('Using offline strategy for:', request.url);
-						return offlineStrategy.handle({ event, request, ...params });
-					} else {
-						console.log('Using online strategy for:', request.url);
-						return onlineStrategy.handle({ event, request, ...params });
-					}
+			return async ({ event, request, ...params }) => {
+				var oNetStat;
+				var mStrategy;
+				try {
+					// Make sure to load a fresh connections status instead of doing exfPWA.isOnline(), which
+					// might use cached values and may also load asynchronously when startig up.
+					oNetStat = await exfPWA.getConnectionStatus();
+					mStrategy = oNetStat.isOfflineVirtually() ? mOfflineStrategy : mOnlineStrategy;
+				} catch (error) {
+					mStrategy = mOnlineStrategy;
+					console.warn('Error checking network status:', error);
+				}
+
+				if (mStrategy.handle !== undefined) {
+					return mStrategy.handle({ event, request, ...params });
+				} else {
+					return mStrategy({ event, request, ...params });
 				}
 			};
 		} 

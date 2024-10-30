@@ -4,7 +4,9 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iAmCollapsible;
+use exface\Core\Interfaces\Widgets\iShowMessageList;
 use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
+use exface\Core\Widgets\Traits\iShowMessageListTrait;
 
 /**
  * The configurator is a special widget, that controls the behavior of another widget.
@@ -39,9 +41,11 @@ use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
  * @author Andrej Kabachnik
  *        
  */
-class WidgetConfigurator extends Tabs implements iConfigureWidgets, iAmCollapsible
+class WidgetConfigurator extends Tabs implements iConfigureWidgets, iAmCollapsible, iShowMessageList
 {
     use iAmCollapsibleTrait;
+
+    use iShowMessageListTrait;
     
     private $widget = null;
     
