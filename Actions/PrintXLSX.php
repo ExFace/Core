@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Templates\BracketHashXlsxTemplateRenderer;
@@ -178,9 +179,11 @@ class PrintXLSX extends PrintTemplate
             }
 
             // Ensure unique file paths.
-            $basePath = explode('.', $filePath = $this->getFilePathAbsolute($filePathRenderer));
+            $filePath = $this->getFilePathAbsolute($filePathRenderer);
+            $basePath = StringDataType::substringBefore($filePath, '.', false, false, true);
+            $fileEnding = StringDataType::substringAfter($filePath, '.', false, false, true);
             for($i = 1; array_key_exists($filePath, $contents); $i++) {
-                $filePath = $basePath[0].'_'.$i.'.'.$basePath[1];
+                $filePath = $basePath.'_'.$i.'.'.$fileEnding;
             }
 
             // Add resolvers for file path.
@@ -198,7 +201,8 @@ class PrintXLSX extends PrintTemplate
                 $currentRowRenderer->render($tplSpreadsheet);
 
                 // Save file.
-                $filePath = explode('.', $filePath)[0].$this->getFileExtension($preview);
+                $filePath = StringDataType::substringBefore($filePath, '.', false, false, true);
+                $filePath .= $this->getFileExtension($preview);
                 $writerType = $this->getWriterType($preview);
                 $writer = IOFactory::createWriter($tplSpreadsheet, $writerType);
                 if($preview) {
