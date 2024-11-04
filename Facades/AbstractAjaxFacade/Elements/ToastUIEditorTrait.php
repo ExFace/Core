@@ -220,6 +220,10 @@ JS;
     {
         return <<<JS
         
+        if({$value} === undefined || {$value} === null) {
+            {$value} = "";
+        }
+        
         {$this->buildJsImageDataSanitizer($value)}
         {$this->buildJsMarkdownVar()}.setMarkdown({$value});
 JS;
@@ -248,9 +252,7 @@ JS;
         
         return <<<JS
 
-        if ({$value} !== undefined) {
-            {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
-        }
+        {$value} = {$value}.replace(/!\[[^\]]+\]\((data:[^\s\"]+)[\"|\s|\)]/, '');
 JS;
 
     }
