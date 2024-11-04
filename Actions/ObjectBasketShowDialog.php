@@ -71,7 +71,9 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
         $table->getConfiguratorWidget()->addFilter(
-            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAttributeAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
+            $table->getConfiguratorWidget()->createFilterForAttributeAlias($table->getMetaObject()->getUidAttributeAlias(), new UxonObject([
+                'hidden' => true
+            ]))
         );
         
         // If the table has no columns, try to generate some: either use the UID column

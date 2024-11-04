@@ -4,8 +4,8 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\iCanBeConvertedToString;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Aggregators are special expressions to define data aggregation like `SUM`, `AVG`, but also `COUNT_IF(condition)`.
@@ -23,11 +23,11 @@ interface AggregatorInterface extends WorkbenchDependantInterface, iCanBeConvert
      * The $arguments are treated as defaults: if the aggregator string has it's own arguments,
      * they will be used instead of $arguments.
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string|AggregatorFunctionsDataType $aggregator_string
      * @param array $arguments
      */
-    public function __construct(Workbench $workbench, $aggregator_string, array $arguments = null);
+    public function __construct(WorkbenchInterface $workbench, $aggregator_string, array $arguments = null);
     
     /**
      * @return AggregatorFunctionsDataType

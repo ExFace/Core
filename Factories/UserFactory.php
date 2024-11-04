@@ -2,7 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\User;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Interfaces\Selectors\UserSelectorInterface;
@@ -104,10 +103,10 @@ class UserFactory extends AbstractStaticFactory
      * An anonymous user is returned if the currently logged in user is requested but no
      * named user is logged in.
      * 
-     * @param Workbench $exface
+     * @param WorkbenchInterface $exface
      * @return UserInterface
      */
-    public static function createAnonymous(Workbench $exface) : UserInterface
+    public static function createAnonymous(WorkbenchInterface $exface) : UserInterface
     {
         return new User($exface, null, $exface->model()->getModelLoader());
     }

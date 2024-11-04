@@ -144,7 +144,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         
         switch (true) {
             case $mode === self::URL_PATH_TEMP:
-                $filename = urldecode($pathParts[0]);
+                $filename = urldecode(implode('/', $pathParts));
                 $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
                 $noCache = true;
                 // Delete the temp file once it was downloaded
@@ -391,10 +391,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
         $relativePath = ltrim($relativePath, "/");
+        $cachePath = FilePathDataType::normalize($workbench->filemanager()->getPathToCacheFolder()) . '/';
 
-        if (StringDataType::startsWith($relativePath, 'cache/')) {
+        if (StringDataType::startsWith($absolutePath, $cachePath)) {
             $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
-            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . urlencode(StringDataType::substringAfter($relativePath, 'cache/'));
+            $urlEnd = urlencode(StringDataType::substringAfter($absolutePath, $cachePath));
+            // IMPORTANT: Decode `/` characters back because Apache and nginx will treat urlencoded 
+            // slashes in the path differently and will issues 404 errors themselves.
+            $urlEnd = str_replace('%2F', '/', $urlEnd);
+            $urlPath = $facade->getUrlRouteDefault() . '/' . self::URL_PATH_TEMP . '/' . $urlEnd;
         } else {
             $urlPath = $relativePath;
         }
@@ -407,6 +412,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }    
     
     /**
+     * Generates a URL to download a file represented by the given meta object and UID
      * 
      * @param MetaObjectInterface $object
      * @param string $uid
@@ -418,6 +424,24 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public static function buildUrlToDownloadData(MetaObjectInterface $object, string $uid, string $urlParams = null, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
     {
         $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_DOWNLOAD, $urlEncodeUid);
+        if ($urlParams) {
+            $url .= '?'. $urlParams;
+        }
+        return $relativeToSiteRoot ? $url : $object->getWorkbench()->getUrl() . '/' . $url;
+    }
+
+    /**
+     * Generates a URL to view/embed a file represented by the given meta object and UID
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $uid
+     * @param bool $urlEncodeUid
+     * @param bool $relativeToSiteRoot
+     * @return string
+     */
+    public static function buildUrlToViewData(MetaObjectInterface $object, string $uid, bool $urlEncodeUid = true, bool $relativeToSiteRoot = true) : string
+    {
+        $url = static::buildUrlForObjectUid($object, $uid, self::URL_PATH_VIEW, $urlEncodeUid);
         if ($urlParams) {
             $url .= '?'. $urlParams;
         }

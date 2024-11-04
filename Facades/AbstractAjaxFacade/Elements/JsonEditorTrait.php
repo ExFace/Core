@@ -5,7 +5,6 @@ use exface\Core\Widgets\InputUxon;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Facades\DocsFacade;
-use exface\Core\CommonLogic\Workbench;
 
 /**
  * This trait helps use the JsonEditor library to create InputJson and InputUxon widgets.
@@ -330,7 +329,7 @@ JS;
      * @param string $funcPrefix
      * @return string
      */
-    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, Workbench $workbench) : string
+    protected function buildJsUxonEditorOptions(string $editorIdJs, string $uxonSchema, string $funcPrefix, WorkbenchInterface $workbench) : string
     {   
         $trans = static::getTranslations($workbench);
 
@@ -889,7 +888,7 @@ CSS;
     * Returns translation for a specific UXON editor term using core app's translator.
     * Add new terms by maintaining "exface.Core.(en|de|ru).json" using prefix 'WIDGET.UXONEDITOR.'.
     * 
-    * @param Workbench $workbench,
+    * @param WorkbenchInterface $workbench,
     * @param string $message_id
     * @return string
     * 
@@ -923,7 +922,7 @@ CSS;
      * @param string $rootPrototype
      * @param string $rootObject
      * @param string $ajaxUrl
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param string uxonEditorId
      * @return string
      */
@@ -933,7 +932,7 @@ CSS;
         string $rootPrototype,
         string $rootObject,
         string $ajaxUrl,
-        Workbench $workbench,
+        WorkbenchInterface $workbench,
         string $uxonEditorId
         ) : string
         {
@@ -1206,7 +1205,7 @@ CSS;
                             try {
                                 json = JSON.parse(sPasted);
                                 menuNode.setValue(json);
-                                menuNode.editor.expandAll(false)
+                                menuNode.expand(true);
                             } catch (e) {
                                 menuNode.setValue(sPasted);
                             }
@@ -1274,7 +1273,6 @@ CSS;
         
         function {$funcPrefix}_loadJsonPathView(oModal, oNode){
             // get node path tree
-            oNode.editor.expandAll(false);
             var oShowPathElem = document.getElementById('jsonPathView');
             var aPath = oNode.getPath();
             oShowPathElem.value = {$funcPrefix}_convertToJsonPath(aPath);
@@ -1359,9 +1357,7 @@ CSS;
                 }
             );
             
-            // get node path tree
-            node.editor.expandAll(false);
-            
+            // get node path tree            
             var path = node.getPath();
             var nodeType = {$funcPrefix}_getNodeType(node);
             var parentNodeType = {$funcPrefix}_getNodeType(node.parent);

@@ -28,7 +28,7 @@ if (! empty($lastError)) {
         // issued and the body is truncated. This may lead to broken data, so we
         // actively look for this warning and empty the body in this case to avaiod
         // unforseable truncated data.
-        case mb_stripos($lastError['message'], 'Input variables exceeded') >= 0:
+        case mb_stripos($lastError['message'], 'Input variables exceeded') !== false:
             // Log an error, but do not throw it to allow gracefull error handling
             // by the facade. An empty request will still lead to an error.
             $workbench->getLogger()->logException(new RuntimeException($lastError['message']));

@@ -40,16 +40,16 @@ class IntegerDataType extends NumberDataType
     {
         return 0;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\NumberDataType::parse()
      */
-    public function parse($string) 
+    public static function cast($string)
     {
-        $num = parent::parse($string);
-        if ($num) {
+        $num = parent::cast($string);
+        if ($num && is_numeric($num)) {
             // Only round non-empty values - otherwise empty will become 0!
             return round($num, 0);
         }

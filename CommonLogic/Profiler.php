@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\StringDataType;
@@ -40,10 +41,10 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets
 
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param float $startMs
      */
-    public function __construct(Workbench $workbench, float $startMs = null, int $msDecimals = 1)
+    public function __construct(WorkbenchInterface $workbench, float $startMs = null, int $msDecimals = 1)
     {
         $this->workbench = $workbench;
         $this->msDecimals = $msDecimals;

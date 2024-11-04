@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractPWAFacade;
 
 use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -167,7 +168,10 @@ JS;
 
 $filename = $this->buildUrlToServiceWorker();
 $path = $this->getWorkbench()->filemanager()->getPathToBaseFolder() . DIRECTORY_SEPARATOR . FilePathDataType::normalize($filename, DIRECTORY_SEPARATOR);
-file_put_contents($path, $code);
+$result = file_put_contents($path, $code);
+if ($result === false) {
+    throw new InstallerRuntimeError($this, 'Could not save ServiceWorker to ' . $path . '!');
+}
 return $filename;
     }
 

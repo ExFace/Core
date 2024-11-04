@@ -6,10 +6,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Factories\DataColumnFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Uxon\DataSheetMapperSchema;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Factories\RelationPathFactory;
@@ -171,7 +171,7 @@ class DataSheetMapper implements DataSheetMapperInterface
     
     private $removeDuplicateRows = null;
     
-    public function __construct(Workbench $workbench)
+    public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;
     }
