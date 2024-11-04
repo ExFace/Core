@@ -5,10 +5,10 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
@@ -25,7 +25,7 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
 
     private $data_sheet = null;
 
-    function __construct(Workbench $exface)
+    function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
     }

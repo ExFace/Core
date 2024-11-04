@@ -2,14 +2,13 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Facades\ConsoleFacade;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Exceptions\AuthorizationExceptionInterface;
-use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -55,7 +54,7 @@ class SessionContextScope extends AbstractContextScope
     
     private $cookieName = null;
     
-    public function __construct(Workbench $exface)
+    public function __construct(WorkbenchInterface $exface)
     {
         $this->installation_name = $exface->getInstallationName();
         $this->cookieName = md5($this->installation_name);

@@ -32,6 +32,7 @@ use exface\Core\CommonLogic\Selectors\DataConnectionSelector;
 use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
 use exface\Core\Events\Facades\OnHttpRequestHandlingEvent;
 use exface\Core\Events\Facades\OnHttpBeforeResponseSentEvent;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * The tracer dumps detailed logs to a special trace file, readable by the standard log viewer.
@@ -63,10 +64,10 @@ class Tracer extends Profiler
     
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param int $startOffsetMs
      */
-    public function __construct(Workbench $workbench, int $startOffsetMs = 0)
+    public function __construct(WorkbenchInterface $workbench, int $startOffsetMs = 0)
     {
         parent::__construct($workbench, $startOffsetMs);
         $this->registerLogHandlers();
@@ -262,7 +263,7 @@ class Tracer extends Profiler
                 $name = 'Action "' . $event->getAction()->getAliasWithNamespace() . '"';
                 break;
             case $event instanceof CommunicationMessageEventInterface:
-                $name = 'Message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
+                $name = 'Communication message `' . $this->sanitizeLapName($event->getMessage()->getText()) . '` sent';
                 break;
             case $event instanceof BehaviorEventInterface:
                 $name = 'Behavior ' . PhpClassDataType::findClassNameWithoutNamespace($event->getBehavior() . ' of "' . $event->getBehavior()->getObject()->getAliasWithNamespace()) . '"';

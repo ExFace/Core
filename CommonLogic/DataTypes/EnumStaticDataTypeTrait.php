@@ -211,6 +211,16 @@ trait EnumStaticDataTypeTrait {
     {
         throw new DataTypeConfigurationError($this, 'Cannot override values in static enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGNBJB');
     }   
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints() : array
+    {
+        return [];
+    }
     
     /**
      * 
@@ -236,7 +246,7 @@ trait EnumStaticDataTypeTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValues()
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabelOfValue()
      */
     public function getLabelOfValue($value = null) : ?string
     {
@@ -251,6 +261,16 @@ trait EnumStaticDataTypeTrait {
             }
         }
         return $label;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getHintOfValue()
+     */
+    public function getHintOfValue($value) : ?string
+    {
+        return null;
     }
     
     /**

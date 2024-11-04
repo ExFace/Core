@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 use Traversable;
 
 /**
@@ -36,10 +37,10 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
     /**
      * An EntityList is alway attached to some parent object, so a reference to that object is required in the constructor
      *
-     * @param Workbench $exface            
+     * @param WorkbenchInterface $exface            
      * @param mixed $parent_object            
      */
-    public function __construct(Workbench $exface, $parent_object)
+    public function __construct(WorkbenchInterface $exface, $parent_object)
     {
         $this->exface = $exface;
         $this->setParent($parent_object);
