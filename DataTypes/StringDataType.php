@@ -340,7 +340,7 @@ class StringDataType extends AbstractDataType
      * @param bool $strict
      * @param bool $recursive
      * 
-     * @throws RangeException if no value is found for a placeholder
+     * @throws PlaceholderValueInvalidError if $strict === true AND a placeholder has no value
      * 
      * @return string
      */
@@ -373,10 +373,14 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Replaces a single placeholder in a string with the given value
      * 
      * @param string $string
      * @param string $placeholder
      * @param mixed $value
+     * 
+     * @throws \exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError
+     * 
      * @return string
      */
     public static function replacePlaceholder(string $string, string $placeholder, $value) : string
