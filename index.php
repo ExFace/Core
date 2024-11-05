@@ -4,7 +4,7 @@ use exface\Core\Facades\AbstractHttpFacade\Middleware\FacadeResolverMiddleware;
 use exface\Core\Facades\AbstractHttpFacade\HttpRequestHandler;
 use exface\Core\Facades\AbstractHttpFacade\NotFoundHandler;
 use exface\Core\Exceptions\RuntimeException;
-use function GuzzleHttp\Psr7\stream_for;
+use GuzzleHttp\Psr7\Utils;
 
 // Start the workbench
 require_once('CommonLogic/Workbench.php');
@@ -28,12 +28,12 @@ if (! empty($lastError)) {
         // issued and the body is truncated. This may lead to broken data, so we
         // actively look for this warning and empty the body in this case to avaiod
         // unforseable truncated data.
-        case mb_stripos($lastError['message'], 'Input variables exceeded') !== false:
+        case mb_stripos(($lastError['message'] ?? ''), 'Input variables exceeded') !== false:
             // Log an error, but do not throw it to allow gracefull error handling
             // by the facade. An empty request will still lead to an error.
             $workbench->getLogger()->logException(new RuntimeException($lastError['message']));
             $request = $request
-                ->withBody(stream_for(''))
+                ->withBody(Utils::streamFor(''))
                 ->withParsedBody(null);
             // Clean the output buffer to remove the WARNING output
             ob_clean();
