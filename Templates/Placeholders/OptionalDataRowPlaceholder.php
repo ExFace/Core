@@ -5,6 +5,7 @@ namespace exface\Core\Templates\Placeholders;
 use exface\Core\Behaviors\NotifyingBehavior;
 use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 
 /**
  * Functions just like DataRowPlaceholders, extended with some validation logic.
@@ -34,5 +35,33 @@ class OptionalDataRowPlaceholder extends OptionalPlaceholders
         } else {
             $this->errorText = 'Placeholder "'.$prefix.'" not allowed for "'.$context.'"!';
         }
+    }
+
+    /**
+     *
+     * @param callable $function
+     * @return PlaceholderResolverInterface
+     */
+    public function setSanitizer(callable $function) : PlaceholderResolverInterface
+    {
+        if($resolver = $this->getInnerResolver()) {
+            $resolver->setSanitizer($function);
+        }
+        
+        return $this;
+    }
+
+    /**
+     *
+     * @param bool $value
+     * @return PlaceholderResolverInterface
+     */
+    public function setSanitizeAsUxon(bool $value) : PlaceholderResolverInterface
+    {
+        if($resolver = $this->getInnerResolver()) {
+            $resolver->setSanitizeAsUxon($value);
+        }
+        
+        return $this;
     }
 }
