@@ -268,6 +268,10 @@ JS;
 
         (function () {
             var value = {$this->buildJsMarkdownVar()}.getMarkdown();
+            if(value === undefined || value === null) {
+                return "";
+            }
+            
             {$this->buildJsImageDataSanitizer('value')}
             return value;
         })()
