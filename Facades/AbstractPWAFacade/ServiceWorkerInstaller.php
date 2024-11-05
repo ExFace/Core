@@ -309,6 +309,13 @@ self.addEventListener('sync', function(event) {
     }
 });
 
+// Make sure any newly installed service worker becomes active and is not blocked by an already running instance.
+// If this is not done, a freshly installed SW will wait until the current one stops, which might actually
+// neve happen. This seems to be a common approach. It will only happen IF a new version is really available!
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
 self.addEventListener('message', function(event){
     // if message contains virtuallyOfflineEnabled, set the flag
     if (event.data && event.data.action === 'virtuallyOfflineEnabled') {
