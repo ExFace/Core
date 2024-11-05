@@ -634,8 +634,8 @@ class NotifyingBehavior extends AbstractBehavior
         foreach ($newData->getRows() as $rowIndex => $row) {
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
-            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context));
-            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context));
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context, true));
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context, true));
 
             try {
                 $renderedJson = $renderer->render($json);
