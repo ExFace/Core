@@ -220,12 +220,17 @@ JS;
     {
         return <<<JS
         
+        var oEditor = {$this->buildJsMarkdownVar()};
         if({$value} === undefined || {$value} === null) {
             {$value} = "";
         }
+
+        if ({$value} === oEditor.getMarkdown()) {
+            return;
+        }
         
         {$this->buildJsImageDataSanitizer($value)}
-        {$this->buildJsMarkdownVar()}.setMarkdown({$value});
+        oEditor.setMarkdown({$value});
 JS;
     }
 
