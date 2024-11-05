@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -211,6 +212,7 @@ class DataSheet implements DataSheetInterface
                 }
                 // Find rows in the other sheet, that match the currently processed key
                 $right_row_nrs = $rCol->findRowsByValue($row[$leftKeyColName]);
+                // If corresponding rows are found in the right sheet, apply their values
                 if (false === empty($right_row_nrs)) {
                     // Since we do an OUTER JOIN, there may be multiple matching rows, so we need
                     // to loop through them. The first row is simply joined to the current left row
@@ -235,8 +237,13 @@ class DataSheet implements DataSheetInterface
                         $needRowCopy = true;
                     }                    
                 } else {
-                    foreach ($right_cols as $col) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                    // If the right sheet does not have corresponding rows, treat them as empty.
+                    // BUT only if we are JOINing with a relation. If JOINing the same object,
+                    // do not empty its values just because the right sheet did not has less data!
+                    if ($relation_path !== '') {
+                        foreach ($right_cols as $col) {
+                            $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row_nr, null);
+                        }
                     }
                 }
             }
@@ -2464,31 +2471,17 @@ class DataSheet implements DataSheetInterface
         if ($uxon->hasProperty('filters')) {
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters'), $this->getMetaObject()));
         }
-        
-        if ($uxon->hasProperty('rows_limit')) {
-            $val = $uxon->getProperty('rows_limit');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
-        } elseif ($uxon->hasProperty('rows_on_page')) {
-            // Still support old property name rows_on_page
-            $val = $uxon->getProperty('rows_on_page');
-            if ($val === '') {
-                $val = null;
-            }
-            $this->setRowsLimit($val);
+
+        // Limit. Still support old property name rows_on_page.
+        $val = $uxon->hasProperty('rows_limit') ? $uxon->getProperty('rows_limit') : $uxon->getProperty('rows_on_page');
+        if ($val !== null) {
+            $this->setRowsLimit(IntegerDataType::cast($val));
         }
         
-        if ($uxon->hasProperty('rows_offset')) {
-            $val = $uxon->getProperty('rows_offset');
-            if ($val === '') {
-                $val = 0;
-            }
-            $this->setRowsOffset($val);
-        } elseif ($uxon->hasProperty('row_offset')) {
-            // Still support old property name row_offset
-            $this->setRowsOffset($uxon->getProperty('row_offset'));
+        // Offset. Still support old property name row_offset.
+        $val = $uxon->hasProperty('rows_offset') ? $uxon->getProperty('rows_offset') : $uxon->getProperty('row_offset');
+        if ($val !== null && $val !== '') {
+            $this->setRowsOffset(IntegerDataType::cast($val));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -2672,6 +2665,9 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsLimit($value) : DataSheetInterface
     {
+        if ($value !== null && $value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid limit "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->rows_on_page = $value;
         return $this;
     }
@@ -2691,18 +2687,18 @@ class DataSheet implements DataSheetInterface
      */
     public function setRowsOffset(int $value) : DataSheetInterface
     {
+        if ($value < 0) {
+            throw new DataSheetRuntimeError($this, 'Invalid offset "' . $value . '" for data sheet. Expecting 0 or positive values!');
+        }
         $this->row_offset = $value;
         return $this;
     }
 
     /**
-     * Merges the current data sheet with another one.
-     * Values of the other sheet will overwrite values of identical columns of the current one!
-     *
-     * @param DataSheet $other_sheet            
-     * @return DataSheet
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::merge()
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true)
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true)
     {
         // Ignore empty other sheets
         if ($other_sheet->isEmpty() && $other_sheet->getFilters()->isEmpty()) {
@@ -2716,6 +2712,15 @@ class DataSheet implements DataSheetInterface
         // Check if the sheets are based on the same object
         if ($this->getMetaObject()->getId() !== $other_sheet->getMetaObject()->getId()) {
             throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->getMetaObject()->getAliasWithNamespace() . '" and "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '"): not implemented!', '6T5E8GM');
+        }
+
+        $removeColNames = [];
+        if ($addColumns === false) {
+            foreach ($other_sheet->getColumns() as $otherCol) {
+                if (! $this->getColumns()->get($otherCol->getName())) {
+                    $removeColNames[] = $otherCol->getName();
+                }
+            }
         }
         
         // Check if both sheets have UID columns if they are not empty
@@ -2741,6 +2746,13 @@ class DataSheet implements DataSheetInterface
             $this->removeRows()->addRows($baseSheet->getRows());
         }
         
+        // Remove any columns, that were not there previously
+        // TODO is it really a good idea to add columns and remove them afterwards? They might be
+        // needed for formulas. But are formulas recalculated here anyway? If not, is that correct?
+        foreach ($removeColNames as $colName) {
+            $this->getColumns()->removeByKey($colName);
+        }
+
         return $this;
     }
 

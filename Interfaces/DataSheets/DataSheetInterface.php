@@ -636,7 +636,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * @param DataSheetInterface $other_sheet            
      */
-    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true);
+    public function merge(DataSheetInterface $other_sheet, bool $overwriteValues = true, bool $addColumns = true);
 
     public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 

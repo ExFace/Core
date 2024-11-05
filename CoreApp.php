@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core;
 
-use exface\Core\Facades\AiChatFacade;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -144,11 +143,6 @@ Disallow: /
         // PWA API facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(PWAapiFacade::class, $this->getWorkbench()));
-        $installer->addInstaller($tplInstaller);
-        
-        // AI chat facade
-        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
-        $tplInstaller->setFacade(FacadeFactory::createFromString(AiChatFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         // Server installer (e.g. for Microsoft IIS)
