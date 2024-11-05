@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\Behaviors\PlaceholderValidation\PrefixValidatorOldData;
-use exface\Core\Behaviors\PlaceholderValidation\TemplateValidator;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedErrorMultiple;
@@ -23,6 +21,8 @@ use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
+use exface\Core\Templates\Placeholders\OptionalPlaceholders;
 
 /**
  * Validates any proposed changes made to the monitored data and rejects invalid changes.
@@ -175,20 +175,6 @@ class ValidatingBehavior extends AbstractBehavior
         self::VAR_ON_ANY => null
     );
     
-    private TemplateValidator $tplValidator;
-
-    /**
-     * @return TemplateValidator
-     */
-    private function getTemplateValidator() : TemplateValidator
-    {
-        if(empty($this->tplValidator)) {
-            $this->tplValidator = new TemplateValidator([new PrefixValidatorOldData()]);
-        }
-        
-        return $this->tplValidator;
-    }
-    
     /**
      * 
      * {@inheritDoc}
@@ -323,10 +309,12 @@ class ValidatingBehavior extends AbstractBehavior
         
         // Perform data checks for each validation rule.
         $error = null;
+        $context = $event::class;
+        
         foreach ($uxon as $dataCheckUxon) {
             // Perform data checks.
             try {
-                $this->performDataChecks($dataCheckUxon, $event, $previousDataSheet, $changedDataSheet);
+                $this->performDataChecks($dataCheckUxon, $context, $previousDataSheet, $changedDataSheet);
             } catch (DataCheckFailedErrorMultiple $exception) {
                 if(!$error) {
                     $error = $exception;
@@ -379,7 +367,7 @@ class ValidatingBehavior extends AbstractBehavior
      */
     protected function performDataChecks(
         UxonObject          $dataCheckUxon, 
-        mixed               $context, 
+        string               $context, 
         ?DataSheetInterface $previousDataSheet, 
         DataSheetInterface  $changedDataSheet) : void
     {
@@ -425,20 +413,17 @@ class ValidatingBehavior extends AbstractBehavior
      */
     private function renderUxon(
         string              $json, 
-        mixed               $context,
+        string               $context,
         ?DataSheetInterface $oldData, 
         DataSheetInterface  $newData, 
         int                 $rowIndex) : UxonObject
     {
         $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
-        
-        if(!empty($oldData)) {
-            $renderer->addPlaceholder(new DataRowPlaceholders($oldData, $rowIndex, PrefixValidatorOldData::PREFIX_OLD));
-        }
-        $renderer->addPlaceholder(new DataRowPlaceholders($newData, $rowIndex, PrefixValidatorOldData::PREFIX_NEW));
+        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context));
+        $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context));
         
         try {
-            $renderedJson = $this->getTemplateValidator()->TryRenderTemplate($renderer, $json, $context);
+            $renderedJson = $renderer->render($json);
         } catch (\Throwable $e) {
             $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
             throw new BehaviorRuntimeError($this, $message, null, $e);

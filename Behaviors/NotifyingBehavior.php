@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\Behaviors\PlaceholderValidation\PrefixValidatorOldData;
-use exface\Core\Behaviors\PlaceholderValidation\TemplateValidator;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -31,6 +29,8 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
+use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
+use exface\Core\Templates\Placeholders\OptionalPlaceholders;
 
 /**
  * Sends communication messages (notifications, emails, chat posts, etc.) on certain events and conditions.
@@ -183,20 +183,6 @@ class NotifyingBehavior extends AbstractBehavior
     private $notifyAfterAllActionsComplete = false;
     
     private $isNotificationInProgress = false;
-    
-    private TemplateValidator $tplValidator;
-
-    /**
-     * @return TemplateValidator
-     */
-    private function getTemplateValidator() : TemplateValidator
-    {
-        if(empty($this->tplValidator)) {
-            $this->tplValidator = new TemplateValidator([new PrefixValidatorOldData()]);
-        }
-        
-        return $this->tplValidator;
-    }
     
     /**
      * Array of messages to send - each with a separate message model: channel, recipients, etc.
@@ -643,18 +629,16 @@ class NotifyingBehavior extends AbstractBehavior
         $metaObject = $newData->getMetaObject();
         $workBench = $this->getWorkbench();
         $conditionGroup = ConditionGroupFactory::createOR($metaObject);
+        $context = $event::class;
         
         foreach ($newData->getRows() as $rowIndex => $row) {
             // Render placeholders.
             $renderer = new BracketHashStringTemplateRenderer($workBench);
-
-            if(!empty($oldData)) {
-                $renderer->addPlaceholder(new DataRowPlaceholders($oldData, $rowIndex, PrefixValidatorOldData::PREFIX_OLD));
-            }
-            $renderer->addPlaceholder(new DataRowPlaceholders($newData, $rowIndex, PrefixValidatorOldData::PREFIX_NEW));
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($oldData, $rowIndex, '~old:', $context));
+            $renderer->addPlaceholder(new OptionalDataRowPlaceholder($newData, $rowIndex, '~new:', $context));
 
             try {
-                $renderedJson = $this->getTemplateValidator()->TryRenderTemplate($renderer, $json, $event);
+                $renderedJson = $renderer->render($json);
             } catch (\Throwable $e) {
                 $message = PHP_EOL.$this->getAlias().' - '.$e->getMessage();
                 throw new BehaviorRuntimeError($this, $message, null, $e);
