@@ -2,8 +2,18 @@
 
 namespace exface\Core\Templates\Placeholders;
 
+use exface\Core\Behaviors\NotifyingBehavior;
+use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
+/**
+ * Functions just like DataRowPlaceholders, extended with some validation logic.
+ * Most importantly, this wrapper can handle an empty datasheet, which means
+ * you can use this as a context dependant resolver without further configuration.
+ * 
+ * @see ValidatingBehavior
+ * @see NotifyingBehavior
+ */
 class OptionalDataRowPlaceholder extends OptionalPlaceholders
 {
     public function __construct(?DataSheetInterface $data, int $rowIndex, string $prefix, string $context = '')
