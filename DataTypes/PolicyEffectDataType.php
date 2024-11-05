@@ -19,6 +19,7 @@ class PolicyEffectDataType extends StringDataType implements EnumDataTypeInterfa
     
     const PERMIT = "P";
     const DENY = "D";
+    private $labels = [];
     
     /**
      * 
@@ -37,6 +38,4 @@ class PolicyEffectDataType extends StringDataType implements EnumDataTypeInterfa
         
         return $this->labels;
     }
-
 }
-?>

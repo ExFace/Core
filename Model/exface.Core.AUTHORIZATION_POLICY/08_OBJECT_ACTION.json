@@ -143,8 +143,7 @@
                 "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
-                "object_alias": "exface.Core.OBJECT_ACTION",
-                "apply_to_aggregates": true
+                "object_alias": "exface.Core.OBJECT_ACTION"
             }
         ]
     },

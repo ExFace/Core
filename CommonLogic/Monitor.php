@@ -43,10 +43,10 @@ class Monitor extends Profiler
     
     /**
      * 
-     * @param Workbench $workbench
+     * @param WorkbenchInterface $workbench
      * @param float $startOffsetMs
      */
-    public function __construct(Workbench $workbench, float $startTimeMs = null)
+    public function __construct(WorkbenchInterface $workbench, float $startTimeMs = null)
     {
         parent::__construct($workbench, $startTimeMs);
     }

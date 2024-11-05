@@ -5,7 +5,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Exceptions\DataSources\DataConnectionQueryTypeError;
 use exface\UrlDataConnector\Psr7DataQuery;
-use function GuzzleHttp\Psr7\stream_for;
+use GuzzleHttp\Psr7\Utils;
 
 /**
  * Reads the combined JSON of the current configuration: system, app, user scope, etc.
@@ -29,7 +29,7 @@ class WorkbenchConfigConnector extends TransparentConnector
             throw new DataConnectionQueryTypeError($this, 'Connector "' . $this->getAliasWithNamespace() . '" expects a Psr7DataQuery as input, "' . get_class($query) . '" given instead!');
         }
             
-        $query->setResponse(new Response(200, array(), stream_for($this->getWorkbench()->getConfig()->exportUxonObject()->toJson())));
+        $query->setResponse(new Response(200, array(), Utils::streamFor($this->getWorkbench()->getConfig()->exportUxonObject()->toJson())));
         return $query;
     }
 

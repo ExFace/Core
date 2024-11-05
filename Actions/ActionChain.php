@@ -15,7 +15,6 @@ use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
 use exface\Core\CommonLogic\Tasks\ResultEmpty;
 use exface\Core\Factories\ResultFactory;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Actions\iShowDialog;

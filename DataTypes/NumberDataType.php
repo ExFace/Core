@@ -60,21 +60,23 @@ class NumberDataType extends AbstractDataType
                     return floatval($int) === $float ? $int : $float; 
                 }
                 return $string;
+            case is_bool($string):
+                return $string === true ? 1 : 0;
             // Return NULL for casting empty values as an empty string '' actually is not a number!
             case static::isValueEmpty($string) === true:
-            // NULL constant
-            // TODO #null-or-NULL the NULL constant is not a number, but do we still need it here?
-            case static::isValueLogicalNull($string) === true:
                 return null;
+            // All the subsequent cases deal with strings, so throw error here if it is not a string
+            case (! is_string($string)):
+                throw new DataTypeCastingError('Cannot cast "' . gettype($string) . '" to number!');
             // Hexadecimal numbers in '0x....'-Notation
             case mb_strtoupper(substr($string, 0, 2)) === '0X':
                 return $string;
-            case is_bool($string):
-                return $string === true ? 1 : 0;
             case strcasecmp($string, 'true') === 0:
                 return 1;
             case strcasecmp($string, 'false') === 0:
                 return 0;
+            // NULL constant
+            // TODO #null-or-NULL the NULL constant is not a number, but do we still need it here?
             case static::isValueLogicalNull($string) === true:
                 return null;
             default:

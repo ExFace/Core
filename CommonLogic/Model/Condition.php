@@ -476,7 +476,9 @@ class Condition implements ConditionInterface
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
         }
-        $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+        if ($this->applyToAggregates === false) {
+            $uxon->setProperty('apply_to_aggregates', $this->applyToAggregates);
+        }
 
         return $uxon;
     }
