@@ -16,12 +16,12 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  */
 class OptionalDataRowPlaceholder extends OptionalPlaceholders
 {
-    public function __construct(?DataSheetInterface $data, int $rowIndex, string $prefix, string $context = '')
+    public function __construct(?DataSheetInterface $data, int $rowIndex, string $prefix, string $context = '', bool $sanitizeAsUxon = false)
     {
-        $this->innerConstructor = function () use ($data, $rowIndex, $prefix) {
+        $this->innerConstructor = function () use ($data, $rowIndex, $prefix, $sanitizeAsUxon) {
             if($data) {
                 $resolver = new DataRowPlaceholders($data, $rowIndex, $prefix);
-                $resolver->setSanitizeAsUxon(true);
+                $resolver->setSanitizeAsUxon($sanitizeAsUxon);
                 
                 return  $resolver;
             }
