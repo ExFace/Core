@@ -4,6 +4,7 @@ namespace exface\Core\Events\DataSheet;
 use exface\Core\DataTypes\DataSheetDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Events\DataChangeEventInterface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
@@ -25,7 +26,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  * @author Andrej Kabachnik
  *
  */
-class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
+class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent implements DataChangeEventInterface
 {
     private $createIfUidNotFound = false;
     
@@ -77,7 +78,7 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent
     /**
      * Returns an identical data sheet as that of the event, but filled with current data (or NULL if not possible)
      * 
-     * @return DataSheetInterface|NULL
+     * @see \exface\Core\Interfaces\Events\DataChangeEventInterface::getDataSheetWithOldData()
      */
     public function getDataSheetWithOldData() : ?DataSheetInterface
     {

@@ -244,13 +244,17 @@ class DataToolbar extends Toolbar
         }
         
         // Add automatic button groups - but only if their parent is still this
-        // toolbar. If they were moved, the parent changes and we don't want
+        // toolbar. If they were moved, the parent changed, and we don't want
         // to see them here anymore.
-        // Adding these groups must be done every time, because they must allways
+        // Adding these groups must be done every time, because they must always
         // be at the end
         $groups = parent::getWidgets();
         if ($this->getIncludeGlobalActions() && $this->getButtonGroupForGlobalActions()->getParent() === $this){
-            $groups[] = $this->getButtonGroupForGlobalActions();
+            $globalActions = $this->getButtonGroupForGlobalActions();
+            foreach ($groups as $overrides) {
+                $globalActions = $this->removeButtonsWithOverriddenActions($globalActions, $overrides);
+            }
+            $groups[] = $globalActions;
         }
         if ($this->getIncludeSearchActions() && $this->getButtonGroupForSearchActions()->getParent() === $this){
             $groups[] = $this->getButtonGroupForSearchActions();
@@ -260,6 +264,39 @@ class DataToolbar extends Toolbar
         }
         
         return $groups;
+    }
+
+    /**
+     * Removes all buttons from the specified group, whose action match the action of any button in
+     * the overrides group - where "match" means either same action or one extending the same prototype class.
+     * 
+     * @param ButtonGroup $buttonGroup
+     * @param ButtonGroup $overrides
+     * @return ButtonGroup
+     */
+    protected function removeButtonsWithOverriddenActions(ButtonGroup $buttonGroup, ButtonGroup $overrides) : ButtonGroup
+    {
+        foreach ($overrides->getButtons() as $userButton) {
+            $userAction = $userButton->getAction();
+            if ($userAction === null) {
+                continue;
+            }
+            
+            foreach ($buttonGroup->getButtons() as $globalButton) {
+                $globalAction = $globalButton->getAction();
+                if ($globalAction === null) {
+                    continue;
+                }
+                // Remove the button from the global actions toolbar if there is another button (user-made)
+                // with the same caption and the same action. Just checking for the same action did not work
+                // because generic actions like ShowDialog would get hidden too easily.
+                if (($userAction instanceof $globalAction) && $userButton->getCaption() === $globalButton->getCaption()) {
+                    $buttonGroup->removeButton($globalButton);
+                }
+            }
+        }
+        
+        return $buttonGroup;
     }
     
     /**

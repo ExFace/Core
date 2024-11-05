@@ -1,9 +1,8 @@
 <?php
 namespace exface\Core\Templates\Placeholders;
 
-use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderResolver;
 use exface\Core\Interfaces\Facades\FacadeInterface;
-use exface\Core\CommonLogic\TemplateRenderer\Traits\PrefixedPlaceholderTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\TemplateRenderer\Traits\SanitizedPlaceholderTrait;
@@ -26,13 +25,9 @@ use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
  *
  * @author Andrej Kabachnik
  */
-class DataRowPlaceholders implements PlaceholderResolverInterface
+class DataRowPlaceholders extends AbstractPlaceholderResolver
 {
-    use PrefixedPlaceholderTrait;
-    
     use SanitizedPlaceholderTrait;
-    
-    private $prefix = null;
     
     /**
      * 
@@ -51,7 +46,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
      */
     public function __construct(DataSheetInterface $dataSheet, int $rowNumber, string $prefix = '~datarow:')
     {
-        $this->prefix = $prefix;
+        $this->setPrefix($prefix);
         $this->dataSheet = $dataSheet;
         $this->rowNumber = $rowNumber;
     }
@@ -64,11 +59,11 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
     public function resolve(array $placeholders) : array
     {     
         $phVals = [];
-        $phs = $this->filterPlaceholders($placeholders, $this->prefix);
+        $phs = $this->filterPlaceholders($placeholders);
         $phSheet = DataSheetFactory::createFromObject($this->dataSheet->getMetaObject());
         $needExtraData = false;
         foreach ($phs as $ph) {
-            $expr = $this->stripPrefix($ph, $this->prefix);
+            $expr = $this->stripPrefix($ph);
             $phSheet->getColumns()->addFromExpression($expr);
             if (! $this->dataSheet->getColumns()->getByExpression($expr)) {
                 $needExtraData = true;
@@ -91,7 +86,7 @@ class DataRowPlaceholders implements PlaceholderResolverInterface
         }
         
         foreach ($phs as $ph) {
-            $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph, $this->prefix));
+            $col = $phSheet->getColumns()->getByExpression($this->stripPrefix($ph));
             if ($col == false) {
                 throw new DataSheetColumnNotFoundError($phSheet, "Column to replace placeholder '{$ph}' not found in data sheet and it could not be loaded automatically.");
             }

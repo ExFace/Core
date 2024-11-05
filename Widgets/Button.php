@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\MetaObject;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -42,7 +40,8 @@ use exface\Core\DataTypes\ComparatorDataType;
 /**
  * A Button is the primary widget for triggering actions.
  *
- * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows a widget).
+ * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows
+ * a widget).
  *
  * @author Andrej Kabachnik
  *        
@@ -227,7 +226,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $this->action_alias = $value === '' ? null : $value;
         return $this;
     }
-
+    
     /**
      * Buttons allow to set action options as an options array or directly as an option of the button itself.
      * In the latter case the option's name must be prefixed by "action_": to set a action's property
@@ -356,7 +355,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
     /**
      * The Button may have a child widget, if the action it triggers shows a widget.
-     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to another resource.
+     * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to
+     * another resource.
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
@@ -386,7 +386,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
-     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the button has an action.
+     * The button's caption falls back to the name of the action if there is no caption defined explicitly and the
+     * button has an action.
      *
      * {@inheritdoc}
      *
