@@ -1206,7 +1206,7 @@ CSS;
                             try {
                                 json = JSON.parse(sPasted);
                                 menuNode.setValue(json);
-                                menuNode.editor.expandAll(false)
+                                menuNode.expand(true);
                             } catch (e) {
                                 menuNode.setValue(sPasted);
                             }
@@ -1274,7 +1274,6 @@ CSS;
         
         function {$funcPrefix}_loadJsonPathView(oModal, oNode){
             // get node path tree
-            oNode.editor.expandAll(false);
             var oShowPathElem = document.getElementById('jsonPathView');
             var aPath = oNode.getPath();
             oShowPathElem.value = {$funcPrefix}_convertToJsonPath(aPath);
@@ -1359,9 +1358,7 @@ CSS;
                 }
             );
             
-            // get node path tree
-            node.editor.expandAll(false);
-            
+            // get node path tree            
             var path = node.getPath();
             var nodeType = {$funcPrefix}_getNodeType(node);
             var parentNodeType = {$funcPrefix}_getNodeType(node.parent);
