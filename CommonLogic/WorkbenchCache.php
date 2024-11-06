@@ -42,7 +42,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::deleteMultiple()
      */
-    public function deleteMultiple($keys)
+    public function deleteMultiple(iterable $keys): bool
     {
         return $this->mainPool->deleteMultiple($keys);
     }
@@ -52,7 +52,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::set()
      */
-    public function set($key, $value, $ttl = null)
+    public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
     {
         return $this->mainPool->set($key, $value, $ttl);
     }
@@ -62,7 +62,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::getMultiple()
      */
-    public function getMultiple($keys, $default = null)
+    public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         return $this->mainPool->getMultiple($keys, $default);
     }
@@ -72,7 +72,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::get()
      */
-    public function get($key, $default = null)
+    public function get(string $key, mixed $default = null) : mixed
     {
         return $this->mainPool->get($key, $default);
     }
@@ -82,7 +82,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::clear()
      */
-    public function clear()
+    public function clear(): bool
     {
         $ok = true;
         
@@ -125,7 +125,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::setMultiple()
      */
-    public function setMultiple($values, $ttl = null)
+    public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
     {
         return $this->mainPool->setMultiple($values, $ttl);
     }
@@ -145,7 +145,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::has()
      */
-    public function has($key)
+    public function has(string $key): bool
     {
         return $this->mainPool->has($key);
     }
@@ -155,7 +155,7 @@ class WorkbenchCache implements WorkbenchCacheInterface
      * {@inheritDoc}
      * @see \Psr\SimpleCache\CacheInterface::delete()
      */
-    public function delete($key)
+    public function delete(string $key): bool
     {
         return $this->mainPool->delete($key);
     }
