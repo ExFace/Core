@@ -253,8 +253,9 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
      *  
      * ```
      * 
-     * @param ServerRequestInterface $request
-     * @return PasswordAuthenticationTokenInterface|NULL
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param \exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
+     * @return MetamodelUsernamePasswordAuthToken|null
      */
     public static function extractBasicHttpAuthToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?MetamodelUsernamePasswordAuthToken
     {
@@ -269,15 +270,31 @@ class AuthenticationMiddleware implements MiddlewareInterface, iCanBeConvertedTo
         return null;
     }
     
-    public static function extractHeaderAsPasswordToken(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?MetamodelUsernamePasswordAuthToken
+    /**
+     * Token extractor for API key authentication via HTTP bearer token - produces a ApiKeyAuthToken.
+     * 
+     * Usage:
+     * 
+     * ```
+     *  new AuthenticationMiddleware(
+     *      $facade,
+     *      [
+     *          [AuthenticationMiddleware::class, 'extractBearerTokenAsApiKey']
+     *      ]
+     *  )
+     *  
+     * ```
+     * 
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param \exface\Core\Interfaces\Facades\HttpFacadeInterface $facade
+     * @return ApiKeyAuthToken|null
+     */
+    public static function extractBearerTokenAsApiKey(ServerRequestInterface $request, HttpFacadeInterface $facade) : ?ApiKeyAuthToken
     {
         $matches = [];
-        if (preg_match("/Basic\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
-            $explodedCredential = explode(":", base64_decode($matches[1]), 2);
-            if (count($explodedCredential) == 2) {
-                list($username, $password) = $explodedCredential;
-                return new MetamodelUsernamePasswordAuthToken($username, $password, $facade);
-            }
+        if (preg_match("/Bearer\s+(.*)$/i", $request->getHeaderLine("Authorization"), $matches)) {
+            $token = $matches[1];
+            return new ApiKeyAuthToken($token, null, $facade);
         }
         return null;
     }
