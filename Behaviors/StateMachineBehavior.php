@@ -40,10 +40,38 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * An object with this behavior automatically acts as a state machine. One of the attributes
  * is specified as the current state. All possible states are defined within the behavior's
  * configuration as well as all allowed transitions and state-specific actions. You can also
- * make certain attributes disabled in selected states.
+ * make certain attributes disabled in selected states, send notifications once a state is
+ * reached and many more usefull things - all centralized in a single behavior!
  * 
- * The behavior makes sure the state of the object cannot be changed if there is no transition
- * allowed between the old and the new state.
+ * ## States
+ * 
+ * Each state is identified by a value of a state attribute. The state has a name and a lot of
+ * additional settings, that can be set in its model:
+ * 
+ * ```
+ * {
+ *      "state_attribute_alias": "Status",
+ *      "states": {
+ *          "10": {
+ *              "name": "Planned",
+ *              "color": "gray",
+ *              "transitions": []
+ *          }
+ *      }
+ * }
+ * 
+ * ```
+ * 
+ * ## Validating state transitions
+ * 
+ * If at least one state has `transitions` defined, the behavior will make sure the state of the object 
+ * cannot be changed if there is no transition allowed between the old and the new state.
+ * 
+ * ## Notifcations
+ * 
+ * You can add `notifications` to a state to make the system send them whenever the state is reached.
+ * 
+ * ## State widgets
  * 
  * There are also special widgets, that help organize state management:
  * 
@@ -51,13 +79,15 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * current state of the object
  * - The `StateMenuButton` automatically generates a menu with all state-specific actions
  * 
+ * ## State enumeration data type
+ * 
  * By default, this behavior will override the data type and the default widgets of the state
  * attribute according to the state machine configuration: Editor widgets will automatically
  * be defined as `StateInputSelect`, while display-widgets will be displayed as a progress bar
  * for numeric states. These features are controlled by the behavior properties `override_attribute_data_type`,
  * `override_attribute_display_widget`, `override_attribute_editor_widget` and `show_state_as_progress_bar`.
  *
- * @author SFL
+ * @author Andrej Kabachnik, SFL
  */
 class StateMachineBehavior extends AbstractBehavior
 {
@@ -89,6 +119,8 @@ class StateMachineBehavior extends AbstractBehavior
     private $displayWidgetWidth = null;
     
     private $logbook = null;
+
+    private $ignoreTransitionRestrictions = false;
     
     /**
      * 
@@ -1024,6 +1056,9 @@ class StateMachineBehavior extends AbstractBehavior
      */
     protected function hasTransitionRestrictions() : bool
     {
+        if ($this->ignoreTransitionRestrictions === true) {
+            return false;
+        }
         foreach ($this->getStates() as $state) {
             if ($state->hasTransitionRestrictions()) {
                 return true;
@@ -1095,6 +1130,29 @@ class StateMachineBehavior extends AbstractBehavior
                 }
             }
         }
+        return $this;
+    }
+
+    /**
+     * Set to TRUE to ignore restrictions for transitions between states even if they are defined in a state.
+     * 
+     * By default, the behavior will prevent status changes, that do not match `transitions`
+     * defined for the states as soon as at least on state has transitions. This option can
+     * disabled transition checks even if transitions are defined.
+     * 
+     * Use this if you do not know all valid transitions yet. It is still a good idea to define the
+     * known transitions for the states - this helps understand the logic of the behavior!
+     * 
+     * @uxon-property disable_transition_restrictions
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return \exface\Core\Behaviors\StateMachineBehavior
+     */
+    protected function setDisableTransitionRestrictions(bool $trueOrFalse) : StateMachineBehavior
+    {
+        $this->ignoreTransitionRestrictions = $trueOrFalse;
         return $this;
     }
 
