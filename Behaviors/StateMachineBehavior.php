@@ -178,13 +178,23 @@ class StateMachineBehavior extends AbstractBehavior
         $attr = $this->getStateAttribute();
         $type = $attr->getDataType();
         
+        // Create a custom enum data type config for the attribute
         $enumVals = [];
+        $enumHints = [];
         foreach ($this->getStates() as $state) {
             $enumVals[$state->getStateId()] = $state->getName(! $this->getHideStateIds());
+            if ($descr = $state->getDescription()) {
+                $enumHints[$state->getStateId()] = $descr;
+            }
         }
         // Set show_values to FALSE in the UXON because they are already included in the labels
-        $configUxon = new UxonObject(['values' => $enumVals, 'show_values' => false]);
-        
+        $configUxon = new UxonObject([
+            'values' => $enumVals, 
+            'show_values' => false
+        ]);
+        if (! empty($enumHints)) {
+            $configUxon->setProperty('value_hints', $enumHints);
+        }
         $attr->setCustomDataTypeUxon($configUxon);
         
         $enumType = null;
