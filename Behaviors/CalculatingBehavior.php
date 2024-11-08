@@ -3,10 +3,12 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -17,11 +19,59 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 
 /**
- * Applies calculations/formulas every time data is read - e.g. to refresh attributes, hide them, etc.
+ * Applies calculations/formulas every time data read or written - e.g. to refresh attributes, hide them, etc.
+ * 
+ * Calculations can be performed on any data event: e.g.
+ * 
+ * - `exface.Core.DataSheet.OnReadData`
+ * - `exface.Core.DataSheet.OnCreateData`
+ * - `exface.Core.DataSheet.OnUpdateData`
+ * - `exface.Core.DataSheet.OnBeforeCreateData`
+ * - `exface.Core.DataSheet.OnBeforeUpdateData`
+ * 
+ * You can specify one or multiple events in `calculate_on_events`. If no events are specified,
+ * calculations will be performed when reading data, that includes any of the calculated columns. 
  * 
  * ## Examples
  * 
+ * ### Save a calculation result in a column
+ * 
+ * Lets say we have an object `my.App.DELIVERY` and we want to see a list of order numbers, that
+ * are part of this delivery. We could do it with SQL, but that may be slow on large data sets.
+ * We can also save the list of related orders in the delivery attribute `ORDER_NO_LIST` every time 
+ * the delivery is updated.
+ * 
+ * ```
+ * {
+ *   "calculate_on_events": [
+ *     "exface.Core.DataSheet.OnBeforeUpdateData"
+ *   ],
+ *   "calculations": [
+ *     {
+ *       "attribute_alias": "ORDER_NO_LIST",
+ *       "calculation": "DELIVERY_POS__ORDER_POS__ORDER__NO:LIST_DISTINCT"
+ *     }
+ *   ]
+ * }
+ * 
+ * ```
+ * 
+ * This will speed up readig deliveries, but has a couple of implications:
+ * 
+ * - We cannot read the orders when creating the delivery, because at that time it does not
+ * have any positions yet and the relation to the orders goes over positions. A possible
+ * solution would be a `CallActionBehavior` attached to `OnCreateData` of a delivery, that
+ * will immediately update the data.
+ * - Our calculation will not be performed if an individual positions is changed, so it will
+ * only work properly if the app only allows to edit the entire delivery at once - e.g. via
+ * `DataSpreadSheet` widget.
+ * - Our calculation will not be performed if things are changed on the DB - obviously, no
+ * events will be fired. This should not happen anyway though ;)
+ * 
  * ### Hide create/update username if a document is explicitly marked anonymous
+ * 
+ * This calculations will be performed when reading data sheets, that contain any of the
+ * calculated columns.
  * 
  * ```
  * {
@@ -42,7 +92,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  *     },
  *     {
  *       "attribute_alias": "MODIFIED_BY",
- *       "calculation": "=Calc(Status <= 20 ? 'Anonymous' : UserNeu)"
+ *       "calculation": "=Calc(Status <= 20 ? 'Anonymous' : CREATED_BY)"
  *     },
  *     {
  *       "attribute_alias": "MODIFIED_BY__LABEL",
@@ -62,6 +112,8 @@ class CalculatingBehavior extends AbstractBehavior
 
     private $calculationsUxon = null;
 
+    private $calculateOnEventNames = [];
+
     private $inProgress = false;
     
     /**
@@ -71,8 +123,15 @@ class CalculatingBehavior extends AbstractBehavior
      */
     protected function registerEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener(OnReadDataEvent::getEventName(), [$this, 'onReadAnonymize'], $this->getPriority());
-        
+        $eventMgr = $this->getWorkbench()->eventManager();
+        if (! empty($this->calculateOnEventNames)) {
+            foreach ($this->calculateOnEventNames as $eventName) {
+                $eventMgr->addListener($eventName, [$this, 'onEventCalculate'], $this->getPriority());
+            }
+        } else {
+            $eventMgr->addListener(OnReadDataEvent::getEventName(), [$this, 'onEventCalculate'], $this->getPriority());
+        }
+
         return $this;
     }
     
@@ -83,7 +142,14 @@ class CalculatingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->removeListener(OnReadDataEvent::getEventName(), [$this, 'onReadAnonymize']);
+        $eventMgr = $this->getWorkbench()->eventManager();
+        if (! empty($this->calculateOnEventNames)) {
+            foreach ($this->calculateOnEventNames as $eventName) {
+                $eventMgr->removeListener($eventName, [$this, 'onEventCalculate']);
+            }
+        } else {
+            $eventMgr->removeListener(OnReadDataEvent::getEventName(), [$this, 'onEventCalculate']);
+        }
         
         return $this;
     }
@@ -106,7 +172,7 @@ class CalculatingBehavior extends AbstractBehavior
      * @param EventInterface $event
      * @return void
      */
-    public function onReadAnonymize(OnReadDataEvent $event)
+    public function onEventCalculate(DataSheetEventInterface $event)
     {
         if ($this->isDisabled()) {
             return;
@@ -123,6 +189,7 @@ class CalculatingBehavior extends AbstractBehavior
         $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
         
         $logbook->addDataSheet('Input data', $inputSheet);
+        $logbook->addLine('Reacting to event `' . $event::getEventName() . '`');
         $logbook->addLine('Found input data for object ' . $inputSheet->getMetaObject()->__toString());
         $logbook->setIndentActive(1);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
@@ -139,8 +206,10 @@ class CalculatingBehavior extends AbstractBehavior
             return;
         }
 
+        $onlyExistingCols = ! $this->willAddColumns($event);
+
         // Check if the data requires calculations - e.g. has any calculated columns
-        if ($this->isApplicable($inputSheet) === false) {
+        if ($onlyExistingCols && $this->hasCalculatedColumns($inputSheet) === false) {
             $logbook->addLine('**Skipped** data does not contain any of the calculated attributes');
             $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
             return;
@@ -173,12 +242,22 @@ class CalculatingBehavior extends AbstractBehavior
         
         // Apply the calculation
         $this->inProgress = true;
-        $mapper = $this->getDataMapper($inputSheet);
+        $mapper = $this->getDataMapper($inputSheet, $onlyExistingCols);
         $calculatedSheet = $mapper->map($filteredSheet, true, $logbook);
         $inputSheet->merge($calculatedSheet, true);
         $this->inProgress = false;
 
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Events\DataSheetEventInterface $event
+     * @return bool
+     */
+    protected function willAddColumns(DataSheetEventInterface $event) : bool
+    {
+        return ! ($event instanceof OnReadDataEvent) && ! ($event instanceof OnBeforeReadDataEvent);
     }
     
     /**
@@ -239,7 +318,7 @@ class CalculatingBehavior extends AbstractBehavior
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $inputSheet
      * @return bool
      */
-    protected function isApplicable(DataSheetInterface $inputSheet) : bool
+    protected function hasCalculatedColumns(DataSheetInterface $inputSheet) : bool
     {
         foreach ($this->calculationsUxon->getPropertiesAll() as $calcUxon) {
             $attrAlias = $calcUxon->getProperty('attribute_alias');
@@ -262,7 +341,7 @@ class CalculatingBehavior extends AbstractBehavior
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $inputSheet
      * @return \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface
      */
-    protected function getDataMapper(DataSheetInterface $inputSheet) : DataSheetMapperInterface
+    protected function getDataMapper(DataSheetInterface $inputSheet, bool $onlyExistingColumns = true) : DataSheetMapperInterface
     {
         $uxon = new UxonObject([
             'inherit_columns' => DataSheetMapper::INHERIT_NONE,
@@ -275,7 +354,7 @@ class CalculatingBehavior extends AbstractBehavior
         ]);
         foreach ($this->calculationsUxon->getPropertiesAll() as $calcUxon) {
             $attrAlias = $calcUxon->getProperty('attribute_alias');
-            if (! $inputSheet->getColumns()->getByExpression($attrAlias)) {
+            if ($onlyExistingColumns === true && ! $inputSheet->getColumns()->getByExpression($attrAlias)) {
                 continue;
             }
             $mapUxon = new UxonObject([
@@ -286,5 +365,24 @@ class CalculatingBehavior extends AbstractBehavior
         }
         $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getObject(), $this->getObject());
         return $mapper;
+    }
+    
+    /**
+     * Names of data events, that should trigger the notification
+     * 
+     * If not specified, calculations will be performed after reading data, 
+     * that includes any of the calculated columns - i.e. `exface.Core.DataSheet.OnReadData`. 
+     * 
+     * @uxon-property calculate_on_events
+     * @uxon-type metamodel:event[]
+     * @uxon-template ["exface.Core.DataSheet.OnReadData"]
+     * 
+     * @param \exface\Core\CommonLogic\UxonObject $arrayOfEvents
+     * @return \exface\Core\Behaviors\CalculatingBehavior
+     */
+    public function setCalculateOnEvents(UxonObject $arrayOfEvents) : CalculatingBehavior
+    {
+        $this->calculateOnEventNames = $arrayOfEvents->toArray();
+        return $this;
     }
 }
