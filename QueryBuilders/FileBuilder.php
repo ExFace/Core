@@ -72,7 +72,7 @@ use exface\Core\DataTypes\RegularExpressionDataType;
  * - `~file:mtime` - last modification time
  * - `~file:ctime` - creation time
  * - `~file:mimetype` - MIME type of the file - e.g. `text/plain`
- * - `~file:subpath(start,length)` - extracts a subset of the folder path (excl. the filenam): e.g.
+ * - `~file:subpath(start,length)` - extracts a subset of the relative folder path (excl. the filename): e.g.
  * `subpath(0,2)` from the path `exface/Core/Translations/Objects` would yield `exface/Core`,
  * while `subpath(0,-1)` would produce `exface/Core/Translations`, `subpath(2)` - `Translations/Objects`
  * and `subpath(-1)` - `Objects`
@@ -1096,9 +1096,9 @@ class FileBuilder extends AbstractQueryBuilder
                 $start = trim($start);
                 $length = trim($length);
                 if (! is_numeric($start) || ($length !== null && ! is_numeric($length))) {
-                    throw new QueryBuilderException('Cannot query "' . $$dataAddress . '" on file path "' . $file->getPathname() . '": invalid start or length condition!');
+                    throw new QueryBuilderException('Cannot query "' . $dataAddress . '" on file path "' . $file->__tostring() . '": invalid start or length condition!');
                 }
-                $pathParts = explode($file->getDirectorySeparator(), $file->getFolderPath());
+                $pathParts = explode($file->getDirectorySeparator(), $file->getFolderInfo()->getPathRelative());
                 $subParts = array_slice($pathParts, $start, $length);
                 $value = implode($file->getDirectorySeparator(), $subParts);
                 break;
