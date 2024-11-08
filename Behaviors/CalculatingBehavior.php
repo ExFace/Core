@@ -4,11 +4,14 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
 use exface\Core\Events\DataSheet\OnReadDataEvent;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -62,7 +65,7 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * have any positions yet and the relation to the orders goes over positions. A possible
  * solution would be a `CallActionBehavior` attached to `OnCreateData` of a delivery, that
  * will immediately update the data.
- * - Our calculation will not be performed if an individual positions is changed, so it will
+ * - Our calculation will not be performed if an individual position is changed, so it will
  * only work properly if the app only allows to edit the entire delivery at once - e.g. via
  * `DataSpreadSheet` widget.
  * - Our calculation will not be performed if things are changed on the DB - obviously, no
@@ -244,6 +247,12 @@ class CalculatingBehavior extends AbstractBehavior
         $this->inProgress = true;
         $mapper = $this->getDataMapper($inputSheet, $onlyExistingCols);
         $calculatedSheet = $mapper->map($filteredSheet, true, $logbook);
+
+        if ($this->willNeedToUpdateData($event)) {
+            $calculatedSheet->merge($inputSheet->extractSystemColumns(), false, true);
+            $calculatedSheet->dataUpdate(false, ($event instanceof DataTransactionEventInterface) ? $event->getTransaction() : null);
+        }
+
         $inputSheet->merge($calculatedSheet, true);
         $this->inProgress = false;
 
@@ -258,6 +267,16 @@ class CalculatingBehavior extends AbstractBehavior
     protected function willAddColumns(DataSheetEventInterface $event) : bool
     {
         return ! ($event instanceof OnReadDataEvent) && ! ($event instanceof OnBeforeReadDataEvent);
+    }
+
+    /**
+     * 
+     * @param \exface\Core\Interfaces\Events\DataSheetEventInterface $event
+     * @return bool
+     */
+    protected function willNeedToUpdateData(DataSheetEventInterface $event) : bool
+    {
+        return $event instanceof OnCreateDataEvent || $event instanceof OnUpdateDataEvent;
     }
     
     /**
