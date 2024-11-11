@@ -11,10 +11,10 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
  * ```
  * $renderer->addPlaceholderResolver(
  *		new OptionalPlaceholders(
- *			'~data:',
  *			function() use ($dataSheet, $rowIndex) {
  *				return $dataSheet ? new DataRowPlaceholders($dataSheet, $rowIndex) : null;
  *			},
+ *			'~data:',
  *			'The `~data:` placeholder cannot be used with event ' . $event->getName() . ' - this event does not have any data';
  *		)	
  *	);
@@ -25,20 +25,21 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
  */
 class OptionalPlaceholders extends AbstractPlaceholderResolver
 {    
-    private $innerResolver = null;
+    private PlaceholderResolverInterface|null $innerResolver = null;
 
-    private $innerConstructor = null;
+    protected $innerConstructor = null;
 
-    private $errorText = null;
-    
+    protected string|null $errorText = null;
+
     /**
-     * 
-     * @param FacadeInterface $workbench
-     * @param string $prefix
+     *
+     * @param callable $resolverConstructor
+     * @param string   $prefix
+     * @param string   $errorText
      */
-    public function __construct(callable $resolverContructor, string $prefix, string $errorText)
+    public function __construct(callable $resolverConstructor, string $prefix, string $errorText)
     {
-        $this->innerConstructor = $resolverContructor;
+        $this->innerConstructor = $resolverConstructor;
         $this->errorText = $errorText;
     }
 
@@ -48,8 +49,10 @@ class OptionalPlaceholders extends AbstractPlaceholderResolver
      * @see \exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface::resolve()
      */
     public function resolve(array $placeholders) : array
-    {     
+    {
+        $vals = [];
         $resolver = $this->getInnerResolver();
+        
         if ($resolver === null) {
             $myPhs = $this->filterPlaceholders($placeholders);
             if (! empty($myPhs)) {
